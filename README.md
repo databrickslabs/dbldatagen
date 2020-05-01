@@ -3,16 +3,6 @@ Define a data generator
 
 Generates test data data from schema and field specifications
 
-based on internal proposal being shared internally. 
-
-*** DO NOT SHARE WITH CUSTOMERS AS THIS MAY FORM PART OF SERVICES ACCELERATOR, FEATURE etc ***
-
-#### Change History
-
-| Date             | Revision  | Who               | Comment      |
-|------------------|-----------|-------------------|--------------|
-| December 2018    | v 0.5     | Ronan Stokes      | Initial Implementation by Ronan Stokes |
-| December 2018    | v 0.6     | Ronan Stokes      | Simplified APIs
 
 ##Implemementation
 
@@ -48,6 +38,3 @@ column spec may specify min , max values and step to control value cycling
 We will follow the PySpark coding conventions rather than the standard PEP naming conventions
 * variables and functions will be named using camel case starting with lower case and uppercasing each word rather than the Python style guide recommendation of underscores to separate each word. I.e. `rowCount` not `row_count`
 * Classes and types will be named using camel case starting with upper case - i.e `FieldDefinition`
-=======
-# genner
-Databricks Data Generator
