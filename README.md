@@ -1,40 +1,76 @@
-### Test Data Generator 
-Define a data generator
+# Databricks Labs TestDataGenerator
+[Release Notes](RELEASE_NOTES.md) |
+[Python Wheel](dist/) |
+[Developer Docs](APIDOCS.md) |
+[Examples](examples) |
+[Tutorial](tutorial) |
+[Contributors](#core-contribution-team)
 
-Generates test data data from schema and field specifications
+
+## Project Description
+This Databricks Labs project is a non-supported end-to-end framework for automating the generation of test data 
+using the Spark framework. 
+
+It supports:
+* Generating test data for all of the 
+Spark SQL supported primitive types as a Spark data frame which may be persisted, 
+saved to external storage or 
+used in other computations
+* Limiting numeric values to specific ranges and intervals
+* Generation of discrete values - both numeric and text
+* Generation of values at random and based on the values of other fields
+* Generating multiple values following the same pattern
+* Generating arrays of values for ML style feature arrays
+* Applying weights to the occurence of values
+* Generating values to conform to a schema or independent of an existing schema
+* use of SQL expressions in test data generation
+
+ 
+
+## Project Support
+Please note that all projects in the /databrickslabs github account are provided for your exploration only, and are not formally supported by Databricks with Service Level Agreements (SLAs).  They are provided AS-IS and we do not make any guarantees of any kind.  Please do not submit a support ticket relating to any issues arising from the use of these projects.
+
+Any issues discovered through the use of this project should be filed as GitHub Issues on the Repo.  They will be reviewed as time permits, but there are no formal SLAs for support.
 
 
-##Implemementation
+## Building the code
 
-### Data Generation
-* for number of rows specified, generate implicit id ranging from 0 to n - 1
-* for each column in schema or interim set of columns , generate column according to colum spec. compute is in order of columns added - columns in schema are considered to be added first
-* if no column spec is specified , columns are generated as id column values converted to column type. for columns of date or timestamp - these will be converted to date or timestamp as interpreting first as numeric timestamp. For string values default generation pattern will be to generate string ’item-’+ value of id column
-* if column spec is supplied , column generation will proceed according to spec - note column spec does not add column - only describes previously added column ( via schema or addColumn)
-* if column spec already exists , later column spec supercedes it
-* if column already exists ( due to being in schema or specified via addColumn), adding colum causes error
-* column generation proceeds according to order of add column
-* output will  drop columns that are implicit ( such as id) or columns where column spec specifies omit=True. If the id column is to be retained a column spec can be specified for id with omit=False
-* a schema is not required - the resulting schema will be result of all addColumn statements
-* final output layout will be derived from schema + add columns
+Run  `make clean dist` from the main project directory.
 
-### Column value generation
-- Values for each column will be in the order of columns added. Optionally, we will reorder column generation for more efficient column generation but that will not affect layout of final dataset ( we will do select if necessary to reorder)
-- Each column will be generated based on base column value or a random value in the range 0 to number of rows. By default the base column is the id column - this may be overridden
-- If column has limited number of values, the base value will use modulo arithmetic to compute the value 
-for array based feature columns , the column spec will determine generation of each value
-- Column spec may specify sql expression which will override default column data generation
-column spec may specify min , max values and step to control value cycling
-- Column spec may specify list of values to restruct values to specific values
-- String values are generated from prefix _ base value _ suffix
-- Use of omit=True omits column from final output
+## Running unit tests
 
-## Implementation details
-* Columns are controlled by the schemaFields which is a collection of StructField definitions, and column definitions which controls how to generate the output fields
-* If a column definition is implicit , it may be overwritten
-* if a column definition is specified as 'omit', it is omitted from the final set of fields
+Run  `make install tests` from the main project directory to run the unit tests.
 
-## Coding style
-We will follow the PySpark coding conventions rather than the standard PEP naming conventions
-* variables and functions will be named using camel case starting with lower case and uppercasing each word rather than the Python style guide recommendation of underscores to separate each word. I.e. `rowCount` not `row_count`
-* Classes and types will be named using camel case starting with upper case - i.e `FieldDefinition`
+## Using the Project
+To use the project, the generated wheel should be installed in your Python notebook as a wheel based library
+
+Once the library has been installed, you can use it to generate a test data frame.
+
+For example
+
+```buildoutcfg
+df_spec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
+                                                  partitions=4)
+                            .withIdOutput()
+                            .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
+                                        numColumns=cls.column_count)
+                            .withColumn("code1", IntegerType(), min=100, max=200)
+                            .withColumn("code2", IntegerType(), min=0, max=10)
+                            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+                            .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+                            .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+
+                            )
+                            
+df = df_spec.build()
+num_rows=df.count()                          
+```
+
+## Feedback
+
+Issues with the application?  Found a bug?  Have a great idea for an addition?
+Feel free to file an issue.
+
+## Core Contribution team
+* Lead Developer, co-designer: Ronan Stokes,RSA, Databricks
+* Design: Daniel Tomes, RSA Practice Leader, Databricks

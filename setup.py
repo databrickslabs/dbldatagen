@@ -5,12 +5,12 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-package_long_description = """###Databricks Spark Test Data Generator###
+package_long_description = """###Databricks Labs Spark Test Data Generator###
     """
 
 setuptools.setup(
     name="databrickslabs-testdatagenerator-prerel",
-    version="1.0.5",
+    version="0.7.1",
     author="Ronan Stokes",
     author_email="ronan.stokes@databricks.com",
     description="Databricks Labs -  PySpark Test Data Generator",
