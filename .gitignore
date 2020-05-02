@@ -1,0 +1,18 @@
+#intellij
+.idea/
+*.iml
+#local spark context data from unit tests
+spark-warehouse/
+#Build dirctories
+env/
+build/
+target/
+project/project/
+project/target/
+./testData
+*.DS_Store
+/bin/
+/python/dist/
+/dist
+**/*.pyc
+*.egg*
