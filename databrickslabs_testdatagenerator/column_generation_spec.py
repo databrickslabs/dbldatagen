@@ -20,7 +20,7 @@ This file defines the `DataGenError` and `DataGenerator` classes
 
 from pyspark.sql.functions import col, lit, concat, rand, ceil, floor, round, array, expr
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
-    StructType, StructField, TimestampType, DataType
+    StructType, StructField, TimestampType, DataType, DateType
 import math
 from datetime import date, datetime, timedelta
 from .utils import ensure
@@ -383,10 +383,14 @@ class ColumnGenerationSpec:
                 cstep = c_interval.total_seconds()
                 cmax = cmin + c_interval.total_seconds() * self.computeTimestampIntervals(c_begin, c_end, c_interval)
 
+            # TODO: add full support for date value generation
             if sqlExpr is not None:
                 newDef = expr(sqlExpr).astype(ctype)
             elif cmin is not None and cmax is not None and cstep is not None:
                 newDef=self._compute_ranged_column(base_column=baseCol,  min=cmin, max=cmax, step=cstep, is_random=crand).astype(ctype)
+            elif type(ctype) is DateType:
+                newDef = expr("date_sub(current_date, round(rand()*1024))").astype(ctype)
+                print("data type for date", type(newDef))
             else:
                 newDef = (col(baseCol) + lit(cmin)).astype(ctype)
 

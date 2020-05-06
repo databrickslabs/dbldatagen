@@ -193,7 +193,7 @@ class DataGenerator:
         return ct if ct is not None else IntegerType()
 
     def isFieldExplicitlyDefined(self, colName):
-        """ return True if column spec has been explicitly defined for column, else false """
+        """ return True if column generation spec has been explicitly defined for column, else false """
         ensure(colName is not None, "colName should be non-empty")
         colDef = self.columnSpecsByName.get(colName, None)
         return not colDef.implicit if colDef is not None else False

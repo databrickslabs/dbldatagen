@@ -21,5 +21,6 @@ This module defines the test data generator and supporting classes
 """
 
 __all__ = ["basic_test", "basic_test2", "test_columnGenerationSpec", "test_dates",
-           "test_options", "test_topological_sort", "test_weights", "unit_tests1"]
+           "test_options", "test_topological_sort", "test_weights", "unit_tests1",
+           "large_schema_test"]
 
