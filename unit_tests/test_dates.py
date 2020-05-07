@@ -74,3 +74,56 @@ class TestDates(unittest.TestCase):
         testDataDF.printSchema()
 
         testDataDF.show()
+
+    @unittest.skip("not yet implemented")
+    def test_date_range3(self):
+        testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+                      .withIdOutput()
+                      .withColumn("last_sync_date", "date",
+                                  data_range=DateRange("2017-10-01 00:00:00",
+                                                       "2018-10-06 00:00:00",
+                                                       "days=7"), random=True)
+
+
+                      .build()
+                      )
+
+        print("schema", testDataDF.schema)
+        testDataDF.printSchema()
+
+        testDataDF.limit(100).show()
+
+        df_outside1=testDataDF.where("last_sync_date > '2018-10-06' ")
+        df_outside1.show()
+        self.assertTrue(df_outside1.count() == 0)
+
+        df_outside2 = testDataDF.where("last_sync_date < '2017-10-01' ")
+        df_outside2.show()
+        self.assertTrue(df_outside2.count() == 0)
+
+    @unittest.skip("not yet implemented")
+    def test_date_range4(self):
+        testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+                      .withIdOutput()
+                      .withColumn("last_sync_date", "date",
+                                  data_range=DateRange("2017-10-01",
+                                                       "2018-10-06",
+                                                       "days=7",
+                                                       datetime_format="%Y-%m-%d"), random=True)
+
+
+                      .build()
+                      )
+
+        print("schema", testDataDF.schema)
+        testDataDF.printSchema()
+
+        testDataDF.limit(100).show()
+
+        df_outside1=testDataDF.where("last_sync_date > '2018-10-06' ")
+        df_outside1.show()
+        self.assertTrue(df_outside1.count() == 0)
+
+        df_outside2 = testDataDF.where("last_sync_date < '2017-10-01' ")
+        df_outside2.show()
+        self.assertTrue(df_outside2.count() == 0)

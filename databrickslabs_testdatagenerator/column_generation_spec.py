@@ -18,12 +18,13 @@
 This file defines the `DataGenError` and `DataGenerator` classes
 """
 
-from pyspark.sql.functions import col, lit, concat, rand, ceil, floor, round, array, expr
+from pyspark.sql.functions import col, lit, concat, rand, ceil, floor, round, array, expr, when, udf
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
     StructType, StructField, TimestampType, DataType, DateType
 import math
 from datetime import date, datetime, timedelta
 from .utils import ensure
+from .text_generators import TextGenerators
 
 
 class ColumnGenerationSpec:
@@ -36,7 +37,8 @@ class ColumnGenerationSpec:
                      'range', 'median', 'base_column', 'values',
                      'numColumns', 'numFeatures', 'structType',
                      'begin', 'end', 'interval', 'expr', 'omit',
-                     'weights', 'description', 'continuous'
+                     'weights', 'description', 'continuous',
+                     'percent_nulls', 'template'
 
                      }
     forbidden_props = {
@@ -353,6 +355,8 @@ class ColumnGenerationSpec:
         crand, cdistribution = self['random'], self['distribution']
         baseCol = self['base_column']
         c_begin, c_end, c_interval = self['begin'], self['end'], self['interval']
+        string_generation_template=self['template']
+        percent_nulls = self['percent_nulls']
 
         cmin, cmax = self._compute_default_ranges_for_type(min=cmin, max=cmax, col_type=ctype)
 
@@ -360,7 +364,7 @@ class ColumnGenerationSpec:
 
         # handle weighted values
         if self.isWeightedValuesColumn:
-            return self.make_weighted_column_values_expression(values, weights)
+            newDef=self.make_weighted_column_values_expression(values, weights)
         else:
             # rs: initialize the begin, end and interval if not initalized for date computations
             # defaults are start of day, now, and 1 minute respectively
@@ -377,6 +381,8 @@ class ColumnGenerationSpec:
             # check for implied ranges
             if values is not None:
                 cmin, cstep, cmax = 0, 1, len(values) - 1
+            elif type(ctype) is BooleanType:
+                cmin, cstep, cmax = 0, 1, 1
             elif type(ctype) is TimestampType:
                 # compute number of intervals in time ranges
                 cmin = (c_begin - datetime(1970, 1, 1)).total_seconds()
@@ -390,11 +396,10 @@ class ColumnGenerationSpec:
                 newDef=self._compute_ranged_column(base_column=baseCol,  min=cmin, max=cmax, step=cstep, is_random=crand).astype(ctype)
             elif type(ctype) is DateType:
                 newDef = expr("date_sub(current_date, round(rand()*1024))").astype(ctype)
-                print("data type for date", type(newDef))
             else:
                 newDef = (col(baseCol) + lit(cmin)).astype(ctype)
 
-            # string value generation is simplu handled by combining with a suffix or prefix
+            # string value generation is simply handled by combining with a suffix or prefix
             if values is not None:
                 newDef = array([lit(x) for x in values])[newDef.astype(IntegerType())]
             elif type(ctype) is StringType and sqlExpr is None:
@@ -404,6 +409,19 @@ class ColumnGenerationSpec:
                     newDef = concat(newDef.astype(IntegerType(), lit('_'), lit(csuffix)))
                 else:
                     newDef = newDef.astype(StringType())
+
+            # use string generation template if available passing in what was generated to date
+            if type(ctype) is StringType and string_generation_template is not None:
+                # note :
+                # while it seems like this could use a shared instance, this does not work if initialized
+                # in a class method
+                u_value_from_template = udf(TextGenerators.value_from_template, StringType()).asNondeterministic()
+                newDef = u_value_from_template(newDef, lit(string_generation_template))
+
+
+        if percent_nulls is not None:
+            prob_nulls=percent_nulls / 100.0
+            newDef = when(rand() > lit(prob_nulls),newDef).otherwise(lit(None))
         return newDef
 
     def make_generation_expressions(self):

@@ -19,7 +19,7 @@ This module defines the test data generator and supporting classes
 """
 
 __all__ = ["data_generator", "data_analyzer", "schema_parser", "daterange",
-           "column_generation_spec", "utils", "function_builder", "spark_singleton"]
+           "column_generation_spec", "utils", "function_builder", "spark_singleton", "text_generators"]
 
 from databrickslabs_testdatagenerator.data_generator import DataGenerator
 from databrickslabs_testdatagenerator.utils import ensure, topological_sort
@@ -29,3 +29,4 @@ from databrickslabs_testdatagenerator.schema_parser import SchemaParser
 from databrickslabs_testdatagenerator.daterange import DateRange
 from databrickslabs_testdatagenerator.function_builder import ColumnGeneratorBuilder
 from .spark_singleton import SparkSingleton
+from databrickslabs_testdatagenerator.text_generators import TextGenerators

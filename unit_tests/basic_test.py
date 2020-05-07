@@ -2,7 +2,7 @@ from pyspark.sql.types import StructType, StructField, IntegerType, StringType, 
 import databrickslabs_testdatagenerator as datagen
 from pyspark.sql import SparkSession
 import unittest
-
+from pyspark.sql import functions as F
 
 schema = StructType([
     StructField("site_id", IntegerType(), True),
@@ -23,7 +23,7 @@ spark = SparkSession.builder \
 class TestBasicOperation(unittest.TestCase):
     testDataSpec = None
     dfTestData = None
-    row_count = 1000
+    row_count = 100000
     column_count = 50
 
     def setUp(self):
@@ -59,14 +59,12 @@ class TestBasicOperation(unittest.TestCase):
         self.assertEqual(column_count_observed, self.column_count + 6)
 
     def test_values_code1(self):
-        from pyspark.sql import functions as F
         values = self.dfTestData.select('code1').groupBy().agg(F.min('code1').alias('min'),
                                                                F.max('code1').alias('max')).collect()[0]
         print("min and max", values)
         self.assertEqual({100, 200}, {values.min, values.max})
 
     def test_values_code2(self):
-        from pyspark.sql import functions as F
         values = self.dfTestData.select('code2').groupBy().agg(F.min('code2').alias('min'),
                                                                F.max('code2').alias('max')).collect()[0]
         print("min and max", values)

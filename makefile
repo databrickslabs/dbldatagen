@@ -22,7 +22,7 @@ prepare: clean
 # Tests
 
 tests: 
-	python3 -m unittest discover -s unit_tests  -v 
+	python3 -m unittest discover -s "unit_tests" -p "*.py"  -v
 
 # Version commands
 
@@ -44,7 +44,7 @@ endif
 
 dist:
 	@echo "$(OK_COLOR)=> building wheel$(NO_COLOR)"
-	@python3 setup.py sdist bdist_wheel
+	@python3 python/setup.py sdist bdist_wheel
 
 release:
 	git add .
