@@ -32,12 +32,23 @@ Please note that all projects in the /databrickslabs github account are provided
 
 Any issues discovered through the use of this project should be filed as GitHub Issues on the Repo.  They will be reviewed as time permits, but there are no formal SLAs for support.
 
+## Compatibility
+The code base must be built with Python 3.x. 
+
+For full library compatibility for a specific Databricks Spark release, see the Databricks 
+release notes for library compatibility
+
+- https://docs.databricks.com/release-notes/runtime/releases.html
 
 ## Building the code
 
 Run  `make clean dist` from the main project directory.
 
 ## Running unit tests
+
+If using an evironment with multiple Python versions, make sure to use virtual env or similar to pick up correct python versions.
+
+If necessary, set `PYSPARK_PYTHON` and `PYSPARK_DRIVER_PYTHON` to point to correct versions of Python.
 
 Run  `make install tests` from the main project directory to run the unit tests.
 
