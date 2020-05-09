@@ -18,7 +18,7 @@
 This file defines the `DataGenError` and `DataGenerator` classes
 """
 
-from pyspark.sql.functions import col, lit, concat, rand, ceil, floor, round, array, expr, when, udf
+from pyspark.sql.functions import col, lit, concat, rand, ceil, floor, round, array, expr, when, udf, format_string
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
     StructType, StructField, TimestampType, DataType, DateType
 import math
@@ -38,7 +38,7 @@ class ColumnGenerationSpec:
                      'numColumns', 'numFeatures', 'structType',
                      'begin', 'end', 'interval', 'expr', 'omit',
                      'weights', 'description', 'continuous',
-                     'percent_nulls', 'template'
+                     'percent_nulls', 'template', 'format'
 
                      }
     forbidden_props = {
@@ -330,6 +330,13 @@ class ColumnGenerationSpec:
                     round(rand() * lit(crange)) * lit(step))
         newDef = (baseval + lit(min))
 
+        # for ranged values in strings, use type of min, max and step as output type
+        if type(self.datatype) is StringType:
+            if type(min) is float or type(max) is float or type(step) is float:
+                newDef = newDef.astype(DoubleType())
+            else:
+                newDef = newDef.astype(IntegerType())
+
         return newDef
 
     def _compute_default_ranges_for_type(self, min, max, col_type):
@@ -357,6 +364,7 @@ class ColumnGenerationSpec:
         c_begin, c_end, c_interval = self['begin'], self['end'], self['interval']
         string_generation_template=self['template']
         percent_nulls = self['percent_nulls']
+        sformat=self['format']
 
         cmin, cmax = self._compute_default_ranges_for_type(min=cmin, max=cmax, col_type=ctype)
 
@@ -393,7 +401,7 @@ class ColumnGenerationSpec:
             if sqlExpr is not None:
                 newDef = expr(sqlExpr).astype(ctype)
             elif cmin is not None and cmax is not None and cstep is not None:
-                newDef=self._compute_ranged_column(base_column=baseCol,  min=cmin, max=cmax, step=cstep, is_random=crand).astype(ctype)
+                newDef=self._compute_ranged_column(base_column=baseCol,  min=cmin, max=cmax, step=cstep, is_random=crand)
             elif type(ctype) is DateType:
                 newDef = expr("date_sub(current_date, round(rand()*1024))").astype(ctype)
             else:
@@ -408,7 +416,7 @@ class ColumnGenerationSpec:
                 elif csuffix is not None:
                     newDef = concat(newDef.astype(IntegerType(), lit('_'), lit(csuffix)))
                 else:
-                    newDef = newDef.astype(StringType())
+                    newDef = newDef
 
             # use string generation template if available passing in what was generated to date
             if type(ctype) is StringType and string_generation_template is not None:
@@ -417,6 +425,14 @@ class ColumnGenerationSpec:
                 # in a class method
                 u_value_from_template = udf(TextGenerators.value_from_template, StringType()).asNondeterministic()
                 newDef = u_value_from_template(newDef, lit(string_generation_template))
+
+            if type(ctype) is StringType and sformat is not None:
+                # note :
+                # while it seems like this could use a shared instance, this does not work if initialized
+                # in a class method
+                newDef = format_string(sformat, newDef)
+
+            newDef = newDef.astype(ctype)
 
 
         if percent_nulls is not None:

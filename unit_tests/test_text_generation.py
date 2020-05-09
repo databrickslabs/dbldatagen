@@ -12,6 +12,13 @@ StructField("PK1",StringType(),True),
 StructField("LAST_MODIFIED_UTC",TimestampType(),True),
 StructField("date",DateType(),True),
 StructField("str1",StringType(),True),
+StructField("nint",IntegerType(),True),
+StructField("nstr1",StringType(),True),
+StructField("nstr2",StringType(),True),
+StructField("nstr3",StringType(),True),
+StructField("nstr4",StringType(),True),
+StructField("nstr5",StringType(),True),
+StructField("nstr6",StringType(),True),
 StructField("email",StringType(),True),
 StructField("ip_addr",StringType(),True),
 StructField("phone",StringType(),True),
@@ -19,7 +26,6 @@ StructField("isDeleted",BooleanType(),True)
 ])
 
 
-print("schema", schema)
 
 spark = SparkSession.builder \
     .master("local[4]") \
@@ -30,50 +36,55 @@ spark = SparkSession.builder \
 # Test manipulation and generation of test data for a large schema
 class TestTextGeneration(unittest.TestCase):
     testDataSpec = None
-    dfTestData = None
     row_count = 100000
 
     def setUp(self):
         print("setting up")
+        print("schema", schema)
 
     @classmethod
     def setUpClass(cls):
+        print("setting up class ")
         cls.testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
                                                   partitions=4)
                             .withSchema(schema)
                             .withIdOutput()
                             .withColumnSpec("date", percent_nulls=10.0)
+                            .withColumnSpec("nint", percent_nulls=10.0, min=1, max=9, step=2)
+                            .withColumnSpec("nstr1", percent_nulls=10.0, min=1, max=9, step=2)
+                            .withColumnSpec("nstr2", percent_nulls=10.0, min=1.5, max=2.5, step=0.3, format="%04f")
+                            .withColumnSpec("nstr3", min=1.0, max=9.0, step=2.0)
+                            .withColumnSpec("nstr4", percent_nulls=10.0, min=1, max=9, step=2,  format="%04d")
+                            .withColumnSpec("nstr5", percent_nulls=10.0, min=1.5, max=2.5, step=0.3,  random=True)
+                            .withColumnSpec("nstr6", percent_nulls=10.0, min=1.5, max=2.5, step=0.3, random=True, format="%04f")
                             .withColumnSpec("email", template=r'\\w.\\w@\\w.com|\\w@\\w.co.u\\k')
                             .withColumnSpec("ip_addr", template=r'\\n.\\n.\\n.\\n')
                             .withColumnSpec("phone", template=r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd')
                             )
 
-        print("Test generation plan")
-        print("=============================")
-        cls.testDataSpec.explain()
-
-        print("=============================")
-        print("")
-        cls.dfTestData = cls.testDataSpec.build().cache()
 
     def test_simple_data(self):
-        self.dfTestData.show()
+        self.testDataSpec.build().show()
 
-    def test_udfs(self):
-        u_value_from_template = udf(datagen.TextGenerators.value_from_template, StringType()).asNondeterministic()
+    def test_simple_data2(self):
+        testDataSpec2 = (datagen.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
+                                              partitions=4)
+                        .withSchema(schema)
+                        .withIdOutput()
+                        .withColumnSpec("date", percent_nulls=10.0)
+                        .withColumnSpec("nint", percent_nulls=10.0, min=1, max=9, step=2)
+                        .withColumnSpecs(fields=["nstr2","nstr3","nstr4","nstr1"],
+                                        percent_nulls=10.0, min=1, max=9, step=2)
+                        .withColumnSpec("nstr5", percent_nulls=10.0, min=1.5, max=2.5, step=0.3, random=True)
+                        .withColumnSpec("nstr6", percent_nulls=10.0, min=1.5, max=2.5, step=0.3, random=True,
+                                        format="%04f")
+                        .withColumnSpec("email", template=r'\\w.\\w@\\w.com|\\w@\\w.co.u\\k')
+                        .withColumnSpec("ip_addr", template=r'\\n.\\n.\\n.\\n')
+                        .withColumnSpec("phone", template=r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd')
+                        )
 
-        df = (spark.range(100000)
-              .withColumn("email", (when(rand() > lit(0.3),
-                                        u_value_from_template(lit('testing'),
-                                                              lit(r'\\w.\\w@\\w.com|\\w@\\w.co.u\\k')))
-                                  .otherwise(lit(None))))
-              .withColumn("email2", expr("case when rand() > 0.3 then email else null end"))
-              .withColumn("ipaddr", u_value_from_template(lit('testing'), lit(r'\\n.\\n.\\n.\\n')))
-              .withColumn("phone", u_value_from_template(lit('testing'), lit(r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd')))
-              .withColumn("cc", u_value_from_template(lit('testing'), lit(r'dddd-dddd-dddd-dddd')))
-              )
+        testDataSpec2.build().show()
 
-        df.show()
 
 
 

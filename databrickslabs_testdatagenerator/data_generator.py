@@ -242,7 +242,10 @@ class DataGenerator:
         else:
             return min, max, step
 
-    def withColumnSpec(self, colName, min=0, max=None, step=1, prefix='', random=False, distribution="normal",
+    def withColumnSpecs(self, pattern=None, fields=None, match_type=None, **kwargs):
+        return self
+
+    def withColumnSpec(self, colName, min=0, max=None, step=1, prefix=None, random=False, distribution="normal",
                        implicit=False, data_range=None, omit=False, base_column="id", **kwargs):
         """ add a column specification for an existing column """
         ensure(colName is not None, "Must specify column name for column")
@@ -275,7 +278,7 @@ class DataGenerator:
         return True if colName in self.columnSpecsByName.keys() else False
 
     def withColumn(self, colName, colType=StringType(), min=0, max=None, step=1,
-                   data_range=None, prefix='', random=False, distribution="normal",
+                   data_range=None, prefix=None, random=False, distribution="normal",
                    base_column="id", nullable=True,
                    omit=False, implicit=False,
                    **kwargs):
