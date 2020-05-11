@@ -190,6 +190,28 @@ class TestLargeSchemaOperation(unittest.TestCase):
         tableScript=self.testDataSpec.scriptTable("testTable")
         print("tableScript", tableScript)
 
+    def test_large_clone(self):
+        sale_values = ['RETAIL', 'ONLINE', 'WHOLESALE', 'RETURN']
+        sale_weights = [1, 5, 5, 1]
+
+        ds = (self.testDataSpec.clone().setRowCount(1000)
+              .withColumnSpecs(patterns=".*_ID", match_types=StringType(), format="%010d", min=1, max=123, step=1)
+              .withColumnSpecs(patterns=".*_IDS", match_types=StringType(), format="%010d", min=1, max=100, step=1)
+              #     .withColumnSpec("R3D3_CLUSTER_IDS", min=1, max=100, step=1)
+              .withColumnSpec("XYYZ_IDS", min=1, max=123, step=1,
+                              format="%05d")  # .withColumnSpec("nstr4", percent_nulls=10.0, min=1, max=9, step=2,  format="%04d")
+              # example of IS_SALE
+              .withColumnSpec("IS_S", values=sale_values, weights=sale_weights, random=True)
+              # .withColumnSpec("nstr4", percent_nulls=10.0, min=1, max=9, step=2,  format="%04d")
+
+              )
+
+        ds.compute_build_plan()
+        ds.explain()
+        df = ds.build()
+        df.show()
+
+
 
 
 

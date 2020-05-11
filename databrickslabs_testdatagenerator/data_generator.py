@@ -83,6 +83,7 @@ class DataGenerator:
         self._build_order = []
         self.inferredSchemaFields = []
         self.partitions = partitions if partitions is not None else 10
+        self.build_plan_computed = False
         self.withColumn("id", LongType(), nullable=False, implicit=True, omit=True)
 
         if sparkSession is None:
@@ -111,13 +112,20 @@ class DataGenerator:
             self.sparkSession = None
             new_copy = copy.deepcopy(self)
             new_copy.sparkSession = old_spark_session
+            new_copy.build_plan_computed = False
         finally:
             # now set it back
             self.sparkSession = old_spark_session
         return new_copy
 
+    def mark_for_replan(self):
+        self.build_plan_computed = False
+
 
     def explain(self):
+        if not self.build_plan_computed:
+            self.compute_build_plan()
+
         output = ["", "Data generation plan", "====================",
                   """spec=DateGenerator(name={}, rows={}, starting_id={}, partitions={})"""
                       .format(self.name, self.rowCount, self.starting_id, self.partitions), ")", "",
@@ -139,18 +147,22 @@ class DataGenerator:
     def withIdOutput(self):
         """ output id field as a column in the test data set if specified """
         self.columnSpecsByName["id"].omit = False
+        self.mark_for_replan()
+
         return self
 
     def option(self, option_key, option_value):
         """ set option to option value for later processing"""
         ensure(option_key in self.allowed_keys)
         self._options[option_key] = option_value
+        self.mark_for_replan()
         return self
 
     def options(self, **kwargs):
         """ set options in bulk"""
         for key, value in kwargs.items():
             self.option(key, value)
+        self.mark_for_replan()
         return self
 
     def _process_options(self):
@@ -282,7 +294,7 @@ class DataGenerator:
                                 if self.getColumnType(x) == y ]
 
         for f in effective_fields:
-            self.withColumnSpec(f, **kwargs)
+            self.withColumnSpec(f, implicit=True, **kwargs)
         return self
 
     def _check_column_or_column_list(self, columns, allow_id=False):
@@ -377,7 +389,14 @@ class DataGenerator:
                                            random_seed_method=self.seed_method,
                                            nullable=nullable, **kwargs)
         self.columnSpecsByName[colName] = column_spec
+
+        # if column spec for column already exists - remove it
+        items_to_remove = [ x  for x in self.allColumnSpecs if x.name == colName ]
+        for x in items_to_remove:
+            self.allColumnSpecs.remove(x)
+
         self.allColumnSpecs.append(column_spec)
+        self.mark_for_replan()
 
         return self
 
@@ -416,16 +435,26 @@ class DataGenerator:
 
         return df1
 
+    def pp_list(self, alist, msg=""):
+        print(msg)
+        l = len(alist)
+        for x in alist:
+            print(x)
+
     def compute_column_build_order(self):
         """ compute the build ordering using a topological sort on dependencies"""
         dependency_ordering = [(x.name, set(x.dependencies)) if x.name != 'id' else ('id', set())
                                for x in self.allColumnSpecs]
+
+        #self.pp_list(dependency_ordering, msg="dependencies")
 
         self.printVerbose("dependency list:", dependency_ordering)
 
         self._build_order = list(topological_sort(dependency_ordering))
 
         self.printVerbose("columnBuildOrder:", self._build_order)
+
+        #self.pp_list(self._build_order, "build order")
         return self._build_order
 
     @property
@@ -443,6 +472,7 @@ class DataGenerator:
         for cs in self.allColumnSpecs:
             for tmp_col in cs.temporary_columns:
                 if not self.hasColumnSpec(tmp_col[0]):
+                    print("materializing temporary column {}".format(tmp_col[0]))
                     self.withColumn(tmp_col[0], tmp_col[1], **tmp_col[2])
 
         self.compute_column_build_order()
@@ -451,6 +481,7 @@ class DataGenerator:
             cs = self.columnSpecsByName[x]
             self.build_plan.append(cs.getPlan())
 
+        self.build_plan_computed=True
         return self
 
     def build(self, withTempView=False, withView=False, withStreaming=False, options=None):

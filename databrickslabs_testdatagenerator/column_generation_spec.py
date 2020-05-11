@@ -84,6 +84,7 @@ class ColumnGenerationSpec:
             temp_name = "_rnd_{}".format(self.name)
             self.dependencies.append(temp_name)
             desc = "adding temporary column {} required by {}".format(temp_name, self.name)
+            print(desc)
             sql_random_generator = self.getUniformRandomSQLExpression()
             self.temporary_columns.append((temp_name, DoubleType(), {'expr': sql_random_generator, 'omit' : "True",
                                                                      'description': desc}))
@@ -421,7 +422,7 @@ class ColumnGenerationSpec:
                 cmin, cstep, cmax = 0, 1, len(values) - 1
             elif type(ctype) is BooleanType:
                 cmin, cstep, cmax = 0, 1, 1
-            elif type(ctype) is TimestampType:
+            elif type(ctype) is TimestampType :
                 # compute number of intervals in time ranges
                 cmin = (c_begin - datetime(1970, 1, 1)).total_seconds()
                 cstep = c_interval.total_seconds()

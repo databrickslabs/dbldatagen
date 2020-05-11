@@ -9,6 +9,8 @@ schema = StructType([
     StructField("site_cd", StringType(), True),
     StructField("c", StringType(), True),
     StructField("c1", StringType(), True),
+    StructField("state1", StringType(), True),
+    StructField("state2", StringType(), True),
     StructField("sector_technology_desc", StringType(), True),
 
 ])

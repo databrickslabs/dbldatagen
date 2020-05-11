@@ -162,20 +162,27 @@ class TestBasicOperation(unittest.TestCase):
             StructField("region_cd", StringType(), True),
             StructField("c", StringType(), True),
             StructField("c1", StringType(), True),
+            StructField("state1", StringType(), True),
+            StructField("state2", StringType(), True),
             StructField("st_desc", StringType(), True),
 
         ])
 
-        testDataSpec = self.testDataSpec
-        print("data generation description:", testDataSpec.describe())
-        print("data generation repr:", repr(testDataSpec))
-        print("data generation str:", str(testDataSpec))
-        self.testDataSpec.explain()
+        testDataSpec2 = self.testDataSpec.clone()
+        print("data generation description:", testDataSpec2.describe())
+        print("data generation repr:", repr(testDataSpec2))
+        print("data generation str:", str(testDataSpec2))
+        testDataSpec2.explain()
 
-        testDataSpec2 = self.testDataSpec.withSchema(schema)
+        testDataSpec3 = (testDataSpec2.withSchema(schema)
+                         .withColumnSpec("state1", values=['ca', 'wa', 'ny'])
+                         )
 
-        print("output columns", testDataSpec2.getOutputColumnNames())
-        testDataDf = testDataSpec2.build()
+        print("output columns", testDataSpec3.getOutputColumnNames())
+
+
+        testDataDf = testDataSpec3.build()
+        testDataDf.show()
 
         print("dataframe description", testDataDf.describe())
         print("dataframe repr", repr(testDataDf))
