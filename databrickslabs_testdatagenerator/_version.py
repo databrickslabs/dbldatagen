@@ -1,3 +1,16 @@
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+"""
+This module defines the version information for the test data generator library
+
+Management of version identiifiers for releases uses the bumpversion python package
+which supports automatic modification of files when the version labels need to be modified
+
+See: https://pypi.org/project/bumpversion/
+"""
+
 from collections import namedtuple
 import re
 

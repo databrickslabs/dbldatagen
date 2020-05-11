@@ -1,21 +1,9 @@
-#
-# Copyright (C) 2019 Databricks, Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
 
 """
-This file defines the `DataGenError` and `DataGenerator` classes
+This file defines the `ColumnGenerationSpec` class
 """
 
 from pyspark.sql.functions import col, lit, concat, rand, ceil, floor, round, array, expr, when, udf, format_string
@@ -51,7 +39,7 @@ class ColumnGenerationSpec:
     }
 
     def __init__(self, name, colType=None, min=0, max=None, step=1, prefix='', random=False,
-                 distribution="normal", base_column="id",
+                 distribution="normal", base_column="id", random_seed=None, random_seed_method=None,
                  implicit=False, omit=False, nullable=True, **kwargs):
 
         if colType is None:
@@ -71,10 +59,15 @@ class ColumnGenerationSpec:
         self.omit = omit
         self.name = name
         self.nullable = nullable
+        self.random_seed = random_seed
+        self.random_seed_method = random_seed_method
 
         # compute dependencies
         if base_column != "id":
-            self.dependencies = [base_column, "id"]
+            if type(base_column) is list:
+                self.dependencies = base_column + ["id"]
+            else:
+                self.dependencies = [base_column, "id"]
         else:
             self.dependencies = ["id"]
 
@@ -91,12 +84,35 @@ class ColumnGenerationSpec:
             temp_name = "_rnd_{}".format(self.name)
             self.dependencies.append(temp_name)
             desc = "adding temporary column {} required by {}".format(temp_name, self.name)
-            self.temporary_columns.append((temp_name, DoubleType(), {'expr': 'rand()', 'omit' : "True",
+            sql_random_generator = self.getUniformRandomSQLExpression()
+            self.temporary_columns.append((temp_name, DoubleType(), {'expr': sql_random_generator, 'omit' : "True",
                                                                      'description': desc}))
             self.base_column = temp_name
 
+    def getUniformRandomExpression(self):
+        """ Get random expression accounting for seed method"""
+        if self.random_seed_method == "fixed":
+            return expr("rand({})".format(self.random_seed))
+        elif self.random_seed_method == "hash_fieldname":
+            assert self.name is not None
+            return expr("rand(hash('{}'))".format(self.name))
+        else:
+            return rand()
+
+    def getUniformRandomSQLExpression(self):
+        """ Get random SQL expression accounting for seed method"""
+        if self.random_seed_method == "fixed":
+            assert self.random_seed is not None
+            return "rand({})".format(self.random_seed)
+        elif self.random_seed_method == "hash_fieldname":
+            assert self.name is not None
+            return "rand(hash('{}'))".format(self.name)
+        else:
+            return "rand()"
+
     @property
     def isWeightedValuesColumn(self):
+        """ check if column is a weighed values column """
         return self.random and self['weights'] is not None and self.values is not None
 
     def getNames(self):
@@ -126,6 +142,7 @@ class ColumnGenerationSpec:
         return self.props.keys()
 
     def __getitem__(self, key):
+        """ implement the built in derefernce by key behavior """
         ensure(key is not None, "key should be non-empty")
         return self.props.get(key, None)
 
@@ -141,57 +158,60 @@ class ColumnGenerationSpec:
 
     @property
     def datatype(self):
-        """get the base column used to generate values for this column"""
+        """get the Spark SQL data type used to generate values for this column"""
         return self['type']
 
     @property
     def prefix(self):
-        """get the base column used to generate values for this column"""
+        """get the string prefix used to generate values for this column"""
         return self['prefix']
 
     @property
     def suffix(self):
-        """get the base column used to generate values for this column"""
+        """get the string suffix used to generate values for this column"""
         return self['suffix']
 
     @property
     def min(self):
-        """get the base column used to generate values for this column"""
+        """get the column generation `min` value used to generate values for this column"""
         return self['min']
 
     @property
     def max(self):
-        """get the base column used to generate values for this column"""
+        """get the column generation `max` value used to generate values for this column"""
         return self['max']
 
     @property
     def step(self):
-        """get the base column used to generate values for this column"""
+        """get the column generation `step` value used to generate values for this column"""
         return self['step']
 
     @property
     def random(self):
-        """get the base column used to generate values for this column"""
+        """get the column generation `random` attribute used to generate values for this column.
+        If set, values should be generated randomly rather than from the seed `id` column
+        """
         return self['random']
 
     @property
     def weights(self):
-        """get the base column used to generate values for this column"""
+        """get the column generation `weights` value used to generate values for this column"""
         return self['weights']
 
     @property
     def values(self):
-        """get the base column used to generate values for this column"""
+        """get the column generation `values` attribute used to generate values for this column"""
         return self['values']
 
     @property
     def exprs(self):
-        """get the base column used to generate values for this column"""
+        """get the column generation `exprs` attribute used to generate values for this column.
+        """
         return self['exprs']
 
     @property
     def distribution(self):
-        """get the base column used to generate values for this column"""
+        """get the column generation `distribution` attribute used to generate values for this column"""
         return self['distribution']
 
     @property
@@ -311,6 +331,15 @@ class ColumnGenerationSpec:
 
         return is_continuous
 
+    def get_seed_expression(self, base_column):
+        """ Get seed expression for column generation
+        if using a single base column, then simply use that, otherwise use a SQL hash of multiple columns
+        """
+        if type(base_column) is list:
+            return expr("hash({})".format(",".join(base_column)))
+        else:
+            return col(base_column)
+
     def _compute_ranged_column(self, min, max, step, base_column, is_random):
         """ compute a ranged column
 
@@ -321,13 +350,14 @@ class ColumnGenerationSpec:
         assert max is not None
         assert step is not None
 
+        random_generator = self.getUniformRandomExpression()
         if self._is_continuous_valued_column() and self._is_real_valued_column() and is_random:
             crange = (max - min) * float(1.0)
-            baseval = rand() * lit(crange)
+            baseval = random_generator * lit(crange)
         else:
             crange = (max - min) * float(1.0 / step)
-            baseval = (col(base_column) % lit(crange + 1) * lit(step)) if not is_random else (
-                    round(rand() * lit(crange)) * lit(step))
+            baseval = (self.get_seed_expression(base_column) % lit(crange + 1) * lit(step)) if not is_random else (
+                    round(random_generator * lit(crange)) * lit(step))
         newDef = (baseval + lit(min))
 
         # for ranged values in strings, use type of min, max and step as output type
@@ -403,9 +433,10 @@ class ColumnGenerationSpec:
             elif cmin is not None and cmax is not None and cstep is not None:
                 newDef=self._compute_ranged_column(base_column=baseCol,  min=cmin, max=cmax, step=cstep, is_random=crand)
             elif type(ctype) is DateType:
-                newDef = expr("date_sub(current_date, round(rand()*1024))").astype(ctype)
+                sql_random_generator = self.getUniformRandomSQLExpression()
+                newDef = expr("date_sub(current_date, round({}*1024))".format(sql_random_generator)).astype(ctype)
             else:
-                newDef = (col(baseCol) + lit(cmin)).astype(ctype)
+                newDef = (self.get_seed_expression(baseCol) + lit(cmin)).astype(ctype)
 
             # string value generation is simply handled by combining with a suffix or prefix
             if values is not None:
@@ -437,7 +468,8 @@ class ColumnGenerationSpec:
 
         if percent_nulls is not None:
             prob_nulls=percent_nulls / 100.0
-            newDef = when(rand() > lit(prob_nulls),newDef).otherwise(lit(None))
+            random_generator = self.getUniformRandomExpression()
+            newDef = when(random_generator > lit(prob_nulls),newDef).otherwise(lit(None))
         return newDef
 
     def make_generation_expressions(self):

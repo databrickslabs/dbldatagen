@@ -1,7 +1,7 @@
 # Databricks Labs TestDataGenerator
 [Release Notes](RELEASE_NOTES.md) |
 [Python Wheel](dist/) |
-[Developer Docs](APIDOCS.md) |
+[Developer Docs](python/docs/APIDOCS.md) |
 [Examples](examples) |
 [Tutorial](tutorial) |
 [Contributors](#core-contribution-team)

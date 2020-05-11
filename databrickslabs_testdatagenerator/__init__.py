@@ -15,7 +15,7 @@
 #
 
 """
-This module defines the test data generator and supporting classes
+This module defines the package contents for the test data generator library
 """
 
 __all__ = ["data_generator", "data_analyzer", "schema_parser", "daterange",

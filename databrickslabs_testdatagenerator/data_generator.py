@@ -1,15 +1,3 @@
-#
-# Copyright (C) 2019 Databricks, Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
@@ -23,16 +11,17 @@ from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, Doub
     StructType, StructField, TimestampType
 import math
 from datetime import date, datetime, timedelta
+import re
 
 from .column_generation_spec import ColumnGenerationSpec
 from .utils import ensure, topological_sort, DataGenError
 from .daterange import DateRange
 from .spark_singleton import SparkSingleton
-
+import copy
 
 
 class DataGenerator:
-    """ Class for test data set generation """
+    """ Main Class for test data set generation """
 
     # class vars
     nextNameIndex = 0
@@ -69,13 +58,14 @@ class DataGenerator:
         if self.verbose:
             print("data generator:", *args)
 
-    def __init__(self, sparkSession=None, name=None,
+    def __init__(self, sparkSession=None, name=None, seed_method=None,
                  rows=1000000, starting_id=0, seed=None, partitions=None, verbose=False):
         """ Constructor:
         :param name: is name of data set
         :param rows: = amount of rows to generate
         :param starting_id: = starting id for generated id column
         :param seed: = seed for random number generator
+        :param seed_method: = seed method for random numbers - either None, 'fixed', 'hash_fieldname'
         :param partitions: = number of partitions to generate
         :param verbose: = if `True`, generate verbose output
         """
@@ -85,6 +75,7 @@ class DataGenerator:
         self.starting_id = starting_id
         self.__schema__ = None
         self.seed = seed if seed is not None else self.randomSeed
+        self.seed_method = seed_method
         self.columnSpecsByName = {}
         self.allColumnSpecs = []
         self.build_plan = []
@@ -108,6 +99,24 @@ class DataGenerator:
             i.e DataGenerator(sparkSession=spark, name="test", ...)
             """)
 
+        if seed_method is not None and seed_method != "fixed" and seed_method != "hash_fieldname":
+            raise DataGenError("""seed_method should be None, 'fixed' or 'hash_fieldname' """)
+
+    def clone(self):
+        """Make a clone of the data spec via deep copy preserving same spark session"""
+        old_spark_session = self.sparkSession
+        new_copy = None
+        try:
+            # temporarily set the spark session to null
+            self.sparkSession = None
+            new_copy = copy.deepcopy(self)
+            new_copy.sparkSession = old_spark_session
+        finally:
+            # now set it back
+            self.sparkSession = old_spark_session
+        return new_copy
+
+
     def explain(self):
         output = ["", "Data generation plan", "====================",
                   """spec=DateGenerator(name={}, rows={}, starting_id={}, partitions={})"""
@@ -121,6 +130,11 @@ class DataGenerator:
         output.append("")
 
         print("\n".join(output))
+
+    def setRowCount(self, rc):
+        """Modify the row count - useful when starting a new spec from a clone"""
+        self.rowCount=rc
+        return self
 
     def withIdOutput(self):
         """ output id field as a column in the test data set if specified """
@@ -242,16 +256,55 @@ class DataGenerator:
         else:
             return min, max, step
 
-    def withColumnSpecs(self, pattern=None, fields=None, match_type=None, **kwargs):
+    def withColumnSpecs(self, patterns=None, fields=None, match_types=None, **kwargs):
+        """Add column specs for columns matching
+           a) list of field names,
+           b) one or more regex patterns
+           c) type (as in pyspark.sql.types)
+        """
+        if fields is not None and type(fields) is str:
+            fields = [fields]
+        if match_types is not None and type(match_types) is not list:
+            match_types = [match_types]
+        if patterns is not None and type(patterns) is str:
+            patterns = ["^" + patterns + "$"]
+        elif type(patterns) is list:
+            patterns = ["^" + pat + "$" for pat in patterns]
+
+        all_fields=self.getInferredColumnNames()
+        effective_fields = [x for x in all_fields if (fields is None or x in fields) and x != "id"]
+
+        if patterns is not None:
+            effective_fields = [x for x in effective_fields for y in patterns if re.search(y, x) is not None]
+
+        if match_types is not None:
+            effective_fields = [x for x in effective_fields for y in match_types
+                                if self.getColumnType(x) == y ]
+
+        for f in effective_fields:
+            self.withColumnSpec(f, **kwargs)
         return self
+
+    def _check_column_or_column_list(self, columns, allow_id=False):
+        inferredColumns = self.getInferredColumnNames()
+        if allow_id and columns == "id":
+            return True
+
+        if type(columns) is list:
+            for column in columns:
+                ensure(column in inferredColumns,
+                       " column `{0}` must refer to defined column".format(column))
+        else:
+            ensure(columns in inferredColumns,
+                   " column `{0}` must refer to defined column".format(columns))
+        return True
 
     def withColumnSpec(self, colName, min=0, max=None, step=1, prefix=None, random=False, distribution="normal",
                        implicit=False, data_range=None, omit=False, base_column="id", **kwargs):
         """ add a column specification for an existing column """
         ensure(colName is not None, "Must specify column name for column")
         ensure(colName in self.getInferredColumnNames(), " column `{0}` must refer to defined column".format(colName))
-        ensure(base_column in self.getInferredColumnNames(),
-               "base column `{0}` must refer to defined column".format(base_column))
+        self._check_column_or_column_list(base_column)
         ensure(not self.isFieldExplicitlyDefined(colName), "duplicate column spec for column `{0}`".format(colName))
 
         newProps = {}
@@ -285,9 +338,7 @@ class DataGenerator:
         """ add a new column for specification """
         ensure(colName is not None, "Must specify column name for column")
         ensure(colType is not None, "Must specify column type for column `{0}`".format(colName))
-        ensure(base_column == "id" or base_column in self.getInferredColumnNames(),
-               "base column `{0}` must refer to defined column (did you set the base column attibute?)".format(
-                   base_column))
+        self._check_column_or_column_list(base_column, allow_id=True)
         newProps = {}
         newProps.update(kwargs)
 
@@ -322,6 +373,8 @@ class DataGenerator:
                                            base_column=base_column,
                                            implicit=implicit,
                                            omit=omit,
+                                           random_seed=self.randomSeed,
+                                           random_seed_method=self.seed_method,
                                            nullable=nullable, **kwargs)
         self.columnSpecsByName[colName] = column_spec
         self.allColumnSpecs.append(column_spec)
