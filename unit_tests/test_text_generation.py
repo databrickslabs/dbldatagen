@@ -5,7 +5,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import expr, lit, udf, when, rand
 
 import unittest
-
+import re
 
 schema = StructType([
 StructField("PK1",StringType(),True),
@@ -67,17 +67,16 @@ class TestTextGeneration(unittest.TestCase):
         self.testDataSpec.build().show()
 
     def test_simple_data2(self):
+        print("test data spec 2")
         testDataSpec2 = (datagen.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
                                               partitions=4)
                         .withSchema(schema)
                         .withIdOutput()
                         .withColumnSpec("date", percent_nulls=10.0)
-                        .withColumnSpec("nint", percent_nulls=10.0, min=1, max=9, step=2)
-                        .withColumnSpecs(fields=["nstr2","nstr3","nstr4","nstr1"],
+                        .withColumnSpecs(patterns="n.*", match_types=StringType(),
                                         percent_nulls=10.0, min=1, max=9, step=2)
-                        .withColumnSpec("nstr5", percent_nulls=10.0, min=1.5, max=2.5, step=0.3, random=True)
-                        .withColumnSpec("nstr6", percent_nulls=10.0, min=1.5, max=2.5, step=0.3, random=True,
-                                        format="%04f")
+                        .withColumnSpecs(patterns="n.*", match_types=IntegerType(),
+                                        percent_nulls=10.0, min=1, max=200, step=-2)
                         .withColumnSpec("email", template=r'\\w.\\w@\\w.com|\\w@\\w.co.u\\k')
                         .withColumnSpec("ip_addr", template=r'\\n.\\n.\\n.\\n')
                         .withColumnSpec("phone", template=r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd')

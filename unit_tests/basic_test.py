@@ -4,14 +4,7 @@ from pyspark.sql import SparkSession
 import unittest
 from pyspark.sql import functions as F
 
-schema = StructType([
-    StructField("site_id", IntegerType(), True),
-    StructField("site_cd", StringType(), True),
-    StructField("c", StringType(), True),
-    StructField("c1", StringType(), True),
-    StructField("sector_technology_desc", StringType(), True),
 
-])
 
 spark = SparkSession.builder \
     .master("local[4]") \
@@ -32,7 +25,7 @@ class TestBasicOperation(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
-                                                  partitions=4)
+                                                  partitions=4, seed_method='hash_fieldname')
                             .withIdOutput()
                             .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
                                         numColumns=cls.column_count)
@@ -45,6 +38,71 @@ class TestBasicOperation(unittest.TestCase):
                             )
 
         cls.dfTestData = cls.testDataSpec.build().cache()
+
+    def test_clone(self):
+        ds_copy1 = self.testDataSpec.clone()
+
+        df_copy1 = (ds_copy1.setRowCount(1000)
+                    .withColumn("another_column", StringType(), values=['a', 'b', 'c'], random=True)
+                    .build())
+
+        self.assertEqual(df_copy1.count(), 1000)
+
+        fields1 = ds_copy1.getOutputColumnNames()
+        fields2 = self.testDataSpec.getOutputColumnNames()
+        self.assertNotEqual(fields1, fields2)
+
+    def test_multiple_base_columns(self):
+        ds_copy1 = self.testDataSpec.clone()
+
+        df_copy1 = (ds_copy1.setRowCount(1000)
+                    .withColumn("another_column", IntegerType(), base_column=['code1','code2'], min=100, max=200)
+                    .build())
+
+        self.assertEqual(df_copy1.count(), 1000)
+
+        df_copy1.show()
+
+    def test_multiple_hash_methods(self):
+        ds1 = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
+                                              partitions=4, seed_method='hash_fieldname')
+                        .withIdOutput()
+                        .withColumn("code2", IntegerType(), min=0, max=10)
+                        .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+                        .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+                        .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+
+                        )
+
+        df = ds1.build()
+        self.assertEqual(df.count(), 1000)
+
+        ds2 = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
+                                     partitions=4, seed_method='fixed')
+               .withIdOutput()
+               .withColumn("code2", IntegerType(), min=0, max=10)
+               .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+               .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+               .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+
+               )
+
+        df2 = ds2.build()
+        self.assertEqual(df2.count(), 1000)
+
+        ds3= (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
+                                     partitions=4, seed_method=None)
+               .withIdOutput()
+               .withColumn("code2", IntegerType(), min=0, max=10)
+               .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+               .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+               .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+
+               )
+
+        df3 = ds3.build()
+        self.assertEqual(df3.count(), 1000)
+
 
     def test_generated_data_count(self):
         count = self.dfTestData.count()
@@ -82,7 +140,32 @@ class TestBasicOperation(unittest.TestCase):
         values = [x.code5 for x in self.dfTestData.select('code5').distinct().collect()]
         self.assertTrue({'a', 'b', 'c'}.issuperset(set(values)))
 
-    def test_basic(self):
+    def test_basic_adhoc(self):
+        testDataSpec = self.testDataSpec
+        print("data generation description:", testDataSpec.describe())
+        print("data generation repr:", repr(testDataSpec))
+        print("data generation str:", str(testDataSpec))
+        self.testDataSpec.explain()
+
+        print("output columns", testDataSpec.getOutputColumnNames())
+        testDataDf = testDataSpec.build()
+
+        print("dataframe description", testDataDf.describe())
+        print("dataframe repr", repr(testDataDf))
+        print("dataframe str", str(testDataDf))
+        print("dataframe schema", str(testDataDf.schema))
+        self.assertEqual(testDataDf.count(), self.row_count)
+
+    def test_basic_with_schema(self):
+        schema = StructType([
+            StructField("region_id", IntegerType(), True),
+            StructField("region_cd", StringType(), True),
+            StructField("c", StringType(), True),
+            StructField("c1", StringType(), True),
+            StructField("st_desc", StringType(), True),
+
+        ])
+
         testDataSpec = self.testDataSpec
         print("data generation description:", testDataSpec.describe())
         print("data generation repr:", repr(testDataSpec))
