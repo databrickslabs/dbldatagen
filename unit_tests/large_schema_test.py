@@ -197,7 +197,7 @@ class TestLargeSchemaOperation(unittest.TestCase):
         ds = (self.testDataSpec.clone().setRowCount(1000)
               .withColumnSpecs(patterns=".*_ID", match_types=StringType(), format="%010d", min=1, max=123, step=1)
               .withColumnSpecs(patterns=".*_IDS", match_types=StringType(), format="%010d", min=1, max=100, step=1)
-              #     .withColumnSpec("R3D3_CLUSTER_IDS", min=1, max=100, step=1)
+              .withColumnSpec("R_ID", min=1, max=100, step=1)
               .withColumnSpec("XYYZ_IDS", min=1, max=123, step=1,
                               format="%05d")  # .withColumnSpec("nstr4", percent_nulls=10.0, min=1, max=9, step=2,  format="%04d")
               # example of IS_SALE

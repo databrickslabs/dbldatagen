@@ -2,10 +2,10 @@ from pyspark.sql.types import StructType, StructField, IntegerType, StringType, 
 from pyspark.sql.types import BooleanType, DateType
 import databrickslabs_testdatagenerator as datagen
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import expr, lit, udf, when, rand
+from pyspark.sql.functions import expr, col, lit, udf, when, rand, pandas_udf
 
 import unittest
-
+import pandas as pd
 
 schema = StructType([
 StructField("PK1",StringType(),True),
@@ -25,7 +25,19 @@ spark = SparkSession.builder \
     .master("local[4]") \
     .appName("spark unit tests") \
     .config("spark.sql.warehouse.dir", "/tmp/spark-warehouse") \
+    .config("spark.sql.execution.arrow.maxRecordsPerBatch", "1000") \
+    .config("spark.sql.execution.arrow.enabled", "true") \
     .getOrCreate()
+
+def test_pandas(v, s):
+    retvals = []
+
+    vlen = v.size
+    i = 0
+    while i < vlen:
+        retvals.append(v.at[i]+s.at[i])
+        i = i + 1
+    return pd.Series(retvals)
 
 # Test manipulation and generation of test data for a large schema
 class TestPandasIntegration(unittest.TestCase):
@@ -38,25 +50,9 @@ class TestPandasIntegration(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
-                                                  partitions=4)
-                            .withSchema(schema)
-                            .withIdOutput()
-                            .withColumnSpec("date", percent_nulls=10.0)
-                            .withColumnSpec("email", template=r'\\w.\\w@\\w.com|\\w@\\w.co.u\\k')
-                            .withColumnSpec("ip_addr", template=r'\\n.\\n.\\n.\\n')
-                            .withColumnSpec("phone", template=r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd')
-                            )
+        pass
 
-        print("Test generation plan")
-        print("=============================")
-        cls.testDataSpec.explain()
-
-        print("=============================")
-        print("")
-        cls.dfTestData = cls.testDataSpec.build().cache()
-
-    @unittest.skip("not yet implemented")
+    #@unittest.skip("not yet implemented")
     def test_pandas(self):
         import numpy as np
         import pandas as pd
@@ -74,6 +70,17 @@ class TestPandasIntegration(unittest.TestCase):
 
         # Convert the Spark DataFrame back to a Pandas DataFrame using Arrow
         df.select("*").show()
+
+    @unittest.skip("not yet finalized")
+    def test_pandas_udf(self):
+        utest_pandas = pandas_udf(test_pandas, returnType=StringType()).asNondeterministic()
+        df = (spark.range(1000000)
+              .withColumn("x", expr("cast(id as string)"))
+              .withColumn("y", expr("cast(id as string)"))
+              .withColumn("z", utest_pandas(col("x"), col("y")))
+              )
+
+        df.show()
 
 # run the tests
 # if __name__ == '__main__':

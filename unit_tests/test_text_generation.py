@@ -6,6 +6,8 @@ from pyspark.sql.functions import expr, lit, udf, when, rand
 
 import unittest
 import re
+import pandas as pd
+
 
 schema = StructType([
 StructField("PK1",StringType(),True),
@@ -25,13 +27,17 @@ StructField("phone",StringType(),True),
 StructField("isDeleted",BooleanType(),True)
 ])
 
-
+# add the following if using pandas udfs
+#    .config("spark.sql.execution.arrow.maxRecordsPerBatch", "1000") \
 
 spark = SparkSession.builder \
     .master("local[4]") \
     .appName("spark unit tests") \
     .config("spark.sql.warehouse.dir", "/tmp/spark-warehouse") \
+    .config("spark.sql.execution.arrow.maxRecordsPerBatch", "1000") \
+    .config("spark.sql.execution.arrow.enabled", "true") \
     .getOrCreate()
+
 
 # Test manipulation and generation of test data for a large schema
 class TestTextGeneration(unittest.TestCase):

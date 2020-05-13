@@ -58,7 +58,7 @@ class DataGenerator:
         if self.verbose:
             print("data generator:", *args)
 
-    def __init__(self, sparkSession=None, name=None, seed_method=None,
+    def __init__(self, sparkSession=None, name=None, seed_method=None, generate_with_selects=True,
                  rows=1000000, starting_id=0, seed=None, partitions=None, verbose=False):
         """ Constructor:
         :param name: is name of data set
@@ -85,6 +85,7 @@ class DataGenerator:
         self.partitions = partitions if partitions is not None else 10
         self.build_plan_computed = False
         self.withColumn("id", LongType(), nullable=False, implicit=True, omit=True)
+        self.generateWithSelects = generate_with_selects
 
         if sparkSession is None:
             sparkSession = SparkSingleton.get_instance()
@@ -450,7 +451,7 @@ class DataGenerator:
 
         self.printVerbose("dependency list:", dependency_ordering)
 
-        self._build_order = list(topological_sort(dependency_ordering))
+        self._build_order = list(topological_sort(dependency_ordering, flatten=False, initial_columns=['id'] ))
 
         self.printVerbose("columnBuildOrder:", self._build_order)
 
@@ -459,8 +460,11 @@ class DataGenerator:
 
     @property
     def build_order(self):
-        """ return the build order minus the `id` column """
-        return [x for x in self._build_order if x != "id"]
+        """ return the build order minus the `id` column
+
+        The build order will be a list of lists - each list specifying columns that can be built at the same time
+        """
+        return [x for x in self._build_order if x != ["id"] ]
 
     def compute_build_plan(self):
         """ prepare for building """
@@ -477,8 +481,10 @@ class DataGenerator:
 
         self.compute_column_build_order()
 
-        for x in self._build_order:
-            cs = self.columnSpecsByName[x]
+        print("column build order:",  self._build_order)
+        for x1 in self._build_order:
+            for x in x1:
+                cs = self.columnSpecsByName[x]
             self.build_plan.append(cs.getPlan())
 
         self.build_plan_computed=True
@@ -499,19 +505,42 @@ class DataGenerator:
         df1 = self.getBaseDataFrame(self.starting_id, streaming=withStreaming, options=options)
 
         # build columns
-        for colName in self.build_order:
-            col1 = self.columnSpecsByName[colName]
-            columnGenerators = col1.make_generation_expressions()
+        if self.generateWithSelects:
+            # generation with selects may be more efficient as less intermediate data frames
+            # are generated resulting in shorter lineage
+            for colNames in self.build_order:
+                build_round=["*"]
+                for colName in colNames:
+                    col1 = self.columnSpecsByName[colName]
+                    columnGenerators = col1.make_generation_expressions()
 
-            if type(columnGenerators) is list and len(columnGenerators) == 1:
-                df1 = df1.withColumn(colName, columnGenerators[0])
-            elif type(columnGenerators) is list and len(columnGenerators) > 1:
-                i = 0
-                for cg in columnGenerators:
-                    df1 = df1.withColumn('{0}_{1}'.format(colName, i), cg)
-                    i += 1
-            else:
-                df1 = df1.withColumn(colName, columnGenerators)
+                    if type(columnGenerators) is list and len(columnGenerators) == 1:
+                        build_round.extend( [ cg.alias(colName) for cg in columnGenerators ])
+                        df1 = df1.withColumn(colName, columnGenerators[0])
+                    elif type(columnGenerators) is list and len(columnGenerators) > 1:
+                        i = 0
+                        for cg in columnGenerators:
+                            build_round.append(cg.alias('{0}_{1}'.format(colName, i)))
+                            i += 1
+                    else:
+                        build_round.append(columnGenerators.alias(colName))
+                df1 = df1.select(*build_round)
+        else:
+            # build columns
+            column_build_order = [ item for sublist in self.build_order for item in sublist ]
+            for colName in column_build_order:
+                col1 = self.columnSpecsByName[colName]
+                columnGenerators = col1.make_generation_expressions()
+
+                if type(columnGenerators) is list and len(columnGenerators) == 1:
+                    df1 = df1.withColumn(colName, columnGenerators[0])
+                elif type(columnGenerators) is list and len(columnGenerators) > 1:
+                    i = 0
+                    for cg in columnGenerators:
+                        df1 = df1.withColumn('{0}_{1}'.format(colName, i), cg)
+                        i += 1
+                else:
+                    df1 = df1.withColumn(colName, columnGenerators)
 
         df1 = df1.select(*self.getOutputColumnNames())
 

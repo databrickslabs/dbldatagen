@@ -25,3 +25,4 @@ __all__ = ["basic_test", "basic_test2", "test_columnGenerationSpec", "test_dates
            "large_schema_test", "test_schema_parser", "test_scripting", "test_text_generation",
            "test_types", "unit_tests1", "test_pandas_integration"]
 
+from unit_tests.test_pandas_integration import TestPandasIntegration

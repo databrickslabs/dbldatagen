@@ -14,6 +14,7 @@ from datetime import date, datetime, timedelta
 from .utils import ensure
 from .text_generators import TextGenerators
 
+from pyspark.sql.functions import col, pandas_udf
 
 class ColumnGenerationSpec:
     """ Column generation spec object - specifies how column is to be generated
@@ -21,12 +22,13 @@ class ColumnGenerationSpec:
 
     required_props = {'name', 'type'}
     allowed_props = {'name', 'type', 'min', 'max', 'step',
-                     'prefix', 'random', 'distribution', 'mean',
-                     'range', 'median', 'base_column', 'values',
+                     'prefix', 'random', 'distribution',
+                     'range', 'base_column', 'values',
                      'numColumns', 'numFeatures', 'structType',
                      'begin', 'end', 'interval', 'expr', 'omit',
                      'weights', 'description', 'continuous',
-                     'percent_nulls', 'template', 'format'
+                     'percent_nulls', 'template', 'format',
+                     'unique_values'
 
                      }
     forbidden_props = {
@@ -351,7 +353,7 @@ class ColumnGenerationSpec:
         assert max is not None
         assert step is not None
 
-        random_generator = self.getUniformRandomExpression()
+        random_generator = self.getUniformRandomExpression() if is_random else None
         if self._is_continuous_valued_column() and self._is_real_valued_column() and is_random:
             crange = (max - min) * float(1.0)
             baseval = random_generator * lit(crange)
@@ -455,7 +457,8 @@ class ColumnGenerationSpec:
                 # note :
                 # while it seems like this could use a shared instance, this does not work if initialized
                 # in a class method
-                u_value_from_template = udf(TextGenerators.value_from_template, StringType()).asNondeterministic()
+                #u_value_from_template = udf(TextGenerators.value_from_template, StringType()).asNondeterministic()
+                u_value_from_template = pandas_udf(TextGenerators.pandas_value_from_template, returnType=StringType()).asNondeterministic()
                 newDef = u_value_from_template(newDef, lit(string_generation_template))
 
             if type(ctype) is StringType and sformat is not None:

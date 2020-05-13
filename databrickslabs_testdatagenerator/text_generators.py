@@ -12,6 +12,8 @@ from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, Doub
 import math
 from datetime import date, datetime, timedelta
 from .utils import ensure
+import numpy as np
+import pandas as pd
 
 import random
 
@@ -100,3 +102,22 @@ class TextGenerators:
         # choose alternative
         alt = alternatives[random.randint(0, num_alternatives - 1)].replace('$escaped-sep', '|')
         return TextGenerators.value_from_single_template(v, alt)
+
+    @staticmethod
+    def pandas_value_from_template(v, s):
+        def value_from_template(v, s):
+            alternatives = s.replace(r'\|', '$escaped-sep').split('|')
+
+            num_alternatives = len(alternatives)
+
+            # choose alternative
+            alt = alternatives[random.randint(0, num_alternatives - 1)].replace('$escaped-sep', '|')
+            return TextGenerators.value_from_single_template(v, alt)
+
+        vlen = v.size
+        i = 0
+        retvals = []
+        while i < vlen:
+            retvals.append(value_from_template(v.at[i], s.at[i]))
+            i = i + 1
+        return pd.Series(retvals)

@@ -13,6 +13,14 @@ warrant that you have the legal authority to do so.
 
 ## Building the code
 
+The code has been tested with Python 3.65. It relies on setting up a virtual enviroment 
+so it may not build correctly for earlier versions. 
+
+The resulting library has been verified against Databricks runtime 6.2 and Apache Spark 2.4.4
+
+Make sure that the `SPAR`
+Run `make buildenv` from the main project directory to set up your build environmemt
+
 Run  `make clean dist` from the main project directory.
 
 ## Running unit tests
