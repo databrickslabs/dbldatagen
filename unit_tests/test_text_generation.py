@@ -10,32 +10,32 @@ import pandas as pd
 
 
 schema = StructType([
-StructField("PK1",StringType(),True),
-StructField("LAST_MODIFIED_UTC",TimestampType(),True),
-StructField("date",DateType(),True),
-StructField("str1",StringType(),True),
-StructField("nint",IntegerType(),True),
-StructField("nstr1",StringType(),True),
-StructField("nstr2",StringType(),True),
-StructField("nstr3",StringType(),True),
-StructField("nstr4",StringType(),True),
-StructField("nstr5",StringType(),True),
-StructField("nstr6",StringType(),True),
-StructField("email",StringType(),True),
-StructField("ip_addr",StringType(),True),
-StructField("phone",StringType(),True),
-StructField("isDeleted",BooleanType(),True)
+    StructField("PK1",StringType(),True),
+    StructField("LAST_MODIFIED_UTC",TimestampType(),True),
+    StructField("date",DateType(),True),
+    StructField("str1",StringType(),True),
+    StructField("nint",IntegerType(),True),
+    StructField("nstr1",StringType(),True),
+    StructField("nstr2",StringType(),True),
+    StructField("nstr3",StringType(),True),
+    StructField("nstr4",StringType(),True),
+    StructField("nstr5",StringType(),True),
+    StructField("nstr6",StringType(),True),
+    StructField("email",StringType(),True),
+    StructField("ip_addr",StringType(),True),
+    StructField("phone",StringType(),True),
+    StructField("isDeleted",BooleanType(),True)
 ])
 
 # add the following if using pandas udfs
 #    .config("spark.sql.execution.arrow.maxRecordsPerBatch", "1000") \
 
+#.config("spark.sql.execution.arrow.maxRecordsPerBatch", "1000") \
+#    .config("spark.sql.execution.arrow.enabled", "true") \
 spark = SparkSession.builder \
     .master("local[4]") \
     .appName("spark unit tests") \
     .config("spark.sql.warehouse.dir", "/tmp/spark-warehouse") \
-    .config("spark.sql.execution.arrow.maxRecordsPerBatch", "1000") \
-    .config("spark.sql.execution.arrow.enabled", "true") \
     .getOrCreate()
 
 

@@ -15,7 +15,7 @@ import re
 
 from .column_generation_spec import ColumnGenerationSpec
 from .utils import ensure, topological_sort, DataGenError
-from .daterange import DateRange
+from .dataranges import DateRange
 from .spark_singleton import SparkSingleton
 import copy
 
@@ -59,7 +59,8 @@ class DataGenerator:
             print("data generator:", *args)
 
     def __init__(self, sparkSession=None, name=None, seed_method=None, generate_with_selects=True,
-                 rows=1000000, starting_id=0, seed=None, partitions=None, verbose=False):
+                 rows=1000000, starting_id=0, seed=None, partitions=None, verbose=False,
+                 use_pandas=True, pandas_udf_batch_size=None):
         """ Constructor:
         :param name: is name of data set
         :param rows: = amount of rows to generate
@@ -79,6 +80,7 @@ class DataGenerator:
         self.columnSpecsByName = {}
         self.allColumnSpecs = []
         self.build_plan = []
+        self.execution_history = []
         self._options = {}
         self._build_order = []
         self.inferredSchemaFields = []
@@ -86,6 +88,8 @@ class DataGenerator:
         self.build_plan_computed = False
         self.withColumn("id", LongType(), nullable=False, implicit=True, omit=True)
         self.generateWithSelects = generate_with_selects
+        self.use_pandas=use_pandas
+        self.pandas_udf_batch_size = pandas_udf_batch_size
 
         if sparkSession is None:
             sparkSession = SparkSingleton.get_instance()
@@ -100,6 +104,16 @@ class DataGenerator:
             
             i.e DataGenerator(sparkSession=spark, name="test", ...)
             """)
+
+        # set up use of pandas udfs if necessary
+        assert pandas_udf_batch_size is None or type(pandas_udf_batch_size) is int, \
+                "If pandas_batch_size is specified, it must be an integer"
+        if self.use_pandas:
+            print("*** using pandas udf for custom functions ***")
+            self.sparkSession.conf.set("spark.sql.execution.arrow.enabled", "true")
+
+            if self.pandas_udf_batch_size is not None:
+                self.sparkSession.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", self.pandas_udf_batch_size)
 
         if seed_method is not None and seed_method != "fixed" and seed_method != "hash_fieldname":
             raise DataGenError("""seed_method should be None, 'fixed' or 'hash_fieldname' """)
@@ -134,6 +148,9 @@ class DataGenerator:
 
         for plan_action in self.build_plan:
             output.append(" ==> " + plan_action)
+        output.extend(["", "execution history:", ""])
+        for build_action in self.execution_history:
+            output.append(" ==> " + build_action)
         output.append("")
         output.append("====================")
         output.append("")
@@ -312,7 +329,7 @@ class DataGenerator:
                    " column `{0}` must refer to defined column".format(columns))
         return True
 
-    def withColumnSpec(self, colName, min=0, max=None, step=1, prefix=None, random=False, distribution="normal",
+    def withColumnSpec(self, colName, min=None, max=None, step=1, prefix=None, random=False, distribution="normal",
                        implicit=False, data_range=None, omit=False, base_column="id", **kwargs):
         """ add a column specification for an existing column """
         ensure(colName is not None, "Must specify column name for column")
@@ -323,18 +340,11 @@ class DataGenerator:
         newProps = {}
         newProps.update(kwargs)
 
-        if isinstance(data_range, range):
-            min, max, step = self._computeRange(data_range, min, max, step)
-        elif isinstance(data_range, DateRange):
-            newProps['begin'] = data_range.begin
-            newProps['end'] = data_range.end
-            newProps['interval'] = data_range.interval
-
         self.printVerbose(
             "adding column spec - `{0}` with baseColumn : `{1}`, implicit : {2} , omit {3}".format(colName, base_column,
                                                                                                    implicit, omit))
         self.generateColumnDefinition(colName, self.getColumnType(colName), min=min, max=max, step=step, prefix=prefix,
-                                      random=random,
+                                      random=random, data_range=data_range,
                                       distribution=distribution, base_column=base_column,
                                       implicit=implicit, omit=omit, **newProps)
         return self
@@ -343,7 +353,7 @@ class DataGenerator:
         """returns true if there is a column spec for the column """
         return True if colName in self.columnSpecsByName.keys() else False
 
-    def withColumn(self, colName, colType=StringType(), min=0, max=None, step=1,
+    def withColumn(self, colName, colType=StringType(), min=None, max=None, step=1,
                    data_range=None, prefix=None, random=False, distribution="normal",
                    base_column="id", nullable=True,
                    omit=False, implicit=False,
@@ -355,13 +365,6 @@ class DataGenerator:
         newProps = {}
         newProps.update(kwargs)
 
-        if isinstance(data_range, range):
-            min, max, step = self._computeRange(data_range, min, max, step)
-        elif isinstance(data_range, DateRange):
-            newProps['begin'] = data_range.begin
-            newProps['end'] = data_range.end
-            newProps['interval'] = data_range.interval
-
         from .schema_parser import SchemaParser
         if type(colType) == str:
             colType = SchemaParser.columnTypeFromString(colType)
@@ -371,7 +374,7 @@ class DataGenerator:
             "adding column - `{0}` with baseColumn : `{1}`, implicit : {2} , omit {3}".format(colName, base_column,
                                                                                               implicit, omit))
         self.generateColumnDefinition(colName, colType, min=min, max=max, step=step, prefix=prefix, random=random,
-                                      distribution=distribution, base_column=base_column,
+                                      distribution=distribution, base_column=base_column, data_range=data_range,
                                       implicit=implicit, omit=omit, **newProps)
         self.inferredSchemaFields.append(StructField(colName, colType, nullable))
         return self
@@ -405,19 +408,22 @@ class DataGenerator:
         """ generate the base data frame and id column , partitioning the data if necessary """
 
         end_id = self.rowCount + start_id
-        id_partitions = self.partitions if self.partitions is not None else 8
+        id_partitions = self.partitions if self.partitions is not None else 4
 
         if not streaming:
-            self.printVerbose("Generating streaming data frame with ids from {} to {} with {} partitions"
+            status = ("Generating data frame with ids from {} to {} with {} partitions"
                               .format(start_id, end_id, id_partitions))
+            self.printVerbose(status)
+            self.execution_history.append(status)
             df1 = self.sparkSession.range(start=start_id,
                                           end=end_id,
                                           numPartitions=id_partitions)
 
         else:
-            self.printVerbose("Generating data frame with ids from {} to {} with {} partitions"
+            status = ("Generating streaming data frame with ids from {} to {} with {} partitions"
                           .format(start_id, end_id, id_partitions))
-
+            self.printVerbose(status)
+            self.execution_history.append(status)
 
             df1 = (self.sparkSession.readStream
                     .format("rate"))
@@ -469,14 +475,17 @@ class DataGenerator:
     def compute_build_plan(self):
         """ prepare for building """
         self.build_plan = []
+        self.execution_history = []
         self._process_options()
         self.build_plan.append("Build dataframe with id")
 
+
         # add temporary columns
         for cs in self.allColumnSpecs:
+            self.build_plan.extend(cs.initial_build_plan)
             for tmp_col in cs.temporary_columns:
                 if not self.hasColumnSpec(tmp_col[0]):
-                    print("materializing temporary column {}".format(tmp_col[0]))
+                    self.build_plan.append("materializing temporary column {}".format(tmp_col[0]))
                     self.withColumn(tmp_col[0], tmp_col[1], **tmp_col[2])
 
         self.compute_column_build_order()
@@ -485,7 +494,7 @@ class DataGenerator:
         for x1 in self._build_order:
             for x in x1:
                 cs = self.columnSpecsByName[x]
-            self.build_plan.append(cs.getPlan())
+                self.build_plan.append(cs.getPlan())
 
         self.build_plan_computed=True
         return self
@@ -493,6 +502,7 @@ class DataGenerator:
     def build(self, withTempView=False, withView=False, withStreaming=False, options=None):
         """ build the test data set from the column definitions and return a dataframe for it"""
 
+        self.execution_history = []
         self.compute_build_plan()
 
         outputColumns = self.getOutputColumnNames()
@@ -504,19 +514,26 @@ class DataGenerator:
 
         df1 = self.getBaseDataFrame(self.starting_id, streaming=withStreaming, options=options)
 
+        if self.use_pandas:
+            self.execution_history.append("Using Pandas Optimizations {}".format(self.use_pandas))
+
         # build columns
         if self.generateWithSelects:
+            self.execution_history.append("Generating data with selects")
+
             # generation with selects may be more efficient as less intermediate data frames
             # are generated resulting in shorter lineage
+
             for colNames in self.build_order:
                 build_round=["*"]
+                nCol = 0
+                self.execution_history.append("building round for : {}".format(colNames))
                 for colName in colNames:
                     col1 = self.columnSpecsByName[colName]
-                    columnGenerators = col1.make_generation_expressions()
-
+                    columnGenerators = col1.make_generation_expressions(self.use_pandas)
+                    self.execution_history.extend(col1.execution_history)
                     if type(columnGenerators) is list and len(columnGenerators) == 1:
-                        build_round.extend( [ cg.alias(colName) for cg in columnGenerators ])
-                        df1 = df1.withColumn(colName, columnGenerators[0])
+                        build_round.append( columnGenerators[0].alias(colName))
                     elif type(columnGenerators) is list and len(columnGenerators) > 1:
                         i = 0
                         for cg in columnGenerators:
@@ -524,13 +541,18 @@ class DataGenerator:
                             i += 1
                     else:
                         build_round.append(columnGenerators.alias(colName))
+                    nCol = nCol + 1
+
                 df1 = df1.select(*build_round)
         else:
             # build columns
+            self.execution_history.append("Generating data with withColumn statements")
+
             column_build_order = [ item for sublist in self.build_order for item in sublist ]
             for colName in column_build_order:
                 col1 = self.columnSpecsByName[colName]
                 columnGenerators = col1.make_generation_expressions()
+                self.execution_history.extend(col1.execution_history)
 
                 if type(columnGenerators) is list and len(columnGenerators) == 1:
                     df1 = df1.withColumn(colName, columnGenerators[0])
@@ -543,13 +565,16 @@ class DataGenerator:
                     df1 = df1.withColumn(colName, columnGenerators)
 
         df1 = df1.select(*self.getOutputColumnNames())
+        self.execution_history.append("selecting columns: {}".format(self.getOutputColumnNames()))
 
         # register temporary or global views if necessary
         if withView:
+            self.execution_history.append("registering view")
             self.printVerbose("Registered global view [{0}]".format(self.name))
             df1.createGlobalTempView(self.name)
             self.printVerbose("Registered!")
         elif withTempView:
+            self.execution_history.append("registering temp view")
             self.printVerbose("Registering temporary view [{0}]".format(self.name))
             df1.createOrReplaceTempView(self.name)
             self.printVerbose("Registered!")

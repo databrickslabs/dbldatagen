@@ -13,6 +13,7 @@ import math
 from datetime import date, datetime, timedelta
 from .utils import ensure
 from .text_generators import TextGenerators
+from .dataranges import DateRange, NRange
 
 from pyspark.sql.functions import col, pandas_udf
 
@@ -28,7 +29,7 @@ class ColumnGenerationSpec:
                      'begin', 'end', 'interval', 'expr', 'omit',
                      'weights', 'description', 'continuous',
                      'percent_nulls', 'template', 'format',
-                     'unique_values'
+                     'unique_values', 'data_range'
 
                      }
     forbidden_props = {
@@ -43,11 +44,15 @@ class ColumnGenerationSpec:
     def __init__(self, name, colType=None, min=0, max=None, step=1, prefix='', random=False,
                  distribution="normal", base_column="id", random_seed=None, random_seed_method=None,
                  implicit=False, omit=False, nullable=True, **kwargs):
+        self.data_range=NRange(None, None, None)
 
         if colType is None:
             colType = IntegerType()
 
         assert isinstance(colType, DataType)
+
+        self.initial_build_plan=[]
+        self.execution_history=[]
 
         self.props = {'name': name, 'min': min, 'type': colType, 'max': max, 'step': step,
                       'prefix': prefix, 'base_column': base_column,
@@ -76,6 +81,33 @@ class ColumnGenerationSpec:
         # compute required temporary values
         self.temporary_columns = []
 
+        data_range = self["data_range"]
+        unique_values = self["unique_values"]
+        min, max, step = (self["min"], self["max"], self["step"])
+        c_begin, c_end, c_interval = self['begin'], self['end'], self['interval']
+        print("data range", data_range)
+        if unique_values is not None:
+            assert type(unique_values) is int, "unique_values must be integer"
+            self.data_range = NRange( 1 if min is None else min, unique_values, 1)
+        elif data_range is not None:
+            print("data range", data_range)
+            self.data_range = data_range
+        elif data_range is None:
+            if type(colType) is TimestampType or type(colType) is DateType:
+                if c_begin is None:
+                    __c_begin = datetime.today()
+                    c_begin = datetime(__c_begin.year, __c_begin.month, __c_begin.day, 0, 0, 0)
+                if c_end is None:
+                    c_end = datetime.today()
+                if c_interval is None:
+                    c_interval = timedelta(days=0, hours=0, minutes=1)
+
+                self.data_range=DateRange(c_begin, c_end, c_interval)
+            else:
+                self.data_range = NRange(0 if min is None else min,max, step)
+        else:
+            self.data_range = NRange(0,None, None)
+
         if self.isWeightedValuesColumn:
             # if its a weighted values column, then create temporary for it
             # not supported for feature / array columns for now
@@ -86,7 +118,7 @@ class ColumnGenerationSpec:
             temp_name = "_rnd_{}".format(self.name)
             self.dependencies.append(temp_name)
             desc = "adding temporary column {} required by {}".format(temp_name, self.name)
-            print(desc)
+            self.initial_build_plan.append(desc)
             sql_random_generator = self.getUniformRandomSQLExpression()
             self.temporary_columns.append((temp_name, DoubleType(), {'expr': sql_random_generator, 'omit' : "True",
                                                                      'description': desc}))
@@ -177,7 +209,7 @@ class ColumnGenerationSpec:
     @property
     def min(self):
         """get the column generation `min` value used to generate values for this column"""
-        return self['min']
+        return self.data_range.min
 
     @property
     def max(self):
@@ -294,14 +326,6 @@ class ColumnGenerationSpec:
                    "length of list of weights must be  equal to length of list of values - column '{}' ".format(
                        column_props['name']))
 
-    def computeTimestampIntervals(self, start, end, interval):
-        """ Compute number of intervals between start and end date """
-        ensure(type(start) is datetime, "Expecting start as type datetime.datetime")
-        ensure(type(end) is datetime, "Expecting end as type datetime.datetime")
-        ensure(type(interval) is timedelta, "Expecting interval as type datetime.timedelta")
-        i1 = end - start
-        ni1 = i1 / interval
-        return math.floor(ni1)
 
     def getPlan(self):
         desc = self['description']
@@ -343,54 +367,44 @@ class ColumnGenerationSpec:
         else:
             return col(base_column)
 
-    def _compute_ranged_column(self, min, max, step, base_column, is_random):
+    def _compute_ranged_column(self, datarange, base_column, is_random):
         """ compute a ranged column
 
         max is max actual value
         """
         assert base_column is not None
-        assert min is not None
-        assert max is not None
-        assert step is not None
+        assert datarange is not None
+        assert datarange.is_fully_populated()
 
         random_generator = self.getUniformRandomExpression() if is_random else None
         if self._is_continuous_valued_column() and self._is_real_valued_column() and is_random:
-            crange = (max - min) * float(1.0)
+            crange = datarange.getContinuousRange()
             baseval = random_generator * lit(crange)
         else:
-            crange = (max - min) * float(1.0 / step)
-            baseval = (self.get_seed_expression(base_column) % lit(crange + 1) * lit(step)) if not is_random else (
-                    round(random_generator * lit(crange)) * lit(step))
-        newDef = (baseval + lit(min))
+            crange = datarange.getDiscreteRange()
+            modulo_factor = lit(crange+1)
+            # following expression is need as spark sql modulo of negative number is negative
+            modulo_exp =((self.get_seed_expression(base_column) % modulo_factor) + modulo_factor) % modulo_factor
+            baseval = (modulo_exp * lit(datarange.step)) if not is_random else (
+                    round(random_generator * lit(crange)) * lit(datarange.step))
+        newDef = (baseval + lit(datarange.min))
 
         # for ranged values in strings, use type of min, max and step as output type
         if type(self.datatype) is StringType:
-            if type(min) is float or type(max) is float or type(step) is float:
+            if type(datarange.min) is float or type(datarange.max) is float or type(datarange.step) is float:
                 newDef = newDef.astype(DoubleType())
             else:
                 newDef = newDef.astype(IntegerType())
 
         return newDef
 
-    def _compute_default_ranges_for_type(self, min, max, col_type):
-        """ computes default min and max based on data type"""
-        if self._is_decimal_column():
-            if min is None:
-                min = 0.0
-            if max is None:
-                max = math.pow(10, col_type.precision - col_type.scale) - 1.0
-
-
-        return min, max
-
-    def make_single_generation_expression(self, index=None):
+    def make_single_generation_expression(self, index=None, use_pandas_optimizations=False):
         """ generate column data via Spark SQL expression"""
 
         # get key column specification properties
         values, weights = self['values'], self['weights']
         sqlExpr = self['expr']
         ctype, cprefix = self['type'], self['prefix']
-        cmin, cmax, cstep = self['min'], self['max'], self['step']
         csuffix = self['suffix']
         crand, cdistribution = self['random'], self['distribution']
         baseCol = self['base_column']
@@ -399,7 +413,10 @@ class ColumnGenerationSpec:
         percent_nulls = self['percent_nulls']
         sformat=self['format']
 
-        cmin, cmax = self._compute_default_ranges_for_type(min=cmin, max=cmax, col_type=ctype)
+        if self.data_range is not None:
+            self.data_range._adjust_for_coltype(ctype)
+
+        self.execution_history.append(".. using effective range: {}".format(self.data_range))
 
         newDef = None
 
@@ -409,37 +426,25 @@ class ColumnGenerationSpec:
         else:
             # rs: initialize the begin, end and interval if not initalized for date computations
             # defaults are start of day, now, and 1 minute respectively
-            if c_begin is None:
-                __c_begin = datetime.today()
-                c_begin = datetime(__c_begin.year, __c_begin.month, __c_begin.day, 0, 0, 0)
-
-            if c_end is None:
-                c_end = datetime.today()
-
-            if c_interval is None:
-                c_interval = timedelta(days=0, hours=0, minutes=1)
 
             # check for implied ranges
             if values is not None:
-                cmin, cstep, cmax = 0, 1, len(values) - 1
+                self.data_range = NRange(0,len(values) - 1,1)
             elif type(ctype) is BooleanType:
-                cmin, cstep, cmax = 0, 1, 1
-            elif type(ctype) is TimestampType :
-                # compute number of intervals in time ranges
-                cmin = (c_begin - datetime(1970, 1, 1)).total_seconds()
-                cstep = c_interval.total_seconds()
-                cmax = cmin + c_interval.total_seconds() * self.computeTimestampIntervals(c_begin, c_end, c_interval)
+                self.data_range = NRange(0, 1, 1)
+            self.execution_history.append(".. using adjusted effective range: {}".format(self.data_range))
 
             # TODO: add full support for date value generation
             if sqlExpr is not None:
                 newDef = expr(sqlExpr).astype(ctype)
-            elif cmin is not None and cmax is not None and cstep is not None:
-                newDef=self._compute_ranged_column(base_column=baseCol,  min=cmin, max=cmax, step=cstep, is_random=crand)
+            elif self.data_range is not None and self.data_range.is_fully_populated():
+                self.execution_history.append(".. computing ranged value: {}".format(self.data_range))
+                newDef=self._compute_ranged_column(base_column=baseCol, datarange=self.data_range, is_random=crand)
             elif type(ctype) is DateType:
                 sql_random_generator = self.getUniformRandomSQLExpression()
                 newDef = expr("date_sub(current_date, round({}*1024))".format(sql_random_generator)).astype(ctype)
             else:
-                newDef = (self.get_seed_expression(baseCol) + lit(cmin)).astype(ctype)
+                newDef = (self.get_seed_expression(baseCol) + lit(self.data_range.min)).astype(ctype)
 
             # string value generation is simply handled by combining with a suffix or prefix
             if values is not None:
@@ -457,26 +462,37 @@ class ColumnGenerationSpec:
                 # note :
                 # while it seems like this could use a shared instance, this does not work if initialized
                 # in a class method
-                #u_value_from_template = udf(TextGenerators.value_from_template, StringType()).asNondeterministic()
-                u_value_from_template = pandas_udf(TextGenerators.pandas_value_from_template, returnType=StringType()).asNondeterministic()
+                if use_pandas_optimizations:
+                    self.execution_history.append(".. template generation via pandas scalar udf `{}`".format(string_generation_template))
+                    u_value_from_template = pandas_udf(TextGenerators.pandas_value_from_template, returnType=StringType()).asNondeterministic()
+                else:
+                    self.execution_history.append(".. template generation via udf `{}`".format(string_generation_template))
+                    u_value_from_template = udf(TextGenerators.value_from_template, StringType()).asNondeterministic()
                 newDef = u_value_from_template(newDef, lit(string_generation_template))
 
             if type(ctype) is StringType and sformat is not None:
                 # note :
                 # while it seems like this could use a shared instance, this does not work if initialized
                 # in a class method
+                self.execution_history.append(".. applying column format  `{}`".format(sformat))
                 newDef = format_string(sformat, newDef)
 
-            newDef = newDef.astype(ctype)
+            self.execution_history.append(".. casting to  `{}`".format(ctype))
+
+            if type(ctype) is DateType:
+                newDef = newDef.astype(TimestampType()).astype(ctype)
+            else:
+                newDef = newDef.astype(ctype)
 
 
         if percent_nulls is not None:
+            self.execution_history.append(".. applying null generator - `when rnd > prob then value - else null`")
             prob_nulls=percent_nulls / 100.0
             random_generator = self.getUniformRandomExpression()
             newDef = when(random_generator > lit(prob_nulls),newDef).otherwise(lit(None))
         return newDef
 
-    def make_generation_expressions(self):
+    def make_generation_expressions(self, use_pandas):
         """ Generate structured column if multiple columns or features are specified
 
             :param self: is ColumnGenerationSpec for column
@@ -484,18 +500,20 @@ class ColumnGenerationSpec:
         """
         numColumns = self['numColumns']
         structType = self['structType']
+        self.execution_history=[]
 
         if numColumns is None:
             numColumns = self['numFeatures']
 
         if numColumns == 1 or numColumns is None:
-            # self.printVerbose("generating single column - `{0}`".format(self['name']))
-            retval = self.make_single_generation_expression()
+            self.execution_history.append("generating single column - `{0}`".format(self['name']))
+            retval = self.make_single_generation_expression(use_pandas_optimizations=use_pandas)
         else:
-            # self.printVerbose("generating multiple columns {0} - `{1}`".format(numColumns, self['name']))
+            self.execution_history.append("generating multiple columns {0} - `{1}`".format(numColumns, self['name']))
             retval = [self.make_single_generation_expression(x) for x in range(numColumns)]
 
             if structType == 'array':
+                self.execution_history.append(".. converting multiple columns to array")
                 retval = array(retval)
             else:
                 # TODO : update the output columns

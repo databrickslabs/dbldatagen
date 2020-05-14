@@ -26,7 +26,7 @@ from databrickslabs_testdatagenerator.utils import ensure, topological_sort
 from databrickslabs_testdatagenerator.column_generation_spec import ColumnGenerationSpec
 from databrickslabs_testdatagenerator.data_analyzer import DataAnalyzer
 from databrickslabs_testdatagenerator.schema_parser import SchemaParser
-from databrickslabs_testdatagenerator.daterange import DateRange
+from databrickslabs_testdatagenerator.dataranges import DateRange, NRange
 from databrickslabs_testdatagenerator.function_builder import ColumnGeneratorBuilder
 from .spark_singleton import SparkSingleton
 from databrickslabs_testdatagenerator.text_generators import TextGenerators

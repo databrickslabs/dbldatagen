@@ -110,31 +110,31 @@ StructField("TAX_CODE_ID",DecimalType(38,0),True),
 StructField("TAX_RATE_ID",DecimalType(38,0),True),
 StructField("CURRENCY_TYPE",DecimalType(38,0),True),
 StructField("EXCHANGE_RATE",DecimalType(38,9),True),
-StructField("HOME_AMOUNT",DecimalType(38,9),True),
-StructField("HOME_OPEN_BALANCE",DecimalType(38,9),True),
-StructField("IS_FOREX_GAIN_LOSS",StringType(),True),
-StructField("SPECIAL_TAX_TYPE",DecimalType(38,0),True),
-StructField("SPECIAL_TAX_OPEN_BALANCE",DecimalType(38,9),True),
-StructField("TAX_OVERRIDE_DELTA_AMOUNT",DecimalType(38,9),True),
-StructField("INCLUSIVE_AMOUNT",DecimalType(38,9),True),
-StructField("CUSTOM_ACCOUNT_TAX_AMT",DecimalType(38,9),True),
-StructField("J_CODE_ID",DecimalType(38,0),True),
-StructField("DISCOUNT_ID",DecimalType(38,0),True),
-StructField("DISCOUNT_AMOUNT",DecimalType(38,9),True),
+StructField("HA",DecimalType(38,9),True),
+StructField("HO_AMT",DecimalType(38,9),True),
+StructField("IS_FGL",StringType(),True),
+StructField("ST_TYPE",DecimalType(38,0),True),
+StructField("STO_BALANCE",DecimalType(38,9),True),
+StructField("TO_AMT",DecimalType(38,9),True),
+StructField("INC_AMOUNT",DecimalType(38,9),True),
+StructField("CA_TAX_AMT",DecimalType(38,9),True),
+StructField("HGS_CODE_ID",DecimalType(38,0),True),
+StructField("DISC_ID",DecimalType(38,0),True),
+StructField("DISC_AMT",DecimalType(38,9),True),
 StructField("TXN_DISCOUNT_AMOUNT",DecimalType(38,9),True),
 StructField("SUBTOTAL_AMOUNT",DecimalType(38,9),True),
 StructField("LINE_DETAIL_TYPE",DecimalType(38,0),True),
 StructField("W_RATE_ID",DecimalType(38,0),True),
-StructField("R_QUANTITY",DecimalType(38,9),True),
+StructField("R_QTY",DecimalType(38,9),True),
 StructField("R_AMOUNT",DecimalType(38,9),True),
-StructField("SRC_QTY_USED",DecimalType(38,9),True),
-StructField("SRC_AMT_USED",DecimalType(38,9),True),
-StructField("LM_CLOSED",StringType(),True),
+StructField("AMT_2",DecimalType(38,9),True),
+StructField("AMT_3",DecimalType(38,9),True),
+StructField("FLAG_5",StringType(),True),
 StructField("CUSTOM_FIELD_VALUES",StringType(),True),
-StructField("PROGRESS_TRACKING_TYPE",DecimalType(38,0),True),
-StructField("ITEM_RATE_TYPE",DecimalType(38,0),True),
+StructField("PTT",DecimalType(38,0),True),
+StructField("IRT",DecimalType(38,0),True),
 StructField("CUSTOM_FIELD_VALS",StringType(),True),
-StructField("REGION_C_CODE",StringType(),True),
+StructField("RCC",StringType(),True),
 StructField("LAST_MODIFIED_UTC",TimestampType(),True),
 StructField("date",DateType(),True),
 StructField("yearMonth",StringType(),True),
@@ -151,7 +151,7 @@ spark = SparkSession.builder \
     .getOrCreate()
 
 # Test manipulation and generation of test data for a large schema
-class TestLargeSchemaOperation(unittest.TestCase):
+class TestBuildPlanning(unittest.TestCase):
     testDataSpec = None
     dfTestData = None
     row_count = 100000
@@ -161,10 +161,24 @@ class TestLargeSchemaOperation(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        sale_values = ['RETAIL', 'ONLINE', 'WHOLESALE', 'RETURN']
+        sale_weights = [1, 5, 5, 1]
+
         cls.testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
                                                   partitions=4)
                             .withSchema(schema)
                             .withIdOutput()
+                            .withColumnSpecs(patterns=".*_ID", match_types=StringType(), format="%010d", min=1, max=123,
+                                             step=1)
+                            .withColumnSpecs(patterns=".*_IDS", match_types=StringType(), format="%010d", min=1,
+                                             max=100, step=1)
+                            #     .withColumnSpec("R3D3_CLUSTER_IDS", min=1, max=100, step=1)
+                            .withColumnSpec("XYYZ_IDS", min=1, max=123, step=1,
+                                            format="%05d")  # .withColumnSpec("nstr4", percent_nulls=10.0, min=1, max=9, step=2,  format="%04d")
+                            # example of IS_SALE
+                            .withColumnSpec("IS_S", values=sale_values, weights=sale_weights, random=True)
+                            # .withColumnSpec("nstr4", percent_nulls=10.0, min=1, max=9, step=2,  format="%04d")
+
                             )
 
         print("Test generation plan")
@@ -173,42 +187,12 @@ class TestLargeSchemaOperation(unittest.TestCase):
 
         print("=============================")
         print("")
-        cls.dfTestData = cls.testDataSpec.build().cache()
+        cls.dfTestData = cls.testDataSpec.build()
 
-    def test_simple_data(self):
-        self.dfTestData.limit(30).show()
-
-    def test_generated_data_count(self):
-        count = self.dfTestData.count()
-        self.assertEqual(count, self.row_count)
-
-    def test_distinct_count(self):
-        distinct_count = self.dfTestData.select('id').distinct().count()
-        self.assertEqual(distinct_count, self.row_count)
-
-    def test_script_table(self):
-        tableScript=self.testDataSpec.scriptTable("testTable")
-        print("tableScript", tableScript)
 
     def test_large_clone(self):
-        sale_values = ['RETAIL', 'ONLINE', 'WHOLESALE', 'RETURN']
-        sale_weights = [1, 5, 5, 1]
-
-        ds = (self.testDataSpec.clone().setRowCount(1000)
-              .withColumnSpecs(patterns=".*_ID", match_types=StringType(), format="%010d", min=1, max=123, step=1)
-              .withColumnSpecs(patterns=".*_IDS", match_types=StringType(), format="%010d", min=1, max=100, step=1)
-              .withColumnSpec("R_ID", min=1, max=100, step=1)
-              .withColumnSpec("XYYZ_IDS", min=1, max=123, step=1,
-                              format="%05d")  # .withColumnSpec("nstr4", percent_nulls=10.0, min=1, max=9, step=2,  format="%04d")
-              # example of IS_SALE
-              .withColumnSpec("IS_S", values=sale_values, weights=sale_weights, random=True)
-              # .withColumnSpec("nstr4", percent_nulls=10.0, min=1, max=9, step=2,  format="%04d")
-
-              )
-
-        df = ds.build()
-        ds.explain()
-        df.show()
+        self.testDataSpec.compute_build_plan()
+        self.testDataSpec.explain()
 
 
 

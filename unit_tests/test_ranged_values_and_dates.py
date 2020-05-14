@@ -16,7 +16,7 @@ spark = SparkSession.builder \
     .getOrCreate()
 
 
-class TestDates(unittest.TestCase):
+class TestRangedValuesAndDates(unittest.TestCase):
     def setUp(self):
         print("setting up")
 
@@ -60,6 +60,9 @@ class TestDates(unittest.TestCase):
         start = datetime(2017, 10, 1, 0, 0, 0)
         end = datetime(2018, 10, 1, 6, 0, 0)
 
+        print(DateRange("2017-10-01 00:00:00",
+                                                       "2018-10-06 00:00:00",
+                                                       "days=1,hours=1"))
         testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
                       .withColumn("last_sync_dt1", "timestamp",
@@ -75,13 +78,13 @@ class TestDates(unittest.TestCase):
 
         testDataDF.show()
 
-    #@unittest.skip("not yet implemented")
+    @unittest.skip("not yet implemented")
     def test_date_range3(self):
         testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
                       .withColumn("last_sync_date", "date",
                                   data_range=DateRange("2017-10-01 00:00:00",
-                                                       "2018-10-06 00:00:00",
+                                                       "2018-10-06 11:55:00",
                                                        "days=7"), random=True)
 
 
@@ -101,7 +104,7 @@ class TestDates(unittest.TestCase):
         df_outside2.show()
         self.assertEquals(df_outside2.count() ,0)
 
-    # @unittest.skip("not yet implemented")
+    @unittest.skip("not yet implemented")
     def test_date_range3a(self):
             testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                           .withIdOutput()
@@ -126,7 +129,7 @@ class TestDates(unittest.TestCase):
             df_outside2.show()
             self.assertEquals(df_outside2.count(), 0)
 
-    #@unittest.skip("not yet implemented")
+    @unittest.skip("not yet implemented")
     def test_date_range4(self):
         testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
@@ -153,6 +156,7 @@ class TestDates(unittest.TestCase):
         df_outside2.show()
         self.assertEquals(df_outside2.count(),  0)
 
+    @unittest.skip("not yet finalized")
     def test_date_range4a(self):
         testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
@@ -179,6 +183,7 @@ class TestDates(unittest.TestCase):
         df_outside2.show()
         self.assertEquals(df_outside2.count(),  0)
 
+    @unittest.skip("not yet finalized")
     def test_timestamp_range3(self):
         testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
@@ -204,6 +209,7 @@ class TestDates(unittest.TestCase):
         df_outside2.show()
         self.assertEquals(df_outside2.count() ,0)
 
+    @unittest.skip("not yet finalized")
     def test_timestamp_range3a(self):
             testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                           .withIdOutput()
@@ -228,6 +234,7 @@ class TestDates(unittest.TestCase):
             df_outside2.show()
             self.assertEquals(df_outside2.count(), 0)
 
+    @unittest.skip("not yet finalized")
     def test_timestamp_range4(self):
         testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
@@ -254,6 +261,7 @@ class TestDates(unittest.TestCase):
         df_outside2.show()
         self.assertEquals(df_outside2.count(),  0)
 
+    @unittest.skip("not yet finalized")
     def test_timestamp_range4a(self):
         testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()

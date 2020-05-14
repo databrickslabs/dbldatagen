@@ -66,6 +66,136 @@ class TestTypes(unittest.TestCase):
         testdata_defn.build().createOrReplaceTempView("testdata")
         spark.sql("select * from testdata order by basic_short desc, basic_byte desc").show()
 
+    def test_for_reverse_range(self):
+        id_partitions =4
+        testdata_defn = (
+            datagen.DataGenerator( name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+            .withColumn("basic_byte", ByteType())
+            .withColumn("basic_short", ShortType())
+            .withColumn("code1", ByteType(), min=127, max=1, step=-1))
+
+        df = testdata_defn.build().limit(130)
+        data_row1 = df.collect()
+        print(data_row1[0])
+        self.assertEquals(data_row1[0]["code1"], 127, "row0")
+        self.assertEquals(data_row1[1]["code1"], 126, "row1")
+        self.assertEquals(data_row1[126]["code1"], 1, "row127")
+        self.assertEquals(data_row1[127]["code1"], 127, "row128")
+
+    def test_for_reverse_range2(self):
+        id_partitions =4
+        testdata_defn = (
+            datagen.DataGenerator( name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+            .withColumn("basic_byte", ByteType())
+            .withColumn("basic_short", ShortType())
+            .withColumn("code1", ByteType(), min=127, max=1, step=-1)
+        )
+
+        df = testdata_defn.build().limit(130)
+        testdata_defn.explain()
+        df.show()
+
+
+    def test_for_values_with_multi_column_dependencies(self):
+        id_partitions =4
+        testdata_defn = (
+            datagen.DataGenerator( name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+            .withColumn("basic_byte", ByteType())
+            .withColumn("basic_short", ShortType())
+            .withColumn("code1", StringType(),
+                        values=["aa", "bb", "cc", "dd", "ee", "ff"],
+                        base_column=["basic_byte", "basic_short"])
+        )
+
+        df = testdata_defn.build().where("code1 is  null")
+
+        testdata_defn.explain()
+
+        self.assertEquals(df.count(), 0)
+
+    def test_for_values_with_single_column_dependencies(self):
+        id_partitions =4
+        testdata_defn = (
+            datagen.DataGenerator( name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+            .withColumn("basic_byte", ByteType())
+            .withColumn("basic_short", ShortType())
+            .withColumn("code1", StringType(),
+                        values=["aa", "bb", "cc", "dd", "ee", "ff"],
+                        base_column=["basic_byte"])
+        )
+        df = testdata_defn.build().where("code1 is  null")
+        self.assertEquals(df.count(), 0)
+
+    def test_for_values_with_single_column_dependencies(self):
+        id_partitions =4
+        testdata_defn = (
+            datagen.DataGenerator( name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+            .withIdOutput()
+            .withColumn("basic_byte", ByteType())
+            .withColumn("basic_short", ShortType())
+            .withColumn("code1", StringType(),
+                        values=["aa", "bb", "cc", "dd", "ee", "ff"],
+                        base_column=["basic_byte"])
+        )
+        df = testdata_defn.build().where("code1 is  null")
+        self.assertEquals(df.count(), 0)
+
+    def test_for_values_with_single_column_dependencies2(self):
+        id_partitions =4
+        testdata_defn = (
+            datagen.DataGenerator( name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+            .withIdOutput()
+            .withColumn("basic_byte", ByteType())
+            .withColumn("basic_short", ShortType())
+            .withColumn("code1", StringType(),
+                        values=["aa", "bb", "cc", "dd", "ee", "ff"],
+                        base_column=["basic_byte"])
+        )
+        df = testdata_defn.build()
+        #df.show()
+        testdata_defn.explain()
+
+
+    def test_for_values_with_default_column_dependencies(self):
+        id_partitions =4
+        testdata_defn = (
+            datagen.DataGenerator( name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+            .withColumn("basic_byte", ByteType())
+            .withColumn("basic_short", ShortType())
+            .withColumn("code1", StringType(),
+                        values=["aa", "bb", "cc", "dd", "ee", "ff"])
+        )
+        df = testdata_defn.build().where("code1 is  null")
+        self.assertEquals(df.count(), 0)
+        testdata_defn.explain()
+
+    def test_for_weighted_values_with_default_column_dependencies(self):
+        id_partitions =4
+        testdata_defn = (
+            datagen.DataGenerator( name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+            .withColumn("basic_byte", ByteType())
+            .withColumn("basic_short", ShortType())
+            .withColumn("code1", StringType(),
+                        values=["aa", "bb", "cc", "dd", "ee", "ff"],
+                        weights=[1, 2, 3, 4, 5, 6])
+        )
+        df = testdata_defn.build().where("code1 is  null")
+        self.assertEquals(df.count(), 0)
+
+    def test_for_weighted_values_with_default_column_dependencies2(self):
+        id_partitions =4
+        testdata_defn = (
+            datagen.DataGenerator( name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+            .withIdOutput()
+            .withColumn("basic_byte", ByteType())
+            .withColumn("basic_short", ShortType())
+            .withColumn("code1", StringType(),
+                        values=["aa", "bb", "cc", "dd", "ee", "ff"],
+                        weights=[1, 2, 3, 4, 5, 6])
+        )
+        df = testdata_defn.build().where("code1 is null")
+        df.show()
+
     @unittest.expectedFailure
     def test_out_of_range_types2(self):
         id_partitions = 4
@@ -78,6 +208,46 @@ class TestTypes(unittest.TestCase):
 
         testdata_defn.build().createOrReplaceTempView("testdata")
         spark.sql("select * from testdata order by basic_short desc, basic_byte desc").show()
+
+    def test_short_types1(self):
+        id_partitions = 4
+        testdata_defn = (
+            datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+                .withColumn("bb", ByteType(), unique_values=100)
+                .withColumn("basic_short", ShortType())
+
+                .withColumn("code2", ShortType(), max=10000, step=5))
+
+        testdata_defn.build().createOrReplaceTempView("testdata")
+        data_row=spark.sql("select min(bb) as min_bb, max(bb) as max_bb from testdata ").limit(1).collect()
+        self.assertEquals(data_row[0]["min_bb"], 1, "row0")
+        self.assertEquals(data_row[0]["max_bb"], 99, "row1")
+
+    def test_short_types1(self):
+        id_partitions = 4
+        testdata_defn = (
+            datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+                .withColumn("bb", ByteType(), min=35, max=72)
+                .withColumn("basic_short", ShortType())
+
+                .withColumn("code2", ShortType(), max=10000, step=5))
+
+        testdata_defn.build().createOrReplaceTempView("testdata")
+        data_row=spark.sql("select min(bb) as min_bb, max(bb) as max_bb from testdata ").limit(1).collect()
+        self.assertEquals(data_row[0]["min_bb"], 35, "row0")
+        self.assertEquals(data_row[0]["max_bb"], 72, "row1")
+
+
+    def test_short_types2(self):
+        id_partitions = 4
+        testdata_defn = (
+            datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+                .withColumn("bb", ByteType(), unique_values=100)
+                .withColumn("basic_short", ShortType())
+
+                .withColumn("code2", ShortType(), max=4000, step=5))
+
+        testdata_defn.build().show()
 
     def test_decimal(self):
         id_partitions =4

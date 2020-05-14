@@ -49,8 +49,9 @@ class TestSimpleOperation(unittest.TestCase):
                                               partitions=4)
                         .withIdOutput()
                         .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)")
-                        .withColumn("code1", IntegerType(), min=100, max=200)
-                        .withColumn("code2", IntegerType(), min=0, max=10)
+                        .withColumn("code1a", IntegerType(),unique_values=100)
+                        .withColumn("code1b", IntegerType(), min=1, max=200)
+                        .withColumn("code2", IntegerType(),  max=10)
                         .withColumn("code3", StringType(), values=['a', 'b', 'c'])
                         .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
                         .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
@@ -64,7 +65,24 @@ class TestSimpleOperation(unittest.TestCase):
 
         testDataSpec.compute_build_plan().explain()
 
-        testDataDF2.show()
+        #testDataDF2.show()
+
+        testDataDF2.createOrReplaceTempView("testdata")
+        df_stats=spark.sql("""select min(code1a) as min1a, 
+                              max(code1a) as max1a, 
+                              min(code1b) as min1b, 
+                              max(code1b) as max1b,
+                              min(code2) as min2, 
+                              max(code2) as max2
+                              from testdata""")
+        stats = df_stats.collect()[0]
+
+        print("stats",stats)
+
+        #self.assertEqual(stats.min1, 1)
+        #self.assertEqual(stats.min2, 1)
+        #self.assertLessEqual(stats.max1, 100)
+        #self.assertLessEqual(stats.max1, 200)
 
 # run the tests
 # if __name__ == '__main__':
