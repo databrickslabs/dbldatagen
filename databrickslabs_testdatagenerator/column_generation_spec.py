@@ -85,12 +85,11 @@ class ColumnGenerationSpec:
         unique_values = self["unique_values"]
         min, max, step = (self["min"], self["max"], self["step"])
         c_begin, c_end, c_interval = self['begin'], self['end'], self['interval']
-        print("data range", data_range)
+
         if unique_values is not None:
             assert type(unique_values) is int, "unique_values must be integer"
             self.data_range = NRange( 1 if min is None else min, unique_values, 1)
         elif data_range is not None:
-            print("data range", data_range)
             self.data_range = data_range
         elif data_range is None:
             if type(colType) is TimestampType or type(colType) is DateType:
