@@ -6,6 +6,7 @@ from pyspark.sql.functions import expr, col, lit, udf, when, rand, pandas_udf
 
 import unittest
 import pandas as pd
+import numpy as np
 
 schema = StructType([
 StructField("PK1",StringType(),True),
@@ -81,6 +82,17 @@ class TestPandasIntegration(unittest.TestCase):
               )
 
         df.show()
+
+    def test_numpy(self):
+        data=np.arange(10)
+        print(np.sum(data))
+
+    def test_numpy2(self):
+        data = np.arange(1000000)
+        print(np.sum(data))
+
+
+
 
 # run the tests
 # if __name__ == '__main__':

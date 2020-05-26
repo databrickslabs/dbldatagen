@@ -61,7 +61,7 @@ class ColumnGeneratorBuilder:
 
 
     @classmethod
-    def mk_expr_choices_fn(cls, values, weights, base_column, datatype):
+    def mk_expr_choices_fn(cls, values, weights, seed_column, datatype):
         """ build an expression of the form
           `` case
                 when rnd_column <= weight1 then value1
@@ -86,9 +86,9 @@ class ColumnGeneratorBuilder:
 
         for v, cdf in conditions:
             if output_type == StringType or output_type == DateType or output_type == TimestampType:
-                output.append(" when {} <= {} then '{}' ".format(base_column, cdf, v))
+                output.append(" when {} <= {} then '{}' ".format(seed_column, cdf, v))
             else:
-                output.append(" when {} <= {} then {} ".format(base_column, cdf, v))
+                output.append(" when {} <= {} then {} ".format(seed_column, cdf, v))
 
         output.append("else '{}'".format(values[-1]))
         output.append("end")

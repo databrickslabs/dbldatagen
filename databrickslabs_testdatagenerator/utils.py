@@ -23,6 +23,25 @@ def ensure(x, msg="condition does not hold true"):
         raise DataGenError(strip_margin(msg))
 
 
+def mkBoundsList(x, default):
+    """ make a bounds list from supplied parameter - otherwise use default
+
+        returns: list of form [x,y]
+    """
+    if x is None:
+        retval = (True, [default, default]) if type(default) is int else (True, list(default))
+        print(retval)
+        return retval
+    elif type(x) is int:
+        bounds_list=[x,x]
+        assert len(bounds_list) == 2, "bounds list must be of length 2"
+        return (False, bounds_list)
+    else:
+        bounds_list=list(x)
+        assert len(bounds_list) == 2, "bounds list must be of length 2"
+        return (False, bounds_list)
+
+
 def topological_sort(sources, initial_columns=None, flatten=True):
     """ Perform a topological sort over sources
 

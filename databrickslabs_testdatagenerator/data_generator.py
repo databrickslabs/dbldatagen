@@ -75,8 +75,14 @@ class DataGenerator:
         self.rowCount = rows
         self.starting_id = starting_id
         self.__schema__ = None
-        self.seed = seed if seed is not None else self.randomSeed
+
         self.seed_method = seed_method
+        self.seed = seed if seed is not None else self.randomSeed
+
+        # if a seed was supplied but no seed method was applied, make the seed method "fixed"
+        if seed is not None and seed_method is None:
+            self.seed_method="fixed"
+
         self.columnSpecsByName = {}
         self.allColumnSpecs = []
         self.build_plan = []
@@ -231,6 +237,12 @@ class DataGenerator:
         self.checkFieldList()
         return StructType(self.inferredSchemaFields)
 
+    def __getitem__(self, key):
+        """ implement the built in derefernce by key behavior """
+        ensure(key is not None, "key should be non-empty")
+        return self.columnSpecsByName[key]
+
+
     def getColumnType(self, colName):
         """ Get column type for specified column """
         ct = self.columnSpecsByName[colName].datatype
@@ -280,7 +292,7 @@ class DataGenerator:
     def _computeRange(self, data_range, min, max, step):
         if data_range is not None and isinstance(data_range, range):
             if max is not None or min != 0 or step != 1:
-                raise ValueError("You cant specufy a range and min, max or step values")
+                raise ValueError("You cant specify both a range and min, max or step values")
 
             return data_range.start, data_range.stop, data_range.step
         else:

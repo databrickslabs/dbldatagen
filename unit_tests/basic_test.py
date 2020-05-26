@@ -3,7 +3,7 @@ import databrickslabs_testdatagenerator as datagen
 from pyspark.sql import SparkSession
 import unittest
 from pyspark.sql import functions as F
-
+import logging
 
 
 spark = SparkSession.builder \
@@ -21,6 +21,8 @@ class TestBasicOperation(unittest.TestCase):
 
     def setUp(self):
         print("setting up")
+        FORMAT = '%(asctime)-15s %(message)s'
+        logging.basicConfig(format=FORMAT)
 
     @classmethod
     def setUpClass(cls):
@@ -142,6 +144,9 @@ class TestBasicOperation(unittest.TestCase):
 
     def test_basic_adhoc(self):
         testDataSpec = self.testDataSpec
+        log=logging.getLogger('unit_tests')
+
+        log.warning("testing")
         print("data generation description:", testDataSpec.describe())
         print("data generation repr:", repr(testDataSpec))
         print("data generation str:", str(testDataSpec))

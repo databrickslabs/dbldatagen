@@ -19,11 +19,17 @@ setuptools.setup(
     url="https://github.com/databricks",
     packages=['databrickslabs_testdatagenerator'],
     install_requires=[
-        'pyspark>=2.4.0'],
+        'pyspark>=2.4.0',
+        'numpy',
+        'pandas',
+        'pyarrow>=0.8.0'
+    ],
     # packages=setuptools.find_packages(exclude=['contrib', 'unit_tests']),
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
+        "Test Data Generator",
+        "Synthetic Data Generator"
     ],
 )

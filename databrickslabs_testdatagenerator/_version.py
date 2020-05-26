@@ -18,6 +18,7 @@ VersionInfo = namedtuple('VersionInfo', ['major', 'minor', 'patch', 'release', '
 
 
 def get_version(version):
+    """ Get version string for library"""
     r = re.compile(r'(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)\-{0,1}(?P<release>\D*)(?P<build>\d*)')
     major, minor, patch, release, build = r.match(version).groups()
     version_info = VersionInfo(major, minor, patch, release, build)

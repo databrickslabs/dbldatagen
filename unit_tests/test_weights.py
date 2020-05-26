@@ -3,6 +3,7 @@ import databrickslabs_testdatagenerator as datagen
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, expr, rand, lit
 import unittest
+import datetime
 
 spark = SparkSession.builder \
     .master("local[4]") \
@@ -11,13 +12,6 @@ spark = SparkSession.builder \
     .getOrCreate()
 
 desired_weights = [9, 1, 1, 1]
-
-
-def weights_as_percentages(w):
-    assert w is not None
-    total = sum(w)
-    percentages = [x / total * 100 for x in w]
-    return percentages
 
 
 class TestWeights(unittest.TestCase):
@@ -45,7 +39,80 @@ class TestWeights(unittest.TestCase):
         print("tear down")
         spark.stop()
 
+    @classmethod
+    def unique_timestamp_seconds(cls):
+        return (datetime.datetime.utcnow()-datetime.datetime.fromtimestamp(0)).total_seconds()
+
+    @classmethod
+    def weights_as_percentages(cls, w):
+        assert w is not None
+        total = sum(w)
+        percentages = [x / total * 100 for x in w]
+        return percentages
+
+    @classmethod
+    def get_observed_weights(cls, df, column, values):
+        assert df is not None
+        assert col is not None
+        assert values is not None
+
+        observed_weights = (df.cube(column).count()
+                            .withColumnRenamed(column, "value")
+                            .withColumnRenamed("count", "rc")
+                            .where("value is not null")
+                            .collect())
+
+        print(observed_weights)
+
+        counts = {x.value: x.rc for x in observed_weights}
+        value_count_pairs = [{'value':x, 'count':counts[x]} for x in values]
+        print(value_count_pairs)
+
+        return value_count_pairs
+
+    def assertPercentagesEqual(self, percentages, desired_percentages):
+        assert percentages is not None and desired_percentages is not None
+
+        print("actual percentages", percentages)
+        print("desired percentages", desired_percentages)
+
+        self.assertEqual(len(percentages), len(desired_percentages))
+
+        # check that values are close
+        for x, y in zip(percentages, desired_percentages):
+            self.assertAlmostEqual(x, y, delta=float(x) / 5.0)
+
+    def test_get_observed_weights(self):
+        alpha_desired_weights = [9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5, 9
+                                 ]
+        alpha_list = [x for x in "abcdefghijklmnopqrstuvwxyz"]
+        dsAlpha = (datagen.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4)
+                   .withIdOutput()  # id column will be emitted in the output
+                   .withColumn("pk1", "int", unique_values=100)
+                   .withColumn("alpha", "string", values=alpha_list, base_column="pk1",
+                               weights=alpha_desired_weights, random=True)
+                   )
+        dfAlpha=dsAlpha.build().cache()
+
+        values = dsAlpha['alpha'].values
+        self.assertTrue(values is not None)
+
+        observed_weights=self.get_observed_weights(dfAlpha, 'alpha', values)
+        percentages = self.weights_as_percentages([x["count"] for x in observed_weights])
+
+        desired_percentages = self.weights_as_percentages(alpha_desired_weights)
+
+        self.assertPercentagesEqual(percentages, desired_percentages)
+
+
+
     def test_basic(self):
+
+        print(self.unique_timestamp_seconds())
 
         df = self.testdata_generator.build()
         row_count = df.count()
@@ -64,17 +131,10 @@ class TestWeights(unittest.TestCase):
         print("row values:", values)
         total_count = sum([x.rc for x in df_values])
 
-        percentages = weights_as_percentages([x.rc for x in df_values])
-        desired_percentages = weights_as_percentages(desired_weights)
+        percentages = self.weights_as_percentages([x.rc for x in df_values])
+        desired_percentages = self.weights_as_percentages(desired_weights)
 
-        print("actual percentages", percentages)
-        print("desired percentages", desired_percentages)
-
-        self.assertEqual(len(percentages), len(desired_percentages))
-
-        # check that values are close
-        for x, y in zip(percentages, desired_percentages):
-            self.assertAlmostEqual(x, y, delta=float(x) / 10.0)
+        self.assertPercentagesEqual(percentages, desired_percentages)
 
     def test_weighted_distribution(self):
         alpha_desired_weights = [9, 4, 1, 10, 5,
@@ -84,61 +144,269 @@ class TestWeights(unittest.TestCase):
                                  9, 4, 1, 10, 5, 9
                                  ]
         alpha_list = [x for x in "abcdefghijklmnopqrstuvwxyz"]
-        dfAlpha = (datagen.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4)
+        dsAlpha = (datagen.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4)
                    .withIdOutput()  # id column will be emitted in the output
                    .withColumn("alpha", "string", values=alpha_list,
                                weights=alpha_desired_weights,
                                random=True)
-                   ).build().cache().createOrReplaceTempView("testdata2")
-        df_values = spark.sql("""select * from (select alpha, 
-                                                    count(alpha) as rc from testdata2 group by alpha ) a 
-                                                order by alpha""").collect()
-        values = [x.alpha for x in df_values]
-        print("row values:", values)
-        total_count = sum([x.rc for x in df_values])
+                   )
+        dfAlpha=dsAlpha.build().cache()
+        observed_weights=self.get_observed_weights(dfAlpha, 'alpha', dsAlpha['alpha'].values)
 
-        percentages = weights_as_percentages([x.rc for x in df_values])
-        desired_percentages = weights_as_percentages(alpha_desired_weights)
+        percentages = self.weights_as_percentages([x["count"] for x in observed_weights])
+        desired_percentages = self.weights_as_percentages(alpha_desired_weights)
 
-        print("actual percentages", percentages)
-        print("desired percentages", desired_percentages)
+        self.assertPercentagesEqual(percentages, desired_percentages)
 
-        self.assertEqual(len(percentages), len(desired_percentages))
+    def test_weighted_distribution_nr(self):
+        alpha_desired_weights = [9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5, 9
+                                 ]
+        alpha_list = [x for x in "abcdefghijklmnopqrstuvwxyz"]
 
-        # check that values are close
-        for x, y in zip(percentages, desired_percentages):
-            self.assertAlmostEqual(x, y, delta=float(x) / 5.0)
+        # dont use seed value as non random fields should be repeatable
+        dsAlpha = (datagen.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4)
+                   .withIdOutput()  # id column will be emitted in the output
+                   .withColumn("alpha", "string", values=alpha_list,
+                               weights=alpha_desired_weights)
+                   )
+        dfAlpha=dsAlpha.build().cache()
+        observed_weights=self.get_observed_weights(dfAlpha, 'alpha', dsAlpha['alpha'].values)
+
+        percentages = self.weights_as_percentages([x["count"] for x in observed_weights])
+        desired_percentages = self.weights_as_percentages(alpha_desired_weights)
+
+        self.assertPercentagesEqual(percentages, desired_percentages)
+
+    def test_weighted_distribution_nr2(self):
+        alpha_desired_weights = [9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5, 9
+                                 ]
+        alpha_list = [x for x in "abcdefghijklmnopqrstuvwxyz"]
+
+        # dont use seed value as non random fields should be repeatable
+        dsAlpha = (datagen.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4)
+                   .withIdOutput()  # id column will be emitted in the output
+                   .withColumn("pk1", "int", unique_values=500)
+                   .withColumn("pk2", "int", unique_values=500)
+                   .withColumn("alpha", "string", values=alpha_list, base_column="pk1",
+                               weights=alpha_desired_weights)
+                   )
+        dfAlpha=dsAlpha.build().cache()
+        observed_weights=self.get_observed_weights(dfAlpha, 'alpha', dsAlpha['alpha'].values)
+
+        percentages = self.weights_as_percentages([x["count"] for x in observed_weights])
+        desired_percentages = self.weights_as_percentages(alpha_desired_weights)
+
+        self.assertPercentagesEqual(percentages, desired_percentages)
+
+        # for columns with non random values and a single base dependency `pk1`
+        # each combination of pk1 and alpha should be the same
+
+        df_counts=(dfAlpha.cube("pk1", "alpha")
+                   .count()
+                   .where("pk1 is not null and alpha is not null")
+                   .orderBy("pk1").withColumnRenamed("count","rc")
+                   )
+
+        # get counts for each primary key from the cube
+        # they should be 1 for each primary key
+        df_counts_by_key = df_counts.distinct().groupBy("pk1").count().withColumnRenamed("count","rc")
+        self.assertEqual(df_counts_by_key.where("rc > 1").count(), 0)
+
+    def test_weighted_distribution2(self):
+        alpha_desired_weights = [9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5, 9
+                                 ]
+        alpha_list = [x for x in "abcdefghijklmnopqrstuvwxyz"]
+        dsAlpha = (datagen.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4)
+                   .withIdOutput()  # id column will be emitted in the output
+                   .withColumn("pk1", "int", unique_values=500)
+                   .withColumn("pk2", "int", unique_values=500)
+                   .withColumn("alpha", "string", values=alpha_list, base_column="pk1",
+                               weights=alpha_desired_weights, random=True)
+                   )
+        dfAlpha=dsAlpha.build().cache()
+        observed_weights=self.get_observed_weights(dfAlpha, 'alpha', dsAlpha['alpha'].values)
+
+        percentages = self.weights_as_percentages([x["count"] for x in observed_weights])
+        desired_percentages = self.weights_as_percentages(alpha_desired_weights)
+
+        self.assertPercentagesEqual(percentages, desired_percentages)
+
+    def test_weighted_distribution3(self):
+        alpha_desired_weights = [9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5, 9
+                                 ]
+        alpha_list = [x for x in "abcdefghijklmnopqrstuvwxyz"]
+        dsAlpha = (datagen.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4)
+                   .withIdOutput()  # id column will be emitted in the output
+                   .withColumn("pk1", "int", unique_values=500)
+                   .withColumn("pk2", "int", unique_values=500)
+                   .withColumn("alpha", "string", values=alpha_list, base_column=["pk1","pk2"],
+                               weights=alpha_desired_weights, random=True)
+                   )
+        dfAlpha=dsAlpha.build().cache()
+        observed_weights=self.get_observed_weights(dfAlpha, 'alpha', dsAlpha['alpha'].values)
+
+        percentages = self.weights_as_percentages([x["count"] for x in observed_weights])
+        desired_percentages = self.weights_as_percentages(alpha_desired_weights)
+
+        self.assertPercentagesEqual(percentages, desired_percentages)
+
+    def test_weighted_distribution_nr3(self):
+        alpha_desired_weights = [9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5, 9
+                                 ]
+        alpha_list = [x for x in "abcdefghijklmnopqrstuvwxyz"]
+
+        # dont use seed value as non random fields should be repeatable
+        dsAlpha = (datagen.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4)
+                   .withIdOutput()  # id column will be emitted in the output
+                   .withColumn("pk1", "int", unique_values=500)
+                   .withColumn("pk2", "int", unique_values=500)
+                   .withColumn("alpha", "string", values=alpha_list, base_column=["pk1","pk2"],
+                               weights=alpha_desired_weights)
+                   )
+        dfAlpha=dsAlpha.build().cache()
+        observed_weights=self.get_observed_weights(dfAlpha, 'alpha', dsAlpha['alpha'].values)
+
+        percentages = self.weights_as_percentages([x["count"] for x in observed_weights])
+        desired_percentages = self.weights_as_percentages(alpha_desired_weights)
+
+        self.assertPercentagesEqual(percentages, desired_percentages)
+
+        # for columns with non random values and base dependency on `pk1` and `pk2`
+        # each combination of pk1, pk2 and alpha should be the same
+
+        df_counts=(dfAlpha.cube("pk1","pk2",  "alpha")
+                   .count()
+                   .where("pk1 is not null and alpha is not null and pk2 is not null")
+                   .orderBy("pk1", "pk2").withColumnRenamed("count","rc")
+                   )
+
+        # get counts for each primary key from the cube
+        # they should be 1 for each primary key
+        df_counts_by_key = df_counts.distinct().groupBy("pk1", "pk2").count().withColumnRenamed("count","rc")
+        self.assertEqual(df_counts_by_key.where("rc > 1").count(), 0)
+
+
 
     def test_weighted_distribution_int(self):
         num_desired_weights = [9, 4, 1, 10, 5]
         num_list = [1, 2, 3, 4, 5]
-        dfAlpha = (datagen.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4)
+        dsInt1 = (datagen.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4)
                    .withIdOutput()  # id column will be emitted in the output
                    .withColumn("code", "integer", values=num_list,
                                weights=num_desired_weights,
                                random=True)
-                   ).build().cache().createOrReplaceTempView("testdata3")
-        df_values = spark.sql("""select * from (select code, 
-                                                    count(code) as rc from testdata3 group by code ) a 
-                                                order by code""")
+                   )
+        dfInt1=dsInt1.build().cache()
 
-        df_values.printSchema()
-        emitted_values = df_values.collect()
-        values = [x.code for x in emitted_values]
-        print("row values:", values)
-        total_count = sum([x.rc for x in emitted_values])
+        observed_weights=self.get_observed_weights(dfInt1, 'code', dsInt1['code'].values)
 
-        percentages = weights_as_percentages([x.rc for x in emitted_values])
-        desired_percentages = weights_as_percentages(num_desired_weights)
+        percentages = self.weights_as_percentages([x["count"] for x in observed_weights])
+        desired_percentages = self.weights_as_percentages(num_desired_weights)
 
-        print("actual percentages", percentages)
-        print("desired percentages", desired_percentages)
+        self.assertPercentagesEqual(percentages, desired_percentages)
 
-        self.assertEqual(len(percentages), len(desired_percentages))
+    def test_weighted_nr_int(self):
+        num_desired_weights = [9, 4, 1, 10, 5]
+        num_list = [1, 2, 3, 4, 5]
 
-        # check that values are close
-        for x, y in zip(percentages, desired_percentages):
-            self.assertAlmostEqual(x, y, delta=float(x) / 10.0)
+        # dont use seed value as non random fields should be repeatable
+        dsInt1 = (datagen.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4)
+                   .withIdOutput()  # id column will be emitted in the output
+                   .withColumn("code", "integer", values=num_list,
+                               weights=num_desired_weights)
+                   )
+        dfInt1=dsInt1.build().cache()
+
+        observed_weights=self.get_observed_weights(dfInt1, 'code', dsInt1['code'].values)
+
+        percentages = self.weights_as_percentages([x["count"] for x in observed_weights])
+        desired_percentages = self.weights_as_percentages(num_desired_weights)
+
+        self.assertPercentagesEqual(percentages, desired_percentages)
+
+
+
+    def test_weighted_repeatable_non_random(self):
+        alpha_desired_weights = [9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5, 9
+                                 ]
+        alpha_list = [x for x in "abcdefghijklmnopqrstuvwxyz"]
+
+        # dont use seed value as non random fields should be repeatable
+        dsAlpha = (datagen.DataGenerator(sparkSession=spark,
+                                         name="test_dataset1",
+                                         rows=26 * 1000,
+                                         partitions=4)
+                   .withIdOutput()  # id column will be emitted in the output
+                   .withColumn("alpha", "string", values=alpha_list,
+                               weights=alpha_desired_weights)
+                   )
+
+        dfAlpha = dsAlpha.build().limit(100).cache()
+        values1 = dfAlpha.collect()
+        print(values1)
+
+        dfAlpha2 = dsAlpha.clone().build().limit(100).cache()
+        values2 = dfAlpha2.collect()
+
+        self.assertEquals(values1, values2)
+
+    def test_weighted_repeatable_random(self):
+        alpha_desired_weights = [9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5,
+                                 9, 4, 1, 10, 5, 9
+                                 ]
+        alpha_list = [x for x in "abcdefghijklmnopqrstuvwxyz"]
+
+        # use seed for random repeatability
+        dsAlpha = (datagen.DataGenerator(sparkSession=spark,
+                                         name="test_dataset1",
+                                         rows=26 * 1000,
+                                         partitions=4,
+                                         seed=43)
+                   .withIdOutput()  # id column will be emitted in the output
+                   .withColumn("alpha", "string", values=alpha_list,
+                               weights=alpha_desired_weights, random=True)
+                   )
+
+        dfAlpha = dsAlpha.build().limit(100).cache()
+        values1 = dfAlpha.collect()
+        print(values1)
+
+        dfAlpha2 = dsAlpha.clone().build().limit(100).cache()
+        values2 = dfAlpha2.collect()
+
+        self.assertEquals(values1, values2)
+
+
+
+
+
 
 # run the tests
 # if __name__ == '__main__':
