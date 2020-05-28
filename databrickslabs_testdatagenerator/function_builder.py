@@ -94,7 +94,5 @@ class ColumnGeneratorBuilder:
         output.append("end")
 
         retval = "\n".join(output)
-        print(retval)
-        print(datatype)
 
         return retval

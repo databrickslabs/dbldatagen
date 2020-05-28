@@ -12,7 +12,7 @@ from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, Doub
 import math
 from datetime import date, datetime, timedelta
 from .utils import ensure
-from .text_generators import TextGenerators
+from .text_generators import TemplateGenerator
 from .dataranges import DateRange, NRange
 
 from pyspark.sql.functions import col, pandas_udf
@@ -130,7 +130,11 @@ class ColumnGenerationSpec:
 
         if unique_values is not None:
             assert type(unique_values) is int, "unique_values must be integer"
-            self.data_range = NRange( 1 if min is None else min, unique_values, 1)
+            assert unique_values >= 1
+            # TODO: set max to unique_values + min & add unit test
+            self.data_range = NRange( 1 if min is None else min,
+                                      unique_values if min is None else unique_values + min-1,
+                                      1)
         elif data_range is not None:
             self.data_range = data_range
         elif data_range is None:
@@ -171,6 +175,9 @@ class ColumnGenerationSpec:
                 self.dependencies.append(temp_name)
                 desc = "adding temporary column {} required by {}".format(temp_name, self.name)
                 self.initial_build_plan.append(desc)
+
+                # TODO : change this to use a base expression based on mapping base column to size of
+                # data
                 sql_random_generator = self.getUniformRandomSQLExpression(self.name)
                 self.temporary_columns.append((temp_name, DoubleType(), {'expr': sql_random_generator, 'omit' : "True",
                                                                          'description': desc}))
@@ -185,7 +192,6 @@ class ColumnGenerationSpec:
             assert self.name is not None
             return expr("rand(hash('{}'))".format(self.name))
         else:
-            print("Generating random with no seed for column :"+ col_name)
             return rand()
 
     def getUniformRandomSQLExpression(self, col_name):
@@ -198,7 +204,6 @@ class ColumnGenerationSpec:
             assert self.name is not None
             return "rand(hash('{}'))".format(self.name)
         else:
-            print("Generating random with no seed for column :"+ col_name)
             return "rand()"
 
 
@@ -404,13 +409,10 @@ class ColumnGenerationSpec:
         if type(base_column) is list:
             assert len(base_column) > 0
             if len(base_column) == 1:
-                print("""col(base_column[0]={})""".format(base_column[0]))
                 return col(base_column[0])
             else:
-                print("""expr("hash({})" """.format(",".join(base_column)))
                 return expr("hash({})".format(",".join(base_column)))
         else:
-            print("""col(base_column={}""".format(base_column))
             return col(base_column)
 
     def _compute_ranged_column(self, datarange, base_column, is_random):
@@ -507,13 +509,16 @@ class ColumnGenerationSpec:
                 # note :
                 # while it seems like this could use a shared instance, this does not work if initialized
                 # in a class method
+                tg = TemplateGenerator(string_generation_template)
                 if use_pandas_optimizations:
                     self.execution_history.append(".. template generation via pandas scalar udf `{}`".format(string_generation_template))
-                    u_value_from_template = pandas_udf(TextGenerators.pandas_value_from_template, returnType=StringType()).asNondeterministic()
+                    u_value_from_template = pandas_udf(tg.pandas_value_from_template,
+                                                       returnType=StringType()).asNondeterministic()
                 else:
                     self.execution_history.append(".. template generation via udf `{}`".format(string_generation_template))
-                    u_value_from_template = udf(TextGenerators.value_from_template, StringType()).asNondeterministic()
-                newDef = u_value_from_template(newDef, lit(string_generation_template))
+                    u_value_from_template = udf(tg.classic_value_from_template,
+                                                StringType()).asNondeterministic()
+                newDef = u_value_from_template(newDef)
 
             if type(ctype) is StringType and sformat is not None:
                 # note :

@@ -18,8 +18,9 @@
 This module defines the package contents for the test data generator library
 """
 
-__all__ = ["data_generator", "data_analyzer", "schema_parser", "daterange",
-           "column_generation_spec", "utils", "function_builder", "spark_singleton", "text_generators"]
+__all__ = ["data_generator", "data_analyzer", "schema_parser", "dataranges",
+           "column_generation_spec", "utils", "function_builder", "spark_singleton", "text_generators",
+           "distributions"]
 
 from databrickslabs_testdatagenerator.data_generator import DataGenerator
 from databrickslabs_testdatagenerator.utils import ensure, topological_sort, mkBoundsList
@@ -29,5 +30,5 @@ from databrickslabs_testdatagenerator.schema_parser import SchemaParser
 from databrickslabs_testdatagenerator.dataranges import DateRange, NRange
 from databrickslabs_testdatagenerator.function_builder import ColumnGeneratorBuilder
 from .spark_singleton import SparkSingleton
-from databrickslabs_testdatagenerator.text_generators import TextGenerators
+from databrickslabs_testdatagenerator.text_generators import TemplateGenerator
 from databrickslabs_testdatagenerator.distributions import DataDistribution, NormalDistribution,ExponentialDistribution

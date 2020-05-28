@@ -3,7 +3,7 @@
 #
 
 """
-This file defines the `DataGenError` and `DataGenerator` classes
+This file defines various text generation classes and methods
 """
 
 from pyspark.sql.functions import col, lit, concat, rand, ceil, floor, round, array, expr, udf
@@ -14,6 +14,7 @@ from datetime import date, datetime, timedelta
 from .utils import ensure
 import numpy as np
 import pandas as pd
+from pyspark.sql.functions import  pandas_udf
 
 import random
 
@@ -46,10 +47,17 @@ words_upper = ['LOREM', 'IPSUM', 'DOLOR', 'SIT', 'AMET', 'CONSECTETUR', 'ADIPISC
                'PROIDENT', 'SUNT', 'IN', 'CULPA', 'QUI', 'OFFICIA', 'DESERUNT', 'MOLLIT', 'ANIM', 'ID', 'EST', 'LABORUM']
 
 
-class TextGenerators:
 
-    @staticmethod
-    def value_from_single_template(v, s):
+
+class TemplateGenerator(object):
+    """This class handles the generation of text from templates"""
+
+    def __init__(self, template):
+        self.template = template
+        template_str0 = self.template
+        self.templates = [x.replace('$__sep__', '|') for x in template_str0.replace(r'\|', '$__sep__').split('|')]
+
+    def value_from_single_template(self, v, s):
         retval = []
 
         escape = False
@@ -85,39 +93,36 @@ class TextGenerators:
                 retval.append(words_lower[random.randint(0, len(words_lower)) - 1])
                 escape = False
             elif char == 'v' and escape:
-                retval.append(v)
+                retval.append(str(v))
                 escape = False
             else:
                 retval.append(char)
                 escape = False
 
-        return "".join(retval)
+        output = "".join(retval)
+        return output
 
-    @staticmethod
-    def value_from_template(v, s):
-        alternatives = s.replace(r'\|', '$escaped-sep').split('|')
-
-        num_alternatives = len(alternatives)
-
-        # choose alternative
-        alt = alternatives[random.randint(0, num_alternatives - 1)].replace('$escaped-sep', '|')
-        return TextGenerators.value_from_single_template(v, alt)
-
-    @staticmethod
-    def pandas_value_from_template(v, s):
-        def value_from_template(v, s):
-            alternatives = s.replace(r'\|', '$escaped-sep').split('|')
-
-            num_alternatives = len(alternatives)
+    def classic_value_from_template(self, v):
+        def value_from_template(original_value, alt_templates):
+            num_alternatives = len(alt_templates)
 
             # choose alternative
-            alt = alternatives[random.randint(0, num_alternatives - 1)].replace('$escaped-sep', '|')
-            return TextGenerators.value_from_single_template(v, alt)
+            alt = alt_templates[random.randint(0, num_alternatives - 1)]
+            return self.value_from_single_template(original_value, alt)
 
-        vlen = v.size
-        i = 0
-        retvals = []
-        while i < vlen:
-            retvals.append(value_from_template(v.at[i], s.at[i]))
-            i = i + 1
-        return pd.Series(retvals)
+        return value_from_template(v, self.templates)
+
+    def pandas_value_from_template(self, v):
+        def value_from_random_template(original_value, alt_templates):
+            num_alternatives = len(alt_templates)
+
+            # choose alternative
+            alt = alt_templates[random.randint(0, num_alternatives - 1)]
+            return self.value_from_single_template(original_value, alt)
+
+        # return [ str(x)+"_Test" for x in v]
+        if len(self.templates) > 1:
+            results = v.apply(lambda v, t: value_from_random_template(v, t), args=(self.templates,))
+        else:
+            results = v.apply(lambda v, t: self.value_from_single_template(v, t), args=(self.templates[0],))
+        return results

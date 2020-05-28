@@ -502,7 +502,6 @@ class DataGenerator:
 
         self.compute_column_build_order()
 
-        print("column build order:",  self._build_order)
         for x1 in self._build_order:
             for x in x1:
                 cs = self.columnSpecsByName[x]
