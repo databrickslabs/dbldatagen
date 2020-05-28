@@ -27,7 +27,7 @@ class TestUtils(unittest.TestCase):
     def testMkBoundsList1(self):
         test = mkBoundsList(None, 1)
 
-        self.assertEquals(len(test), 2)
+        self.assertEqual(len(test), 2)
 
         test2 = mkBoundsList(None, [1,1])
 

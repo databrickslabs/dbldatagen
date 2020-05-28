@@ -35,13 +35,13 @@ class TestBasicOperation(unittest.TestCase):
         x_dec2 = SchemaParser.columnTypeFromString("decimal(15)")
 
         self.assertIsInstance(x_dec2, DecimalType().__class__)
-        self.assertEquals(x_dec2.precision, 15)
+        self.assertEqual(x_dec2.precision, 15)
 
         x_dec3 = SchemaParser.columnTypeFromString("decimal(19,4)")
 
         self.assertIsInstance(x_dec3, DecimalType().__class__)
-        self.assertEquals(x_dec3.precision, 19)
-        self.assertEquals(x_dec3.scale, 4)
+        self.assertEqual(x_dec3.precision, 19)
+        self.assertEqual(x_dec3.scale, 4)
 
 
 # run the tests

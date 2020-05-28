@@ -27,3 +27,6 @@ __all__ = ["basic_test", "basic_test2", "test_columnGenerationSpec", "test_range
            "test_utils", "test_distributions"]
 
 from unit_tests.test_pandas_integration import TestPandasIntegration
+
+if __name__ == '__main__':
+    unittest.main()

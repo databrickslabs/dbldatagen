@@ -233,3 +233,6 @@ class TestBasicOperation(unittest.TestCase):
 
 
 # runTests([TestBasicOperation])
+
+if __name__ == '__main__':
+    unittest.main()

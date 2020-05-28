@@ -181,6 +181,7 @@ class TestWeights(unittest.TestCase):
 
         self.assertPercentagesEqual(percentages, desired_percentages)
 
+    @unittest.skip("not yet finalized")
     def test_weighted_distribution_nr2(self):
         alpha_desired_weights = [9, 4, 1, 10, 5,
                                  9, 4, 1, 10, 5,
@@ -266,6 +267,7 @@ class TestWeights(unittest.TestCase):
 
         self.assertPercentagesEqual(percentages, desired_percentages)
 
+    @unittest.skip("not yet finalized")
     def test_weighted_distribution_nr3(self):
         alpha_desired_weights = [9, 4, 1, 10, 5,
                                  9, 4, 1, 10, 5,
@@ -345,7 +347,7 @@ class TestWeights(unittest.TestCase):
         self.assertPercentagesEqual(percentages, desired_percentages)
 
 
-
+    @unittest.skip("not yet finalized")
     def test_weighted_repeatable_non_random(self):
         alpha_desired_weights = [9, 4, 1, 10, 5,
                                  9, 4, 1, 10, 5,
