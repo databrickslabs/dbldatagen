@@ -9,14 +9,14 @@ package_long_description = """###Databricks Labs Spark Test Data Generator###
     """
 
 setuptools.setup(
-    name="databrickslabs-testdatagenerator-labs-candidate",
-    version="0.9.04",
+    name="databrickslabs-testdatagenerator",
+    version="0.9.05-dev2",
     author="Ronan Stokes, Databricks",
     author_email="ronan.stokes@databricks.com",
     description="Databricks Labs -  PySpark Test Data Generator",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/databricks",
+    url="https://github.com/databrickslabs/data-generator",
     packages=['databrickslabs_testdatagenerator'],
     install_requires=[
         'pyspark>=2.4.0',
@@ -32,4 +32,5 @@ setuptools.setup(
         "Test Data Generator",
         "Synthetic Data Generator"
     ],
+    python_requires='>=3.6',
 )

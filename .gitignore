@@ -16,3 +16,5 @@ project/target/
 /dist
 **/*.pyc
 *.egg*
+*.py[cod]
+build_env/
