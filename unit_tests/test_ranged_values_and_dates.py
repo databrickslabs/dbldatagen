@@ -287,3 +287,22 @@ class TestRangedValuesAndDates(unittest.TestCase):
         df_outside2 = testDataDF.where("last_sync_date < '2017-10-01' ")
         df_outside2.show()
         self.assertEquals(df_outside2.count(),  0)
+
+    def test_unique_values1(self):
+        testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+                      .withIdOutput()
+                      .withColumn("code1", "int", unique_values=7)
+                      .withColumn("code2", "int", unique_values=7, min=20)
+                      .build()
+                      )
+
+        testDataSummary = testDataDF.selectExpr("min(code1) as min_c1",
+                                                "max(code1) as max_c1",
+                                                "min(code2) as min_c2",
+                                                "max(code2) as max_c2")
+
+        summary=testDataSummary.collect()[0]
+        self.assertEquals(summary[0], 1)
+        self.assertEquals(summary[1], 7)
+        self.assertEquals(summary[2], 20)
+        self.assertEquals(summary[3], 26)

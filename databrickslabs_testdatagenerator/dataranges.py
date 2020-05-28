@@ -7,10 +7,12 @@ from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, Doub
     StructType, StructField, TimestampType, DataType, DateType, ByteType
 
 class NRange(object):
-
-    def __init__(self, min=None, max=None, step=None):
+    """ Ranged numeric interval representing the interval min .. max inclusive"""
+    def __init__(self, min=None, max=None, step=None, until=None):
+        assert until is None if max is not None else True,"Only one of max or until can be specified"
+        assert max is None if until is not None else True,"Only one of max or until can be specified"
         self.min=min
-        self.max=max
+        self.max=max if until is None else until+1
         self.step=step
 
     def __str__(self):

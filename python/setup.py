@@ -9,8 +9,8 @@ package_long_description = """###Databricks Labs Spark Test Data Generator###
     """
 
 setuptools.setup(
-    name="databrickslabs-testdatagenerator-prerel-labs",
-    version="0.9.01",
+    name="databrickslabs-testdatagenerator-labs-candidate",
+    version="0.9.04",  # dont edit directly will be modified by bumpversion
     author="Ronan Stokes, Databricks",
     author_email="ronan.stokes@databricks.com",
     description="Databricks Labs -  PySpark Test Data Generator",
