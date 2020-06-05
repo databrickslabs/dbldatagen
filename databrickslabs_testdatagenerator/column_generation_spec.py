@@ -32,7 +32,8 @@ class ColumnGenerationSpec:
                      'begin', 'end', 'interval', 'expr', 'omit',
                      'weights', 'description', 'continuous',
                      'percent_nulls', 'template', 'format',
-                     'unique_values', 'data_range'
+                     'unique_values', 'data_range', 'text',
+                     'precision', 'scale'
 
                      }
 
@@ -71,6 +72,17 @@ class ColumnGenerationSpec:
 
         self._checkProps(self.props)
 
+        # only allow `template` or `test`
+        self._checkExclusiveOptions(["template", "text"])
+
+        # only allow `weights` or `distribution`
+        self._checkExclusiveOptions(["distribution", "weights"])
+
+        # check for alternative forms of specifying range
+        self._checkExclusiveOptions(["min", "begin", "data_range"])
+        self._checkExclusiveOptions(["max", "end", "data_range"])
+        self._checkExclusiveOptions(["step", "interval", "data_range"])
+
         # we want to assign each of the properties to the appropriate instance variables
         # but compute sensible defaults in the process as needed
         # in particular, we want to ensure that things like values and weights match
@@ -105,6 +117,17 @@ class ColumnGenerationSpec:
                 self.dependencies = [base_column, "id"]
         else:
             self.dependencies = ["id"]
+
+        # handle text generation templates
+        if self['template'] is not None:
+            assert type(self['template']) is str, "template must be a string "
+            self.text_generator = TemplateGenerator(self['template'])
+            print("text generator", self.text_generator)
+        elif self['text'] is not None:
+            self.text_generator = self['text']
+            print("text generator", self.text_generator)
+        else:
+            self.text_generator=None
 
         # compute required temporary values
         self.temporary_columns = []
@@ -182,6 +205,11 @@ class ColumnGenerationSpec:
                 self.temporary_columns.append((temp_name, DoubleType(), {'expr': sql_random_generator, 'omit' : "True",
                                                                          'description': desc}))
                 self.weighted_base_column = temp_name
+
+    def _checkExclusiveOptions(self, options):
+        """check if the options are exclusive - i.e only one is not None"""
+        assert len([self[x] for x in options if self[x] is not None]) <= 1, \
+            f" only one of of the options: {options} may be specified "
 
     def getUniformRandomExpression(self, col_name):
         """ Get random expression accounting for seed method"""
@@ -456,7 +484,6 @@ class ColumnGenerationSpec:
         crand, cdistribution = self['random'], self['distribution']
         baseCol = self['base_column']
         c_begin, c_end, c_interval = self['begin'], self['end'], self['interval']
-        string_generation_template=self['template']
         percent_nulls = self['percent_nulls']
         sformat=self['format']
 
@@ -505,20 +532,22 @@ class ColumnGenerationSpec:
                     newDef = newDef
 
             # use string generation template if available passing in what was generated to date
-            if type(ctype) is StringType and string_generation_template is not None:
+            if type(ctype) is StringType and self.text_generator is not None:
                 # note :
                 # while it seems like this could use a shared instance, this does not work if initialized
                 # in a class method
-                tg = TemplateGenerator(string_generation_template)
+                tg = self.text_generator
                 if use_pandas_optimizations:
-                    self.execution_history.append(".. template generation via pandas scalar udf `{}`".format(string_generation_template))
-                    u_value_from_template = pandas_udf(tg.pandas_value_from_template,
+                    self.execution_history.append(".. text generation via pandas scalar udf `{}`"
+                                                  .format(str(tg)))
+                    u_value_from_generator = pandas_udf(tg.pandas_generate_text,
                                                        returnType=StringType()).asNondeterministic()
                 else:
-                    self.execution_history.append(".. template generation via udf `{}`".format(string_generation_template))
-                    u_value_from_template = udf(tg.classic_value_from_template,
+                    self.execution_history.append(".. text generation via udf `{}`"
+                                                  .format(str(tg)))
+                    u_value_from_generator = udf(tg.classic_generate_text,
                                                 StringType()).asNondeterministic()
-                newDef = u_value_from_template(newDef)
+                newDef = u_value_from_generator(newDef)
 
             if type(ctype) is StringType and sformat is not None:
                 # note :

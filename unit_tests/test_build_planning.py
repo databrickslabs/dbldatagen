@@ -1,6 +1,6 @@
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType, DecimalType
 from pyspark.sql.types import BooleanType, DateType
-import databrickslabs_testdatagenerator as datagen
+import databrickslabs_testdatagenerator as dg
 from pyspark.sql import SparkSession
 import unittest
 
@@ -164,8 +164,8 @@ class TestBuildPlanning(unittest.TestCase):
         sale_values = ['RETAIL', 'ONLINE', 'WHOLESALE', 'RETURN']
         sale_weights = [1, 5, 5, 1]
 
-        cls.testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
-                                                  partitions=4)
+        cls.testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
+                                             partitions=4)
                             .withSchema(schema)
                             .withIdOutput()
                             .withColumnSpecs(patterns=".*_ID", match_types=StringType(), format="%010d", min=1, max=123,

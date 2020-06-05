@@ -1,6 +1,8 @@
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType, DecimalType
 from pyspark.sql.types import BooleanType, DateType
-import databrickslabs_testdatagenerator as datagen
+import databrickslabs_testdatagenerator as dg
+from databrickslabs_testdatagenerator import NRange, ILText
+import databrickslabs_testdatagenerator.distributions as dist
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import expr, lit, udf, when, rand
 
@@ -30,19 +32,21 @@ schema = StructType([
 # add the following if using pandas udfs
 #    .config("spark.sql.execution.arrow.maxRecordsPerBatch", "1000") \
 
-#.config("spark.sql.execution.arrow.maxRecordsPerBatch", "1000") \
-#    .config("spark.sql.execution.arrow.enabled", "true") \
+
 spark = SparkSession.builder \
     .master("local[4]") \
     .appName("spark unit tests") \
     .config("spark.sql.warehouse.dir", "/tmp/spark-warehouse") \
     .getOrCreate()
 
+spark.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", "500")
+spark.conf.set("spark.sql.execution.arrow.enabled", "true")
 
 # Test manipulation and generation of test data for a large schema
 class TestTextGeneration(unittest.TestCase):
     testDataSpec = None
-    row_count = 100000
+    row_count = 1000000
+    partitions_requested=24
 
     def setUp(self):
         print("setting up")
@@ -51,8 +55,8 @@ class TestTextGeneration(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         print("setting up class ")
-        cls.testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
-                                                  partitions=4)
+        cls.testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
+                                             partitions=cls.partitions_requested)
                             .withSchema(schema)
                             .withIdOutput()
                             .withColumnSpec("date", percent_nulls=10.0)
@@ -74,21 +78,100 @@ class TestTextGeneration(unittest.TestCase):
 
     def test_simple_data2(self):
         print("test data spec 2")
-        testDataSpec2 = (datagen.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
-                                              partitions=4)
-                        .withSchema(schema)
-                        .withIdOutput()
-                        .withColumnSpec("date", percent_nulls=10.0)
-                        .withColumnSpecs(patterns="n.*", match_types=StringType(),
+        testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
+                                          partitions=self.partitions_requested)
+                         .withSchema(schema)
+                         .withIdOutput()
+                         .withColumnSpec("date", percent_nulls=10.0)
+                         .withColumnSpecs(patterns="n.*", match_types=StringType(),
                                         percent_nulls=10.0, min=1, max=9, step=2)
-                        .withColumnSpecs(patterns="n.*", match_types=IntegerType(),
+                         .withColumnSpecs(patterns="n.*", match_types=IntegerType(),
                                         percent_nulls=10.0, min=1, max=200, step=-2)
-                        .withColumnSpec("email", template=r'\\w.\\w@\\w.com|\\w@\\w.co.u\\k')
-                        .withColumnSpec("ip_addr", template=r'\\n.\\n.\\n.\\n')
-                        .withColumnSpec("phone", template=r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd')
-                        )
+                         .withColumnSpec("email", template=r'\\w.\\w@\\w.com|\\w@\\w.co.u\\k')
+                         .withColumnSpec("ip_addr", template=r'\\n.\\n.\\n.\\n')
+                         .withColumnSpec("phone", template=r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd')
+                         )
 
         testDataSpec2.build().show()
+
+    def test_iltext1(self):
+        print("test data spec 2")
+        testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
+                                          partitions=self.partitions_requested)
+                         .withSchema(schema)
+                         .withIdOutput()
+                         .withColumnSpec("phone", text=ILText(words=(2,6)))
+                         )
+
+        testDataSpec2.build().select("id", "phone").show()
+
+    def test_iltext2(self):
+        print("test data spec 2")
+        testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
+                                          partitions=self.partitions_requested)
+                         .withSchema(schema)
+                         .withIdOutput()
+                         .withColumnSpec("phone", text=ILText(paragraphs=(2,6)))
+                         )
+
+        testDataSpec2.build().select("id", "phone").show()
+
+    def test_iltext3(self):
+        print("test data spec 2")
+        testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
+                                          partitions=self.partitions_requested)
+                         .withSchema(schema)
+                         .withIdOutput()
+                         .withColumnSpec("phone", text=ILText(sentences=(2,6)))
+                         )
+
+        testDataSpec2.build().select("id", "phone").show()
+
+    def test_iltext4a(self):
+        print("test data spec 2")
+        testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
+                                          partitions=self.partitions_requested,
+                                          use_pandas=True, pandas_udf_batch_size=300)
+                         .withSchema(schema)
+                         .withIdOutput()
+                         .withColumnSpec("phone", text=ILText(paragraphs=(1,4), sentences=(2,6)))
+                         )
+
+        testDataSpec2.build().select("id", "phone").show(20, truncate=False)
+
+    def test_iltext4b(self):
+        print("test data spec 2")
+        testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
+                                          partitions=self.partitions_requested, use_pandas=False)
+                         .withSchema(schema)
+                         .withIdOutput()
+                         .withColumnSpec("phone", text=ILText(paragraphs=(1,4), sentences=(2,6)))
+                         )
+
+        testDataSpec2.build().select("id", "phone").show(20, truncate=False)
+
+    def test_iltext5(self):
+        print("test data spec 2")
+        testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
+                                          partitions=self.partitions_requested)
+                         .withSchema(schema)
+                         .withIdOutput()
+                         .withColumnSpec("phone", text=ILText(paragraphs=(1,4), words=(3,12)))
+                         )
+
+        testDataSpec2.build().select("id", "phone").show()
+
+    def test_iltext6(self):
+        print("test data spec 2")
+        testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
+                                          partitions=self.partitions_requested)
+                         .withSchema(schema)
+                         .withIdOutput()
+                         .withColumnSpec("phone", text=ILText(paragraphs=(1,4), sentences=(2, 8), words=(3,12)))
+                         )
+
+        testDataSpec2.build().select("id", "phone").show()
+
 
 
 

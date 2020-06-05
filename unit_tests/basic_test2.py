@@ -1,5 +1,5 @@
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
-import databrickslabs_testdatagenerator as datagen
+import databrickslabs_testdatagenerator as dg
 
 from pyspark.sql import SparkSession
 import unittest
@@ -31,7 +31,7 @@ class TestSimpleOperation(unittest.TestCase):
         print("setting up")
 
     def test_analyzer(self):
-        testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
                       .build()
                       )
@@ -40,13 +40,13 @@ class TestSimpleOperation(unittest.TestCase):
         testDataDF.printSchema()
         # display(x3_output)
 
-        analyzer = datagen.DataAnalyzer(testDataDF)
+        analyzer = dg.DataAnalyzer(testDataDF)
 
         print("Summary;", analyzer.summarize())
 
     def test_complex_datagen(self):
-        testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
-                                              partitions=4)
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
+                                         partitions=4)
                         .withIdOutput()
                         .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)")
                         .withColumn("code1a", IntegerType(),unique_values=100)

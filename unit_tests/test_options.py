@@ -1,5 +1,5 @@
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
-import databrickslabs_testdatagenerator as datagen
+import databrickslabs_testdatagenerator as dg
 from pyspark.sql import SparkSession
 import unittest
 
@@ -17,7 +17,7 @@ class TestUseOfOptions(unittest.TestCase):
     def test_basic(self):
         # will have implied column `id` for ordinal of row
         testdata_generator = (
-            datagen.DataGenerator(sparkSession=spark, name="test_dataset1", rows=100000, partitions=20)
+            dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=100000, partitions=20)
             .withIdOutput()  # id column will be emitted in the output
             .withColumn("code1", "integer", min=1, max=20, step=1)
             .withColumn("code2", "integer", min=1, max=20, step=1, random=True)

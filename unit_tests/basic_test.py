@@ -1,5 +1,5 @@
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
-import databrickslabs_testdatagenerator as datagen
+import databrickslabs_testdatagenerator as dg
 from pyspark.sql import SparkSession
 import unittest
 from pyspark.sql import functions as F
@@ -26,8 +26,8 @@ class TestBasicOperation(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
-                                                  partitions=4, seed_method='hash_fieldname')
+        cls.testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
+                                             partitions=4, seed_method='hash_fieldname')
                             .withIdOutput()
                             .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
                                         numColumns=cls.column_count)
@@ -66,21 +66,21 @@ class TestBasicOperation(unittest.TestCase):
         df_copy1.show()
 
     def test_multiple_hash_methods(self):
-        ds1 = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
-                                              partitions=4, seed_method='hash_fieldname')
-                        .withIdOutput()
-                        .withColumn("code2", IntegerType(), min=0, max=10)
-                        .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-                        .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
-                        .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+        ds1 = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
+                                partitions=4, seed_method='hash_fieldname')
+               .withIdOutput()
+               .withColumn("code2", IntegerType(), min=0, max=10)
+               .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+               .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+               .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
 
-                        )
+               )
 
         df = ds1.build()
         self.assertEqual(df.count(), 1000)
 
-        ds2 = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
-                                     partitions=4, seed_method='fixed')
+        ds2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
+                                partitions=4, seed_method='fixed')
                .withIdOutput()
                .withColumn("code2", IntegerType(), min=0, max=10)
                .withColumn("code3", StringType(), values=['a', 'b', 'c'])
@@ -92,15 +92,15 @@ class TestBasicOperation(unittest.TestCase):
         df2 = ds2.build()
         self.assertEqual(df2.count(), 1000)
 
-        ds3= (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
-                                     partitions=4, seed_method=None)
-               .withIdOutput()
-               .withColumn("code2", IntegerType(), min=0, max=10)
-               .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-               .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
-               .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+        ds3= (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
+                               partitions=4, seed_method=None)
+              .withIdOutput()
+              .withColumn("code2", IntegerType(), min=0, max=10)
+              .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+              .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+              .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
 
-               )
+              )
 
         df3 = ds3.build()
         self.assertEqual(df3.count(), 1000)
@@ -198,7 +198,7 @@ class TestBasicOperation(unittest.TestCase):
     def test_partitions(self):
         id_partitions =11
         testdata_defn = (
-            datagen.DataGenerator( name="basic_dataset", rows=100000000, partitions=id_partitions, verbose=True)
+            dg.DataGenerator(name="basic_dataset", rows=100000000, partitions=id_partitions, verbose=True)
             .withColumn("code1", IntegerType(), min=1, max=20, step=1)
             .withColumn("code2", IntegerType(), max=1000, step=5)
             .withColumn("code3", IntegerType(), min=100, max=200, step=1, random=True)

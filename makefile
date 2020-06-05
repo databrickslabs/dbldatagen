@@ -87,6 +87,16 @@ dist: buildenv
 
 dist/dist_flag.txt: dist
 
+newbuild:
+	. `pwd`/build_env/bin/activate; bumpversion --config-file python/.bumpversion.cfg --allow-dirty part=build ; \
+	grep current python/.bumpversion.cfg ; \
+	grep -H "version" setup.py ; \
+	grep -H "Version" RELEASE_NOTES.md
+	git add -u
+	git status
+	#git commit -m "Latest release: $(CURRENT_VERSION)"
+	#git tag -a v$(CURRENT_VERSION) -m "Latest release: $(CURRENT_VERSION)"
+
 release:
 	git add .
 	git status

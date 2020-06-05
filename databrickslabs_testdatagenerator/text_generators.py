@@ -6,16 +6,18 @@
 This file defines various text generation classes and methods
 """
 
-from pyspark.sql.functions import col, lit, concat, rand, ceil, floor, round, array, expr, udf
+from pyspark.sql.functions import col, lit, concat, rand, ceil, floor, array, expr, udf
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
     StructType, StructField, TimestampType, DataType, DateType
 import math
 from datetime import date, datetime, timedelta
 from .utils import ensure
 import numpy as np
+import numpy.random as rnd
 import pandas as pd
 from pyspark.sql.functions import  pandas_udf
 
+import sys
 import random
 
 hex_lower = [ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
@@ -30,6 +32,7 @@ letters_all = letters_lower + letters_upper
 alnum_lower = letters_lower+digits_zero
 alnum_upper = letters_upper+digits_zero
 
+""" words for ipsum lorem based text generation"""
 words_lower = ['lorem', 'ipsum', 'dolor', 'sit', 'amet', 'consectetur', 'adipiscing', 'elit', 'sed', 'do',
                'eiusmod', 'tempor', 'incididunt', 'ut', 'labore', 'et', 'dolore', 'magna', 'aliqua', 'ut',
                'enim', 'ad', 'minim', 'veniam', 'quis', 'nostrud', 'exercitation', 'ullamco', 'laboris',
@@ -47,17 +50,26 @@ words_upper = ['LOREM', 'IPSUM', 'DOLOR', 'SIT', 'AMET', 'CONSECTETUR', 'ADIPISC
                'PROIDENT', 'SUNT', 'IN', 'CULPA', 'QUI', 'OFFICIA', 'DESERUNT', 'MOLLIT', 'ANIM', 'ID', 'EST', 'LABORUM']
 
 
+class TextGenerator(object):
+    def __init__(self):
+        pass
 
-
-class TemplateGenerator(object):
+class TemplateGenerator(TextGenerator):
     """This class handles the generation of text from templates"""
 
     def __init__(self, template):
+        assert template is not None
+        super().__init__()
+
         self.template = template
         template_str0 = self.template
         self.templates = [x.replace('$__sep__', '|') for x in template_str0.replace(r'\|', '$__sep__').split('|')]
 
+    def __repr__(self):
+        return f"TemplateGenerator(template='{self.template}')"
+
     def value_from_single_template(self, v, s):
+        """ Generate text from a single template """
         retval = []
 
         escape = False
@@ -102,7 +114,8 @@ class TemplateGenerator(object):
         output = "".join(retval)
         return output
 
-    def classic_value_from_template(self, v):
+    def classic_generate_text(self, v):
+        """entry point to use for classic udfs"""
         def value_from_template(original_value, alt_templates):
             num_alternatives = len(alt_templates)
 
@@ -112,7 +125,8 @@ class TemplateGenerator(object):
 
         return value_from_template(v, self.templates)
 
-    def pandas_value_from_template(self, v):
+    def pandas_generate_text(self, v):
+        """ entry point to use for pandas udfs"""
         def value_from_random_template(original_value, alt_templates):
             num_alternatives = len(alt_templates)
 
@@ -126,3 +140,166 @@ class TemplateGenerator(object):
         else:
             results = v.apply(lambda v, t: self.value_from_single_template(v, t), args=(self.templates[0],))
         return results
+
+
+class ILText(TextGenerator):
+    """ Class to generate Ipsum Lorem text paragraphs, words and sentences"""
+
+    @staticmethod
+    def getAsTupleOrElse(v, default_v, v_name):
+        """ get value v as tuple or return default_v is v is None"""
+        assert v is None or type(v) is int or type(v) is tuple, f"param {v_name} must be an int, a tuple or None"
+        assert type(default_v) is tuple and len(default_v) == 2, "default value must be tuple"
+
+        if type(v) is int:
+            return (v,v)
+        elif type(v) is tuple:
+            assert len(v) == 2
+            assert type(v[0]) is int and type(v[1]) is int
+            return v
+        else:
+            assert len(default_v) == 2
+            assert type(default_v[0]) is int and type(default_v[1]) is int
+            return default_v
+        return default_v
+
+    def __init__(self, paragraphs=None, sentences=None, words=None):
+        """
+        Initialize the ILText with text generation parameters
+
+        :param paragraphs: Number of paragraphs to generate. If tuple will generate random number in range
+        :param sentences:  Number of sentences to generate. If tuple will generate random number in tuple range
+        :param words:  Number of words per sentence to generate. If tuple, will generate random number in tuple range
+        """
+        assert paragraphs is not None or sentences is not None or words is not None
+        super().__init__()
+
+        self.paragraphs = self.getAsTupleOrElse(paragraphs, (1,1), "paragraphs")
+        self.words = self.getAsTupleOrElse(words, (2,12), "words")
+        self.sentences = self.getAsTupleOrElse(sentences, (1,1), "sentences")
+        self.shape= [self.paragraphs[1], self.sentences[1], self.words[1] ]
+
+        # values needed for the text generation
+        # numpy uses fixed sizes for strings , so compute whats needed
+        self.np_words=np.array(words_lower)
+        max_word_len = max([len(s) for s in words_lower])
+        sentence_usize = (max_word_len +1) * self.words[1]+10
+        paragraph_usize = sentence_usize * self.sentences[1] + 10
+        text_usize = paragraph_usize * self.paragraphs[1] + 15
+        self.sentence_dtype=f"U{sentence_usize}"
+        self.para_dtype=f"U{paragraph_usize}"
+        self.text_dtype=f"U{text_usize}"
+
+        # build array of min and max values for paragraphs, sentences and words
+        self.max_vals = np.array([ self.paragraphs[1], self.sentences[1],  self.words[1]])
+        self.min_vals = np.array([ self.paragraphs[0], self.sentences[0],  self.words[0]])
+
+        # compute the range and std dev (allowing for 3.5 x std dev either side of mean)
+        # we're generating truncated std normal values with mean +/- 3.5 x std_dev
+        # this will determine number of paragraphs , sentences and words
+
+        # so this will result in x paragraphs, each having y sentences, each having z words
+        # we could use for loops to generate the structure, but generating the max number of
+        # random numbers needed in numpy will be much faster and we'll just ignore what we dont need
+        self.range_vals=self.max_vals - self.min_vals
+        self.mean_vals = (self.range_vals / 2.0) + self.min_vals
+        self.std_vals = self.range_vals / 6.0
+
+
+    def __repr__(self):
+        return f"ILText(paragraphs={self.paragraphs}, sentences={self.sentences}, words={self.words})"
+
+    def random_gauss(self, bounds):
+        assert type(bounds) is tuple and len(bounds) == 2
+
+        min_v = bounds[0] * 1.0
+        max_v = bounds[1] * 1.0
+
+        if min_v == max_v:
+            return min_v
+
+        mean_v = (min_v+max_v) / 2
+        std_v = (mean_v - min_v) / 3.5
+        rnd_v = random.gauss(mean_v, std_v)
+        rnd_v = min(max(rnd_v, min_v), max_v)
+        return rnd_v
+
+    def generate_text(self, seed, default_seed):
+        """
+        generate text for seed based on configuration parameters.
+
+        As it uses numpy, repeatability is restricted depending on version of the runtime
+        :param seed: list or array-like set of seed values
+        :param default_seed: seed value to use if value of seed is None or null
+        :return: list or Pandas series of generated strings of same size as input seed
+        """
+        assert seed is not None
+        assert default_seed is not None
+
+        seed_size = len(seed) if type(seed) is list else seed.shape[0]
+        assert seed_size > 0
+
+        stats_shape= [ seed_size, self.paragraphs[1], self.sentences[1], 3]
+
+        # get number of paragraphs, number of sentences and number of words shaped to size of the
+        # word selections generated afterwards. We'll only use the first rows value for paragraphs and sentences
+        # but its faster to generate all rows than to generate a ragged array
+        para_stats = np.array(np.maximum(np.minimum(np.round(rnd.normal(self.mean_vals, self.std_vals, size= stats_shape)) ,
+                                           self.max_vals),
+                                self.min_vals),
+                              dtype='int')
+
+        # get offsets for random words
+        word_offsets = rnd.randint(self.np_words.size, size=(seed_size,self.paragraphs[1], self.sentences[1], self.words[1]))
+
+        # get words
+        candidate_words = self.np_words[word_offsets]
+
+        # add words per sentence to start of array and capitalize the first word
+        candidate_words2=np.concatenate((para_stats[:, :, :, 2:3],
+                        np.char.capitalize(candidate_words[:, :, :, 0:1]),
+                        candidate_words[:, :, :, 1:]), axis=3)
+
+        candidate_words3=np.array(candidate_words2, dtype=self.sentence_dtype)
+
+        # make sentence from each sentence dimension limiting the sentence to first n words
+        # reminder dimensions are (rows, paragraphs, sentences, words)
+        candidate_sentences=np.apply_along_axis(lambda x:  f"{x[0]}_"+" ".join(x[1:int(x[0])+1 ])+r"." , 3, candidate_words3)
+        candidate_sentences2 = np.concatenate((para_stats[:, :, 0, 1:2],
+                                           candidate_sentences), axis=2)
+        candidate_sentences3=np.array(candidate_sentences2, dtype=self.para_dtype)
+
+        candidate_paras=np.apply_along_axis(lambda x: " ".join(x[1:int(x[0])+1 ]) , 2, candidate_sentences3)
+        candidate_paras2 = np.concatenate((para_stats[:, 0, 0, 0:1],
+                                           candidate_paras), axis=1)
+        candidate_paras3=np.array(candidate_paras2, dtype=self.text_dtype)
+
+        candidate_text=np.apply_along_axis(lambda x: "\n\n".join(x[1:int(x[0])+1 ]) , 1, candidate_paras3)
+
+        # now dimensions are rows, paras, sentences
+
+        return [ str(x) for x in candidate_text ]
+        #return [ [ [":::".join(s) for s in p ] for p in r] for r in candidate_sentences ]
+
+    def classic_generate_text(self, seed):
+        """"
+        classic udf entry point for text generation
+
+        :param seed: seed value to control generation of random numbers
+        """
+        retval = [ int(round(self.random_gauss(self.paragraphs))),
+                   int(round(self.random_gauss(self.sentences))),
+                   int(round(self.random_gauss(self.words)))]
+
+
+        return self.generate_text([seed], 42)[0]
+
+    def pandas_generate_text(self, v):
+        """
+        pandas udf entry point for text generation
+
+        :param pd_seed_series: pandas series of seed values for random text generation
+        :return: Pandas series of generated strings
+        """
+        results=self.generate_text(v.to_numpy(), 42)
+        return pd.Series(results)

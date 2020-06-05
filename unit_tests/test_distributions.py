@@ -1,5 +1,5 @@
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
-import databrickslabs_testdatagenerator as datagen
+import databrickslabs_testdatagenerator as dg
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, expr, rand, lit
 import unittest
@@ -23,7 +23,7 @@ class TestDistributions(unittest.TestCase):
 
         # will have implied column `id` for ordinal of row
         cls.testdata_generator = (
-            datagen.DataGenerator(sparkSession=spark, name="test_dataset1", rows=cls.rows, partitions=4)
+            dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=cls.rows, partitions=4)
             .withIdOutput()  # id column will be emitted in the output
             .withColumn("code1", "integer", min=1, max=20, step=1)
             .withColumn("code4", "integer", min=1, max=40, step=1, random=True)

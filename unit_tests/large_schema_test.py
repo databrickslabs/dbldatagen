@@ -1,6 +1,6 @@
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType, DecimalType
 from pyspark.sql.types import BooleanType, DateType
-import databrickslabs_testdatagenerator as datagen
+import databrickslabs_testdatagenerator as dg
 from pyspark.sql import SparkSession
 import unittest
 
@@ -161,8 +161,8 @@ class TestLargeSchemaOperation(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
-                                                  partitions=4)
+        cls.testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
+                                             partitions=4)
                             .withSchema(schema)
                             .withIdOutput()
                             )
