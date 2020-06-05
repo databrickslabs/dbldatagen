@@ -77,6 +77,7 @@ else
 endif
 
 # Dist commands
+# TODO - use conda in future rather than virtual env for better compatibility to ensure we can setup correct version of python
 
 # wheel:
 
