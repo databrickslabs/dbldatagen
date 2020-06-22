@@ -18,8 +18,10 @@
 This module defines the package contents for the test data generator library distributions package
 """
 
-__all__ = ["distributions", "gamma", "beta"]
 
-from .distributions import DataDistribution, Normal, Exponential
+from .distributions import Normal, Exponential
+from .data_distribution import DataDistribution
 from .beta import Beta
 from .gamma import Gamma
+
+__all__ = ["distributions", "gamma", "beta", "data_distribution" ]

@@ -1,5 +1,7 @@
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
 import databrickslabs_testdatagenerator as dg
+from databrickslabs_testdatagenerator.distributions import *
+
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, expr, rand, lit
 import unittest
@@ -81,6 +83,10 @@ class TestDistributions(unittest.TestCase):
         # check that values are close
         for x, y in zip(percentages, desired_percentages):
             self.assertAlmostEqual(x, y, delta=float(x) / 5.0)
+
+    def test_basic_distribution(self):
+        base_dist=distributions.DataDistribution()
+        self.assertTrue(base_dist is not None)
 
 
 

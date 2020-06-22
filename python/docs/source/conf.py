@@ -11,10 +11,11 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 from databrickslabs_testdatagenerator import *
-#from databrickslabs_testdatagenerator.distributions import *
+from databrickslabs_testdatagenerator.distributions import *
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../../databrickslabs_testdatagenerator'))
+sys.path.insert(0, os.path.abspath('../../databrickslabs_testdatagenerator/distributions'))
 
 
 # -- Project information -----------------------------------------------------
@@ -35,7 +36,7 @@ release = "1.0" # databrickslabs_testdatagenerator.__version__
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
-    'sphinx.ext.autosummary',
+    #'sphinx.ext.autosummary',
     'sphinx.ext.viewcode',
     'numpydoc',  # handle NumPy documentation formatted docstrings. Needs to install
     'sphinx_markdown_builder'
@@ -62,7 +63,7 @@ master_doc = 'index'
 # -- Options for auto output -------------------------------------------------
 
 autoclass_content = 'class'
-autosummary_generate = True
+autosummary_generate = False
 
 add_module_names=False
 
@@ -100,5 +101,5 @@ html_theme_options= {
 
 numpydoc_show_class_members=True
 numpydoc_show_inherited_class_members=False
-numpydoc_class_members_toctree=True
+numpydoc_class_members_toctree=False
 numpydoc_attributes_as_param_list=True

@@ -17,7 +17,9 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/databrickslabs/data-generator",
-    packages=['databrickslabs_testdatagenerator'],
+    packages=['databrickslabs_testdatagenerator',
+              'databrickslabs_testdatagenerator.distributions'
+              ],
     install_requires=[
         'pyspark>=2.4.0',
         'numpy',
