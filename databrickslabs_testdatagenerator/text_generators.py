@@ -298,7 +298,7 @@ class ILText(TextGenerator):
         """
         pandas udf entry point for text generation
 
-        :param pd_seed_series: pandas series of seed values for random text generation
+        :param v: pandas series of seed values for random text generation
         :returns: Pandas series of generated strings
         """
         results=self.generate_text(v.to_numpy(), 42)
