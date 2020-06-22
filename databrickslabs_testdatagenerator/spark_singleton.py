@@ -10,6 +10,7 @@ class SparkSingleton:
     @classmethod
     def get_instance(cls):
         """Create a Spark instance for Datalib.
+
         :returns: A Spark instance
         """
 

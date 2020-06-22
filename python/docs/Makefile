@@ -20,10 +20,15 @@ clean: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 	@- rm "$(SOURCEDIR)/reference/api"/*.rst
 
+
 relnotes: Makefile
 	@echo "Copying release notes etc"
 	@mkdir -p source/relnotes
 	@cp ../../*.md source/relnotes/
+
+markdown: Makefile
+	@echo "Making md5 files"
+	@$(SPHINXBUILD) -M markdown "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 apidoc: Makefile
 	@echo "Making APIDOC"

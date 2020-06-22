@@ -18,3 +18,4 @@ pypandoc
 ipython==7.4.0
 pydata-sphinx-theme
 recommonmark
+sphinx-markdown-builder

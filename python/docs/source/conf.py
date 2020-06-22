@@ -36,8 +36,9 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
     'sphinx.ext.autosummary',
-    #'sphinx.ext.viewcode',
+    'sphinx.ext.viewcode',
     'numpydoc',  # handle NumPy documentation formatted docstrings. Needs to install
+    'sphinx_markdown_builder'
     #'matplotlib.sphinxext.plot_directive',  # For visualize plot result
     #'nbsphinx',  # Converts Jupyter Notebook to reStructuredText files for Sphinx.
     # For ipython directive in reStructuredText files.
@@ -50,7 +51,7 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '**.ipynb_checkpoints']
+exclude_patterns = ['_build', 'build/*', 'Thumbs.db', '.DS_Store', '**.ipynb_checkpoints']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
@@ -63,6 +64,7 @@ master_doc = 'index'
 autoclass_content = 'class'
 autosummary_generate = True
 
+add_module_names=False
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -83,6 +85,18 @@ html_static_path = ['_static']
 html_css_files = [
     'css/tdg.css',
 ]
+
+#html_sidebars={
+#    '**' : [ 'globaltoc.html']
+#}
+
+html_theme_options= {
+    "external_links": [
+            { "name": "Databricks Labs",
+              "url" : "https://github.com/databrickslabs"
+              }
+        ]
+}
 
 numpydoc_show_class_members=True
 numpydoc_show_inherited_class_members=False

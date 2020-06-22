@@ -11,20 +11,20 @@ class SchemaParser(object):
 
         Creates pyspark SQL datatype from string
     """
-    match_precision_only = re.compile("decimal\s*\(\s*([0-9]+)\s*\)")
-    match_precision_and_scale = re.compile("decimal\s*\(\s*([0-9]+)\s*,\s*([0-9]+)\s*\)")
+    _match_precision_only = re.compile("decimal\s*\(\s*([0-9]+)\s*\)")
+    _match_precision_and_scale = re.compile("decimal\s*\(\s*([0-9]+)\s*,\s*([0-9]+)\s*\)")
 
     @classmethod
     def parse_decimal(cls, str):
         """ parse a decimal specifier
 
-        :param str - decimal specifier string such as `decimal(19,4)`, `decimal` or `decimal(10)`
+        :param str: - decimal specifier string such as `decimal(19,4)`, `decimal` or `decimal(10)`
         """
-        m = cls.match_precision_only.search( str)
+        m = cls._match_precision_only.search(str)
         if m:
             return DecimalType(int(m.group(1)))
 
-        m = cls.match_precision_and_scale.search( str)
+        m = cls._match_precision_and_scale.search(str)
         if m:
             return DecimalType(int(m.group(1)), int(m.group(2)))
 

@@ -39,11 +39,11 @@ class DataGenerator:
     """
 
     # class vars
-    nextNameIndex = 0
-    untitledNamePrefix = "Untitled"
-    randomSeed = 42
+    _nextNameIndex = 0
+    _untitledNamePrefix = "Untitled"
+    _randomSeed = 42
 
-    allowed_keys = ["starting_id", "row_count", "output_id"]
+    _allowed_keys = ["starting_id", "row_count", "output_id"]
 
     def __init__(self, sparkSession=None, name=None, seed_method=None, generate_with_selects=True,
                  rows=1000000, starting_id=0, seed=None, partitions=None, verbose=False,
@@ -57,7 +57,7 @@ class DataGenerator:
         self.__schema__ = None
 
         self.seed_method = seed_method
-        self.seed = seed if seed is not None else self.randomSeed
+        self.seed = seed if seed is not None else self._randomSeed
 
         # if a seed was supplied but no seed method was applied, make the seed method "fixed"
         if seed is not None and seed_method is None:
@@ -116,20 +116,20 @@ class DataGenerator:
             Arguments:
             :param  seedVal: - new value for the random number seed
         """
-        cls.randomSeed = seedVal
+        cls._randomSeed = seedVal
 
     @classmethod
     def reset(cls):
         """ reset any state associated with the data """
-        cls.nextNameIndex = 0
+        cls._nextNameIndex = 0
 
     @classmethod
     def generateName(cls):
         """ get a name for the data set
             Uses the untitled name prefix and nextNameIndex to generate a dummy dataset name
         """
-        cls.nextNameIndex += 1
-        newName = (cls.untitledNamePrefix + '_' + str(cls.nextNameIndex))
+        cls._nextNameIndex += 1
+        newName = (cls._untitledNamePrefix + '_' + str(cls._nextNameIndex))
         return newName
 
     def printVerbose(self, *args):
@@ -154,10 +154,12 @@ class DataGenerator:
         return new_copy
 
     def mark_for_replan(self):
+        """Mark that build plan needs to be regenerated"""
         self.build_plan_computed = False
 
 
     def explain(self):
+        """Explain the test data generation process"""
         if not self.build_plan_computed:
             self.compute_build_plan()
 
@@ -191,7 +193,7 @@ class DataGenerator:
 
     def option(self, option_key, option_value):
         """ set option to option value for later processing"""
-        ensure(option_key in self.allowed_keys)
+        ensure(option_key in self._allowed_keys)
         self._options[option_key] = option_value
         self.mark_for_replan()
         return self
@@ -230,14 +232,15 @@ class DataGenerator:
                                                               self.rowCount,
                                                               self.partitions)
 
-    def checkFieldList(self):
+    def _checkFieldList(self):
+        """Check field list for common errors"""
         ensure(self.inferredSchemaFields is not None, "schemaFields should be non-empty")
         ensure(type(self.inferredSchemaFields) is list, "schemaFields should be list")
 
     @property
     def schemaFields(self):
         """ get list of schema fields for final output schema """
-        self.checkFieldList()
+        self._checkFieldList()
         return [fd for fd in self.inferredSchemaFields if not self.columnSpecsByName[fd.name].isFieldOmitted]
 
     @property
@@ -248,7 +251,7 @@ class DataGenerator:
     @property
     def inferredSchema(self):
         """ infer spark interim schema definition from the field specifications"""
-        self.checkFieldList()
+        self._checkFieldList()
         return StructType(self.inferredSchemaFields)
 
     def __getitem__(self, key):
@@ -274,6 +277,10 @@ class DataGenerator:
 
     @staticmethod
     def flatten(l):
+        """ flatten list
+
+        :param l: list to flatten
+        """
         return [item for sublist in l for item in sublist]
 
     def getOutputColumnNames(self):
@@ -415,7 +422,7 @@ class DataGenerator:
                                            base_column=base_column,
                                            implicit=implicit,
                                            omit=omit,
-                                           random_seed=self.randomSeed,
+                                           random_seed=self._randomSeed,
                                            random_seed_method=self.seed_method,
                                            nullable=nullable, **kwargs)
         self.columnSpecsByName[colName] = column_spec
@@ -468,7 +475,7 @@ class DataGenerator:
 
         return df1
 
-    def pp_list(self, alist, msg=""):
+    def _pp_list(self, alist, msg=""):
         print(msg)
         l = len(alist)
         for x in alist:
@@ -607,6 +614,7 @@ class DataGenerator:
         return df1
 
     def sqlTypeFromSparkType(self, dt):
+        """Get sql type for spark type"""
         return dt.simpleString()
 
     def scriptTable(self, name=None, location=None,table_format="delta"):

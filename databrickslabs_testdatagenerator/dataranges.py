@@ -20,12 +20,15 @@ class NRange(object):
         return "NRange({}, {}, {})".format(self.min, self.max, self.step)
 
     def is_empty(self):
+        """Check if object is empty (i.e all instance vars of note are `None`"""
         return self.min is None and self.max is None and self.step is None
 
     def is_fully_populated(self):
+        """Check is all instance vars are populated"""
         return self.min is not None and self.max is not None and self.step is not None
 
     def _adjust_for_coltype(self, ctype):
+        """ Adjust default values for column output type"""
         if ctype.typeName() == 'decimal':
             if self.min is None:
                 self.min = 0.0
@@ -39,17 +42,20 @@ class NRange(object):
             assert self.max <= 256
 
     def getDiscreteRange(self):
+        """Convert range to discrete range"""
         if type(self.min) is int and type(self.max) is int and self.step == 1:
             return (self.max - self.min)
         else:
             return (self.max - self.min) * float(1.0 / self.step)
 
     def getContinuousRange(self):
+        """Convert range to continuous range"""
         return (self.max - self.min) * float(1.0)
 
 
 
 class DateRange(object):
+    """Class to represent Date range"""
 
     def __init__(self, begin, end, interval=None, datetime_format="%Y-%m-%d %H:%M:%S"):
         assert begin is not None
@@ -68,6 +74,7 @@ class DateRange(object):
 
     @classmethod
     def parseInterval(cls, interval_str):
+        """Parse interval from string"""
         assert interval_str is not None
         results = []
         for kv in interval_str.split(","):
@@ -91,11 +98,14 @@ class DateRange(object):
         return math.floor(ni1)
 
     def is_fully_populated(self):
+        """Check if min, max and step are specified """
         return self.min is not None and self.max is not None and self.step is not None
 
     def _adjust_for_coltype(self, ctype):
+        """ adjust the range for the column output type"""
         pass
 
     def getDiscreteRange(self):
+        """ Divide continuous range into discrete intervals"""
         return (self.max - self.min) * float(1.0 / self.step)
 
