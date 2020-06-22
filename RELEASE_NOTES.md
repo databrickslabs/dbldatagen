@@ -4,4 +4,4 @@
 
 ### Version 0.9.05-dev7
 #### Features
-* Release notes to be added here
+* Added HTML help - use `make docs` to create it
