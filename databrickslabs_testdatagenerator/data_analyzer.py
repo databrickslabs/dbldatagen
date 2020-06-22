@@ -15,8 +15,8 @@ class DataAnalyzer:
 
     def __init__(self, df, sparkSession=None):
         """ Constructor:
-        name is name of data set
-        rows = amount of rows to generate
+        :param name: name is name of data set
+        :param rows: rows = amount of rows to generate
         seed = seed for random number generator
         partitions = number of partitions to generate
         """

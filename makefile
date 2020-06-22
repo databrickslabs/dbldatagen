@@ -42,6 +42,9 @@ clean_buildenv:
 	@python3 -m venv build_env
 	@. build_env/bin/activate; pip install -r python/require.txt
 
+docs: install
+	@echo "$(OK_COLOR)=> Creating docs ...$(NO_COLOR)"
+	@. build_env/bin/activate; cd python/docs && make docs
 
 
 # Tests

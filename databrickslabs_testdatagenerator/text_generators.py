@@ -231,7 +231,7 @@ class ILText(TextGenerator):
         As it uses numpy, repeatability is restricted depending on version of the runtime
         :param seed: list or array-like set of seed values
         :param default_seed: seed value to use if value of seed is None or null
-        :return: list or Pandas series of generated strings of same size as input seed
+        :returns: list or Pandas series of generated strings of same size as input seed
         """
         assert seed is not None
         assert default_seed is not None
@@ -299,7 +299,7 @@ class ILText(TextGenerator):
         pandas udf entry point for text generation
 
         :param pd_seed_series: pandas series of seed values for random text generation
-        :return: Pandas series of generated strings
+        :returns: Pandas series of generated strings
         """
         results=self.generate_text(v.to_numpy(), 42)
         return pd.Series(results)

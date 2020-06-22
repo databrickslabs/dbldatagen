@@ -21,7 +21,22 @@ import copy
 
 
 class DataGenerator:
-    """ Main Class for test data set generation """
+    """ Main Class for test data set generation
+
+    This class acts as the entry point to all test data generation activities.
+
+    :param sparkSession: spark Session object to use
+    :param name: is name of data set
+    :param seed_method: = seed method for random numbers - either None, 'fixed', 'hash_fieldname'
+    :param generate_with_selects: = if `True`, optimize datae generation with selects, otherwise use `withColumn`
+    :param rows: = amount of rows to generate
+    :param starting_id: = starting id for generated id column
+    :param seed: = seed for random number generator
+    :param partitions: = number of partitions to generate
+    :param verbose: = if `True`, generate verbose output
+    :param use_pandas: = if `True`, use Pandas UDFs during test data generation
+    :param pandas_udf_batch_size: = UDF batch number of rows to pass via Apache Arrow to Pandas UDFs
+    """
 
     # class vars
     nextNameIndex = 0
@@ -29,6 +44,70 @@ class DataGenerator:
     randomSeed = 42
 
     allowed_keys = ["starting_id", "row_count", "output_id"]
+
+    def __init__(self, sparkSession=None, name=None, seed_method=None, generate_with_selects=True,
+                 rows=1000000, starting_id=0, seed=None, partitions=None, verbose=False,
+                 use_pandas=True, pandas_udf_batch_size=None):
+        """ Constructor for data generator object """
+
+        self.verbose = verbose
+        self.name = name if name is not None else self.generateName()
+        self.rowCount = rows
+        self.starting_id = starting_id
+        self.__schema__ = None
+
+        self.seed_method = seed_method
+        self.seed = seed if seed is not None else self.randomSeed
+
+        # if a seed was supplied but no seed method was applied, make the seed method "fixed"
+        if seed is not None and seed_method is None:
+            self.seed_method = "fixed"
+
+        self.columnSpecsByName = {}
+        self.allColumnSpecs = []
+        self.build_plan = []
+        self.execution_history = []
+        self._options = {}
+        self._build_order = []
+        self.inferredSchemaFields = []
+        self.partitions = partitions if partitions is not None else 10
+        self.build_plan_computed = False
+        self.withColumn("id", LongType(), nullable=False, implicit=True, omit=True)
+        self.generateWithSelects = generate_with_selects
+        self.use_pandas = use_pandas
+        self.pandas_udf_batch_size = pandas_udf_batch_size
+
+        if sparkSession is None:
+            sparkSession = SparkSingleton.get_instance()
+
+        assert sparkSession is not None, "The spark session attribute must be initialized"
+
+        self.sparkSession = sparkSession
+        if sparkSession is None:
+            raise DataGenError("""Spark session not initialized
+
+            The spark session attribute must be initialized in the DataGenerator initialization
+
+            i.e DataGenerator(sparkSession=spark, name="test", ...)
+            """)
+
+        # set up use of pandas udfs if necessary
+        assert pandas_udf_batch_size is None or type(pandas_udf_batch_size) is int, \
+            "If pandas_batch_size is specified, it must be an integer"
+        if self.use_pandas:
+            print("*** using pandas udf for custom functions ***")
+            print("Spark version:", self.sparkSession.version)
+            if str(self.sparkSession.version).startswith("3"):
+                print("Using spark 3.x")
+                self.sparkSession.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
+            else:
+                self.sparkSession.conf.set("spark.sql.execution.arrow.enabled", "true")
+
+            if self.pandas_udf_batch_size is not None:
+                self.sparkSession.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", self.pandas_udf_batch_size)
+
+        if seed_method is not None and seed_method != "fixed" and seed_method != "hash_fieldname":
+            raise DataGenError("""seed_method should be None, 'fixed' or 'hash_fieldname' """)
 
     @classmethod
     def seed(cls, seedVal):
@@ -58,71 +137,6 @@ class DataGenerator:
         if self.verbose:
             print("data generator:", *args)
 
-    def __init__(self, sparkSession=None, name=None, seed_method=None, generate_with_selects=True,
-                 rows=1000000, starting_id=0, seed=None, partitions=None, verbose=False,
-                 use_pandas=True, pandas_udf_batch_size=None):
-        """ Constructor:
-        :param name: is name of data set
-        :param rows: = amount of rows to generate
-        :param starting_id: = starting id for generated id column
-        :param seed: = seed for random number generator
-        :param seed_method: = seed method for random numbers - either None, 'fixed', 'hash_fieldname'
-        :param partitions: = number of partitions to generate
-        :param verbose: = if `True`, generate verbose output
-        """
-        self.verbose = verbose
-        self.name = name if name is not None else self.generateName()
-        self.rowCount = rows
-        self.starting_id = starting_id
-        self.__schema__ = None
-
-        self.seed_method = seed_method
-        self.seed = seed if seed is not None else self.randomSeed
-
-        # if a seed was supplied but no seed method was applied, make the seed method "fixed"
-        if seed is not None and seed_method is None:
-            self.seed_method="fixed"
-
-        self.columnSpecsByName = {}
-        self.allColumnSpecs = []
-        self.build_plan = []
-        self.execution_history = []
-        self._options = {}
-        self._build_order = []
-        self.inferredSchemaFields = []
-        self.partitions = partitions if partitions is not None else 10
-        self.build_plan_computed = False
-        self.withColumn("id", LongType(), nullable=False, implicit=True, omit=True)
-        self.generateWithSelects = generate_with_selects
-        self.use_pandas=use_pandas
-        self.pandas_udf_batch_size = pandas_udf_batch_size
-
-        if sparkSession is None:
-            sparkSession = SparkSingleton.get_instance()
-
-        assert sparkSession is not None, "The spark session attribute must be initialized"
-
-        self.sparkSession = sparkSession
-        if sparkSession is None:
-            raise DataGenError("""Spark session not initialized
-            
-            The spark session attribute must be initialized in the DataGenerator initialization
-            
-            i.e DataGenerator(sparkSession=spark, name="test", ...)
-            """)
-
-        # set up use of pandas udfs if necessary
-        assert pandas_udf_batch_size is None or type(pandas_udf_batch_size) is int, \
-                "If pandas_batch_size is specified, it must be an integer"
-        if self.use_pandas:
-            print("*** using pandas udf for custom functions ***")
-            self.sparkSession.conf.set("spark.sql.execution.arrow.enabled", "true")
-
-            if self.pandas_udf_batch_size is not None:
-                self.sparkSession.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", self.pandas_udf_batch_size)
-
-        if seed_method is not None and seed_method != "fixed" and seed_method != "hash_fieldname":
-            raise DataGenError("""seed_method should be None, 'fixed' or 'hash_fieldname' """)
 
     def clone(self):
         """Make a clone of the data spec via deep copy preserving same spark session"""
@@ -505,7 +519,7 @@ class DataGenerator:
         for x1 in self._build_order:
             for x in x1:
                 cs = self.columnSpecsByName[x]
-                self.build_plan.append(cs.getPlan())
+                self.build_plan.append(cs.getPlanEntry())
 
         self.build_plan_computed=True
         return self

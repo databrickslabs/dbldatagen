@@ -8,6 +8,7 @@ from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, Doub
 
 class NRange(object):
     """ Ranged numeric interval representing the interval min .. max inclusive"""
+
     def __init__(self, min=None, max=None, step=None, until=None):
         assert until is None if max is not None else True,"Only one of max or until can be specified"
         assert max is None if until is not None else True,"Only one of max or until can be specified"
@@ -50,16 +51,6 @@ class NRange(object):
 
 class DateRange(object):
 
-    @classmethod
-    def parseInterval(cls, interval_str):
-        assert interval_str is not None
-        results = []
-        for kv in interval_str.split(","):
-            key, value = kv.split('=')
-            results.append("'{}':{}".format(key, value))
-
-        return eval("{{ {}  }} ".format(",".join(results)))
-
     def __init__(self, begin, end, interval=None, datetime_format="%Y-%m-%d %H:%M:%S"):
         assert begin is not None
         assert end is not None
@@ -74,6 +65,16 @@ class DateRange(object):
         self.max = (self.min +self.interval.total_seconds()
                * self.computeTimestampIntervals(self.begin, self.end, self.interval))
         self.step = self.interval.total_seconds()
+
+    @classmethod
+    def parseInterval(cls, interval_str):
+        assert interval_str is not None
+        results = []
+        for kv in interval_str.split(","):
+            key, value = kv.split('=')
+            results.append("'{}':{}".format(key, value))
+
+        return eval("{{ {}  }} ".format(",".join(results)))
 
     def __str__(self):
         return "DateRange({},{},{} == {}, {}, {})".format(self.begin, self.end, self.interval,

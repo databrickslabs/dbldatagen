@@ -5,7 +5,7 @@
 """
 This module defines the version information for the test data generator library
 
-Management of version identiifiers for releases uses the bumpversion python package
+Management of version identifiers for releases uses the bumpversion python package
 which supports automatic modification of files when the version labels need to be modified
 
 See: https://pypi.org/project/bumpversion/

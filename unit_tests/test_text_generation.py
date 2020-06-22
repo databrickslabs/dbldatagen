@@ -94,6 +94,7 @@ class TestTextGeneration(unittest.TestCase):
 
         testDataSpec2.build().show()
 
+    @unittest.skip("not yet finalized")
     def test_iltext1(self):
         print("test data spec 2")
         testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
@@ -105,6 +106,7 @@ class TestTextGeneration(unittest.TestCase):
 
         testDataSpec2.build().select("id", "phone").show()
 
+    @unittest.skip("not yet finalized")
     def test_iltext2(self):
         print("test data spec 2")
         testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
@@ -116,6 +118,7 @@ class TestTextGeneration(unittest.TestCase):
 
         testDataSpec2.build().select("id", "phone").show()
 
+    @unittest.skip("not yet finalized")
     def test_iltext3(self):
         print("test data spec 2")
         testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
@@ -127,6 +130,7 @@ class TestTextGeneration(unittest.TestCase):
 
         testDataSpec2.build().select("id", "phone").show()
 
+    @unittest.skip("not yet finalized")
     def test_iltext4a(self):
         print("test data spec 2")
         testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
@@ -150,6 +154,7 @@ class TestTextGeneration(unittest.TestCase):
 
         testDataSpec2.build().select("id", "phone").show(20, truncate=False)
 
+    @unittest.skip("not yet finalized")
     def test_iltext5(self):
         print("test data spec 2")
         testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
@@ -161,6 +166,7 @@ class TestTextGeneration(unittest.TestCase):
 
         testDataSpec2.build().select("id", "phone").show()
 
+    @unittest.skip("not yet finalized")
     def test_iltext6(self):
         print("test data spec 2")
         testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,

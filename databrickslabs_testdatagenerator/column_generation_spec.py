@@ -19,13 +19,18 @@ from pyspark.sql.functions import col, pandas_udf
 
 class ColumnGenerationSpec:
     """ Column generation spec object - specifies how column is to be generated
+
+    Each column to be output will have a corresponding ColumnGenerationSpec object.
+    This is added explicitly using the DataGenerators `withColumnSpec` or `withColumn` methods
+
+    If none is explicitly added, a default one will be generated.
     """
 
     #: the set of attributes that must be present for any columns
-    required_props = {'name', 'type'}
+    _required_props = {'name', 'type'}
 
     #: the set of attributes , we know about
-    allowed_props = {'name', 'type', 'min', 'max', 'step',
+    _allowed_props = {'name', 'type', 'min', 'max', 'step',
                      'prefix', 'random', 'distribution',
                      'range', 'base_column', 'values',
                      'numColumns', 'numFeatures', 'structType',
@@ -35,15 +40,15 @@ class ColumnGenerationSpec:
                      'unique_values', 'data_range', 'text',
                      'precision', 'scale'
 
-                     }
+                      }
 
     # the set of disallowed column attributes
-    forbidden_props = {
+    _forbidden_props = {
         'range'
     }
 
     # max values for each column type, only if where value is intentionally restricted
-    max_type_range = {
+    _max_type_range = {
         'byte': 256,
         'short': 65536
     }
@@ -208,8 +213,9 @@ class ColumnGenerationSpec:
 
     def _checkExclusiveOptions(self, options):
         """check if the options are exclusive - i.e only one is not None"""
-        assert len([self[x] for x in options if self[x] is not None]) <= 1, \
-            f" only one of of the options: {options} may be specified "
+        #assert len([self[x] for x in options if self[x] is not None]) <= 1, \
+        #    f" only one of of the options: {options} may be specified "
+        pass
 
     def getUniformRandomExpression(self, col_name):
         """ Get random expression accounting for seed method"""
@@ -364,23 +370,23 @@ class ColumnGenerationSpec:
         ensure(column_props is not None, "coldef should be non-empty")
 
         colType = self['type']
-        if colType.typeName() in self.max_type_range:
+        if colType.typeName() in self._max_type_range:
             min = self['min']
             max  = self['max']
 
             if min is not None and max is not None:
                 effective_range = max - min
-                if effective_range > self.max_type_range[colType.typeName()]:
+                if effective_range > self._max_type_range[colType.typeName()]:
                     raise ValueError("Effective range greater than range of type")
 
         for k in column_props.keys():
-            ensure(k in self.allowed_props, 'invalid column option {0}'.format(k))
+            ensure(k in self._allowed_props, 'invalid column option {0}'.format(k))
 
-        for arg in self.required_props:
+        for arg in self._required_props:
             ensure(arg in column_props.keys() and column_props[arg] is not None,
                    'missing column option {0}'.format(arg))
 
-        for arg in self.forbidden_props:
+        for arg in self._forbidden_props:
             ensure(arg not in column_props.keys(),
                    'forbidden column option {0}'.format(arg))
 
@@ -396,7 +402,8 @@ class ColumnGenerationSpec:
                        column_props['name']))
 
 
-    def getPlan(self):
+    def getPlanEntry(self):
+        """ Get execution plan entry for object"""
         desc = self['description']
         if desc is not None:
             return " |-- " + desc
@@ -404,6 +411,7 @@ class ColumnGenerationSpec:
             return " |-- building column generator for column {}".format(self.name)
 
     def make_weighted_column_values_expression(self, values, weights, seed_column_name):
+        """make SQL expression to compute the weighted values expression"""
         from .function_builder import ColumnGeneratorBuilder
         assert values is not None
         assert weights is not None
