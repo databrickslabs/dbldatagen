@@ -72,7 +72,7 @@ class TestPandasIntegration(unittest.TestCase):
         # Convert the Spark DataFrame back to a Pandas DataFrame using Arrow
         df.select("*").show()
 
-    @unittest.skip("not yet finalized")
+    @unittest.skip("not yet debugged")
     def test_pandas_udf(self):
         utest_pandas = pandas_udf(test_pandas, returnType=StringType()).asNondeterministic()
         df = (spark.range(1000000)

@@ -1,17 +1,12 @@
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
-import databrickslabs_testdatagenerator as datagen
+import databrickslabs_testdatagenerator as dg
 from pyspark.sql import SparkSession
 import unittest
 from pyspark.sql import functions as F
 import logging
 from databrickslabs_testdatagenerator import ensure, mkBoundsList
 
-spark = SparkSession.builder \
-    .master("local[4]") \
-    .appName("spark unit tests") \
-    .config("spark.sql.warehouse.dir", "/tmp/spark-warehouse") \
-    .getOrCreate()
-
+spark = dg.SparkSingleton.get_local_instance("unit tests")
 
 class TestUtils(unittest.TestCase):
 

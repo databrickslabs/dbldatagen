@@ -4,6 +4,8 @@
 
 """
 This file defines the `DataGenError` classes and utility functions
+
+These are meant for internal use only
 """
 
 

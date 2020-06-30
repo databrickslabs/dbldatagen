@@ -144,11 +144,7 @@ StructField("isDeleted",BooleanType(),True)
 
 print("schema", schema)
 
-spark = SparkSession.builder \
-    .master("local[4]") \
-    .appName("spark unit tests") \
-    .config("spark.sql.warehouse.dir", "/tmp/spark-warehouse") \
-    .getOrCreate()
+spark = dg.SparkSingleton.get_local_instance("unit tests")
 
 # Test manipulation and generation of test data for a large schema
 class TestLargeSchemaOperation(unittest.TestCase):

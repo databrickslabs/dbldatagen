@@ -5,11 +5,7 @@ import unittest
 
 
 
-spark = SparkSession.builder \
-    .master("local[4]") \
-    .appName("spark unit tests") \
-    .config("spark.sql.warehouse.dir", "/tmp/spark-warehouse") \
-    .getOrCreate()
+spark = datagen.SparkSingleton.get_local_instance("unit tests")
 
 
 class TestStreaming(unittest.TestCase):

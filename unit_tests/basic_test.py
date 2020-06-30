@@ -6,12 +6,7 @@ from pyspark.sql import functions as F
 import logging
 
 
-spark = SparkSession.builder \
-    .master("local[4]") \
-    .appName("spark unit tests") \
-    .config("spark.sql.warehouse.dir", "/tmp/spark-warehouse") \
-    .getOrCreate()
-
+spark = dg.SparkSingleton.get_local_instance("basic tests")
 
 class TestBasicOperation(unittest.TestCase):
     testDataSpec = None

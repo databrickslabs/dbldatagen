@@ -19,14 +19,10 @@ schema = StructType([
 
 # global spark
 
-spark = SparkSession.builder \
-    .master("local[4]") \
-    .appName("spark unit tests") \
-    .config("spark.sql.warehouse.dir", "/tmp/spark-warehouse") \
-    .getOrCreate()
+spark = dg.SparkSingleton.get_local_instance("basic tests 2")
 
 
-class TestSimpleOperation(unittest.TestCase):
+class TestBasicOperation2(unittest.TestCase):
     def setUp(self):
         print("setting up")
 

@@ -86,8 +86,12 @@ endif
 
 dist: buildenv
 	@echo "$(OK_COLOR)=> building dist of wheel$(NO_COLOR)"
+	@- rm `pwd`/dist/*
 	@source `pwd`/build_env/bin/activate; python3 setup.py sdist bdist_wheel
 	@touch `pwd`/dist/dist_flag.txt
+	export NEW_WHEEL=`find ./dist -name "*.whl" -print`
+	@echo "new package is $(NEW_WHEEL)"
+
 
 dist/dist_flag.txt: dist
 

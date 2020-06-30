@@ -20,11 +20,18 @@
 This module defines the test data generator and supporting classes
 """
 
-__all__ = ["basic_test", "basic_test2", "test_columnGenerationSpec", "test_ranged_values_and_dates",
-           "test_options", "test_topological_sort", "test_weights", "unit_tests1",
+__all__ = ["basic_test", "basic_test2", "test_columnGenerationSpec",
+           "test_pandas_integration",
+           "test_distributions",
+           "test_ranged_values_and_dates",
+           "test_options",
+           "test_topological_sort",
            "large_schema_test", "test_schema_parser", "test_scripting", "test_text_generation",
-           "test_types", "unit_tests1", "test_pandas_integration",
-           "test_utils", "test_distributions"]
+           "unit_tests1",
+           "test_types",
+           "test_utils",
+           "test_weights", "unit_tests1"
+           ]
 
 from unit_tests.test_pandas_integration import TestPandasIntegration
 

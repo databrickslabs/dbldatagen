@@ -2,7 +2,7 @@ import unittest
 import databrickslabs_testdatagenerator as datagen
 
 
-class TestTopological_sort(unittest.TestCase):
+class TestTopologicalSort(unittest.TestCase):
 
     def test_sort(self):
         src = [

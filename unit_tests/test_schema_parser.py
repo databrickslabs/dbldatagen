@@ -2,17 +2,12 @@ from pyspark.sql.types import StructType, StructField, IntegerType, StringType, 
 from databrickslabs_testdatagenerator import SchemaParser
 from pyspark.sql import SparkSession
 import unittest
+import databrickslabs_testdatagenerator as dg
+
+spark = dg.SparkSingleton.get_local_instance("unit tests")
 
 
-
-spark = SparkSession.builder \
-    .master("local[4]") \
-    .appName("spark unit tests") \
-    .config("spark.sql.warehouse.dir", "/tmp/spark-warehouse") \
-    .getOrCreate()
-
-
-class TestBasicOperation(unittest.TestCase):
+class TestSchemaParser(unittest.TestCase):
 
     def test_type_parser(self):
         x_int = SchemaParser.columnTypeFromString("int")

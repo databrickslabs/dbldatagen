@@ -16,6 +16,10 @@
 
 """
 This module defines the package contents for the test data generator library
+
+The main entry point for any test data generation activities is the `DataGenerator` class.
+
+Most of the other classes are used for internal purposes only
 """
 
 __all__ = ["data_generator", "data_analyzer", "schema_parser", "dataranges",

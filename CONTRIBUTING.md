@@ -25,6 +25,8 @@ Run `make clean_buildenv` from the main project directory to set up your build e
 
 Run  `make clean dist` from the main project directory.
 
+Run  `make docs` from the main project directory to make the HTML documentation
+
 ## Running unit tests
 
 Run  `make install tests` from the main project directory to run the unit tests.

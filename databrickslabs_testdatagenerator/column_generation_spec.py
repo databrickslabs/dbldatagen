@@ -24,6 +24,11 @@ class ColumnGenerationSpec:
     This is added explicitly using the DataGenerators `withColumnSpec` or `withColumn` methods
 
     If none is explicitly added, a default one will be generated.
+
+    The full set of arguments to the class is more than the explicitly called out parameters as any
+    arguments that are not explictly called out can still be passed due to the `**kwargs` expression.
+
+    This class is meant for internal use only
     """
 
     #: the set of attributes that must be present for any columns
@@ -212,13 +217,19 @@ class ColumnGenerationSpec:
                 self.weighted_base_column = temp_name
 
     def _checkExclusiveOptions(self, options):
-        """check if the options are exclusive - i.e only one is not None"""
+        """check if the options are exclusive - i.e only one is not None
+
+        :param options: list of options that will be mutually exclusive
+        """
         #assert len([self[x] for x in options if self[x] is not None]) <= 1, \
         #    f" only one of of the options: {options} may be specified "
         pass
 
     def getUniformRandomExpression(self, col_name):
-        """ Get random expression accounting for seed method"""
+        """ Get random expression accounting for seed method
+
+        :returns: expression of ColDef form - i.e `lit`, `expr` etc
+        """
         assert col_name is not None
         if self.random_seed_method == "fixed":
             return expr("rand({})".format(self.random_seed))
@@ -229,7 +240,10 @@ class ColumnGenerationSpec:
             return rand()
 
     def getUniformRandomSQLExpression(self, col_name):
-        """ Get random SQL expression accounting for seed method"""
+        """ Get random SQL expression accounting for seed method
+
+        :returns: expression as a SQL string
+        """
         assert col_name is not None
         if self.random_seed_method == "fixed":
             assert self.random_seed is not None
@@ -248,7 +262,7 @@ class ColumnGenerationSpec:
         return self['weights'] is not None and self.values is not None
 
     def getNames(self):
-        """ get column names as list"""
+        """ get column names as list of strings"""
         numColumns = self.props.get('numColumns', 1)
         structType = self.props.get('structType', None)
 
@@ -258,7 +272,7 @@ class ColumnGenerationSpec:
             return [self.name]
 
     def getNamesAndTypes(self):
-        """ get column names as list"""
+        """ get column names as list of tules `(name, datatype)`"""
         numColumns = self.props.get('numColumns', 1)
         structType = self.props.get('structType', None)
 
@@ -269,7 +283,7 @@ class ColumnGenerationSpec:
 
 
     def keys(self):
-        """ Get the keys or field names """
+        """ Get the keys as list of strings """
         ensure(self.props is not None, "self.props should be non-empty")
         return self.props.keys()
 
@@ -280,13 +294,18 @@ class ColumnGenerationSpec:
 
     @property
     def isFieldOmitted(self):
-        """ check if this field should be omitted from the output"""
+        """ check if this field should be omitted from the output
+
+        If the field is omitted from the output, the field is available for use in expressions etc.
+        but dropped from the final set of fields
+        """
         return self.omit
 
     @property
     def baseColumn(self):
         """get the base column used to generate values for this column"""
         return self['base_column']
+
     @property
     def datatype(self):
         """get the Spark SQL data type used to generate values for this column"""
@@ -294,12 +313,18 @@ class ColumnGenerationSpec:
 
     @property
     def prefix(self):
-        """get the string prefix used to generate values for this column"""
+        """get the string prefix used to generate values for this column
+
+        When a string field is generated from this spec, the prefix is prepended to the generated string
+        """
         return self['prefix']
 
     @property
     def suffix(self):
-        """get the string suffix used to generate values for this column"""
+        """get the string suffix used to generate values for this column
+
+        When a string field is generated from this spec, the suffix is appended to the generated string
+        """
         return self['suffix']
 
     @property
@@ -326,36 +351,60 @@ class ColumnGenerationSpec:
 
     @property
     def expr(self):
-        """get the base column used to generate values for this column"""
+        """get the `expr` attributed used to generate values for this column"""
         return self['expr']
 
     @property
     def begin(self):
-        """get the base column used to generate values for this column"""
+        """get the `begin` attribute used to generate values for this column
+
+        For numeric columns, the range (min, max, step) is used to control data generation.
+        For date and time columns, the range (begin, end, interval) are used to control data generation
+        """
         return self['begin']
 
     @property
     def end(self):
-        """get the base column used to generate values for this column"""
+        """get the `end` attribute used to generate values for this column
+
+        For numeric columns, the range (min, max, step) is used to control data generation.
+        For date and time columns, the range (begin, end, interval) are used to control data generation
+        """
         return self['end']
 
     @property
     def interval(self):
-        """get the base column used to generate values for this column"""
+        """get the `interval` attribute used to generate values for this column
+
+        For numeric columns, the range (min, max, step) is used to control data generation.
+        For date and time columns, the range (begin, end, interval) are used to control data generation
+        """
         return self['interval']
 
     @property
     def numColumns(self):
-        """get the base column used to generate values for this column"""
+        """get the `numColumns` attribute used to generate values for this column
+
+        if a column is specified with the `numColumns` attribute, this is used to create multiple
+        copies of the column, named `colName1` .. `colNameN`
+        """
         return self['numColumns']
 
     @property
     def numFeatures(self):
-        """get the base column used to generate values for this column"""
+        """get the `numFeatures` attribute used to generate values for this column
+
+        if a column is specified with the `numFeatures` attribute, this is used to create multiple
+        copies of the column, combined into an array or feature vector
+        """
         return self['numFeatures']
 
     def structType(self):
-        """get the base column used to generate values for this column"""
+        """get the `structType` attribute used to generate values for this column
+
+        When a column spec is specified to generate multiple copies of the column, this controls whether
+        these are combined into an array etc
+        """
         return self['structType']
 
     def _getOrElse(self, key, default=None):

@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import unittest
 from databrickslabs_testdatagenerator import DataGenerator
+import databrickslabs_testdatagenerator as dg
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
 
 from pyspark.sql import SparkSession
@@ -21,12 +22,7 @@ schema = StructType([
 
 ])
 
-spark = SparkSession.builder \
-    .master("local[4]") \
-    .appName("spark unit tests") \
-    .config("spark.sql.warehouse.dir", "/tmp/spark-warehouse") \
-    .getOrCreate()
-
+spark = dg.SparkSingleton.get_local_instance("unit tests")
 
 # will have implied column `id` for ordinal of row
 

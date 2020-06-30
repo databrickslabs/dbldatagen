@@ -20,20 +20,37 @@ from pyspark.sql.functions import  pandas_udf
 import sys
 import random
 
-hex_lower = [ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
-hex_upper = [ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
-digits_non_zero = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
-digits_zero = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-letters_upper = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+#: list of hex digits for template generation
+_HEX_LOWER = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
+
+#: list of upper case hex digits for template generation
+_HEX_UPPER = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
+
+#: list of non-zero digits for template generation
+_DIGITS_NON_ZERO = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+
+#: list of digits for template generation
+_DIGITS_ZERO = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+
+#: list of uppercase letters for template generation
+_LETTERS_UPPER = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
                  'Q', 'R', 'T', 'S', 'U', 'V', 'W', 'X', 'Y', 'Z']
-letters_lower = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q',
+
+#: list of lowercase letters for template generation
+_LETTERS_LOWER = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q',
                  'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
-letters_all = letters_lower + letters_upper
-alnum_lower = letters_lower+digits_zero
-alnum_upper = letters_upper+digits_zero
+
+#: list of all letters uppercase and lowercase
+_LETTERS_ALL = _LETTERS_LOWER + _LETTERS_UPPER
+
+#: list of alphanumeric chars in lowercase
+_ALNUM_LOWER = _LETTERS_LOWER + _DIGITS_ZERO
+
+#: list of alphanumeric chars in uppercase
+_ALNUM_UPPER = _LETTERS_UPPER + _DIGITS_ZERO
 
 """ words for ipsum lorem based text generation"""
-words_lower = ['lorem', 'ipsum', 'dolor', 'sit', 'amet', 'consectetur', 'adipiscing', 'elit', 'sed', 'do',
+_WORDS_LOWER = ['lorem', 'ipsum', 'dolor', 'sit', 'amet', 'consectetur', 'adipiscing', 'elit', 'sed', 'do',
                'eiusmod', 'tempor', 'incididunt', 'ut', 'labore', 'et', 'dolore', 'magna', 'aliqua', 'ut',
                'enim', 'ad', 'minim', 'veniam', 'quis', 'nostrud', 'exercitation', 'ullamco', 'laboris',
                'nisi', 'ut', 'aliquip', 'ex', 'ea', 'commodo', 'consequat', 'duis', 'aute', 'irure', 'dolor',
@@ -41,7 +58,7 @@ words_lower = ['lorem', 'ipsum', 'dolor', 'sit', 'amet', 'consectetur', 'adipisc
                'nulla', 'pariatur', 'excepteur', 'sint', 'occaecat', 'cupidatat', 'non', 'proident', 'sunt',
                'in', 'culpa', 'qui', 'officia', 'deserunt', 'mollit', 'anim', 'id', 'est', 'laborum']
 
-words_upper = ['LOREM', 'IPSUM', 'DOLOR', 'SIT', 'AMET', 'CONSECTETUR', 'ADIPISCING', 'ELIT', 'SED', 'DO',
+_WORDS_UPPER = ['LOREM', 'IPSUM', 'DOLOR', 'SIT', 'AMET', 'CONSECTETUR', 'ADIPISCING', 'ELIT', 'SED', 'DO',
                'EIUSMOD', 'TEMPOR', 'INCIDIDUNT', 'UT', 'LABORE', 'ET', 'DOLORE', 'MAGNA', 'ALIQUA', 'UT',
                'ENIM', 'AD', 'MINIM', 'VENIAM', 'QUIS', 'NOSTRUD', 'EXERCITATION', 'ULLAMCO', 'LABORIS',
                'NISI', 'UT', 'ALIQUIP', 'EX', 'EA', 'COMMODO', 'CONSEQUAT', 'DUIS', 'AUTE', 'IRURE',
@@ -51,11 +68,15 @@ words_upper = ['LOREM', 'IPSUM', 'DOLOR', 'SIT', 'AMET', 'CONSECTETUR', 'ADIPISC
 
 
 class TextGenerator(object):
+    """ Base class for text generation classes"""
     def __init__(self):
         pass
 
 class TemplateGenerator(TextGenerator):
-    """This class handles the generation of text from templates"""
+    """This class handles the generation of text from templates
+
+    :param template: template string to use in text generation
+    """
 
     def __init__(self, template):
         assert template is not None
@@ -68,30 +89,35 @@ class TemplateGenerator(TextGenerator):
     def __repr__(self):
         return f"TemplateGenerator(template='{self.template}')"
 
-    def value_from_single_template(self, v, s):
-        """ Generate text from a single template """
+    def value_from_single_template(self, base_value, gen_template):
+        """ Generate text from a single template
+
+        :param base_value: underlying base value to seed template generation.
+          Ignored unless template outputs it
+        :param gen_template: template string to control text generation
+        """
         retval = []
 
         escape = False
-        for char in s:
+        for char in gen_template:
             if char == '\\':
                 escape = True
             elif char == 'x' and not escape:
-                retval.append(hex_lower[random.randint(0, 15)])
+                retval.append(_HEX_LOWER[random.randint(0, 15)])
             elif char == 'X' and not escape:
-                retval.append(hex_upper[random.randint(0, 15)])
+                retval.append(_HEX_UPPER[random.randint(0, 15)])
             elif char == 'd' and not escape:
-                retval.append(digits_zero[random.randint(0, 9)])
+                retval.append(_DIGITS_ZERO[random.randint(0, 9)])
             elif char == 'D' and not escape:
-                retval.append(digits_non_zero[random.randint(0, 8)])
+                retval.append(_DIGITS_NON_ZERO[random.randint(0, 8)])
             elif char == 'a' and not escape:
-                retval.append(letters_lower[random.randint(0, 25)])
+                retval.append(_LETTERS_LOWER[random.randint(0, 25)])
             elif char == 'A' and not escape:
-                retval.append(letters_upper[random.randint(0, 25)])
+                retval.append(_LETTERS_UPPER[random.randint(0, 25)])
             elif char == 'k' and not escape:
-                retval.append(alnum_lower[random.randint(0, 35)])
+                retval.append(_ALNUM_LOWER[random.randint(0, 35)])
             elif char == 'K' and not escape:
-                retval.append(alnum_upper[random.randint(0, 35)])
+                retval.append(_ALNUM_UPPER[random.randint(0, 35)])
             elif char == 'n' and escape:
                 retval.append(str(random.randint(0, 255)))
                 escape = False
@@ -99,13 +125,13 @@ class TemplateGenerator(TextGenerator):
                 retval.append(str(random.randint(0, 65535)))
                 escape = False
             elif char == 'W' and escape:
-                retval.append(words_upper[random.randint(0, len(words_upper)) - 1])
+                retval.append(_WORDS_UPPER[random.randint(0, len(_WORDS_UPPER)) - 1])
                 escape = False
             elif char == 'w' and escape:
-                retval.append(words_lower[random.randint(0, len(words_lower)) - 1])
+                retval.append(_WORDS_LOWER[random.randint(0, len(_WORDS_LOWER)) - 1])
                 escape = False
             elif char == 'v' and escape:
-                retval.append(str(v))
+                retval.append(str(base_value))
                 escape = False
             else:
                 retval.append(char)
@@ -143,7 +169,12 @@ class TemplateGenerator(TextGenerator):
 
 
 class ILText(TextGenerator):
-    """ Class to generate Ipsum Lorem text paragraphs, words and sentences"""
+    """ Class to generate Ipsum Lorem text paragraphs, words and sentences
+
+    :param paragraphs: Number of paragraphs to generate. If tuple will generate random number in range
+    :param sentences:  Number of sentences to generate. If tuple will generate random number in tuple range
+    :param words:  Number of words per sentence to generate. If tuple, will generate random number in tuple range
+    """
 
     @staticmethod
     def getAsTupleOrElse(v, default_v, v_name):
@@ -166,10 +197,6 @@ class ILText(TextGenerator):
     def __init__(self, paragraphs=None, sentences=None, words=None):
         """
         Initialize the ILText with text generation parameters
-
-        :param paragraphs: Number of paragraphs to generate. If tuple will generate random number in range
-        :param sentences:  Number of sentences to generate. If tuple will generate random number in tuple range
-        :param words:  Number of words per sentence to generate. If tuple, will generate random number in tuple range
         """
         assert paragraphs is not None or sentences is not None or words is not None
         super().__init__()
@@ -181,8 +208,8 @@ class ILText(TextGenerator):
 
         # values needed for the text generation
         # numpy uses fixed sizes for strings , so compute whats needed
-        self.np_words=np.array(words_lower)
-        max_word_len = max([len(s) for s in words_lower])
+        self.np_words=np.array(_WORDS_LOWER)
+        max_word_len = max([len(s) for s in _WORDS_LOWER])
         sentence_usize = (max_word_len +1) * self.words[1]+10
         paragraph_usize = sentence_usize * self.sentences[1] + 10
         text_usize = paragraph_usize * self.paragraphs[1] + 15
