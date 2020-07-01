@@ -92,6 +92,11 @@ dist: buildenv
 	export NEW_WHEEL=`find ./dist -name "*.whl" -print`
 	@echo "new package is $(NEW_WHEEL)"
 
+new_artifact: buildenv
+	@echo "$(OK_COLOR)=> committing new artifact$(NO_COLOR)"
+	- git rm --cached `pwd`/dist/"*.whl"
+	git add -f `pwd`/dist/*.whl
+
 
 dist/dist_flag.txt: dist
 
