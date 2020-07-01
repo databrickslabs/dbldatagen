@@ -291,7 +291,7 @@ class ILText(TextGenerator):
 
         # make sentence from each sentence dimension limiting the sentence to first n words
         # reminder dimensions are (rows, paragraphs, sentences, words)
-        candidate_sentences=np.apply_along_axis(lambda x:  f"{x[0]}_"+" ".join(x[1:int(x[0])+1 ])+r"." , 3, candidate_words3)
+        candidate_sentences=np.apply_along_axis(lambda x:  " ".join(x[1:int(x[0])+1 ])+r"." , 3, candidate_words3)
         candidate_sentences2 = np.concatenate((para_stats[:, :, 0, 1:2],
                                            candidate_sentences), axis=2)
         candidate_sentences3=np.array(candidate_sentences2, dtype=self.para_dtype)
