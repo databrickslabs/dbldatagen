@@ -463,14 +463,17 @@ class DataGenerator:
             if options is not None:
                 if "rowsPerSecond" not in options:
                     options['rowsPerSecond'] = 1
+                if "numPartitions" not in options:
+                    options['numPartitions'] = id_partitions
 
-                for k,v in options.items:
+                for k,v in options.items():
                     df1 = df1.option(k,v)
                 df1= df1.load().withColumnRenamed("value", "id")
             else:
                 df1 = ( df1.option("rowsPerSecond", 1)
                         .option("numPartitions", id_partitions)
                         .load()
+                        .withColumnRenamed("value", "id")
                         )
 
         return df1

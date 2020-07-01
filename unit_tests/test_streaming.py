@@ -1,109 +1,79 @@
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
-import databrickslabs_testdatagenerator as datagen
+import databrickslabs_testdatagenerator as dg
 from pyspark.sql import SparkSession
 import unittest
+import os
+import time
+import shutil
 
 
-
-spark = datagen.SparkSingleton.get_local_instance("unit tests")
+spark = dg.SparkSingleton.get_local_instance("streaming tests")
 
 
 class TestStreaming(unittest.TestCase):
-    row_count = 1000
+    row_count = 100000
     column_count = 10
+    time_to_run = 15
 
 
-    def compareTableScriptWithDataset(self, script, name,  df):
-        pass
+    def test_streaming(self):
+        time_now = int(round(time.time() * 1000))
+        base_dir ="/tmp/testdatagenerator_{}".format(time_now)
+        test_dir = os.path.join(base_dir, "data")
+        checkpoint_dir = os.path.join(base_dir, "checkpoint")
+        print(time_now, test_dir, checkpoint_dir)
 
-    def checkGeneratedScript(self, script, name):
-        self.assertIsNotNone(script, "script is None")
-        self.assertTrue(len(script.strip()) > 0, "empty script")
-        self.assertTrue(name in script, "name is not in script")
+        try:
+            os.makedirs(test_dir)
+            os.makedirs(checkpoint_dir)
 
-    def checkSchemaEquality(self, schema1, schema2):
-        # check schemas are the same
-        self.assertEqual(len(schema1.fields), len(schema2.fields), "schemas should have same numbers of fields")
+            testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count,
+                                                 partitions=4, seed_method='hash_fieldname')
+                                .withIdOutput()
+                                .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
+                                            numColumns=self.column_count)
+                                .withColumn("code1", IntegerType(), min=100, max=200)
+                                .withColumn("code2", IntegerType(), min=0, max=10)
+                                .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+                                .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+                                .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
 
-        for c1,c2 in zip(schema1.fields, schema2.fields):
-            self.assertEqual(c1.name, c2.name, msg="{} != {}".format(c1.name, c2.name))
-            self.assertEqual(c1.dataType, c2.dataType, msg="{}.datatype ({}) != {}.datatype ({})".format(
-                c1.name,c1.dataType, c2.name, c2.dataType))
+                                )
 
+            dfTestData = testDataSpec.build(withStreaming=True,
+                                            options={ 'rowsPerSecond': 5000})
 
-    def test_generate_table_script(self):
-        tbl_name = "scripted_table1"
-        spark.sql("drop table if exists {}".format(tbl_name))
+            (dfTestData
+             .writeStream
+             .format("parquet")
+             .outputMode("append")
+             .option("path", test_dir)
+             .option("checkpointLocation", checkpoint_dir)
+             .start())
 
-        testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count,
-                                                  partitions=4)
-                            .withIdOutput()
-                            .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
-                                        numColumns=self.column_count)
-                            .withColumn("code1", IntegerType(), min=100, max=200)
-                            .withColumn("code2", IntegerType(), min=0, max=10)
-                            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-                            .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
-                            .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+            start_time = time.time()
+            time.sleep(self.time_to_run)
 
-                            )
+            # note stopping the stream may produce exceptions - these can be ignored
+            recent_progress = []
+            for x in spark.streams.active:
+                recent_progress.append(x.recentProgress)
+                print(x)
+                x.stop()
 
-        creation_script = testDataSpec.scriptTable(name=tbl_name, table_format="parquet")
+            end_time = time.time()
 
-        self.checkGeneratedScript(creation_script, name=tbl_name)
+            # read newly written data
+            df2 = spark.read.format("parquet").load(test_dir)
 
-        print("====")
-        print("Table Creation Script:")
-        print(creation_script)
-        print("====")
+            new_data_rows = df2.count()
 
+            print("read {} rows from newly written data".format(new_data_rows))
+        finally:
+            shutil.rmtree(base_dir)
 
-        result1 = spark.sql(creation_script)
-        df_result = spark.sql("select * from {}".format(tbl_name))
+        print("*** Done ***")
 
-        dfTestData = testDataSpec.build().cache()
-
-        schema1 = df_result.schema
-        schema2 = dfTestData.schema
-
-        self.checkSchemaEquality(schema1, schema2)
-
-    def test_generate_table_script2(self):
-        tbl_name = "scripted_table1"
-        spark.sql("drop table if exists {}".format(tbl_name))
-
-        testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
-                                                  partitions=4)
-                            .withIdOutput()
-                            .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
-                                        numColumns=self.column_count)
-                            .withColumn("code1", IntegerType(), min=100, max=200)
-                            .withColumn("code2", IntegerType(), min=0, max=10)
-                            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-                            .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
-                            .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
-
-                            )
-
-        creation_script = testDataSpec.scriptTable(name=tbl_name, table_format="parquet", location="/tmp/test")
-
-        self.checkGeneratedScript(creation_script, name=tbl_name)
-        self.assertTrue("location" in creation_script, "location is not in script")
-
-        print("====")
-        print("Table Creation Script:")
-        print(creation_script)
-        print("====")
-
-
-        result1 = spark.sql(creation_script)
-        df_result = spark.sql("select * from {}".format(tbl_name))
-
-        dfTestData = testDataSpec.build().cache()
-
-        schema1 = df_result.schema
-        schema2 = dfTestData.schema
-
-        self.checkSchemaEquality(schema1, schema2)
+        print("elapsed time (seconds)", end_time - start_time)
 
 

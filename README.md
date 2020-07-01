@@ -44,6 +44,12 @@ release notes for library compatibility
 
 Run  `make clean dist` from the main project directory.
 
+## Creating the HTML documentation
+
+Run  `make docs` from the main project directory.
+
+The main html document will be in `./python/docs/docs/build/html/index.html`
+
 ## Running unit tests
 
 If using an evironment with multiple Python versions, make sure to use virtual env or similar to pick up correct python versions.
