@@ -28,7 +28,7 @@ used in other computations
  
 
 ## Project Support
-Please note that all projects in the /databrickslabs github account are provided for your exploration only, and are not formally supported by Databricks with Service Level Agreements (SLAs).  They are provided AS-IS and we do not make any guarantees of any kind.  Please do not submit a support ticket relating to any issues arising from the use of these projects.
+Please note that all projects in the `databrickslabs` github space are provided for your exploration only, and are not formally supported by Databricks with Service Level Agreements (SLAs).  They are provided AS-IS and we do not make any guarantees of any kind.  Please do not submit a support ticket relating to any issues arising from the use of these projects.
 
 Any issues discovered through the use of this project should be filed as GitHub Issues on the Repo.  They will be reviewed as time permits, but there are no formal SLAs for support.
 
@@ -48,11 +48,11 @@ Run  `make clean dist` from the main project directory.
 
 Run  `make docs` from the main project directory.
 
-The main html document will be in `./python/docs/docs/build/html/index.html`
+The main html document will be in the file (relative to the root of the build directory) `./python/docs/docs/build/html/index.html`
 
 ## Running unit tests
 
-If using an evironment with multiple Python versions, make sure to use virtual env or similar to pick up correct python versions.
+If using an environment with multiple Python versions, make sure to use virtual env or similar to pick up correct python versions.
 
 If necessary, set `PYSPARK_PYTHON` and `PYSPARK_DRIVER_PYTHON` to point to correct versions of Python.
 
