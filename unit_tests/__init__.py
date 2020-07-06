@@ -28,7 +28,6 @@ __all__ = ["test_basic_test", "test_basic_test2", "test_columnGenerationSpec",
            "test_topological_sort",
            "test_large_schema", "test_schema_parser", "test_scripting",
            "test_text_generation","test_iltext_generation",
-           "test_unit_tests1",
            "test_types",
            "test_utils",
            "test_weights"
