@@ -19,7 +19,7 @@ schema = StructType([
 
 # global spark
 
-spark = dg.SparkSingleton.get_local_instance("basic tests 2")
+spark = dg.SparkSingleton.getLocalInstance("basic tests 2")
 
 
 class TestBasicOperation2(unittest.TestCase):
@@ -59,7 +59,7 @@ class TestBasicOperation2(unittest.TestCase):
         print("schema", testDataDF2.schema)
         testDataDF2.printSchema()
 
-        testDataSpec.compute_build_plan().explain()
+        testDataSpec.computeBuildPlan().explain()
 
         #testDataDF2.show()
 

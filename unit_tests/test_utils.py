@@ -6,7 +6,7 @@ from pyspark.sql import functions as F
 import logging
 from databrickslabs_testdatagenerator import ensure, mkBoundsList
 
-spark = dg.SparkSingleton.get_local_instance("unit tests")
+spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
 class TestUtils(unittest.TestCase):
 

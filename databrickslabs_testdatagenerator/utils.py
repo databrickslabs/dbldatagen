@@ -44,7 +44,7 @@ def mkBoundsList(x, default):
         return (False, bounds_list)
 
 
-def topological_sort(sources, initial_columns=None, flatten=True):
+def topologicalSort(sources, initial_columns=None, flatten=True):
     """ Perform a topological sort over sources
 
     :arg sources: list of ``(name, set(names of dependencies))`` pairs

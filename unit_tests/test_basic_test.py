@@ -6,7 +6,7 @@ from pyspark.sql import functions as F
 import logging
 
 
-spark = dg.SparkSingleton.get_local_instance("basic tests")
+spark = dg.SparkSingleton.getLocalInstance("basic tests")
 
 class TestBasicOperation(unittest.TestCase):
     testDataSpec = None

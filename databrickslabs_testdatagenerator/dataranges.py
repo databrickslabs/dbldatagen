@@ -19,15 +19,15 @@ class NRange(object):
     def __str__(self):
         return "NRange({}, {}, {})".format(self.min, self.max, self.step)
 
-    def is_empty(self):
+    def isEmpty(self):
         """Check if object is empty (i.e all instance vars of note are `None`"""
         return self.min is None and self.max is None and self.step is None
 
-    def is_fully_populated(self):
+    def isFullyPopulated(self):
         """Check is all instance vars are populated"""
         return self.min is not None and self.max is not None and self.step is not None
 
-    def _adjust_for_coltype(self, ctype):
+    def _adjustForColtype(self, ctype):
         """ Adjust default values for column output type"""
         if ctype.typeName() == 'decimal':
             if self.min is None:
@@ -97,11 +97,11 @@ class DateRange(object):
         ni1 = i1 / interval
         return math.floor(ni1)
 
-    def is_fully_populated(self):
+    def isFullyPopulated(self):
         """Check if min, max and step are specified """
         return self.min is not None and self.max is not None and self.step is not None
 
-    def _adjust_for_coltype(self, ctype):
+    def _adjustForColtype(self, ctype):
         """ adjust the range for the column output type"""
         pass
 

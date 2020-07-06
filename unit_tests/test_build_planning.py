@@ -144,7 +144,7 @@ StructField("isDeleted",BooleanType(),True)
 
 print("schema", schema)
 
-spark = dg.SparkSingleton.get_local_instance("unit tests")
+spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
 # Test manipulation and generation of test data for a large schema
 class TestBuildPlanning(unittest.TestCase):
@@ -187,7 +187,7 @@ class TestBuildPlanning(unittest.TestCase):
 
 
     def test_large_clone(self):
-        self.testDataSpec.compute_build_plan()
+        self.testDataSpec.computeBuildPlan()
         self.testDataSpec.explain()
 
 

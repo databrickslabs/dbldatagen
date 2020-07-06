@@ -5,7 +5,7 @@ from pyspark.sql.functions import col, expr, rand, lit
 import unittest
 import datetime
 
-spark = dg.SparkSingleton.get_local_instance("unit tests")
+spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
 desired_weights = [9, 1, 1, 1]
 

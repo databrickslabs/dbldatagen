@@ -33,7 +33,7 @@ schema = StructType([
 #    .config("spark.sql.execution.arrow.maxRecordsPerBatch", "1000") \
 
 
-spark = dg.SparkSingleton.get_local_instance("unit tests")
+spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
 spark.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", "500")
 spark.conf.set("spark.sql.execution.arrow.enabled", "true")

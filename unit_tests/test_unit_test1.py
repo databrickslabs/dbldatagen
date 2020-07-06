@@ -22,7 +22,7 @@ schema = StructType([
 
 ])
 
-spark = dg.SparkSingleton.get_local_instance("unit tests")
+spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
 # will have implied column `id` for ordinal of row
 

@@ -33,7 +33,7 @@ class DataAnalyzer:
         #            i.e DataGenerator(sparkSession=spark, name="test", ...)
         #            """)
 
-    def lookup_field_type(self, typ):
+    def lookupFieldType(self, typ):
         type_mappings = {
             "LongType": "Long",
             "IntegerType": "Int",
@@ -47,31 +47,31 @@ class DataAnalyzer:
         else:
             return typ
 
-    def summarize_field(self, field):
+    def summarizeField(self, field):
         if isinstance(field, StructField):
-            return "{} {}".format(field.name, self.lookup_field_type(str(field.dataType)))
+            return "{} {}".format(field.name, self.lookupFieldType(str(field.dataType)))
         else:
             return str(field)
 
-    def summarize_fields(self, schema):
+    def summarizeFields(self, schema):
         if schema is not None:
             fields = schema.fields
-            fields_desc = [self.summarize_field(x) for x in fields]
+            fields_desc = [self.summarizeField(x) for x in fields]
             return "Record(" + ",".join(fields_desc) + ")"
         else:
             return "N/A"
 
-    def field_names(self, schema):
+    def getFieldNames(self, schema):
         """ get field names from schema"""
         if schema is not None and schema.fields is not None:
             return [x.name for x in schema.fields if isinstance(x, StructField)]
         else:
             return []
 
-    def get_distinct_counts(self):
+    def getDistinctCounts(self):
         pass
 
-    def display_row(self, row):
+    def displayRow(self, row):
         results = []
         row_key_pairs = row.asDict()
         for x in row_key_pairs:
@@ -79,8 +79,8 @@ class DataAnalyzer:
 
         return ", ".join(results)
 
-    def prepend_summary(self, df, heading):
-        field_names = self.field_names(self.df.schema)
+    def prependSummary(self, df, heading):
+        field_names = self.getFieldNames(self.df.schema)
         select_fields = ["summary"]
         select_fields.extend(field_names)
 
@@ -100,22 +100,22 @@ class DataAnalyzer:
         """.format(count, distinct_count, partition_count)
 
         results.append(summary)
-        results.append("schema: " + self.summarize_fields(self.df.schema))
+        results.append("schema: " + self.summarizeFields(self.df.schema))
 
-        field_names = self.field_names(self.df.schema)
+        field_names = self.getFieldNames(self.df.schema)
         select_fields = ["summary"]
         select_fields.extend(field_names)
         #        print("select fields:", select_fields)
         #        print("field names", field_names)
-        distinct_expressions = [fns.countDistinct(x).alias(x) for x in self.field_names(self.df.schema)]
-        results.append(self.display_row(
-            self.prepend_summary(self.df.agg(*distinct_expressions),
+        distinct_expressions = [fns.countDistinct(x).alias(x) for x in self.getFieldNames(self.df.schema)]
+        results.append(self.displayRow(
+            self.prependSummary(self.df.agg(*distinct_expressions),
                                  'distinct_count')
                 .select(*select_fields)
                 .collect()[0]
         ))
 
         for r in self.df.describe().collect():
-            results.append(self.display_row(r))
+            results.append(self.displayRow(r))
 
         return "\n".join([str(x) for x in results])

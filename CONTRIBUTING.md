@@ -48,3 +48,11 @@ Run  `make install tests` from the main project directory to run the unit tests.
 To use the project, the generated wheel should be installed in your Python notebook as a wheel based library
 
 Once the library has been installed, you can use it to generate a test data frame.
+
+## Coding Style 
+
+The code follows the Pyspark coding conventions. 
+
+Basically it follows the Python PEP8 coding conventions - but method names used mixed case starting with a lower case letter rather than underscores.
+
+See https://legacy.python.org/dev/peps/pep-0008/

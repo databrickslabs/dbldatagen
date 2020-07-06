@@ -5,7 +5,7 @@ import unittest
 
 
 
-spark = datagen.SparkSingleton.get_local_instance("unit tests")
+spark = datagen.SparkSingleton.getLocalInstance("unit tests")
 
 
 class TestScripting(unittest.TestCase):

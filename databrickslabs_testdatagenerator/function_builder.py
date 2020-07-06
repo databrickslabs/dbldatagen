@@ -10,15 +10,15 @@ class ColumnGeneratorBuilder:
     """ Helper class to build functional column generators of specific forms"""
 
     @classmethod
-    def _mk_list(cls, x):
+    def _mkList(cls, x):
         return [x] if type(x) is not list else x
 
     @classmethod
-    def _last_element(cls, x):
+    def _lastElement(cls, x):
         return x[-1] if type(x) is list else x
 
     @classmethod
-    def mk_cdf_probabilities(cls, weights):
+    def mkCdfProbabilities(cls, weights):
         """ make cumulative distribution function probabilities for each value in values list
 
         a cumulative distribution function for discrete values can uses
@@ -61,7 +61,7 @@ class ColumnGeneratorBuilder:
 
 
     @classmethod
-    def mk_expr_choices_fn(cls, values, weights, seed_column, datatype):
+    def mkExprChoicesFn(cls, values, weights, seed_column, datatype):
         """ build an expression of the form
           `` case
                 when rnd_column <= weight1 then value1
@@ -77,7 +77,7 @@ class ColumnGeneratorBuilder:
             guaranteed on all Databricks distributions
 
         """
-        cdf_probs = cls.mk_cdf_probabilities(weights)
+        cdf_probs = cls.mkCdfProbabilities(weights)
 
         output = [" CASE "]
 

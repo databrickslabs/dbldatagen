@@ -459,35 +459,35 @@ class ColumnGenerationSpec:
         else:
             return " |-- building column generator for column {}".format(self.name)
 
-    def make_weighted_column_values_expression(self, values, weights, seed_column_name):
+    def makeWeightedColumnValuesExpression(self, values, weights, seed_column_name):
         """make SQL expression to compute the weighted values expression"""
         from .function_builder import ColumnGeneratorBuilder
         assert values is not None
         assert weights is not None
         assert len(values) == len(weights)
         assert seed_column_name is not None
-        expr_str = ColumnGeneratorBuilder.mk_expr_choices_fn(values, weights, seed_column_name, self.datatype)
+        expr_str = ColumnGeneratorBuilder.mkExprChoicesFn(values, weights, seed_column_name, self.datatype)
         return expr(expr_str).astype(self.datatype)
 
-    def _is_real_valued_column(self):
+    def _isRealValuedColumn(self):
         """ determine if column is real valued """
         colTypeName = self['type'].typeName()
 
         return colTypeName == 'double' or colTypeName == 'float' or colTypeName == 'decimal'
 
-    def _is_decimal_column(self):
+    def _isDecimalColumn(self):
         """ determine if column is decimal column"""
         colTypeName = self['type'].typeName()
 
         return colTypeName == 'decimal'
 
-    def _is_continuous_valued_column(self):
+    def _isContinuousValuedColumn(self):
         """ determine if column generates continuous values"""
         is_continuous = self['continuous']
 
         return is_continuous
 
-    def get_seed_expression(self, base_column):
+    def getSeedExpression(self, base_column):
         """ Get seed expression for column generation
         if using a single base column, then simply use that, otherwise use a SQL hash of multiple columns
         """
@@ -500,24 +500,24 @@ class ColumnGenerationSpec:
         else:
             return col(base_column)
 
-    def _compute_ranged_column(self, datarange, base_column, is_random):
+    def _computeRangedColumn(self, datarange, base_column, is_random):
         """ compute a ranged column
 
         max is max actual value
         """
         assert base_column is not None
         assert datarange is not None
-        assert datarange.is_fully_populated()
+        assert datarange.isFullyPopulated()
 
         random_generator = self.getUniformRandomExpression(self.name) if is_random else None
-        if self._is_continuous_valued_column() and self._is_real_valued_column() and is_random:
+        if self._isContinuousValuedColumn() and self._isRealValuedColumn() and is_random:
             crange = datarange.getContinuousRange()
             baseval = random_generator * lit(crange)
         else:
             crange = datarange.getDiscreteRange()
             modulo_factor = lit(crange+1)
             # following expression is need as spark sql modulo of negative number is negative
-            modulo_exp =((self.get_seed_expression(base_column) % modulo_factor) + modulo_factor) % modulo_factor
+            modulo_exp = ((self.getSeedExpression(base_column) % modulo_factor) + modulo_factor) % modulo_factor
             baseval = (modulo_exp * lit(datarange.step)) if not is_random else (
                     round(random_generator * lit(crange)) * lit(datarange.step))
         newDef = (baseval + lit(datarange.min))
@@ -531,7 +531,7 @@ class ColumnGenerationSpec:
 
         return newDef
 
-    def make_single_generation_expression(self, index=None, use_pandas_optimizations=False):
+    def makeSingleGenerationExpression(self, index=None, use_pandas_optimizations=False):
         """ generate column data via Spark SQL expression"""
 
         # get key column specification properties
@@ -545,7 +545,7 @@ class ColumnGenerationSpec:
         sformat=self['format']
 
         if self.data_range is not None:
-            self.data_range._adjust_for_coltype(ctype)
+            self.data_range._adjustForColtype(ctype)
 
         self.execution_history.append(".. using effective range: {}".format(self.data_range))
 
@@ -553,7 +553,7 @@ class ColumnGenerationSpec:
 
         # handle weighted values
         if self.isWeightedValuesColumn:
-            newDef=self.make_weighted_column_values_expression(self.values, self.weights, self.weighted_base_column)
+            newDef=self.makeWeightedColumnValuesExpression(self.values, self.weights, self.weighted_base_column)
         else:
             # rs: initialize the begin, end and interval if not initalized for date computations
             # defaults are start of day, now, and 1 minute respectively
@@ -568,14 +568,14 @@ class ColumnGenerationSpec:
             # TODO: add full support for date value generation
             if sqlExpr is not None:
                 newDef = expr(sqlExpr).astype(ctype)
-            elif self.data_range is not None and self.data_range.is_fully_populated():
+            elif self.data_range is not None and self.data_range.isFullyPopulated():
                 self.execution_history.append(".. computing ranged value: {}".format(self.data_range))
-                newDef=self._compute_ranged_column(base_column=baseCol, datarange=self.data_range, is_random=crand)
+                newDef=self._computeRangedColumn(base_column=baseCol, datarange=self.data_range, is_random=crand)
             elif type(ctype) is DateType:
                 sql_random_generator = self.getUniformRandomSQLExpression(self.name)
                 newDef = expr("date_sub(current_date, round({}*1024))".format(sql_random_generator)).astype(ctype)
             else:
-                newDef = (self.get_seed_expression(baseCol) + lit(self.data_range.min)).astype(ctype)
+                newDef = (self.getSeedExpression(baseCol) + lit(self.data_range.min)).astype(ctype)
 
             # string value generation is simply handled by combining with a suffix or prefix
             if self.values is not None:
@@ -597,13 +597,13 @@ class ColumnGenerationSpec:
                 if use_pandas_optimizations:
                     self.execution_history.append(".. text generation via pandas scalar udf `{}`"
                                                   .format(str(tg)))
-                    u_value_from_generator = pandas_udf(tg.pandas_generate_text,
-                                                       returnType=StringType()).asNondeterministic()
+                    u_value_from_generator = pandas_udf(tg.pandasGenerateText,
+                                                        returnType=StringType()).asNondeterministic()
                 else:
                     self.execution_history.append(".. text generation via udf `{}`"
                                                   .format(str(tg)))
-                    u_value_from_generator = udf(tg.classic_generate_text,
-                                                StringType()).asNondeterministic()
+                    u_value_from_generator = udf(tg.classicGenerateText,
+                                                 StringType()).asNondeterministic()
                 newDef = u_value_from_generator(newDef)
 
             if type(ctype) is StringType and sformat is not None:
@@ -629,7 +629,7 @@ class ColumnGenerationSpec:
             newDef = when(random_generator > lit(prob_nulls),newDef).otherwise(lit(None))
         return newDef
 
-    def make_generation_expressions(self, use_pandas):
+    def makeGenerationExpressions(self, use_pandas):
         """ Generate structured column if multiple columns or features are specified
 
             :param self: is ColumnGenerationSpec for column
@@ -644,10 +644,10 @@ class ColumnGenerationSpec:
 
         if numColumns == 1 or numColumns is None:
             self.execution_history.append("generating single column - `{0}`".format(self['name']))
-            retval = self.make_single_generation_expression(use_pandas_optimizations=use_pandas)
+            retval = self.makeSingleGenerationExpression(use_pandas_optimizations=use_pandas)
         else:
             self.execution_history.append("generating multiple columns {0} - `{1}`".format(numColumns, self['name']))
-            retval = [self.make_single_generation_expression(x) for x in range(numColumns)]
+            retval = [self.makeSingleGenerationExpression(x) for x in range(numColumns)]
 
             if structType == 'array':
                 self.execution_history.append(".. converting multiple columns to array")

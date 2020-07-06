@@ -9,6 +9,8 @@ Management of version identifiers for releases uses the bumpversion python packa
 which supports automatic modification of files when the version labels need to be modified
 
 See: https://pypi.org/project/bumpversion/
+
+Note the use of `get_version` for method name to conform with bumpversion conventions
 """
 
 from collections import namedtuple
@@ -26,5 +28,5 @@ def get_version(version):
     return version_info
 
 
-__version__ = "0.10.0-dev1"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpversion
+__version__ = "0.10.0-dev2"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpversion
 __version_info__ = get_version(__version__)

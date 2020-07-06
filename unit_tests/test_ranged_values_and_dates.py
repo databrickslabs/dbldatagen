@@ -9,7 +9,7 @@ from databrickslabs_testdatagenerator import DateRange
 
 # global spark
 
-spark = datagen.SparkSingleton.get_local_instance("unit tests")
+spark = datagen.SparkSingleton.getLocalInstance("unit tests")
 
 
 class TestRangedValuesAndDates(unittest.TestCase):

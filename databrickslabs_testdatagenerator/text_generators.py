@@ -89,7 +89,7 @@ class TemplateGenerator(TextGenerator):
     def __repr__(self):
         return f"TemplateGenerator(template='{self.template}')"
 
-    def value_from_single_template(self, base_value, gen_template):
+    def valueFromSingleTemplate(self, base_value, gen_template):
         """ Generate text from a single template
 
         :param base_value: underlying base value to seed template generation.
@@ -140,31 +140,31 @@ class TemplateGenerator(TextGenerator):
         output = "".join(retval)
         return output
 
-    def classic_generate_text(self, v):
+    def classicGenerateText(self, v):
         """entry point to use for classic udfs"""
         def value_from_template(original_value, alt_templates):
             num_alternatives = len(alt_templates)
 
             # choose alternative
             alt = alt_templates[random.randint(0, num_alternatives - 1)]
-            return self.value_from_single_template(original_value, alt)
+            return self.valueFromSingleTemplate(original_value, alt)
 
         return value_from_template(v, self.templates)
 
-    def pandas_generate_text(self, v):
+    def pandasGenerateText(self, v):
         """ entry point to use for pandas udfs"""
         def value_from_random_template(original_value, alt_templates):
             num_alternatives = len(alt_templates)
 
             # choose alternative
             alt = alt_templates[random.randint(0, num_alternatives - 1)]
-            return self.value_from_single_template(original_value, alt)
+            return self.valueFromSingleTemplate(original_value, alt)
 
         # return [ str(x)+"_Test" for x in v]
         if len(self.templates) > 1:
             results = v.apply(lambda v, t: value_from_random_template(v, t), args=(self.templates,))
         else:
-            results = v.apply(lambda v, t: self.value_from_single_template(v, t), args=(self.templates[0],))
+            results = v.apply(lambda v, t: self.valueFromSingleTemplate(v, t), args=(self.templates[0],))
         return results
 
 
@@ -236,7 +236,7 @@ class ILText(TextGenerator):
     def __repr__(self):
         return f"ILText(paragraphs={self.paragraphs}, sentences={self.sentences}, words={self.words})"
 
-    def random_gauss(self, bounds):
+    def randomGauss(self, bounds):
         assert type(bounds) is tuple and len(bounds) == 2
 
         min_v = bounds[0] * 1.0
@@ -251,7 +251,7 @@ class ILText(TextGenerator):
         rnd_v = min(max(rnd_v, min_v), max_v)
         return rnd_v
 
-    def generate_text(self, seed, default_seed):
+    def generateText(self, seed, default_seed):
         """
         generate text for seed based on configuration parameters.
 
@@ -308,25 +308,25 @@ class ILText(TextGenerator):
         return [ str(x) for x in candidate_text ]
         #return [ [ [":::".join(s) for s in p ] for p in r] for r in candidate_sentences ]
 
-    def classic_generate_text(self, seed):
+    def classicGenerateText(self, seed):
         """"
         classic udf entry point for text generation
 
         :param seed: seed value to control generation of random numbers
         """
-        retval = [ int(round(self.random_gauss(self.paragraphs))),
-                   int(round(self.random_gauss(self.sentences))),
-                   int(round(self.random_gauss(self.words)))]
+        retval = [int(round(self.randomGauss(self.paragraphs))),
+                  int(round(self.randomGauss(self.sentences))),
+                  int(round(self.randomGauss(self.words)))]
 
 
-        return self.generate_text([seed], 42)[0]
+        return self.generateText([seed], 42)[0]
 
-    def pandas_generate_text(self, v):
+    def pandasGenerateText(self, v):
         """
         pandas udf entry point for text generation
 
         :param v: pandas series of seed values for random text generation
         :returns: Pandas series of generated strings
         """
-        results=self.generate_text(v.to_numpy(), 42)
+        results=self.generateText(v.to_numpy(), 42)
         return pd.Series(results)

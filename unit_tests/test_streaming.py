@@ -7,7 +7,7 @@ import time
 import shutil
 
 
-spark = dg.SparkSingleton.get_local_instance("streaming tests")
+spark = dg.SparkSingleton.getLocalInstance("streaming tests")
 
 
 class TestStreaming(unittest.TestCase):

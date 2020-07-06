@@ -4,7 +4,7 @@ from pyspark.sql import SparkSession
 import unittest
 import databrickslabs_testdatagenerator as dg
 
-spark = dg.SparkSingleton.get_local_instance("unit tests")
+spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
 
 class TestSchemaParser(unittest.TestCase):

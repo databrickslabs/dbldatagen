@@ -14,7 +14,7 @@ from datetime import date, datetime, timedelta
 import re
 
 from .column_generation_spec import ColumnGenerationSpec
-from .utils import ensure, topological_sort, DataGenError
+from .utils import ensure, topologicalSort, DataGenError
 from .dataranges import DateRange
 from .spark_singleton import SparkSingleton
 import copy
@@ -78,7 +78,7 @@ class DataGenerator:
         self.pandas_udf_batch_size = pandas_udf_batch_size
 
         if sparkSession is None:
-            sparkSession = SparkSingleton.get_instance()
+            sparkSession = SparkSingleton.getInstance()
 
         assert sparkSession is not None, "The spark session attribute must be initialized"
 
@@ -153,7 +153,7 @@ class DataGenerator:
             self.sparkSession = old_spark_session
         return new_copy
 
-    def mark_for_replan(self):
+    def markForPlanRegen(self):
         """Mark that build plan needs to be regenerated"""
         self.build_plan_computed = False
 
@@ -161,7 +161,7 @@ class DataGenerator:
     def explain(self):
         """Explain the test data generation process"""
         if not self.build_plan_computed:
-            self.compute_build_plan()
+            self.computeBuildPlan()
 
         output = ["", "Data generation plan", "====================",
                   """spec=DateGenerator(name={}, rows={}, starting_id={}, partitions={})"""
@@ -187,7 +187,7 @@ class DataGenerator:
     def withIdOutput(self):
         """ output id field as a column in the test data set if specified """
         self.columnSpecsByName["id"].omit = False
-        self.mark_for_replan()
+        self.markForPlanRegen()
 
         return self
 
@@ -195,17 +195,17 @@ class DataGenerator:
         """ set option to option value for later processing"""
         ensure(option_key in self._allowed_keys)
         self._options[option_key] = option_value
-        self.mark_for_replan()
+        self.markForPlanRegen()
         return self
 
     def options(self, **kwargs):
         """ set options in bulk"""
         for key, value in kwargs.items():
             self.option(key, value)
-        self.mark_for_replan()
+        self.markForPlanRegen()
         return self
 
-    def _process_options(self):
+    def _processOptions(self):
         """ process options to give effect to the options supplied earlier"""
         self.printVerbose("options", self._options)
 
@@ -348,7 +348,7 @@ class DataGenerator:
             self.withColumnSpec(f, implicit=True, **kwargs)
         return self
 
-    def _check_column_or_column_list(self, columns, allow_id=False):
+    def _checkColumnOrColumnList(self, columns, allow_id=False):
         inferredColumns = self.getInferredColumnNames()
         if allow_id and columns == "id":
             return True
@@ -367,7 +367,7 @@ class DataGenerator:
         """ add a column specification for an existing column """
         ensure(colName is not None, "Must specify column name for column")
         ensure(colName in self.getInferredColumnNames(), " column `{0}` must refer to defined column".format(colName))
-        self._check_column_or_column_list(base_column)
+        self._checkColumnOrColumnList(base_column)
         ensure(not self.isFieldExplicitlyDefined(colName), "duplicate column spec for column `{0}`".format(colName))
 
         newProps = {}
@@ -394,7 +394,7 @@ class DataGenerator:
         """ add a new column for specification """
         ensure(colName is not None, "Must specify column name for column")
         ensure(colType is not None, "Must specify column type for column `{0}`".format(colName))
-        self._check_column_or_column_list(base_column, allow_id=True)
+        self._checkColumnOrColumnList(base_column, allow_id=True)
         newProps = {}
         newProps.update(kwargs)
 
@@ -433,7 +433,7 @@ class DataGenerator:
             self.allColumnSpecs.remove(x)
 
         self.allColumnSpecs.append(column_spec)
-        self.mark_for_replan()
+        self.markForPlanRegen()
 
         return self
 
@@ -478,13 +478,13 @@ class DataGenerator:
 
         return df1
 
-    def _pp_list(self, alist, msg=""):
+    def _ppList(self, alist, msg=""):
         print(msg)
         l = len(alist)
         for x in alist:
             print(x)
 
-    def compute_column_build_order(self):
+    def computeColumnBuildOrder(self):
         """ compute the build ordering using a topological sort on dependencies"""
         dependency_ordering = [(x.name, set(x.dependencies)) if x.name != 'id' else ('id', set())
                                for x in self.allColumnSpecs]
@@ -493,7 +493,7 @@ class DataGenerator:
 
         self.printVerbose("dependency list:", dependency_ordering)
 
-        self._build_order = list(topological_sort(dependency_ordering, flatten=False, initial_columns=['id'] ))
+        self._build_order = list(topologicalSort(dependency_ordering, flatten=False, initial_columns=['id']))
 
         self.printVerbose("columnBuildOrder:", self._build_order)
 
@@ -508,11 +508,11 @@ class DataGenerator:
         """
         return [x for x in self._build_order if x != ["id"] ]
 
-    def compute_build_plan(self):
+    def computeBuildPlan(self):
         """ prepare for building """
         self.build_plan = []
         self.execution_history = []
-        self._process_options()
+        self._processOptions()
         self.build_plan.append("Build dataframe with id")
 
 
@@ -524,7 +524,7 @@ class DataGenerator:
                     self.build_plan.append("materializing temporary column {}".format(tmp_col[0]))
                     self.withColumn(tmp_col[0], tmp_col[1], **tmp_col[2])
 
-        self.compute_column_build_order()
+        self.computeColumnBuildOrder()
 
         for x1 in self._build_order:
             for x in x1:
@@ -538,7 +538,7 @@ class DataGenerator:
         """ build the test data set from the column definitions and return a dataframe for it"""
 
         self.execution_history = []
-        self.compute_build_plan()
+        self.computeBuildPlan()
 
         outputColumns = self.getOutputColumnNames()
         ensure(outputColumns is not None and len(outputColumns) > 0,
@@ -565,7 +565,7 @@ class DataGenerator:
                 self.execution_history.append("building round for : {}".format(colNames))
                 for colName in colNames:
                     col1 = self.columnSpecsByName[colName]
-                    columnGenerators = col1.make_generation_expressions(self.use_pandas)
+                    columnGenerators = col1.makeGenerationExpressions(self.use_pandas)
                     self.execution_history.extend(col1.execution_history)
                     if type(columnGenerators) is list and len(columnGenerators) == 1:
                         build_round.append( columnGenerators[0].alias(colName))
@@ -586,7 +586,7 @@ class DataGenerator:
             column_build_order = [ item for sublist in self.build_order for item in sublist ]
             for colName in column_build_order:
                 col1 = self.columnSpecsByName[colName]
-                columnGenerators = col1.make_generation_expressions()
+                columnGenerators = col1.makeGenerationExpressions()
                 self.execution_history.extend(col1.execution_history)
 
                 if type(columnGenerators) is list and len(columnGenerators) == 1:
@@ -624,7 +624,7 @@ class DataGenerator:
         """ generate create table script suitable for format of test data set"""
         assert name is not None
 
-        self.compute_build_plan()
+        self.computeBuildPlan()
 
         outputColumns = self.getOutputColumnNamesAndTypes()
 

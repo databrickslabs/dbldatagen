@@ -26,7 +26,7 @@ __all__ = ["data_generator", "data_analyzer", "schema_parser", "dataranges",
            "column_generation_spec", "utils", "function_builder", "spark_singleton", "text_generators"]
 
 from databrickslabs_testdatagenerator.data_generator import DataGenerator
-from databrickslabs_testdatagenerator.utils import ensure, topological_sort, mkBoundsList
+from databrickslabs_testdatagenerator.utils import ensure, topologicalSort, mkBoundsList
 from databrickslabs_testdatagenerator.column_generation_spec import ColumnGenerationSpec
 from databrickslabs_testdatagenerator.data_analyzer import DataAnalyzer
 from databrickslabs_testdatagenerator.schema_parser import SchemaParser
