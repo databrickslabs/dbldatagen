@@ -18,6 +18,7 @@ from .utils import ensure, topologicalSort, DataGenError
 from .dataranges import DateRange
 from .spark_singleton import SparkSingleton
 import copy
+import logging
 
 
 class DataGenerator:
@@ -45,12 +46,22 @@ class DataGenerator:
 
     _allowed_keys = ["starting_id", "row_count", "output_id"]
 
+    # set up logging
+
+    # restrict spurious messages from java gateway
+    logging.getLogger("py4j").setLevel(logging.WARNING)
+    logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.NOTSET)
+
     def __init__(self, sparkSession=None, name=None, seed_method=None, generate_with_selects=True,
                  rows=1000000, starting_id=0, seed=None, partitions=None, verbose=False,
                  use_pandas=True, pandas_udf_batch_size=None):
         """ Constructor for data generator object """
 
+        # set up logging
         self.verbose = verbose
+
+        self._setup_logger()
+
         self.name = name if name is not None else self.generateName()
         self.rowCount = rows
         self.starting_id = starting_id
@@ -95,10 +106,10 @@ class DataGenerator:
         assert pandas_udf_batch_size is None or type(pandas_udf_batch_size) is int, \
             "If pandas_batch_size is specified, it must be an integer"
         if self.use_pandas:
-            print("*** using pandas udf for custom functions ***")
-            print("Spark version:", self.sparkSession.version)
+            self.logger.info("*** using pandas udf for custom functions ***")
+            self.logger.info("Spark version: %s", self.sparkSession.version)
             if str(self.sparkSession.version).startswith("3"):
-                print("Using spark 3.x")
+                self.logger.info("Using spark 3.x")
                 self.sparkSession.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
             else:
                 self.sparkSession.conf.set("spark.sql.execution.arrow.enabled", "true")
@@ -108,6 +119,13 @@ class DataGenerator:
 
         if seed_method is not None and seed_method != "fixed" and seed_method != "hash_fieldname":
             raise DataGenError("""seed_method should be None, 'fixed' or 'hash_fieldname' """)
+
+    def _setup_logger(self):
+        self.logger = logging.getLogger("DataGenerator")
+        if self.verbose:
+            self.logger.setLevel(logging.INFO)
+        else:
+            self.logger.setLevel(logging.WARNING)
 
     @classmethod
     def seed(cls, seedVal):
@@ -132,25 +150,23 @@ class DataGenerator:
         newName = (cls._untitledNamePrefix + '_' + str(cls._nextNameIndex))
         return newName
 
-    def printVerbose(self, *args):
-        """ Write out message only if `self.verbose` is set to True"""
-        if self.verbose:
-            print("data generator:", *args)
-
-
     def clone(self):
         """Make a clone of the data spec via deep copy preserving same spark session"""
         old_spark_session = self.sparkSession
+        old_logger = self.logger
         new_copy = None
         try:
             # temporarily set the spark session to null
             self.sparkSession = None
+            self.logger = None
             new_copy = copy.deepcopy(self)
             new_copy.sparkSession = old_spark_session
             new_copy.build_plan_computed = False
+            new_copy._setup_logger()
         finally:
             # now set it back
             self.sparkSession = old_spark_session
+            self.logger = old_logger
         return new_copy
 
     def markForPlanRegen(self):
@@ -207,7 +223,7 @@ class DataGenerator:
 
     def _processOptions(self):
         """ process options to give effect to the options supplied earlier"""
-        self.printVerbose("options", self._options)
+        self.logger.info("options: %s", str(self._options))
 
         for key, value in self._options.items():
             if key == "starting_id":
@@ -362,7 +378,7 @@ class DataGenerator:
                    " column `{0}` must refer to defined column".format(columns))
         return True
 
-    def withColumnSpec(self, colName, min=None, max=None, step=1, prefix=None, random=False, distribution="normal",
+    def withColumnSpec(self, colName, min=None, max=None, step=1, prefix=None, random=False, distribution=None,
                        implicit=False, data_range=None, omit=False, base_column="id", **kwargs):
         """ add a column specification for an existing column """
         ensure(colName is not None, "Must specify column name for column")
@@ -373,7 +389,7 @@ class DataGenerator:
         newProps = {}
         newProps.update(kwargs)
 
-        self.printVerbose(
+        self.logger.info(
             "adding column spec - `{0}` with baseColumn : `{1}`, implicit : {2} , omit {3}".format(colName, base_column,
                                                                                                    implicit, omit))
         self.generateColumnDefinition(colName, self.getColumnType(colName), min=min, max=max, step=step, prefix=prefix,
@@ -387,7 +403,7 @@ class DataGenerator:
         return True if colName in self.columnSpecsByName.keys() else False
 
     def withColumn(self, colName, colType=StringType(), min=None, max=None, step=1,
-                   data_range=None, prefix=None, random=False, distribution="normal",
+                   data_range=None, prefix=None, random=False, distribution=None,
                    base_column="id", nullable=True,
                    omit=False, implicit=False,
                    **kwargs):
@@ -402,8 +418,8 @@ class DataGenerator:
         if type(colType) == str:
             colType = SchemaParser.columnTypeFromString(colType)
 
-        self.printVerbose("effective range:", min, max, step, "args:", kwargs)
-        self.printVerbose(
+        self.logger.info("effective range: %s, %s, %s args: %s", min, max, step, kwargs)
+        self.logger.info(
             "adding column - `{0}` with baseColumn : `{1}`, implicit : {2} , omit {3}".format(colName, base_column,
                                                                                               implicit, omit))
         self.generateColumnDefinition(colName, colType, min=min, max=max, step=step, prefix=prefix, random=random,
@@ -446,7 +462,7 @@ class DataGenerator:
         if not streaming:
             status = ("Generating data frame with ids from {} to {} with {} partitions"
                               .format(start_id, end_id, id_partitions))
-            self.printVerbose(status)
+            self.logger.info(status)
             self.execution_history.append(status)
             df1 = self.sparkSession.range(start=start_id,
                                           end=end_id,
@@ -455,7 +471,7 @@ class DataGenerator:
         else:
             status = ("Generating streaming data frame with ids from {} to {} with {} partitions"
                           .format(start_id, end_id, id_partitions))
-            self.printVerbose(status)
+            self.logger.info(status)
             self.execution_history.append(status)
 
             df1 = (self.sparkSession.readStream
@@ -491,11 +507,11 @@ class DataGenerator:
 
         #self.pp_list(dependency_ordering, msg="dependencies")
 
-        self.printVerbose("dependency list:", dependency_ordering)
+        self.logger.info("dependency list: %s", str(dependency_ordering))
 
         self._build_order = list(topologicalSort(dependency_ordering, flatten=False, initial_columns=['id']))
 
-        self.printVerbose("columnBuildOrder:", self._build_order)
+        self.logger.info("columnBuildOrder: %s", str(self._build_order))
 
         #self.pp_list(self._build_order, "build order")
         return self._build_order
@@ -605,14 +621,14 @@ class DataGenerator:
         # register temporary or global views if necessary
         if withView:
             self.execution_history.append("registering view")
-            self.printVerbose("Registered global view [{0}]".format(self.name))
+            self.logger.info("Registered global view [{0}]".format(self.name))
             df1.createGlobalTempView(self.name)
-            self.printVerbose("Registered!")
+            self.logger.info("Registered!")
         elif withTempView:
             self.execution_history.append("registering temp view")
-            self.printVerbose("Registering temporary view [{0}]".format(self.name))
+            self.logger.info("Registering temporary view [{0}]".format(self.name))
             df1.createOrReplaceTempView(self.name)
-            self.printVerbose("Registered!")
+            self.logger.info("Registered!")
 
         return df1
 

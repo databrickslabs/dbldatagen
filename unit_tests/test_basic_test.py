@@ -22,7 +22,7 @@ class TestBasicOperation(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
-                                             partitions=4, seed_method='hash_fieldname')
+                                             partitions=4, seed_method='hash_fieldname', verbose=True)
                             .withIdOutput()
                             .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
                                         numColumns=cls.column_count)

@@ -73,7 +73,6 @@ class TestTextGeneration(unittest.TestCase):
         self.testDataSpec.build().show()
 
     def test_simple_data2(self):
-        print("test data spec 2")
         testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
                                           partitions=self.partitions_requested)
                          .withSchema(schema)
@@ -87,13 +86,11 @@ class TestTextGeneration(unittest.TestCase):
                          .withColumnSpec("ip_addr", template=r'\\n.\\n.\\n.\\n')
                          .withColumnSpec("phone", template=r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd')
                          )
-
         testDataSpec2.build().show()
 
     def test_multi_columns(self):
-        print("test data spec 2")
         testDataSpec3 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count,
-                                          partitions=self.partitions_requested)
+                                          partitions=self.partitions_requested, verbose=True)
                          .withIdOutput()
                          .withColumn("val1", IntegerType(), percent_nulls=10.0)
                          .withColumn("val2", IntegerType(), percent_nulls=10.0)
@@ -101,6 +98,17 @@ class TestTextGeneration(unittest.TestCase):
                          )
 
         testDataSpec3.build().show()
+
+    def test_multi_columns2(self):
+        testDataSpec4 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count,
+                                          partitions=self.partitions_requested, verbose=True)
+                         .withIdOutput()
+                         .withColumn("val1", IntegerType(), percent_nulls=10.0)
+                         .withColumn("val2", IntegerType(), percent_nulls=10.0)
+                         .withColumn("val3", StringType(), base_column=["val1","val2"], base_column_type="values", template=r"\\v0-\\v1")
+                         )
+
+        testDataSpec4.build().show()
 
 # run the tests
 # if __name__ == '__main__':

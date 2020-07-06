@@ -99,9 +99,18 @@ class TemplateGenerator(TextGenerator):
         retval = []
 
         escape = False
-        for char in gen_template:
+        use_value = False
+        template_len = len(gen_template)
+        for i in range(0,template_len):
+            char = gen_template[i]
+            following_char = gen_template[i+1] if i+1 < template_len else None
+
             if char == '\\':
                 escape = True
+            elif use_value and (char >= '0' and char <= '9'):
+                val_index = int(char)
+                retval.append(str(base_value[val_index]))
+                use_value = False
             elif char == 'x' and not escape:
                 retval.append(_HEX_LOWER[random.randint(0, 15)])
             elif char == 'X' and not escape:
@@ -131,11 +140,20 @@ class TemplateGenerator(TextGenerator):
                 retval.append(_WORDS_LOWER[random.randint(0, len(_WORDS_LOWER)) - 1])
                 escape = False
             elif char == 'v' and escape:
+                escape = False
+                if following_char >= '0' and following_char <= '9':
+                    use_value = True
+                else:
+                    retval.append(str(base_value))
+            elif char == 'V' and escape:
                 retval.append(str(base_value))
                 escape = False
             else:
                 retval.append(char)
                 escape = False
+
+        if use_value:
+            retval.append(str(base_value))
 
         output = "".join(retval)
         return output

@@ -59,7 +59,7 @@ class ColumnGenerationSpec:
     }
 
     def __init__(self, name, colType=None, min=0, max=None, step=1, prefix='', random=False,
-                 distribution="normal", base_column="id", random_seed=None, random_seed_method=None,
+                 distribution=None, base_column="id", random_seed=None, random_seed_method=None,
                  implicit=False, omit=False, nullable=True, **kwargs):
 
         self.data_range=NRange(None, None, None)    # by default the range of values for the column is unconstrained
@@ -89,9 +89,9 @@ class ColumnGenerationSpec:
         self._checkExclusiveOptions(["distribution", "weights"])
 
         # check for alternative forms of specifying range
-        self._checkExclusiveOptions(["min", "begin", "data_range"])
-        self._checkExclusiveOptions(["max", "end", "data_range"])
-        self._checkExclusiveOptions(["step", "interval", "data_range"])
+        #self._checkExclusiveOptions(["min", "begin", "data_range"])
+        #self._checkExclusiveOptions(["max", "end", "data_range"])
+        #self._checkExclusiveOptions(["step", "interval", "data_range"])
 
         self._checkOptionValues("base_column_type", ["values", "hash", None])
 
@@ -130,14 +130,15 @@ class ColumnGenerationSpec:
         else:
             self.dependencies = ["id"]
 
+        # value of `base_column_type` must be `None`,"values" or "hash"
+        self.base_column_type = self['base_column_type']
+
         # handle text generation templates
         if self['template'] is not None:
             assert type(self['template']) is str, "template must be a string "
             self.text_generator = TemplateGenerator(self['template'])
-            print("text generator", self.text_generator)
         elif self['text'] is not None:
             self.text_generator = self['text']
-            print("text generator", self.text_generator)
         else:
             self.text_generator=None
 
@@ -504,12 +505,17 @@ class ColumnGenerationSpec:
 
     def getSeedExpression(self, base_column):
         """ Get seed expression for column generation
+
+        This is used to generate the base value for every column
         if using a single base column, then simply use that, otherwise use a SQL hash of multiple columns
         """
         if type(base_column) is list:
             assert len(base_column) > 0
             if len(base_column) == 1:
                 return col(base_column[0])
+            elif self.base_column_type == "values":
+                base_values = [ "string(ifnull(`{}`, 'null'))".format(x) for x in base_column ]
+                return expr("array({})".format(",".join(base_values)))
             else:
                 return expr("hash({})".format(",".join(base_column)))
         else:
@@ -535,7 +541,11 @@ class ColumnGenerationSpec:
             modulo_exp = ((self.getSeedExpression(base_column) % modulo_factor) + modulo_factor) % modulo_factor
             baseval = (modulo_exp * lit(datarange.step)) if not is_random else (
                     round(random_generator * lit(crange)) * lit(datarange.step))
-        newDef = (baseval + lit(datarange.min))
+
+        if self.base_column_type == "values":
+            newDef = baseval
+        else:
+            newDef = (baseval + lit(datarange.min))
 
         # for ranged values in strings, use type of min, max and step as output type
         if type(self.datatype) is StringType:
@@ -590,7 +600,10 @@ class ColumnGenerationSpec:
                 sql_random_generator = self.getUniformRandomSQLExpression(self.name)
                 newDef = expr("date_sub(current_date, round({}*1024))".format(sql_random_generator)).astype(ctype)
             else:
-                newDef = (self.getSeedExpression(baseCol) + lit(self.data_range.min)).astype(ctype)
+                if self.base_column_type == "values":
+                    newDef = self.getSeedExpression(baseCol)
+                else:
+                    newDef = (self.getSeedExpression(baseCol) + lit(self.data_range.min)).astype(ctype)
 
             # string value generation is simply handled by combining with a suffix or prefix
             if self.values is not None:
