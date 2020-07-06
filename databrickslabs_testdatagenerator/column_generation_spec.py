@@ -12,6 +12,7 @@ from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, Doub
 import math
 from datetime import date, datetime, timedelta
 from .utils import ensure
+from .column_spec_options import ColumnSpecOptions
 from .text_generators import TemplateGenerator
 from .dataranges import DateRange, NRange
 
@@ -47,7 +48,7 @@ class ColumnGenerationSpec:
 
                       }
 
-    # the set of disallowed column attributes
+    #: the set of disallowed column attributes
     _forbidden_props = {
         'range'
     }

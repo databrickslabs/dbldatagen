@@ -63,8 +63,8 @@ class TestTextGeneration(unittest.TestCase):
                             .withColumnSpec("nstr4", percent_nulls=10.0, min=1, max=9, step=2,  format="%04d")
                             .withColumnSpec("nstr5", percent_nulls=10.0, min=1.5, max=2.5, step=0.3,  random=True)
                             .withColumnSpec("nstr6", percent_nulls=10.0, min=1.5, max=2.5, step=0.3, random=True, format="%04f")
-                            .withColumnSpec("email", template=r'\\w.\\w@\\w.com|\\w@\\w.co.u\\k')
-                            .withColumnSpec("ip_addr", template=r'\\n.\\n.\\n.\\n')
+                            .withColumnSpec("email", template=r'\w.\w@\w.com|\w@\w.co.u\k')
+                            .withColumnSpec("ip_addr", template=r'\n.\n.\n.\n')
                             .withColumnSpec("phone", template=r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd')
                             )
 
@@ -82,8 +82,8 @@ class TestTextGeneration(unittest.TestCase):
                                         percent_nulls=10.0, min=1, max=9, step=2)
                          .withColumnSpecs(patterns="n.*", match_types=IntegerType(),
                                         percent_nulls=10.0, min=1, max=200, step=-2)
-                         .withColumnSpec("email", template=r'\\w.\\w@\\w.com|\\w@\\w.co.u\\k')
-                         .withColumnSpec("ip_addr", template=r'\\n.\\n.\\n.\\n')
+                         .withColumnSpec("email", template=r'\w.\w@\w.com|\w@\w.co.u\k')
+                         .withColumnSpec("ip_addr", template=r'\n.\n.\n.\n')
                          .withColumnSpec("phone", template=r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd')
                          )
         testDataSpec2.build().show()
@@ -94,7 +94,7 @@ class TestTextGeneration(unittest.TestCase):
                          .withIdOutput()
                          .withColumn("val1", IntegerType(), percent_nulls=10.0)
                          .withColumn("val2", IntegerType(), percent_nulls=10.0)
-                         .withColumn("val3", StringType(), base_column=["val1","val2"], base_column_type="values", template=r"\\v-1")
+                         .withColumn("val3", StringType(), base_column=["val1","val2"], base_column_type="values", template=r"\v-1")
                          )
 
         testDataSpec3.build().show()
@@ -105,10 +105,66 @@ class TestTextGeneration(unittest.TestCase):
                          .withIdOutput()
                          .withColumn("val1", IntegerType(), percent_nulls=10.0)
                          .withColumn("val2", IntegerType(), percent_nulls=10.0)
-                         .withColumn("val3", StringType(), base_column=["val1","val2"], base_column_type="values", template=r"\\v0-\\v1")
+                         .withColumn("val3", StringType(), base_column=["val1","val2"], base_column_type="values", template=r"\v0-\v1")
+                         )
+        # in this case we expect values of the form `<first-value> - <second-value>`
+        testDataSpec4.build().show()
+
+    def test_multi_columns3(self):
+        testDataSpec5 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count,
+                                          partitions=self.partitions_requested, verbose=True)
+                         .withIdOutput()
+                         .withColumn("val1", IntegerType(), percent_nulls=10.0)
+                         .withColumn("val2", IntegerType(), percent_nulls=10.0)
+                         .withColumn("val3", StringType(), base_column=["val1","val2"], base_column_type="values", template=r"\v\0-\v\1")
                          )
 
-        testDataSpec4.build().show()
+        # in this case we expect values of the form `[ array of values]0 - [array of values]1`
+        testDataSpec5.build().show()
+
+    def test_multi_columns4(self):
+        testDataSpec6 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count,
+                                          partitions=self.partitions_requested, verbose=True)
+                         .withIdOutput()
+                         .withColumn("val1", IntegerType(), percent_nulls=10.0)
+                         .withColumn("val2", IntegerType(), percent_nulls=10.0)
+                         .withColumn("val3", StringType(), base_column=["val1","val2"], base_column_type="hash", template=r"\v0-\v1")
+                         )
+        # here the values for val3 are undefined as the base value for the column is a hash of the base columns
+        testDataSpec6.build().show()
+
+    def test_multi_columns5(self):
+        testDataSpec7 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count,
+                                          partitions=self.partitions_requested, verbose=True)
+                         .withIdOutput()
+                         .withColumn("val1", IntegerType(), percent_nulls=10.0)
+                         .withColumn("val2", IntegerType(), percent_nulls=10.0)
+                         .withColumn("val3", StringType(), base_column=["val1","val2"], base_column_type="hash", format="%s")
+                         )
+        # here the values for val3 are undefined as the base value for the column is a hash of the base columns
+        testDataSpec7.build().show()
+
+    def test_multi_columns6(self):
+        testDataSpec8 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count,
+                                          partitions=self.partitions_requested, verbose=True)
+                         .withIdOutput()
+                         .withColumn("val1", IntegerType(), percent_nulls=10.0)
+                         .withColumn("val2", IntegerType(), percent_nulls=10.0)
+                         .withColumn("val3", StringType(), base_column=["val1","val2"], base_column_type="values", format="%s")
+                         )
+        # here the values for val3 are undefined as the base value for the column is a hash of the base columns
+        testDataSpec8.build().show()
+
+    def test_multi_columns7(self):
+        testDataSpec9 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count,
+                                          partitions=self.partitions_requested, verbose=True)
+                         .withIdOutput()
+                         .withColumn("val1", IntegerType(), percent_nulls=10.0)
+                         .withColumn("val2", IntegerType(), percent_nulls=10.0)
+                         .withColumn("val3", StringType(), base_column=["val1","val2"], format="%s")
+                         )
+        # here the values for val3 are undefined as the base value for the column is a hash of the base columns
+        testDataSpec9.build().show()
 
 # run the tests
 # if __name__ == '__main__':
