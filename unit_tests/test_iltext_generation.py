@@ -39,7 +39,7 @@ spark.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", "500")
 spark.conf.set("spark.sql.execution.arrow.enabled", "true")
 
 # Test manipulation and generation of test data for a large schema
-class TestTextGeneration(unittest.TestCase):
+class TestILTextGeneration(unittest.TestCase):
     testDataSpec = None
     row_count = 1000000
     partitions_requested=24
@@ -69,38 +69,93 @@ class TestTextGeneration(unittest.TestCase):
                             )
 
 
-    def test_simple_data(self):
-        self.testDataSpec.build().show()
-
-    def test_simple_data2(self):
+    def test_iltext1(self):
         print("test data spec 2")
         testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
                                           partitions=self.partitions_requested)
                          .withSchema(schema)
                          .withIdOutput()
-                         .withColumnSpec("date", percent_nulls=10.0)
-                         .withColumnSpecs(patterns="n.*", match_types=StringType(),
-                                        percent_nulls=10.0, min=1, max=9, step=2)
-                         .withColumnSpecs(patterns="n.*", match_types=IntegerType(),
-                                        percent_nulls=10.0, min=1, max=200, step=-2)
-                         .withColumnSpec("email", template=r'\\w.\\w@\\w.com|\\w@\\w.co.u\\k')
-                         .withColumnSpec("ip_addr", template=r'\\n.\\n.\\n.\\n')
-                         .withColumnSpec("phone", template=r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd')
+                         .withColumnSpec("nstr1", text=ILText(words=(2,6)))
                          )
 
-        testDataSpec2.build().show()
+        testDataSpec2.build().select("id", "nstr1").show()
 
-    def test_multi_columns(self):
+    def test_iltext2(self):
         print("test data spec 2")
-        testDataSpec3 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count,
+        testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
                                           partitions=self.partitions_requested)
+                         .withSchema(schema)
                          .withIdOutput()
-                         .withColumn("val1", IntegerType(), percent_nulls=10.0)
-                         .withColumn("val2", IntegerType(), percent_nulls=10.0)
-                         .withColumn("val3", StringType(), base_column=["val1","val2"], base_column_type="values", template=r"\\v-1")
+                         .withColumnSpec("phone", text=ILText(paragraphs=(2,6)))
                          )
 
-        testDataSpec3.build().show()
+        testDataSpec2.build().select("id", "phone").show()
+
+    def test_iltext3(self):
+        print("test data spec 2")
+        testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
+                                          partitions=self.partitions_requested)
+                         .withSchema(schema)
+                         .withIdOutput()
+                         .withColumnSpec("phone", text=ILText(sentences=(2,6)))
+                         )
+
+        testDataSpec2.build().select("id", "phone").show()
+
+    def test_iltext4a(self):
+        print("test data spec 2")
+        testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
+                                          partitions=self.partitions_requested,
+                                          use_pandas=True, pandas_udf_batch_size=300)
+                         .withSchema(schema)
+                         .withIdOutput()
+                         .withColumnSpec("phone", text=ILText(paragraphs=(1,4), sentences=(2,6)))
+                         )
+
+        testDataSpec2.build().select("id", "phone").show(20, truncate=False)
+
+    def test_iltext4b(self):
+        print("test data spec 2")
+        testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
+                                          partitions=self.partitions_requested, use_pandas=False)
+                         .withSchema(schema)
+                         .withIdOutput()
+                         .withColumnSpec("phone", text=ILText(paragraphs=(1,4), sentences=(2,6)))
+                         )
+
+        testDataSpec2.build().select("id", "phone").show(20, truncate=False)
+
+    def test_iltext5(self):
+        print("test data spec 2")
+        testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
+                                          partitions=self.partitions_requested)
+                         .withSchema(schema)
+                         .withIdOutput()
+                         .withColumnSpec("phone", text=ILText(paragraphs=(1,4), words=(3,12)))
+                         )
+
+        testDataSpec2.build().select("id", "phone").show()
+
+    def test_iltext6(self):
+        print("test data spec 2")
+        testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
+                                          partitions=self.partitions_requested)
+                         .withSchema(schema)
+                         .withIdOutput()
+                         .withColumnSpec("phone", text=ILText(paragraphs=(1,4), sentences=(2, 8), words=(3,12)))
+                         )
+
+        testDataSpec2.build().select("id", "phone").show()
+
+
+
+
+
+
+
+
+
+
 
 # run the tests
 # if __name__ == '__main__':

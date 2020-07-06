@@ -37,7 +37,7 @@ class ColumnGenerationSpec:
     #: the set of attributes , we know about
     _allowed_props = {'name', 'type', 'min', 'max', 'step',
                      'prefix', 'random', 'distribution',
-                     'range', 'base_column', 'values',
+                     'range', 'base_column', 'base_column_type', 'values',
                      'numColumns', 'numFeatures', 'structType',
                      'begin', 'end', 'interval', 'expr', 'omit',
                      'weights', 'description', 'continuous',
@@ -92,6 +92,8 @@ class ColumnGenerationSpec:
         self._checkExclusiveOptions(["min", "begin", "data_range"])
         self._checkExclusiveOptions(["max", "end", "data_range"])
         self._checkExclusiveOptions(["step", "interval", "data_range"])
+
+        self._checkOptionValues("base_column_type", ["values", "hash", None])
 
         # we want to assign each of the properties to the appropriate instance variables
         # but compute sensible defaults in the process as needed
@@ -221,9 +223,22 @@ class ColumnGenerationSpec:
 
         :param options: list of options that will be mutually exclusive
         """
-        #assert len([self[x] for x in options if self[x] is not None]) <= 1, \
-        #    f" only one of of the options: {options} may be specified "
-        pass
+        assert options is not None, "options must be non empty"
+        assert type(options) is list
+        assert len([self[x] for x in options if self[x] is not None]) <= 1, \
+            f" only one of of the options: {options} may be specified "
+
+    def _checkOptionValues(self, option, option_values):
+        """check if option value is in list of values
+
+        :param option: list of options that will be mutually exclusive
+        :param option_values: list of possible option values that will be mutually exclusive
+        """
+        assert option is not None and len(option.strip()) > 0, "option must be non empty"
+        assert type(option_values) is list
+        assert self[option] in option_values, "option: `{}` must have one of the values {}".format(option, option_values)
+
+
 
     def getUniformRandomExpression(self, col_name):
         """ Get random expression accounting for seed method
