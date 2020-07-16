@@ -94,7 +94,7 @@ dist: buildenv
 
 new_artifact: buildenv
 	@echo "$(OK_COLOR)=> committing new artifact$(NO_COLOR)"
-	- git rm --cached `pwd`/dist/"*.whl"
+	-git rm --cached `pwd`/dist/"*.whl"
 	git add -f `pwd`/dist/*.whl
 
 

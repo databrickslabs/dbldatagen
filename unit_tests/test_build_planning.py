@@ -186,10 +186,14 @@ class TestBuildPlanning(unittest.TestCase):
         cls.dfTestData = cls.testDataSpec.build()
 
 
-    def test_large_clone(self):
+    def test_explain(self):
         self.testDataSpec.computeBuildPlan()
         self.testDataSpec.explain()
 
+    def test_explain_on_clone(self):
+        testDataSpec2 = self.testDataSpec.clone()
+        testDataSpec2.computeBuildPlan()
+        testDataSpec2.explain()
 
 
 

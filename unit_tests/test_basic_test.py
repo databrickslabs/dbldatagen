@@ -53,10 +53,23 @@ class TestBasicOperation(unittest.TestCase):
         ds_copy1 = self.testDataSpec.clone()
 
         df_copy1 = (ds_copy1.setRowCount(1000)
-                    .withColumn("another_column", IntegerType(), base_column=['code1','code2'], min=100, max=200)
+                    .withColumn("ac1", IntegerType(), base_column=['code1','code2'], min=100, max=200)
+                    .withColumn("ac2", IntegerType(), base_column=['code1','code2'], min=100, max=200, random=True)
                     .build())
 
         self.assertEqual(df_copy1.count(), 1000)
+
+        df_overlimit=df_copy1.where("ac1 > 200")
+        self.assertEqual(df_overlimit.count(), 0)
+
+        df_underlimit=df_copy1.where("ac1 < 100")
+        self.assertEqual(df_underlimit.count(), 0)
+
+        df_overlimit2=df_copy1.where("ac2 > 200")
+        self.assertEqual(df_overlimit2.count(), 0)
+
+        df_underlimit2=df_copy1.where("ac2 < 100")
+        self.assertEqual(df_underlimit2.count(), 0)
 
         df_copy1.show()
 

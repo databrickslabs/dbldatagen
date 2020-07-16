@@ -32,28 +32,8 @@ class ColumnGenerationSpec:
     This class is meant for internal use only
     """
 
-    #: the set of attributes that must be present for any columns
-    _required_props = {'name', 'type'}
 
-    #: the set of attributes , we know about
-    _allowed_props = {'name', 'type', 'min', 'max', 'step',
-                     'prefix', 'random', 'distribution',
-                     'range', 'base_column', 'base_column_type', 'values',
-                     'numColumns', 'numFeatures', 'structType',
-                     'begin', 'end', 'interval', 'expr', 'omit',
-                     'weights', 'description', 'continuous',
-                     'percent_nulls', 'template', 'format',
-                     'unique_values', 'data_range', 'text',
-                     'precision', 'scale'
-
-                      }
-
-    #: the set of disallowed column attributes
-    _forbidden_props = {
-        'range'
-    }
-
-    # max values for each column type, only if where value is intentionally restricted
+    #: max values for each column type, only if where value is intentionally restricted
     _max_type_range = {
         'byte': 256,
         'short': 65536
@@ -68,33 +48,37 @@ class ColumnGenerationSpec:
         if colType is None:                         # default to integer field if none specified
             colType = IntegerType()
 
-        assert isinstance(colType, DataType)
+        assert isinstance(colType, DataType), "colType `{}` is not instance of DataType".format(colType)
 
         self.initial_build_plan=[]                  # the build plan for the column - descriptive only
         self.execution_history=[]                   # the execution history for the column
 
         # to allow for open ended extension of many column attributes, we use a few specific
         # parameters and pass the rest as keyword arguments
-        self.props = {'name': name, 'min': min, 'type': colType, 'max': max, 'step': step,
+        self._column_spec_options = {'name': name, 'min': min, 'type': colType, 'max': max, 'step': step,
                       'prefix': prefix, 'base_column': base_column,
                       'random': random, 'distribution': distribution,
-                      }
-        self.props.update(kwargs)
+                      'random_seed_method': random_seed_method, 'random_seed': random_seed,
+                      'omit': omit, 'nullable': nullable, 'implicit': implicit
+                                     }
 
-        self._checkProps(self.props)
+        self._column_spec_options.update(kwargs)
+
+        column_spec_options=ColumnSpecOptions(self._column_spec_options)
+
+        column_spec_options._checkProps(self._column_spec_options)
 
         # only allow `template` or `test`
-        self._checkExclusiveOptions(["template", "text"])
+        column_spec_options._checkExclusiveOptions(["template", "text"])
 
         # only allow `weights` or `distribution`
-        self._checkExclusiveOptions(["distribution", "weights"])
+        column_spec_options._checkExclusiveOptions(["distribution", "weights"])
 
         # check for alternative forms of specifying range
-        #self._checkExclusiveOptions(["min", "begin", "data_range"])
-        #self._checkExclusiveOptions(["max", "end", "data_range"])
-        #self._checkExclusiveOptions(["step", "interval", "data_range"])
+        #column_spec_options._checkExclusiveOptions(["min", "begin", "data_range"])
+        #column_spec_options._checkExclusiveOptions(["max", "end", "data_range"])
+        #column_spec_options._checkExclusiveOptions(["step", "interval", "data_range"])
 
-        self._checkOptionValues("base_column_type", ["values", "hash", None])
 
         # we want to assign each of the properties to the appropriate instance variables
         # but compute sensible defaults in the process as needed
@@ -103,15 +87,19 @@ class ColumnGenerationSpec:
 
         # if a column spec is implicit, it can be overwritten
         # by default column specs added by wild cards or inferred from schemas are implicit
+        column_spec_options._checkBoolOption(implicit, name="implicit")
         self.implicit = implicit
 
         # if true, omit the column from the final output
+
+        column_spec_options._checkBoolOption(omit, name="omit")
         self.omit = omit
 
         # the column name
         self.name = name
 
         # not used for much other than to validate against option to generate nulls
+        column_spec_options._checkBoolOption(nullable, name="nullable")
         self.nullable = nullable
 
         # should be either a literal or None
@@ -132,6 +120,7 @@ class ColumnGenerationSpec:
             self.dependencies = ["id"]
 
         # value of `base_column_type` must be `None`,"values" or "hash"
+        column_spec_options._checkOptionValues("base_column_type", ["values", "hash", None])
         self.base_column_type = self['base_column_type']
 
         # handle text generation templates
@@ -147,8 +136,10 @@ class ColumnGenerationSpec:
         self.temporary_columns = []
 
         data_range = self["data_range"]
+
         unique_values = self["unique_values"]
-        min, max, step = (self["min"], self["max"], self["step"])
+
+        c_min, c_max, c_step = (self["min"], self["max"], self["step"])
         c_begin, c_end, c_interval = self['begin'], self['end'], self['interval']
 
         # handle weights / values and distributions
@@ -165,30 +156,11 @@ class ColumnGenerationSpec:
             self.values=list(self.values)
 
 
-        if unique_values is not None:
-            assert type(unique_values) is int, "unique_values must be integer"
-            assert unique_values >= 1
-            # TODO: set max to unique_values + min & add unit test
-            self.data_range = NRange( 1 if min is None else min,
-                                      unique_values if min is None else unique_values + min-1,
-                                      1)
-        elif data_range is not None:
-            self.data_range = data_range
-        elif data_range is None:
-            if type(colType) is TimestampType or type(colType) is DateType:
-                if c_begin is None:
-                    __c_begin = datetime.today()
-                    c_begin = datetime(__c_begin.year, __c_begin.month, __c_begin.day, 0, 0, 0)
-                if c_end is None:
-                    c_end = datetime.today()
-                if c_interval is None:
-                    c_interval = timedelta(days=0, hours=0, minutes=1)
+        self.data_range=self.computeAdjustedRangeForColumn(colType=colType, c_min=c_min, c_max=c_max, c_step=c_step,
+                                           c_begin=c_begin, c_end=c_end, c_interval=c_interval,
+                                           c_unique=unique_values, c_range=data_range)
 
-                self.data_range=DateRange(c_begin, c_end, c_interval)
-            else:
-                self.data_range = NRange(0 if min is None else min,max, step)
-        else:
-            self.data_range = NRange(0,None, None)
+        print("data range: name={}, value={}".format(name, self.data_range))
 
         if self.isWeightedValuesColumn:
             # if its a weighted values column, then create temporary for it
@@ -203,7 +175,7 @@ class ColumnGenerationSpec:
                 desc = "adding temporary column {} required by {}".format(temp_name, self.name)
                 self.initial_build_plan.append(desc)
                 sql_random_generator = self.getUniformRandomSQLExpression(self.name)
-                self.temporary_columns.append((temp_name, DoubleType(), {'expr': sql_random_generator, 'omit' : "True",
+                self.temporary_columns.append((temp_name, DoubleType(), {'expr': sql_random_generator, 'omit' : True,
                                                                          'description': desc}))
                 self.weighted_base_column = temp_name
             else:
@@ -216,31 +188,44 @@ class ColumnGenerationSpec:
                 # TODO : change this to use a base expression based on mapping base column to size of
                 # data
                 sql_random_generator = self.getUniformRandomSQLExpression(self.name)
-                self.temporary_columns.append((temp_name, DoubleType(), {'expr': sql_random_generator, 'omit' : "True",
+                self.temporary_columns.append((temp_name, DoubleType(), {'expr': sql_random_generator, 'omit' : True,
                                                                          'description': desc}))
                 self.weighted_base_column = temp_name
 
-    def _checkExclusiveOptions(self, options):
-        """check if the options are exclusive - i.e only one is not None
+    def computeAdjustedRangeForColumn(self, colType, c_min, c_max, c_step, c_begin, c_end, c_interval, c_range, c_unique):
+        """Determine adjusted range for data column
 
-        :param options: list of options that will be mutually exclusive
+        Rules:
+        - if a datarange is specified , use that
+        - if begin and end are specified or min and max are specified, use that
+        - if unique values is specified, compute min and max depending on type
+
         """
-        assert options is not None, "options must be non empty"
-        assert type(options) is list
-        assert len([self[x] for x in options if self[x] is not None]) <= 1, \
-            f" only one of of the options: {options} may be specified "
+        if c_unique is not None:
+            assert type(c_unique) is int, "unique_values must be integer"
+            assert c_unique >= 1
+            # TODO: set max to unique_values + min & add unit test
+            return NRange( 1 if c_min is None else c_min,
+                                      c_unique if c_min is None else c_unique + c_min-1,
+                                      1)
+        elif c_range is not None:
+            return c_range
+        elif c_range is None:
+            if type(colType) is TimestampType or type(colType) is DateType:
+                if c_begin is None:
+                    __c_begin = datetime.today()
+                    c_begin = datetime(__c_begin.year, __c_begin.month, __c_begin.day, 0, 0, 0)
+                if c_end is None:
+                    c_end = datetime.today()
+                if c_interval is None:
+                    c_interval = timedelta(days=0, hours=0, minutes=1)
 
-    def _checkOptionValues(self, option, option_values):
-        """check if option value is in list of values
+                return DateRange(c_begin, c_end, c_interval)
+            else:
+                return NRange(0 if c_min is None else c_min,c_max, c_step)
 
-        :param option: list of options that will be mutually exclusive
-        :param option_values: list of possible option values that will be mutually exclusive
-        """
-        assert option is not None and len(option.strip()) > 0, "option must be non empty"
-        assert type(option_values) is list
-        assert self[option] in option_values, "option: `{}` must have one of the values {}".format(option, option_values)
-
-
+        # assume numeric range of 0 to x, if no range specified
+        return NRange(0, None, None)
 
     def getUniformRandomExpression(self, col_name):
         """ Get random expression accounting for seed method
@@ -280,8 +265,8 @@ class ColumnGenerationSpec:
 
     def getNames(self):
         """ get column names as list of strings"""
-        numColumns = self.props.get('numColumns', 1)
-        structType = self.props.get('structType', None)
+        numColumns = self._column_spec_options.get('numColumns', 1)
+        structType = self._column_spec_options.get('structType', None)
 
         if numColumns > 1 and structType is None:
             return ["{0}_{1}".format(self.name, x) for x in range(0, numColumns)]
@@ -290,8 +275,8 @@ class ColumnGenerationSpec:
 
     def getNamesAndTypes(self):
         """ get column names as list of tules `(name, datatype)`"""
-        numColumns = self.props.get('numColumns', 1)
-        structType = self.props.get('structType', None)
+        numColumns = self._column_spec_options.get('numColumns', 1)
+        structType = self._column_spec_options.get('structType', None)
 
         if numColumns > 1 and structType is None:
             return [ ("{0}_{1}".format(self.name, x), self.datatype) for x in range(0, numColumns)]
@@ -301,13 +286,13 @@ class ColumnGenerationSpec:
 
     def keys(self):
         """ Get the keys as list of strings """
-        ensure(self.props is not None, "self.props should be non-empty")
-        return self.props.keys()
+        ensure(self._column_spec_options is not None, "self._column_spec_options should be non-empty")
+        return self._column_spec_options.keys()
 
     def __getitem__(self, key):
         """ implement the built in derefernce by key behavior """
         ensure(key is not None, "key should be non-empty")
-        return self.props.get(key, None)
+        return self._column_spec_options.get(key, None)
 
     @property
     def isFieldOmitted(self):
@@ -426,7 +411,7 @@ class ColumnGenerationSpec:
 
     def _getOrElse(self, key, default=None):
         """ Get val for key if it exists or else return default"""
-        return self.props.get(key, default)
+        return self._column_spec_options.get(key, default)
 
     def _checkProps(self, column_props):
         """
@@ -446,13 +431,13 @@ class ColumnGenerationSpec:
                     raise ValueError("Effective range greater than range of type")
 
         for k in column_props.keys():
-            ensure(k in self._allowed_props, 'invalid column option {0}'.format(k))
+            ensure(k in ColumnSpecOptions._allowed_props, 'invalid column option {0}'.format(k))
 
-        for arg in self._required_props:
+        for arg in ColumnSpecOptions._required_props:
             ensure(arg in column_props.keys() and column_props[arg] is not None,
                    'missing column option {0}'.format(arg))
 
-        for arg in self._forbidden_props:
+        for arg in ColumnSpecOptions._forbidden_props:
             ensure(arg not in column_props.keys(),
                    'forbidden column option {0}'.format(arg))
 
@@ -508,7 +493,8 @@ class ColumnGenerationSpec:
         """ Get seed expression for column generation
 
         This is used to generate the base value for every column
-        if using a single base column, then simply use that, otherwise use a SQL hash of multiple columns
+        if using a single base column, then simply use that, otherwise use either
+        a SQL hash of multiple columns, or an array of the base column values converted to strings
         """
         if type(base_column) is list:
             assert len(base_column) > 0
@@ -662,6 +648,7 @@ class ColumnGenerationSpec:
         """ Generate structured column if multiple columns or features are specified
 
             :param self: is ColumnGenerationSpec for column
+            :param use_pandas: indicates that `pandas` framework should be used
             :returns: spark sql `column` or expression that can be used to generate a column
         """
         numColumns = self['numColumns']

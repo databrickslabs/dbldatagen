@@ -121,6 +121,7 @@ class DataGenerator:
             raise DataGenError("""seed_method should be None, 'fixed' or 'hash_fieldname' """)
 
     def _setup_logger(self):
+        """Set up logging"""
         self.logger = logging.getLogger("DataGenerator")
         if self.verbose:
             self.logger.setLevel(logging.INFO)
@@ -495,6 +496,7 @@ class DataGenerator:
         return df1
 
     def _ppList(self, alist, msg=""):
+        """Pretty printing for lists"""
         print(msg)
         l = len(alist)
         for x in alist:

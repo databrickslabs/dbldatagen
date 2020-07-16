@@ -1,7 +1,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 import math
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
     StructType, StructField, TimestampType, DataType, DateType, ByteType
@@ -55,22 +55,42 @@ class NRange(object):
 
 
 class DateRange(object):
-    """Class to represent Date range"""
+    """Class to represent Date range
 
-    def __init__(self, begin, end, interval=None, datetime_format="%Y-%m-%d %H:%M:%S"):
+    The date range will represented internally using `datetime` for `start` and `end`, and `timedelta` for `interval`
+
+    When computing ranges for purposes of the sequences, the maximum value will be adjusted to the nearest whole multiple
+    of the interval that is before the `end` value.
+
+    When converting from a string, datetime is assumed to use local timezone unless specified as part of the format
+    in keeping with the python `datetime` handling of datetime instances that do not specify a timezone
+
+    :param begin: start of date range as python datetime object. If specified as string, converted to datetime
+    :param end: start of date range as python datetime object. If specified as string, converted to datetime
+    :param interval: start of date range as python datetime object
+    :param datetime_format: format for conversion of strings to datetime objects
+    """
+    DEFAULT_UTC_FORMAT="%Y-%m-%d %H:%M:%S"
+
+    def __init__(self, begin, end, interval=None, datetime_format=DEFAULT_UTC_FORMAT):
         assert begin is not None
         assert end is not None
 
-        self.begin = begin if not isinstance(begin, str) else datetime.strptime(begin, datetime_format)
-        self.end = end if not isinstance(end, str) else datetime.strptime(end, datetime_format)
+        self.begin = begin if not isinstance(begin, str) else self._date_from_string(begin, datetime_format)
+        self.end = end if not isinstance(end, str) else self._date_from_string(end, datetime_format)
         self.interval = interval if not isinstance(interval, str) else timedelta(
             **self.parseInterval(interval))
 
-        self.min = (self.begin - datetime(1970, 1, 1)).total_seconds()
+        self.min = self.begin.timestamp()
 
         self.max = (self.min +self.interval.total_seconds()
                * self.computeTimestampIntervals(self.begin, self.end, self.interval))
         self.step = self.interval.total_seconds()
+
+    def _date_from_string(self, date_str, date_format):
+        result = datetime.strptime(date_str, date_format)
+        return result
+
 
     @classmethod
     def parseInterval(cls, interval_str):
@@ -84,6 +104,7 @@ class DateRange(object):
         return eval("{{ {}  }} ".format(",".join(results)))
 
     def __str__(self):
+        """ create string representation of date range"""
         return "DateRange({},{},{} == {}, {}, {})".format(self.begin, self.end, self.interval,
                                                           self.min, self.max, self.step)
 

@@ -29,3 +29,8 @@ class TestColumnGenerationSpec(unittest.TestCase):
         dt = StringType()
         cd = dg.ColumnGenerationSpec(name="test", colType=StringType(), base_column='test0')
         self.assertEqual(cd.baseColumn, 'test0')
+
+    def test_baseColumnMultiple(self):
+        dt = StringType()
+        cd = dg.ColumnGenerationSpec(name="test", colType=StringType(), base_column=['test0', 'test_1'])
+        self.assertEqual(cd.baseColumn, ['test0', 'test_1'])

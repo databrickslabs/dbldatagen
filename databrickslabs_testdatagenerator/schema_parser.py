@@ -2,7 +2,7 @@
 # limitations under the License.
 #
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
-    StructType, StructField, TimestampType, DateType, DecimalType
+    StructType, StructField, TimestampType, DateType, DecimalType, ByteType
 import re
 
 
@@ -56,6 +56,8 @@ class SchemaParser(object):
             return DateType()
         elif s == "short":
             return ShortType()
+        elif s == "byte":
+            return ByteType()
         else:
             return s
 
