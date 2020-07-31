@@ -34,12 +34,24 @@ class NRange(object):
                 self.min = 0.0
             if self.max is None:
                 self.max = math.pow(10, ctype.precision - ctype.scale) - 1.0
+            if self.step is None:
+                self.step = 1.0
 
         if type(ctype) is ShortType and self.max is not None:
             assert self.max <= 65536
 
         if type(ctype) is ByteType and self.max is not None:
             assert self.max <= 256
+
+        if (type(ctype) is DoubleType
+                or type(ctype) is FloatType) and self.step is None:
+            self.step = 1.0
+
+        if (type(ctype) is ByteType
+                or type(ctype) is ShortType
+                or type(ctype) is IntegerType
+                or type(ctype) is LongType) and self.step is None:
+            self.step = 1
 
     def getDiscreteRange(self):
         """Convert range to discrete range"""

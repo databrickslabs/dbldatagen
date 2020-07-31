@@ -19,6 +19,7 @@ class SchemaParser(object):
         """ parse a decimal specifier
 
         :param str: - decimal specifier string such as `decimal(19,4)`, `decimal` or `decimal(10)`
+        :returns: DecimalType instance for parsed result
         """
         m = cls._match_precision_only.search(str)
         if m:
@@ -32,7 +33,11 @@ class SchemaParser(object):
 
     @classmethod
     def columnTypeFromString(cls, type_string):
-        """ Generate a Spark SQL data type from a string """
+        """ Generate a Spark SQL data type from a string
+
+        :param type_string: String representation of SQL type such as 'integer' etc
+        :returns: Spark SQL type
+        """
         assert type_string is not None
 
         s = type_string.strip().lower()
@@ -62,13 +67,15 @@ class SchemaParser(object):
             return s
 
     @classmethod
-    def parseCreateTable(cls, sparkSession, s):
+    def parseCreateTable(cls, sparkSession, source_schema):
         """ Parse a schema from a schema string
-            - schema should be a table definition minus the create table statement
+
+            :param source_schema: should be a table definition minus the create table statement
+            :returns: Spark SQL schema instance
         """
-        assert (s is not None)
+        assert (source_schema is not None)
         assert (sparkSession is not None)
-        lines = [x.strip() for x in s.split("\n") if x is not None]
+        lines = [x.strip() for x in source_schema.split("\n") if x is not None]
         table_defn = " ".join(lines)
 
         # get table name from s

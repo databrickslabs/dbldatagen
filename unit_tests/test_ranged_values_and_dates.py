@@ -3,7 +3,7 @@ import databrickslabs_testdatagenerator as datagen
 from pyspark.sql import SparkSession
 import unittest
 from datetime import timedelta, datetime
-from databrickslabs_testdatagenerator import DateRange
+from databrickslabs_testdatagenerator import DateRange, NRange
 
 # build spark session
 
@@ -114,11 +114,11 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
         df_outside1=testDataDF.where("last_sync_date > '2018-10-06' ")
         df_outside1.show()
-        self.assertEquals(df_outside1.count() , 0)
+        self.assertEqual(df_outside1.count() , 0)
 
         df_outside2 = testDataDF.where("last_sync_date < '2017-10-01' ")
         df_outside2.show()
-        self.assertEquals(df_outside2.count() ,0)
+        self.assertEqual(df_outside2.count() ,0)
 
     #@unittest.skip("not yet implemented")
     def test_date_range3a(self):
@@ -139,11 +139,11 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
             df_outside1 = testDataDF.where("last_sync_date > '2018-10-06' ")
             df_outside1.show()
-            self.assertEquals(df_outside1.count(), 0)
+            self.assertEqual(df_outside1.count(), 0)
 
             df_outside2 = testDataDF.where("last_sync_date < '2017-10-01' ")
             df_outside2.show()
-            self.assertEquals(df_outside2.count(), 0)
+            self.assertEqual(df_outside2.count(), 0)
 
     #@unittest.skip("not yet implemented")
     def test_date_range4(self):
@@ -166,11 +166,11 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
         df_outside1=testDataDF.where("last_sync_date > '2018-10-06' ")
         df_outside1.show()
-        self.assertEquals(df_outside1.count(),  0)
+        self.assertEqual(df_outside1.count(),  0)
 
         df_outside2 = testDataDF.where("last_sync_date < '2017-10-01' ")
         df_outside2.show()
-        self.assertEquals(df_outside2.count(),  0)
+        self.assertEqual(df_outside2.count(),  0)
 
     #@unittest.skip("not yet finalized")
     def test_date_range4a(self):
@@ -193,11 +193,11 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
         df_outside1=testDataDF.where("last_sync_date > '2018-10-06' ")
         df_outside1.show()
-        self.assertEquals(df_outside1.count(),  0)
+        self.assertEqual(df_outside1.count(),  0)
 
         df_outside2 = testDataDF.where("last_sync_date < '2017-10-01' ")
         df_outside2.show()
-        self.assertEquals(df_outside2.count(),  0)
+        self.assertEqual(df_outside2.count(),  0)
 
     #@unittest.skip("not yet finalized")
     def test_timestamp_range3(self):
@@ -219,11 +219,11 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
         df_outside1=testDataDF.where("last_sync_date > '2018-10-06' ")
         df_outside1.show()
-        self.assertEquals(df_outside1.count() , 0)
+        self.assertEqual(df_outside1.count() , 0)
 
         df_outside2 = testDataDF.where("last_sync_date < '2017-10-01' ")
         df_outside2.show()
-        self.assertEquals(df_outside2.count() ,0)
+        self.assertEqual(df_outside2.count() ,0)
 
     #@unittest.skip("not yet finalized")
     def test_timestamp_range3a(self):
@@ -244,11 +244,11 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
             df_outside1 = testDataDF.where("last_sync_date > '2018-10-06' ")
             df_outside1.show()
-            self.assertEquals(df_outside1.count(), 0)
+            self.assertEqual(df_outside1.count(), 0)
 
             df_outside2 = testDataDF.where("last_sync_date < '2017-10-01' ")
             df_outside2.show()
-            self.assertEquals(df_outside2.count(), 0)
+            self.assertEqual(df_outside2.count(), 0)
 
     #@unittest.skip("not yet finalized")
     def test_timestamp_range4(self):
@@ -271,11 +271,11 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
         df_outside1=testDataDF.where("last_sync_date > '2018-10-06' ")
         df_outside1.show()
-        self.assertEquals(df_outside1.count(),  0)
+        self.assertEqual(df_outside1.count(),  0)
 
         df_outside2 = testDataDF.where("last_sync_date < '2017-10-01' ")
         df_outside2.show()
-        self.assertEquals(df_outside2.count(),  0)
+        self.assertEqual(df_outside2.count(),  0)
 
     #@unittest.skip("not yet finalized")
     def test_timestamp_range4a(self):
@@ -298,11 +298,11 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
         df_outside1=testDataDF.where("last_sync_date > '2018-10-06' ")
         df_outside1.show()
-        self.assertEquals(df_outside1.count(),  0)
+        self.assertEqual(df_outside1.count(),  0)
 
         df_outside2 = testDataDF.where("last_sync_date < '2017-10-01' ")
         df_outside2.show()
-        self.assertEquals(df_outside2.count(),  0)
+        self.assertEqual(df_outside2.count(),  0)
 
     def test_unique_values1(self):
         testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
@@ -318,10 +318,10 @@ class TestRangedValuesAndDates(unittest.TestCase):
                                                 "max(code2) as max_c2")
 
         summary=testDataSummary.collect()[0]
-        self.assertEquals(summary[0], 1)
-        self.assertEquals(summary[1], 7)
-        self.assertEquals(summary[2], 20)
-        self.assertEquals(summary[3], 26)
+        self.assertEqual(summary[0], 1)
+        self.assertEqual(summary[1], 7)
+        self.assertEqual(summary[2], 20)
+        self.assertEqual(summary[3], 26)
 
     def test_unique_values_ts(self):
         testDataUniqueDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
@@ -335,7 +335,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
         dfResults = spark.sql("select count(distinct test_ts) from testUnique1")
         summary = dfResults.collect()[0]
-        self.assertEquals(summary[0], 51)
+        self.assertEqual(summary[0], 51)
 
 
 
@@ -351,7 +351,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
         dfResults = spark.sql("select count(distinct test_ts) from testUnique2")
         summary = dfResults.collect()[0]
-        self.assertEquals(summary[0], 51)
+        self.assertEqual(summary[0], 51)
 
     def test_unique_values_ts3(self):
         testDataUniqueTSDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
@@ -366,7 +366,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
         dfResults = spark.sql("select count(distinct test_ts) from testUniqueTS3")
         summary = dfResults.collect()[0]
-        self.assertEquals(summary[0], 51)
+        self.assertEqual(summary[0], 51)
 
     def test_unique_values_ts4(self):
         testDataUniqueTSDF2 = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
@@ -380,7 +380,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
         dfResults = spark.sql("select count(distinct test_ts) from testUniqueTS4")
         summary = dfResults.collect()[0]
-        self.assertEquals(summary[0], 51)
+        self.assertEqual(summary[0], 51)
 
     def test_unique_values_date(self):
         testDataUniqueDF3spec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
@@ -453,14 +453,14 @@ class TestRangedValuesAndDates(unittest.TestCase):
           from testUniqueIntegers
         """"")
         summary = dfResults.collect()[0]
-        self.assertEquals(summary[0], 51)
-        self.assertEquals(summary[1], 57)
-        self.assertEquals(summary[2], 93)
-        self.assertEquals(summary[3], 87)
-        self.assertEquals(summary[4], 93)
-        self.assertEquals(summary[5], 87)
-        self.assertEquals(summary[6], 93)
-        self.assertEquals(summary[7], 87)
+        self.assertEqual(summary[0], 51)
+        self.assertEqual(summary[1], 57)
+        self.assertEqual(summary[2], 93)
+        self.assertEqual(summary[3], 87)
+        self.assertEqual(summary[4], 93)
+        self.assertEqual(summary[5], 87)
+        self.assertEqual(summary[6], 93)
+        self.assertEqual(summary[7], 87)
         print("passed")
 
     def test_unique_values_decimal(self):
@@ -484,10 +484,10 @@ class TestRangedValuesAndDates(unittest.TestCase):
           from testUniqueDecimal
         """"")
         summary = dfResults.collect()[0]
-        self.assertEquals(summary[0], 51)
-        self.assertEquals(summary[1], 57)
-        self.assertEquals(summary[2], 93)
-        self.assertEquals(summary[3], 87)
+        self.assertEqual(summary[0], 51)
+        self.assertEqual(summary[1], 57)
+        self.assertEqual(summary[2], 93)
+        self.assertEqual(summary[3], 87)
         print("passed")
 
     def test_unique_values_float(self):
@@ -511,10 +511,10 @@ class TestRangedValuesAndDates(unittest.TestCase):
           from testUniqueFloats
         """"")
         summary = dfResults.collect()[0]
-        self.assertEquals(summary[0], 51)
-        self.assertEquals(summary[1], 57)
-        self.assertEquals(summary[2], 93)
-        self.assertEquals(summary[3], 87)
+        self.assertEqual(summary[0], 51)
+        self.assertEqual(summary[1], 57)
+        self.assertEqual(summary[2], 93)
+        self.assertEqual(summary[3], 87)
         print("passed")
 
     def test_unique_values_float2(self):
@@ -538,9 +538,9 @@ class TestRangedValuesAndDates(unittest.TestCase):
           from testUniqueFloats2
         """"")
         summary = dfResults.collect()[0]
-        self.assertEquals(summary[0], 51)
-        self.assertEquals(summary[1], 57)
-        self.assertEquals(summary[2], 93)
-        self.assertEquals(summary[3], 87)
+        self.assertEqual(summary[0], 51)
+        self.assertEqual(summary[1], 57)
+        self.assertEqual(summary[2], 93)
+        self.assertEqual(summary[3], 87)
         print("passed")
 

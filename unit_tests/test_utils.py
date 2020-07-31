@@ -26,7 +26,7 @@ class TestUtils(unittest.TestCase):
 
         test2 = mkBoundsList(None, [1,1])
 
-        self.assertEquals(len(test2), 2)
+        self.assertEqual(len(test2), 2)
 
 
 

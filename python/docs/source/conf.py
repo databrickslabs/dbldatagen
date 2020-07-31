@@ -25,7 +25,7 @@ copyright = '2020, Databricks Inc'
 author = 'Databricks Inc'
 
 # The full version, including alpha/beta/rc tags
-release = "0.10.0-dev5"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpversion
+release = "0.10.0-prerel1"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpversion
 
 
 # -- General configuration ---------------------------------------------------
@@ -39,12 +39,18 @@ extensions = [
     #'sphinx.ext.autosummary',
     'sphinx.ext.viewcode',
     'numpydoc',  # handle NumPy documentation formatted docstrings. Needs to install
+    'recommonmark',
     'sphinx_markdown_builder'
     #'matplotlib.sphinxext.plot_directive',  # For visualize plot result
     #'nbsphinx',  # Converts Jupyter Notebook to reStructuredText files for Sphinx.
     # For ipython directive in reStructuredText files.
     #'IPython.sphinxext.ipython_console_highlighting',
 ]
+
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.md': 'markdown'
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

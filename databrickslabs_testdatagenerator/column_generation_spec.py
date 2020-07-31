@@ -17,8 +17,13 @@ from .text_generators import TemplateGenerator
 from .dataranges import DateRange, NRange
 
 from pyspark.sql.functions import col, pandas_udf
+import logging
+import copy
 
-class ColumnGenerationSpec:
+HASH_COMPUTE_METHOD="hash"
+VALUES_COMPUTE_METHOD="values"
+
+class ColumnGenerationSpec(object):
     """ Column generation spec object - specifies how column is to be generated
 
     Each column to be output will have a corresponding ColumnGenerationSpec object.
@@ -39,10 +44,23 @@ class ColumnGenerationSpec:
         'short': 65536
     }
 
+    # set up logging
+
+    # restrict spurious messages from java gateway
+    logging.getLogger("py4j").setLevel(logging.WARNING)
+    logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.NOTSET)
+
     def __init__(self, name, colType=None, min=0, max=None, step=1, prefix='', random=False,
                  distribution=None, base_column="id", random_seed=None, random_seed_method=None,
-                 implicit=False, omit=False, nullable=True, **kwargs):
+                 implicit=False, omit=False, nullable=True,debug=False, verbose=False,  **kwargs):
 
+        # set up logging
+        self.verbose = verbose
+        self.debug = debug
+
+        self._setup_logger()
+
+        # set up default range and type for column
         self.data_range=NRange(None, None, None)    # by default the range of values for the column is unconstrained
 
         if colType is None:                         # default to integer field if none specified
@@ -98,6 +116,9 @@ class ColumnGenerationSpec:
         # the column name
         self.name = name
 
+        # the base column data types
+        self._base_column_datatypes = []
+
         # not used for much other than to validate against option to generate nulls
         column_spec_options._checkBoolOption(nullable, name="nullable")
         self.nullable = nullable
@@ -111,17 +132,12 @@ class ColumnGenerationSpec:
         self.random = random
 
         # compute dependencies
-        if base_column != "id":
-            if type(base_column) is list:
-                self.dependencies = base_column + ["id"]
-            else:
-                self.dependencies = [base_column, "id"]
-        else:
-            self.dependencies = ["id"]
+        self.dependencies = self.compute_basic_dependencies()
 
         # value of `base_column_type` must be `None`,"values" or "hash"
+        # this is the method of generation of current column value from base column, not the datatype of the base column
         column_spec_options._checkOptionValues("base_column_type", ["values", "hash", None])
-        self.base_column_type = self['base_column_type']
+        self.base_column_compute_method = self['base_column_type']
 
         # handle text generation templates
         if self['template'] is not None:
@@ -131,6 +147,15 @@ class ColumnGenerationSpec:
             self.text_generator = self['text']
         else:
             self.text_generator=None
+
+        # handle default method of computing the base column value
+        if self.base_column_compute_method is None and (self.text_generator is not None or self['format'] is not None):
+            self.logger.warning("""Column [%s] has no `base_column_type` attribute specified and output is formatted text
+                                   => Assuming `values` for attribute `base_column_type`. 
+                                   => Use explicit value for `base_column_type` if alternate interpretation is needed
+                                   
+            """, self.name)
+            self.base_column_compute_method = "values"
 
         # compute required temporary values
         self.temporary_columns = []
@@ -160,8 +185,63 @@ class ColumnGenerationSpec:
                                            c_begin=c_begin, c_end=c_end, c_interval=c_interval,
                                            c_unique=unique_values, c_range=data_range)
 
-        print("data range: name={}, value={}".format(name, self.data_range))
+        # set up the temporary columns needed for data generation
+        self._setup_temporary_columns()
 
+    def __deepcopy__(self, memo):
+        """Custom deep copy method that resets the logger to avoid trying to copy the logger
+
+        :see https://docs.python.org/3/library/copy.html
+        """
+        self.logger = None
+
+        try:
+            cls = self.__class__
+            result = cls.__new__(cls)
+            memo[id(self)] = result
+            for k, v in self.__dict__.items():
+                setattr(result, k, copy.deepcopy(v, memo))
+        finally:
+            self._setup_logger()
+            result._setup_logger()
+        return result
+
+
+    @property
+    def base_columns(self):
+        """ Return base columns as list"""
+
+        # if base column  is string and contains multiple columns, split them
+        # other build list of columns if needed
+        if type(self.baseColumn) is str and "," in self.baseColumn:
+            return [x.strip() for x in self.baseColumn.split(",")]
+        elif type(self.baseColumn) is list:
+            return self.baseColumn
+        else:
+            return [self.baseColumn]
+
+    def compute_basic_dependencies(self):
+        """ get set of basic column dependencies
+
+        :return: base columns as list with dependency on 'id' added
+        """
+        if self.baseColumn != "id":
+            return list(set(self.base_columns + ["id"]))
+        else:
+            return ["id"]
+
+    def set_base_column_datatypes(self, column_datatypes):
+        """ Set the data types for the base columns
+
+        :param column_datatypes: = list of data types for the base columns
+
+        """
+        ensure(type(column_datatypes) is list)
+        ensure(len(column_datatypes) == len(self.base_columns), "number of base column datatypes must match number of  base columns")
+        self._base_column_datatypes = [].append(column_datatypes)
+
+    def _setup_temporary_columns(self):
+        """ Set up any temporary columns needed for test data generation"""
         if self.isWeightedValuesColumn:
             # if its a weighted values column, then create temporary for it
             # not supported for feature / array columns for now
@@ -185,12 +265,38 @@ class ColumnGenerationSpec:
                 desc = "adding temporary column {} required by {}".format(temp_name, self.name)
                 self.initial_build_plan.append(desc)
 
-                # TODO : change this to use a base expression based on mapping base column to size of
-                # data
-                sql_random_generator = self.getUniformRandomSQLExpression(self.name)
-                self.temporary_columns.append((temp_name, DoubleType(), {'expr': sql_random_generator, 'omit' : True,
+                # use a base expression based on mapping base column to size of data
+                sql_scaled_generator = self.getScaledIntegerSQLExpression(self.name, scale=sum(self.weights) ,
+                                                                          base_columns=self.base_columns,
+                                                                          base_datatypes=self._base_column_datatypes,
+                                                                          compute_method=self.base_column_compute_method,
+                                                                          normalize=True)
+
+                self.logger.debug("""building scaled sql expression : '%s' 
+                                      with base column: %s, dependencies: %s""",
+                                  sql_scaled_generator,
+                                  self.baseColumn,
+                                  self.dependencies)
+
+                self.temporary_columns.append((temp_name, DoubleType(), {'expr': sql_scaled_generator, 'omit' : True,
+                                                                         'base_column' : self.baseColumn,
                                                                          'description': desc}))
                 self.weighted_base_column = temp_name
+
+
+    def _setup_logger(self):
+        """Set up logging
+
+        This will set the logger at warning, info or debug levels depending on the instance construction parameters
+        """
+        self.logger = logging.getLogger("DataGenerator")
+        if self.debug:
+            self.logger.setLevel(logging.DEBUG)
+        elif self.verbose:
+            self.logger.setLevel(logging.INFO)
+        else:
+            self.logger.setLevel(logging.WARNING)
+
 
     def computeAdjustedRangeForColumn(self, colType, c_min, c_max, c_step, c_begin, c_end, c_interval, c_range, c_unique):
         """Determine adjusted range for data column
@@ -256,7 +362,49 @@ class ColumnGenerationSpec:
         else:
             return "rand()"
 
+    def getScaledIntegerSQLExpression(self, col_name, scale, base_columns, base_datatypes= None, compute_method=None, normalize=False):
+        """ Get scaled numeric expression
 
+        This will produce a scaled SQL epression from the base columns
+
+
+
+        :param col_name: = Column name used for error messages and debugging
+        :param normalize: = If True, will normalize to the range 0 .. 1 inclusive
+        :param scale: = Numeric value indicating scaling factor - will scale via modulo arithmetic
+        :param base_columns: = list of base_columns
+        :param base_datatypes: = list of Spark SQL datatypes for columns
+        :param compute_method: = indicates how the value is be derived from base columns - i.e 'hash' or 'values' - treated as hint only
+        :returns: scaled expression as a SQL string
+
+        """
+        assert col_name is not None
+        assert self.name is not None
+        assert scale is not None
+        assert compute_method is None or compute_method == HASH_COMPUTE_METHOD or compute_method == VALUES_COMPUTE_METHOD
+        assert base_columns is not None and type(base_columns) is list and len(base_columns) > 0, "Base columns must be a non-empty list"
+
+        effective_compute_method = compute_method
+
+        # if we have multiple columns, effective compute method is always the hash of the base values
+        if len(base_columns) > 1:
+            effective_compute_method = HASH_COMPUTE_METHOD
+
+        if effective_compute_method is None:
+            effective_compute_method = VALUES_COMPUTE_METHOD
+
+        column_set = ",".join(base_columns)
+
+        if effective_compute_method == HASH_COMPUTE_METHOD:
+            result = "cast( ((hash({}) % {}) + {}) % {} as double)".format(column_set, scale, scale, scale)
+        else:
+            result = "cast( (({} % {}) + {}) % {} as double)".format(column_set, scale, scale, scale)
+
+        if normalize:
+            result = "floor({}) / {}".format(result, scale * 1.0 - 1.0)
+
+        self.logger.debug("computing scaled field [%s] as expression [%s]", col_name, result)
+        return result
 
     @property
     def isWeightedValuesColumn(self):
@@ -417,6 +565,8 @@ class ColumnGenerationSpec:
         """
             check that column definition properties are recognized
             and that the column definition has required properties
+
+        :raises: assertion or exception of checks fail
         """
         ensure(column_props is not None, "coldef should be non-empty")
 
@@ -454,7 +604,10 @@ class ColumnGenerationSpec:
 
 
     def getPlanEntry(self):
-        """ Get execution plan entry for object"""
+        """ Get execution plan entry for object
+
+        :returns: String representation of plan entry
+        """
         desc = self['description']
         if desc is not None:
             return " |-- " + desc
@@ -462,7 +615,10 @@ class ColumnGenerationSpec:
             return " |-- building column generator for column {}".format(self.name)
 
     def makeWeightedColumnValuesExpression(self, values, weights, seed_column_name):
-        """make SQL expression to compute the weighted values expression"""
+        """make SQL expression to compute the weighted values expression
+
+        :returns: Spark SQL expr
+        """
         from .function_builder import ColumnGeneratorBuilder
         assert values is not None
         assert weights is not None
@@ -472,19 +628,28 @@ class ColumnGenerationSpec:
         return expr(expr_str).astype(self.datatype)
 
     def _isRealValuedColumn(self):
-        """ determine if column is real valued """
+        """ determine if column is real valued
+
+        :returns: Boolean - True if condition is true
+        """
         colTypeName = self['type'].typeName()
 
         return colTypeName == 'double' or colTypeName == 'float' or colTypeName == 'decimal'
 
     def _isDecimalColumn(self):
-        """ determine if column is decimal column"""
+        """ determine if column is decimal column
+
+        :returns: Boolean - True if condition is true
+        """
         colTypeName = self['type'].typeName()
 
         return colTypeName == 'decimal'
 
     def _isContinuousValuedColumn(self):
-        """ determine if column generates continuous values"""
+        """ determine if column generates continuous values
+
+        :returns: Boolean - True if condition is true
+        """
         is_continuous = self['continuous']
 
         return is_continuous
@@ -495,23 +660,34 @@ class ColumnGenerationSpec:
         This is used to generate the base value for every column
         if using a single base column, then simply use that, otherwise use either
         a SQL hash of multiple columns, or an array of the base column values converted to strings
+
+        :returns: Spark SQL `col` or `expr` object
         """
+
         if type(base_column) is list:
             assert len(base_column) > 0
             if len(base_column) == 1:
-                return col(base_column[0])
-            elif self.base_column_type == "values":
+                if self.base_column_compute_method == "hash":
+                    return expr("hash({})".format(base_column[0]))
+                else:
+                    return col(base_column[0])
+            elif self.base_column_compute_method == "values":
                 base_values = [ "string(ifnull(`{}`, 'null'))".format(x) for x in base_column ]
                 return expr("array({})".format(",".join(base_values)))
             else:
                 return expr("hash({})".format(",".join(base_column)))
         else:
-            return col(base_column)
+            if self.base_column_compute_method == "hash":
+                return expr("hash({})".format(base_column))
+            else:
+                return col(base_column)
 
     def _computeRangedColumn(self, datarange, base_column, is_random):
         """ compute a ranged column
 
         max is max actual value
+
+        :returns: spark sql `column` or expression that can be used to generate a column
         """
         assert base_column is not None
         assert datarange is not None
@@ -529,7 +705,7 @@ class ColumnGenerationSpec:
             baseval = (modulo_exp * lit(datarange.step)) if not is_random else (
                     round(random_generator * lit(crange)) * lit(datarange.step))
 
-        if self.base_column_type == "values":
+        if self.base_column_compute_method == "values":
             newDef = baseval
         else:
             newDef = (baseval + lit(datarange.min))
@@ -544,7 +720,12 @@ class ColumnGenerationSpec:
         return newDef
 
     def makeSingleGenerationExpression(self, index=None, use_pandas_optimizations=False):
-        """ generate column data via Spark SQL expression"""
+        """ generate column data for a single column value via Spark SQL expression
+
+            :returns: spark sql `column` or expression that can be used to generate a column
+        """
+
+        self.logger.debug("building column : %s", self.name)
 
         # get key column specification properties
         sqlExpr = self['expr']
@@ -587,9 +768,10 @@ class ColumnGenerationSpec:
                 sql_random_generator = self.getUniformRandomSQLExpression(self.name)
                 newDef = expr("date_sub(current_date, round({}*1024))".format(sql_random_generator)).astype(ctype)
             else:
-                if self.base_column_type == "values":
+                if self.base_column_compute_method == "values":
                     newDef = self.getSeedExpression(baseCol)
                 else:
+                    self.logger.warning("Assuming a seeded base expression with minimum value for column %s", self.name)
                     newDef = (self.getSeedExpression(baseCol) + lit(self.data_range.min)).astype(ctype)
 
             # string value generation is simply handled by combining with a suffix or prefix
@@ -646,6 +828,9 @@ class ColumnGenerationSpec:
 
     def makeGenerationExpressions(self, use_pandas):
         """ Generate structured column if multiple columns or features are specified
+
+        if there are multiple columns / features specified using a single definition, it will generate a set of columns conforming to the same definition,
+        renaming them as appropriate and combine them into a array if necessary (depending on the structure combination instructions)
 
             :param self: is ColumnGenerationSpec for column
             :param use_pandas: indicates that `pandas` framework should be used

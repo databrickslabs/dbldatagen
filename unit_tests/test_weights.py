@@ -15,7 +15,7 @@ class TestWeights(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         print("setting up")
-        cls.rows = 10000
+        cls.rows = 100000
 
         # will have implied column `id` for ordinal of row
         cls.testdata_generator = (
@@ -66,7 +66,7 @@ class TestWeights(unittest.TestCase):
 
         return value_count_pairs
 
-    def assertPercentagesEqual(self, percentages, desired_percentages):
+    def assertPercentagesEqual(self, percentages, desired_percentages, target_delta=0.2):
         assert percentages is not None and desired_percentages is not None
 
         print("actual percentages", percentages)
@@ -76,7 +76,7 @@ class TestWeights(unittest.TestCase):
 
         # check that values are close
         for x, y in zip(percentages, desired_percentages):
-            self.assertAlmostEqual(x, y, delta=float(x) / 5.0)
+            self.assertAlmostEqual(x, y, delta=float(x) * target_delta)
 
     def test_get_observed_weights(self):
         alpha_desired_weights = [9, 4, 1, 10, 5,
@@ -155,6 +155,7 @@ class TestWeights(unittest.TestCase):
         self.assertPercentagesEqual(percentages, desired_percentages)
 
     def test_weighted_distribution_nr(self):
+        """ Test distribution of values with weights for non random values"""
         alpha_desired_weights = [9, 4, 1, 10, 5,
                                  9, 4, 1, 10, 5,
                                  9, 4, 1, 10, 5,
@@ -177,7 +178,7 @@ class TestWeights(unittest.TestCase):
 
         self.assertPercentagesEqual(percentages, desired_percentages)
 
-    @unittest.skip("not yet finalized")
+    #@unittest.skip("not yet finalized")
     def test_weighted_distribution_nr2(self):
         alpha_desired_weights = [9, 4, 1, 10, 5,
                                  9, 4, 1, 10, 5,
@@ -263,7 +264,6 @@ class TestWeights(unittest.TestCase):
 
         self.assertPercentagesEqual(percentages, desired_percentages)
 
-    @unittest.skip("not yet finalized")
     def test_weighted_distribution_nr3(self):
         alpha_desired_weights = [9, 4, 1, 10, 5,
                                  9, 4, 1, 10, 5,
@@ -274,7 +274,7 @@ class TestWeights(unittest.TestCase):
         alpha_list = [x for x in "abcdefghijklmnopqrstuvwxyz"]
 
         # dont use seed value as non random fields should be repeatable
-        dsAlpha = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4)
+        dsAlpha = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4, debug=True)
                    .withIdOutput()  # id column will be emitted in the output
                    .withColumn("pk1", "int", unique_values=500)
                    .withColumn("pk2", "int", unique_values=500)
@@ -287,7 +287,9 @@ class TestWeights(unittest.TestCase):
         percentages = self.weights_as_percentages([x["count"] for x in observed_weights])
         desired_percentages = self.weights_as_percentages(alpha_desired_weights)
 
-        self.assertPercentagesEqual(percentages, desired_percentages)
+        # note for multiple base fields which will use hashing of the field values as the base for the derived fields,
+        # there may be substantial deviation from the desired target percentages
+        self.assertPercentagesEqual(percentages, desired_percentages, target_delta=1.5)
 
         # for columns with non random values and base dependency on `pk1` and `pk2`
         # each combination of pk1, pk2 and alpha should be the same
@@ -324,14 +326,15 @@ class TestWeights(unittest.TestCase):
         self.assertPercentagesEqual(percentages, desired_percentages)
 
     def test_weighted_nr_int(self):
+        """ Test distribution of non-random values where field is a integer"""
         num_desired_weights = [9, 4, 1, 10, 5]
         num_list = [1, 2, 3, 4, 5]
 
         # dont use seed value as non random fields should be repeatable
-        dsInt1 = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4)
+        dsInt1 = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4, debug=True)
                   .withIdOutput()  # id column will be emitted in the output
                   .withColumn("code", "integer", values=num_list,
-                               weights=num_desired_weights)
+                               weights=num_desired_weights, base_column_type="hash")
                   )
         dfInt1=dsInt1.build().cache()
 
@@ -343,7 +346,7 @@ class TestWeights(unittest.TestCase):
         self.assertPercentagesEqual(percentages, desired_percentages)
 
 
-    @unittest.skip("not yet finalized")
+    #@unittest.skip("not yet finalized")
     def test_weighted_repeatable_non_random(self):
         alpha_desired_weights = [9, 4, 1, 10, 5,
                                  9, 4, 1, 10, 5,
@@ -370,7 +373,7 @@ class TestWeights(unittest.TestCase):
         dfAlpha2 = dsAlpha.clone().build().limit(100).cache()
         values2 = dfAlpha2.collect()
 
-        self.assertEquals(values1, values2)
+        self.assertEqual(values1, values2)
 
     def test_weighted_repeatable_random(self):
         alpha_desired_weights = [9, 4, 1, 10, 5,
@@ -399,7 +402,7 @@ class TestWeights(unittest.TestCase):
         dfAlpha2 = dsAlpha.clone().build().limit(100).cache()
         values2 = dfAlpha2.collect()
 
-        self.assertEquals(values1, values2)
+        self.assertEqual(values1, values2)
 
 
 

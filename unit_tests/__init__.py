@@ -30,7 +30,8 @@ __all__ = ["test_basic_test", "test_basic_test2", "test_columnGenerationSpec",
            "test_text_generation","test_iltext_generation",
            "test_types",
            "test_utils",
-           "test_weights"
+           "test_weights",
+           "test_dependent_data"
            ]
 
 from unit_tests.test_pandas_integration import TestPandasIntegration

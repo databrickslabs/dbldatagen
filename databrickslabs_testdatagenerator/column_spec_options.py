@@ -32,7 +32,7 @@ class ColumnSpecOptions:
     #: the set of attributes , we know about
     _allowed_props = {'name', 'type', 'min', 'max', 'step',
                      'prefix', 'random', 'distribution',
-                     'range', 'base_column', 'base_column_type', 'values',
+                     'range', 'base_column', 'base_column_type', 'values', 'base_columns',
                      'numColumns', 'numFeatures', 'structType',
                      'begin', 'end', 'interval', 'expr', 'omit',
                      'weights', 'description', 'continuous',

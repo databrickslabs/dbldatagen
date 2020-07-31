@@ -11,7 +11,11 @@ from pyspark.sql import functions as fns
 
 
 class DataAnalyzer:
-    """ Class for data set generation """
+    """This class is used to analyze an existing data set to assist in generating a test data set with similar characteristics
+
+    :param df: dataframe to analyze
+    :param sparkSession: spark session instance to use when performing spark operations
+    """
 
     def __init__(self, df, sparkSession=None):
         """ Constructor:
@@ -34,6 +38,7 @@ class DataAnalyzer:
         #            """)
 
     def lookupFieldType(self, typ):
+        """Perform lookup of type name by Spark SQL type name"""
         type_mappings = {
             "LongType": "Long",
             "IntegerType": "Int",
@@ -48,12 +53,14 @@ class DataAnalyzer:
             return typ
 
     def summarizeField(self, field):
+        """Generate summary for individual field"""
         if isinstance(field, StructField):
             return "{} {}".format(field.name, self.lookupFieldType(str(field.dataType)))
         else:
             return str(field)
 
     def summarizeFields(self, schema):
+        """ Generate summary for all fields in schema"""
         if schema is not None:
             fields = schema.fields
             fields_desc = [self.summarizeField(x) for x in fields]
@@ -69,9 +76,11 @@ class DataAnalyzer:
             return []
 
     def getDistinctCounts(self):
+        """ Get distinct counts"""
         pass
 
     def displayRow(self, row):
+        """Display details for row"""
         results = []
         row_key_pairs = row.asDict()
         for x in row_key_pairs:
@@ -80,6 +89,7 @@ class DataAnalyzer:
         return ", ".join(results)
 
     def prependSummary(self, df, heading):
+        """ Prepend summary information"""
         field_names = self.getFieldNames(self.df.schema)
         select_fields = ["summary"]
         select_fields.extend(field_names)
@@ -88,6 +98,7 @@ class DataAnalyzer:
                 .select(*select_fields))
 
     def summarize(self):
+        """Generate summary"""
         count = self.df.count()
         distinct_count = self.df.distinct().count()
         partition_count = self.df.rdd.getNumPartitions()

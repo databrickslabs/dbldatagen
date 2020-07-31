@@ -14,21 +14,27 @@ class DataGenError(Exception):
     pass
 
 
-def ensure(x, msg="condition does not hold true"):
-    """ensure(c, s) => throws Exception(s) if c is not true"""
+def ensure(c, msg="condition does not hold true"):
+    """ensure(c, s) => throws Exception(s) if c is not true
+
+    :param c: condition to test
+    :param msg: Message to add to exception if exception is raised
+    :raises: `DataGenError` exception if condition does not hold true
+    :returns: Does not return anything but raises exception if condition does not hold
+    """
     import re
 
     def strip_margin(text):
         return re.sub('\n[ \t]*\|', '\n', text)
 
-    if not x:
+    if not c:
         raise DataGenError(strip_margin(msg))
 
 
 def mkBoundsList(x, default):
     """ make a bounds list from supplied parameter - otherwise use default
 
-        returns: list of form [x,y]
+        :returns: list of form [x,y]
     """
     if x is None:
         retval = (True, [default, default]) if type(default) is int else (True, list(default))
