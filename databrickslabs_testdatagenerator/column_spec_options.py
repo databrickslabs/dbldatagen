@@ -13,17 +13,63 @@ import math
 from datetime import date, datetime, timedelta
 from .utils import ensure
 from .text_generators import TemplateGenerator
-from .dataranges import DateRange, NRange
+from .daterange import DateRange
+from .nrange import NRange
 
 from pyspark.sql.functions import col, pandas_udf
 
-class ColumnSpecOptions:
+class ColumnSpecOptions(object):
     """ Column spec options object - manages options for column specs.
 
-    This class has limited functionality - mainly used to document the options
+    This class has limited functionality - mainly used to validate and document the options, and the class is meant for internal use only.
 
+    :param props: Used to pass list of properties for column generation spec property checking.
 
-    This class is meant for internal use only
+    The following options are permitted on data generator `withColumn`, `withColumnSpec` and `withColumnSpecs` methods:
+
+    :param name: Column name
+
+    :param type: Data type of column. Can be either instance of Spark SQL Datatype such as `IntegerType()` or string containing SQL name of type
+
+    :param min: Minimum value for range of generated value. As an alternative, you may use the `data_range` parameter
+
+    :param max: Maximum value for range of generated value. As an alternative, you may use the `data_range` parameter
+
+    :param step: Step to use for range of generated value. As an alternative, you may use the `data_range` parameter
+
+    :param random: If True, will generate random values for column value. Defaults to `False`
+
+    :param base_column: Either the string name of the base column, or a list of columns to use to control data generation.
+
+    :param values: List of discrete values for the colummn. Discrete values for the column can be strings, numbers or constants conforming to type of column
+
+    :param weights: List of discrete weights for the colummn. Should be integer values.
+                    For example, you might declare a column for status values with a weighted distribution with the following statement:
+                    `withColumn("status", StringType(), values=['online', 'offline', 'unknown'], weights=[3,2,1])`
+
+    :param percent_nulls: Specifies numeric percentage of generated values to be populated with SQL `null`. For example: `percent_nulls=12`
+
+    :param unique_values: Number of unique values for column.
+                          If the unique values are specified for a timestamp or date field, the values will be chosen
+                          working back from the end of the previous month,
+                          unless `begin`, `end` and `interval` parameters are specified
+
+    :param begin: Beginning of range for date and timestamp fields.
+                   For dates and timestamp fields, use the `begin`, `end` and `interval`
+                   or `data_range` parameters instead of `min`, `max` and `step`
+
+    :param end: End of range for date and timestamp fields.
+                   For dates and timestamp fields, use the `begin`, `end` and `interval`
+                   or `data_range` parameters instead of `min`, `max` and `step`
+
+    :param interval: Interval of range for date and timestamp fields.
+                   For dates and timestamp fields, use the `begin`, `end` and `interval`
+                   or `data_range` parameters instead of `min`, `max` and `step`
+
+    :param data_range: An instance of an `NRange` or `DateRange` object. This can be used in place of `min`, `max`, `step` or `begin`, `end`, `interval`.
+
+    If the `data_range` parameter is specified as well as the `min`, `max` or `step`, the results are undetermined.
+    For more information, see :doc:`/reference/api/databrickslabs_testdatagenerator.daterange` or :doc:`/reference/api/databrickslabs_testdatagenerator.nrange`.
     """
 
     #: the set of attributes that must be present for any columns
@@ -56,7 +102,7 @@ class ColumnSpecOptions:
     }
 
 
-    def __init__(self, props):
+    def __init__(self, props, **kwargs):
         self._column_spec_options = props
 
     def _getOrElse(self, key, default=None):
@@ -69,7 +115,12 @@ class ColumnSpecOptions:
         return self._column_spec_options.get(key, None)
 
     def _checkBoolOption(self, v, name=None, optional=True ):
-        """ Check that option is either not specified or of type boolean"""
+        """ Check that option is either not specified or of type boolean
+
+        :param v: value to test
+        :param name: name of value to use in any reported errors or exceptions
+        :param optional: If True (default), indicates that value is optional and that None is a valid value for the option
+        """
         assert name is not None
         if optional:
             ensure(v is None or type(v) is bool,

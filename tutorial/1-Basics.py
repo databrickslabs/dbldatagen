@@ -180,11 +180,3 @@ for r in summary_rows:
     print("Summary2", r)
 
 # COMMAND ----------
-
-df = spark.range(10000)
-
-df = df.withColumn("test", df.when())
-
-display(df)
-
-# COMMAND ----------

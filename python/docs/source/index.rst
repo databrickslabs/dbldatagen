@@ -20,4 +20,5 @@ to Scala or R based Spark applications also.
    :maxdepth: 4
    :caption: Contents:
 
-   reference/api/modules
+   Documentation from code <reference/api/modules>
+   relnotes/relnotes_and_docs

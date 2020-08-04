@@ -44,6 +44,11 @@ clean_buildenv:
 
 docs: install
 	@echo "$(OK_COLOR)=> Creating docs ...$(NO_COLOR)"
+	@-mkdir python/docs/source/relnotes
+	@cp -f python/require.txt python/docs/source/relnotes/require.md
+	@cp -f CONTRIBUTING.md python/docs/source/relnotes/
+	@cp -f RELEASE_NOTES.md python/docs/source/relnotes/
+	@cp -f python/docs/APIDOCS.md python/docs/source/relnotes/
 	@. build_env/bin/activate; cd python/docs && make docs
 
 

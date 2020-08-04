@@ -35,12 +35,17 @@ apidoc: Makefile
 	@sphinx-apidoc -e -o "$(SOURCEDIR)/reference/api" "$(MODULEDIR)"
 	#@sphinx-autogen -o "$(SOURCEDIR)/reference/api" "$(MODULEDIR)"
 
+requirements:
+	@echo "Making requirements"
+	@python3 mk_requirements.py `pwd`/source/relnotes/require.md `pwd`/source/relnotes/requirements.md
+	@-rm -f `pwd`/source/relnotes/require.md
+
 html: Makefile
 	@echo "Making HTML"
 	@echo "$(SPHINXBUILD) -M $@ '$(SOURCEDIR)' '$(BUILDDIR)' $(SPHINXOPTS) $(O)"
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-docs: clean Makefile apidoc html markdown
+docs: clean requirements Makefile apidoc html markdown
 	@echo "Making full docs"
 	@echo "Full path to HTML docs is [$(BUILDDIR)/html]"
 

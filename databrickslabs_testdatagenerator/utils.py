@@ -53,6 +53,8 @@ def mkBoundsList(x, default):
 def topologicalSort(sources, initial_columns=None, flatten=True):
     """ Perform a topological sort over sources
 
+    Used to compute the column test data generation order in terms of ordering according to dependencies
+
     :arg sources: list of ``(name, set(names of dependencies))`` pairs
     :arg initial_columns: force ``initial_columns`` to be computed first
     :arg flatten: if true, flatten output list

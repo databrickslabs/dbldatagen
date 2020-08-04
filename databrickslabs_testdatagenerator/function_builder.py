@@ -11,10 +11,15 @@ class ColumnGeneratorBuilder:
 
     @classmethod
     def _mkList(cls, x):
+        """
+        Makes a list of the supplied object instance if it is not already a list
+        :param x: object to process
+        :returns: Returns list of supplied object if it is not already a list, otherwise simply returns the object"""
         return [x] if type(x) is not list else x
 
     @classmethod
     def _lastElement(cls, x):
+        """ Gets the last element, if the object is a list otherwise returns the object itself"""
         return x[-1] if type(x) is list else x
 
     @classmethod

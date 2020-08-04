@@ -22,7 +22,7 @@ The main entry point for any test data generation activities is the `DataGenerat
 Most of the other classes are used for internal purposes only
 """
 
-__all__ = ["data_generator", "data_analyzer", "schema_parser", "dataranges",
+__all__ = ["data_generator", "data_analyzer", "schema_parser", "daterange","nrange",
            "column_generation_spec", "utils", "function_builder", "spark_singleton", "text_generators"
            ]
 
@@ -32,7 +32,8 @@ from databrickslabs_testdatagenerator.column_generation_spec import ColumnGenera
 from databrickslabs_testdatagenerator.column_spec_options import ColumnSpecOptions
 from databrickslabs_testdatagenerator.data_analyzer import DataAnalyzer
 from databrickslabs_testdatagenerator.schema_parser import SchemaParser
-from databrickslabs_testdatagenerator.dataranges import DateRange, NRange
+from databrickslabs_testdatagenerator.daterange import DateRange
+from databrickslabs_testdatagenerator.nrange import NRange
 from databrickslabs_testdatagenerator.function_builder import ColumnGeneratorBuilder
 from .spark_singleton import SparkSingleton
 from databrickslabs_testdatagenerator.text_generators import TemplateGenerator, ILText

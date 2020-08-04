@@ -14,7 +14,8 @@ from datetime import date, datetime, timedelta
 from .utils import ensure
 from .column_spec_options import ColumnSpecOptions
 from .text_generators import TemplateGenerator
-from .dataranges import DateRange, NRange
+from .daterange import DateRange
+from .nrange import NRange
 
 from pyspark.sql.functions import col, pandas_udf
 import logging
@@ -34,7 +35,30 @@ class ColumnGenerationSpec(object):
     The full set of arguments to the class is more than the explicitly called out parameters as any
     arguments that are not explictly called out can still be passed due to the `**kwargs` expression.
 
-    This class is meant for internal use only
+    This class is meant for internal use only.
+
+    :param name: Name of column (string).
+    :param colType: Spark SQL datatype instance, representing the type of the column.
+    :param min: minimum value of column
+    :param max: maximum value of the column
+    :param step: numeric step used in column data generation
+    :param prefix: string used as prefix to the column underlying value to produce a string value
+    :param random: Boolean, if True, will generate random values
+    :param distribution: Instance of distribution, that will control the distribution of the generated values
+    :param base_column: String or list of strings representing columns used as basis for generating the column data
+    :param random_seed: random seed value used to generate the random value, if column data is random
+    :param random_seed_method: method for computing random values from the random seed
+
+    :param implicit: If True, the specification for the column can be replaced by a later definition.
+           If not, a later attempt to replace the definition will flag an error.
+           Typically used when generating definitions automatically from a schema, or when using wildcards in the specification
+
+    :param omit: if True, omit from the final output.
+    :param nullable: If True, column may be null - defaults to True.
+    :param debug: If True, output debugging log statements. Defaults to False.
+    :param verbose: If True, output logging statements at the info level. If False (the default), only output warning and error logging statements.
+
+    For full list of options, see :doc:`/reference/api/databrickslabs_testdatagenerator.column_spec_options`.
     """
 
 
@@ -149,13 +173,14 @@ class ColumnGenerationSpec(object):
             self.text_generator=None
 
         # handle default method of computing the base column value
-        if self.base_column_compute_method is None and (self.text_generator is not None or self['format'] is not None):
-            self.logger.warning("""Column [%s] has no `base_column_type` attribute specified and output is formatted text
-                                   => Assuming `values` for attribute `base_column_type`. 
-                                   => Use explicit value for `base_column_type` if alternate interpretation is needed
-                                   
-            """, self.name)
-            self.base_column_compute_method = "values"
+        if False:
+            if self.base_column_compute_method is None and (self.text_generator is not None or self['format'] is not None):
+                self.logger.warning("""Column [%s] has no `base_column_type` attribute specified and output is formatted text
+                                       => Assuming `values` for attribute `base_column_type`. 
+                                       => Use explicit value for `base_column_type` if alternate interpretation is needed
+                                       
+                """, self.name)
+                self.base_column_compute_method = "values"
 
         # compute required temporary values
         self.temporary_columns = []
@@ -209,7 +234,7 @@ class ColumnGenerationSpec(object):
 
     @property
     def base_columns(self):
-        """ Return base columns as list"""
+        """ Return base columns as list of strings"""
 
         # if base column  is string and contains multiple columns, split them
         # other build list of columns if needed
@@ -396,12 +421,12 @@ class ColumnGenerationSpec(object):
         column_set = ",".join(base_columns)
 
         if effective_compute_method == HASH_COMPUTE_METHOD:
-            result = "cast( ((hash({}) % {}) + {}) % {} as double)".format(column_set, scale, scale, scale)
+            result = "cast( floor((hash({}) % {}) + {}) % {} as double)".format(column_set, scale, scale, scale)
         else:
-            result = "cast( (({} % {}) + {}) % {} as double)".format(column_set, scale, scale, scale)
+            result = "cast( ( floor(({} % {}) + {}) % {}) as double) ".format(column_set, scale, scale, scale)
 
         if normalize:
-            result = "floor({}) / {}".format(result, scale * 1.0 - 1.0)
+            result = "({} / {})".format(result, (scale * 1.0) - 1.0)
 
         self.logger.debug("computing scaled field [%s] as expression [%s]", col_name, result)
         return result

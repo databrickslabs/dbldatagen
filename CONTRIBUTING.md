@@ -20,9 +20,6 @@ so it may not build correctly for earlier versions.
 
 The resulting library has been verified against Databricks runtime 6.5 and Apache Spark 2.4.4
 
-
-## Building the code
-
 ### Setting up your build environment
 Run `make clean_buildenv` from the root of the projectg directory to 
 set up a virtualized Python build environment in the project directory

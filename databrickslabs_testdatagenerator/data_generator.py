@@ -15,7 +15,7 @@ import re
 
 from .column_generation_spec import ColumnGenerationSpec
 from .utils import ensure, topologicalSort, DataGenError
-from .dataranges import DateRange
+from .daterange import DateRange
 from .spark_singleton import SparkSingleton
 import copy
 import logging
@@ -418,6 +418,10 @@ class DataGenerator:
         :param fields: a string specifying an explicit field to match , or a list of strings specifying explicit fields to match. May be omitted.
         :param match_types: a single Spark SQL datatype or list of Spark SQL data types to match. May be omitted.
         :returns: modified in-place instance of test data generator allowing for chaining of calls following Builder pattern
+
+        You may also add a variety of options to further control the test data generation process.
+        For full list of options, see :doc:`/reference/api/databrickslabs_testdatagenerator.column_spec_options`.
+
         """
         if fields is not None and type(fields) is str:
             fields = [fields]
@@ -467,6 +471,10 @@ class DataGenerator:
         """ add a column specification for an existing column
 
         :returns: modified in-place instance of test data generator allowing for chaining of calls following Builder pattern
+
+        You may also add a variety of options to further control the test data generation process.
+        For full list of options, see :doc:`/reference/api/databrickslabs_testdatagenerator.column_spec_options`.
+
         """
         ensure(colName is not None, "Must specify column name for column")
         ensure(colName in self.getInferredColumnNames(), " column `{0}` must refer to defined column".format(colName))
@@ -501,6 +509,10 @@ class DataGenerator:
         """ add a new column for specification
 
         :returns: modified in-place instance of test data generator allowing for chaining of calls following Builder pattern
+
+        You may also add a variety of options to further control the test data generation process.
+        For full list of options, see :doc:`/reference/api/databrickslabs_testdatagenerator.column_spec_options`.
+
         """
         ensure(colName is not None, "Must specify column name for column")
         ensure(colType is not None, "Must specify column type for column `{0}`".format(colName))
@@ -604,8 +616,13 @@ class DataGenerator:
         return df1
 
     def _ppList(self, alist, msg=""):
-        """Pretty printing for lists"""
-        print(msg)
+        """Pretty printing for lists
+
+        :param alist: the list to print
+        :param msg: optional message to display
+        """
+        if msg is not None:
+            print(msg)
         l = len(alist)
         for x in alist:
             print(x)
@@ -777,12 +794,16 @@ class DataGenerator:
         return df1
 
     def sqlTypeFromSparkType(self, dt):
-        """Get sql type for spark type"""
+        """Get sql type for spark type
+           :param dt: instance of Spark SQL type such as IntegerType()
+        """
         return dt.simpleString()
 
     def scriptTable(self, name=None, location=None,table_format="delta"):
         """ generate create table script suitable for format of test data set
 
+        :param name: name of table to use in generated script
+        :param location: path to location of data. If specified (default is None), will generate an external table definition.
         :returns: SQL string for scripted table
         """
         assert name is not None

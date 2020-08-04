@@ -1,3 +1,5 @@
+# The following packages are used in building the test data generator framework
+# All packages used are already installed in the Databricks runtime environment for version 6.5 or later
 numpy==1.16.2
 pandas==0.24.2
 pickleshare==0.7.5
@@ -10,7 +12,7 @@ wheel==0.33.1
 setuptools==40.8.0
 bumpversion
 
-# for doc build
+# The following packages are only required for building documentation and are not required at runtime
 sphinx>=2.0.0,<3.1.0
 nbsphinx
 numpydoc==0.8

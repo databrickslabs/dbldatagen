@@ -18,3 +18,5 @@ project/target/
 *.egg*
 *.py[cod]
 build_env/
+python/docs/source/relnotes/*.md
+python/docs/source/reference/api/*.rst

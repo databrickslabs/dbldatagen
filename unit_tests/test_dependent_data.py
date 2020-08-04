@@ -25,11 +25,11 @@ class TestDependentData(unittest.TestCase):
         cls.line_weights= [10, 5, 5, 5, 5]
 
         cls.rows = 1000000
-        cls.devices=100
+        cls.devices=30000
 
 
         cls.testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="device_data_set", rows=cls.rows,
-                                                  partitions=4, seed_method='hash_fieldname', debug=False, verbose=False)
+                                                  partitions=4, seed_method='hash_fieldname', debug=True, verbose=False)
                             .withIdOutput()
                             # we'll use hash of the base field to generate the ids to avoid a simple incrementing sequence
                             .withColumn("internal_device_id", LongType(), min=0x1000000000000, unique_values=cls.devices)
@@ -39,7 +39,10 @@ class TestDependentData(unittest.TestCase):
                             #.withColumn("device_id", StringType(), format='0x%013x', base_column="internal_device_id")
 
                             # the device / user attributes will be the same for the same device id - so lets use the internal device id as the base column for these attribute
-                            .withColumn("country", StringType(), values=cls.country_codes, weights=cls.country_weights, base_column="internal_device_id")
+                            .withColumn("country", StringType(), values=cls.country_codes, weights=cls.country_weights, base_column="internal_device_id",
+                                        base_column_type="hash")
+                            .withColumn("country2", StringType(), values=cls.country_codes, weights=cls.country_weights, base_column="internal_device_id",
+                                        base_column_type="values")
                             .withColumn("manufacturer", StringType(), values=cls.manufacturers, base_column="internal_device_id")
                             .withColumn("line", StringType(), values=cls.lines, base_column="manufacturer", base_column_type="hash")
                             .withColumn("line2", StringType(), values=cls.lines, weights=cls.line_weights, base_column="manufacturer", base_column_type="hash")
@@ -130,6 +133,34 @@ class TestDependentData(unittest.TestCase):
 
         df2 = spark.sql("select count(distinct country) as c from test_data group by device_id")
         self.assertEqual(0, df2.where("c > 1").count(), "should not more than one value for country for same device id ")
+
+    def test_spread_of_country_value1(self):
+        # for given device id, should have the same country
+        self.dfTestData.createOrReplaceTempView("test_data")
+
+        df2 = spark.sql("""
+          select count(distinct country) from test_data
+        """)
+
+        results = df2.collect()[0][0]
+
+        self.assertEqual(len(self.country_codes), results)
+
+    def test_spread_of_country_value2(self):
+        # for given device id, should have the same country
+        self.dfTestData.createOrReplaceTempView("test_data")
+
+        df2 = spark.sql("""
+          select count(distinct country2) from test_data
+          
+        """)
+
+        results = df2.collect()[0][0]
+
+        self.assertEqual(len(self.country_codes), results)
+
+
+
 
 
     def test_format_dependent_data(self):
