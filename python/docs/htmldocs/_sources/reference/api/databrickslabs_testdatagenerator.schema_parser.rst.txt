@@ -1,7 +1,0 @@
-databrickslabs\_testdatagenerator.schema\_parser module
-=======================================================
-
-.. automodule:: databrickslabs_testdatagenerator.schema_parser
-   :members:
-   :undoc-members:
-   :show-inheritance:

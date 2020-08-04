@@ -1,7 +1,0 @@
-databrickslabs\_testdatagenerator.distributions.gamma module
-============================================================
-
-.. automodule:: databrickslabs_testdatagenerator.distributions.gamma
-   :members:
-   :undoc-members:
-   :show-inheritance:

@@ -1,7 +1,0 @@
-databrickslabs\_testdatagenerator.data\_analyzer module
-=======================================================
-
-.. automodule:: databrickslabs_testdatagenerator.data_analyzer
-   :members:
-   :undoc-members:
-   :show-inheritance:

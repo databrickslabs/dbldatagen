@@ -1,7 +1,0 @@
-databrickslabs\_testdatagenerator.column\_spec\_options module
-==============================================================
-
-.. automodule:: databrickslabs_testdatagenerator.column_spec_options
-   :members:
-   :undoc-members:
-   :show-inheritance:
