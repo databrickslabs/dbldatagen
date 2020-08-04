@@ -1,0 +1,21 @@
+databrickslabs\_testdatagenerator.distributions package
+=======================================================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   databrickslabs_testdatagenerator.distributions.beta
+   databrickslabs_testdatagenerator.distributions.data_distribution
+   databrickslabs_testdatagenerator.distributions.distributions
+   databrickslabs_testdatagenerator.distributions.gamma
+
+Module contents
+---------------
+
+.. automodule:: databrickslabs_testdatagenerator.distributions
+   :members:
+   :undoc-members:
+   :show-inheritance:

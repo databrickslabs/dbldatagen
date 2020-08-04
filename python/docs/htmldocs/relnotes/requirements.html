@@ -1,0 +1,202 @@
+
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Dependencies for the Test Data Generator framework &#8212; Test Data Generator 0.10.0-prerel2 documentation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" integrity="sha384-KA6wR/X5RY4zFAHpv/CnoG2UW1uogYfdnP67Uv7eULvTveboZJg0qUpmJZb5VqzN" crossorigin="anonymous">
+    <link href="../_static/css/index.css" rel="stylesheet">
+    <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/tdg.css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Test Data Generator Release Notes" href="RELEASE_NOTES.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="docsearch:language" content="en">
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
+<div class="container-xl">
+
+    
+    <a class="navbar-brand" href="../index.html">
+      <img src="../_static/tdg-logo-medium.png" class="logo" alt="logo">
+    </a>
+    
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../reference/api/modules.html">Documentation from code</a>
+        </li>
+        
+        <li class="nav-item active">
+            <a class="nav-link" href="relnotes_and_docs.html">Release Notes and related docs</a>
+        </li>
+        
+        
+        <li class="nav-item">
+            <a class="nav-link nav-external" href="https://github.com/databrickslabs">Databricks Labs<i class="fas fa-external-link-alt"></i></a>
+        </li>
+        
+      </ul>
+
+
+      
+
+      <ul class="navbar-nav">
+        
+        
+      </ul>
+    </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar">
+
+<form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+
+
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+  <div class="bd-toc-item active">
+  
+
+  <ul class="nav bd-sidenav">
+      
+      
+      
+      
+        
+          
+              <li class="">
+                  <a href="CONTRIBUTING.html">Contributing and building</a>
+              </li>
+          
+        
+          
+              <li class="">
+                  <a href="APIDOCS.html">Using the Test Data Generator</a>
+              </li>
+          
+        
+          
+              <li class="">
+                  <a href="RELEASE_NOTES.html">Release Notes</a>
+              </li>
+          
+        
+          
+              <li class="active">
+                  <a href="">Code dependencies</a>
+              </li>
+          
+        
+      
+      
+    </ul>
+
+</nav>
+          </div>
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <div class="section" id="dependencies-for-the-test-data-generator-framework">
+<h1>Dependencies for the Test Data Generator framework<a class="headerlink" href="#dependencies-for-the-test-data-generator-framework" title="Permalink to this headline">¶</a></h1>
+<p>Building the framework will install a number of packages in the virtual environment used for building the framework.
+Some of these are required at runtime, while a number of packages are used for building the documentation only.</p>
+<p>The following packages are used in building the test data generator framework
+All packages used are already installed in the Databricks runtime environment for version 6.5 or later</p>
+<ul class="simple">
+<li><p>numpy==1.16.2</p></li>
+<li><p>pandas==0.24.2</p></li>
+<li><p>pickleshare==0.7.5</p></li>
+<li><p>py4j==0.10.7</p></li>
+<li><p>pyarrow==0.13.0</p></li>
+<li><p>pyspark==2.4.5</p></li>
+<li><p>python-dateutil==2.8.0</p></li>
+<li><p>six==1.12.0</p></li>
+<li><p>wheel==0.33.1</p></li>
+<li><p>setuptools==40.8.0</p></li>
+<li><p>bumpversion</p></li>
+</ul>
+<p>The following packages are only required for building documentation and are not required at runtime</p>
+<ul class="simple">
+<li><p>sphinx&gt;=2.0.0,&lt;3.1.0</p></li>
+<li><p>nbsphinx</p></li>
+<li><p>numpydoc==0.8</p></li>
+<li><p>pypandoc</p></li>
+<li><p>ipython==7.4.0</p></li>
+<li><p>pydata-sphinx-theme</p></li>
+<li><p>recommonmark</p></li>
+<li><p>sphinx-markdown-builder</p></li>
+</ul>
+</div>
+
+
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+    <a class='left-prev' id="prev-link" href="RELEASE_NOTES.html" title="previous page">Test Data Generator Release Notes</a>
+
+              </div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+
+    <script src="../_static/js/index.js"></script>
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    <p>
+          &copy; Copyright 2020, Databricks Inc.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.4.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

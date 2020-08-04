@@ -1,0 +1,698 @@
+
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>databrickslabs_testdatagenerator.data_generator module &#8212; Test Data Generator 0.10.0-prerel2 documentation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" integrity="sha384-KA6wR/X5RY4zFAHpv/CnoG2UW1uogYfdnP67Uv7eULvTveboZJg0qUpmJZb5VqzN" crossorigin="anonymous">
+    <link href="../../_static/css/index.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/tdg.css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="databrickslabs_testdatagenerator.daterange module" href="databrickslabs_testdatagenerator.daterange.html" />
+    <link rel="prev" title="databrickslabs_testdatagenerator.data_analyzer module" href="databrickslabs_testdatagenerator.data_analyzer.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="docsearch:language" content="en">
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
+<div class="container-xl">
+
+    
+    <a class="navbar-brand" href="../../index.html">
+      <img src="../../_static/tdg-logo-medium.png" class="logo" alt="logo">
+    </a>
+    
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item active">
+            <a class="nav-link" href="modules.html">Documentation from code</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../relnotes/relnotes_and_docs.html">Release Notes and related docs</a>
+        </li>
+        
+        
+        <li class="nav-item">
+            <a class="nav-link nav-external" href="https://github.com/databrickslabs">Databricks Labs<i class="fas fa-external-link-alt"></i></a>
+        </li>
+        
+      </ul>
+
+
+      
+
+      <ul class="navbar-nav">
+        
+        
+      </ul>
+    </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar">
+
+<form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+
+
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+  <div class="bd-toc-item active">
+  
+
+  <ul class="nav bd-sidenav">
+      
+      
+        
+          
+              <li class="active">
+                  <a href="databrickslabs_testdatagenerator.html">databrickslabs_testdatagenerator package</a>
+              </li>
+          
+        
+      
+      
+      
+      
+    </ul>
+
+</nav>
+          </div>
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <div class="section" id="module-databrickslabs_testdatagenerator.data_generator">
+<span id="databrickslabs-testdatagenerator-data-generator-module"></span><h1>databrickslabs_testdatagenerator.data_generator module<a class="headerlink" href="#module-databrickslabs_testdatagenerator.data_generator" title="Permalink to this headline">¶</a></h1>
+<p>This file defines the <cite>DataGenError</cite> and <cite>DataGenerator</cite> classes</p>
+<dl class="py class">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator">
+<em class="property">class </em><code class="sig-name descname">DataGenerator</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sparkSession</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">seed_method</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">generate_with_selects</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">rows</span><span class="o">=</span><span class="default_value">1000000</span></em>, <em class="sig-param"><span class="n">starting_id</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">partitions</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">use_pandas</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">pandas_udf_batch_size</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">debug</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Main Class for test data set generation</p>
+<p>This class acts as the entry point to all test data generation activities.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sparkSession</strong> – spark Session object to use</p></li>
+<li><p><strong>name</strong> – is name of data set</p></li>
+<li><p><strong>seed_method</strong> – = seed method for random numbers - either None, ‘fixed’, ‘hash_fieldname’</p></li>
+<li><p><strong>generate_with_selects</strong> – = if <cite>True</cite>, optimize datae generation with selects, otherwise use <cite>withColumn</cite></p></li>
+<li><p><strong>rows</strong> – = amount of rows to generate</p></li>
+<li><p><strong>starting_id</strong> – = starting id for generated id column</p></li>
+<li><p><strong>seed</strong> – = seed for random number generator</p></li>
+<li><p><strong>partitions</strong> – = number of partitions to generate</p></li>
+<li><p><strong>verbose</strong> – = if <cite>True</cite>, generate verbose output</p></li>
+<li><p><strong>use_pandas</strong> – = if <cite>True</cite>, use Pandas UDFs during test data generation</p></li>
+<li><p><strong>pandas_udf_batch_size</strong> – = UDF batch number of rows to pass via Apache Arrow to Pandas UDFs</p></li>
+<li><p><strong>debug</strong> – = if set to True, output debug level of information</p></li>
+</ul>
+</dd>
+<dt class="field-even">Attributes</dt>
+<dd class="field-even"><dl class="simple">
+<dt><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.build_order" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.build_order"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_order</span></code></a></dt><dd><p>return the build order minus the <cite>id</cite> column</p>
+</dd>
+<dt><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.inferredSchema" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.inferredSchema"><code class="xref py py-obj docutils literal notranslate"><span class="pre">inferredSchema</span></code></a></dt><dd><p>infer spark interim schema definition from the field specifications</p>
+</dd>
+<dt><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.schema" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.schema"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema</span></code></a></dt><dd><p>infer spark output schema definition from the field specifications</p>
+</dd>
+<dt><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.schemaFields" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.schemaFields"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schemaFields</span></code></a></dt><dd><p>get list of schema fields for final output schema</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="longtable table">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.build" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.build"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build</span></code></a>([withTempView, withView, …])</p></td>
+<td><p>build the test data set from the column definitions and return a dataframe for it</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.clone" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.clone"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clone</span></code></a>()</p></td>
+<td><p>Make a clone of the data spec via deep copy preserving same spark session</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.computeBuildPlan" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.computeBuildPlan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">computeBuildPlan</span></code></a>()</p></td>
+<td><p>prepare for building</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.computeColumnBuildOrder" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.computeColumnBuildOrder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">computeColumnBuildOrder</span></code></a>()</p></td>
+<td><p>compute the build ordering using a topological sort on dependencies</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.describe" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.describe"><code class="xref py py-obj docutils literal notranslate"><span class="pre">describe</span></code></a>()</p></td>
+<td><p>return description of the dataset generation spec</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.explain" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.explain"><code class="xref py py-obj docutils literal notranslate"><span class="pre">explain</span></code></a>()</p></td>
+<td><p>Explain the test data generation process</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.flatten" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.flatten"><code class="xref py py-obj docutils literal notranslate"><span class="pre">flatten</span></code></a>(l)</p></td>
+<td><p>flatten list</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.generateColumnDefinition" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.generateColumnDefinition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generateColumnDefinition</span></code></a>(colName[, colType, …])</p></td>
+<td><p>generate field definition and column spec</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.generateName" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.generateName"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generateName</span></code></a>()</p></td>
+<td><p>get a name for the data set Uses the untitled name prefix and nextNameIndex to generate a dummy dataset name</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.getBaseDataFrame" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.getBaseDataFrame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getBaseDataFrame</span></code></a>([start_id, streaming, options])</p></td>
+<td><p>generate the base data frame and id column , partitioning the data if necessary</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.getColumnType" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.getColumnType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getColumnType</span></code></a>(colName)</p></td>
+<td><p>Get column Spark SQL datatype for specified column</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.getInferredColumnNames" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.getInferredColumnNames"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getInferredColumnNames</span></code></a>()</p></td>
+<td><p>get list of output columns</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.getOutputColumnNames" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.getOutputColumnNames"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getOutputColumnNames</span></code></a>()</p></td>
+<td><p>get list of output columns by flattening list of lists of column names normal columns will have a single column name but column definitions that result in multiple columns will produce a list of multiple names</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.getOutputColumnNamesAndTypes" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.getOutputColumnNamesAndTypes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getOutputColumnNamesAndTypes</span></code></a>()</p></td>
+<td><p>get list of output columns by flattening list of lists of column names and types normal columns will have a single column name but column definitions that result in multiple columns will produce a list of multiple names</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.get_column_data_types" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.get_column_data_types"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_column_data_types</span></code></a>(columns)</p></td>
+<td><p>Get data types for columns</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.hasColumnSpec" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.hasColumnSpec"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hasColumnSpec</span></code></a>(colName)</p></td>
+<td><p>returns true if there is a column spec for the column</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.isFieldExplicitlyDefined" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.isFieldExplicitlyDefined"><code class="xref py py-obj docutils literal notranslate"><span class="pre">isFieldExplicitlyDefined</span></code></a>(colName)</p></td>
+<td><p>return True if column generation spec has been explicitly defined for column, else false</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.markForPlanRegen" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.markForPlanRegen"><code class="xref py py-obj docutils literal notranslate"><span class="pre">markForPlanRegen</span></code></a>()</p></td>
+<td><p>Mark that build plan needs to be regenerated</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.option" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.option"><code class="xref py py-obj docutils literal notranslate"><span class="pre">option</span></code></a>(option_key, option_value)</p></td>
+<td><p>set option to option value for later processing</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.options" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.options"><code class="xref py py-obj docutils literal notranslate"><span class="pre">options</span></code></a>(**kwargs)</p></td>
+<td><p>set options in bulk</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.reset" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.reset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code></a>()</p></td>
+<td><p>reset any state associated with the data</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.scriptTable" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.scriptTable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scriptTable</span></code></a>([name, location, table_format])</p></td>
+<td><p>generate create table script suitable for format of test data set</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.seed" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.seed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">seed</span></code></a>(seedVal)</p></td>
+<td><p>set seed for random number generation</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.setRowCount" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.setRowCount"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setRowCount</span></code></a>(rc)</p></td>
+<td><p>Modify the row count - useful when starting a new spec from a clone</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.sqlTypeFromSparkType" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.sqlTypeFromSparkType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sqlTypeFromSparkType</span></code></a>(dt)</p></td>
+<td><p>Get sql type for spark type :param dt: instance of Spark SQL type such as IntegerType()</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.withColumn" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.withColumn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">withColumn</span></code></a>(colName[, colType, min, max, …])</p></td>
+<td><p>add a new column for specification</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.withColumnSpec" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.withColumnSpec"><code class="xref py py-obj docutils literal notranslate"><span class="pre">withColumnSpec</span></code></a>(colName[, min, max, step, …])</p></td>
+<td><p>add a column specification for an existing column</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.withColumnSpecs" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.withColumnSpecs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">withColumnSpecs</span></code></a>([patterns, fields, match_types])</p></td>
+<td><p>Add column specs for columns matching</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.withIdOutput" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.withIdOutput"><code class="xref py py-obj docutils literal notranslate"><span class="pre">withIdOutput</span></code></a>()</p></td>
+<td><p>output id field as a column in the test data set if specified</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.withSchema" title="databrickslabs_testdatagenerator.data_generator.DataGenerator.withSchema"><code class="xref py py-obj docutils literal notranslate"><span class="pre">withSchema</span></code></a>(sch)</p></td>
+<td><p>populate column definitions and specifications for each of the columns in the schema</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.build">
+<code class="sig-name descname">build</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">withTempView</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">withView</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">withStreaming</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">options</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.build"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.build" title="Permalink to this definition">¶</a></dt>
+<dd><p>build the test data set from the column definitions and return a dataframe for it</p>
+<p>if <cite>withStreaming</cite> is True, generates a streaming data set. Use options to control the rate of generation of test data if streaming is used.</p>
+<p>For example:</p>
+<p><cite>dfTestData = testDataSpec.build(withStreaming=True,options={ ‘rowsPerSecond’: 5000})</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>withTempView</strong> – if True, automatically creates temporary view for generated data set</p></li>
+<li><p><strong>withView</strong> – If True, automatically creates global view for data set</p></li>
+<li><p><strong>withStreaming</strong> – If True, generates data using Spark Structured Streaming Rate source suitable for writing with <cite>writeStream</cite></p></li>
+<li><p><strong>options</strong> – optional Dict of options to control generating of streaming data</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Spark SQL dataframe of generated test data</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.build_order">
+<em class="property">property </em><code class="sig-name descname">build_order</code><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.build_order" title="Permalink to this definition">¶</a></dt>
+<dd><p>return the build order minus the <cite>id</cite> column</p>
+<p>The build order will be a list of lists - each list specifying columns that can be built at the same time</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.clone">
+<code class="sig-name descname">clone</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.clone"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.clone" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make a clone of the data spec via deep copy preserving same spark session</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>deep copy of test data generator definition</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.computeBuildPlan">
+<code class="sig-name descname">computeBuildPlan</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.computeBuildPlan"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.computeBuildPlan" title="Permalink to this definition">¶</a></dt>
+<dd><p>prepare for building</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>modified in-place instance of test data generator allowing for chaining of calls following Builder pattern</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.computeColumnBuildOrder">
+<code class="sig-name descname">computeColumnBuildOrder</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.computeColumnBuildOrder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.computeColumnBuildOrder" title="Permalink to this definition">¶</a></dt>
+<dd><p>compute the build ordering using a topological sort on dependencies</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the build ordering</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.describe">
+<code class="sig-name descname">describe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.describe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.describe" title="Permalink to this definition">¶</a></dt>
+<dd><p>return description of the dataset generation spec</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Dict object containing key attributes of test data generator instance</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.explain">
+<code class="sig-name descname">explain</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.explain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.explain" title="Permalink to this definition">¶</a></dt>
+<dd><p>Explain the test data generation process</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>String containing explanation of test data generation for this specification</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.flatten">
+<em class="property">static </em><code class="sig-name descname">flatten</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">l</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.flatten"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.flatten" title="Permalink to this definition">¶</a></dt>
+<dd><p>flatten list</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>l</strong> – list to flatten</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.generateColumnDefinition">
+<code class="sig-name descname">generateColumnDefinition</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">colName</span></em>, <em class="sig-param"><span class="n">colType</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">base_column</span><span class="o">=</span><span class="default_value">'id'</span></em>, <em class="sig-param"><span class="n">implicit</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">omit</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">nullable</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.generateColumnDefinition"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.generateColumnDefinition" title="Permalink to this definition">¶</a></dt>
+<dd><p>generate field definition and column spec</p>
+<p>Note: Any time that a new column definition is added, we’ll mark that the build plan needs to be regenerated.
+For our purposes, the build plan determines the order of column generation etc.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>modified in-place instance of test data generator allowing for chaining of calls following Builder pattern</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.generateName">
+<em class="property">classmethod </em><code class="sig-name descname">generateName</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.generateName"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.generateName" title="Permalink to this definition">¶</a></dt>
+<dd><p>get a name for the data set
+Uses the untitled name prefix and nextNameIndex to generate a dummy dataset name</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>string containing generated name</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.getBaseDataFrame">
+<code class="sig-name descname">getBaseDataFrame</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">start_id</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">streaming</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">options</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.getBaseDataFrame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.getBaseDataFrame" title="Permalink to this definition">¶</a></dt>
+<dd><p>generate the base data frame and id column , partitioning the data if necessary</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Spark data frame for base data that drives the data generation</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.getColumnType">
+<code class="sig-name descname">getColumnType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">colName</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.getColumnType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.getColumnType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get column Spark SQL datatype for specified column</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>colName</strong> – name of column as string</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Spark SQL datatype for named column</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.getInferredColumnNames">
+<code class="sig-name descname">getInferredColumnNames</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.getInferredColumnNames"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.getInferredColumnNames" title="Permalink to this definition">¶</a></dt>
+<dd><p>get list of output columns</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.getOutputColumnNames">
+<code class="sig-name descname">getOutputColumnNames</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.getOutputColumnNames"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.getOutputColumnNames" title="Permalink to this definition">¶</a></dt>
+<dd><p>get list of output columns by flattening list of lists of column names
+normal columns will have a single column name but column definitions that result in
+multiple columns will produce a list of multiple names</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>list of column names to be output in generated data set</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.getOutputColumnNamesAndTypes">
+<code class="sig-name descname">getOutputColumnNamesAndTypes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.getOutputColumnNamesAndTypes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.getOutputColumnNamesAndTypes" title="Permalink to this definition">¶</a></dt>
+<dd><p>get list of output columns by flattening list of lists of column names and types
+normal columns will have a single column name but column definitions that result in
+multiple columns will produce a list of multiple names</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.get_column_data_types">
+<code class="sig-name descname">get_column_data_types</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">columns</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.get_column_data_types"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.get_column_data_types" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get data types for columns</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>columns</strong> – = list of columns to retrieve data types for</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.hasColumnSpec">
+<code class="sig-name descname">hasColumnSpec</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">colName</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.hasColumnSpec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.hasColumnSpec" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns true if there is a column spec for the column</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>colName</strong> – name of column to check for</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True if column has spec, False otherwise</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.inferredSchema">
+<em class="property">property </em><code class="sig-name descname">inferredSchema</code><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.inferredSchema" title="Permalink to this definition">¶</a></dt>
+<dd><p>infer spark interim schema definition from the field specifications</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.isFieldExplicitlyDefined">
+<code class="sig-name descname">isFieldExplicitlyDefined</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">colName</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.isFieldExplicitlyDefined"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.isFieldExplicitlyDefined" title="Permalink to this definition">¶</a></dt>
+<dd><p>return True if column generation spec has been explicitly defined for column, else false</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.markForPlanRegen">
+<code class="sig-name descname">markForPlanRegen</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.markForPlanRegen"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.markForPlanRegen" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mark that build plan needs to be regenerated</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>modified in-place instance of test data generator allowing for chaining of calls following Builder pattern</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.option">
+<code class="sig-name descname">option</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">option_key</span></em>, <em class="sig-param"><span class="n">option_value</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.option"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.option" title="Permalink to this definition">¶</a></dt>
+<dd><p>set option to option value for later processing</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>option_key</strong> – key for option</p></li>
+<li><p><strong>option_value</strong> – value for option</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>modified in-place instance of test data generator allowing for chaining of calls following Builder pattern</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.options">
+<code class="sig-name descname">options</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.options"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.options" title="Permalink to this definition">¶</a></dt>
+<dd><p>set options in bulk</p>
+<p>Allows for multiple options with option=option_value style of option passing</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>modified in-place instance of test data generator allowing for chaining of calls following Builder pattern</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.reset">
+<em class="property">classmethod </em><code class="sig-name descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.reset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>reset any state associated with the data</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.schema">
+<em class="property">property </em><code class="sig-name descname">schema</code><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>infer spark output schema definition from the field specifications</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Spark SQL <cite>StructType</cite> for schema</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.schemaFields">
+<em class="property">property </em><code class="sig-name descname">schemaFields</code><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.schemaFields" title="Permalink to this definition">¶</a></dt>
+<dd><p>get list of schema fields for final output schema</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>list of fields in schema</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.scriptTable">
+<code class="sig-name descname">scriptTable</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">location</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">table_format</span><span class="o">=</span><span class="default_value">'delta'</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.scriptTable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.scriptTable" title="Permalink to this definition">¶</a></dt>
+<dd><p>generate create table script suitable for format of test data set</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – name of table to use in generated script</p></li>
+<li><p><strong>location</strong> – path to location of data. If specified (default is None), will generate an external table definition.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>SQL string for scripted table</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.seed">
+<em class="property">classmethod </em><code class="sig-name descname">seed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">seedVal</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.seed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.seed" title="Permalink to this definition">¶</a></dt>
+<dd><p>set seed for random number generation</p>
+<p>Arguments:
+:param seedVal: - new value for the random number seed</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.setRowCount">
+<code class="sig-name descname">setRowCount</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rc</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.setRowCount"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.setRowCount" title="Permalink to this definition">¶</a></dt>
+<dd><p>Modify the row count - useful when starting a new spec from a clone</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>rc</strong> – The count of rows to generate</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>modified in-place instance of test data generator allowing for chaining of calls following Builder pattern</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.sqlTypeFromSparkType">
+<code class="sig-name descname">sqlTypeFromSparkType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dt</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.sqlTypeFromSparkType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.sqlTypeFromSparkType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get sql type for spark type
+:param dt: instance of Spark SQL type such as IntegerType()</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.withColumn">
+<code class="sig-name descname">withColumn</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">colName</span></em>, <em class="sig-param"><span class="n">colType</span><span class="o">=</span><span class="default_value">StringType</span></em>, <em class="sig-param"><span class="n">min</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">max</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">step</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">data_range</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">prefix</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">random</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">distribution</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">base_column</span><span class="o">=</span><span class="default_value">'id'</span></em>, <em class="sig-param"><span class="n">nullable</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">omit</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">implicit</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.withColumn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.withColumn" title="Permalink to this definition">¶</a></dt>
+<dd><p>add a new column for specification</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>modified in-place instance of test data generator allowing for chaining of calls following Builder pattern</p>
+</dd>
+</dl>
+<p>You may also add a variety of options to further control the test data generation process.
+For full list of options, see <a class="reference internal" href="databrickslabs_testdatagenerator.column_spec_options.html"><span class="doc">databrickslabs_testdatagenerator.column_spec_options module</span></a>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.withColumnSpec">
+<code class="sig-name descname">withColumnSpec</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">colName</span></em>, <em class="sig-param"><span class="n">min</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">max</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">step</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">prefix</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">random</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">distribution</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">implicit</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">data_range</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">omit</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">base_column</span><span class="o">=</span><span class="default_value">'id'</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.withColumnSpec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.withColumnSpec" title="Permalink to this definition">¶</a></dt>
+<dd><p>add a column specification for an existing column</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>modified in-place instance of test data generator allowing for chaining of calls following Builder pattern</p>
+</dd>
+</dl>
+<p>You may also add a variety of options to further control the test data generation process.
+For full list of options, see <a class="reference internal" href="databrickslabs_testdatagenerator.column_spec_options.html"><span class="doc">databrickslabs_testdatagenerator.column_spec_options module</span></a>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.withColumnSpecs">
+<code class="sig-name descname">withColumnSpecs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">patterns</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">fields</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">match_types</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.withColumnSpecs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.withColumnSpecs" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Add column specs for columns matching</dt><dd><ol class="loweralpha simple">
+<li><p>list of field names,</p></li>
+<li><p>one or more regex patterns</p></li>
+<li><p>type (as in pyspark.sql.types)</p></li>
+</ol>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>patterns</strong> – patterns may specified a single pattern as a string or a list of patterns that match the column names. May be omitted.</p></li>
+<li><p><strong>fields</strong> – a string specifying an explicit field to match , or a list of strings specifying explicit fields to match. May be omitted.</p></li>
+<li><p><strong>match_types</strong> – a single Spark SQL datatype or list of Spark SQL data types to match. May be omitted.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>modified in-place instance of test data generator allowing for chaining of calls following Builder pattern</p>
+</dd>
+</dl>
+<p>You may also add a variety of options to further control the test data generation process.
+For full list of options, see <a class="reference internal" href="databrickslabs_testdatagenerator.column_spec_options.html"><span class="doc">databrickslabs_testdatagenerator.column_spec_options module</span></a>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.withIdOutput">
+<code class="sig-name descname">withIdOutput</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.withIdOutput"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.withIdOutput" title="Permalink to this definition">¶</a></dt>
+<dd><p>output id field as a column in the test data set if specified</p>
+<p>If this is not called, the id field is omitted from the final test data set</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>modified in-place instance of test data generator allowing for chaining of calls following Builder pattern</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_generator.DataGenerator.withSchema">
+<code class="sig-name descname">withSchema</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sch</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_generator.html#DataGenerator.withSchema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_generator.DataGenerator.withSchema" title="Permalink to this definition">¶</a></dt>
+<dd><p>populate column definitions and specifications for each of the columns in the schema</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>sch</strong> – Spark SQL schema, from which fields are added</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>modified in-place instance of test data generator allowing for chaining of calls following Builder pattern</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+    <a class='left-prev' id="prev-link" href="databrickslabs_testdatagenerator.data_analyzer.html" title="previous page">databrickslabs_testdatagenerator.data_analyzer module</a>
+    <a class='right-next' id="next-link" href="databrickslabs_testdatagenerator.daterange.html" title="next page">databrickslabs_testdatagenerator.daterange module</a>
+
+              </div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+
+    <script src="../../_static/js/index.js"></script>
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    <p>
+          &copy; Copyright 2020, Databricks Inc.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.4.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

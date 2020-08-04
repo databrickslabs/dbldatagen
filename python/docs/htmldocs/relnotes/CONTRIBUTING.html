@@ -1,0 +1,261 @@
+
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Contributing to the Test Data Generator &#8212; Test Data Generator 0.10.0-prerel2 documentation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" integrity="sha384-KA6wR/X5RY4zFAHpv/CnoG2UW1uogYfdnP67Uv7eULvTveboZJg0qUpmJZb5VqzN" crossorigin="anonymous">
+    <link href="../_static/css/index.css" rel="stylesheet">
+    <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/tdg.css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Getting started with the Databricks Labs Test Data Generator" href="APIDOCS.html" />
+    <link rel="prev" title="Release Notes and related docs" href="relnotes_and_docs.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="docsearch:language" content="en">
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
+<div class="container-xl">
+
+    
+    <a class="navbar-brand" href="../index.html">
+      <img src="../_static/tdg-logo-medium.png" class="logo" alt="logo">
+    </a>
+    
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../reference/api/modules.html">Documentation from code</a>
+        </li>
+        
+        <li class="nav-item active">
+            <a class="nav-link" href="relnotes_and_docs.html">Release Notes and related docs</a>
+        </li>
+        
+        
+        <li class="nav-item">
+            <a class="nav-link nav-external" href="https://github.com/databrickslabs">Databricks Labs<i class="fas fa-external-link-alt"></i></a>
+        </li>
+        
+      </ul>
+
+
+      
+
+      <ul class="navbar-nav">
+        
+        
+      </ul>
+    </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar">
+
+<form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+
+
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+  <div class="bd-toc-item active">
+  
+
+  <ul class="nav bd-sidenav">
+      
+      
+      
+      
+        
+          
+              <li class="active">
+                  <a href="">Contributing and building</a>
+              </li>
+          
+        
+          
+              <li class="">
+                  <a href="APIDOCS.html">Using the Test Data Generator</a>
+              </li>
+          
+        
+          
+              <li class="">
+                  <a href="RELEASE_NOTES.html">Release Notes</a>
+              </li>
+          
+        
+          
+              <li class="">
+                  <a href="requirements.html">Code dependencies</a>
+              </li>
+          
+        
+      
+      
+    </ul>
+
+</nav>
+          </div>
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+<div class="tocsection onthispage pt-5 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#license" class="nav-link">License</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#building-the-code" class="nav-link">Building the code</a><ul class="nav section-nav flex-column">
+                
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#setting-up-your-build-environment" class="nav-link">Setting up your build environment</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#building-the-python-wheel" class="nav-link">Building the Python wheel</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#creating-the-html-documentation" class="nav-link">Creating the HTML documentation</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#running-unit-tests" class="nav-link">Running unit tests</a>
+        </li>
+    
+            </ul>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#using-the-project" class="nav-link">Using the Project</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#coding-style" class="nav-link">Coding Style</a>
+        </li>
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <div class="section" id="contributing-to-the-test-data-generator">
+<h1>Contributing to the Test Data Generator<a class="headerlink" href="#contributing-to-the-test-data-generator" title="Permalink to this headline">¶</a></h1>
+<p>We happily welcome contributions to <em>data-generator</em>.</p>
+<p>We use GitHub Issues to track community reported issues and GitHub Pull Requests for accepting changes.</p>
+<div class="section" id="license">
+<h2>License<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h2>
+<p>When you contribute code, you affirm that the contribution is your original work and that you
+license the work to the project under the project’s open source license. Whether or not you
+state this explicitly, by submitting any copyrighted material via pull request, email, or
+other means you agree to license the material under the project’s open source license and
+warrant that you have the legal authority to do so.</p>
+</div>
+<div class="section" id="building-the-code">
+<h2>Building the code<a class="headerlink" href="#building-the-code" title="Permalink to this headline">¶</a></h2>
+<p>The code has been tested with Python 3.7.6</p>
+<p>It relies on setting up a Python virtual enviroment with the necessary requirements
+so it may not build correctly for earlier versions.</p>
+<p>The resulting library has been verified against Databricks runtime 6.5 and Apache Spark 2.4.4</p>
+<div class="section" id="setting-up-your-build-environment">
+<h3>Setting up your build environment<a class="headerlink" href="#setting-up-your-build-environment" title="Permalink to this headline">¶</a></h3>
+<p>Run <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">clean_buildenv</span></code> from the root of the projectg directory to
+set up a virtualized Python build environment in the project directory</p>
+</div>
+<div class="section" id="building-the-python-wheel">
+<h3>Building the Python wheel<a class="headerlink" href="#building-the-python-wheel" title="Permalink to this headline">¶</a></h3>
+<p>Run  <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">clean</span> <span class="pre">dist</span></code> from the main project directory.</p>
+</div>
+<div class="section" id="creating-the-html-documentation">
+<h3>Creating the HTML documentation<a class="headerlink" href="#creating-the-html-documentation" title="Permalink to this headline">¶</a></h3>
+<p>Run  <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">docs</span></code> from the main project directory.</p>
+<p>The main html document will be in the file (relative to the root of the build directory) <code class="docutils literal notranslate"><span class="pre">./python/docs/docs/build/html/index.html</span></code></p>
+</div>
+<div class="section" id="running-unit-tests">
+<h3>Running unit tests<a class="headerlink" href="#running-unit-tests" title="Permalink to this headline">¶</a></h3>
+<p>If using an environment with multiple Python versions, make sure to use virtual env or similar to pick up correct python versions.</p>
+<p>If necessary, set <code class="docutils literal notranslate"><span class="pre">PYSPARK_PYTHON</span></code> and <code class="docutils literal notranslate"><span class="pre">PYSPARK_DRIVER_PYTHON</span></code> to point to correct versions of Python.</p>
+<p>Run  <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">install</span> <span class="pre">tests</span></code> from the main project directory to run the unit tests.</p>
+</div>
+</div>
+<div class="section" id="using-the-project">
+<h2>Using the Project<a class="headerlink" href="#using-the-project" title="Permalink to this headline">¶</a></h2>
+<p>To use the project, the generated wheel should be installed in your Python notebook as a wheel based library</p>
+<p>Once the library has been installed, you can use it to generate a test data frame.</p>
+</div>
+<div class="section" id="coding-style">
+<h2>Coding Style<a class="headerlink" href="#coding-style" title="Permalink to this headline">¶</a></h2>
+<p>The code follows the Pyspark coding conventions.</p>
+<p>Basically it follows the Python PEP8 coding conventions - but method names used mixed case starting with a lower case letter rather than underscores.</p>
+<p>See https://legacy.python.org/dev/peps/pep-0008/</p>
+</div>
+</div>
+
+
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+    <a class='left-prev' id="prev-link" href="relnotes_and_docs.html" title="previous page">Release Notes and related docs</a>
+    <a class='right-next' id="next-link" href="APIDOCS.html" title="next page">Getting started with the Databricks Labs Test Data Generator</a>
+
+              </div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+
+    <script src="../_static/js/index.js"></script>
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    <p>
+          &copy; Copyright 2020, Databricks Inc.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.4.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

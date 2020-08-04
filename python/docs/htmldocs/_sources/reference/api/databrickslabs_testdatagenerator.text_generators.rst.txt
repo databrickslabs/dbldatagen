@@ -1,0 +1,7 @@
+databrickslabs\_testdatagenerator.text\_generators module
+=========================================================
+
+.. automodule:: databrickslabs_testdatagenerator.text_generators
+   :members:
+   :undoc-members:
+   :show-inheritance:

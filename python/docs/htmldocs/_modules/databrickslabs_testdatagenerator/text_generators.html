@@ -1,0 +1,494 @@
+
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>databrickslabs_testdatagenerator.text_generators &#8212; Test Data Generator 0.10.0-prerel2 documentation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" integrity="sha384-KA6wR/X5RY4zFAHpv/CnoG2UW1uogYfdnP67Uv7eULvTveboZJg0qUpmJZb5VqzN" crossorigin="anonymous">
+    <link href="../../_static/css/index.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/tdg.css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="docsearch:language" content="en">
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
+<div class="container-xl">
+
+    
+    <a class="navbar-brand" href="../../index.html">
+      <img src="../../_static/tdg-logo-medium.png" class="logo" alt="logo">
+    </a>
+    
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../reference/api/modules.html">Documentation from code</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../relnotes/relnotes_and_docs.html">Release Notes and related docs</a>
+        </li>
+        
+        
+        <li class="nav-item">
+            <a class="nav-link nav-external" href="https://github.com/databrickslabs">Databricks Labs<i class="fas fa-external-link-alt"></i></a>
+        </li>
+        
+      </ul>
+
+
+      
+
+      <ul class="navbar-nav">
+        
+        
+      </ul>
+    </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar">
+
+<form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+
+
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+  <div class="bd-toc-item active">
+  
+
+  <ul class="nav bd-sidenav">
+      
+      
+      
+      
+      
+    </ul>
+
+</nav>
+          </div>
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <h1>Source code for databrickslabs_testdatagenerator.text_generators</h1><div class="highlight"><pre>
+<span></span><span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="c1">#</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This file defines various text generation classes and methods</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">pyspark.sql.functions</span> <span class="kn">import</span> <span class="n">col</span><span class="p">,</span> <span class="n">lit</span><span class="p">,</span> <span class="n">concat</span><span class="p">,</span> <span class="n">rand</span><span class="p">,</span> <span class="n">ceil</span><span class="p">,</span> <span class="n">floor</span><span class="p">,</span> <span class="n">array</span><span class="p">,</span> <span class="n">expr</span><span class="p">,</span> <span class="n">udf</span>
+<span class="kn">from</span> <span class="nn">pyspark.sql.types</span> <span class="kn">import</span> <span class="n">LongType</span><span class="p">,</span> <span class="n">FloatType</span><span class="p">,</span> <span class="n">IntegerType</span><span class="p">,</span> <span class="n">StringType</span><span class="p">,</span> <span class="n">DoubleType</span><span class="p">,</span> <span class="n">BooleanType</span><span class="p">,</span> <span class="n">ShortType</span><span class="p">,</span> \
+    <span class="n">StructType</span><span class="p">,</span> <span class="n">StructField</span><span class="p">,</span> <span class="n">TimestampType</span><span class="p">,</span> <span class="n">DataType</span><span class="p">,</span> <span class="n">DateType</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span><span class="p">,</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">ensure</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">numpy.random</span> <span class="k">as</span> <span class="nn">rnd</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">pyspark.sql.functions</span> <span class="kn">import</span>  <span class="n">pandas_udf</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">random</span>
+
+<span class="c1">#: list of hex digits for template generation</span>
+<span class="n">_HEX_LOWER</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;0&#39;</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="s1">&#39;2&#39;</span><span class="p">,</span> <span class="s1">&#39;3&#39;</span><span class="p">,</span> <span class="s1">&#39;4&#39;</span><span class="p">,</span> <span class="s1">&#39;5&#39;</span><span class="p">,</span> <span class="s1">&#39;6&#39;</span><span class="p">,</span> <span class="s1">&#39;7&#39;</span><span class="p">,</span> <span class="s1">&#39;8&#39;</span><span class="p">,</span> <span class="s1">&#39;9&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;e&#39;</span><span class="p">,</span> <span class="s1">&#39;f&#39;</span><span class="p">]</span>
+
+<span class="c1">#: list of upper case hex digits for template generation</span>
+<span class="n">_HEX_UPPER</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;0&#39;</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="s1">&#39;2&#39;</span><span class="p">,</span> <span class="s1">&#39;3&#39;</span><span class="p">,</span> <span class="s1">&#39;4&#39;</span><span class="p">,</span> <span class="s1">&#39;5&#39;</span><span class="p">,</span> <span class="s1">&#39;6&#39;</span><span class="p">,</span> <span class="s1">&#39;7&#39;</span><span class="p">,</span> <span class="s1">&#39;8&#39;</span><span class="p">,</span> <span class="s1">&#39;9&#39;</span><span class="p">,</span> <span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="s1">&#39;B&#39;</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">,</span> <span class="s1">&#39;D&#39;</span><span class="p">,</span> <span class="s1">&#39;E&#39;</span><span class="p">,</span> <span class="s1">&#39;F&#39;</span><span class="p">]</span>
+
+<span class="c1">#: list of non-zero digits for template generation</span>
+<span class="n">_DIGITS_NON_ZERO</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="s1">&#39;2&#39;</span><span class="p">,</span> <span class="s1">&#39;3&#39;</span><span class="p">,</span> <span class="s1">&#39;4&#39;</span><span class="p">,</span> <span class="s1">&#39;5&#39;</span><span class="p">,</span> <span class="s1">&#39;6&#39;</span><span class="p">,</span> <span class="s1">&#39;7&#39;</span><span class="p">,</span> <span class="s1">&#39;8&#39;</span><span class="p">,</span> <span class="s1">&#39;9&#39;</span><span class="p">]</span>
+
+<span class="c1">#: list of digits for template generation</span>
+<span class="n">_DIGITS_ZERO</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;0&#39;</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="s1">&#39;2&#39;</span><span class="p">,</span> <span class="s1">&#39;3&#39;</span><span class="p">,</span> <span class="s1">&#39;4&#39;</span><span class="p">,</span> <span class="s1">&#39;5&#39;</span><span class="p">,</span> <span class="s1">&#39;6&#39;</span><span class="p">,</span> <span class="s1">&#39;7&#39;</span><span class="p">,</span> <span class="s1">&#39;8&#39;</span><span class="p">,</span> <span class="s1">&#39;9&#39;</span><span class="p">]</span>
+
+<span class="c1">#: list of uppercase letters for template generation</span>
+<span class="n">_LETTERS_UPPER</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="s1">&#39;B&#39;</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">,</span> <span class="s1">&#39;D&#39;</span><span class="p">,</span> <span class="s1">&#39;E&#39;</span><span class="p">,</span> <span class="s1">&#39;F&#39;</span><span class="p">,</span> <span class="s1">&#39;G&#39;</span><span class="p">,</span> <span class="s1">&#39;H&#39;</span><span class="p">,</span> <span class="s1">&#39;I&#39;</span><span class="p">,</span> <span class="s1">&#39;J&#39;</span><span class="p">,</span> <span class="s1">&#39;K&#39;</span><span class="p">,</span> <span class="s1">&#39;L&#39;</span><span class="p">,</span> <span class="s1">&#39;M&#39;</span><span class="p">,</span> <span class="s1">&#39;N&#39;</span><span class="p">,</span> <span class="s1">&#39;O&#39;</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">,</span>
+                 <span class="s1">&#39;Q&#39;</span><span class="p">,</span> <span class="s1">&#39;R&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">,</span> <span class="s1">&#39;S&#39;</span><span class="p">,</span> <span class="s1">&#39;U&#39;</span><span class="p">,</span> <span class="s1">&#39;V&#39;</span><span class="p">,</span> <span class="s1">&#39;W&#39;</span><span class="p">,</span> <span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="s1">&#39;Y&#39;</span><span class="p">,</span> <span class="s1">&#39;Z&#39;</span><span class="p">]</span>
+
+<span class="c1">#: list of lowercase letters for template generation</span>
+<span class="n">_LETTERS_LOWER</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;e&#39;</span><span class="p">,</span> <span class="s1">&#39;f&#39;</span><span class="p">,</span> <span class="s1">&#39;g&#39;</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">,</span> <span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="s1">&#39;j&#39;</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="s1">&#39;l&#39;</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">,</span> <span class="s1">&#39;n&#39;</span><span class="p">,</span> <span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="s1">&#39;p&#39;</span><span class="p">,</span> <span class="s1">&#39;q&#39;</span><span class="p">,</span>
+                 <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="s1">&#39;s&#39;</span><span class="p">,</span> <span class="s1">&#39;t&#39;</span><span class="p">,</span> <span class="s1">&#39;u&#39;</span><span class="p">,</span> <span class="s1">&#39;v&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">]</span>
+
+<span class="c1">#: list of all letters uppercase and lowercase</span>
+<span class="n">_LETTERS_ALL</span> <span class="o">=</span> <span class="n">_LETTERS_LOWER</span> <span class="o">+</span> <span class="n">_LETTERS_UPPER</span>
+
+<span class="c1">#: list of alphanumeric chars in lowercase</span>
+<span class="n">_ALNUM_LOWER</span> <span class="o">=</span> <span class="n">_LETTERS_LOWER</span> <span class="o">+</span> <span class="n">_DIGITS_ZERO</span>
+
+<span class="c1">#: list of alphanumeric chars in uppercase</span>
+<span class="n">_ALNUM_UPPER</span> <span class="o">=</span> <span class="n">_LETTERS_UPPER</span> <span class="o">+</span> <span class="n">_DIGITS_ZERO</span>
+
+<span class="sd">&quot;&quot;&quot; words for ipsum lorem based text generation&quot;&quot;&quot;</span>
+<span class="n">_WORDS_LOWER</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;lorem&#39;</span><span class="p">,</span> <span class="s1">&#39;ipsum&#39;</span><span class="p">,</span> <span class="s1">&#39;dolor&#39;</span><span class="p">,</span> <span class="s1">&#39;sit&#39;</span><span class="p">,</span> <span class="s1">&#39;amet&#39;</span><span class="p">,</span> <span class="s1">&#39;consectetur&#39;</span><span class="p">,</span> <span class="s1">&#39;adipiscing&#39;</span><span class="p">,</span> <span class="s1">&#39;elit&#39;</span><span class="p">,</span> <span class="s1">&#39;sed&#39;</span><span class="p">,</span> <span class="s1">&#39;do&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;eiusmod&#39;</span><span class="p">,</span> <span class="s1">&#39;tempor&#39;</span><span class="p">,</span> <span class="s1">&#39;incididunt&#39;</span><span class="p">,</span> <span class="s1">&#39;ut&#39;</span><span class="p">,</span> <span class="s1">&#39;labore&#39;</span><span class="p">,</span> <span class="s1">&#39;et&#39;</span><span class="p">,</span> <span class="s1">&#39;dolore&#39;</span><span class="p">,</span> <span class="s1">&#39;magna&#39;</span><span class="p">,</span> <span class="s1">&#39;aliqua&#39;</span><span class="p">,</span> <span class="s1">&#39;ut&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;enim&#39;</span><span class="p">,</span> <span class="s1">&#39;ad&#39;</span><span class="p">,</span> <span class="s1">&#39;minim&#39;</span><span class="p">,</span> <span class="s1">&#39;veniam&#39;</span><span class="p">,</span> <span class="s1">&#39;quis&#39;</span><span class="p">,</span> <span class="s1">&#39;nostrud&#39;</span><span class="p">,</span> <span class="s1">&#39;exercitation&#39;</span><span class="p">,</span> <span class="s1">&#39;ullamco&#39;</span><span class="p">,</span> <span class="s1">&#39;laboris&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;nisi&#39;</span><span class="p">,</span> <span class="s1">&#39;ut&#39;</span><span class="p">,</span> <span class="s1">&#39;aliquip&#39;</span><span class="p">,</span> <span class="s1">&#39;ex&#39;</span><span class="p">,</span> <span class="s1">&#39;ea&#39;</span><span class="p">,</span> <span class="s1">&#39;commodo&#39;</span><span class="p">,</span> <span class="s1">&#39;consequat&#39;</span><span class="p">,</span> <span class="s1">&#39;duis&#39;</span><span class="p">,</span> <span class="s1">&#39;aute&#39;</span><span class="p">,</span> <span class="s1">&#39;irure&#39;</span><span class="p">,</span> <span class="s1">&#39;dolor&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;in&#39;</span><span class="p">,</span> <span class="s1">&#39;reprehenderit&#39;</span><span class="p">,</span> <span class="s1">&#39;in&#39;</span><span class="p">,</span> <span class="s1">&#39;voluptate&#39;</span><span class="p">,</span> <span class="s1">&#39;velit&#39;</span><span class="p">,</span> <span class="s1">&#39;esse&#39;</span><span class="p">,</span> <span class="s1">&#39;cillum&#39;</span><span class="p">,</span> <span class="s1">&#39;dolore&#39;</span><span class="p">,</span> <span class="s1">&#39;eu&#39;</span><span class="p">,</span> <span class="s1">&#39;fugiat&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;nulla&#39;</span><span class="p">,</span> <span class="s1">&#39;pariatur&#39;</span><span class="p">,</span> <span class="s1">&#39;excepteur&#39;</span><span class="p">,</span> <span class="s1">&#39;sint&#39;</span><span class="p">,</span> <span class="s1">&#39;occaecat&#39;</span><span class="p">,</span> <span class="s1">&#39;cupidatat&#39;</span><span class="p">,</span> <span class="s1">&#39;non&#39;</span><span class="p">,</span> <span class="s1">&#39;proident&#39;</span><span class="p">,</span> <span class="s1">&#39;sunt&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;in&#39;</span><span class="p">,</span> <span class="s1">&#39;culpa&#39;</span><span class="p">,</span> <span class="s1">&#39;qui&#39;</span><span class="p">,</span> <span class="s1">&#39;officia&#39;</span><span class="p">,</span> <span class="s1">&#39;deserunt&#39;</span><span class="p">,</span> <span class="s1">&#39;mollit&#39;</span><span class="p">,</span> <span class="s1">&#39;anim&#39;</span><span class="p">,</span> <span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;est&#39;</span><span class="p">,</span> <span class="s1">&#39;laborum&#39;</span><span class="p">]</span>
+
+<span class="n">_WORDS_UPPER</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;LOREM&#39;</span><span class="p">,</span> <span class="s1">&#39;IPSUM&#39;</span><span class="p">,</span> <span class="s1">&#39;DOLOR&#39;</span><span class="p">,</span> <span class="s1">&#39;SIT&#39;</span><span class="p">,</span> <span class="s1">&#39;AMET&#39;</span><span class="p">,</span> <span class="s1">&#39;CONSECTETUR&#39;</span><span class="p">,</span> <span class="s1">&#39;ADIPISCING&#39;</span><span class="p">,</span> <span class="s1">&#39;ELIT&#39;</span><span class="p">,</span> <span class="s1">&#39;SED&#39;</span><span class="p">,</span> <span class="s1">&#39;DO&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;EIUSMOD&#39;</span><span class="p">,</span> <span class="s1">&#39;TEMPOR&#39;</span><span class="p">,</span> <span class="s1">&#39;INCIDIDUNT&#39;</span><span class="p">,</span> <span class="s1">&#39;UT&#39;</span><span class="p">,</span> <span class="s1">&#39;LABORE&#39;</span><span class="p">,</span> <span class="s1">&#39;ET&#39;</span><span class="p">,</span> <span class="s1">&#39;DOLORE&#39;</span><span class="p">,</span> <span class="s1">&#39;MAGNA&#39;</span><span class="p">,</span> <span class="s1">&#39;ALIQUA&#39;</span><span class="p">,</span> <span class="s1">&#39;UT&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;ENIM&#39;</span><span class="p">,</span> <span class="s1">&#39;AD&#39;</span><span class="p">,</span> <span class="s1">&#39;MINIM&#39;</span><span class="p">,</span> <span class="s1">&#39;VENIAM&#39;</span><span class="p">,</span> <span class="s1">&#39;QUIS&#39;</span><span class="p">,</span> <span class="s1">&#39;NOSTRUD&#39;</span><span class="p">,</span> <span class="s1">&#39;EXERCITATION&#39;</span><span class="p">,</span> <span class="s1">&#39;ULLAMCO&#39;</span><span class="p">,</span> <span class="s1">&#39;LABORIS&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;NISI&#39;</span><span class="p">,</span> <span class="s1">&#39;UT&#39;</span><span class="p">,</span> <span class="s1">&#39;ALIQUIP&#39;</span><span class="p">,</span> <span class="s1">&#39;EX&#39;</span><span class="p">,</span> <span class="s1">&#39;EA&#39;</span><span class="p">,</span> <span class="s1">&#39;COMMODO&#39;</span><span class="p">,</span> <span class="s1">&#39;CONSEQUAT&#39;</span><span class="p">,</span> <span class="s1">&#39;DUIS&#39;</span><span class="p">,</span> <span class="s1">&#39;AUTE&#39;</span><span class="p">,</span> <span class="s1">&#39;IRURE&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;DOLOR&#39;</span><span class="p">,</span> <span class="s1">&#39;IN&#39;</span><span class="p">,</span> <span class="s1">&#39;REPREHENDERIT&#39;</span><span class="p">,</span> <span class="s1">&#39;IN&#39;</span><span class="p">,</span> <span class="s1">&#39;VOLUPTATE&#39;</span><span class="p">,</span> <span class="s1">&#39;VELIT&#39;</span><span class="p">,</span> <span class="s1">&#39;ESSE&#39;</span><span class="p">,</span> <span class="s1">&#39;CILLUM&#39;</span><span class="p">,</span> <span class="s1">&#39;DOLORE&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;EU&#39;</span><span class="p">,</span> <span class="s1">&#39;FUGIAT&#39;</span><span class="p">,</span> <span class="s1">&#39;NULLA&#39;</span><span class="p">,</span> <span class="s1">&#39;PARIATUR&#39;</span><span class="p">,</span> <span class="s1">&#39;EXCEPTEUR&#39;</span><span class="p">,</span> <span class="s1">&#39;SINT&#39;</span><span class="p">,</span> <span class="s1">&#39;OCCAECAT&#39;</span><span class="p">,</span> <span class="s1">&#39;CUPIDATAT&#39;</span><span class="p">,</span> <span class="s1">&#39;NON&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;PROIDENT&#39;</span><span class="p">,</span> <span class="s1">&#39;SUNT&#39;</span><span class="p">,</span> <span class="s1">&#39;IN&#39;</span><span class="p">,</span> <span class="s1">&#39;CULPA&#39;</span><span class="p">,</span> <span class="s1">&#39;QUI&#39;</span><span class="p">,</span> <span class="s1">&#39;OFFICIA&#39;</span><span class="p">,</span> <span class="s1">&#39;DESERUNT&#39;</span><span class="p">,</span> <span class="s1">&#39;MOLLIT&#39;</span><span class="p">,</span> <span class="s1">&#39;ANIM&#39;</span><span class="p">,</span> <span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;EST&#39;</span><span class="p">,</span> <span class="s1">&#39;LABORUM&#39;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="TextGenerator"><a class="viewcode-back" href="../../reference/api/databrickslabs_testdatagenerator.text_generators.html#databrickslabs_testdatagenerator.text_generators.TextGenerator">[docs]</a><span class="k">class</span> <span class="nc">TextGenerator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Base class for text generation classes&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="TemplateGenerator"><a class="viewcode-back" href="../../reference/api/databrickslabs_testdatagenerator.text_generators.html#databrickslabs_testdatagenerator.text_generators.TemplateGenerator">[docs]</a><span class="k">class</span> <span class="nc">TemplateGenerator</span><span class="p">(</span><span class="n">TextGenerator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;This class handles the generation of text from templates</span>
+
+<span class="sd">    :param template: template string to use in text generation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">template</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="n">template</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">template</span> <span class="o">=</span> <span class="n">template</span>
+        <span class="n">template_str0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">template</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">templates</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;$__sep__&#39;</span><span class="p">,</span> <span class="s1">&#39;|&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">template_str0</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;\|&#39;</span><span class="p">,</span> <span class="s1">&#39;$__sep__&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;|&#39;</span><span class="p">)]</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;TemplateGenerator(template=&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">template</span><span class="si">}</span><span class="s2">&#39;)&quot;</span>
+
+<div class="viewcode-block" id="TemplateGenerator.valueFromSingleTemplate"><a class="viewcode-back" href="../../reference/api/databrickslabs_testdatagenerator.text_generators.html#databrickslabs_testdatagenerator.text_generators.TemplateGenerator.valueFromSingleTemplate">[docs]</a>    <span class="k">def</span> <span class="nf">valueFromSingleTemplate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_value</span><span class="p">,</span> <span class="n">gen_template</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Generate text from a single template</span>
+
+<span class="sd">        :param base_value: underlying base value to seed template generation.</span>
+<span class="sd">          Ignored unless template outputs it</span>
+<span class="sd">        :param gen_template: template string to control text generation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">retval</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">escape</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">use_value</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">template_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">gen_template</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">template_len</span><span class="p">):</span>
+            <span class="n">char</span> <span class="o">=</span> <span class="n">gen_template</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">following_char</span> <span class="o">=</span> <span class="n">gen_template</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span> <span class="o">&lt;</span> <span class="n">template_len</span> <span class="k">else</span> <span class="kc">None</span>
+
+            <span class="k">if</span> <span class="n">char</span> <span class="o">==</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">:</span>
+                <span class="n">escape</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">elif</span> <span class="n">use_value</span> <span class="ow">and</span> <span class="p">(</span><span class="n">char</span> <span class="o">&gt;=</span> <span class="s1">&#39;0&#39;</span> <span class="ow">and</span> <span class="n">char</span> <span class="o">&lt;=</span> <span class="s1">&#39;9&#39;</span><span class="p">):</span>
+                <span class="n">val_index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">char</span><span class="p">)</span>
+                <span class="n">retval</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">base_value</span><span class="p">[</span><span class="n">val_index</span><span class="p">]))</span>
+                <span class="n">use_value</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">elif</span> <span class="n">char</span> <span class="o">==</span> <span class="s1">&#39;x&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">escape</span><span class="p">:</span>
+                <span class="n">retval</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_HEX_LOWER</span><span class="p">[</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">15</span><span class="p">)])</span>
+            <span class="k">elif</span> <span class="n">char</span> <span class="o">==</span> <span class="s1">&#39;X&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">escape</span><span class="p">:</span>
+                <span class="n">retval</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_HEX_UPPER</span><span class="p">[</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">15</span><span class="p">)])</span>
+            <span class="k">elif</span> <span class="n">char</span> <span class="o">==</span> <span class="s1">&#39;d&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">escape</span><span class="p">:</span>
+                <span class="n">retval</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_DIGITS_ZERO</span><span class="p">[</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">9</span><span class="p">)])</span>
+            <span class="k">elif</span> <span class="n">char</span> <span class="o">==</span> <span class="s1">&#39;D&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">escape</span><span class="p">:</span>
+                <span class="n">retval</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_DIGITS_NON_ZERO</span><span class="p">[</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">8</span><span class="p">)])</span>
+            <span class="k">elif</span> <span class="n">char</span> <span class="o">==</span> <span class="s1">&#39;a&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">escape</span><span class="p">:</span>
+                <span class="n">retval</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_LETTERS_LOWER</span><span class="p">[</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">25</span><span class="p">)])</span>
+            <span class="k">elif</span> <span class="n">char</span> <span class="o">==</span> <span class="s1">&#39;A&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">escape</span><span class="p">:</span>
+                <span class="n">retval</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_LETTERS_UPPER</span><span class="p">[</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">25</span><span class="p">)])</span>
+            <span class="k">elif</span> <span class="n">char</span> <span class="o">==</span> <span class="s1">&#39;k&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">escape</span><span class="p">:</span>
+                <span class="n">retval</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_ALNUM_LOWER</span><span class="p">[</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">35</span><span class="p">)])</span>
+            <span class="k">elif</span> <span class="n">char</span> <span class="o">==</span> <span class="s1">&#39;K&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">escape</span><span class="p">:</span>
+                <span class="n">retval</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_ALNUM_UPPER</span><span class="p">[</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">35</span><span class="p">)])</span>
+            <span class="k">elif</span> <span class="n">char</span> <span class="o">==</span> <span class="s1">&#39;n&#39;</span> <span class="ow">and</span> <span class="n">escape</span><span class="p">:</span>
+                <span class="n">retval</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">)))</span>
+                <span class="n">escape</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">elif</span> <span class="n">char</span> <span class="o">==</span> <span class="s1">&#39;N&#39;</span> <span class="ow">and</span> <span class="n">escape</span><span class="p">:</span>
+                <span class="n">retval</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">65535</span><span class="p">)))</span>
+                <span class="n">escape</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">elif</span> <span class="n">char</span> <span class="o">==</span> <span class="s1">&#39;W&#39;</span> <span class="ow">and</span> <span class="n">escape</span><span class="p">:</span>
+                <span class="n">retval</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_WORDS_UPPER</span><span class="p">[</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">_WORDS_UPPER</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+                <span class="n">escape</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">elif</span> <span class="n">char</span> <span class="o">==</span> <span class="s1">&#39;w&#39;</span> <span class="ow">and</span> <span class="n">escape</span><span class="p">:</span>
+                <span class="n">retval</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_WORDS_LOWER</span><span class="p">[</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">_WORDS_LOWER</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+                <span class="n">escape</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">elif</span> <span class="n">char</span> <span class="o">==</span> <span class="s1">&#39;v&#39;</span> <span class="ow">and</span> <span class="n">escape</span><span class="p">:</span>
+                <span class="n">escape</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">if</span> <span class="n">following_char</span> <span class="o">&gt;=</span> <span class="s1">&#39;0&#39;</span> <span class="ow">and</span> <span class="n">following_char</span> <span class="o">&lt;=</span> <span class="s1">&#39;9&#39;</span><span class="p">:</span>
+                    <span class="n">use_value</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">retval</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">base_value</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">char</span> <span class="o">==</span> <span class="s1">&#39;V&#39;</span> <span class="ow">and</span> <span class="n">escape</span><span class="p">:</span>
+                <span class="n">retval</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">base_value</span><span class="p">))</span>
+                <span class="n">escape</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">retval</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">char</span><span class="p">)</span>
+                <span class="n">escape</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">use_value</span><span class="p">:</span>
+            <span class="n">retval</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">base_value</span><span class="p">))</span>
+
+        <span class="n">output</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">retval</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">output</span></div>
+
+<div class="viewcode-block" id="TemplateGenerator.classicGenerateText"><a class="viewcode-back" href="../../reference/api/databrickslabs_testdatagenerator.text_generators.html#databrickslabs_testdatagenerator.text_generators.TemplateGenerator.classicGenerateText">[docs]</a>    <span class="k">def</span> <span class="nf">classicGenerateText</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;entry point to use for classic udfs&quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">value_from_template</span><span class="p">(</span><span class="n">original_value</span><span class="p">,</span> <span class="n">alt_templates</span><span class="p">):</span>
+            <span class="n">num_alternatives</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">alt_templates</span><span class="p">)</span>
+
+            <span class="c1"># choose alternative</span>
+            <span class="n">alt</span> <span class="o">=</span> <span class="n">alt_templates</span><span class="p">[</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_alternatives</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">valueFromSingleTemplate</span><span class="p">(</span><span class="n">original_value</span><span class="p">,</span> <span class="n">alt</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">value_from_template</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">templates</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TemplateGenerator.pandasGenerateText"><a class="viewcode-back" href="../../reference/api/databrickslabs_testdatagenerator.text_generators.html#databrickslabs_testdatagenerator.text_generators.TemplateGenerator.pandasGenerateText">[docs]</a>    <span class="k">def</span> <span class="nf">pandasGenerateText</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; entry point to use for pandas udfs&quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">value_from_random_template</span><span class="p">(</span><span class="n">original_value</span><span class="p">,</span> <span class="n">alt_templates</span><span class="p">):</span>
+            <span class="n">num_alternatives</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">alt_templates</span><span class="p">)</span>
+
+            <span class="c1"># choose alternative</span>
+            <span class="n">alt</span> <span class="o">=</span> <span class="n">alt_templates</span><span class="p">[</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_alternatives</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">valueFromSingleTemplate</span><span class="p">(</span><span class="n">original_value</span><span class="p">,</span> <span class="n">alt</span><span class="p">)</span>
+
+        <span class="c1"># return [ str(x)+&quot;_Test&quot; for x in v]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">templates</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">value_from_random_template</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">t</span><span class="p">),</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">templates</span><span class="p">,))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">valueFromSingleTemplate</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">t</span><span class="p">),</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">templates</span><span class="p">[</span><span class="mi">0</span><span class="p">],))</span>
+        <span class="k">return</span> <span class="n">results</span></div></div>
+
+
+<div class="viewcode-block" id="ILText"><a class="viewcode-back" href="../../reference/api/databrickslabs_testdatagenerator.text_generators.html#databrickslabs_testdatagenerator.text_generators.ILText">[docs]</a><span class="k">class</span> <span class="nc">ILText</span><span class="p">(</span><span class="n">TextGenerator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Class to generate Ipsum Lorem text paragraphs, words and sentences</span>
+
+<span class="sd">    :param paragraphs: Number of paragraphs to generate. If tuple will generate random number in range</span>
+<span class="sd">    :param sentences:  Number of sentences to generate. If tuple will generate random number in tuple range</span>
+<span class="sd">    :param words:  Number of words per sentence to generate. If tuple, will generate random number in tuple range</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ILText.getAsTupleOrElse"><a class="viewcode-back" href="../../reference/api/databrickslabs_testdatagenerator.text_generators.html#databrickslabs_testdatagenerator.text_generators.ILText.getAsTupleOrElse">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">getAsTupleOrElse</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">default_v</span><span class="p">,</span> <span class="n">v_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; get value v as tuple or return default_v is v is None&quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">tuple</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;param </span><span class="si">{</span><span class="n">v_name</span><span class="si">}</span><span class="s2"> must be an int, a tuple or None&quot;</span>
+        <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">default_v</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">tuple</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">default_v</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;default value must be tuple&quot;</span>
+
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">v</span><span class="p">,</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">tuple</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
+            <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="ow">is</span> <span class="nb">int</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="ow">is</span> <span class="nb">int</span>
+            <span class="k">return</span> <span class="n">v</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">default_v</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
+            <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">default_v</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="ow">is</span> <span class="nb">int</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">default_v</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="ow">is</span> <span class="nb">int</span>
+            <span class="k">return</span> <span class="n">default_v</span>
+        <span class="k">return</span> <span class="n">default_v</span></div>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">paragraphs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sentences</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">words</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the ILText with text generation parameters</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">paragraphs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">sentences</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">words</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">paragraphs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getAsTupleOrElse</span><span class="p">(</span><span class="n">paragraphs</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="s2">&quot;paragraphs&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">words</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getAsTupleOrElse</span><span class="p">(</span><span class="n">words</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">12</span><span class="p">),</span> <span class="s2">&quot;words&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sentences</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getAsTupleOrElse</span><span class="p">(</span><span class="n">sentences</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="s2">&quot;sentences&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">paragraphs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">sentences</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">words</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="p">]</span>
+
+        <span class="c1"># values needed for the text generation</span>
+        <span class="c1"># numpy uses fixed sizes for strings , so compute whats needed</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">np_words</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">_WORDS_LOWER</span><span class="p">)</span>
+        <span class="n">max_word_len</span> <span class="o">=</span> <span class="nb">max</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">_WORDS_LOWER</span><span class="p">])</span>
+        <span class="n">sentence_usize</span> <span class="o">=</span> <span class="p">(</span><span class="n">max_word_len</span> <span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">words</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="mi">10</span>
+        <span class="n">paragraph_usize</span> <span class="o">=</span> <span class="n">sentence_usize</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">sentences</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">10</span>
+        <span class="n">text_usize</span> <span class="o">=</span> <span class="n">paragraph_usize</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">paragraphs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">15</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sentence_dtype</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;U</span><span class="si">{</span><span class="n">sentence_usize</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">para_dtype</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;U</span><span class="si">{</span><span class="n">paragraph_usize</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text_dtype</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;U</span><span class="si">{</span><span class="n">text_usize</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="c1"># build array of min and max values for paragraphs, sentences and words</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span> <span class="bp">self</span><span class="o">.</span><span class="n">paragraphs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">sentences</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>  <span class="bp">self</span><span class="o">.</span><span class="n">words</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span> <span class="bp">self</span><span class="o">.</span><span class="n">paragraphs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">sentences</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>  <span class="bp">self</span><span class="o">.</span><span class="n">words</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+
+        <span class="c1"># compute the range and std dev (allowing for 3.5 x std dev either side of mean)</span>
+        <span class="c1"># we&#39;re generating truncated std normal values with mean +/- 3.5 x std_dev</span>
+        <span class="c1"># this will determine number of paragraphs , sentences and words</span>
+
+        <span class="c1"># so this will result in x paragraphs, each having y sentences, each having z words</span>
+        <span class="c1"># we could use for loops to generate the structure, but generating the max number of</span>
+        <span class="c1"># random numbers needed in numpy will be much faster and we&#39;ll just ignore what we dont need</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">range_vals</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max_vals</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_vals</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mean_vals</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">range_vals</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_vals</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">std_vals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">range_vals</span> <span class="o">/</span> <span class="mf">6.0</span>
+
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;ILText(paragraphs=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">paragraphs</span><span class="si">}</span><span class="s2">, sentences=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sentences</span><span class="si">}</span><span class="s2">, words=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">words</span><span class="si">}</span><span class="s2">)&quot;</span>
+
+<div class="viewcode-block" id="ILText.randomGauss"><a class="viewcode-back" href="../../reference/api/databrickslabs_testdatagenerator.text_generators.html#databrickslabs_testdatagenerator.text_generators.ILText.randomGauss">[docs]</a>    <span class="k">def</span> <span class="nf">randomGauss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bounds</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">tuple</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
+
+        <span class="n">min_v</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1.0</span>
+        <span class="n">max_v</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1.0</span>
+
+        <span class="k">if</span> <span class="n">min_v</span> <span class="o">==</span> <span class="n">max_v</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">min_v</span>
+
+        <span class="n">mean_v</span> <span class="o">=</span> <span class="p">(</span><span class="n">min_v</span><span class="o">+</span><span class="n">max_v</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">std_v</span> <span class="o">=</span> <span class="p">(</span><span class="n">mean_v</span> <span class="o">-</span> <span class="n">min_v</span><span class="p">)</span> <span class="o">/</span> <span class="mf">3.5</span>
+        <span class="n">rnd_v</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">gauss</span><span class="p">(</span><span class="n">mean_v</span><span class="p">,</span> <span class="n">std_v</span><span class="p">)</span>
+        <span class="n">rnd_v</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">rnd_v</span><span class="p">,</span> <span class="n">min_v</span><span class="p">),</span> <span class="n">max_v</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">rnd_v</span></div>
+
+<div class="viewcode-block" id="ILText.generateText"><a class="viewcode-back" href="../../reference/api/databrickslabs_testdatagenerator.text_generators.html#databrickslabs_testdatagenerator.text_generators.ILText.generateText">[docs]</a>    <span class="k">def</span> <span class="nf">generateText</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seed</span><span class="p">,</span> <span class="n">default_seed</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        generate text for seed based on configuration parameters.</span>
+
+<span class="sd">        As it uses numpy, repeatability is restricted depending on version of the runtime</span>
+<span class="sd">        :param seed: list or array-like set of seed values</span>
+<span class="sd">        :param default_seed: seed value to use if value of seed is None or null</span>
+<span class="sd">        :returns: list or Pandas series of generated strings of same size as input seed</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">assert</span> <span class="n">default_seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+        <span class="n">seed_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span> <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span> <span class="k">else</span> <span class="n">seed</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">assert</span> <span class="n">seed_size</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+        <span class="n">stats_shape</span><span class="o">=</span> <span class="p">[</span> <span class="n">seed_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">paragraphs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">sentences</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">3</span><span class="p">]</span>
+
+        <span class="c1"># get number of paragraphs, number of sentences and number of words shaped to size of the</span>
+        <span class="c1"># word selections generated afterwards. We&#39;ll only use the first rows value for paragraphs and sentences</span>
+        <span class="c1"># but its faster to generate all rows than to generate a ragged array</span>
+        <span class="n">para_stats</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">rnd</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mean_vals</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">std_vals</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="n">stats_shape</span><span class="p">))</span> <span class="p">,</span>
+                                           <span class="bp">self</span><span class="o">.</span><span class="n">max_vals</span><span class="p">),</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">min_vals</span><span class="p">),</span>
+                              <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;int&#39;</span><span class="p">)</span>
+
+        <span class="c1"># get offsets for random words</span>
+        <span class="n">word_offsets</span> <span class="o">=</span> <span class="n">rnd</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">np_words</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">seed_size</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">paragraphs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">sentences</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">words</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+        <span class="c1"># get words</span>
+        <span class="n">candidate_words</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">np_words</span><span class="p">[</span><span class="n">word_offsets</span><span class="p">]</span>
+
+        <span class="c1"># add words per sentence to start of array and capitalize the first word</span>
+        <span class="n">candidate_words2</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">para_stats</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">3</span><span class="p">],</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">char</span><span class="o">.</span><span class="n">capitalize</span><span class="p">(</span><span class="n">candidate_words</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">]),</span>
+                        <span class="n">candidate_words</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">:]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+
+        <span class="n">candidate_words3</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">candidate_words2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sentence_dtype</span><span class="p">)</span>
+
+        <span class="c1"># make sentence from each sentence dimension limiting the sentence to first n words</span>
+        <span class="c1"># reminder dimensions are (rows, paragraphs, sentences, words)</span>
+        <span class="n">candidate_sentences</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">apply_along_axis</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span>  <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">+</span><span class="mi">1</span> <span class="p">])</span><span class="o">+</span><span class="sa">r</span><span class="s2">&quot;.&quot;</span> <span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">candidate_words3</span><span class="p">)</span>
+        <span class="n">candidate_sentences2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">para_stats</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">],</span>
+                                           <span class="n">candidate_sentences</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">candidate_sentences3</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">candidate_sentences2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">para_dtype</span><span class="p">)</span>
+
+        <span class="n">candidate_paras</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">apply_along_axis</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">+</span><span class="mi">1</span> <span class="p">])</span> <span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">candidate_sentences3</span><span class="p">)</span>
+        <span class="n">candidate_paras2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">para_stats</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">],</span>
+                                           <span class="n">candidate_paras</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">candidate_paras3</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">candidate_paras2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">text_dtype</span><span class="p">)</span>
+
+        <span class="n">candidate_text</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">apply_along_axis</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">+</span><span class="mi">1</span> <span class="p">])</span> <span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">candidate_paras3</span><span class="p">)</span>
+
+        <span class="c1"># now dimensions are rows, paras, sentences</span>
+
+        <span class="k">return</span> <span class="p">[</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">candidate_text</span> <span class="p">]</span></div>
+        <span class="c1">#return [ [ [&quot;:::&quot;.join(s) for s in p ] for p in r] for r in candidate_sentences ]</span>
+
+<div class="viewcode-block" id="ILText.classicGenerateText"><a class="viewcode-back" href="../../reference/api/databrickslabs_testdatagenerator.text_generators.html#databrickslabs_testdatagenerator.text_generators.ILText.classicGenerateText">[docs]</a>    <span class="k">def</span> <span class="nf">classicGenerateText</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seed</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;&quot;</span>
+<span class="sd">        classic udf entry point for text generation</span>
+
+<span class="sd">        :param seed: seed value to control generation of random numbers</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">retval</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">randomGauss</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">paragraphs</span><span class="p">))),</span>
+                  <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">randomGauss</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sentences</span><span class="p">))),</span>
+                  <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">randomGauss</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">words</span><span class="p">)))]</span>
+
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">generateText</span><span class="p">([</span><span class="n">seed</span><span class="p">],</span> <span class="mi">42</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="ILText.pandasGenerateText"><a class="viewcode-back" href="../../reference/api/databrickslabs_testdatagenerator.text_generators.html#databrickslabs_testdatagenerator.text_generators.ILText.pandasGenerateText">[docs]</a>    <span class="k">def</span> <span class="nf">pandasGenerateText</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        pandas udf entry point for text generation</span>
+
+<span class="sd">        :param v: pandas series of seed values for random text generation</span>
+<span class="sd">        :returns: Pandas series of generated strings</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">results</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">generateText</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(),</span> <span class="mi">42</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">results</span><span class="p">)</span></div></div>
+</pre></div>
+
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+
+              </div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+
+    <script src="../../_static/js/index.js"></script>
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    <p>
+          &copy; Copyright 2020, Databricks Inc.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.4.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

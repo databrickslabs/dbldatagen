@@ -1,0 +1,7 @@
+databrickslabs\_testdatagenerator.daterange module
+==================================================
+
+.. automodule:: databrickslabs_testdatagenerator.daterange
+   :members:
+   :undoc-members:
+   :show-inheritance:

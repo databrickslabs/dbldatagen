@@ -1,0 +1,338 @@
+
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>databrickslabs_testdatagenerator.column_spec_options &#8212; Test Data Generator 0.10.0-prerel2 documentation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" integrity="sha384-KA6wR/X5RY4zFAHpv/CnoG2UW1uogYfdnP67Uv7eULvTveboZJg0qUpmJZb5VqzN" crossorigin="anonymous">
+    <link href="../../_static/css/index.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/tdg.css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="docsearch:language" content="en">
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
+<div class="container-xl">
+
+    
+    <a class="navbar-brand" href="../../index.html">
+      <img src="../../_static/tdg-logo-medium.png" class="logo" alt="logo">
+    </a>
+    
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../reference/api/modules.html">Documentation from code</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../relnotes/relnotes_and_docs.html">Release Notes and related docs</a>
+        </li>
+        
+        
+        <li class="nav-item">
+            <a class="nav-link nav-external" href="https://github.com/databrickslabs">Databricks Labs<i class="fas fa-external-link-alt"></i></a>
+        </li>
+        
+      </ul>
+
+
+      
+
+      <ul class="navbar-nav">
+        
+        
+      </ul>
+    </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar">
+
+<form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+
+
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+  <div class="bd-toc-item active">
+  
+
+  <ul class="nav bd-sidenav">
+      
+      
+      
+      
+      
+    </ul>
+
+</nav>
+          </div>
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <h1>Source code for databrickslabs_testdatagenerator.column_spec_options</h1><div class="highlight"><pre>
+<span></span><span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="c1">#</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This file defines the `ColumnSpecOptions` class</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">pyspark.sql.functions</span> <span class="kn">import</span> <span class="n">col</span><span class="p">,</span> <span class="n">lit</span><span class="p">,</span> <span class="n">concat</span><span class="p">,</span> <span class="n">rand</span><span class="p">,</span> <span class="n">ceil</span><span class="p">,</span> <span class="n">floor</span><span class="p">,</span> <span class="nb">round</span><span class="p">,</span> <span class="n">array</span><span class="p">,</span> <span class="n">expr</span><span class="p">,</span> <span class="n">when</span><span class="p">,</span> <span class="n">udf</span><span class="p">,</span> <span class="n">format_string</span>
+<span class="kn">from</span> <span class="nn">pyspark.sql.types</span> <span class="kn">import</span> <span class="n">LongType</span><span class="p">,</span> <span class="n">FloatType</span><span class="p">,</span> <span class="n">IntegerType</span><span class="p">,</span> <span class="n">StringType</span><span class="p">,</span> <span class="n">DoubleType</span><span class="p">,</span> <span class="n">BooleanType</span><span class="p">,</span> <span class="n">ShortType</span><span class="p">,</span> \
+    <span class="n">StructType</span><span class="p">,</span> <span class="n">StructField</span><span class="p">,</span> <span class="n">TimestampType</span><span class="p">,</span> <span class="n">DataType</span><span class="p">,</span> <span class="n">DateType</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span><span class="p">,</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">ensure</span>
+<span class="kn">from</span> <span class="nn">.text_generators</span> <span class="kn">import</span> <span class="n">TemplateGenerator</span>
+<span class="kn">from</span> <span class="nn">.daterange</span> <span class="kn">import</span> <span class="n">DateRange</span>
+<span class="kn">from</span> <span class="nn">.nrange</span> <span class="kn">import</span> <span class="n">NRange</span>
+
+<span class="kn">from</span> <span class="nn">pyspark.sql.functions</span> <span class="kn">import</span> <span class="n">col</span><span class="p">,</span> <span class="n">pandas_udf</span>
+
+<div class="viewcode-block" id="ColumnSpecOptions"><a class="viewcode-back" href="../../reference/api/databrickslabs_testdatagenerator.column_spec_options.html#databrickslabs_testdatagenerator.column_spec_options.ColumnSpecOptions">[docs]</a><span class="k">class</span> <span class="nc">ColumnSpecOptions</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Column spec options object - manages options for column specs.</span>
+
+<span class="sd">    This class has limited functionality - mainly used to validate and document the options, and the class is meant for internal use only.</span>
+
+<span class="sd">    :param props: Used to pass list of properties for column generation spec property checking.</span>
+
+<span class="sd">    The following options are permitted on data generator `withColumn`, `withColumnSpec` and `withColumnSpecs` methods:</span>
+
+<span class="sd">    :param name: Column name</span>
+
+<span class="sd">    :param type: Data type of column. Can be either instance of Spark SQL Datatype such as `IntegerType()` or string containing SQL name of type</span>
+
+<span class="sd">    :param min: Minimum value for range of generated value. As an alternative, you may use the `data_range` parameter</span>
+
+<span class="sd">    :param max: Maximum value for range of generated value. As an alternative, you may use the `data_range` parameter</span>
+
+<span class="sd">    :param step: Step to use for range of generated value. As an alternative, you may use the `data_range` parameter</span>
+
+<span class="sd">    :param random: If True, will generate random values for column value. Defaults to `False`</span>
+
+<span class="sd">    :param base_column: Either the string name of the base column, or a list of columns to use to control data generation.</span>
+
+<span class="sd">    :param values: List of discrete values for the colummn. Discrete values for the column can be strings, numbers or constants conforming to type of column</span>
+
+<span class="sd">    :param weights: List of discrete weights for the colummn. Should be integer values.</span>
+<span class="sd">                    For example, you might declare a column for status values with a weighted distribution with the following statement:</span>
+<span class="sd">                    `withColumn(&quot;status&quot;, StringType(), values=[&#39;online&#39;, &#39;offline&#39;, &#39;unknown&#39;], weights=[3,2,1])`</span>
+
+<span class="sd">    :param percent_nulls: Specifies numeric percentage of generated values to be populated with SQL `null`. For example: `percent_nulls=12`</span>
+
+<span class="sd">    :param unique_values: Number of unique values for column.</span>
+<span class="sd">                          If the unique values are specified for a timestamp or date field, the values will be chosen</span>
+<span class="sd">                          working back from the end of the previous month,</span>
+<span class="sd">                          unless `begin`, `end` and `interval` parameters are specified</span>
+
+<span class="sd">    :param begin: Beginning of range for date and timestamp fields.</span>
+<span class="sd">                   For dates and timestamp fields, use the `begin`, `end` and `interval`</span>
+<span class="sd">                   or `data_range` parameters instead of `min`, `max` and `step`</span>
+
+<span class="sd">    :param end: End of range for date and timestamp fields.</span>
+<span class="sd">                   For dates and timestamp fields, use the `begin`, `end` and `interval`</span>
+<span class="sd">                   or `data_range` parameters instead of `min`, `max` and `step`</span>
+
+<span class="sd">    :param interval: Interval of range for date and timestamp fields.</span>
+<span class="sd">                   For dates and timestamp fields, use the `begin`, `end` and `interval`</span>
+<span class="sd">                   or `data_range` parameters instead of `min`, `max` and `step`</span>
+
+<span class="sd">    :param data_range: An instance of an `NRange` or `DateRange` object. This can be used in place of `min`, `max`, `step` or `begin`, `end`, `interval`.</span>
+
+<span class="sd">    If the `data_range` parameter is specified as well as the `min`, `max` or `step`, the results are undetermined.</span>
+<span class="sd">    For more information, see :doc:`/reference/api/databrickslabs_testdatagenerator.daterange` or :doc:`/reference/api/databrickslabs_testdatagenerator.nrange`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1">#: the set of attributes that must be present for any columns</span>
+    <span class="n">_required_props</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">}</span>
+
+    <span class="c1">#: the set of attributes , we know about</span>
+    <span class="n">_allowed_props</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;min&#39;</span><span class="p">,</span> <span class="s1">&#39;max&#39;</span><span class="p">,</span> <span class="s1">&#39;step&#39;</span><span class="p">,</span>
+                     <span class="s1">&#39;prefix&#39;</span><span class="p">,</span> <span class="s1">&#39;random&#39;</span><span class="p">,</span> <span class="s1">&#39;distribution&#39;</span><span class="p">,</span>
+                     <span class="s1">&#39;range&#39;</span><span class="p">,</span> <span class="s1">&#39;base_column&#39;</span><span class="p">,</span> <span class="s1">&#39;base_column_type&#39;</span><span class="p">,</span> <span class="s1">&#39;values&#39;</span><span class="p">,</span> <span class="s1">&#39;base_columns&#39;</span><span class="p">,</span>
+                     <span class="s1">&#39;numColumns&#39;</span><span class="p">,</span> <span class="s1">&#39;numFeatures&#39;</span><span class="p">,</span> <span class="s1">&#39;structType&#39;</span><span class="p">,</span>
+                     <span class="s1">&#39;begin&#39;</span><span class="p">,</span> <span class="s1">&#39;end&#39;</span><span class="p">,</span> <span class="s1">&#39;interval&#39;</span><span class="p">,</span> <span class="s1">&#39;expr&#39;</span><span class="p">,</span> <span class="s1">&#39;omit&#39;</span><span class="p">,</span>
+                     <span class="s1">&#39;weights&#39;</span><span class="p">,</span> <span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="s1">&#39;continuous&#39;</span><span class="p">,</span>
+                     <span class="s1">&#39;percent_nulls&#39;</span><span class="p">,</span> <span class="s1">&#39;template&#39;</span><span class="p">,</span> <span class="s1">&#39;format&#39;</span><span class="p">,</span>
+                     <span class="s1">&#39;unique_values&#39;</span><span class="p">,</span> <span class="s1">&#39;data_range&#39;</span><span class="p">,</span> <span class="s1">&#39;text&#39;</span><span class="p">,</span>
+                     <span class="s1">&#39;precision&#39;</span><span class="p">,</span> <span class="s1">&#39;scale&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;random_seed_method&#39;</span><span class="p">,</span> <span class="s1">&#39;random_seed&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;nullable&#39;</span><span class="p">,</span> <span class="s1">&#39;implicit&#39;</span>
+
+                      <span class="p">}</span>
+
+    <span class="c1">#: the set of disallowed column attributes</span>
+    <span class="n">_forbidden_props</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;range&#39;</span>
+    <span class="p">}</span>
+
+    <span class="c1">#: max values for each column type, only if where value is intentionally restricted</span>
+    <span class="n">_max_type_range</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;byte&#39;</span><span class="p">:</span> <span class="mi">256</span><span class="p">,</span>
+        <span class="s1">&#39;short&#39;</span><span class="p">:</span> <span class="mi">65536</span>
+    <span class="p">}</span>
+
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_column_spec_options</span> <span class="o">=</span> <span class="n">props</span>
+
+    <span class="k">def</span> <span class="nf">_getOrElse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get val for key if it exists or else return default&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_column_spec_options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; implement the built in dereference by key behavior &quot;&quot;&quot;</span>
+        <span class="n">ensure</span><span class="p">(</span><span class="n">key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;key should be non-empty&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_column_spec_options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_checkBoolOption</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">optional</span><span class="o">=</span><span class="kc">True</span> <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Check that option is either not specified or of type boolean</span>
+
+<span class="sd">        :param v: value to test</span>
+<span class="sd">        :param name: name of value to use in any reported errors or exceptions</span>
+<span class="sd">        :param optional: If True (default), indicates that value is optional and that None is a valid value for the option</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">optional</span><span class="p">:</span>
+            <span class="n">ensure</span><span class="p">(</span><span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">bool</span><span class="p">,</span>
+                   <span class="s2">&quot;Option `</span><span class="si">{}</span><span class="s2">` must be boolean if specified - value: </span><span class="si">{}</span><span class="s2">, type:&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ensure</span><span class="p">(</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">bool</span><span class="p">,</span>
+                   <span class="s2">&quot;Option `</span><span class="si">{}</span><span class="s2">` must be boolean  - value: </span><span class="si">{}</span><span class="s2">, type:&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)))</span>
+
+
+
+    <span class="k">def</span> <span class="nf">_checkExclusiveOptions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">options</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;check if the options are exclusive - i.e only one is not None</span>
+
+<span class="sd">        :param options: list of options that will be mutually exclusive</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">options</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;options must be non empty&quot;</span>
+        <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">options</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">([</span><span class="bp">self</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">options</span> <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">])</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> \
+            <span class="sa">f</span><span class="s2">&quot; only one of of the options: </span><span class="si">{</span><span class="n">options</span><span class="si">}</span><span class="s2"> may be specified &quot;</span>
+
+    <span class="k">def</span> <span class="nf">_checkOptionValues</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">option</span><span class="p">,</span> <span class="n">option_values</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;check if option value is in list of values</span>
+
+<span class="sd">        :param option: list of options that will be mutually exclusive</span>
+<span class="sd">        :param option_values: list of possible option values that will be mutually exclusive</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">option</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">option</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;option must be non empty&quot;</span>
+        <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">option_values</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="p">[</span><span class="n">option</span><span class="p">]</span> <span class="ow">in</span> <span class="n">option_values</span><span class="p">,</span> <span class="s2">&quot;option: `</span><span class="si">{}</span><span class="s2">` must have one of the values </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">option</span><span class="p">,</span> <span class="n">option_values</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_checkProps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column_props</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            check that column definition properties are recognized</span>
+<span class="sd">            and that the column definition has required properties</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ensure</span><span class="p">(</span><span class="n">column_props</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;coldef should be non-empty&quot;</span><span class="p">)</span>
+
+        <span class="n">colType</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">colType</span><span class="o">.</span><span class="n">typeName</span><span class="p">()</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_type_range</span><span class="p">:</span>
+            <span class="nb">min</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;min&#39;</span><span class="p">]</span>
+            <span class="nb">max</span>  <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;max&#39;</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="nb">min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">effective_range</span> <span class="o">=</span> <span class="nb">max</span> <span class="o">-</span> <span class="nb">min</span>
+                <span class="k">if</span> <span class="n">effective_range</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_type_range</span><span class="p">[</span><span class="n">colType</span><span class="o">.</span><span class="n">typeName</span><span class="p">()]:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Effective range greater than range of type&quot;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">column_props</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">ensure</span><span class="p">(</span><span class="n">k</span> <span class="ow">in</span> <span class="n">ColumnSpecOptions</span><span class="o">.</span><span class="n">_allowed_props</span><span class="p">,</span> <span class="s1">&#39;invalid column option </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_required_props</span><span class="p">:</span>
+            <span class="n">ensure</span><span class="p">(</span><span class="n">arg</span> <span class="ow">in</span> <span class="n">column_props</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">and</span> <span class="n">column_props</span><span class="p">[</span><span class="n">arg</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span>
+                   <span class="s1">&#39;missing column option </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">arg</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forbidden_props</span><span class="p">:</span>
+            <span class="n">ensure</span><span class="p">(</span><span class="n">arg</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">column_props</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span>
+                   <span class="s1">&#39;forbidden column option </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">arg</span><span class="p">))</span>
+
+        <span class="c1"># check weights and values</span>
+        <span class="k">if</span> <span class="s1">&#39;weights&#39;</span> <span class="ow">in</span> <span class="n">column_props</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">ensure</span><span class="p">(</span><span class="s1">&#39;values&#39;</span> <span class="ow">in</span> <span class="n">column_props</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span>
+                   <span class="s2">&quot;weights are only allowed for columns with values - column &#39;</span><span class="si">{}</span><span class="s2">&#39; &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">column_props</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]))</span>
+            <span class="n">ensure</span><span class="p">(</span><span class="n">column_props</span><span class="p">[</span><span class="s1">&#39;values&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">column_props</span><span class="p">[</span><span class="s1">&#39;values&#39;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
+                   <span class="s2">&quot;weights must be associated with non-empty list of values - column &#39;</span><span class="si">{}</span><span class="s2">&#39; &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                       <span class="n">column_props</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]))</span>
+            <span class="n">ensure</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">column_props</span><span class="p">[</span><span class="s1">&#39;values&#39;</span><span class="p">])</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">column_props</span><span class="p">[</span><span class="s1">&#39;weights&#39;</span><span class="p">]),</span>
+                   <span class="s2">&quot;length of list of weights must be  equal to length of list of values - column &#39;</span><span class="si">{}</span><span class="s2">&#39; &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                       <span class="n">column_props</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]))</span></div>
+
+
+
+</pre></div>
+
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+
+              </div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+
+    <script src="../../_static/js/index.js"></script>
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    <p>
+          &copy; Copyright 2020, Databricks Inc.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.4.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

@@ -1,0 +1,255 @@
+
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>databrickslabs_testdatagenerator.data_analyzer module &#8212; Test Data Generator 0.10.0-prerel2 documentation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" integrity="sha384-KA6wR/X5RY4zFAHpv/CnoG2UW1uogYfdnP67Uv7eULvTveboZJg0qUpmJZb5VqzN" crossorigin="anonymous">
+    <link href="../../_static/css/index.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/tdg.css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="databrickslabs_testdatagenerator.data_generator module" href="databrickslabs_testdatagenerator.data_generator.html" />
+    <link rel="prev" title="databrickslabs_testdatagenerator.column_spec_options module" href="databrickslabs_testdatagenerator.column_spec_options.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="docsearch:language" content="en">
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
+<div class="container-xl">
+
+    
+    <a class="navbar-brand" href="../../index.html">
+      <img src="../../_static/tdg-logo-medium.png" class="logo" alt="logo">
+    </a>
+    
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item active">
+            <a class="nav-link" href="modules.html">Documentation from code</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../relnotes/relnotes_and_docs.html">Release Notes and related docs</a>
+        </li>
+        
+        
+        <li class="nav-item">
+            <a class="nav-link nav-external" href="https://github.com/databrickslabs">Databricks Labs<i class="fas fa-external-link-alt"></i></a>
+        </li>
+        
+      </ul>
+
+
+      
+
+      <ul class="navbar-nav">
+        
+        
+      </ul>
+    </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar">
+
+<form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+
+
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+  <div class="bd-toc-item active">
+  
+
+  <ul class="nav bd-sidenav">
+      
+      
+        
+          
+              <li class="active">
+                  <a href="databrickslabs_testdatagenerator.html">databrickslabs_testdatagenerator package</a>
+              </li>
+          
+        
+      
+      
+      
+      
+    </ul>
+
+</nav>
+          </div>
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <div class="section" id="module-databrickslabs_testdatagenerator.data_analyzer">
+<span id="databrickslabs-testdatagenerator-data-analyzer-module"></span><h1>databrickslabs_testdatagenerator.data_analyzer module<a class="headerlink" href="#module-databrickslabs_testdatagenerator.data_analyzer" title="Permalink to this headline">¶</a></h1>
+<p>This module defines the DataAnalyzer class. This is still a work in progress.</p>
+<dl class="py class">
+<dt id="databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer">
+<em class="property">class </em><code class="sig-name descname">DataAnalyzer</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">df</span></em>, <em class="sig-param"><span class="n">sparkSession</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_analyzer.html#DataAnalyzer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>This class is used to analyze an existing data set to assist in generating a test data set with similar characteristics</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> – dataframe to analyze</p></li>
+<li><p><strong>sparkSession</strong> – spark session instance to use when performing spark operations</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="longtable table">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.displayRow" title="databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.displayRow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">displayRow</span></code></a>(row)</p></td>
+<td><p>Display details for row</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.getDistinctCounts" title="databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.getDistinctCounts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getDistinctCounts</span></code></a>()</p></td>
+<td><p>Get distinct counts</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.getFieldNames" title="databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.getFieldNames"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getFieldNames</span></code></a>(schema)</p></td>
+<td><p>get field names from schema</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.lookupFieldType" title="databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.lookupFieldType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lookupFieldType</span></code></a>(typ)</p></td>
+<td><p>Perform lookup of type name by Spark SQL type name</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.prependSummary" title="databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.prependSummary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prependSummary</span></code></a>(df, heading)</p></td>
+<td><p>Prepend summary information</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.summarize" title="databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.summarize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">summarize</span></code></a>()</p></td>
+<td><p>Generate summary</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.summarizeField" title="databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.summarizeField"><code class="xref py py-obj docutils literal notranslate"><span class="pre">summarizeField</span></code></a>(field)</p></td>
+<td><p>Generate summary for individual field</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.summarizeFields" title="databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.summarizeFields"><code class="xref py py-obj docutils literal notranslate"><span class="pre">summarizeFields</span></code></a>(schema)</p></td>
+<td><p>Generate summary for all fields in schema</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.displayRow">
+<code class="sig-name descname">displayRow</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">row</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_analyzer.html#DataAnalyzer.displayRow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.displayRow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Display details for row</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.getDistinctCounts">
+<code class="sig-name descname">getDistinctCounts</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_analyzer.html#DataAnalyzer.getDistinctCounts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.getDistinctCounts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get distinct counts</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.getFieldNames">
+<code class="sig-name descname">getFieldNames</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">schema</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_analyzer.html#DataAnalyzer.getFieldNames"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.getFieldNames" title="Permalink to this definition">¶</a></dt>
+<dd><p>get field names from schema</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.lookupFieldType">
+<code class="sig-name descname">lookupFieldType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">typ</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_analyzer.html#DataAnalyzer.lookupFieldType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.lookupFieldType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform lookup of type name by Spark SQL type name</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.prependSummary">
+<code class="sig-name descname">prependSummary</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">df</span></em>, <em class="sig-param"><span class="n">heading</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_analyzer.html#DataAnalyzer.prependSummary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.prependSummary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepend summary information</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.summarize">
+<code class="sig-name descname">summarize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_analyzer.html#DataAnalyzer.summarize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.summarize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate summary</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.summarizeField">
+<code class="sig-name descname">summarizeField</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">field</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_analyzer.html#DataAnalyzer.summarizeField"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.summarizeField" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate summary for individual field</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.summarizeFields">
+<code class="sig-name descname">summarizeFields</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">schema</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/data_analyzer.html#DataAnalyzer.summarizeFields"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.summarizeFields" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate summary for all fields in schema</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+    <a class='left-prev' id="prev-link" href="databrickslabs_testdatagenerator.column_spec_options.html" title="previous page">databrickslabs_testdatagenerator.column_spec_options module</a>
+    <a class='right-next' id="next-link" href="databrickslabs_testdatagenerator.data_generator.html" title="next page">databrickslabs_testdatagenerator.data_generator module</a>
+
+              </div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+
+    <script src="../../_static/js/index.js"></script>
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    <p>
+          &copy; Copyright 2020, Databricks Inc.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.4.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

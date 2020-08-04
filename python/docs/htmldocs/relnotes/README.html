@@ -1,0 +1,266 @@
+
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Databricks Labs TestDataGenerator &#8212; Test Data Generator 0.10.0-prerel2 documentation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" integrity="sha384-KA6wR/X5RY4zFAHpv/CnoG2UW1uogYfdnP67Uv7eULvTveboZJg0qUpmJZb5VqzN" crossorigin="anonymous">
+    <link href="../_static/css/index.css" rel="stylesheet">
+    <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/tdg.css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="docsearch:language" content="en">
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
+<div class="container-xl">
+
+    
+    <a class="navbar-brand" href="../index.html">
+      <img src="../_static/tdg-logo-medium.png" class="logo" alt="logo">
+    </a>
+    
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../reference/api/modules.html">Documentation from code</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="relnotes_and_docs.html">Release Notes and related docs</a>
+        </li>
+        
+        
+        <li class="nav-item">
+            <a class="nav-link nav-external" href="https://github.com/databrickslabs">Databricks Labs<i class="fas fa-external-link-alt"></i></a>
+        </li>
+        
+      </ul>
+
+
+      
+
+      <ul class="navbar-nav">
+        
+        
+      </ul>
+    </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar">
+
+<form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+
+
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+  <div class="bd-toc-item active">
+  
+
+  <ul class="nav bd-sidenav">
+      
+      
+      
+      
+      
+    </ul>
+
+</nav>
+          </div>
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+<div class="tocsection onthispage pt-5 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#project-description" class="nav-link">Project Description</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#project-support" class="nav-link">Project Support</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#compatibility" class="nav-link">Compatibility</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#building-the-code" class="nav-link">Building the code</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#running-unit-tests" class="nav-link">Running unit tests</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#using-the-project" class="nav-link">Using the Project</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#feedback" class="nav-link">Feedback</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#core-contribution-team" class="nav-link">Core Contribution team</a>
+        </li>
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <div class="section" id="databricks-labs-testdatagenerator">
+<h1>Databricks Labs TestDataGenerator<a class="headerlink" href="#databricks-labs-testdatagenerator" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference internal" href="RELEASE_NOTES.html"><span class="doc">Release Notes</span></a> |
+<a class="reference external" href="dist/">Python Wheel</a> |
+<a class="reference external" href="python/docs/APIDOCS">Developer Docs</a> |
+<a class="reference external" href="examples">Examples</a> |
+<a class="reference external" href="tutorial">Tutorial</a> |
+<a class="reference external" href="#core-contribution-team">Contributors</a></p>
+<div class="section" id="project-description">
+<h2>Project Description<a class="headerlink" href="#project-description" title="Permalink to this headline">¶</a></h2>
+<p>This Databricks Labs project is a non-supported end-to-end framework for automating the generation of test data
+using the Spark framework.</p>
+<p>It supports:</p>
+<ul class="simple">
+<li><p>Generating test data for all of the
+Spark SQL supported primitive types as a Spark data frame which may be persisted,
+saved to external storage or
+used in other computations</p></li>
+<li><p>Limiting numeric values to specific ranges and intervals</p></li>
+<li><p>Generation of discrete values - both numeric and text</p></li>
+<li><p>Generation of values at random and based on the values of other fields</p></li>
+<li><p>Generating multiple values following the same pattern</p></li>
+<li><p>Generating arrays of values for ML style feature arrays</p></li>
+<li><p>Applying weights to the occurence of values</p></li>
+<li><p>Generating values to conform to a schema or independent of an existing schema</p></li>
+<li><p>use of SQL expressions in test data generation</p></li>
+</ul>
+</div>
+<div class="section" id="project-support">
+<h2>Project Support<a class="headerlink" href="#project-support" title="Permalink to this headline">¶</a></h2>
+<p>Please note that all projects in the /databrickslabs github account are provided for your exploration only, and are not formally supported by Databricks with Service Level Agreements (SLAs).  They are provided AS-IS and we do not make any guarantees of any kind.  Please do not submit a support ticket relating to any issues arising from the use of these projects.</p>
+<p>Any issues discovered through the use of this project should be filed as GitHub Issues on the Repo.  They will be reviewed as time permits, but there are no formal SLAs for support.</p>
+</div>
+<div class="section" id="compatibility">
+<h2>Compatibility<a class="headerlink" href="#compatibility" title="Permalink to this headline">¶</a></h2>
+<p>The code base must be built with Python 3.x.</p>
+<p>For full library compatibility for a specific Databricks Spark release, see the Databricks
+release notes for library compatibility</p>
+<ul class="simple">
+<li><p>https://docs.databricks.com/release-notes/runtime/releases.html</p></li>
+</ul>
+</div>
+<div class="section" id="building-the-code">
+<h2>Building the code<a class="headerlink" href="#building-the-code" title="Permalink to this headline">¶</a></h2>
+<p>Run  <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">clean</span> <span class="pre">dist</span></code> from the main project directory.</p>
+</div>
+<div class="section" id="running-unit-tests">
+<h2>Running unit tests<a class="headerlink" href="#running-unit-tests" title="Permalink to this headline">¶</a></h2>
+<p>If using an evironment with multiple Python versions, make sure to use virtual env or similar to pick up correct python versions.</p>
+<p>If necessary, set <code class="docutils literal notranslate"><span class="pre">PYSPARK_PYTHON</span></code> and <code class="docutils literal notranslate"><span class="pre">PYSPARK_DRIVER_PYTHON</span></code> to point to correct versions of Python.</p>
+<p>Run  <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">install</span> <span class="pre">tests</span></code> from the main project directory to run the unit tests.</p>
+</div>
+<div class="section" id="using-the-project">
+<h2>Using the Project<a class="headerlink" href="#using-the-project" title="Permalink to this headline">¶</a></h2>
+<p>To use the project, the generated wheel should be installed in your Python notebook as a wheel based library</p>
+<p>Once the library has been installed, you can use it to generate a test data frame.</p>
+<p>For example</p>
+<div class="highlight-buildoutcfg notranslate"><div class="highlight"><pre><span></span>df_spec = (datagen.DataGenerator(sparkSession=spark, name=&quot;test_data_set1&quot;, rows=cls.row_count,
+                                                  partitions=4)
+                            .withIdOutput()
+                            .withColumn(&quot;r&quot;, FloatType(), expr=&quot;floor(rand() * 350) * (86400 + 3600)&quot;,
+                                        numColumns=cls.column_count)
+                            .withColumn(&quot;code1&quot;, IntegerType(), min=100, max=200)
+                            .withColumn(&quot;code2&quot;, IntegerType(), min=0, max=10)
+                            .withColumn(&quot;code3&quot;, StringType(), values=[&#39;a&#39;, &#39;b&#39;, &#39;c&#39;])
+                            .withColumn(&quot;code4&quot;, StringType(), values=[&#39;a&#39;, &#39;b&#39;, &#39;c&#39;], random=True)
+                            .withColumn(&quot;code5&quot;, StringType(), values=[&#39;a&#39;, &#39;b&#39;, &#39;c&#39;], random=True, weights=[9, 1, 1])
+
+                            )
+                            
+df = df_spec.build()
+num_rows=df.count()                          
+</pre></div>
+</div>
+</div>
+<div class="section" id="feedback">
+<h2>Feedback<a class="headerlink" href="#feedback" title="Permalink to this headline">¶</a></h2>
+<p>Issues with the application?  Found a bug?  Have a great idea for an addition?
+Feel free to file an issue.</p>
+</div>
+<div class="section" id="core-contribution-team">
+<h2>Core Contribution team<a class="headerlink" href="#core-contribution-team" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Lead Developer, co-designer: Ronan Stokes,RSA, Databricks</p></li>
+<li><p>Design: Daniel Tomes, RSA Practice Leader, Databricks</p></li>
+</ul>
+</div>
+</div>
+
+
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+
+              </div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+
+    <script src="../_static/js/index.js"></script>
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    <p>
+          &copy; Copyright 2020, Databricks Inc.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.4.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

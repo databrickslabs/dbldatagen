@@ -1,0 +1,7 @@
+databrickslabs\_testdatagenerator.distributions.data\_distribution module
+=========================================================================
+
+.. automodule:: databrickslabs_testdatagenerator.distributions.data_distribution
+   :members:
+   :undoc-members:
+   :show-inheritance:

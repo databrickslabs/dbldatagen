@@ -1,0 +1,577 @@
+
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>databrickslabs_testdatagenerator.column_generation_spec module &#8212; Test Data Generator 0.10.0-prerel2 documentation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" integrity="sha384-KA6wR/X5RY4zFAHpv/CnoG2UW1uogYfdnP67Uv7eULvTveboZJg0qUpmJZb5VqzN" crossorigin="anonymous">
+    <link href="../../_static/css/index.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/tdg.css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="databrickslabs_testdatagenerator.column_spec_options module" href="databrickslabs_testdatagenerator.column_spec_options.html" />
+    <link rel="prev" title="databrickslabs_testdatagenerator.distributions.gamma module" href="databrickslabs_testdatagenerator.distributions.gamma.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="docsearch:language" content="en">
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
+<div class="container-xl">
+
+    
+    <a class="navbar-brand" href="../../index.html">
+      <img src="../../_static/tdg-logo-medium.png" class="logo" alt="logo">
+    </a>
+    
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item active">
+            <a class="nav-link" href="modules.html">Documentation from code</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../relnotes/relnotes_and_docs.html">Release Notes and related docs</a>
+        </li>
+        
+        
+        <li class="nav-item">
+            <a class="nav-link nav-external" href="https://github.com/databrickslabs">Databricks Labs<i class="fas fa-external-link-alt"></i></a>
+        </li>
+        
+      </ul>
+
+
+      
+
+      <ul class="navbar-nav">
+        
+        
+      </ul>
+    </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar">
+
+<form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+
+
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+  <div class="bd-toc-item active">
+  
+
+  <ul class="nav bd-sidenav">
+      
+      
+        
+          
+              <li class="active">
+                  <a href="databrickslabs_testdatagenerator.html">databrickslabs_testdatagenerator package</a>
+              </li>
+          
+        
+      
+      
+      
+      
+    </ul>
+
+</nav>
+          </div>
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <div class="section" id="module-databrickslabs_testdatagenerator.column_generation_spec">
+<span id="databrickslabs-testdatagenerator-column-generation-spec-module"></span><h1>databrickslabs_testdatagenerator.column_generation_spec module<a class="headerlink" href="#module-databrickslabs_testdatagenerator.column_generation_spec" title="Permalink to this headline">¶</a></h1>
+<p>This file defines the <cite>ColumnGenerationSpec</cite> class</p>
+<dl class="py class">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec">
+<em class="property">class </em><code class="sig-name descname">ColumnGenerationSpec</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">colType</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">min</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">max</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">step</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">prefix</span><span class="o">=</span><span class="default_value">''</span></em>, <em class="sig-param"><span class="n">random</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">distribution</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">base_column</span><span class="o">=</span><span class="default_value">'id'</span></em>, <em class="sig-param"><span class="n">random_seed</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">random_seed_method</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">implicit</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">omit</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">nullable</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">debug</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/column_generation_spec.html#ColumnGenerationSpec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Column generation spec object - specifies how column is to be generated</p>
+<p>Each column to be output will have a corresponding ColumnGenerationSpec object.
+This is added explicitly using the DataGenerators <cite>withColumnSpec</cite> or <cite>withColumn</cite> methods</p>
+<p>If none is explicitly added, a default one will be generated.</p>
+<p>The full set of arguments to the class is more than the explicitly called out parameters as any
+arguments that are not explictly called out can still be passed due to the <cite>**kwargs</cite> expression.</p>
+<p>This class is meant for internal use only.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – Name of column (string).</p></li>
+<li><p><strong>colType</strong> – Spark SQL datatype instance, representing the type of the column.</p></li>
+<li><p><strong>min</strong> – minimum value of column</p></li>
+<li><p><strong>max</strong> – maximum value of the column</p></li>
+<li><p><strong>step</strong> – numeric step used in column data generation</p></li>
+<li><p><strong>prefix</strong> – string used as prefix to the column underlying value to produce a string value</p></li>
+<li><p><strong>random</strong> – Boolean, if True, will generate random values</p></li>
+<li><p><strong>distribution</strong> – Instance of distribution, that will control the distribution of the generated values</p></li>
+<li><p><strong>base_column</strong> – String or list of strings representing columns used as basis for generating the column data</p></li>
+<li><p><strong>random_seed</strong> – random seed value used to generate the random value, if column data is random</p></li>
+<li><p><strong>random_seed_method</strong> – method for computing random values from the random seed</p></li>
+<li><p><strong>implicit</strong> – If True, the specification for the column can be replaced by a later definition.
+If not, a later attempt to replace the definition will flag an error.
+Typically used when generating definitions automatically from a schema, or when using wildcards in the specification</p></li>
+<li><p><strong>omit</strong> – if True, omit from the final output.</p></li>
+<li><p><strong>nullable</strong> – If True, column may be null - defaults to True.</p></li>
+<li><p><strong>debug</strong> – If True, output debugging log statements. Defaults to False.</p></li>
+<li><p><strong>verbose</strong> – If True, output logging statements at the info level. If False (the default), only output warning and error logging statements.</p></li>
+</ul>
+</dd>
+</dl>
+<p>For full list of options, see <a class="reference internal" href="databrickslabs_testdatagenerator.column_spec_options.html"><span class="doc">databrickslabs_testdatagenerator.column_spec_options module</span></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.baseColumn" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.baseColumn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">baseColumn</span></code></a></dt><dd><p>get the base column used to generate values for this column</p>
+</dd>
+<dt><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.base_columns" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.base_columns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base_columns</span></code></a></dt><dd><p>Return base columns as list of strings</p>
+</dd>
+<dt><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.begin" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.begin"><code class="xref py py-obj docutils literal notranslate"><span class="pre">begin</span></code></a></dt><dd><p>get the <cite>begin</cite> attribute used to generate values for this column</p>
+</dd>
+<dt><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.datatype" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.datatype"><code class="xref py py-obj docutils literal notranslate"><span class="pre">datatype</span></code></a></dt><dd><p>get the Spark SQL data type used to generate values for this column</p>
+</dd>
+<dt><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.end" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.end"><code class="xref py py-obj docutils literal notranslate"><span class="pre">end</span></code></a></dt><dd><p>get the <cite>end</cite> attribute used to generate values for this column</p>
+</dd>
+<dt><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.expr" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">expr</span></code></a></dt><dd><p>get the <cite>expr</cite> attributed used to generate values for this column</p>
+</dd>
+<dt><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.exprs" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.exprs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">exprs</span></code></a></dt><dd><p>get the column generation <cite>exprs</cite> attribute used to generate values for this column.</p>
+</dd>
+<dt><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.interval" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.interval"><code class="xref py py-obj docutils literal notranslate"><span class="pre">interval</span></code></a></dt><dd><p>get the <cite>interval</cite> attribute used to generate values for this column</p>
+</dd>
+<dt><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.isFieldOmitted" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.isFieldOmitted"><code class="xref py py-obj docutils literal notranslate"><span class="pre">isFieldOmitted</span></code></a></dt><dd><p>check if this field should be omitted from the output</p>
+</dd>
+<dt><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.isWeightedValuesColumn" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.isWeightedValuesColumn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">isWeightedValuesColumn</span></code></a></dt><dd><p>check if column is a weighed values column</p>
+</dd>
+<dt><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.max" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.max"><code class="xref py py-obj docutils literal notranslate"><span class="pre">max</span></code></a></dt><dd><p>get the column generation <cite>max</cite> value used to generate values for this column</p>
+</dd>
+<dt><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.min" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.min"><code class="xref py py-obj docutils literal notranslate"><span class="pre">min</span></code></a></dt><dd><p>get the column generation <cite>min</cite> value used to generate values for this column</p>
+</dd>
+<dt><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.numColumns" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.numColumns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numColumns</span></code></a></dt><dd><p>get the <cite>numColumns</cite> attribute used to generate values for this column</p>
+</dd>
+<dt><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.numFeatures" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.numFeatures"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numFeatures</span></code></a></dt><dd><p>get the <cite>numFeatures</cite> attribute used to generate values for this column</p>
+</dd>
+<dt><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.prefix" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.prefix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prefix</span></code></a></dt><dd><p>get the string prefix used to generate values for this column</p>
+</dd>
+<dt><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.step" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.step"><code class="xref py py-obj docutils literal notranslate"><span class="pre">step</span></code></a></dt><dd><p>get the column generation <cite>step</cite> value used to generate values for this column</p>
+</dd>
+<dt><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.suffix" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.suffix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">suffix</span></code></a></dt><dd><p>get the string suffix used to generate values for this column</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="longtable table">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.computeAdjustedRangeForColumn" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.computeAdjustedRangeForColumn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">computeAdjustedRangeForColumn</span></code></a>(colType, …)</p></td>
+<td><p>Determine adjusted range for data column</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.compute_basic_dependencies" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.compute_basic_dependencies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_basic_dependencies</span></code></a>()</p></td>
+<td><p>get set of basic column dependencies</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.getNames" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.getNames"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getNames</span></code></a>()</p></td>
+<td><p>get column names as list of strings</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.getNamesAndTypes" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.getNamesAndTypes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getNamesAndTypes</span></code></a>()</p></td>
+<td><p>get column names as list of tules <cite>(name, datatype)</cite></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.getPlanEntry" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.getPlanEntry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getPlanEntry</span></code></a>()</p></td>
+<td><p>Get execution plan entry for object</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.getScaledIntegerSQLExpression" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.getScaledIntegerSQLExpression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getScaledIntegerSQLExpression</span></code></a>(col_name, …)</p></td>
+<td><p>Get scaled numeric expression</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.getSeedExpression" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.getSeedExpression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getSeedExpression</span></code></a>(base_column)</p></td>
+<td><p>Get seed expression for column generation</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.getUniformRandomExpression" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.getUniformRandomExpression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getUniformRandomExpression</span></code></a>(col_name)</p></td>
+<td><p>Get random expression accounting for seed method</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.getUniformRandomSQLExpression" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.getUniformRandomSQLExpression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getUniformRandomSQLExpression</span></code></a>(col_name)</p></td>
+<td><p>Get random SQL expression accounting for seed method</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.keys" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">keys</span></code></a>()</p></td>
+<td><p>Get the keys as list of strings</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.makeGenerationExpressions" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.makeGenerationExpressions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">makeGenerationExpressions</span></code></a>(use_pandas)</p></td>
+<td><p>Generate structured column if multiple columns or features are specified</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.makeSingleGenerationExpression" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.makeSingleGenerationExpression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">makeSingleGenerationExpression</span></code></a>([index, …])</p></td>
+<td><p>generate column data for a single column value via Spark SQL expression</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.makeWeightedColumnValuesExpression" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.makeWeightedColumnValuesExpression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">makeWeightedColumnValuesExpression</span></code></a>(values, …)</p></td>
+<td><p>make SQL expression to compute the weighted values expression</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.set_base_column_datatypes" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.set_base_column_datatypes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_base_column_datatypes</span></code></a>(column_datatypes)</p></td>
+<td><p>Set the data types for the base columns</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.structType" title="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.structType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">structType</span></code></a>()</p></td>
+<td><p>get the <cite>structType</cite> attribute used to generate values for this column</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.baseColumn">
+<em class="property">property </em><code class="sig-name descname">baseColumn</code><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.baseColumn" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the base column used to generate values for this column</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.base_columns">
+<em class="property">property </em><code class="sig-name descname">base_columns</code><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.base_columns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return base columns as list of strings</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.begin">
+<em class="property">property </em><code class="sig-name descname">begin</code><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.begin" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the <cite>begin</cite> attribute used to generate values for this column</p>
+<p>For numeric columns, the range (min, max, step) is used to control data generation.
+For date and time columns, the range (begin, end, interval) are used to control data generation</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.computeAdjustedRangeForColumn">
+<code class="sig-name descname">computeAdjustedRangeForColumn</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">colType</span></em>, <em class="sig-param"><span class="n">c_min</span></em>, <em class="sig-param"><span class="n">c_max</span></em>, <em class="sig-param"><span class="n">c_step</span></em>, <em class="sig-param"><span class="n">c_begin</span></em>, <em class="sig-param"><span class="n">c_end</span></em>, <em class="sig-param"><span class="n">c_interval</span></em>, <em class="sig-param"><span class="n">c_range</span></em>, <em class="sig-param"><span class="n">c_unique</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/column_generation_spec.html#ColumnGenerationSpec.computeAdjustedRangeForColumn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.computeAdjustedRangeForColumn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determine adjusted range for data column</p>
+<p>Rules:
+- if a datarange is specified , use that
+- if begin and end are specified or min and max are specified, use that
+- if unique values is specified, compute min and max depending on type</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.compute_basic_dependencies">
+<code class="sig-name descname">compute_basic_dependencies</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/column_generation_spec.html#ColumnGenerationSpec.compute_basic_dependencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.compute_basic_dependencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>get set of basic column dependencies</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>base columns as list with dependency on ‘id’ added</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.datatype">
+<em class="property">property </em><code class="sig-name descname">datatype</code><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.datatype" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the Spark SQL data type used to generate values for this column</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.end">
+<em class="property">property </em><code class="sig-name descname">end</code><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.end" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the <cite>end</cite> attribute used to generate values for this column</p>
+<p>For numeric columns, the range (min, max, step) is used to control data generation.
+For date and time columns, the range (begin, end, interval) are used to control data generation</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.expr">
+<em class="property">property </em><code class="sig-name descname">expr</code><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.expr" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the <cite>expr</cite> attributed used to generate values for this column</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.exprs">
+<em class="property">property </em><code class="sig-name descname">exprs</code><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.exprs" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the column generation <cite>exprs</cite> attribute used to generate values for this column.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.getNames">
+<code class="sig-name descname">getNames</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/column_generation_spec.html#ColumnGenerationSpec.getNames"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.getNames" title="Permalink to this definition">¶</a></dt>
+<dd><p>get column names as list of strings</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.getNamesAndTypes">
+<code class="sig-name descname">getNamesAndTypes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/column_generation_spec.html#ColumnGenerationSpec.getNamesAndTypes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.getNamesAndTypes" title="Permalink to this definition">¶</a></dt>
+<dd><p>get column names as list of tules <cite>(name, datatype)</cite></p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.getPlanEntry">
+<code class="sig-name descname">getPlanEntry</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/column_generation_spec.html#ColumnGenerationSpec.getPlanEntry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.getPlanEntry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get execution plan entry for object</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>String representation of plan entry</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.getScaledIntegerSQLExpression">
+<code class="sig-name descname">getScaledIntegerSQLExpression</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">col_name</span></em>, <em class="sig-param"><span class="n">scale</span></em>, <em class="sig-param"><span class="n">base_columns</span></em>, <em class="sig-param"><span class="n">base_datatypes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">compute_method</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">normalize</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/column_generation_spec.html#ColumnGenerationSpec.getScaledIntegerSQLExpression"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.getScaledIntegerSQLExpression" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get scaled numeric expression</p>
+<p>This will produce a scaled SQL epression from the base columns</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>col_name</strong> – = Column name used for error messages and debugging</p></li>
+<li><p><strong>normalize</strong> – = If True, will normalize to the range 0 .. 1 inclusive</p></li>
+<li><p><strong>scale</strong> – = Numeric value indicating scaling factor - will scale via modulo arithmetic</p></li>
+<li><p><strong>base_columns</strong> – = list of base_columns</p></li>
+<li><p><strong>base_datatypes</strong> – = list of Spark SQL datatypes for columns</p></li>
+<li><p><strong>compute_method</strong> – = indicates how the value is be derived from base columns - i.e ‘hash’ or ‘values’ - treated as hint only</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>scaled expression as a SQL string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.getSeedExpression">
+<code class="sig-name descname">getSeedExpression</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">base_column</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/column_generation_spec.html#ColumnGenerationSpec.getSeedExpression"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.getSeedExpression" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get seed expression for column generation</p>
+<p>This is used to generate the base value for every column
+if using a single base column, then simply use that, otherwise use either
+a SQL hash of multiple columns, or an array of the base column values converted to strings</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Spark SQL <cite>col</cite> or <cite>expr</cite> object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.getUniformRandomExpression">
+<code class="sig-name descname">getUniformRandomExpression</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">col_name</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/column_generation_spec.html#ColumnGenerationSpec.getUniformRandomExpression"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.getUniformRandomExpression" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get random expression accounting for seed method</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>expression of ColDef form - i.e <cite>lit</cite>, <cite>expr</cite> etc</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.getUniformRandomSQLExpression">
+<code class="sig-name descname">getUniformRandomSQLExpression</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">col_name</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/column_generation_spec.html#ColumnGenerationSpec.getUniformRandomSQLExpression"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.getUniformRandomSQLExpression" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get random SQL expression accounting for seed method</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>expression as a SQL string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.interval">
+<em class="property">property </em><code class="sig-name descname">interval</code><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.interval" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the <cite>interval</cite> attribute used to generate values for this column</p>
+<p>For numeric columns, the range (min, max, step) is used to control data generation.
+For date and time columns, the range (begin, end, interval) are used to control data generation</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.isFieldOmitted">
+<em class="property">property </em><code class="sig-name descname">isFieldOmitted</code><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.isFieldOmitted" title="Permalink to this definition">¶</a></dt>
+<dd><p>check if this field should be omitted from the output</p>
+<p>If the field is omitted from the output, the field is available for use in expressions etc.
+but dropped from the final set of fields</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.isWeightedValuesColumn">
+<em class="property">property </em><code class="sig-name descname">isWeightedValuesColumn</code><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.isWeightedValuesColumn" title="Permalink to this definition">¶</a></dt>
+<dd><p>check if column is a weighed values column</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.keys">
+<code class="sig-name descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/column_generation_spec.html#ColumnGenerationSpec.keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the keys as list of strings</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.makeGenerationExpressions">
+<code class="sig-name descname">makeGenerationExpressions</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_pandas</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/column_generation_spec.html#ColumnGenerationSpec.makeGenerationExpressions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.makeGenerationExpressions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate structured column if multiple columns or features are specified</p>
+<p>if there are multiple columns / features specified using a single definition, it will generate a set of columns conforming to the same definition,
+renaming them as appropriate and combine them into a array if necessary (depending on the structure combination instructions)</p>
+<blockquote>
+<div><dl class="field-list simple">
+<dt class="field-odd">param self</dt>
+<dd class="field-odd"><p>is ColumnGenerationSpec for column</p>
+</dd>
+<dt class="field-even">param use_pandas</dt>
+<dd class="field-even"><p>indicates that <cite>pandas</cite> framework should be used</p>
+</dd>
+<dt class="field-odd">returns</dt>
+<dd class="field-odd"><p>spark sql <cite>column</cite> or expression that can be used to generate a column</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.makeSingleGenerationExpression">
+<code class="sig-name descname">makeSingleGenerationExpression</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">index</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">use_pandas_optimizations</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/column_generation_spec.html#ColumnGenerationSpec.makeSingleGenerationExpression"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.makeSingleGenerationExpression" title="Permalink to this definition">¶</a></dt>
+<dd><p>generate column data for a single column value via Spark SQL expression</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>spark sql <cite>column</cite> or expression that can be used to generate a column</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.makeWeightedColumnValuesExpression">
+<code class="sig-name descname">makeWeightedColumnValuesExpression</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">values</span></em>, <em class="sig-param"><span class="n">weights</span></em>, <em class="sig-param"><span class="n">seed_column_name</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/column_generation_spec.html#ColumnGenerationSpec.makeWeightedColumnValuesExpression"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.makeWeightedColumnValuesExpression" title="Permalink to this definition">¶</a></dt>
+<dd><p>make SQL expression to compute the weighted values expression</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Spark SQL expr</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.max">
+<em class="property">property </em><code class="sig-name descname">max</code><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.max" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the column generation <cite>max</cite> value used to generate values for this column</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.min">
+<em class="property">property </em><code class="sig-name descname">min</code><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.min" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the column generation <cite>min</cite> value used to generate values for this column</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.numColumns">
+<em class="property">property </em><code class="sig-name descname">numColumns</code><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.numColumns" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the <cite>numColumns</cite> attribute used to generate values for this column</p>
+<p>if a column is specified with the <cite>numColumns</cite> attribute, this is used to create multiple
+copies of the column, named <cite>colName1</cite> .. <cite>colNameN</cite></p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.numFeatures">
+<em class="property">property </em><code class="sig-name descname">numFeatures</code><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.numFeatures" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the <cite>numFeatures</cite> attribute used to generate values for this column</p>
+<p>if a column is specified with the <cite>numFeatures</cite> attribute, this is used to create multiple
+copies of the column, combined into an array or feature vector</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.prefix">
+<em class="property">property </em><code class="sig-name descname">prefix</code><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.prefix" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the string prefix used to generate values for this column</p>
+<p>When a string field is generated from this spec, the prefix is prepended to the generated string</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.set_base_column_datatypes">
+<code class="sig-name descname">set_base_column_datatypes</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">column_datatypes</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/column_generation_spec.html#ColumnGenerationSpec.set_base_column_datatypes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.set_base_column_datatypes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the data types for the base columns</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>column_datatypes</strong> – = list of data types for the base columns</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.step">
+<em class="property">property </em><code class="sig-name descname">step</code><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.step" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the column generation <cite>step</cite> value used to generate values for this column</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.structType">
+<code class="sig-name descname">structType</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/column_generation_spec.html#ColumnGenerationSpec.structType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.structType" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the <cite>structType</cite> attribute used to generate values for this column</p>
+<p>When a column spec is specified to generate multiple copies of the column, this controls whether
+these are combined into an array etc</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.suffix">
+<em class="property">property </em><code class="sig-name descname">suffix</code><a class="headerlink" href="#databrickslabs_testdatagenerator.column_generation_spec.ColumnGenerationSpec.suffix" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the string suffix used to generate values for this column</p>
+<p>When a string field is generated from this spec, the suffix is appended to the generated string</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+    <a class='left-prev' id="prev-link" href="databrickslabs_testdatagenerator.distributions.gamma.html" title="previous page">databrickslabs_testdatagenerator.distributions.gamma module</a>
+    <a class='right-next' id="next-link" href="databrickslabs_testdatagenerator.column_spec_options.html" title="next page">databrickslabs_testdatagenerator.column_spec_options module</a>
+
+              </div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+
+    <script src="../../_static/js/index.js"></script>
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    <p>
+          &copy; Copyright 2020, Databricks Inc.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.4.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+databrickslabs\_testdatagenerator.nrange module
+===============================================
+
+.. automodule:: databrickslabs_testdatagenerator.nrange
+   :members:
+   :undoc-members:
+   :show-inheritance:

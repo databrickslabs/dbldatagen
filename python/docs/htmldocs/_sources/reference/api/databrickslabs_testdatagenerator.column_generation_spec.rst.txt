@@ -1,0 +1,7 @@
+databrickslabs\_testdatagenerator.column\_generation\_spec module
+=================================================================
+
+.. automodule:: databrickslabs_testdatagenerator.column_generation_spec
+   :members:
+   :undoc-members:
+   :show-inheritance:

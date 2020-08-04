@@ -1,0 +1,276 @@
+
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>databrickslabs_testdatagenerator.data_analyzer &#8212; Test Data Generator 0.10.0-prerel2 documentation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" integrity="sha384-KA6wR/X5RY4zFAHpv/CnoG2UW1uogYfdnP67Uv7eULvTveboZJg0qUpmJZb5VqzN" crossorigin="anonymous">
+    <link href="../../_static/css/index.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/tdg.css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="docsearch:language" content="en">
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
+<div class="container-xl">
+
+    
+    <a class="navbar-brand" href="../../index.html">
+      <img src="../../_static/tdg-logo-medium.png" class="logo" alt="logo">
+    </a>
+    
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../reference/api/modules.html">Documentation from code</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../relnotes/relnotes_and_docs.html">Release Notes and related docs</a>
+        </li>
+        
+        
+        <li class="nav-item">
+            <a class="nav-link nav-external" href="https://github.com/databrickslabs">Databricks Labs<i class="fas fa-external-link-alt"></i></a>
+        </li>
+        
+      </ul>
+
+
+      
+
+      <ul class="navbar-nav">
+        
+        
+      </ul>
+    </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar">
+
+<form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+
+
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+  <div class="bd-toc-item active">
+  
+
+  <ul class="nav bd-sidenav">
+      
+      
+      
+      
+      
+    </ul>
+
+</nav>
+          </div>
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <h1>Source code for databrickslabs_testdatagenerator.data_analyzer</h1><div class="highlight"><pre>
+<span></span><span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="c1">#</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This module defines the DataAnalyzer class. This is still a work in progress.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">pyspark.sql.types</span> <span class="kn">import</span> <span class="n">StructField</span>
+<span class="kn">from</span> <span class="nn">pyspark.sql.functions</span> <span class="kn">import</span> <span class="n">expr</span><span class="p">,</span> <span class="n">lit</span>
+<span class="kn">from</span> <span class="nn">pyspark.sql</span> <span class="kn">import</span> <span class="n">functions</span> <span class="k">as</span> <span class="n">fns</span>
+
+
+<div class="viewcode-block" id="DataAnalyzer"><a class="viewcode-back" href="../../reference/api/databrickslabs_testdatagenerator.data_analyzer.html#databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer">[docs]</a><span class="k">class</span> <span class="nc">DataAnalyzer</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;This class is used to analyze an existing data set to assist in generating a test data set with similar characteristics</span>
+
+<span class="sd">    :param df: dataframe to analyze</span>
+<span class="sd">    :param sparkSession: spark session instance to use when performing spark operations</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">sparkSession</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Constructor:</span>
+<span class="sd">        :param name: name is name of data set</span>
+<span class="sd">        :param rows: rows = amount of rows to generate</span>
+<span class="sd">        seed = seed for random number generator</span>
+<span class="sd">        partitions = number of partitions to generate</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rowCount</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">schema</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">cache</span><span class="p">()</span>
+        <span class="c1"># assert sparkSession is not None, &quot;The spark session attribute must be initialized&quot;</span>
+        <span class="c1"># self.sparkSession = sparkSession</span>
+        <span class="c1"># if sparkSession is None:</span>
+        <span class="c1">#    raise Exception(&quot;&quot;&quot;ERROR: spark session not initialized</span>
+        <span class="c1">#</span>
+        <span class="c1">#            The spark session attribute must be initialized in the DataGenerator initialization</span>
+        <span class="c1">#</span>
+        <span class="c1">#            i.e DataGenerator(sparkSession=spark, name=&quot;test&quot;, ...)</span>
+        <span class="c1">#            &quot;&quot;&quot;)</span>
+
+<div class="viewcode-block" id="DataAnalyzer.lookupFieldType"><a class="viewcode-back" href="../../reference/api/databrickslabs_testdatagenerator.data_analyzer.html#databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.lookupFieldType">[docs]</a>    <span class="k">def</span> <span class="nf">lookupFieldType</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">typ</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Perform lookup of type name by Spark SQL type name&quot;&quot;&quot;</span>
+        <span class="n">type_mappings</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;LongType&quot;</span><span class="p">:</span> <span class="s2">&quot;Long&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;IntegerType&quot;</span><span class="p">:</span> <span class="s2">&quot;Int&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;TimestampType&quot;</span><span class="p">:</span> <span class="s2">&quot;Timestamp&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;FloatType&quot;</span><span class="p">:</span> <span class="s2">&quot;Float&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;StringType&quot;</span><span class="p">:</span> <span class="s2">&quot;String&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">typ</span> <span class="ow">in</span> <span class="n">type_mappings</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">type_mappings</span><span class="p">[</span><span class="n">typ</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">typ</span></div>
+
+<div class="viewcode-block" id="DataAnalyzer.summarizeField"><a class="viewcode-back" href="../../reference/api/databrickslabs_testdatagenerator.data_analyzer.html#databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.summarizeField">[docs]</a>    <span class="k">def</span> <span class="nf">summarizeField</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate summary for individual field&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">StructField</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lookupFieldType</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">dataType</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">field</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataAnalyzer.summarizeFields"><a class="viewcode-back" href="../../reference/api/databrickslabs_testdatagenerator.data_analyzer.html#databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.summarizeFields">[docs]</a>    <span class="k">def</span> <span class="nf">summarizeFields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">schema</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Generate summary for all fields in schema&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">schema</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fields</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">fields</span>
+            <span class="n">fields_desc</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">summarizeField</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">]</span>
+            <span class="k">return</span> <span class="s2">&quot;Record(&quot;</span> <span class="o">+</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fields_desc</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;N/A&quot;</span></div>
+
+<div class="viewcode-block" id="DataAnalyzer.getFieldNames"><a class="viewcode-back" href="../../reference/api/databrickslabs_testdatagenerator.data_analyzer.html#databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.getFieldNames">[docs]</a>    <span class="k">def</span> <span class="nf">getFieldNames</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">schema</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; get field names from schema&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">schema</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">schema</span><span class="o">.</span><span class="n">fields</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">schema</span><span class="o">.</span><span class="n">fields</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">StructField</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span></div>
+
+<div class="viewcode-block" id="DataAnalyzer.getDistinctCounts"><a class="viewcode-back" href="../../reference/api/databrickslabs_testdatagenerator.data_analyzer.html#databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.getDistinctCounts">[docs]</a>    <span class="k">def</span> <span class="nf">getDistinctCounts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get distinct counts&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="DataAnalyzer.displayRow"><a class="viewcode-back" href="../../reference/api/databrickslabs_testdatagenerator.data_analyzer.html#databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.displayRow">[docs]</a>    <span class="k">def</span> <span class="nf">displayRow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Display details for row&quot;&quot;&quot;</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">row_key_pairs</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">asDict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">row_key_pairs</span><span class="p">:</span>
+            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">x</span><span class="p">])))</span>
+
+        <span class="k">return</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">results</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataAnalyzer.prependSummary"><a class="viewcode-back" href="../../reference/api/databrickslabs_testdatagenerator.data_analyzer.html#databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.prependSummary">[docs]</a>    <span class="k">def</span> <span class="nf">prependSummary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">heading</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Prepend summary information&quot;&quot;&quot;</span>
+        <span class="n">field_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getFieldNames</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">schema</span><span class="p">)</span>
+        <span class="n">select_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;summary&quot;</span><span class="p">]</span>
+        <span class="n">select_fields</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">field_names</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;summary&quot;</span><span class="p">,</span> <span class="n">lit</span><span class="p">(</span><span class="n">heading</span><span class="p">))</span>
+                <span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="o">*</span><span class="n">select_fields</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="DataAnalyzer.summarize"><a class="viewcode-back" href="../../reference/api/databrickslabs_testdatagenerator.data_analyzer.html#databrickslabs_testdatagenerator.data_analyzer.DataAnalyzer.summarize">[docs]</a>    <span class="k">def</span> <span class="nf">summarize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate summary&quot;&quot;&quot;</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+        <span class="n">distinct_count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">distinct</span><span class="p">()</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+        <span class="n">partition_count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">rdd</span><span class="o">.</span><span class="n">getNumPartitions</span><span class="p">()</span>
+
+        <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">summary</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">           count: </span><span class="si">{}</span><span class="s2"></span>
+<span class="s2">           distinct count: </span><span class="si">{}</span><span class="s2"></span>
+<span class="s2">           partition count: </span><span class="si">{}</span><span class="s2"> </span>
+<span class="s2">        &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="n">distinct_count</span><span class="p">,</span> <span class="n">partition_count</span><span class="p">)</span>
+
+        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">summary</span><span class="p">)</span>
+        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;schema: &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">summarizeFields</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">schema</span><span class="p">))</span>
+
+        <span class="n">field_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getFieldNames</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">schema</span><span class="p">)</span>
+        <span class="n">select_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;summary&quot;</span><span class="p">]</span>
+        <span class="n">select_fields</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">field_names</span><span class="p">)</span>
+        <span class="c1">#        print(&quot;select fields:&quot;, select_fields)</span>
+        <span class="c1">#        print(&quot;field names&quot;, field_names)</span>
+        <span class="n">distinct_expressions</span> <span class="o">=</span> <span class="p">[</span><span class="n">fns</span><span class="o">.</span><span class="n">countDistinct</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">getFieldNames</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">schema</span><span class="p">)]</span>
+        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">displayRow</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">prependSummary</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="o">*</span><span class="n">distinct_expressions</span><span class="p">),</span>
+                                 <span class="s1">&#39;distinct_count&#39;</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="o">*</span><span class="n">select_fields</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">collect</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span><span class="o">.</span><span class="n">collect</span><span class="p">():</span>
+            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">displayRow</span><span class="p">(</span><span class="n">r</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">results</span><span class="p">])</span></div></div>
+</pre></div>
+
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+
+              </div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+
+    <script src="../../_static/js/index.js"></script>
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    <p>
+          &copy; Copyright 2020, Databricks Inc.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.4.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

@@ -1,0 +1,319 @@
+
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>databrickslabs_testdatagenerator.text_generators module &#8212; Test Data Generator 0.10.0-prerel2 documentation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" integrity="sha384-KA6wR/X5RY4zFAHpv/CnoG2UW1uogYfdnP67Uv7eULvTveboZJg0qUpmJZb5VqzN" crossorigin="anonymous">
+    <link href="../../_static/css/index.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/tdg.css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="databrickslabs_testdatagenerator.utils module" href="databrickslabs_testdatagenerator.utils.html" />
+    <link rel="prev" title="databrickslabs_testdatagenerator.spark_singleton module" href="databrickslabs_testdatagenerator.spark_singleton.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="docsearch:language" content="en">
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
+<div class="container-xl">
+
+    
+    <a class="navbar-brand" href="../../index.html">
+      <img src="../../_static/tdg-logo-medium.png" class="logo" alt="logo">
+    </a>
+    
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item active">
+            <a class="nav-link" href="modules.html">Documentation from code</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../relnotes/relnotes_and_docs.html">Release Notes and related docs</a>
+        </li>
+        
+        
+        <li class="nav-item">
+            <a class="nav-link nav-external" href="https://github.com/databrickslabs">Databricks Labs<i class="fas fa-external-link-alt"></i></a>
+        </li>
+        
+      </ul>
+
+
+      
+
+      <ul class="navbar-nav">
+        
+        
+      </ul>
+    </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar">
+
+<form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+
+
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+  <div class="bd-toc-item active">
+  
+
+  <ul class="nav bd-sidenav">
+      
+      
+        
+          
+              <li class="active">
+                  <a href="databrickslabs_testdatagenerator.html">databrickslabs_testdatagenerator package</a>
+              </li>
+          
+        
+      
+      
+      
+      
+    </ul>
+
+</nav>
+          </div>
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <div class="section" id="module-databrickslabs_testdatagenerator.text_generators">
+<span id="databrickslabs-testdatagenerator-text-generators-module"></span><h1>databrickslabs_testdatagenerator.text_generators module<a class="headerlink" href="#module-databrickslabs_testdatagenerator.text_generators" title="Permalink to this headline">¶</a></h1>
+<p>This file defines various text generation classes and methods</p>
+<dl class="py class">
+<dt id="databrickslabs_testdatagenerator.text_generators.ILText">
+<em class="property">class </em><code class="sig-name descname">ILText</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">paragraphs</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">sentences</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">words</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/text_generators.html#ILText"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.text_generators.ILText" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#databrickslabs_testdatagenerator.text_generators.TextGenerator" title="databrickslabs_testdatagenerator.text_generators.TextGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">databrickslabs_testdatagenerator.text_generators.TextGenerator</span></code></a></p>
+<p>Class to generate Ipsum Lorem text paragraphs, words and sentences</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>paragraphs</strong> – Number of paragraphs to generate. If tuple will generate random number in range</p></li>
+<li><p><strong>sentences</strong> – Number of sentences to generate. If tuple will generate random number in tuple range</p></li>
+<li><p><strong>words</strong> – Number of words per sentence to generate. If tuple, will generate random number in tuple range</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="longtable table">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.text_generators.ILText.classicGenerateText" title="databrickslabs_testdatagenerator.text_generators.ILText.classicGenerateText"><code class="xref py py-obj docutils literal notranslate"><span class="pre">classicGenerateText</span></code></a>(seed)</p></td>
+<td><p><p>”</p>
+</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.text_generators.ILText.generateText" title="databrickslabs_testdatagenerator.text_generators.ILText.generateText"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generateText</span></code></a>(seed, default_seed)</p></td>
+<td><p>generate text for seed based on configuration parameters.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.text_generators.ILText.getAsTupleOrElse" title="databrickslabs_testdatagenerator.text_generators.ILText.getAsTupleOrElse"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getAsTupleOrElse</span></code></a>(v, default_v, v_name)</p></td>
+<td><p>get value v as tuple or return default_v is v is None</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.text_generators.ILText.pandasGenerateText" title="databrickslabs_testdatagenerator.text_generators.ILText.pandasGenerateText"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pandasGenerateText</span></code></a>(v)</p></td>
+<td><p>pandas udf entry point for text generation</p></td>
+</tr>
+</tbody>
+</table>
+<table class="table">
+<colgroup>
+<col style="width: 60%" />
+<col style="width: 40%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>randomGauss</strong></p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.text_generators.ILText.classicGenerateText">
+<code class="sig-name descname">classicGenerateText</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">seed</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/text_generators.html#ILText.classicGenerateText"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.text_generators.ILText.classicGenerateText" title="Permalink to this definition">¶</a></dt>
+<dd><p>”
+classic udf entry point for text generation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>seed</strong> – seed value to control generation of random numbers</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.text_generators.ILText.generateText">
+<code class="sig-name descname">generateText</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">seed</span></em>, <em class="sig-param"><span class="n">default_seed</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/text_generators.html#ILText.generateText"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.text_generators.ILText.generateText" title="Permalink to this definition">¶</a></dt>
+<dd><p>generate text for seed based on configuration parameters.</p>
+<p>As it uses numpy, repeatability is restricted depending on version of the runtime
+:param seed: list or array-like set of seed values
+:param default_seed: seed value to use if value of seed is None or null
+:returns: list or Pandas series of generated strings of same size as input seed</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.text_generators.ILText.getAsTupleOrElse">
+<em class="property">static </em><code class="sig-name descname">getAsTupleOrElse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">v</span></em>, <em class="sig-param"><span class="n">default_v</span></em>, <em class="sig-param"><span class="n">v_name</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/text_generators.html#ILText.getAsTupleOrElse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.text_generators.ILText.getAsTupleOrElse" title="Permalink to this definition">¶</a></dt>
+<dd><p>get value v as tuple or return default_v is v is None</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.text_generators.ILText.pandasGenerateText">
+<code class="sig-name descname">pandasGenerateText</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">v</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/text_generators.html#ILText.pandasGenerateText"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.text_generators.ILText.pandasGenerateText" title="Permalink to this definition">¶</a></dt>
+<dd><p>pandas udf entry point for text generation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>v</strong> – pandas series of seed values for random text generation</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Pandas series of generated strings</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.text_generators.ILText.randomGauss">
+<code class="sig-name descname">randomGauss</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">bounds</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/text_generators.html#ILText.randomGauss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.text_generators.ILText.randomGauss" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="databrickslabs_testdatagenerator.text_generators.TemplateGenerator">
+<em class="property">class </em><code class="sig-name descname">TemplateGenerator</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">template</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/text_generators.html#TemplateGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.text_generators.TemplateGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#databrickslabs_testdatagenerator.text_generators.TextGenerator" title="databrickslabs_testdatagenerator.text_generators.TextGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">databrickslabs_testdatagenerator.text_generators.TextGenerator</span></code></a></p>
+<p>This class handles the generation of text from templates</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>template</strong> – template string to use in text generation</p>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="longtable table">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.text_generators.TemplateGenerator.classicGenerateText" title="databrickslabs_testdatagenerator.text_generators.TemplateGenerator.classicGenerateText"><code class="xref py py-obj docutils literal notranslate"><span class="pre">classicGenerateText</span></code></a>(v)</p></td>
+<td><p>entry point to use for classic udfs</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.text_generators.TemplateGenerator.pandasGenerateText" title="databrickslabs_testdatagenerator.text_generators.TemplateGenerator.pandasGenerateText"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pandasGenerateText</span></code></a>(v)</p></td>
+<td><p>entry point to use for pandas udfs</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#databrickslabs_testdatagenerator.text_generators.TemplateGenerator.valueFromSingleTemplate" title="databrickslabs_testdatagenerator.text_generators.TemplateGenerator.valueFromSingleTemplate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">valueFromSingleTemplate</span></code></a>(base_value, gen_template)</p></td>
+<td><p>Generate text from a single template</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.text_generators.TemplateGenerator.classicGenerateText">
+<code class="sig-name descname">classicGenerateText</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">v</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/text_generators.html#TemplateGenerator.classicGenerateText"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.text_generators.TemplateGenerator.classicGenerateText" title="Permalink to this definition">¶</a></dt>
+<dd><p>entry point to use for classic udfs</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.text_generators.TemplateGenerator.pandasGenerateText">
+<code class="sig-name descname">pandasGenerateText</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">v</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/text_generators.html#TemplateGenerator.pandasGenerateText"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.text_generators.TemplateGenerator.pandasGenerateText" title="Permalink to this definition">¶</a></dt>
+<dd><p>entry point to use for pandas udfs</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="databrickslabs_testdatagenerator.text_generators.TemplateGenerator.valueFromSingleTemplate">
+<code class="sig-name descname">valueFromSingleTemplate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">base_value</span></em>, <em class="sig-param"><span class="n">gen_template</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/text_generators.html#TemplateGenerator.valueFromSingleTemplate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.text_generators.TemplateGenerator.valueFromSingleTemplate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate text from a single template</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base_value</strong> – underlying base value to seed template generation.
+Ignored unless template outputs it</p></li>
+<li><p><strong>gen_template</strong> – template string to control text generation</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="databrickslabs_testdatagenerator.text_generators.TextGenerator">
+<em class="property">class </em><code class="sig-name descname">TextGenerator</code><a class="reference internal" href="../../_modules/databrickslabs_testdatagenerator/text_generators.html#TextGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#databrickslabs_testdatagenerator.text_generators.TextGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class for text generation classes</p>
+</dd></dl>
+
+</div>
+
+
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+    <a class='left-prev' id="prev-link" href="databrickslabs_testdatagenerator.spark_singleton.html" title="previous page">databrickslabs_testdatagenerator.spark_singleton module</a>
+    <a class='right-next' id="next-link" href="databrickslabs_testdatagenerator.utils.html" title="next page">databrickslabs_testdatagenerator.utils module</a>
+
+              </div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+
+    <script src="../../_static/js/index.js"></script>
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    <p>
+          &copy; Copyright 2020, Databricks Inc.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.4.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

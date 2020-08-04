@@ -1,0 +1,7 @@
+databrickslabs\_testdatagenerator.spark\_singleton module
+=========================================================
+
+.. automodule:: databrickslabs_testdatagenerator.spark_singleton
+   :members:
+   :undoc-members:
+   :show-inheritance:
