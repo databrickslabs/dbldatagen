@@ -2,7 +2,9 @@ from pyspark.sql.types import StructType, StructField, IntegerType, StringType, 
 from datetime import datetime, timedelta
 from databrickslabs_testdatagenerator import DataGenerator
 import databrickslabs_testdatagenerator as dg
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
+from databrickslabs_testdatagenerator import NRange, DateRange
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType, DateType
+from datetime import timedelta, datetime
 
 from pyspark.sql import SparkSession
 import unittest
@@ -45,7 +47,11 @@ spark = dg.SparkSingleton.getLocalInstance("unit tests")
 spark = dg.SparkSingleton.getLocalInstance("basic tests 2")
 
 
-class TestBasicOperation2(unittest.TestCase):
+class TestQuickTests(unittest.TestCase):
+    """These are a set of quick tests to validate some basic behaviors
+
+    The goal for these tests is that they should run fast so focus is on quick execution
+    """
     def setUp(self):
         print("setting up")
 
@@ -112,7 +118,7 @@ class TestBasicOperation2(unittest.TestCase):
         self.assertNotEqual(n1, n2, "Names should be different")
 
     def test_column_specifications(self):
-        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=100)
+        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
                 .withSchema(schema)
                 .withColumn("sector_status_desc", StringType(), min=1, max=200, step=1, prefix='status', random=True)
                 .withColumn("s", StringType(), min=1, max=200, step=1, prefix='status', random=True, omit=True))
@@ -122,7 +128,7 @@ class TestBasicOperation2(unittest.TestCase):
         self.assertEqual(expectedColumns, set(([x.name for x in tgen.allColumnSpecs])))
 
     def test_inferred_columns(self):
-        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=100)
+        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
                 .withSchema(schema)
                 .withColumn("sector_status_desc", StringType(), min=1, max=200, step=1, prefix='status', random=True)
                 .withColumn("s", StringType(), min=1, max=200, step=1, prefix='status', random=True, omit=True))
@@ -133,7 +139,7 @@ class TestBasicOperation2(unittest.TestCase):
         self.assertEqual(expectedColumns, set((tgen.getInferredColumnNames())))
 
     def test_output_columns(self):
-        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=100)
+        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
                 .withSchema(schema)
                 .withColumn("sector_status_desc", StringType(), min=1, max=200, step=1, prefix='status', random=True)
                 .withColumn("s", StringType(), min=1, max=200, step=1, prefix='status', random=True, omit=True))
@@ -144,7 +150,7 @@ class TestBasicOperation2(unittest.TestCase):
         self.assertEqual(expectedColumns, set((tgen.getOutputColumnNames())))
 
     def test_with_column_spec_for_missing_column(self):
-        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=100)
+        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
                 .withSchema(schema)
                 .withColumn("sector_status_desc", StringType(), min=1, max=200, step=1, prefix='status', random=True)
                 .withColumn("s", StringType(), min=1, max=200, step=1, prefix='status', random=True, omit=True))
@@ -155,7 +161,7 @@ class TestBasicOperation2(unittest.TestCase):
 
     @unittest.expectedFailure
     def test_with_column_spec_for_missing_column(self):
-        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=100)
+        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
                 .withSchema(schema)
                 .withColumn("sector_status_desc", StringType(), min=1, max=200, step=1, prefix='status', random=True)
                 .withColumn("s", StringType(), min=1, max=200, step=1, prefix='status', random=True, omit=True))
@@ -166,7 +172,7 @@ class TestBasicOperation2(unittest.TestCase):
 
     @unittest.expectedFailure
     def test_with_column_spec_for_duplicate_column(self):
-        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=100)
+        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
                 .withSchema(schema)
                 .withColumn("sector_status_desc", StringType(), min=1, max=200, step=1, prefix='status', random=True)
                 .withColumn("s", StringType(), min=1, max=200, step=1, prefix='status', random=True, omit=True))
@@ -178,7 +184,7 @@ class TestBasicOperation2(unittest.TestCase):
 
     # @unittest.expectedFailure
     def test_with_column_spec_for_duplicate_column2(self):
-        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=100)
+        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
                 .withSchema(schema)
                 .withColumn("sector_status_desc", StringType(), min=1, max=200, step=1, prefix='status', random=True)
                 .withColumn("s", StringType(), min=1, max=200, step=1, prefix='status', random=True, omit=True))
@@ -187,7 +193,7 @@ class TestBasicOperation2(unittest.TestCase):
         t2 = tgen.withColumn("site_id", "string", min=1, max=200, step=1, random=True)
 
     def test_with_column_spec_for_id_column(self):
-        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=100)
+        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
                 .withSchema(schema)
                 .withColumn("sector_status_desc", StringType(), min=1, max=200, step=1, prefix='status', random=True)
                 .withColumn("s", StringType(), min=1, max=200, step=1, prefix='status', random=True, omit=True))
@@ -198,6 +204,117 @@ class TestBasicOperation2(unittest.TestCase):
         print("output columns", t2.getOutputColumnNames())
         print("inferred columns", t2.getInferredColumnNames())
         self.assertEqual(expectedColumns, set((t2.getOutputColumnNames())))
+
+
+    def test_basic_ranges_with_view(self):
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="ranged_data", rows=100000,
+                                         partitions=4)
+                        .withIdOutput()
+                        .withColumn("code1a", IntegerType(),unique_values=100)
+                        .withColumn("code1b", IntegerType(), min=1, max=100)
+                        .withColumn("code1c", IntegerType(), min=1, max=200, unique_values=100)
+                        .withColumn("code1d", IntegerType(), min=1, max=200, step=3, unique_values=50)
+                        .withColumn("code2", IntegerType(),  max=10)
+                        .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+                        .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+                        .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+
+                        )
+
+        rangedDF = testDataSpec.build(withTempView=True).cache()
+
+        result = spark.sql("""select count(distinct code1a), 
+                                     count(distinct code1b), 
+                                     count(distinct code1c) 
+                                     from ranged_data""").collect()[0]
+        self.assertEqual(100, result[0])
+        self.assertEqual(100, result[1])
+        self.assertEqual(100, result[2])
+
+    def test_basic_formatting(self):
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
+                                         partitions=4)
+                        .withIdOutput()
+                        .withColumn("val1", IntegerType(),unique_values=100)
+                        .withColumn("val2", IntegerType(), min=1, max=100)
+                        .withColumn("str1", StringType(), format="test %d")
+                        #.withColumn("str1a", StringType(), format="test %s")
+                        .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"], base_column_type="values")
+                        .withColumn("str3", StringType(), format="test %s", base_column=["val1", "val2"], base_column_type="hash")
+                        .withColumn("str4", StringType(), format="test %s", base_column=["val1", "val2"], base_column_type="hash")
+                        .withColumn("str5", StringType(), format="test %s", base_column=["val1", "val2"])
+                        .withColumn("str5a", StringType(), format="test %s", base_column=["val1", "val2"])
+                        .withColumn("str5b", StringType(),  format="test %s", base_column=["val1", "val2"], values=["one", "two", "three"] )
+                        .withColumn("str6", StringType(), template=r"\v0 \v1", base_column=["val1", "val2"])
+                        )
+
+        formattedDF = testDataSpec.build(withTempView=True)
+        formattedDF.show()
+
+    def test_reversed_ranges(self):
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="ranged_data", rows=100000,
+                                         partitions=4)
+                        .withIdOutput()
+                        .withColumn("val1", IntegerType(), min=100, max=1, step=-1)
+                        .withColumn("val2", IntegerType(), min=100, max=1, step=-3, unique_values=5)
+                        .withColumn("val3", IntegerType(), data_range=NRange(100,1,-1), unique_values=5)
+                        .withColumn("val4", IntegerType(), min=1, max=100, step=3, unique_values=5)
+                        .withColumn("code1b", IntegerType(), min=1, max=100)
+                        .withColumn("code1c", IntegerType(), min=1, max=200, unique_values=100)
+                        .withColumn("code1d", IntegerType(), min=1, max=200)
+                        .withColumn("code2", IntegerType(),  max=10)
+                        .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+                        .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+                        .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+
+                        )
+
+        rangedDF = testDataSpec.build()
+        rangedDF.show()
+
+    def test_date_time_ranges(self):
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="ranged_data", rows=100000,
+                                         partitions=4)
+                        .withIdOutput()
+                        .withColumn("last_sync_ts", "timestamp",
+                                    data_range=DateRange("2017-10-01 00:00:00",
+                                                         "2018-10-06 00:00:00",
+                                                         "days=1,hours=1"))
+                        .withColumn("last_sync_ts", "timestamp",
+                                    data_range=DateRange("2017-10-01 00:00:00",
+                                                         "2018-10-06 00:00:00",
+                                                         "days=1,hours=1"), unique_values=5)
+
+                        .withColumn("last_sync_ts", "timestamp",
+                                    data_range=DateRange("2017-10-01",
+                                                         "2018-10-06",
+                                                         "days=7",
+                                                         datetime_format="%Y-%m-%d"))
+
+                        .withColumn("last_sync_dt1", DateType(),
+                                    data_range=DateRange("2017-10-01 00:00:00",
+                                                         "2018-10-06 00:00:00",
+                                                         "days=1"))
+                        .withColumn("last_sync_dt2", DateType(),
+                                    data_range=DateRange("2017-10-01 00:00:00",
+                                                         "2018-10-06 00:00:00",
+                                                         "days=1"), unique_values=5)
+
+                        .withColumn("last_sync_date", DateType(),
+                                    data_range=DateRange("2017-10-01",
+                                                         "2018-10-06",
+                                                         "days=7",
+                                                         datetime_format="%Y-%m-%d"))
+
+                        )
+
+        rangedDF = testDataSpec.build()
+        rangedDF.show()
+
+
+
+
+
 
 
 # run the tests

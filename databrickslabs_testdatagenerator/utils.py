@@ -13,6 +13,11 @@ class DataGenError(Exception):
     """Used to represent data generation errors"""
     pass
 
+def coalesce( *args):
+    for x in args:
+        if x is not None:
+            return x
+    return None
 
 def ensure(c, msg="condition does not hold true"):
     """ensure(c, s) => throws Exception(s) if c is not true

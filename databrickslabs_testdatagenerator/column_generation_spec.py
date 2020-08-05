@@ -11,7 +11,7 @@ from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, Doub
     StructType, StructField, TimestampType, DataType, DateType
 import math
 from datetime import date, datetime, timedelta
-from .utils import ensure
+from .utils import ensure, coalesce
 from .column_spec_options import ColumnSpecOptions
 from .text_generators import TemplateGenerator
 from .daterange import DateRange
@@ -172,16 +172,6 @@ class ColumnGenerationSpec(object):
         else:
             self.text_generator=None
 
-        # handle default method of computing the base column value
-        if False:
-            if self.base_column_compute_method is None and (self.text_generator is not None or self['format'] is not None):
-                self.logger.warning("""Column [%s] has no `base_column_type` attribute specified and output is formatted text
-                                       => Assuming `values` for attribute `base_column_type`. 
-                                       => Use explicit value for `base_column_type` if alternate interpretation is needed
-                                       
-                """, self.name)
-                self.base_column_compute_method = "values"
-
         # compute required temporary values
         self.temporary_columns = []
 
@@ -205,7 +195,25 @@ class ColumnGenerationSpec(object):
             # coerce to list - this will allow for pandas series, numpy arrays and tuples to be used
             self.values=list(self.values)
 
+        # handle default method of computing the base column value
+        # if we have text manipulation, use 'values' as default for format but 'hash' as default if its a column with values
+        if self.base_column_compute_method is None and (self.text_generator is not None or self['format'] is not None):
+            if self.values is not None:
+                self.logger.warning("""Column [%s] has no `base_column_type` attribute specified and output is based on discrete values
+                                       => Assuming `hash` for attribute `base_column_type`. 
+                                       => Use explicit value for `base_column_type` if alternate interpretation is needed
 
+                                    """, self.name)
+                self.base_column_compute_method = "hash"
+            else:
+                self.logger.warning("""Column [%s] has no `base_column_type` attribute specified and output is formatted text
+                                       => Assuming `values` for attribute `base_column_type`. 
+                                       => Use explicit value for `base_column_type` if alternate interpretation is needed
+
+                                    """, self.name)
+                self.base_column_compute_method = "values"
+
+        # adjust the range by merging type and range information
         self.data_range=self.computeAdjustedRangeForColumn(colType=colType, c_min=c_min, c_max=c_max, c_step=c_step,
                                            c_begin=c_begin, c_end=c_end, c_interval=c_interval,
                                            c_unique=unique_values, c_range=data_range)
@@ -322,8 +330,17 @@ class ColumnGenerationSpec(object):
         else:
             self.logger.setLevel(logging.WARNING)
 
-
     def computeAdjustedRangeForColumn(self, colType, c_min, c_max, c_step, c_begin, c_end, c_interval, c_range, c_unique):
+        """Determine adjusted range for data column
+        """
+        assert colType is not None
+
+        if type(colType) is DateType or type(colType) is TimestampType:
+            return self.computeAdjustedDateTimeRangeForColumn(colType, c_begin, c_end, c_interval, c_range, c_unique)
+        else:
+            return self.computeAdjustedNumericRangeForColumn(colType, c_min, c_max, c_step, c_range, c_unique)
+
+    def computeAdjustedNumericRangeForColumn(self, colType, c_min, c_max, c_step, c_range, c_unique):
         """Determine adjusted range for data column
 
         Rules:
@@ -336,27 +353,76 @@ class ColumnGenerationSpec(object):
             assert type(c_unique) is int, "unique_values must be integer"
             assert c_unique >= 1
             # TODO: set max to unique_values + min & add unit test
-            return NRange( 1 if c_min is None else c_min,
-                                      c_unique if c_min is None else c_unique + c_min-1,
-                                      1)
+            effective_min, effective_max, effective_step = None, None , None
+            if c_range is not None and type(c_range) is NRange:
+                effective_min = c_range.min
+                effective_step  = c_range.step
+                effective_max = c_range.max
+            effective_min = coalesce(effective_min, c_min, 1)
+            effective_step = coalesce(effective_step, c_step, 1)
+            effective_max = coalesce(effective_max, c_max)
+
+            result = NRange( effective_min, c_unique * effective_step + effective_min - effective_step,
+                                      effective_step)
+
+            if result.max is not None and effective_max is not None and result.max > effective_max:
+                self.logger.warning("Computed max for column [%s] of %s is greater than specified max %s", self.name, result.max, effective_max)
         elif c_range is not None:
-            return c_range
+            result = c_range
         elif c_range is None:
-            if type(colType) is TimestampType or type(colType) is DateType:
-                if c_begin is None:
-                    __c_begin = datetime.today()
-                    c_begin = datetime(__c_begin.year, __c_begin.month, __c_begin.day, 0, 0, 0)
-                if c_end is None:
-                    c_end = datetime.today()
-                if c_interval is None:
-                    c_interval = timedelta(days=0, hours=0, minutes=1)
-
-                return DateRange(c_begin, c_end, c_interval)
-            else:
-                return NRange(0 if c_min is None else c_min,c_max, c_step)
-
+            effective_min, effective_max, effective_step = None, None, None
+            effective_min = coalesce( c_min, 0)
+            effective_step = coalesce( c_step, 1)
+            result = NRange(effective_min,c_max, effective_step)
+        else:
+            result = NRange(0, None, None)
         # assume numeric range of 0 to x, if no range specified
-        return NRange(0, None, None)
+        return result
+
+
+    def computeAdjustedDateTimeRangeForColumn(self, colType, c_begin, c_end, c_interval, c_range, c_unique):
+        """Determine adjusted range for Date or Timestamp data column
+        """
+        self.logger.warning("data type is %s", colType)
+        if c_unique is not None:
+            assert type(c_unique) is int, "unique_values must be integer"
+            assert c_unique >= 1
+
+            effective_begin, effective_end, effective_interval = None, None , None
+            if c_range is not None and type(c_range) is DateRange:
+                effective_begin = c_range.begin
+                effective_end  = c_range.end
+                effective_interval = c_range.interval
+
+            if type(colType) is DateType:
+                effective_interval = coalesce(effective_interval, c_interval, timedelta(days=1))
+            else:
+                effective_interval = coalesce(effective_interval, c_interval, timedelta(minutes=1))
+
+            effective_end = coalesce(effective_end, c_end, datetime.now().replace(hour=0, minute=0, second=0, day=1) - timedelta(days=1))
+            effective_begin = effective_end - effective_interval * (c_unique-1)
+
+            result = DateRange( effective_begin, effective_end, effective_interval)
+        elif c_range is not None:
+            result = c_range
+        elif c_range is None:
+            effective_end = coalesce( c_end, datetime.now().replace(hour=0, minute=0, second=0, day=1) - timedelta(days=1))
+            effective_begin = coalesce(c_begin,  effective_end - timedelta(days=365))
+            if type(colType) is DateType:
+                effective_interval = coalesce( c_interval, timedelta(days=1))
+            else:
+                effective_interval = coalesce( c_interval, timedelta(minutes=1))
+
+            result = DateRange(effective_begin, effective_end, effective_interval)
+        else:
+            default_end = datetime.now().replace(hour=0, minute=0, second=0, day=1) - timedelta(days=1)
+            default_begin = default_end - timedelta(days=365)
+            if type(colType) is DateType:
+                result = DataRange(default_begin, default_end, timedelta(days=1))
+            else:
+                result = DataRange(default_begin, default_end, timedelta(minutes=1))
+
+        return result
 
     def getUniformRandomExpression(self, col_name):
         """ Get random expression accounting for seed method
@@ -413,6 +479,8 @@ class ColumnGenerationSpec(object):
 
         # if we have multiple columns, effective compute method is always the hash of the base values
         if len(base_columns) > 1:
+            if compute_method == VALUES_COMPUTE_METHOD:
+                self.logger.warning("For column generation with values and multiple base columns, column data will always be computed with `hash`")
             effective_compute_method = HASH_COMPUTE_METHOD
 
         if effective_compute_method is None:
@@ -769,7 +837,11 @@ class ColumnGenerationSpec(object):
 
         newDef = None
 
-        # handle weighted values
+
+        # generate expression
+
+        # handle weighted values for weighted value columns
+        # a weighted values column will use a base value denoted by `self.weighted_base_column`
         if self.isWeightedValuesColumn:
             newDef=self.makeWeightedColumnValuesExpression(self.values, self.weights, self.weighted_base_column)
         else:
@@ -799,10 +871,10 @@ class ColumnGenerationSpec(object):
                     self.logger.warning("Assuming a seeded base expression with minimum value for column %s", self.name)
                     newDef = (self.getSeedExpression(baseCol) + lit(self.data_range.min)).astype(ctype)
 
-            # string value generation is simply handled by combining with a suffix or prefix
             if self.values is not None:
                 newDef = array([lit(x) for x in self.values])[newDef.astype(IntegerType())]
             elif type(ctype) is StringType and sqlExpr is None:
+                # string value generation is simply handled by combining with a suffix or prefix
                 if cprefix is not None:
                     newDef = concat(lit(cprefix), lit('_'), newDef.astype(IntegerType()))
                 elif csuffix is not None:

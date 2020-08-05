@@ -3,6 +3,7 @@
 #
 
 """
+.. title::Column Spec Options
 This file defines the `ColumnSpecOptions` class
 """
 
@@ -68,8 +69,10 @@ class ColumnSpecOptions(object):
 
     :param data_range: An instance of an `NRange` or `DateRange` object. This can be used in place of `min`, `max`, `step` or `begin`, `end`, `interval`.
 
-    If the `data_range` parameter is specified as well as the `min`, `max` or `step`, the results are undetermined.
-    For more information, see :doc:`/reference/api/databrickslabs_testdatagenerator.daterange` or :doc:`/reference/api/databrickslabs_testdatagenerator.nrange`.
+    .. note::
+        If the `data_range` parameter is specified as well as the `min`, `max` or `step`, the results are undetermined.
+        For more information, see :doc:`/reference/api/databrickslabs_testdatagenerator.daterange` or :doc:`/reference/api/databrickslabs_testdatagenerator.nrange`.
+
     """
 
     #: the set of attributes that must be present for any columns

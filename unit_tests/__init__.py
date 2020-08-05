@@ -20,7 +20,7 @@
 This module defines the test data generator and supporting classes
 """
 
-__all__ = ["test_basic_test", "test_basic_test2", "test_columnGenerationSpec",
+__all__ = ["test_basic_test", "test_quick_tests", "test_columnGenerationSpec",
            "test_pandas_integration",
            "test_distributions",
            "test_ranged_values_and_dates",
