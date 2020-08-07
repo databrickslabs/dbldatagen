@@ -6,7 +6,7 @@
 This file defines the `ColumnGenerationSpec` class
 """
 
-from pyspark.sql.functions import col, lit, concat, rand, ceil, floor, round, array, expr, when, udf, format_string
+from pyspark.sql.functions import col, lit, concat, rand, ceil, floor, round as sql_round, array, expr, when, udf, format_string
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
     StructType, StructField, TimestampType, DataType, DateType
 import math
@@ -218,6 +218,12 @@ class ColumnGenerationSpec(object):
                                            c_begin=c_begin, c_end=c_end, c_interval=c_interval,
                                            c_unique=unique_values, c_range=data_range)
 
+        if self.distribution is not None:
+            ensure((self.data_range is not None and self.data_range.isFullyPopulated())
+                    or
+                    self.values is not None,
+                    """When using an explicit distribution, you must provide a fully populated range or a set of values""")
+
         # set up the temporary columns needed for data generation
         self._setup_temporary_columns()
 
@@ -362,8 +368,13 @@ class ColumnGenerationSpec(object):
             effective_step = coalesce(effective_step, c_step, 1)
             effective_max = coalesce(effective_max, c_max)
 
-            result = NRange( effective_min, c_unique * effective_step + effective_min - effective_step,
-                                      effective_step)
+            # due to floating point errors in some Python floating point calulations, we need to apply rounding
+            # if any of the components are float
+            if type(effective_min) is float or type(effective_step) is float:
+                unique_max = round(c_unique * effective_step + effective_min - effective_step,9)
+            else:
+                unique_max = c_unique * effective_step + effective_min - effective_step
+            result = NRange( effective_min, unique_max, effective_step)
 
             if result.max is not None and effective_max is not None and result.max > effective_max:
                 self.logger.warning("Computed max for column [%s] of %s is greater than specified max %s", self.name, result.max, effective_max)
@@ -377,13 +388,14 @@ class ColumnGenerationSpec(object):
         else:
             result = NRange(0, None, None)
         # assume numeric range of 0 to x, if no range specified
+        self.logger.debug("Computing adjusted range for column: %s - %s", self.name, result)
+
         return result
 
 
     def computeAdjustedDateTimeRangeForColumn(self, colType, c_begin, c_end, c_interval, c_range, c_unique):
         """Determine adjusted range for Date or Timestamp data column
         """
-        self.logger.warning("data type is %s", colType)
         if c_unique is not None:
             assert type(c_unique) is int, "unique_values must be integer"
             assert c_unique >= 1
@@ -422,6 +434,7 @@ class ColumnGenerationSpec(object):
             else:
                 result = DataRange(default_begin, default_end, timedelta(minutes=1))
 
+        self.logger.debug("Computing adjusted range for column: %s - %s", self.name, result)
         return result
 
     def getUniformRandomExpression(self, col_name):
@@ -796,7 +809,7 @@ class ColumnGenerationSpec(object):
             # following expression is need as spark sql modulo of negative number is negative
             modulo_exp = ((self.getSeedExpression(base_column) % modulo_factor) + modulo_factor) % modulo_factor
             baseval = (modulo_exp * lit(datarange.step)) if not is_random else (
-                    round(random_generator * lit(crange)) * lit(datarange.step))
+                    sql_round(random_generator * lit(crange)) * lit(datarange.step))
 
         if self.base_column_compute_method == "values":
             newDef = baseval

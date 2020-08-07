@@ -518,7 +518,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         print("passed")
 
     def test_unique_values_float2(self):
-        testDataUniqueFloatssDF2 = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+        testDataUniqueFloatssDF3 = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4, verbose=True, debug=True)
                       .withIdOutput()
                       .withColumn("val1", "float", unique_values=51, random=True, min=1.0)
                       .withColumn("val2", "float", unique_values=57, min=-5.0)
@@ -527,8 +527,10 @@ class TestRangedValuesAndDates(unittest.TestCase):
                       .build()
                       )
 
+        testDataUniqueFloatssDF3.show()
 
-        testDataUniqueFloatssDF2.createOrReplaceTempView("testUniqueFloats2")
+
+        testDataUniqueFloatssDF3.createOrReplaceTempView("testUniqueFloats2")
 
         dfResults = spark.sql("""
         select count(distinct val1), 

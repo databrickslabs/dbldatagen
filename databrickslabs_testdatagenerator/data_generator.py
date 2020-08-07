@@ -799,6 +799,26 @@ class DataGenerator:
         """
         return dt.simpleString()
 
+    def _mkInsertOrUpdateStatement(self, columns, src_alias, substitutions, isUpdate=True):
+        if substitutions is None:
+            substitutions = []
+        results = []
+        subs = {}
+        for x in columns:
+            subs[x] = "{}.{}".format(src_alias, x)
+        for x in substitutions:
+            subs[x[0]] = x[1]
+
+        for col in columns:
+            new_val = subs[col]
+            if isUpdate:
+                results.append("{}={}".format(col, new_val))
+            else:
+                results.append("{}".format( new_val))
+
+
+        return ", ".join(results)
+
     def scriptTable(self, name=None, location=None,table_format="delta"):
         """ generate create table script suitable for format of test data set
 
@@ -828,5 +848,110 @@ class DataGenerator:
 
         if location is not None:
             results.append("location '{}'".format(location))
+
+        return "\n".join(results)
+
+    def scriptMerge(self, tgt_name=None, src_name=None, update_expr=None, del_expr=None, join_expr=None, time_expr=None, ins_expr=None,
+                    use_explicit_names=True,
+                    update_columns=None, update_column_exprs=None,
+                    insert_columns=None, insert_column_exprs=None,
+                    src_alias="src", tgt_alias="tgt"):
+        """ generate merge table script suitable for format of test data set
+
+        :param tgt_name: name of target table to use in generated script
+        :param tgt_alias: alias for target table - defaults to `tgt`
+        :param src_name: name of source table to use in generated script
+        :param src_alias: alias for source table - defaults to `src`
+        :param update_expr: optonal string representing updated condition. If not present, then any row that does not match join condition is considered an update
+        :param del_expr: optional string representing delete condition - For example `src.action='DEL'`. If not present, no delete clause is generated
+        :param ins_expr: optional string representing insert condition - If not present, there is no condition on insert other than no match
+        :param join_expr: string repesenting join condition. For example, `tgt.id=src.id`
+        :param time_expr: optional time travel expression - for example : `TIMESTAMP AS OF timestamp_expression` or `VERSION AS OF version`
+        :param insert_columns: Optional list of strings designating columns to insert. If not supplied, uses all columns defined in spec
+        :param insert_column_exprs: Optional list of strings designating designating column expressions for insert.
+            By default, will use src column as insert value into
+            target table. This should have the form [ ("insert_column_name", "insert column expr"), ...]
+        :param update_columns: List of strings designating columns to update. If not supplied, uses all columns defined in spec
+        :param update_column_exprs: Optional list of strings designating designating column expressions for update.
+            By default, will use src column as update value for
+            target table. This should have the form [ ("update_column_name", "update column expr"), ...]
+        :param use_explicit_names: If True, generate explicit column names in insert and update statements
+        :returns: SQL string for scripted merge statement
+        """
+        assert tgt_name is not None, "you must specify a target table"
+        assert src_name is not None, "you must specify a source table"
+        assert join_expr is not None, "you must specify a join expression"
+
+        self.computeBuildPlan()
+
+        # get list of column names
+        outputColumns = [ x[0] for x in self.getOutputColumnNamesAndTypes() ]
+
+        ensure(outputColumns is not None and len(outputColumns) > 0,
+               """
+                | You must specify at least one column for output
+                | - use withIdOutput() to output base id column
+               """)
+
+        # use list of column names if not supplied
+        if insert_columns is None:
+            insert_columns = outputColumns
+
+        if update_columns is None:
+            update_columns = outputColumns
+
+        # build merge statement
+        results = ["MERGE INTO `{}` as {}".format(tgt_name, tgt_alias)]
+
+        # use time expression if supplied
+        if time_expr is None:
+            results.append("USING `{}` as {}".format(src_name, src_alias))
+        else:
+            results.append("USING `{}` {} as {}".format(src_name, time_expr, src_alias))
+
+        # add join condition
+        results.append("ON {}".format(join_expr))
+
+
+        # generate update clause
+        update_clause = None
+        if update_expr is not None:
+            update_clause = """WHEN MATCHED and {} THEN UPDATE """.format(update_expr)
+        else:
+            update_clause = """WHEN MATCHED THEN UPDATE """
+
+        if not use_explicit_names:
+            update_clause=update_clause + " SET *"
+        else:
+            update_clause= (update_clause
+                            + " SET "
+                            + self._mkInsertOrUpdateStatement(columns=update_columns, src_alias=src_alias, substitutions=update_column_exprs))
+
+        results.append(update_clause)
+
+
+
+        # generate delete clause
+        if del_expr is not None:
+            results.append( "WHEN MATCHED and {} THEN DELETE".format(del_expr))
+
+
+        if ins_expr is not None:
+            ins_clause = "WHEN NOT MATCHED and {} THEN INSERT ".format(ins_expr)
+        else:
+            ins_clause = "WHEN NOT MATCHED THEN INSERT "
+
+        if not use_explicit_names:
+            ins_clause=ins_clause + " *"
+        else:
+            ins_clause=(ins_clause
+                        + "({})".format(",".join(insert_columns))
+                        + " VALUES ({})".format(self._mkInsertOrUpdateStatement(columns=insert_columns,
+                                                                               src_alias=src_alias,
+                                                                               substitutions=insert_column_exprs,
+                                                                               isUpdate=False))
+                        )
+
+        results.append(ins_clause)
 
         return "\n".join(results)

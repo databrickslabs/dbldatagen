@@ -311,7 +311,62 @@ class TestQuickTests(unittest.TestCase):
         rangedDF = testDataSpec.build()
         rangedDF.show()
 
+    def test_script_table(self):
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
+                                         partitions=4)
+                        .withIdOutput()
+                        .withColumn("val1", IntegerType(),unique_values=100)
+                        .withColumn("val2", IntegerType(), min=1, max=100)
+                        .withColumn("str1", StringType(), format="test %d")
+                        #.withColumn("str1a", StringType(), format="test %s")
+                        .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"], base_column_type="values")
+                        .withColumn("str3", StringType(), format="test %s", base_column=["val1", "val2"], base_column_type="hash")
+                        .withColumn("str4", StringType(), format="test %s", base_column=["val1", "val2"], base_column_type="hash")
+                        .withColumn("str5", StringType(), format="test %s", base_column=["val1", "val2"])
+                        .withColumn("str5a", StringType(), format="test %s", base_column=["val1", "val2"])
+                        .withColumn("str5b", StringType(),  format="test %s", base_column=["val1", "val2"], values=["one", "two", "three"] )
+                        .withColumn("str6", StringType(), template=r"\v0 \v1", base_column=["val1", "val2"])
+                        )
 
+        print(testDataSpec.scriptTable(name="Test"))
+
+    def test_script_merge1(self):
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
+                                         partitions=4)
+                        .withIdOutput()
+                        .withColumn("val1", IntegerType(),unique_values=100)
+                        .withColumn("val2", IntegerType(), min=1, max=100)
+                        .withColumn("str1", StringType(), format="test %d")
+                        #.withColumn("str1a", StringType(), format="test %s")
+                        .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"], base_column_type="values")
+                        .withColumn("str3", StringType(), format="test %s", base_column=["val1", "val2"], base_column_type="hash")
+                        .withColumn("str4", StringType(), format="test %s", base_column=["val1", "val2"], base_column_type="hash")
+                        .withColumn("str5", StringType(), format="test %s", base_column=["val1", "val2"])
+                        .withColumn("str5a", StringType(), format="test %s", base_column=["val1", "val2"])
+                        .withColumn("action", StringType(),  format="test %s", base_column=["val1", "val2"], values=["INS", "DEL", "UPDATE"] )
+                        .withColumn("str6", StringType(), template=r"\v0 \v1", base_column=["val1", "val2"])
+                        )
+
+        print(testDataSpec.scriptMerge(tgt_name="Test", src_name="TestInc", join_expr="src.id=tgt.id", del_expr="src.action='DEL'", update_expr="src.action='UPDATE"))
+
+    def test_script_merge_min(self):
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
+                                         partitions=4)
+                        .withIdOutput()
+                        .withColumn("val1", IntegerType(),unique_values=100)
+                        .withColumn("val2", IntegerType(), min=1, max=100)
+                        .withColumn("str1", StringType(), format="test %d")
+                        #.withColumn("str1a", StringType(), format="test %s")
+                        .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"], base_column_type="values")
+                        .withColumn("str3", StringType(), format="test %s", base_column=["val1", "val2"], base_column_type="hash")
+                        .withColumn("str4", StringType(), format="test %s", base_column=["val1", "val2"], base_column_type="hash")
+                        .withColumn("str5", StringType(), format="test %s", base_column=["val1", "val2"])
+                        .withColumn("str5a", StringType(), format="test %s", base_column=["val1", "val2"])
+                        .withColumn("action", StringType(),  format="test %s", base_column=["val1", "val2"], values=["INS", "DEL", "UPDATE"] )
+                        .withColumn("str6", StringType(), template=r"\v0 \v1", base_column=["val1", "val2"])
+                        )
+
+        print(testDataSpec.scriptMerge(tgt_name="Test", src_name="TestInc", join_expr="src.id=tgt.id"))
 
 
 

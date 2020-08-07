@@ -23,16 +23,15 @@ class DateRange(object):
     Note parsing format for interval uses standard timedelta parsing not the `datetime_format` string
     :param datetime_format: format for conversion of strings to datetime objects
     """
-    DEFAULT_UTC_FORMAT="%Y-%m-%d %H:%M:%S"
+    DEFAULT_UTC_TS_FORMAT= "%Y-%m-%d %H:%M:%S"
 
-    def __init__(self, begin, end, interval=None, datetime_format=DEFAULT_UTC_FORMAT):
+    def __init__(self, begin, end, interval=None, datetime_format=DEFAULT_UTC_TS_FORMAT):
         assert begin is not None
         assert end is not None
 
-        self.begin = begin if not isinstance(begin, str) else self._date_from_string(begin, datetime_format)
-        self.end = end if not isinstance(end, str) else self._date_from_string(end, datetime_format)
-        self.interval = interval if not isinstance(interval, str) else timedelta(
-            **self.parseInterval(interval))
+        self.begin = begin if not isinstance(begin, str) else self._datetime_from_string(begin, datetime_format)
+        self.end = end if not isinstance(end, str) else self._datetime_from_string(end, datetime_format)
+        self.interval = interval if not isinstance(interval, str) else self._timedelta_from_string(interval)
 
         self.min = self.begin.timestamp()
 
@@ -40,9 +39,15 @@ class DateRange(object):
                * self.computeTimestampIntervals(self.begin, self.end, self.interval))
         self.step = self.interval.total_seconds()
 
-    def _date_from_string(self, date_str, date_format):
+    @classmethod
+    def _datetime_from_string(cls, date_str, date_format):
+        """convert string to Python DateTime object using format"""
         result = datetime.strptime(date_str, date_format)
         return result
+
+    @classmethod
+    def _timedelta_from_string(cls, interval):
+        return timedelta(**cls.parseInterval(interval))
 
 
     @classmethod
