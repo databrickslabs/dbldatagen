@@ -65,7 +65,7 @@ class DataGenerator:
         self._setup_logger()
 
         self.name = name if name is not None else self.generateName()
-        self.rowCount = rows
+        self._rowCount = rows
         self.starting_id = starting_id
         self.__schema__ = None
 
@@ -201,7 +201,7 @@ class DataGenerator:
 
         output = ["", "Data generation plan", "====================",
                   """spec=DateGenerator(name={}, rows={}, starting_id={}, partitions={})"""
-                      .format(self.name, self.rowCount, self.starting_id, self.partitions), ")", "",
+                      .format(self.name, self._rowCount, self.starting_id, self.partitions), ")", "",
                   "column build order: {}".format(self._build_order), "", "build plan:"]
 
         for plan_action in self.build_plan:
@@ -221,8 +221,17 @@ class DataGenerator:
         :param rc: The count of rows to generate
         :returns: modified in-place instance of test data generator allowing for chaining of calls following Builder pattern
         """
-        self.rowCount=rc
+        self._rowCount=rc
         return self
+
+    @property
+    def rowCount(self):
+        """ Return the row count
+
+        This may differ from the original specified row counts, if counts need to be adjusted for purposes of keeping the ratio of rows to unique keys correct
+        or other heuristics
+        """
+        return self._rowCount
 
     def withIdOutput(self):
         """ output id field as a column in the test data set if specified
@@ -271,7 +280,7 @@ class DataGenerator:
             if key == "starting_id":
                 self.starting_id = value
             elif key == "row_count":
-                self.rowCount = value
+                self._rowCount = value
         return self
 
     def describe(self):
@@ -282,7 +291,7 @@ class DataGenerator:
 
         return {
             'name': self.name,
-            'rowCount': self.rowCount,
+            'rowCount': self._rowCount,
             'schema': self.schema,
             'seed': self.seed,
             'partitions': self.partitions,
@@ -295,7 +304,7 @@ class DataGenerator:
         """ return the repr string for the class"""
         return "{}(name='{}', rows={}, partitions={})".format(__class__.__name__,
                                                               self.name,
-                                                              self.rowCount,
+                                                              self._rowCount,
                                                               self.partitions)
 
     def _checkFieldList(self):
@@ -577,7 +586,7 @@ class DataGenerator:
         :returns: Spark data frame for base data that drives the data generation
         """
 
-        end_id = self.rowCount + start_id
+        end_id = self._rowCount + start_id
         id_partitions = self.partitions if self.partitions is not None else 4
 
         if not streaming:

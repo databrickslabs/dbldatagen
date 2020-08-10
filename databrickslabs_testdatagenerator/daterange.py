@@ -24,6 +24,8 @@ class DateRange(object):
     :param datetime_format: format for conversion of strings to datetime objects
     """
     DEFAULT_UTC_FORMAT="%Y-%m-%d %H:%M:%S"
+    DEFAULT_DATE_FORMAT="%Y-%m-%d"
+    # todo: deduce format from begin and end params
 
     def __init__(self, begin, end, interval=None, datetime_format=DEFAULT_UTC_FORMAT):
         assert begin is not None

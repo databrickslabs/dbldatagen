@@ -173,14 +173,13 @@ class ColumnGenerationSpec(object):
             self.text_generator=None
 
         # handle default method of computing the base column value
-        if False:
-            if self.base_column_compute_method is None and (self.text_generator is not None or self['format'] is not None):
-                self.logger.warning("""Column [%s] has no `base_column_type` attribute specified and output is formatted text
-                                       => Assuming `values` for attribute `base_column_type`. 
-                                       => Use explicit value for `base_column_type` if alternate interpretation is needed
-                                       
-                """, self.name)
-                self.base_column_compute_method = "values"
+        if self.base_column_compute_method is None and (self.text_generator is not None or self['format'] is not None):
+            self.logger.warning("""Column [%s] has no `base_column_type` attribute specified and output is formatted text
+                                   => Assuming `values` for attribute `base_column_type`. 
+                                   => Use explicit value for `base_column_type` if alternate interpretation is needed
+                                   
+            """, self.name)
+            self.base_column_compute_method = "values"
 
         # compute required temporary values
         self.temporary_columns = []
