@@ -121,7 +121,8 @@ release:
 	tar -czf ./dist/html_help.tgz -C ./python/docs/build ./html/
 	-git rm -f --cached `pwd`/dist/"*.whl"
 	git add -f `pwd`/dist/*.whl
-	#git commit -m "Latest release: $(CURRENT_VERSION)"
+	git add -f ./dist/html_help.tgz
+	git commit -m "Latest release: $(CURRENT_VERSION)"
 	#git tag -a v$(CURRENT_VERSION) -m "Latest release: $(CURRENT_VERSION)"
 
 install: buildenv dist/dist_flag.txt
