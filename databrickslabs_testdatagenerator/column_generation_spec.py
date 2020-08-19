@@ -61,6 +61,8 @@ class ColumnGenerationSpec(object):
     For full list of options, see :doc:`/reference/api/databrickslabs_testdatagenerator.column_spec_options`.
     """
 
+    #: row seed field for data set
+    SEED_COLUMN = "id"
 
     #: max values for each column type, only if where value is intentionally restricted
     _max_type_range = {
@@ -75,7 +77,7 @@ class ColumnGenerationSpec(object):
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.NOTSET)
 
     def __init__(self, name, colType=None, min=0, max=None, step=1, prefix='', random=False,
-                 distribution=None, base_column="id", random_seed=None, random_seed_method=None,
+                 distribution=None, base_column=None, random_seed=None, random_seed_method=None,
                  implicit=False, omit=False, nullable=True,debug=False, verbose=False,  **kwargs):
 
         # set up logging
@@ -95,6 +97,10 @@ class ColumnGenerationSpec(object):
         self.initial_build_plan=[]                  # the build plan for the column - descriptive only
         self.execution_history=[]                   # the execution history for the column
 
+        # If no base column is specified, assume its dependent on the seed column
+        if base_column is None:
+            base_column = self.SEED_COLUMN
+
         # to allow for open ended extension of many column attributes, we use a few specific
         # parameters and pass the rest as keyword arguments
         self._column_spec_options = {'name': name, 'min': min, 'type': colType, 'max': max, 'step': step,
@@ -105,6 +111,7 @@ class ColumnGenerationSpec(object):
                                      }
 
         self._column_spec_options.update(kwargs)
+
 
         column_spec_options=ColumnSpecOptions(self._column_spec_options)
 
@@ -171,6 +178,16 @@ class ColumnGenerationSpec(object):
             self.text_generator = self['text']
         else:
             self.text_generator=None
+
+        # handle default method of computing the base column value
+        if self.base_column_compute_method is None and (self.text_generator is not None or self['format'] is not None):
+            self.logger.warning("""Column [%s] has no `base_column_type` attribute specified and output is formatted text
+                                   => Assuming `values` for attribute `base_column_type`. 
+                                   => Use explicit value for `base_column_type` if alternate interpretation is needed
+                                   
+            """, self.name)
+            self.base_column_compute_method = "values"
+
 
         # compute required temporary values
         self.temporary_columns = []
@@ -262,12 +279,12 @@ class ColumnGenerationSpec(object):
     def compute_basic_dependencies(self):
         """ get set of basic column dependencies
 
-        :return: base columns as list with dependency on 'id' added
+        :return: base columns as list with dependency on seed column added
         """
-        if self.baseColumn != "id":
-            return list(set(self.base_columns + ["id"]))
+        if self.baseColumn != self.SEED_COLUMN:
+            return list(set(self.base_columns + [self.SEED_COLUMN]))
         else:
-            return ["id"]
+            return [self.SEED_COLUMN]
 
     def set_base_column_datatypes(self, column_datatypes):
         """ Set the data types for the base columns

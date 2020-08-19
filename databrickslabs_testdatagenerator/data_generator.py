@@ -31,7 +31,7 @@ class DataGenerator:
     :param seed_method: = seed method for random numbers - either None, 'fixed', 'hash_fieldname'
     :param generate_with_selects: = if `True`, optimize datae generation with selects, otherwise use `withColumn`
     :param rows: = amount of rows to generate
-    :param starting_id: = starting id for generated id column
+    :param starting_id: = starting value for generated seed column
     :param seed: = seed for random number generator
     :param partitions: = number of partitions to generate
     :param verbose: = if `True`, generate verbose output
@@ -65,7 +65,7 @@ class DataGenerator:
         self._setup_logger()
 
         self.name = name if name is not None else self.generateName()
-        self.rowCount = rows
+        self._rowCount = rows
         self.starting_id = starting_id
         self.__schema__ = None
 
@@ -85,7 +85,7 @@ class DataGenerator:
         self.inferredSchemaFields = []
         self.partitions = partitions if partitions is not None else 10
         self.build_plan_computed = False
-        self.withColumn("id", LongType(), nullable=False, implicit=True, omit=True)
+        self.withColumn(ColumnGenerationSpec.SEED_COLUMN, LongType(), nullable=False, implicit=True, omit=True)
         self.generateWithSelects = generate_with_selects
         self.use_pandas = use_pandas
         self.pandas_udf_batch_size = pandas_udf_batch_size
@@ -201,7 +201,7 @@ class DataGenerator:
 
         output = ["", "Data generation plan", "====================",
                   """spec=DateGenerator(name={}, rows={}, starting_id={}, partitions={})"""
-                      .format(self.name, self.rowCount, self.starting_id, self.partitions), ")", "",
+                      .format(self.name, self._rowCount, self.starting_id, self.partitions), ")", "",
                   "column build order: {}".format(self._build_order), "", "build plan:"]
 
         for plan_action in self.build_plan:
@@ -221,17 +221,26 @@ class DataGenerator:
         :param rc: The count of rows to generate
         :returns: modified in-place instance of test data generator allowing for chaining of calls following Builder pattern
         """
-        self.rowCount=rc
+        self._rowCount=rc
         return self
 
-    def withIdOutput(self):
-        """ output id field as a column in the test data set if specified
+    @property
+    def rowCount(self):
+        """ Return the row count
 
-        If this is not called, the id field is omitted from the final test data set
+        This may differ from the original specified row counts, if counts need to be adjusted for purposes of keeping the ratio of rows to unique keys correct
+        or other heuristics
+        """
+        return self._rowCount
+
+    def withIdOutput(self):
+        """ output seed column field (defaults to `id`) as a column in the test data set if specified
+
+        If this is not called, the seed column field is omitted from the final test data set
 
         :returns: modified in-place instance of test data generator allowing for chaining of calls following Builder pattern
         """
-        self.columnSpecsByName["id"].omit = False
+        self.columnSpecsByName[ColumnGenerationSpec.SEED_COLUMN].omit = False
         self.markForPlanRegen()
 
         return self
@@ -271,7 +280,7 @@ class DataGenerator:
             if key == "starting_id":
                 self.starting_id = value
             elif key == "row_count":
-                self.rowCount = value
+                self._rowCount = value
         return self
 
     def describe(self):
@@ -282,7 +291,7 @@ class DataGenerator:
 
         return {
             'name': self.name,
-            'rowCount': self.rowCount,
+            'rowCount': self._rowCount,
             'schema': self.schema,
             'seed': self.seed,
             'partitions': self.partitions,
@@ -295,7 +304,7 @@ class DataGenerator:
         """ return the repr string for the class"""
         return "{}(name='{}', rows={}, partitions={})".format(__class__.__name__,
                                                               self.name,
-                                                              self.rowCount,
+                                                              self._rowCount,
                                                               self.partitions)
 
     def _checkFieldList(self):
@@ -433,7 +442,7 @@ class DataGenerator:
             patterns = ["^" + pat + "$" for pat in patterns]
 
         all_fields=self.getInferredColumnNames()
-        effective_fields = [x for x in all_fields if (fields is None or x in fields) and x != "id"]
+        effective_fields = [x for x in all_fields if (fields is None or x in fields) and x != ColumnGenerationSpec.SEED_COLUMN]
 
         if patterns is not None:
             effective_fields = [x for x in effective_fields for y in patterns if re.search(y, x) is not None]
@@ -450,11 +459,11 @@ class DataGenerator:
         """ Check if column or columns refer to existing columns
 
         :param columns: a single column or list of columns as strings
-        :param allow_id: If True, allows the specialized column `id` to be present in columns
+        :param allow_id: If True, allows the specialized seed column (which defaults to `id`) to be present in columns
         :returns: True if test passes
         """
         inferredColumns = self.getInferredColumnNames()
-        if allow_id and columns == "id":
+        if allow_id and columns == ColumnGenerationSpec.SEED_COLUMN:
             return True
 
         if type(columns) is list:
@@ -467,7 +476,7 @@ class DataGenerator:
         return True
 
     def withColumnSpec(self, colName, min=None, max=None, step=1, prefix=None, random=False, distribution=None,
-                       implicit=False, data_range=None, omit=False, base_column="id", **kwargs):
+                       implicit=False, data_range=None, omit=False, base_column=None, **kwargs):
         """ add a column specification for an existing column
 
         :returns: modified in-place instance of test data generator allowing for chaining of calls following Builder pattern
@@ -478,7 +487,8 @@ class DataGenerator:
         """
         ensure(colName is not None, "Must specify column name for column")
         ensure(colName in self.getInferredColumnNames(), " column `{0}` must refer to defined column".format(colName))
-        self._checkColumnOrColumnList(base_column)
+        if base_column is not None:
+            self._checkColumnOrColumnList(base_column)
         ensure(not self.isFieldExplicitlyDefined(colName), "duplicate column spec for column `{0}`".format(colName))
 
         newProps = {}
@@ -503,7 +513,7 @@ class DataGenerator:
 
     def withColumn(self, colName, colType=StringType(), min=None, max=None, step=1,
                    data_range=None, prefix=None, random=False, distribution=None,
-                   base_column="id", nullable=True,
+                   base_column=None, nullable=True,
                    omit=False, implicit=False,
                    **kwargs):
         """ add a new column for specification
@@ -516,7 +526,8 @@ class DataGenerator:
         """
         ensure(colName is not None, "Must specify column name for column")
         ensure(colType is not None, "Must specify column type for column `{0}`".format(colName))
-        self._checkColumnOrColumnList(base_column, allow_id=True)
+        if base_column is not None:
+            self._checkColumnOrColumnList(base_column, allow_id=True)
         newProps = {}
         newProps.update(kwargs)
 
@@ -534,7 +545,7 @@ class DataGenerator:
         self.inferredSchemaFields.append(StructField(colName, colType, nullable))
         return self
 
-    def generateColumnDefinition(self, colName, colType=None, base_column="id",
+    def generateColumnDefinition(self, colName, colType=None, base_column=None,
                                  implicit=False, omit=False, nullable=True, **kwargs):
         """ generate field definition and column spec
 
@@ -572,12 +583,12 @@ class DataGenerator:
         return self
 
     def getBaseDataFrame(self, start_id=0, streaming=False, options=None):
-        """ generate the base data frame and id column , partitioning the data if necessary
+        """ generate the base data frame and seed column (which defaults to `id`) , partitioning the data if necessary
 
         :returns: Spark data frame for base data that drives the data generation
         """
 
-        end_id = self.rowCount + start_id
+        end_id = self._rowCount + start_id
         id_partitions = self.partitions if self.partitions is not None else 4
 
         if not streaming:
@@ -588,6 +599,9 @@ class DataGenerator:
             df1 = self.sparkSession.range(start=start_id,
                                           end=end_id,
                                           numPartitions=id_partitions)
+
+            if ColumnGenerationSpec.SEED_COLUMN != "id":
+                df1 = df1.withColumnRenamed("id", ColumnGenerationSpec.SEED_COLUMN)
 
         else:
             status = ("Generating streaming data frame with ids from {} to {} with {} partitions"
@@ -605,12 +619,12 @@ class DataGenerator:
 
                 for k,v in options.items():
                     df1 = df1.option(k,v)
-                df1= df1.load().withColumnRenamed("value", "id")
+                df1= df1.load().withColumnRenamed("value", ColumnGenerationSpec.SEED_COLUMN)
             else:
                 df1 = ( df1.option("rowsPerSecond", 1)
                         .option("numPartitions", id_partitions)
                         .load()
-                        .withColumnRenamed("value", "id")
+                        .withColumnRenamed("value", ColumnGenerationSpec.SEED_COLUMN)
                         )
 
         return df1
@@ -632,14 +646,14 @@ class DataGenerator:
 
         :returns: the build ordering
         """
-        dependency_ordering = [(x.name, set(x.dependencies)) if x.name != 'id' else ('id', set())
+        dependency_ordering = [(x.name, set(x.dependencies)) if x.name != ColumnGenerationSpec.SEED_COLUMN else (ColumnGenerationSpec.SEED_COLUMN, set())
                                for x in self.allColumnSpecs]
 
         #self.pp_list(dependency_ordering, msg="dependencies")
 
         self.logger.info("dependency list: %s", str(dependency_ordering))
 
-        self._build_order = list(topologicalSort(dependency_ordering, flatten=False, initial_columns=['id']))
+        self._build_order = list(topologicalSort(dependency_ordering, flatten=False, initial_columns=[ColumnGenerationSpec.SEED_COLUMN]))
 
         self.logger.info("columnBuildOrder: %s", str(self._build_order))
 
@@ -648,11 +662,11 @@ class DataGenerator:
 
     @property
     def build_order(self):
-        """ return the build order minus the `id` column
+        """ return the build order minus the seed column (which defaults to `id`)
 
         The build order will be a list of lists - each list specifying columns that can be built at the same time
         """
-        return [x for x in self._build_order if x != ["id"] ]
+        return [x for x in self._build_order if x != [ColumnGenerationSpec.SEED_COLUMN] ]
 
     def get_column_data_types(self, columns):
         """ Get data types for columns
@@ -669,7 +683,7 @@ class DataGenerator:
         self.build_plan = []
         self.execution_history = []
         self._processOptions()
-        self.build_plan.append("Build dataframe with id")
+        self.build_plan.append("Build dataframe with seed column: %s".format(ColumnGenerationSpec.SEED_COLUMN))
 
         # add temporary columns
         for cs in self.allColumnSpecs:
@@ -721,7 +735,7 @@ class DataGenerator:
         ensure(outputColumns is not None and len(outputColumns) > 0,
                """
                 | You must specify at least one column for output
-                | - use withIdOutput() to output base id column
+                | - use withIdOutput() to output base seed column
                """)
 
         df1 = self.getBaseDataFrame(self.starting_id, streaming=withStreaming, options=options)
@@ -836,7 +850,7 @@ class DataGenerator:
         ensure(outputColumns is not None and len(outputColumns) > 0,
                """
                 | You must specify at least one column for output
-                | - use withIdOutput() to output base id column
+                | - use withIdOutput() to output base seed column
                """)
 
         col_expressions = []
@@ -890,7 +904,7 @@ class DataGenerator:
         ensure(outputColumns is not None and len(outputColumns) > 0,
                """
                 | You must specify at least one column for output
-                | - use withIdOutput() to output base id column
+                | - use withIdOutput() to output base seed column
                """)
 
         # use list of column names if not supplied

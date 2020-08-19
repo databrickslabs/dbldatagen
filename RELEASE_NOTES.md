@@ -2,6 +2,8 @@
 
 ### Requirements
 
+See the contents of the file [python/require.txt] to see the Python package dependencies
+
 ### Version 0.10.0-prerel3
 #### Features
 * Added HTML help - use `make docs` to create it

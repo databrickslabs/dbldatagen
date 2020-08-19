@@ -8,18 +8,25 @@
 
 
 ## Project Description
-This Databricks Labs project is a non-supported end-to-end framework for automating the generation of test data 
-using the Spark framework. 
+This Databricks Labs project is a Python library for generating synthetic test data within the Databricks 
+environment using Spark. It operates by defining a test data generation specification in code for how the test data is to be generated.
+
+The specification may incorporate use of existing schemas, or create data in an adhoc fashion.
+
+It has no dependencies on any libraries that are not already incuded in the Databricks 
+runtime, and you can use it from Scala, R or other languages by defining
+a view over the generated data.
 
 It supports:
 * Generating test data for all of the 
 Spark SQL supported primitive types as a Spark data frame which may be persisted, 
 saved to external storage or 
 used in other computations
-* Limiting numeric values to specific ranges and intervals
+* Generating ranges of dates, timestamps and numeric values
 * Generation of discrete values - both numeric and text
-* Generation of values at random and based on the values of other fields
-* Generating multiple values following the same pattern
+* Generation of values at random and based on the values of other fields 
+(either based on the `hash` of the underlying values or the values themselves)
+* Specifying 
 * Generating arrays of values for ML style feature arrays
 * Applying weights to the occurence of values
 * Generating values to conform to a schema or independent of an existing schema

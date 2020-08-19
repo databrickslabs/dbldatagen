@@ -33,7 +33,7 @@ markdown: Makefile
 apidoc: Makefile
 	@echo "Making APIDOC"
 	@sphinx-apidoc -e -o "$(SOURCEDIR)/reference/api" "$(MODULEDIR)"
-	#@sphinx-autogen -o "$(SOURCEDIR)/reference/api" "$(MODULEDIR)"
+	#@sphinx-autogen -o "$(SOURCEDIR)/generated" `pwd`/"$(SOURCEDIR)/reference/api/*.rst"
 
 requirements:
 	@echo "Making requirements"

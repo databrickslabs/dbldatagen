@@ -167,7 +167,18 @@ class TestDependentData(unittest.TestCase):
         ds_copy1 = self.testDataSpec.clone()
 
         df_copy1 = (ds_copy1.setRowCount(1000)
+                    .withColumn("device_id_2", StringType(), format='0x%013x', base_column="internal_device_id", base_column_type="values")
+                    .build())
+
+        df_copy1.show()
+
+    def test_format_dependent_data2(self):
+        """ Test without specifying the base column type"""
+        ds_copy1 = self.testDataSpec.clone()
+
+        df_copy1 = (ds_copy1.setRowCount(1000)
                     .withColumn("device_id_2", StringType(), format='0x%013x', base_column="internal_device_id")
                     .build())
 
         df_copy1.show()
+

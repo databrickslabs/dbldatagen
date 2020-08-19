@@ -77,10 +77,26 @@ There is also support for applying arbitrary SQL expressions, and generation of 
 
 ## Creating a simple test data set
 
-At the highest level of the API, the FamilyRunner, using defaults, requires only a Spark Dataframe and an Array of InstanceConfigurations to be supplied to the object instantiation.
+Here is an example of creating a simple test data set without use of a schema. 
 
-With the recommended PipelineAPI method .executeWithPipeline(), a SparkML Pipeline will be created, wrapping all transformations used in building the feature vector,
-hyperparameter tuning, and best selected model will be returned.
+```python 
+row_count=1000 * 100
+testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=row_count,
+                                  partitions=4, seed_method='hash_fieldname', 
+                                  verbose=True)
+                            .withIdOutput()
+                            .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
+                                        numColumns=cls.column_count)
+                            .withColumn("code1", IntegerType(), min=100, max=200)
+                            .withColumn("code2", IntegerType(), min=0, max=10)
+                            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+                            .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+                            .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+
+                            )
+
+dfTestData = testDataSpec.build()
+```
 
 ### Building Device IOT Test Data
 This example shows generation of IOT device style data:
