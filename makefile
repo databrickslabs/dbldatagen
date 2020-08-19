@@ -44,6 +44,11 @@ clean_buildenv:
 
 docs: install
 	@echo "$(OK_COLOR)=> Creating docs ...$(NO_COLOR)"
+	@-mkdir python/docs/source/relnotes
+	@cp -f python/require.txt python/docs/source/relnotes/require.md
+	@cp -f CONTRIBUTING.md python/docs/source/relnotes/
+	@cp -f RELEASE_NOTES.md python/docs/source/relnotes/
+	@cp -f python/docs/APIDOCS.md python/docs/source/relnotes/
 	@. build_env/bin/activate; cd python/docs && make docs
 
 
@@ -112,9 +117,12 @@ newbuild:
 	#git tag -a v$(CURRENT_VERSION) -m "Latest release: $(CURRENT_VERSION)"
 
 release:
-	git add .
-	git status
-	#git commit -m "Latest release: $(CURRENT_VERSION)"
+	@echo "$(OK_COLOR)=> building and committing new artifact$(NO_COLOR)"
+	tar -czf ./dist/html_help.tgz -C ./python/docs/build ./html/
+	-git rm -f --cached `pwd`/dist/"*.whl"
+	git add -f `pwd`/dist/*.whl
+	git add -f ./dist/html_help.tgz
+	git commit -m "Latest release: $(CURRENT_VERSION)"
 	#git tag -a v$(CURRENT_VERSION) -m "Latest release: $(CURRENT_VERSION)"
 
 install: buildenv dist/dist_flag.txt
