@@ -58,7 +58,7 @@ class ColumnGenerationSpec(object):
         self.verbose = verbose
         self.debug = debug
 
-        self._setup_logger()
+        self._setupLogger()
 
         # set up default range and type for column
         self.data_range=NRange(None, None, None)    # by default the range of values for the column is unconstrained
@@ -132,7 +132,7 @@ class ColumnGenerationSpec(object):
         self.random = random
 
         # compute dependencies
-        self.dependencies = self.compute_basic_dependencies()
+        self.dependencies = self.computeBasicDependencies()
 
         # value of `base_column_type` must be `None`,"values" or "hash"
         # this is the method of generation of current column value from base column, not the datatype of the base column
@@ -186,7 +186,7 @@ class ColumnGenerationSpec(object):
                                            c_unique=unique_values, c_range=data_range)
 
         # set up the temporary columns needed for data generation
-        self._setup_temporary_columns()
+        self._setupTemporaryColumns()
 
     def __deepcopy__(self, memo):
         """Custom deep copy method that resets the logger to avoid trying to copy the logger
@@ -202,13 +202,13 @@ class ColumnGenerationSpec(object):
             for k, v in self.__dict__.items():
                 setattr(result, k, copy.deepcopy(v, memo))
         finally:
-            self._setup_logger()
-            result._setup_logger()
+            self._setupLogger()
+            result._setupLogger()
         return result
 
 
     @property
-    def base_columns(self):
+    def baseColumns(self):
         """ Return base columns as list"""
 
         # if base column  is string and contains multiple columns, split them
@@ -220,27 +220,27 @@ class ColumnGenerationSpec(object):
         else:
             return [self.baseColumn]
 
-    def compute_basic_dependencies(self):
+    def computeBasicDependencies(self):
         """ get set of basic column dependencies
 
         :return: base columns as list with dependency on 'id' added
         """
         if self.baseColumn != "id":
-            return list(set(self.base_columns + ["id"]))
+            return list(set(self.baseColumns + ["id"]))
         else:
             return ["id"]
 
-    def set_base_column_datatypes(self, column_datatypes):
+    def setBaseColumnDatatypes(self, column_datatypes):
         """ Set the data types for the base columns
 
         :param column_datatypes: = list of data types for the base columns
 
         """
         ensure(type(column_datatypes) is list)
-        ensure(len(column_datatypes) == len(self.base_columns), "number of base column datatypes must match number of  base columns")
+        ensure(len(column_datatypes) == len(self.baseColumns), "number of base column datatypes must match number of  base columns")
         self._base_column_datatypes = [].append(column_datatypes)
 
-    def _setup_temporary_columns(self):
+    def _setupTemporaryColumns(self):
         """ Set up any temporary columns needed for test data generation"""
         if self.isWeightedValuesColumn:
             # if its a weighted values column, then create temporary for it
@@ -266,8 +266,8 @@ class ColumnGenerationSpec(object):
                 self.initial_build_plan.append(desc)
 
                 # use a base expression based on mapping base column to size of data
-                sql_scaled_generator = self.getScaledIntegerSQLExpression(self.name, scale=sum(self.weights) ,
-                                                                          base_columns=self.base_columns,
+                sql_scaled_generator = self.getScaledIntegerSQLExpression(self.name, scale=sum(self.weights),
+                                                                          base_columns=self.baseColumns,
                                                                           base_datatypes=self._base_column_datatypes,
                                                                           compute_method=self.base_column_compute_method,
                                                                           normalize=True)
@@ -284,7 +284,7 @@ class ColumnGenerationSpec(object):
                 self.weighted_base_column = temp_name
 
 
-    def _setup_logger(self):
+    def _setupLogger(self):
         """Set up logging
 
         This will set the logger at warning, info or debug levels depending on the instance construction parameters

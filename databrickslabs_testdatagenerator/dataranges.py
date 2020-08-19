@@ -88,8 +88,8 @@ class DateRange(object):
         assert begin is not None
         assert end is not None
 
-        self.begin = begin if not isinstance(begin, str) else self._date_from_string(begin, datetime_format)
-        self.end = end if not isinstance(end, str) else self._date_from_string(end, datetime_format)
+        self.begin = begin if not isinstance(begin, str) else self._dateFromString(begin, datetime_format)
+        self.end = end if not isinstance(end, str) else self._dateFromString(end, datetime_format)
         self.interval = interval if not isinstance(interval, str) else timedelta(
             **self.parseInterval(interval))
 
@@ -99,7 +99,7 @@ class DateRange(object):
                * self.computeTimestampIntervals(self.begin, self.end, self.interval))
         self.step = self.interval.total_seconds()
 
-    def _date_from_string(self, date_str, date_format):
+    def _dateFromString(self, date_str, date_format):
         result = datetime.strptime(date_str, date_format)
         return result
 

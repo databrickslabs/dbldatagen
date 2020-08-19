@@ -29,16 +29,16 @@ class TestColumnGenerationSpec(unittest.TestCase):
         dt = StringType()
         cd = dg.ColumnGenerationSpec(name="test", colType=StringType(), base_column='test0')
         self.assertEqual(cd.baseColumn, 'test0', "baseColumn should be as expected")
-        self.assertEqual(cd.base_columns, ['test0'])
+        self.assertEqual(cd.baseColumns, ['test0'])
 
     def test_baseColumnMultiple(self):
         dt = StringType()
         cd = dg.ColumnGenerationSpec(name="test", colType=StringType(), base_column=['test0', 'test_1'])
         self.assertEquals(cd.baseColumn, ['test0', 'test_1'], "baseColumn should be as expected")
-        self.assertEquals(cd.base_columns, ['test0', 'test_1'])
+        self.assertEquals(cd.baseColumns, ['test0', 'test_1'])
 
     def test_baseColumnMultiple2(self):
         dt = StringType()
         cd = dg.ColumnGenerationSpec(name="test", colType=StringType(), base_column='test0,test_1')
         self.assertEquals(cd.baseColumn, 'test0,test_1', "baseColumn should be as expected")
-        self.assertEquals(cd.base_columns, ['test0', 'test_1'])
+        self.assertEquals(cd.baseColumns, ['test0', 'test_1'])

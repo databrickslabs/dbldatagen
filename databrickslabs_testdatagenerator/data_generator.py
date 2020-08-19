@@ -637,7 +637,7 @@ class DataGenerator:
         """
         return [x for x in self._build_order if x != ["id"] ]
 
-    def get_column_data_types(self, columns):
+    def getColumnDataTypes(self, columns):
         """ Get data types for columns
 
         :param columns: = list of columns to retrieve data types for
@@ -668,8 +668,8 @@ class DataGenerator:
 
         # TODO: set up the base column data type information
         for cs in self.allColumnSpecs:
-            base_column_datatypes = self.get_column_data_types(cs.base_columns)
-            cs.set_base_column_datatypes(base_column_datatypes)
+            base_column_datatypes = self.getColumnDataTypes(cs.baseColumns)
+            cs.setBaseColumnDatatypes(base_column_datatypes)
 
         self.computeColumnBuildOrder()
 
