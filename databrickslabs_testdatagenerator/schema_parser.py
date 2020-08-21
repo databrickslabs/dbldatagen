@@ -15,17 +15,17 @@ class SchemaParser(object):
     _match_precision_and_scale = re.compile("decimal\s*\(\s*([0-9]+)\s*,\s*([0-9]+)\s*\)")
 
     @classmethod
-    def parseDecimal(cls, str):
+    def parseDecimal(cls, valueStr):
         """ parse a decimal specifier
 
-        :param str: - decimal specifier string such as `decimal(19,4)`, `decimal` or `decimal(10)`
+        :param valueStr: - decimal specifier string such as `decimal(19,4)`, `decimal` or `decimal(10)`
         :returns: DecimalType instance for parsed result
         """
-        m = cls._match_precision_only.search(str)
+        m = cls._match_precision_only.search(valueStr)
         if m:
             return DecimalType(int(m.group(1)))
 
-        m = cls._match_precision_and_scale.search(str)
+        m = cls._match_precision_and_scale.search(valueStr)
         if m:
             return DecimalType(int(m.group(1)), int(m.group(2)))
 
@@ -70,6 +70,7 @@ class SchemaParser(object):
     def parseCreateTable(cls, sparkSession, source_schema):
         """ Parse a schema from a schema string
 
+            :param sparkSession:
             :param source_schema: should be a table definition minus the create table statement
             :returns: Spark SQL schema instance
         """

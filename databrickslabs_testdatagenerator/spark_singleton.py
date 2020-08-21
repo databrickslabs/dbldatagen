@@ -12,6 +12,7 @@ This is primarily meant for situations where the test data generator is run on a
 rather than in a Databricks workspace environment
 """
 
+
 class SparkSingleton:
     """A singleton class which returns one Spark session instance"""
 
@@ -31,8 +32,7 @@ class SparkSingleton:
         :returns: A Spark instance
         """
         cpu_count = int(math.floor(os.cpu_count() * 0.75))
-        print("cpus", cpu_count )
-
+        print("cpus", cpu_count)
 
         return SparkSession.builder \
             .master("local[{}]".format(cpu_count)) \

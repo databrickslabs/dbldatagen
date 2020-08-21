@@ -221,7 +221,7 @@ class DataGenerator:
         :param rc: The count of rows to generate
         :returns: modified in-place instance of test data generator allowing for chaining of calls following Builder pattern
         """
-        self.rowCount=rc
+        self.rowCount = rc
         return self
 
     def withIdOutput(self):
@@ -334,7 +334,6 @@ class DataGenerator:
         ensure(key is not None, "key should be non-empty")
         return self.columnSpecsByName[key]
 
-
     def getColumnType(self, colName):
         """ Get column Spark SQL datatype for specified column
 
@@ -428,7 +427,7 @@ class DataGenerator:
         elif type(patterns) is list:
             patterns = ["^" + pat + "$" for pat in patterns]
 
-        all_fields=self.getInferredColumnNames()
+        all_fields = self.getInferredColumnNames()
         effective_fields = [x for x in all_fields if (fields is None or x in fields) and x != "id"]
 
         if patterns is not None:
@@ -548,7 +547,7 @@ class DataGenerator:
         self.columnSpecsByName[colName] = column_spec
 
         # if column spec for column already exists - remove it
-        items_to_remove = [ x  for x in self.allColumnSpecs if x.name == colName ]
+        items_to_remove = [ x for x in self.allColumnSpecs if x.name == colName ]
         for x in items_to_remove:
             self.allColumnSpecs.remove(x)
 
@@ -570,7 +569,7 @@ class DataGenerator:
 
         if not streaming:
             status = ("Generating data frame with ids from {} to {} with {} partitions"
-                              .format(start_id, end_id, id_partitions))
+                      .format(start_id, end_id, id_partitions))
             self.logger.info(status)
             self.execution_history.append(status)
             df1 = self.sparkSession.range(start=start_id,
@@ -579,12 +578,12 @@ class DataGenerator:
 
         else:
             status = ("Generating streaming data frame with ids from {} to {} with {} partitions"
-                          .format(start_id, end_id, id_partitions))
+                      .format(start_id, end_id, id_partitions))
             self.logger.info(status)
             self.execution_history.append(status)
 
             df1 = (self.sparkSession.readStream
-                    .format("rate"))
+                   .format("rate"))
             if options is not None:
                 if "rowsPerSecond" not in options:
                     options['rowsPerSecond'] = 1
@@ -593,7 +592,7 @@ class DataGenerator:
 
                 for k,v in options.items():
                     df1 = df1.option(k,v)
-                df1= df1.load().withColumnRenamed("value", "id")
+                df1 = df1.load().withColumnRenamed("value", "id")
             else:
                 df1 = ( df1.option("rowsPerSecond", 1)
                         .option("numPartitions", id_partitions)
@@ -618,7 +617,7 @@ class DataGenerator:
         dependency_ordering = [(x.name, set(x.dependencies)) if x.name != 'id' else ('id', set())
                                for x in self.allColumnSpecs]
 
-        #self.pp_list(dependency_ordering, msg="dependencies")
+        # self.pp_list(dependency_ordering, msg="dependencies")
 
         self.logger.info("dependency list: %s", str(dependency_ordering))
 
@@ -626,7 +625,7 @@ class DataGenerator:
 
         self.logger.info("columnBuildOrder: %s", str(self._build_order))
 
-        #self.pp_list(self._build_order, "build order")
+        # self.pp_list(self._build_order, "build order")
         return self._build_order
 
     @property
@@ -678,7 +677,7 @@ class DataGenerator:
                 cs = self.columnSpecsByName[x]
                 self.build_plan.append(cs.getPlanEntry())
 
-        self.build_plan_computed=True
+        self.build_plan_computed = True
         return self
 
     def build(self, withTempView=False, withView=False, withStreaming=False, options=None):
@@ -720,7 +719,7 @@ class DataGenerator:
             # are generated resulting in shorter lineage
 
             for colNames in self.build_order:
-                build_round=["*"]
+                build_round = ["*"]
                 nCol = 0
                 self.execution_history.append("building round for : {}".format(colNames))
                 for colName in colNames:

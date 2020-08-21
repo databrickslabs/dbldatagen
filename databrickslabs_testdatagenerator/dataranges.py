@@ -6,15 +6,16 @@ import math
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
     StructType, StructField, TimestampType, DataType, DateType, ByteType
 
+
 class NRange(object):
     """ Ranged numeric interval representing the interval min .. max inclusive"""
 
     def __init__(self, min=None, max=None, step=None, until=None):
         assert until is None if max is not None else True,"Only one of max or until can be specified"
         assert max is None if until is not None else True,"Only one of max or until can be specified"
-        self.min=min
-        self.max=max if until is None else until+1
-        self.step=step
+        self.min = min
+        self.max = max if until is None else until+1
+        self.step = step
 
     def __str__(self):
         return "NRange({}, {}, {})".format(self.min, self.max, self.step)
@@ -27,7 +28,7 @@ class NRange(object):
         """Check is all instance vars are populated"""
         return self.min is not None and self.max is not None and self.step is not None
 
-    def _adjustForColtype(self, ctype):
+    def adjustRangeForColtype(self, ctype):
         """ Adjust default values for column output type"""
         if ctype.typeName() == 'decimal':
             if self.min is None:
@@ -56,7 +57,7 @@ class NRange(object):
     def getDiscreteRange(self):
         """Convert range to discrete range"""
         if type(self.min) is int and type(self.max) is int and self.step == 1:
-            return (self.max - self.min)
+            return self.max - self.min
         else:
             return (self.max - self.min) * float(1.0 / self.step)
 
@@ -82,7 +83,7 @@ class DateRange(object):
     :param interval: start of date range as python datetime object
     :param datetime_format: format for conversion of strings to datetime objects
     """
-    DEFAULT_UTC_FORMAT="%Y-%m-%d %H:%M:%S"
+    DEFAULT_UTC_FORMAT = "%Y-%m-%d %H:%M:%S"
 
     def __init__(self, begin, end, interval=None, datetime_format=DEFAULT_UTC_FORMAT):
         assert begin is not None
@@ -95,8 +96,8 @@ class DateRange(object):
 
         self.min = self.begin.timestamp()
 
-        self.max = (self.min +self.interval.total_seconds()
-               * self.computeTimestampIntervals(self.begin, self.end, self.interval))
+        self.max = (self.min + self.interval.total_seconds()
+                    * self.computeTimestampIntervals(self.begin, self.end, self.interval))
         self.step = self.interval.total_seconds()
 
     def _dateFromString(self, date_str, date_format):
@@ -134,7 +135,7 @@ class DateRange(object):
         """Check if min, max and step are specified """
         return self.min is not None and self.max is not None and self.step is not None
 
-    def _adjustForColtype(self, ctype):
+    def adjustRangeForColtype(self, ctype):
         """ adjust the range for the column output type"""
         pass
 

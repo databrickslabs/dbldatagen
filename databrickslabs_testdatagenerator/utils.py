@@ -41,11 +41,11 @@ def mkBoundsList(x, default):
         print(retval)
         return retval
     elif type(x) is int:
-        bounds_list=[x,x]
+        bounds_list = [x, x]
         assert len(bounds_list) == 2, "bounds list must be of length 2"
         return (False, bounds_list)
     else:
-        bounds_list=list(x)
+        bounds_list = list(x)
         assert len(bounds_list) == 2, "bounds list must be of length 2"
         return (False, bounds_list)
 
@@ -61,13 +61,13 @@ def topologicalSort(sources, initial_columns=None, flatten=True):
     # generate a copy so that we can modify in place
     pending = [(name, set(deps)) for name, deps in sources]
     provided = [] if initial_columns is None else initial_columns[:]
-    build_orders=[] if initial_columns is None else [ initial_columns ]
+    build_orders = [] if initial_columns is None else [ initial_columns ]
 
     while pending:
         next_pending = []
-        gen=[]
+        gen = []
         value_emitted = False
-        gen_provided=[]
+        gen_provided = []
         for entry in pending:
             name, deps = entry
             deps.difference_update(provided)

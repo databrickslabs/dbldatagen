@@ -34,11 +34,11 @@ _DIGITS_ZERO = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
 #: list of uppercase letters for template generation
 _LETTERS_UPPER = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
-                 'Q', 'R', 'T', 'S', 'U', 'V', 'W', 'X', 'Y', 'Z']
+                  'Q', 'R', 'T', 'S', 'U', 'V', 'W', 'X', 'Y', 'Z']
 
 #: list of lowercase letters for template generation
 _LETTERS_LOWER = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q',
-                 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+                  'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 
 #: list of all letters uppercase and lowercase
 _LETTERS_ALL = _LETTERS_LOWER + _LETTERS_UPPER
@@ -51,20 +51,21 @@ _ALNUM_UPPER = _LETTERS_UPPER + _DIGITS_ZERO
 
 """ words for ipsum lorem based text generation"""
 _WORDS_LOWER = ['lorem', 'ipsum', 'dolor', 'sit', 'amet', 'consectetur', 'adipiscing', 'elit', 'sed', 'do',
-               'eiusmod', 'tempor', 'incididunt', 'ut', 'labore', 'et', 'dolore', 'magna', 'aliqua', 'ut',
-               'enim', 'ad', 'minim', 'veniam', 'quis', 'nostrud', 'exercitation', 'ullamco', 'laboris',
-               'nisi', 'ut', 'aliquip', 'ex', 'ea', 'commodo', 'consequat', 'duis', 'aute', 'irure', 'dolor',
-               'in', 'reprehenderit', 'in', 'voluptate', 'velit', 'esse', 'cillum', 'dolore', 'eu', 'fugiat',
-               'nulla', 'pariatur', 'excepteur', 'sint', 'occaecat', 'cupidatat', 'non', 'proident', 'sunt',
-               'in', 'culpa', 'qui', 'officia', 'deserunt', 'mollit', 'anim', 'id', 'est', 'laborum']
+                'eiusmod', 'tempor', 'incididunt', 'ut', 'labore', 'et', 'dolore', 'magna', 'aliqua', 'ut',
+                'enim', 'ad', 'minim', 'veniam', 'quis', 'nostrud', 'exercitation', 'ullamco', 'laboris',
+                'nisi', 'ut', 'aliquip', 'ex', 'ea', 'commodo', 'consequat', 'duis', 'aute', 'irure', 'dolor',
+                'in', 'reprehenderit', 'in', 'voluptate', 'velit', 'esse', 'cillum', 'dolore', 'eu', 'fugiat',
+                'nulla', 'pariatur', 'excepteur', 'sint', 'occaecat', 'cupidatat', 'non', 'proident', 'sunt',
+                'in', 'culpa', 'qui', 'officia', 'deserunt', 'mollit', 'anim', 'id', 'est', 'laborum']
 
 _WORDS_UPPER = ['LOREM', 'IPSUM', 'DOLOR', 'SIT', 'AMET', 'CONSECTETUR', 'ADIPISCING', 'ELIT', 'SED', 'DO',
-               'EIUSMOD', 'TEMPOR', 'INCIDIDUNT', 'UT', 'LABORE', 'ET', 'DOLORE', 'MAGNA', 'ALIQUA', 'UT',
-               'ENIM', 'AD', 'MINIM', 'VENIAM', 'QUIS', 'NOSTRUD', 'EXERCITATION', 'ULLAMCO', 'LABORIS',
-               'NISI', 'UT', 'ALIQUIP', 'EX', 'EA', 'COMMODO', 'CONSEQUAT', 'DUIS', 'AUTE', 'IRURE',
-               'DOLOR', 'IN', 'REPREHENDERIT', 'IN', 'VOLUPTATE', 'VELIT', 'ESSE', 'CILLUM', 'DOLORE',
-               'EU', 'FUGIAT', 'NULLA', 'PARIATUR', 'EXCEPTEUR', 'SINT', 'OCCAECAT', 'CUPIDATAT', 'NON',
-               'PROIDENT', 'SUNT', 'IN', 'CULPA', 'QUI', 'OFFICIA', 'DESERUNT', 'MOLLIT', 'ANIM', 'ID', 'EST', 'LABORUM']
+                'EIUSMOD', 'TEMPOR', 'INCIDIDUNT', 'UT', 'LABORE', 'ET', 'DOLORE', 'MAGNA', 'ALIQUA', 'UT',
+                'ENIM', 'AD', 'MINIM', 'VENIAM', 'QUIS', 'NOSTRUD', 'EXERCITATION', 'ULLAMCO', 'LABORIS',
+                'NISI', 'UT', 'ALIQUIP', 'EX', 'EA', 'COMMODO', 'CONSEQUAT', 'DUIS', 'AUTE', 'IRURE',
+                'DOLOR', 'IN', 'REPREHENDERIT', 'IN', 'VOLUPTATE', 'VELIT', 'ESSE', 'CILLUM', 'DOLORE',
+                'EU', 'FUGIAT', 'NULLA', 'PARIATUR', 'EXCEPTEUR', 'SINT', 'OCCAECAT', 'CUPIDATAT', 'NON',
+                'PROIDENT', 'SUNT', 'IN', 'CULPA', 'QUI', 'OFFICIA', 'DESERUNT', 'MOLLIT', 'ANIM', 'ID', 'EST',
+                'LABORUM']
 
 
 class TextGenerator(object):
@@ -107,7 +108,7 @@ class TemplateGenerator(TextGenerator):
 
             if char == '\\':
                 escape = True
-            elif use_value and (char >= '0' and char <= '9'):
+            elif use_value and ('0' <= char <= '9'):
                 val_index = int(char)
                 retval.append(str(base_value[val_index]))
                 use_value = False
@@ -141,7 +142,7 @@ class TemplateGenerator(TextGenerator):
                 escape = False
             elif char == 'v' and escape:
                 escape = False
-                if following_char >= '0' and following_char <= '9':
+                if '0' <= following_char <= '9':
                     use_value = True
                 else:
                     retval.append(str(base_value))
@@ -180,9 +181,9 @@ class TemplateGenerator(TextGenerator):
 
         # return [ str(x)+"_Test" for x in v]
         if len(self.templates) > 1:
-            results = v.apply(lambda v, t: value_from_random_template(v, t), args=(self.templates,))
+            results = v.apply(lambda v1, t: value_from_random_template(v1, t), args=(self.templates,))
         else:
-            results = v.apply(lambda v, t: self.valueFromSingleTemplate(v, t), args=(self.templates[0],))
+            results = v.apply(lambda v1, t: self.valueFromSingleTemplate(v1, t), args=(self.templates[0],))
         return results
 
 
@@ -222,18 +223,18 @@ class ILText(TextGenerator):
         self.paragraphs = self.getAsTupleOrElse(paragraphs, (1,1), "paragraphs")
         self.words = self.getAsTupleOrElse(words, (2,12), "words")
         self.sentences = self.getAsTupleOrElse(sentences, (1,1), "sentences")
-        self.shape= [self.paragraphs[1], self.sentences[1], self.words[1] ]
+        self.shape = [self.paragraphs[1], self.sentences[1], self.words[1] ]
 
         # values needed for the text generation
         # numpy uses fixed sizes for strings , so compute whats needed
-        self.np_words=np.array(_WORDS_LOWER)
+        self.np_words = np.array(_WORDS_LOWER)
         max_word_len = max([len(s) for s in _WORDS_LOWER])
-        sentence_usize = (max_word_len +1) * self.words[1]+10
+        sentence_usize = (max_word_len + 1) * self.words[1]+10
         paragraph_usize = sentence_usize * self.sentences[1] + 10
         text_usize = paragraph_usize * self.paragraphs[1] + 15
-        self.sentence_dtype=f"U{sentence_usize}"
-        self.para_dtype=f"U{paragraph_usize}"
-        self.text_dtype=f"U{text_usize}"
+        self.sentence_dtype = f"U{sentence_usize}"
+        self.para_dtype = f"U{paragraph_usize}"
+        self.text_dtype = f"U{text_usize}"
 
         # build array of min and max values for paragraphs, sentences and words
         self.max_vals = np.array([ self.paragraphs[1], self.sentences[1],  self.words[1]])
@@ -246,10 +247,9 @@ class ILText(TextGenerator):
         # so this will result in x paragraphs, each having y sentences, each having z words
         # we could use for loops to generate the structure, but generating the max number of
         # random numbers needed in numpy will be much faster and we'll just ignore what we dont need
-        self.range_vals=self.max_vals - self.min_vals
+        self.range_vals = self.max_vals - self.min_vals
         self.mean_vals = (self.range_vals / 2.0) + self.min_vals
         self.std_vals = self.range_vals / 6.0
-
 
     def __repr__(self):
         return f"ILText(paragraphs={self.paragraphs}, sentences={self.sentences}, words={self.words})"
@@ -284,15 +284,16 @@ class ILText(TextGenerator):
         seed_size = len(seed) if type(seed) is list else seed.shape[0]
         assert seed_size > 0
 
-        stats_shape= [ seed_size, self.paragraphs[1], self.sentences[1], 3]
+        stats_shape = [ seed_size, self.paragraphs[1], self.sentences[1], 3]
 
         # get number of paragraphs, number of sentences and number of words shaped to size of the
         # word selections generated afterwards. We'll only use the first rows value for paragraphs and sentences
         # but its faster to generate all rows than to generate a ragged array
-        para_stats = np.array(np.maximum(np.minimum(np.round(rnd.normal(self.mean_vals, self.std_vals, size= stats_shape)) ,
-                                           self.max_vals),
-                                self.min_vals),
-                              dtype='int')
+        para_stats = np.array(
+            np.maximum(np.minimum(np.round(rnd.normal(self.mean_vals, self.std_vals, size=stats_shape)),
+                                  self.max_vals),
+                       self.min_vals),
+            dtype='int')
 
         # get offsets for random words
         word_offsets = rnd.randint(self.np_words.size, size=(seed_size,self.paragraphs[1], self.sentences[1], self.words[1]))
@@ -301,30 +302,30 @@ class ILText(TextGenerator):
         candidate_words = self.np_words[word_offsets]
 
         # add words per sentence to start of array and capitalize the first word
-        candidate_words2=np.concatenate((para_stats[:, :, :, 2:3],
-                        np.char.capitalize(candidate_words[:, :, :, 0:1]),
-                        candidate_words[:, :, :, 1:]), axis=3)
+        candidate_words2 = np.concatenate((para_stats[:, :, :, 2:3],
+                                           np.char.capitalize(candidate_words[:, :, :, 0:1]),
+                                           candidate_words[:, :, :, 1:]), axis=3)
 
-        candidate_words3=np.array(candidate_words2, dtype=self.sentence_dtype)
+        candidate_words3 = np.array(candidate_words2, dtype=self.sentence_dtype)
 
         # make sentence from each sentence dimension limiting the sentence to first n words
         # reminder dimensions are (rows, paragraphs, sentences, words)
-        candidate_sentences=np.apply_along_axis(lambda x:  " ".join(x[1:int(x[0])+1 ])+r"." , 3, candidate_words3)
+        candidate_sentences = np.apply_along_axis(lambda x:  " ".join(x[1:int(x[0])+1 ])+r"." , 3, candidate_words3)
         candidate_sentences2 = np.concatenate((para_stats[:, :, 0, 1:2],
-                                           candidate_sentences), axis=2)
-        candidate_sentences3=np.array(candidate_sentences2, dtype=self.para_dtype)
+                                               candidate_sentences), axis=2)
+        candidate_sentences3 = np.array(candidate_sentences2, dtype=self.para_dtype)
 
-        candidate_paras=np.apply_along_axis(lambda x: " ".join(x[1:int(x[0])+1 ]) , 2, candidate_sentences3)
+        candidate_paras = np.apply_along_axis(lambda x: " ".join(x[1:int(x[0])+1 ]) , 2, candidate_sentences3)
         candidate_paras2 = np.concatenate((para_stats[:, 0, 0, 0:1],
                                            candidate_paras), axis=1)
-        candidate_paras3=np.array(candidate_paras2, dtype=self.text_dtype)
+        candidate_paras3 = np.array(candidate_paras2, dtype=self.text_dtype)
 
-        candidate_text=np.apply_along_axis(lambda x: "\n\n".join(x[1:int(x[0])+1 ]) , 1, candidate_paras3)
+        candidate_text = np.apply_along_axis(lambda x: "\n\n".join(x[1:int(x[0])+1 ]), 1, candidate_paras3)
 
         # now dimensions are rows, paras, sentences
 
         return [ str(x) for x in candidate_text ]
-        #return [ [ [":::".join(s) for s in p ] for p in r] for r in candidate_sentences ]
+        # return [ [ [":::".join(s) for s in p ] for p in r] for r in candidate_sentences ]
 
     def classicGenerateText(self, seed):
         """"
@@ -336,7 +337,6 @@ class ILText(TextGenerator):
                   int(round(self.randomGauss(self.sentences))),
                   int(round(self.randomGauss(self.words)))]
 
-
         return self.generateText([seed], 42)[0]
 
     def pandasGenerateText(self, v):
@@ -346,5 +346,5 @@ class ILText(TextGenerator):
         :param v: pandas series of seed values for random text generation
         :returns: Pandas series of generated strings
         """
-        results=self.generateText(v.to_numpy(), 42)
+        results = self.generateText(v.to_numpy(), 42)
         return pd.Series(results)
