@@ -14,7 +14,8 @@ from datetime import date, datetime, timedelta
 from .utils import ensure
 from .column_spec_options import ColumnSpecOptions
 from .text_generators import TemplateGenerator
-from .dataranges import DateRange, NRange
+from .dataranges import DateRange
+from .nrange import NRange
 
 from pyspark.sql.functions import col, pandas_udf
 import logging
