@@ -13,7 +13,7 @@ import math
 from datetime import date, datetime, timedelta
 from .utils import ensure
 from .text_generators import TemplateGenerator
-from .dataranges import DateRange
+from .daterange import DateRange
 from .nrange import NRange
 
 from pyspark.sql.functions import col, pandas_udf

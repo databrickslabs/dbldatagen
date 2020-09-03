@@ -29,14 +29,14 @@ from databrickslabs_testdatagenerator.column_generation_spec import ColumnGenera
 from databrickslabs_testdatagenerator.column_spec_options import ColumnSpecOptions
 from databrickslabs_testdatagenerator.data_analyzer import DataAnalyzer
 from databrickslabs_testdatagenerator.schema_parser import SchemaParser
-from databrickslabs_testdatagenerator.dataranges import DateRange
+from databrickslabs_testdatagenerator.daterange import DateRange
 from databrickslabs_testdatagenerator.nrange import NRange
 from databrickslabs_testdatagenerator.function_builder import ColumnGeneratorBuilder
 from .spark_singleton import SparkSingleton
 from databrickslabs_testdatagenerator.text_generators import TemplateGenerator, ILText
 
 
-__all__ = ["data_generator", "data_analyzer", "schema_parser", "dataranges", "nrange",
+__all__ = ["data_generator", "data_analyzer", "schema_parser", "daterange.py", "nrange",
            "column_generation_spec", "utils", "function_builder",
            "spark_singleton", "text_generators"
            ]
