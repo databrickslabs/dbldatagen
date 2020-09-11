@@ -64,7 +64,6 @@ class ColumnGeneratorBuilder:
         total_weights = sum(weights)
         return list(map(lambda x: x / total_weights, itertools.accumulate(weights)))
 
-
     @classmethod
     def mkExprChoicesFn(cls, values, weights, seed_column, datatype):
         """ build an expression of the form

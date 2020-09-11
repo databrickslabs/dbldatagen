@@ -22,7 +22,7 @@ The main entry point for any test data generation activities is the `DataGenerat
 Most of the other classes are used for internal purposes only
 """
 
-__all__ = ["data_generator", "data_analyzer", "schema_parser", "daterange","nrange",
+__all__ = ["data_generator", "data_analyzer", "schema_parser", "daterange", "nrange",
            "column_generation_spec", "utils", "function_builder", "spark_singleton", "text_generators"
            ]
 

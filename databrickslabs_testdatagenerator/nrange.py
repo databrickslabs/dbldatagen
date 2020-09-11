@@ -6,6 +6,7 @@ import math
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
     StructType, StructField, TimestampType, DataType, DateType, ByteType
 
+
 class NRange(object):
     """ Ranged numeric interval representing the interval min .. max inclusive
 
@@ -23,11 +24,11 @@ class NRange(object):
     """
 
     def __init__(self, min=None, max=None, step=None, until=None):
-        assert until is None if max is not None else True,"Only one of max or until can be specified"
-        assert max is None if until is not None else True,"Only one of max or until can be specified"
-        self.min=min
-        self.max=max if until is None else until+1
-        self.step=step
+        assert until is None if max is not None else True, "Only one of max or until can be specified"
+        assert max is None if until is not None else True, "Only one of max or until can be specified"
+        self.min = min
+        self.max = max if until is None else until + 1
+        self.step = step
 
     def __str__(self):
         return "NRange({}, {}, {})".format(self.min, self.max, self.step)
@@ -40,7 +41,7 @@ class NRange(object):
         """Check is all instance vars are populated"""
         return self.min is not None and self.max is not None and self.step is not None
 
-    def _adjustForColtype(self, ctype):
+    def adjustForColumnDatatype(self, ctype):
         """ Adjust default values for column output type"""
         if ctype.typeName() == 'decimal':
             if self.min is None:
@@ -57,24 +58,22 @@ class NRange(object):
             assert self.max <= 256
 
         if (type(ctype) is DoubleType
-                or type(ctype) is FloatType) and self.step is None:
+            or type(ctype) is FloatType) and self.step is None:
             self.step = 1.0
 
         if (type(ctype) is ByteType
-                or type(ctype) is ShortType
-                or type(ctype) is IntegerType
-                or type(ctype) is LongType) and self.step is None:
+            or type(ctype) is ShortType
+            or type(ctype) is IntegerType
+            or type(ctype) is LongType) and self.step is None:
             self.step = 1
 
     def getDiscreteRange(self):
         """Convert range to discrete range"""
         if type(self.min) is int and type(self.max) is int and self.step == 1:
-            return (self.max - self.min)
+            return self.max - self.min
         else:
             return (self.max - self.min) * float(1.0 / self.step)
 
     def getContinuousRange(self):
         """Convert range to continuous range"""
         return (self.max - self.min) * float(1.0)
-
-

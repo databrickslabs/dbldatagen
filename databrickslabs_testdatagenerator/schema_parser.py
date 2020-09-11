@@ -70,6 +70,7 @@ class SchemaParser(object):
     def parseCreateTable(cls, sparkSession, source_schema):
         """ Parse a schema from a schema string
 
+            :param sparkSession: spark session to use
             :param source_schema: should be a table definition minus the create table statement
             :returns: Spark SQL schema instance
         """

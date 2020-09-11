@@ -157,9 +157,10 @@ class DataGenerator:
             :returns: string containing generated name
         """
         cls._nextNameIndex += 1
-        newName = (cls._untitledNamePrefix + '_' + str(cls._nextNameIndex))
-        return newName
+        new_name = (cls._untitledNamePrefix + '_' + str(cls._nextNameIndex))
+        return new_name
 
+    # noinspection PyAttributeOutsideInit
     def clone(self):
         """Make a clone of the data spec via deep copy preserving same spark session
 
@@ -185,11 +186,11 @@ class DataGenerator:
     def markForPlanRegen(self):
         """Mark that build plan needs to be regenerated
 
-        :returns: modified in-place instance of test data generator allowing for chaining of calls following Builder pattern
+        :returns: modified in-place instance of test data generator allowing for chaining of calls following
+                  Builder pattern
         """
         self.build_plan_computed = False
         return self
-
 
     def explain(self):
         """Explain the test data generation process
@@ -219,17 +220,18 @@ class DataGenerator:
         """Modify the row count - useful when starting a new spec from a clone
 
         :param rc: The count of rows to generate
-        :returns: modified in-place instance of test data generator allowing for chaining of calls following Builder pattern
+        :returns: modified in-place instance of test data generator allowing for chaining of calls following
+                  Builder pattern
         """
-        self._rowCount=rc
+        self._rowCount = rc
         return self
 
     @property
     def rowCount(self):
         """ Return the row count
 
-        This may differ from the original specified row counts, if counts need to be adjusted for purposes of keeping the ratio of rows to unique keys correct
-        or other heuristics
+        This may differ from the original specified row counts, if counts need to be adjusted for purposes of
+        keeping the ratio of rows to unique keys correct or other heuristics
         """
         return self._rowCount
 
@@ -238,7 +240,8 @@ class DataGenerator:
 
         If this is not called, the seed column field is omitted from the final test data set
 
-        :returns: modified in-place instance of test data generator allowing for chaining of calls following Builder pattern
+        :returns: modified in-place instance of test data generator allowing for chaining of calls
+                  following Builder pattern
         """
         self.columnSpecsByName[ColumnGenerationSpec.SEED_COLUMN].omit = False
         self.markForPlanRegen()
@@ -250,7 +253,8 @@ class DataGenerator:
 
         :param option_key: key for option
         :param option_value: value for option
-        :returns: modified in-place instance of test data generator allowing for chaining of calls following Builder pattern
+        :returns: modified in-place instance of test data generator allowing for chaining of calls
+                  following Builder pattern
         """
         ensure(option_key in self._allowed_keys)
         self._options[option_key] = option_value
@@ -262,7 +266,8 @@ class DataGenerator:
 
         Allows for multiple options with option=option_value style of option passing
 
-        :returns: modified in-place instance of test data generator allowing for chaining of calls following Builder pattern
+        :returns: modified in-place instance of test data generator allowing for chaining of calls
+                  following Builder pattern
         """
         for key, value in kwargs.items():
             self.option(key, value)
@@ -272,7 +277,8 @@ class DataGenerator:
     def _processOptions(self):
         """ process options to give effect to the options supplied earlier
 
-        :returns: modified in-place instance of test data generator allowing for chaining of calls following Builder pattern
+        :returns: modified in-place instance of test data generator allowing for chaining of calls
+                  following Builder pattern
         """
         self.logger.info("options: %s", str(self._options))
 
@@ -343,7 +349,6 @@ class DataGenerator:
         ensure(key is not None, "key should be non-empty")
         return self.columnSpecsByName[key]
 
-
     def getColumnType(self, colName):
         """ Get column Spark SQL datatype for specified column
 
@@ -356,20 +361,20 @@ class DataGenerator:
     def isFieldExplicitlyDefined(self, colName):
         """ return True if column generation spec has been explicitly defined for column, else false """
         ensure(colName is not None, "colName should be non-empty")
-        colDef = self.columnSpecsByName.get(colName, None)
-        return not colDef.implicit if colDef is not None else False
+        col_def = self.columnSpecsByName.get(colName, None)
+        return not col_def.implicit if col_def is not None else False
 
     def getInferredColumnNames(self):
         """ get list of output columns """
         return [fd.name for fd in self.inferredSchemaFields]
 
     @staticmethod
-    def flatten(l):
+    def flatten(lst):
         """ flatten list
 
-        :param l: list to flatten
+        :param lst: list to flatten
         """
-        return [item for sublist in l for item in sublist]
+        return [item for sublist in lst for item in sublist]
 
     def getOutputColumnNames(self):
         """ get list of output columns by flattening list of lists of column names
@@ -423,10 +428,13 @@ class DataGenerator:
            b) one or more regex patterns
            c) type (as in pyspark.sql.types)
 
-        :param patterns: patterns may specified a single pattern as a string or a list of patterns that match the column names. May be omitted.
-        :param fields: a string specifying an explicit field to match , or a list of strings specifying explicit fields to match. May be omitted.
+        :param patterns: patterns may specified a single pattern as a string or a list of patterns
+                         that match the column names. May be omitted.
+        :param fields: a string specifying an explicit field to match , or a list of strings specifying
+                       explicit fields to match. May be omitted.
         :param match_types: a single Spark SQL datatype or list of Spark SQL data types to match. May be omitted.
-        :returns: modified in-place instance of test data generator allowing for chaining of calls following Builder pattern
+        :returns: modified in-place instance of test data generator allowing for chaining of calls following
+                  Builder pattern
 
         You may also add a variety of options to further control the test data generation process.
         For full list of options, see :doc:`/reference/api/databrickslabs_testdatagenerator.column_spec_options`.
@@ -441,15 +449,16 @@ class DataGenerator:
         elif type(patterns) is list:
             patterns = ["^" + pat + "$" for pat in patterns]
 
-        all_fields=self.getInferredColumnNames()
-        effective_fields = [x for x in all_fields if (fields is None or x in fields) and x != ColumnGenerationSpec.SEED_COLUMN]
+        all_fields = self.getInferredColumnNames()
+        effective_fields = [x for x in all_fields if
+                            (fields is None or x in fields) and x != ColumnGenerationSpec.SEED_COLUMN]
 
         if patterns is not None:
             effective_fields = [x for x in effective_fields for y in patterns if re.search(y, x) is not None]
 
         if match_types is not None:
             effective_fields = [x for x in effective_fields for y in match_types
-                                if self.getColumnType(x) == y ]
+                                if self.getColumnType(x) == y]
 
         for f in effective_fields:
             self.withColumnSpec(f, implicit=True, **kwargs)
@@ -462,16 +471,16 @@ class DataGenerator:
         :param allow_id: If True, allows the specialized seed column (which defaults to `id`) to be present in columns
         :returns: True if test passes
         """
-        inferredColumns = self.getInferredColumnNames()
+        inferred_columns = self.getInferredColumnNames()
         if allow_id and columns == ColumnGenerationSpec.SEED_COLUMN:
             return True
 
         if type(columns) is list:
             for column in columns:
-                ensure(column in inferredColumns,
+                ensure(column in inferred_columns,
                        " column `{0}` must refer to defined column".format(column))
         else:
-            ensure(columns in inferredColumns,
+            ensure(columns in inferred_columns,
                    " column `{0}` must refer to defined column".format(columns))
         return True
 
@@ -479,7 +488,8 @@ class DataGenerator:
                        implicit=False, data_range=None, omit=False, base_column=None, **kwargs):
         """ add a column specification for an existing column
 
-        :returns: modified in-place instance of test data generator allowing for chaining of calls following Builder pattern
+        :returns: modified in-place instance of test data generator allowing for chaining of calls
+                  following Builder pattern
 
         You may also add a variety of options to further control the test data generation process.
         For full list of options, see :doc:`/reference/api/databrickslabs_testdatagenerator.column_spec_options`.
@@ -491,8 +501,8 @@ class DataGenerator:
             self._checkColumnOrColumnList(base_column)
         ensure(not self.isFieldExplicitlyDefined(colName), "duplicate column spec for column `{0}`".format(colName))
 
-        newProps = {}
-        newProps.update(kwargs)
+        new_props = {}
+        new_props.update(kwargs)
 
         self.logger.info(
             "adding column spec - `{0}` with baseColumn : `{1}`, implicit : {2} , omit {3}".format(colName, base_column,
@@ -500,7 +510,7 @@ class DataGenerator:
         self.generateColumnDefinition(colName, self.getColumnType(colName), min=min, max=max, step=step, prefix=prefix,
                                       random=random, data_range=data_range,
                                       distribution=distribution, base_column=base_column,
-                                      implicit=implicit, omit=omit, **newProps)
+                                      implicit=implicit, omit=omit, **new_props)
         return self
 
     def hasColumnSpec(self, colName):
@@ -518,7 +528,8 @@ class DataGenerator:
                    **kwargs):
         """ add a new column for specification
 
-        :returns: modified in-place instance of test data generator allowing for chaining of calls following Builder pattern
+        :returns: modified in-place instance of test data generator allowing for chaining of calls
+                  following Builder pattern
 
         You may also add a variety of options to further control the test data generation process.
         For full list of options, see :doc:`/reference/api/databrickslabs_testdatagenerator.column_spec_options`.
@@ -528,8 +539,8 @@ class DataGenerator:
         ensure(colType is not None, "Must specify column type for column `{0}`".format(colName))
         if base_column is not None:
             self._checkColumnOrColumnList(base_column, allow_id=True)
-        newProps = {}
-        newProps.update(kwargs)
+        new_props = {}
+        new_props.update(kwargs)
 
         from .schema_parser import SchemaParser
         if type(colType) == str:
@@ -541,7 +552,7 @@ class DataGenerator:
                                                                                               implicit, omit))
         self.generateColumnDefinition(colName, colType, min=min, max=max, step=step, prefix=prefix, random=random,
                                       distribution=distribution, base_column=base_column, data_range=data_range,
-                                      implicit=implicit, omit=omit, **newProps)
+                                      implicit=implicit, omit=omit, **new_props)
         self.inferredSchemaFields.append(StructField(colName, colType, nullable))
         return self
 
@@ -571,7 +582,7 @@ class DataGenerator:
         self.columnSpecsByName[colName] = column_spec
 
         # if column spec for column already exists - remove it
-        items_to_remove = [ x  for x in self.allColumnSpecs if x.name == colName ]
+        items_to_remove = [x for x in self.allColumnSpecs if x.name == colName]
         for x in items_to_remove:
             self.allColumnSpecs.remove(x)
 
@@ -593,7 +604,7 @@ class DataGenerator:
 
         if not streaming:
             status = ("Generating data frame with ids from {} to {} with {} partitions"
-                              .format(start_id, end_id, id_partitions))
+                      .format(start_id, end_id, id_partitions))
             self.logger.info(status)
             self.execution_history.append(status)
             df1 = self.sparkSession.range(start=start_id,
@@ -605,59 +616,49 @@ class DataGenerator:
 
         else:
             status = ("Generating streaming data frame with ids from {} to {} with {} partitions"
-                          .format(start_id, end_id, id_partitions))
+                      .format(start_id, end_id, id_partitions))
             self.logger.info(status)
             self.execution_history.append(status)
 
             df1 = (self.sparkSession.readStream
-                    .format("rate"))
+                   .format("rate"))
             if options is not None:
                 if "rowsPerSecond" not in options:
                     options['rowsPerSecond'] = 1
                 if "numPartitions" not in options:
                     options['numPartitions'] = id_partitions
 
-                for k,v in options.items():
-                    df1 = df1.option(k,v)
-                df1= df1.load().withColumnRenamed("value", ColumnGenerationSpec.SEED_COLUMN)
+                for k, v in options.items():
+                    df1 = df1.option(k, v)
+                df1 = df1.load().withColumnRenamed("value", ColumnGenerationSpec.SEED_COLUMN)
             else:
-                df1 = ( df1.option("rowsPerSecond", 1)
-                        .option("numPartitions", id_partitions)
-                        .load()
-                        .withColumnRenamed("value", ColumnGenerationSpec.SEED_COLUMN)
-                        )
+                df1 = (df1.option("rowsPerSecond", 1)
+                       .option("numPartitions", id_partitions)
+                       .load()
+                       .withColumnRenamed("value", ColumnGenerationSpec.SEED_COLUMN)
+                       )
 
         return df1
-
-    def _ppList(self, alist, msg=""):
-        """Pretty printing for lists
-
-        :param alist: the list to print
-        :param msg: optional message to display
-        """
-        if msg is not None:
-            print(msg)
-        l = len(alist)
-        for x in alist:
-            print(x)
 
     def computeColumnBuildOrder(self):
         """ compute the build ordering using a topological sort on dependencies
 
         :returns: the build ordering
         """
-        dependency_ordering = [(x.name, set(x.dependencies)) if x.name != ColumnGenerationSpec.SEED_COLUMN else (ColumnGenerationSpec.SEED_COLUMN, set())
+        dependency_ordering = [(x.name, set(x.dependencies)) if x.name != ColumnGenerationSpec.SEED_COLUMN else (
+            ColumnGenerationSpec.SEED_COLUMN, set())
                                for x in self.allColumnSpecs]
 
-        #self.pp_list(dependency_ordering, msg="dependencies")
+        # self.pp_list(dependency_ordering, msg="dependencies")
 
         self.logger.info("dependency list: %s", str(dependency_ordering))
 
-        self._build_order = list(topologicalSort(dependency_ordering, flatten=False, initial_columns=[ColumnGenerationSpec.SEED_COLUMN]))
+        self._build_order = list(
+            topologicalSort(dependency_ordering, flatten=False, initial_columns=[ColumnGenerationSpec.SEED_COLUMN]))
 
         self.logger.info("columnBuildOrder: %s", str(self._build_order))
 
-        #self.pp_list(self._build_order, "build order")
+        # self.pp_list(self._build_order, "build order")
         return self._build_order
 
     @property
@@ -666,24 +667,25 @@ class DataGenerator:
 
         The build order will be a list of lists - each list specifying columns that can be built at the same time
         """
-        return [x for x in self._build_order if x != [ColumnGenerationSpec.SEED_COLUMN] ]
+        return [x for x in self._build_order if x != [ColumnGenerationSpec.SEED_COLUMN]]
 
     def get_column_data_types(self, columns):
         """ Get data types for columns
 
         :param columns: = list of columns to retrieve data types for
         """
-        return [ self.columnSpecsByName[col].datatype for col in columns ]
+        return [self.columnSpecsByName[col].datatype for col in columns]
 
     def computeBuildPlan(self):
         """ prepare for building
 
-        :returns: modified in-place instance of test data generator allowing for chaining of calls following Builder pattern
+        :returns: modified in-place instance of test data generator allowing for chaining of calls
+                  following Builder pattern
         """
         self.build_plan = []
         self.execution_history = []
         self._processOptions()
-        self.build_plan.append("Build dataframe with seed column: %s".format(ColumnGenerationSpec.SEED_COLUMN))
+        self.build_plan.append("Build Spark data frame with seed column: %s".format(ColumnGenerationSpec.SEED_COLUMN))
 
         # add temporary columns
         for cs in self.allColumnSpecs:
@@ -709,7 +711,7 @@ class DataGenerator:
                 cs = self.columnSpecsByName[x]
                 self.build_plan.append(cs.getPlanEntry())
 
-        self.build_plan_computed=True
+        self.build_plan_computed = True
         return self
 
     def build(self, withTempView=False, withView=False, withStreaming=False, options=None):
@@ -723,7 +725,8 @@ class DataGenerator:
 
         :param withTempView: if True, automatically creates temporary view for generated data set
         :param withView: If True, automatically creates global view for data set
-        :param withStreaming: If True, generates data using Spark Structured Streaming Rate source suitable for writing with `writeStream`
+        :param withStreaming: If True, generates data using Spark Structured Streaming Rate source suitable
+                              for writing with `writeStream`
         :param options: optional Dict of options to control generating of streaming data
         :returns: Spark SQL dataframe of generated test data
         """
@@ -731,8 +734,8 @@ class DataGenerator:
         self.execution_history = []
         self.computeBuildPlan()
 
-        outputColumns = self.getOutputColumnNames()
-        ensure(outputColumns is not None and len(outputColumns) > 0,
+        output_columns = self.getOutputColumnNames()
+        ensure(output_columns is not None and len(output_columns) > 0,
                """
                 | You must specify at least one column for output
                 | - use withIdOutput() to output base seed column
@@ -751,44 +754,44 @@ class DataGenerator:
             # are generated resulting in shorter lineage
 
             for colNames in self.build_order:
-                build_round=["*"]
-                nCol = 0
+                build_round = ["*"]
+                inx_col = 0
                 self.execution_history.append("building round for : {}".format(colNames))
                 for colName in colNames:
                     col1 = self.columnSpecsByName[colName]
-                    columnGenerators = col1.makeGenerationExpressions(self.use_pandas)
+                    column_generators = col1.makeGenerationExpressions(self.use_pandas)
                     self.execution_history.extend(col1.execution_history)
-                    if type(columnGenerators) is list and len(columnGenerators) == 1:
-                        build_round.append( columnGenerators[0].alias(colName))
-                    elif type(columnGenerators) is list and len(columnGenerators) > 1:
+                    if type(column_generators) is list and len(column_generators) == 1:
+                        build_round.append(column_generators[0].alias(colName))
+                    elif type(column_generators) is list and len(column_generators) > 1:
                         i = 0
-                        for cg in columnGenerators:
+                        for cg in column_generators:
                             build_round.append(cg.alias('{0}_{1}'.format(colName, i)))
                             i += 1
                     else:
-                        build_round.append(columnGenerators.alias(colName))
-                    nCol = nCol + 1
+                        build_round.append(column_generators.alias(colName))
+                    inx_col = inx_col + 1
 
                 df1 = df1.select(*build_round)
         else:
             # build columns
             self.execution_history.append("Generating data with withColumn statements")
 
-            column_build_order = [ item for sublist in self.build_order for item in sublist ]
+            column_build_order = [item for sublist in self.build_order for item in sublist]
             for colName in column_build_order:
                 col1 = self.columnSpecsByName[colName]
-                columnGenerators = col1.makeGenerationExpressions()
+                column_generators = col1.makeGenerationExpressions()
                 self.execution_history.extend(col1.execution_history)
 
-                if type(columnGenerators) is list and len(columnGenerators) == 1:
-                    df1 = df1.withColumn(colName, columnGenerators[0])
-                elif type(columnGenerators) is list and len(columnGenerators) > 1:
+                if type(column_generators) is list and len(column_generators) == 1:
+                    df1 = df1.withColumn(colName, column_generators[0])
+                elif type(column_generators) is list and len(column_generators) > 1:
                     i = 0
-                    for cg in columnGenerators:
+                    for cg in column_generators:
                         df1 = df1.withColumn('{0}_{1}'.format(colName, i), cg)
                         i += 1
                 else:
-                    df1 = df1.withColumn(colName, columnGenerators)
+                    df1 = df1.withColumn(colName, column_generators)
 
         df1 = df1.select(*self.getOutputColumnNames())
         self.execution_history.append("selecting columns: {}".format(self.getOutputColumnNames()))
@@ -828,33 +831,34 @@ class DataGenerator:
             if isUpdate:
                 results.append("{}={}".format(col, new_val))
             else:
-                results.append("{}".format( new_val))
-
+                results.append("{}".format(new_val))
 
         return ", ".join(results)
 
-    def scriptTable(self, name=None, location=None,table_format="delta"):
+    def scriptTable(self, name=None, location=None, table_format="delta"):
         """ generate create table script suitable for format of test data set
 
         :param name: name of table to use in generated script
-        :param location: path to location of data. If specified (default is None), will generate an external table definition.
+        :param location: path to location of data. If specified (default is None), will generate
+                         an external table definition.
+        :param table_format: table format for table
         :returns: SQL string for scripted table
         """
         assert name is not None
 
         self.computeBuildPlan()
 
-        outputColumns = self.getOutputColumnNamesAndTypes()
+        output_columns = self.getOutputColumnNamesAndTypes()
 
-        results = [ "CREATE TABLE IF NOT EXISTS {} (".format(name)]
-        ensure(outputColumns is not None and len(outputColumns) > 0,
+        results = ["CREATE TABLE IF NOT EXISTS {} (".format(name)]
+        ensure(output_columns is not None and len(output_columns) > 0,
                """
                 | You must specify at least one column for output
                 | - use withIdOutput() to output base seed column
                """)
 
         col_expressions = []
-        for col in outputColumns:
+        for col in output_columns:
             col_expressions.append("    {} {}".format(col[0], self.sqlTypeFromSparkType(col[1])))
         results.append(",\n".join(col_expressions))
         results.append(")")
@@ -865,7 +869,8 @@ class DataGenerator:
 
         return "\n".join(results)
 
-    def scriptMerge(self, tgt_name=None, src_name=None, update_expr=None, del_expr=None, join_expr=None, time_expr=None, ins_expr=None,
+    def scriptMerge(self, tgt_name=None, src_name=None, update_expr=None, del_expr=None, join_expr=None, time_expr=None,
+                    ins_expr=None,
                     use_explicit_names=True,
                     update_columns=None, update_column_exprs=None,
                     insert_columns=None, insert_column_exprs=None,
@@ -876,10 +881,10 @@ class DataGenerator:
         :param tgt_alias: alias for target table - defaults to `tgt`
         :param src_name: name of source table to use in generated script
         :param src_alias: alias for source table - defaults to `src`
-        :param update_expr: optonal string representing updated condition. If not present, then any row that does not match join condition is considered an update
+        :param update_expr: optional string representing updated condition. If not present, then any row that does not match join condition is considered an update
         :param del_expr: optional string representing delete condition - For example `src.action='DEL'`. If not present, no delete clause is generated
         :param ins_expr: optional string representing insert condition - If not present, there is no condition on insert other than no match
-        :param join_expr: string repesenting join condition. For example, `tgt.id=src.id`
+        :param join_expr: string representing join condition. For example, `tgt.id=src.id`
         :param time_expr: optional time travel expression - for example : `TIMESTAMP AS OF timestamp_expression` or `VERSION AS OF version`
         :param insert_columns: Optional list of strings designating columns to insert. If not supplied, uses all columns defined in spec
         :param insert_column_exprs: Optional list of strings designating designating column expressions for insert.
@@ -899,9 +904,9 @@ class DataGenerator:
         self.computeBuildPlan()
 
         # get list of column names
-        outputColumns = [ x[0] for x in self.getOutputColumnNamesAndTypes() ]
+        output_columns = [x[0] for x in self.getOutputColumnNamesAndTypes()]
 
-        ensure(outputColumns is not None and len(outputColumns) > 0,
+        ensure(output_columns is not None and len(output_columns) > 0,
                """
                 | You must specify at least one column for output
                 | - use withIdOutput() to output base seed column
@@ -909,10 +914,10 @@ class DataGenerator:
 
         # use list of column names if not supplied
         if insert_columns is None:
-            insert_columns = outputColumns
+            insert_columns = output_columns
 
         if update_columns is None:
-            update_columns = outputColumns
+            update_columns = output_columns
 
         # build merge statement
         results = ["MERGE INTO `{}` as {}".format(tgt_name, tgt_alias)]
@@ -926,7 +931,6 @@ class DataGenerator:
         # add join condition
         results.append("ON {}".format(join_expr))
 
-
         # generate update clause
         update_clause = None
         if update_expr is not None:
@@ -935,20 +939,18 @@ class DataGenerator:
             update_clause = """WHEN MATCHED THEN UPDATE """
 
         if not use_explicit_names:
-            update_clause=update_clause + " SET *"
+            update_clause = update_clause + " SET *"
         else:
-            update_clause= (update_clause
-                            + " SET "
-                            + self._mkInsertOrUpdateStatement(columns=update_columns, src_alias=src_alias, substitutions=update_column_exprs))
+            update_clause = (update_clause
+                             + " SET "
+                             + self._mkInsertOrUpdateStatement(columns=update_columns, src_alias=src_alias,
+                                                               substitutions=update_column_exprs))
 
         results.append(update_clause)
 
-
-
         # generate delete clause
         if del_expr is not None:
-            results.append( "WHEN MATCHED and {} THEN DELETE".format(del_expr))
-
+            results.append("WHEN MATCHED and {} THEN DELETE".format(del_expr))
 
         if ins_expr is not None:
             ins_clause = "WHEN NOT MATCHED and {} THEN INSERT ".format(ins_expr)
@@ -956,15 +958,15 @@ class DataGenerator:
             ins_clause = "WHEN NOT MATCHED THEN INSERT "
 
         if not use_explicit_names:
-            ins_clause=ins_clause + " *"
+            ins_clause = ins_clause + " *"
         else:
-            ins_clause=(ins_clause
-                        + "({})".format(",".join(insert_columns))
-                        + " VALUES ({})".format(self._mkInsertOrUpdateStatement(columns=insert_columns,
-                                                                               src_alias=src_alias,
-                                                                               substitutions=insert_column_exprs,
-                                                                               isUpdate=False))
-                        )
+            ins_clause = (ins_clause
+                          + "({})".format(",".join(insert_columns))
+                          + " VALUES ({})".format(self._mkInsertOrUpdateStatement(columns=insert_columns,
+                                                                                  src_alias=src_alias,
+                                                                                  substitutions=insert_column_exprs,
+                                                                                  isUpdate=False))
+                          )
 
         results.append(ins_clause)
 

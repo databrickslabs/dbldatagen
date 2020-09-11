@@ -3,10 +3,13 @@
 #
 from datetime import date, datetime, timedelta, timezone
 import math
+from .datarange import DataRange
+
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
     StructType, StructField, TimestampType, DataType, DateType, ByteType
 
-class DateRange(object):
+
+class DateRange(DataRange):
     """Class to represent Date range
 
     The date range will represented internally using `datetime` for `start` and `end`, and `timedelta` for `interval`
@@ -23,8 +26,9 @@ class DateRange(object):
     Note parsing format for interval uses standard timedelta parsing not the `datetime_format` string
     :param datetime_format: format for conversion of strings to datetime objects
     """
-    DEFAULT_UTC_TS_FORMAT="%Y-%m-%d %H:%M:%S"
-    DEFAULT_DATE_FORMAT="%Y-%m-%d"
+    DEFAULT_UTC_TS_FORMAT = "%Y-%m-%d %H:%M:%S"
+    DEFAULT_DATE_FORMAT = "%Y-%m-%d"
+
     # todo: deduce format from begin and end params
 
     def __init__(self, begin, end, interval=None, datetime_format=DEFAULT_UTC_TS_FORMAT):
@@ -37,8 +41,8 @@ class DateRange(object):
 
         self.min = self.begin.timestamp()
 
-        self.max = (self.min +self.interval.total_seconds()
-               * self.computeTimestampIntervals(self.begin, self.end, self.interval))
+        self.max = (self.min + self.interval.total_seconds()
+                    * self.computeTimestampIntervals(self.begin, self.end, self.interval))
         self.step = self.interval.total_seconds()
 
     @classmethod
@@ -50,7 +54,6 @@ class DateRange(object):
     @classmethod
     def _timedelta_from_string(cls, interval):
         return timedelta(**cls.parseInterval(interval))
-
 
     @classmethod
     def parseInterval(cls, interval_str):
@@ -68,7 +71,6 @@ class DateRange(object):
         return "DateRange({},{},{} == {}, {}, {})".format(self.begin, self.end, self.interval,
                                                           self.min, self.max, self.step)
 
-
     def computeTimestampIntervals(self, start, end, interval):
         """ Compute number of intervals between start and end date """
         assert type(start) is datetime, "Expecting start as type datetime.datetime"
@@ -82,11 +84,10 @@ class DateRange(object):
         """Check if min, max and step are specified """
         return self.min is not None and self.max is not None and self.step is not None
 
-    def _adjustForColtype(self, ctype):
+    def adjustForColumnDatatype(self, ctype):
         """ adjust the range for the column output type"""
         pass
 
     def getDiscreteRange(self):
         """ Divide continuous range into discrete intervals"""
         return (self.max - self.min) * float(1.0 / self.step)
-

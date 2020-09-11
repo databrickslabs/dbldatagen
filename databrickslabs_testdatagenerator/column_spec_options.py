@@ -19,10 +19,12 @@ from .nrange import NRange
 
 from pyspark.sql.functions import col, pandas_udf
 
+
 class ColumnSpecOptions(object):
     """ Column spec options object - manages options for column specs.
 
-    This class has limited functionality - mainly used to validate and document the options, and the class is meant for internal use only.
+    This class has limited functionality - mainly used to validate and document the options,
+    and the class is meant for internal use only.
 
     :param props: Used to pass list of properties for column generation spec property checking.
 
@@ -30,7 +32,8 @@ class ColumnSpecOptions(object):
 
     :param name: Column name
 
-    :param type: Data type of column. Can be either instance of Spark SQL Datatype such as `IntegerType()` or string containing SQL name of type
+    :param type: Data type of column. Can be either instance of Spark SQL Datatype such as `IntegerType()`
+                 or string containing SQL name of type
 
     :param min: Minimum value for range of generated value. As an alternative, you may use the `data_range` parameter
 
@@ -40,15 +43,19 @@ class ColumnSpecOptions(object):
 
     :param random: If True, will generate random values for column value. Defaults to `False`
 
-    :param base_column: Either the string name of the base column, or a list of columns to use to control data generation.
+    :param base_column: Either the string name of the base column, or a list of columns to use to
+                        control data generation.
 
-    :param values: List of discrete values for the colummn. Discrete values for the column can be strings, numbers or constants conforming to type of column
+    :param values: List of discrete values for the colummn. Discrete values for the column can be strings, numbers
+                   or constants conforming to type of column
 
     :param weights: List of discrete weights for the colummn. Should be integer values.
-                    For example, you might declare a column for status values with a weighted distribution with the following statement:
+                    For example, you might declare a column for status values with a weighted distribution with
+                    the following statement:
                     `withColumn("status", StringType(), values=['online', 'offline', 'unknown'], weights=[3,2,1])`
 
-    :param percent_nulls: Specifies numeric percentage of generated values to be populated with SQL `null`. For example: `percent_nulls=12`
+    :param percent_nulls: Specifies numeric percentage of generated values to be populated with SQL `null`.
+                          For example: `percent_nulls=12`
 
     :param unique_values: Number of unique values for column.
                           If the unique values are specified for a timestamp or date field, the values will be chosen
@@ -67,34 +74,36 @@ class ColumnSpecOptions(object):
                    For dates and timestamp fields, use the `begin`, `end` and `interval`
                    or `data_range` parameters instead of `min`, `max` and `step`
 
-    :param data_range: An instance of an `NRange` or `DateRange` object. This can be used in place of `min`, `max`, `step` or `begin`, `end`, `interval`.
+    :param data_range: An instance of an `NRange` or `DateRange` object. This can be used in place of `min`, `max`,
+                       `step` or `begin`, `end`, `interval`.
 
     .. note::
         If the `data_range` parameter is specified as well as the `min`, `max` or `step`, the results are undetermined.
-        For more information, see :doc:`/reference/api/databrickslabs_testdatagenerator.daterange` or :doc:`/reference/api/databrickslabs_testdatagenerator.nrange`.
+        For more information, see :doc:`/reference/api/databrickslabs_testdatagenerator.daterange`
+        or :doc:`/reference/api/databrickslabs_testdatagenerator.nrange`.
 
     """
 
     #: the set of attributes that must be present for any columns
-    _required_props = {'name', 'type'}
+    required_properties = {'name', 'type'}
 
     #: the set of attributes , we know about
-    _allowed_props = {'name', 'type', 'min', 'max', 'step',
-                     'prefix', 'random', 'distribution',
-                     'range', 'base_column', 'base_column_type', 'values', 'base_columns',
-                     'numColumns', 'numFeatures', 'structType',
-                     'begin', 'end', 'interval', 'expr', 'omit',
-                     'weights', 'description', 'continuous',
-                     'percent_nulls', 'template', 'format',
-                     'unique_values', 'data_range', 'text',
-                     'precision', 'scale',
-                      'random_seed_method', 'random_seed',
-                      'nullable', 'implicit'
+    allowed_properties = {'name', 'type', 'min', 'max', 'step',
+                          'prefix', 'random', 'distribution',
+                          'range', 'base_column', 'base_column_type', 'values', 'base_columns',
+                          'numColumns', 'numFeatures', 'structType',
+                          'begin', 'end', 'interval', 'expr', 'omit',
+                          'weights', 'description', 'continuous',
+                          'percent_nulls', 'template', 'format',
+                          'unique_values', 'data_range', 'text',
+                          'precision', 'scale',
+                          'random_seed_method', 'random_seed',
+                          'nullable', 'implicit'
 
-                      }
+                          }
 
     #: the set of disallowed column attributes
-    _forbidden_props = {
+    forbidden_properties = {
         'range'
     }
 
@@ -103,7 +112,6 @@ class ColumnSpecOptions(object):
         'byte': 256,
         'short': 65536
     }
-
 
     def __init__(self, props, **kwargs):
         self._column_spec_options = props
@@ -117,24 +125,23 @@ class ColumnSpecOptions(object):
         ensure(key is not None, "key should be non-empty")
         return self._column_spec_options.get(key, None)
 
-    def _checkBoolOption(self, v, name=None, optional=True ):
+    def checkBoolOption(self, v, name=None, optional=True):
         """ Check that option is either not specified or of type boolean
 
         :param v: value to test
         :param name: name of value to use in any reported errors or exceptions
-        :param optional: If True (default), indicates that value is optional and that None is a valid value for the option
+        :param optional: If True (default), indicates that value is optional and
+                         that `None` is a valid value for the option
         """
         assert name is not None
         if optional:
             ensure(v is None or type(v) is bool,
                    "Option `{}` must be boolean if specified - value: {}, type:".format(name, v, type(v)))
         else:
-            ensure( type(v) is bool,
+            ensure(type(v) is bool,
                    "Option `{}` must be boolean  - value: {}, type:".format(name, v, type(v)))
 
-
-
-    def _checkExclusiveOptions(self, options):
+    def checkExclusiveOptions(self, options):
         """check if the options are exclusive - i.e only one is not None
 
         :param options: list of options that will be mutually exclusive
@@ -144,7 +151,7 @@ class ColumnSpecOptions(object):
         assert len([self[x] for x in options if self[x] is not None]) <= 1, \
             f" only one of of the options: {options} may be specified "
 
-    def _checkOptionValues(self, option, option_values):
+    def checkOptionValues(self, option, option_values):
         """check if option value is in list of values
 
         :param option: list of options that will be mutually exclusive
@@ -152,33 +159,34 @@ class ColumnSpecOptions(object):
         """
         assert option is not None and len(option.strip()) > 0, "option must be non empty"
         assert type(option_values) is list
-        assert self[option] in option_values, "option: `{}` must have one of the values {}".format(option, option_values)
+        assert self[option] in option_values, "option: `{}` must have one of the values {}".format(option,
+                                                                                                   option_values)
 
-    def _checkProps(self, column_props):
+    def checkValidColumnProperties(self, column_props):
         """
             check that column definition properties are recognized
             and that the column definition has required properties
         """
         ensure(column_props is not None, "coldef should be non-empty")
 
-        colType = self['type']
-        if colType.typeName() in self._max_type_range:
+        col_type = self['type']
+        if col_type.typeName() in self._max_type_range:
             min = self['min']
-            max  = self['max']
+            max = self['max']
 
             if min is not None and max is not None:
                 effective_range = max - min
-                if effective_range > self._max_type_range[colType.typeName()]:
+                if effective_range > self._max_type_range[col_type.typeName()]:
                     raise ValueError("Effective range greater than range of type")
 
         for k in column_props.keys():
-            ensure(k in ColumnSpecOptions._allowed_props, 'invalid column option {0}'.format(k))
+            ensure(k in ColumnSpecOptions.allowed_properties, 'invalid column option {0}'.format(k))
 
-        for arg in self._required_props:
+        for arg in self.required_properties:
             ensure(arg in column_props.keys() and column_props[arg] is not None,
                    'missing column option {0}'.format(arg))
 
-        for arg in self._forbidden_props:
+        for arg in self.forbidden_properties:
             ensure(arg not in column_props.keys(),
                    'forbidden column option {0}'.format(arg))
 
@@ -192,6 +200,3 @@ class ColumnSpecOptions(object):
             ensure(len(column_props['values']) == len(column_props['weights']),
                    "length of list of weights must be  equal to length of list of values - column '{}' ".format(
                        column_props['name']))
-
-
-

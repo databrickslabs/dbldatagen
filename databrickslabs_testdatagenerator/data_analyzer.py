@@ -11,9 +11,10 @@ from pyspark.sql import functions as fns
 
 
 class DataAnalyzer:
-    """This class is used to analyze an existing data set to assist in generating a test data set with similar characteristics
+    """This class is used to analyze an existing data set to assist in generating a test data set with similar
+    characteristics
 
-    :param df: dataframe to analyze
+    :param df: Spark data frame to analyze
     :param sparkSession: spark session instance to use when performing spark operations
     """
 
@@ -121,7 +122,7 @@ class DataAnalyzer:
         distinct_expressions = [fns.countDistinct(x).alias(x) for x in self.getFieldNames(self.df.schema)]
         results.append(self.displayRow(
             self.prependSummary(self.df.agg(*distinct_expressions),
-                                 'distinct_count')
+                                'distinct_count')
                 .select(*select_fields)
                 .collect()[0]
         ))
