@@ -1,16 +1,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from datetime import date, datetime, timedelta, timezone
+
+"""
+This module defines the `NRange` class used to specify data ranges
+"""
+
 import math
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
     StructType, StructField, TimestampType, DataType, DateType, ByteType
+from .datarange import DataRange
 
 
-class NRange(object):
+class NRange(DataRange):
     """ Ranged numeric interval representing the interval min .. max inclusive
 
-    A ranged object can be uses as an alternative to the `min`, `max`, `step` parameters to the DataGenerator `withColumn` and `withColumn` objects.
+    A ranged object can be uses as an alternative to the `min`, `max`, `step` parameters
+    to the DataGenerator `withColumn` and `withColumn` objects.
     Specify by passing an instance of `NRange` to the `data_range` parameter.
 
     :param min: Minimum value of range. May be integer / long / float
@@ -34,15 +40,25 @@ class NRange(object):
         return "NRange({}, {}, {})".format(self.min, self.max, self.step)
 
     def isEmpty(self):
-        """Check if object is empty (i.e all instance vars of note are `None`"""
+        """Check if object is empty (i.e all instance vars of note are `None`
+
+        :returns: `True` if empty, `False` otherwise
+        """
         return self.min is None and self.max is None and self.step is None
 
     def isFullyPopulated(self):
-        """Check is all instance vars are populated"""
+        """Check is all instance vars are populated
+
+        :returns: `True` if fully populated, `False` otherwise
+        """
         return self.min is not None and self.max is not None and self.step is not None
 
     def adjustForColumnDatatype(self, ctype):
-        """ Adjust default values for column output type"""
+        """ Adjust default values for column output type
+
+        :param ctype: Spark SQL type instance to adjust range for
+        :returns: No return value - executes for effect only
+        """
         if ctype.typeName() == 'decimal':
             if self.min is None:
                 self.min = 0.0
@@ -68,12 +84,24 @@ class NRange(object):
             self.step = 1
 
     def getDiscreteRange(self):
-        """Convert range to discrete range"""
+        """Convert range to discrete range
+
+        :returns: number of discrete values in range. For example `NRange(1, 5, 0.5)` has 8 discrete values
+
+        .. note::
+           A range of 0,4, 0.5 has 8 discrete values not 9 as the `max` value is not part of the range
+
+        TODO: check range of values
+
+        """
         if type(self.min) is int and type(self.max) is int and self.step == 1:
             return self.max - self.min
         else:
             return (self.max - self.min) * float(1.0 / self.step)
 
     def getContinuousRange(self):
-        """Convert range to continuous range"""
+        """Convert range to continuous range
+
+        :returns: float value for size of interval from `min` to `max`
+        """
         return (self.max - self.min) * float(1.0)

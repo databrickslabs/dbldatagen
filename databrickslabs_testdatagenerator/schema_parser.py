@@ -1,13 +1,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+"""
+This file defines the `SchemaParser` class
+"""
+
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
     StructType, StructField, TimestampType, DateType, DecimalType, ByteType
 import re
 
-
 class SchemaParser(object):
-    """" SchemaParser class
+    """ SchemaParser class
 
         Creates pyspark SQL datatype from string
     """
@@ -15,17 +19,17 @@ class SchemaParser(object):
     _match_precision_and_scale = re.compile("decimal\s*\(\s*([0-9]+)\s*,\s*([0-9]+)\s*\)")
 
     @classmethod
-    def parseDecimal(cls, str):
+    def parseDecimal(cls, valueStr):
         """ parse a decimal specifier
 
-        :param str: - decimal specifier string such as `decimal(19,4)`, `decimal` or `decimal(10)`
+        :param valueStr: decimal specifier string such as `decimal(19,4)`, `decimal` or `decimal(10)`
         :returns: DecimalType instance for parsed result
         """
-        m = cls._match_precision_only.search(str)
+        m = cls._match_precision_only.search(valueStr)
         if m:
             return DecimalType(int(m.group(1)))
 
-        m = cls._match_precision_and_scale.search(str)
+        m = cls._match_precision_and_scale.search(valueStr)
         if m:
             return DecimalType(int(m.group(1)), int(m.group(2)))
 
@@ -35,7 +39,17 @@ class SchemaParser(object):
     def columnTypeFromString(cls, type_string):
         """ Generate a Spark SQL data type from a string
 
-        :param type_string: String representation of SQL type such as 'integer' etc
+        Allowable options for `type_string` parameter are:
+         * `string`, `varchar`, `char`, `nvarchar`,
+         * `int`, `integer`,
+         * `bigint`, `long`,
+         * `bool`, `boolean`,
+         * `timestamp`, `datetime`,
+         * `double`, `float`, `date`, `short`, `byte`,
+         * `decimal(p, s)` or `number(p, s)`
+
+
+        :param type_string: String representation of SQL type such as 'integer' etc.
         :returns: Spark SQL type
         """
         assert type_string is not None

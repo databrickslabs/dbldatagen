@@ -6,7 +6,7 @@
 This file defines the `ColumnGenerationSpec` class
 """
 
-from pyspark.sql.functions import col, lit, concat, rand, ceil, floor, round as sql_round, array, expr, when, udf, \
+from pyspark.sql.functions import  lit, concat, rand, round as sql_round, array, expr, when, udf, \
     format_string
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
     StructType, StructField, TimestampType, DataType, DateType
@@ -165,7 +165,7 @@ class ColumnGenerationSpec(object):
         self.random = random
 
         # compute dependencies
-        self.dependencies = self.compute_basic_dependencies()
+        self.dependencies = self.computeBasicDependencies()
 
         # value of `base_column_type` must be `None`,"values" or "hash"
         # this is the method of comouting current column value from base column, not the data type of the base column
@@ -214,7 +214,8 @@ class ColumnGenerationSpec(object):
             self.values = list(self.values)
 
         # handle default method of computing the base column value
-        # if we have text manipulation, use 'values' as default for format but 'hash' as default if its a column with values
+        # if we have text manipulation, use 'values' as default for format but 'hash' as default if
+        # its a column with multiple values
         if self.base_column_compute_method is None and (self.text_generator is not None or self['format'] is not None):
             if self.values is not None:
                 self.logger.warning("""Column [%s] has no `base_column_type` attribute specified and uses discrete values
@@ -240,7 +241,7 @@ class ColumnGenerationSpec(object):
             ensure((self.data_range is not None and self.data_range.isFullyPopulated())
                    or
                    self.values is not None,
-                   """When using an explicit distribution, you must provide a fully populated range or a set of values""")
+                   """When using an explicit distribution, provide a fully populated range or a set of values""")
 
         # set up the temporary columns needed for data generation
         self._setup_temporary_columns()
@@ -261,11 +262,12 @@ class ColumnGenerationSpec(object):
                 setattr(result, k, copy.deepcopy(v, memo))
         finally:
             self._setup_logger()
-            result._setup_logger()
+            if result is not None:
+                result._setup_logger()
         return result
 
     @property
-    def base_columns(self):
+    def baseColumns(self):
         """ Return base columns as list of strings"""
 
         # if base column  is string and contains multiple columns, split them
@@ -277,24 +279,24 @@ class ColumnGenerationSpec(object):
         else:
             return [self.baseColumn]
 
-    def compute_basic_dependencies(self):
+    def computeBasicDependencies(self):
         """ get set of basic column dependencies
 
         :return: base columns as list with dependency on seed column added
         """
         if self.baseColumn != self.SEED_COLUMN:
-            return list(set(self.base_columns + [self.SEED_COLUMN]))
+            return list(set(self.baseColumns + [self.SEED_COLUMN]))
         else:
             return [self.SEED_COLUMN]
 
-    def set_base_column_datatypes(self, column_datatypes):
+    def setBaseColumnDatatypes(self, column_datatypes):
         """ Set the data types for the base columns
 
         :param column_datatypes: = list of data types for the base columns
 
         """
         ensure(type(column_datatypes) is list)
-        ensure(len(column_datatypes) == len(self.base_columns),
+        ensure(len(column_datatypes) == len(self.baseColumns),
                "number of base column datatypes must match number of  base columns")
         self._base_column_datatypes = [].append(column_datatypes)
 
@@ -325,7 +327,7 @@ class ColumnGenerationSpec(object):
 
                 # use a base expression based on mapping base column to size of data
                 sql_scaled_generator = self.getScaledIntegerSQLExpression(self.name, scale=sum(self.weights),
-                                                                          base_columns=self.base_columns,
+                                                                          base_columns=self.baseColumns,
                                                                           base_datatypes=self._base_column_datatypes,
                                                                           compute_method=self.base_column_compute_method,
                                                                           normalize=True)
@@ -451,9 +453,9 @@ class ColumnGenerationSpec(object):
             default_end = datetime.now().replace(hour=0, minute=0, second=0, day=1) - timedelta(days=1)
             default_begin = default_end - timedelta(days=365)
             if type(colType) is DateType:
-                result = DataRange(default_begin, default_end, timedelta(days=1))
+                result = DateRange(default_begin, default_end, timedelta(days=1))
             else:
-                result = DataRange(default_begin, default_end, timedelta(minutes=1))
+                result = DateRange(default_begin, default_end, timedelta(minutes=1))
 
         self.logger.debug("Computing adjusted range for column: %s - %s", self.name, result)
         return result
@@ -500,14 +502,16 @@ class ColumnGenerationSpec(object):
         :param scale: = Numeric value indicating scaling factor - will scale via modulo arithmetic
         :param base_columns: = list of base_columns
         :param base_datatypes: = list of Spark SQL datatypes for columns
-        :param compute_method: = indicates how the value is be derived from base columns - i.e 'hash' or 'values' - treated as hint only
+        :param compute_method: = indicates how the value is be derived from base columns - i.e 'hash' or 'values'
+                               - treated as hint only
         :returns: scaled expression as a SQL string
 
         """
         assert col_name is not None
         assert self.name is not None
         assert scale is not None
-        assert compute_method is None or compute_method == HASH_COMPUTE_METHOD or compute_method == VALUES_COMPUTE_METHOD
+        assert (compute_method is None or compute_method == HASH_COMPUTE_METHOD
+                or compute_method == VALUES_COMPUTE_METHOD)
         assert base_columns is not None and type(base_columns) is list and len(
             base_columns) > 0, "Base columns must be a non-empty list"
 
@@ -517,7 +521,7 @@ class ColumnGenerationSpec(object):
         if len(base_columns) > 1:
             if compute_method == VALUES_COMPUTE_METHOD:
                 self.logger.warning(
-                    "For column generation with values and multiple base columns, column data will always be computed with `hash`")
+                    "For column generation with values and multiple base columns,  data will  be computed with `hash`")
             effective_compute_method = HASH_COMPUTE_METHOD
 
         if effective_compute_method is None:
@@ -958,8 +962,10 @@ class ColumnGenerationSpec(object):
     def makeGenerationExpressions(self, use_pandas):
         """ Generate structured column if multiple columns or features are specified
 
-        if there are multiple columns / features specified using a single definition, it will generate a set of columns conforming to the same definition,
-        renaming them as appropriate and combine them into a array if necessary (depending on the structure combination instructions)
+        if there are multiple columns / features specified using a single definition, it will generate
+        a set of columns conforming to the same definition,
+        renaming them as appropriate and combine them into a array if necessary
+        (depending on the structure combination instructions)
 
             :param self: is ColumnGenerationSpec for column
             :param use_pandas: indicates that `pandas` framework should be used

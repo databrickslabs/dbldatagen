@@ -10,21 +10,26 @@ These are meant for internal use only
 
 
 class DataGenError(Exception):
-    """Used to represent data generation errors"""
+    """Exception class to represent data generation errors"""
     pass
 
 
 def coalesce(*args):
+    """For a supplied list of arguments, returns the first argument that does not have the value `None`
+
+    :param args: variable list of arguments which are evaluated
+    :returns: First argument in list that evaluates to a non-`None` value
+    """
     for x in args:
         if x is not None:
             return x
     return None
 
 
-def ensure(c, msg="condition does not hold true"):
-    """ensure(c, s) => throws Exception(s) if c is not true
+def ensure(cond, msg="condition does not hold true"):
+    """ensure(cond, s) => throws Exception(s) if c is not true
 
-    :param c: condition to test
+    :param cond: condition to test
     :param msg: Message to add to exception if exception is raised
     :raises: `DataGenError` exception if condition does not hold true
     :returns: Does not return anything but raises exception if condition does not hold
@@ -34,13 +39,15 @@ def ensure(c, msg="condition does not hold true"):
     def strip_margin(text):
         return re.sub('\n[ \t]*\|', '\n', text)
 
-    if not c:
+    if not cond:
         raise DataGenError(strip_margin(msg))
 
 
 def mkBoundsList(x, default):
     """ make a bounds list from supplied parameter - otherwise use default
 
+        :param x: integer or list of 2 values that define bounds list
+        :param default: default value if X is `None`
         :returns: list of form [x,y]
     """
     if x is None:
@@ -60,7 +67,10 @@ def mkBoundsList(x, default):
 def topologicalSort(sources, initial_columns=None, flatten=True):
     """ Perform a topological sort over sources
 
-    Used to compute the column test data generation order in terms of ordering according to dependencies
+    Used to compute the column test data generation order of the column generation dependencies.
+
+    The column generation dependencies are based on the value of the `base_column` attribute for `withColumn` or
+    `withColumnSpec` statements in the data generator specification.
 
     :arg sources: list of ``(name, set(names of dependencies))`` pairs
     :arg initial_columns: force ``initial_columns`` to be computed first

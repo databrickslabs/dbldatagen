@@ -152,6 +152,7 @@ class DataGenerator:
     @classmethod
     def generateName(cls):
         """ get a name for the data set
+
             Uses the untitled name prefix and nextNameIndex to generate a dummy dataset name
 
             :returns: string containing generated name
@@ -359,7 +360,12 @@ class DataGenerator:
         return ct if ct is not None else IntegerType()
 
     def isFieldExplicitlyDefined(self, colName):
-        """ return True if column generation spec has been explicitly defined for column, else false """
+        """ return True if column generation spec has been explicitly defined for column, else false
+
+        .. note::
+           A column is not considered explicitly defined if it was inferred from a schema or added
+           with a wildcard statement. This impacts whether the column can be redefined.
+        """
         ensure(colName is not None, "colName should be non-empty")
         col_def = self.columnSpecsByName.get(colName, None)
         return not col_def.implicit if col_def is not None else False
@@ -400,7 +406,8 @@ class DataGenerator:
         """ populate column definitions and specifications for each of the columns in the schema
 
         :param sch: Spark SQL schema, from which fields are added
-        :returns: modified in-place instance of test data generator allowing for chaining of calls following Builder pattern
+        :returns: modified in-place instance of test data generator allowing for chaining of calls
+                  following Builder pattern
         """
         ensure(sch is not None, "schema sch should be non-empty")
         self.__schema__ = sch
@@ -560,10 +567,11 @@ class DataGenerator:
                                  implicit=False, omit=False, nullable=True, **kwargs):
         """ generate field definition and column spec
 
-        Note: Any time that a new column definition is added, we'll mark that the build plan needs to be regenerated.
-        For our purposes, the build plan determines the order of column generation etc.
+        .. note:: Any time that a new column definition is added, we'll mark that the build plan needs to be regenerated.
+           For our purposes, the build plan determines the order of column generation etc.
 
-        :returns: modified in-place instance of test data generator allowing for chaining of calls following Builder pattern
+        :returns: modified in-place instance of test data generator allowing for chaining of calls
+                  following Builder pattern
         """
         if colType is None:
             colType = self.getColumnType(base_column)
@@ -595,6 +603,11 @@ class DataGenerator:
 
     def getBaseDataFrame(self, start_id=0, streaming=False, options=None):
         """ generate the base data frame and seed column (which defaults to `id`) , partitioning the data if necessary
+
+        This is used when generating the test data.
+
+        A base data frame is created and then each of the additional columns are generated, according to
+        base column dependency order, and added to the base data frame using expressions or withColumn statements.
 
         :returns: Spark data frame for base data that drives the data generation
         """
@@ -669,10 +682,10 @@ class DataGenerator:
         """
         return [x for x in self._build_order if x != [ColumnGenerationSpec.SEED_COLUMN]]
 
-    def get_column_data_types(self, columns):
+    def getColumnDataTypes(self, columns):
         """ Get data types for columns
 
-        :param columns: = list of columns to retrieve data types for
+        :param columns: list of columns to retrieve data types for
         """
         return [self.columnSpecsByName[col].datatype for col in columns]
 
@@ -701,8 +714,8 @@ class DataGenerator:
 
         # TODO: set up the base column data type information
         for cs in self.allColumnSpecs:
-            base_column_datatypes = self.get_column_data_types(cs.base_columns)
-            cs.set_base_column_datatypes(base_column_datatypes)
+            base_column_datatypes = self.getColumnDataTypes(cs.baseColumns)
+            cs.setBaseColumnDatatypes(base_column_datatypes)
 
         self.computeColumnBuildOrder()
 
@@ -717,7 +730,8 @@ class DataGenerator:
     def build(self, withTempView=False, withView=False, withStreaming=False, options=None):
         """ build the test data set from the column definitions and return a dataframe for it
 
-        if `withStreaming` is True, generates a streaming data set. Use options to control the rate of generation of test data if streaming is used.
+        if `withStreaming` is True, generates a streaming data set.
+        Use options to control the rate of generation of test data if streaming is used.
 
         For example:
 
@@ -881,16 +895,22 @@ class DataGenerator:
         :param tgt_alias: alias for target table - defaults to `tgt`
         :param src_name: name of source table to use in generated script
         :param src_alias: alias for source table - defaults to `src`
-        :param update_expr: optional string representing updated condition. If not present, then any row that does not match join condition is considered an update
-        :param del_expr: optional string representing delete condition - For example `src.action='DEL'`. If not present, no delete clause is generated
-        :param ins_expr: optional string representing insert condition - If not present, there is no condition on insert other than no match
+        :param update_expr: optional string representing updated condition. If not present, then
+                            any row that does not match join condition is considered an update
+        :param del_expr: optional string representing delete condition - For example `src.action='DEL'`.
+                         If not present, no delete clause is generated
+        :param ins_expr: optional string representing insert condition - If not present,
+                        there is no condition on insert other than no match
         :param join_expr: string representing join condition. For example, `tgt.id=src.id`
-        :param time_expr: optional time travel expression - for example : `TIMESTAMP AS OF timestamp_expression` or `VERSION AS OF version`
-        :param insert_columns: Optional list of strings designating columns to insert. If not supplied, uses all columns defined in spec
+        :param time_expr: optional time travel expression - for example : `TIMESTAMP AS OF timestamp_expression`
+                        or `VERSION AS OF version`
+        :param insert_columns: Optional list of strings designating columns to insert.
+                               If not supplied, uses all columns defined in spec
         :param insert_column_exprs: Optional list of strings designating designating column expressions for insert.
             By default, will use src column as insert value into
             target table. This should have the form [ ("insert_column_name", "insert column expr"), ...]
-        :param update_columns: List of strings designating columns to update. If not supplied, uses all columns defined in spec
+        :param update_columns: List of strings designating columns to update.
+                               If not supplied, uses all columns defined in spec
         :param update_column_exprs: Optional list of strings designating designating column expressions for update.
             By default, will use src column as update value for
             target table. This should have the form [ ("update_column_name", "update column expr"), ...]

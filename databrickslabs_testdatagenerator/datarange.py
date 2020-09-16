@@ -11,6 +11,7 @@ changes to method names when refactoring
 
 
 class DataRange(object):
+    """ Abstract class used as base class for NRange and DateRange"""
 
     def isEmpty(self):
         """Check if object is empty (i.e all instance vars of note are `None`)"""

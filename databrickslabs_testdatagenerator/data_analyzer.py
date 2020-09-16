@@ -14,16 +14,17 @@ class DataAnalyzer:
     """This class is used to analyze an existing data set to assist in generating a test data set with similar
     characteristics
 
+    .. warning::
+       Not fully implemented.
+
     :param df: Spark data frame to analyze
     :param sparkSession: spark session instance to use when performing spark operations
     """
 
     def __init__(self, df, sparkSession=None):
         """ Constructor:
-        :param name: name is name of data set
-        :param rows: rows = amount of rows to generate
-        seed = seed for random number generator
-        partitions = number of partitions to generate
+        :param df: data frame to analyze
+        :param sparkSession: spark session to use
         """
         self.rowCount = 0
         self.schema = None

@@ -144,7 +144,7 @@ class TemplateGenerator(TextGenerator):
                 escape = False
             elif char == 'v' and escape:
                 escape = False
-                if  '0' <= following_char <= '9':
+                if '0' <= following_char <= '9':
                     use_value = True
                 else:
                     retval.append(str(base_value))
@@ -197,11 +197,17 @@ class ILText(TextGenerator):
     :param paragraphs: Number of paragraphs to generate. If tuple will generate random number in range
     :param sentences:  Number of sentences to generate. If tuple will generate random number in tuple range
     :param words:  Number of words per sentence to generate. If tuple, will generate random number in tuple range
+
     """
 
     @staticmethod
     def getAsTupleOrElse(v, default_v, v_name):
-        """ get value v as tuple or return default_v is v is None"""
+        """ get value v as tuple or return default value
+
+            :param v: value to test
+            :param default_v: value to use as a default if value of `v` is None. Must be a tuple.
+            :returns: return `v` as tuple if not `None` or value of `default_v` if `v` is `None`. If `v` is a single
+                      value, returns the tuple (`v`, `v`)"""
         assert v is None or type(v) is int or type(v) is tuple, f"param {v_name} must be an int, a tuple or None"
         assert type(default_v) is tuple and len(default_v) == 2, "default value must be tuple"
 
@@ -214,7 +220,7 @@ class ILText(TextGenerator):
         else:
             assert len(default_v) == 2
             assert type(default_v[0]) is int and type(default_v[1]) is int
-            return default_v
+
         return default_v
 
     def __init__(self, paragraphs=None, sentences=None, words=None):
@@ -259,6 +265,11 @@ class ILText(TextGenerator):
         return f"ILText(paragraphs={self.paragraphs}, sentences={self.sentences}, words={self.words})"
 
     def randomGauss(self, bounds):
+        """Compute random gauss value (truncated normal value) within bounds
+
+        :param bounds: tuple containing lower and upper bound for random gaussian value
+        :returns: scaled gaussian value such that `bounds[0]` <= return value <= `bounds[1]`
+        """
         assert type(bounds) is tuple and len(bounds) == 2
 
         min_v = bounds[0] * 1.0
@@ -278,6 +289,7 @@ class ILText(TextGenerator):
         generate text for seed based on configuration parameters.
 
         As it uses numpy, repeatability is restricted depending on version of the runtime
+
         :param seed: list or array-like set of seed values
         :param default_seed: seed value to use if value of seed is None or null
         :returns: list or Pandas series of generated strings of same size as input seed
@@ -333,7 +345,7 @@ class ILText(TextGenerator):
         # return [ [ [":::".join(s) for s in p ] for p in r] for r in candidate_sentences ]
 
     def classicGenerateText(self, seed):
-        """"
+        """
         classic udf entry point for text generation
 
         :param seed: seed value to control generation of random numbers

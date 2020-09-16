@@ -1,17 +1,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from pyspark.sql import SparkSession
-import os
-import math
 
 """
 This file defines the `SparkSingleton` class
 
 This is primarily meant for situations where the test data generator is run on a standalone environment
-rather than in a Databricks workspace environment
+for use cases like unit testing rather than in a Databricks workspace environment
 """
 
+from pyspark.sql import SparkSession
+import os
+import math
 
 class SparkSingleton:
     """A singleton class which returns one Spark session instance"""
@@ -27,7 +27,8 @@ class SparkSingleton:
 
     @classmethod
     def getLocalInstance(cls, appName="new Spark session"):
-        """Create a Spark instance for Datalib.
+        """Create a machine local Spark instance for Datalib.
+        It uses 3/4 of the available cores for the spark session.
 
         :returns: A Spark instance
         """

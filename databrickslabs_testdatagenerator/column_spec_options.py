@@ -87,7 +87,7 @@ class ColumnSpecOptions(object):
     #: the set of attributes that must be present for any columns
     required_properties = {'name', 'type'}
 
-    #: the set of attributes , we know about
+    #: the set of attributes that are permitted for any call to data generator `withColumn` or `withColumnSpec`
     allowed_properties = {'name', 'type', 'min', 'max', 'step',
                           'prefix', 'random', 'distribution',
                           'range', 'base_column', 'base_column_type', 'values', 'base_columns',
@@ -102,7 +102,7 @@ class ColumnSpecOptions(object):
 
                           }
 
-    #: the set of disallowed column attributes
+    #: the set of disallowed column attributes for any call to data generator `withColumn` or `withColumnSpec`
     forbidden_properties = {
         'range'
     }
@@ -167,7 +167,7 @@ class ColumnSpecOptions(object):
             check that column definition properties are recognized
             and that the column definition has required properties
         """
-        ensure(column_props is not None, "coldef should be non-empty")
+        ensure(column_props is not None, "column_props should be non-empty")
 
         col_type = self['type']
         if col_type.typeName() in self._max_type_range:

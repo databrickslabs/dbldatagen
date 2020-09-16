@@ -14,8 +14,8 @@ class DateRange(DataRange):
 
     The date range will represented internally using `datetime` for `start` and `end`, and `timedelta` for `interval`
 
-    When computing ranges for purposes of the sequences, the maximum value will be adjusted to the nearest whole multiple
-    of the interval that is before the `end` value.
+    When computing ranges for purposes of the sequences, the maximum value will be adjusted to the
+    nearest whole multiple of the interval that is before the `end` value.
 
     When converting from a string, datetime is assumed to use local timezone unless specified as part of the format
     in keeping with the python `datetime` handling of datetime instances that do not specify a timezone
@@ -26,6 +26,7 @@ class DateRange(DataRange):
     Note parsing format for interval uses standard timedelta parsing not the `datetime_format` string
     :param datetime_format: format for conversion of strings to datetime objects
     """
+
     DEFAULT_UTC_TS_FORMAT = "%Y-%m-%d %H:%M:%S"
     DEFAULT_DATE_FORMAT = "%Y-%m-%d"
 
@@ -85,9 +86,27 @@ class DateRange(DataRange):
         return self.min is not None and self.max is not None and self.step is not None
 
     def adjustForColumnDatatype(self, ctype):
-        """ adjust the range for the column output type"""
+        """ adjust the range for the column output type
+
+        :param ctype: Spark SQL data type for column
+        """
         pass
 
     def getDiscreteRange(self):
-        """ Divide continuous range into discrete intervals"""
+        """ Divide continuous range into discrete intervals
+
+            Note does not modify range object.
+
+            :returns: range from min to max
+        """
         return (self.max - self.min) * float(1.0 / self.step)
+
+    def isEmpty(self):
+        """Check if object is empty (i.e all instance vars of note are `None`)"""
+        return self.begin is None and self.end is None and self.interval is None
+
+    def getContinuousRange(self):
+        """Convert range to continuous range"""
+        return (self.max - self.min) * float(1.0)
+
+
