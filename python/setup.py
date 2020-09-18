@@ -21,7 +21,7 @@ setuptools.setup(
     #          'databrickslabs_testdatagenerator/distributions'],
     install_requires=[
         'pyspark>=2.4.0'],
-    packages=setuptools.find_packages(exclude=['contrib', 'unit_tests'],
+    packages=setuptools.find_packages(exclude=['contrib', 'unit_tests', 'tests'],
                                       include=['databrickslabs_testdatagenerator.*']),
     classifiers=[
         "Programming Language :: Python :: 3",
