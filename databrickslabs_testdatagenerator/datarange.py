@@ -32,3 +32,7 @@ class DataRange(object):
     def getContinuousRange(self):
         """Convert range to continuous range"""
         raise NotImplementedError("method not implemented")
+
+    def getScale(self):
+        """Get scale of range"""
+        raise NotImplementedError("method not implemented")
