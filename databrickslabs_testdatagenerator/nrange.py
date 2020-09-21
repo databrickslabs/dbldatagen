@@ -105,3 +105,31 @@ class NRange(DataRange):
         :returns: float value for size of interval from `min` to `max`
         """
         return (self.max - self.min) * float(1.0)
+
+    def getScale(self):
+        """Get scale of range"""
+        smin, smax, sstep = 0, 0, 0
+
+        if self.min is not None:
+            smin = self._precision_and_scale(self.min)[1]
+        if self.max is not None:
+            smax = self._precision_and_scale(self.max)[1]
+        if self.step is not None:
+            sstep = self._precision_and_scale(self.step)[1]
+
+        # return maximum scale of components
+        return max(smin, smax, sstep)
+
+    def _precision_and_scale(self, x):
+        max_digits = 14
+        int_part = int(abs(x))
+        magnitude = 1 if int_part == 0 else int(math.log10(int_part)) + 1
+        if magnitude >= max_digits:
+            return (magnitude, 0)
+        frac_part = abs(x) - int_part
+        multiplier = 10 ** (max_digits - magnitude)
+        frac_digits = multiplier + int(multiplier * frac_part + 0.5)
+        while frac_digits % 10 == 0:
+            frac_digits /= 10
+        scale = int(math.log10(frac_digits))
+        return (magnitude + scale, scale)

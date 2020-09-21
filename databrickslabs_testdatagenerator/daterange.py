@@ -109,4 +109,9 @@ class DateRange(DataRange):
         """Convert range to continuous range"""
         return (self.max - self.min) * float(1.0)
 
+    def getScale(self):
+        """Get scale of range"""
+        return 0
+
+
 
