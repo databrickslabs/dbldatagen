@@ -217,7 +217,7 @@ class DataGenerator:
 
         print("\n".join(output))
 
-    def setRowCount(self, rc):
+    def withRowCount(self, rc):
         """Modify the row count - useful when starting a new spec from a clone
 
         :param rc: The count of rows to generate
@@ -226,6 +226,20 @@ class DataGenerator:
         """
         self._rowCount = rc
         return self
+
+    def setRowCount(self, rc):
+        """Modify the row count - useful when starting a new spec from a clone
+
+        .. warning::
+           Method is deprecated - use `withRowCount` instead
+
+        :param rc: The count of rows to generate
+        :returns: modified in-place instance of test data generator allowing for chaining of calls following
+                  Builder pattern
+
+        """
+        self.logger.warning("method `setRowCount` is deprecated, use `withRowCount` instead")
+        return self.withRowCount(rc)
 
     @property
     def rowCount(self):
