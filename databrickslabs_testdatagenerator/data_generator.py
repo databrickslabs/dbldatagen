@@ -193,9 +193,10 @@ class DataGenerator:
         self.build_plan_computed = False
         return self
 
-    def explain(self):
+    def explain(self, suppress_output=False):
         """Explain the test data generation process
 
+        :param suppress_output: If True, suppress display of build plan
         :returns: String containing explanation of test data generation for this specification
         """
         if not self.build_plan_computed:
@@ -215,7 +216,11 @@ class DataGenerator:
         output.append("====================")
         output.append("")
 
-        print("\n".join(output))
+        explain_results = "\n".join(output)
+        if not suppress_output:
+            print(explain_results)
+
+        return explain_results
 
     def withRowCount(self, rc):
         """Modify the row count - useful when starting a new spec from a clone
