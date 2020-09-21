@@ -22,14 +22,14 @@ class TestDistributions(unittest.TestCase):
         # will have implied column `id` for ordinal of row
         cls.testdata_generator = (
             dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=cls.rows, partitions=4)
-            .withIdOutput()  # id column will be emitted in the output
-            .withColumn("code1", "integer", min=1, max=20, step=1)
-            .withColumn("code4", "integer", min=1, max=40, step=1, random=True)
-            .withColumn("sector_status_desc", "string", min=1, max=200, step=1, prefix='status', random=True)
-            .withColumn("tech", "string", values=["GSM", "LTE", "UMTS", "UNKNOWN"],
-                        weights=desired_weights,
-                        random=True)
-            )
+                .withIdOutput()  # id column will be emitted in the output
+                .withColumn("code1", "integer", min=1, max=20, step=1)
+                .withColumn("code4", "integer", min=1, max=40, step=1, random=True)
+                .withColumn("sector_status_desc", "string", min=1, max=200, step=1, prefix='status', random=True)
+                .withColumn("tech", "string", values=["GSM", "LTE", "UMTS", "UNKNOWN"],
+                            weights=desired_weights,
+                            random=True)
+        )
         cls.testdata_generator.build().cache().createOrReplaceTempView("testdata")
 
     @classmethod
@@ -39,7 +39,7 @@ class TestDistributions(unittest.TestCase):
 
     @classmethod
     def unique_timestamp_seconds(cls):
-        return (datetime.datetime.utcnow()-datetime.datetime.fromtimestamp(0)).total_seconds()
+        return (datetime.datetime.utcnow() - datetime.datetime.fromtimestamp(0)).total_seconds()
 
     @classmethod
     def weights_as_percentages(cls, w):
@@ -63,7 +63,7 @@ class TestDistributions(unittest.TestCase):
         print(observed_weights)
 
         counts = {x.value: x.rc for x in observed_weights}
-        value_count_pairs = [{'value':x, 'count':counts[x]} for x in values]
+        value_count_pairs = [{'value': x, 'count': counts[x]} for x in values]
         print(value_count_pairs)
 
         return value_count_pairs
@@ -80,15 +80,10 @@ class TestDistributions(unittest.TestCase):
         for x, y in zip(percentages, desired_percentages):
             self.assertAlmostEqual(x, y, delta=float(x) / 5.0)
 
-    #@unittest.skip("not yet debugged")
+    # @unittest.skip("not yet debugged")
     def no_basic_distribution(self):
-        base_dist=dist.DataDistribution()
+        base_dist = dist.DataDistribution()
         self.assertTrue(base_dist is not None)
-
-
-
-
-
 
 # run the tests
 # if __name__ == '__main__':

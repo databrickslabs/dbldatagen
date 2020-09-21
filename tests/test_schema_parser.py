@@ -38,7 +38,6 @@ class TestSchemaParser(unittest.TestCase):
         self.assertEqual(x_dec3.precision, 19)
         self.assertEqual(x_dec3.scale, 4)
 
-
 # run the tests
 # if __name__ == '__main__':
 #  print("Trying to run tests")
