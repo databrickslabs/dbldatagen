@@ -61,7 +61,7 @@ tests: export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 
 tests: buildenv dist/install_flag.txt
 	@echo "$(OK_COLOR)=> Running unit tests$(NO_COLOR)"
-	. `pwd`/build_env/bin/activate; python3 -m unittest discover -s "tests" -p "*.py"
+	. `pwd`/build_env/bin/activate; python3 -m unittest discover -s "tests" -p "test_*.py"
 
 # Version commands
 
