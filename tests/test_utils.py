@@ -4,11 +4,13 @@ from pyspark.sql import SparkSession
 import unittest
 from pyspark.sql import functions as F
 import logging
-from databrickslabs_testdatagenerator import ensure, mkBoundsList
+from databrickslabs_testdatagenerator import ensure, mkBoundsList, coalesce
 
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
+
 class TestUtils(unittest.TestCase):
+    x = 1
 
     def setUp(self):
         print("setting up")
@@ -20,16 +22,28 @@ class TestUtils(unittest.TestCase):
         pass
 
     def testMkBoundsList1(self):
+        """ Test utils mkBoundsList"""
         test = mkBoundsList(None, 1)
 
         self.assertEqual(len(test), 2)
 
-        test2 = mkBoundsList(None, [1,1])
+        test2 = mkBoundsList(None, [1, 1])
 
         self.assertEqual(len(test2), 2)
 
+    def testCoalesce(self):
+        """ Test utils coalesce function"""
+        result = coalesce(None, 1)
 
+        self.assertEqual(result, 1)
 
+        result2 = coalesce(3, None, 1)
+
+        self.assertEqual(result2, 3)
+
+        result3 = coalesce(None, None, None)
+
+        self.assertIsNone(result3)
 
 # run the tests
 # if __name__ == '__main__':

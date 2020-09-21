@@ -5,8 +5,8 @@ import unittest
 from pyspark.sql import functions as F
 import logging
 
-
 spark = dg.SparkSingleton.getLocalInstance("basic tests")
+
 
 class TestBasicOperation(unittest.TestCase):
     testDataSpec = None
@@ -53,22 +53,22 @@ class TestBasicOperation(unittest.TestCase):
         ds_copy1 = self.testDataSpec.clone()
 
         df_copy1 = (ds_copy1.setRowCount(1000)
-                    .withColumn("ac1", IntegerType(), base_column=['code1','code2'], min=100, max=200)
-                    .withColumn("ac2", IntegerType(), base_column=['code1','code2'], min=100, max=200, random=True)
+                    .withColumn("ac1", IntegerType(), base_column=['code1', 'code2'], min=100, max=200)
+                    .withColumn("ac2", IntegerType(), base_column=['code1', 'code2'], min=100, max=200, random=True)
                     .build())
 
         self.assertEqual(df_copy1.count(), 1000)
 
-        df_overlimit=df_copy1.where("ac1 > 200")
+        df_overlimit = df_copy1.where("ac1 > 200")
         self.assertEqual(df_overlimit.count(), 0)
 
-        df_underlimit=df_copy1.where("ac1 < 100")
+        df_underlimit = df_copy1.where("ac1 < 100")
         self.assertEqual(df_underlimit.count(), 0)
 
-        df_overlimit2=df_copy1.where("ac2 > 200")
+        df_overlimit2 = df_copy1.where("ac2 > 200")
         self.assertEqual(df_overlimit2.count(), 0)
 
-        df_underlimit2=df_copy1.where("ac2 < 100")
+        df_underlimit2 = df_copy1.where("ac2 < 100")
         self.assertEqual(df_underlimit2.count(), 0)
 
         df_copy1.show()
@@ -100,19 +100,18 @@ class TestBasicOperation(unittest.TestCase):
         df2 = ds2.build()
         self.assertEqual(df2.count(), 1000)
 
-        ds3= (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
-                               partitions=4, seed_method=None)
-              .withIdOutput()
-              .withColumn("code2", IntegerType(), min=0, max=10)
-              .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-              .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
-              .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+        ds3 = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
+                                partitions=4, seed_method=None)
+               .withIdOutput()
+               .withColumn("code2", IntegerType(), min=0, max=10)
+               .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+               .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+               .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
 
-              )
+               )
 
         df3 = ds3.build()
         self.assertEqual(df3.count(), 1000)
-
 
     def test_generated_data_count(self):
         count = self.dfTestData.count()
@@ -152,7 +151,7 @@ class TestBasicOperation(unittest.TestCase):
 
     def test_basic_adhoc(self):
         testDataSpec = self.testDataSpec
-        log=logging.getLogger('unit_tests')
+        log = logging.getLogger('tests')
 
         log.warning("testing")
         print("data generation description:", testDataSpec.describe())
@@ -193,7 +192,6 @@ class TestBasicOperation(unittest.TestCase):
 
         print("output columns", testDataSpec3.getOutputColumnNames())
 
-
         testDataDf = testDataSpec3.build()
         testDataDf.show()
 
@@ -204,14 +202,14 @@ class TestBasicOperation(unittest.TestCase):
         self.assertEqual(testDataDf.count(), self.row_count)
 
     def test_partitions(self):
-        id_partitions =11
+        id_partitions = 11
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=100000000, partitions=id_partitions, verbose=True)
-            .withColumn("code1", IntegerType(), min=1, max=20, step=1)
-            .withColumn("code2", IntegerType(), max=1000, step=5)
-            .withColumn("code3", IntegerType(), min=100, max=200, step=1, random=True)
-            .withColumn("xcode", StringType(), values=["a", "test", "value"], random=True)
-            .withColumn("rating", FloatType(), min=1.0, max=5.0, step=0.00001, random=True))
+                .withColumn("code1", IntegerType(), min=1, max=20, step=1)
+                .withColumn("code2", IntegerType(), max=1000, step=5)
+                .withColumn("code3", IntegerType(), min=100, max=200, step=1, random=True)
+                .withColumn("xcode", StringType(), values=["a", "test", "value"], random=True)
+                .withColumn("rating", FloatType(), min=1.0, max=5.0, step=0.00001, random=True))
 
         df = testdata_defn.build()
         df.printSchema()
@@ -221,9 +219,6 @@ class TestBasicOperation(unittest.TestCase):
         partitions_created = df.rdd.getNumPartitions()
         print("partitions created", partitions_created)
         self.assertEqual(id_partitions, partitions_created)
-
-
-
 
 
 # run the tests
