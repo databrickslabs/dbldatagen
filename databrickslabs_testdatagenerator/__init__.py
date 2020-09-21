@@ -42,7 +42,6 @@ __all__ = ["data_generator", "data_analyzer", "schema_parser", "daterange", "nra
            "spark_singleton", "text_generators", "datarange"
            ]
 
-
 def python_version_check():
     import sys
     if not sys.version_info >= (3, 6):
