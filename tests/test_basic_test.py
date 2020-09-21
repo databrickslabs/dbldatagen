@@ -39,7 +39,7 @@ class TestBasicOperation(unittest.TestCase):
     def test_clone(self):
         ds_copy1 = self.testDataSpec.clone()
 
-        df_copy1 = (ds_copy1.setRowCount(1000)
+        df_copy1 = (ds_copy1.withRowCount(1000)
                     .withColumn("another_column", StringType(), values=['a', 'b', 'c'], random=True)
                     .build())
 
@@ -52,7 +52,7 @@ class TestBasicOperation(unittest.TestCase):
     def test_multiple_base_columns(self):
         ds_copy1 = self.testDataSpec.clone()
 
-        df_copy1 = (ds_copy1.setRowCount(1000)
+        df_copy1 = (ds_copy1.withRowCount(1000)
                     .withColumn("ac1", IntegerType(), base_column=['code1', 'code2'], min=100, max=200)
                     .withColumn("ac2", IntegerType(), base_column=['code1', 'code2'], min=100, max=200, random=True)
                     .build())
