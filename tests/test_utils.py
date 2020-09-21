@@ -6,6 +6,7 @@ from databrickslabs_testdatagenerator import ensure, mkBoundsList, coalesce_valu
 spark = SparkSingleton.getLocalInstance("unit tests")
 
 
+
 class TestUtils(unittest.TestCase):
     x = 1
 
@@ -38,6 +39,7 @@ class TestUtils(unittest.TestCase):
 
     def testCoalesce(self):
         """ Test utils coalesce function"""
+<<<<<<< HEAD
         result = coalesce_values(None, 1)
 
         self.assertEqual(result, 1)
@@ -47,6 +49,17 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(result2, 3)
 
         result3 = coalesce_values(None, None, None)
+=======
+        result = coalesce(None, 1)
+
+        self.assertEqual(result, 1)
+
+        result2 = coalesce(3, None, 1)
+
+        self.assertEqual(result2, 3)
+
+        result3 = coalesce(None, None, None)
+>>>>>>> 8ee8fd1... updated tests
 
         self.assertIsNone(result3)
 

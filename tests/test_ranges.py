@@ -80,6 +80,9 @@ class TestRanges(unittest.TestCase):
 
 # runTests([TestBasicOperation])
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> fe8d4d1... updates to tests
 if __name__ == '__main__':
     unittest.main()
