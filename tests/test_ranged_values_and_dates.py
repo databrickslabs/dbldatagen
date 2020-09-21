@@ -29,6 +29,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
         # TODO: add validation statement
 
+        # TODO: add validation statement
+
     def test_date_range_object2(self):
         interval = timedelta(days=7, hours=0)
         start = datetime(2017, 10, 1, 0, 0, 0)
@@ -40,6 +42,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
         print("maxValue", datetime.fromtimestamp(x.maxValue))
         print("minValue gm", datetime.utcfromtimestamp(x.minValue))
         print("maxValue gm", datetime.utcfromtimestamp(x.maxValue))
+
+        # TODO: add validation statement
 
         # TODO: add validation statement
 
@@ -95,6 +99,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
         count_distinct = testDataDF.select(F.countDistinct("last_sync_dt")).collect()[0][0]
         self.assertLessEqual(10, count_distinct)
 
+        # TODO: add validation statement
+
     def test_date_range1(self):
         interval = timedelta(days=1, hours=1)
         start = datetime(2017, 10, 1, 0, 0, 0)
@@ -123,6 +129,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
         count_distinct = testDataDF.select(F.countDistinct("last_sync_dt1")).collect()[0][0]
         self.assertLessEqual(10, count_distinct)
+
+        # TODO: add validation statement
 
     def test_date_range2(self):
         #interval = timedelta(days=1, hours=1)

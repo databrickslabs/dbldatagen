@@ -34,6 +34,7 @@ spark = dg.SparkSingleton.getLocalInstance("unit tests")
 spark.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", "500")
 
 
+
 # Test manipulation and generation of test data for a large schema
 class TestILTextGeneration(unittest.TestCase):
     testDataSpec = None
