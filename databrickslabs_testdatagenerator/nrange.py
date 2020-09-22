@@ -68,10 +68,10 @@ class NRange(DataRange):
                 self.step = 1.0
 
         if type(ctype) is ShortType and self.max is not None:
-            assert self.max <= 65536
+            assert self.max <= 65536, "`max` must be in range of short"
 
         if type(ctype) is ByteType and self.max is not None:
-            assert self.max <= 256
+            assert self.max <= 256, "`max` must be in range of byte (0 - 256)"
 
         if (type(ctype) is DoubleType
             or type(ctype) is FloatType) and self.step is None:

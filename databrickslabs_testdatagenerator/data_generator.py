@@ -105,6 +105,17 @@ class DataGenerator:
             """)
 
         # set up use of pandas udfs if necessary
+        self._setup_pandas_if_needed(pandas_udf_batch_size)
+
+        if seed_method is not None and seed_method != "fixed" and seed_method != "hash_fieldname":
+            raise DataGenError("""seed_method should be None, 'fixed' or 'hash_fieldname' """)
+
+    def _setup_pandas_if_needed(self, pandas_udf_batch_size):
+        """
+        Set up pandas if needed
+        :param pandas_udf_batch_size: batch size for pandas, may be None
+        :return: nothing
+        """
         assert pandas_udf_batch_size is None or type(pandas_udf_batch_size) is int, \
             "If pandas_batch_size is specified, it must be an integer"
         if self.use_pandas:
@@ -118,9 +129,6 @@ class DataGenerator:
 
             if self.pandas_udf_batch_size is not None:
                 self.sparkSession.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", self.pandas_udf_batch_size)
-
-        if seed_method is not None and seed_method != "fixed" and seed_method != "hash_fieldname":
-            raise DataGenError("""seed_method should be None, 'fixed' or 'hash_fieldname' """)
 
     def _setup_logger(self):
         """Set up logging
@@ -440,6 +448,7 @@ class DataGenerator:
 
         :returns: effective min, max, step as tuple
         """
+        # TODO: may also need to check for instance of DataRnage
         if data_range is not None and isinstance(data_range, range):
             if max is not None or min != 0 or step != 1:
                 raise ValueError("You cant specify both a range and min, max or step values")
@@ -877,7 +886,7 @@ class DataGenerator:
         :param table_format: table format for table
         :returns: SQL string for scripted table
         """
-        assert name is not None
+        assert name is not None, "`name` must be specified"
 
         self.computeBuildPlan()
 

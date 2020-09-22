@@ -33,8 +33,8 @@ class DateRange(DataRange):
     # todo: deduce format from begin and end params
 
     def __init__(self, begin, end, interval=None, datetime_format=DEFAULT_UTC_TS_FORMAT):
-        assert begin is not None
-        assert end is not None
+        assert begin is not None, "`begin` must be specified"
+        assert end is not None, "`end` must be specified"
 
         self.begin = begin if not isinstance(begin, str) else self._datetime_from_string(begin, datetime_format)
         self.end = end if not isinstance(end, str) else self._datetime_from_string(end, datetime_format)
@@ -59,7 +59,7 @@ class DateRange(DataRange):
     @classmethod
     def parseInterval(cls, interval_str):
         """Parse interval from string"""
-        assert interval_str is not None
+        assert interval_str is not None, "`interval_str` must be specified"
         results = []
         for kv in interval_str.split(","):
             key, value = kv.split('=')

@@ -82,7 +82,7 @@ class TemplateGenerator(TextGenerator):
     """
 
     def __init__(self, template):
-        assert template is not None
+        assert template is not None, "`template` must be specified"
         super().__init__()
 
         self.template = template
@@ -214,12 +214,12 @@ class ILText(TextGenerator):
         if type(v) is int:
             return v, v
         elif type(v) is tuple:
-            assert len(v) == 2
-            assert type(v[0]) is int and type(v[1]) is int
+            assert len(v) == 2, "expecting tuple of length 2"
+            assert type(v[0]) is int and type(v[1]) is int, "expecting tuple with both elements as integers"
             return v
         else:
-            assert len(default_v) == 2
-            assert type(default_v[0]) is int and type(default_v[1]) is int
+            assert len(default_v) == 2, "must have list or iterable with lenght 2"
+            assert type(default_v[0]) is int and type(default_v[1]) is int, "all elements must be integers"
 
         return default_v
 
@@ -227,7 +227,9 @@ class ILText(TextGenerator):
         """
         Initialize the ILText with text generation parameters
         """
-        assert paragraphs is not None or sentences is not None or words is not None
+        assert paragraphs is not None or sentences is not None or words is not None, \
+            "At least one of the params `paragraphs`, `sentences` or `words` must be specified"
+
         super().__init__()
 
         self.paragraphs = self.getAsTupleOrElse(paragraphs, (1, 1), "paragraphs")
@@ -270,7 +272,7 @@ class ILText(TextGenerator):
         :param bounds: tuple containing lower and upper bound for random gaussian value
         :returns: scaled gaussian value such that `bounds[0]` <= return value <= `bounds[1]`
         """
-        assert type(bounds) is tuple and len(bounds) == 2
+        assert type(bounds) is tuple and len(bounds) == 2, "`bounds` must be tuple of length 2"
 
         min_v = bounds[0] * 1.0
         max_v = bounds[1] * 1.0
@@ -294,11 +296,11 @@ class ILText(TextGenerator):
         :param default_seed: seed value to use if value of seed is None or null
         :returns: list or Pandas series of generated strings of same size as input seed
         """
-        assert seed is not None
-        assert default_seed is not None
+        assert seed is not None, "`seed` param must be specified"
+        assert default_seed is not None, "`default_seed` value must be specified"
 
         seed_size = len(seed) if type(seed) is list else seed.shape[0]
-        assert seed_size > 0
+        assert seed_size > 0, "must have valud `seed` parameter"
 
         stats_shape = [seed_size, self.paragraphs[1], self.sentences[1], 3]
 
