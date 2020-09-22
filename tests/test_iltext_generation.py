@@ -58,7 +58,7 @@ class TestILTextGeneration(unittest.TestCase):
                             .withColumnSpec("date", percent_nulls=10.0)
                             .withColumnSpec("nint", percent_nulls=10.0, min=1, max=9, step=2)
                             .withColumnSpec("nstr1", percent_nulls=10.0, min=1, max=9, step=2)
-                            .withColumnSpec("nstr2", percent_nulls=10.0, min=1.5, max=2.5, step=0.3, format="%04f")
+                            .withColumnSpec("nstr2", percent_nulls=10.0, min=1.5, max=2.5, step=0.3, format="%04.1f")
                             .withColumnSpec("nstr3", min=1.0, max=9.0, step=2.0)
                             .withColumnSpec("nstr4", percent_nulls=10.0, min=1, max=9, step=2, format="%04d")
                             .withColumnSpec("nstr5", percent_nulls=10.0, min=1.5, max=2.5, step=0.3, random=True)
@@ -104,17 +104,20 @@ class TestILTextGeneration(unittest.TestCase):
         results = self.testDataSpec.build()
 
         # check ranged string data
-        nstr1_values = [ r[0] for r in results.select("nstr1").distinct().collect() ]
-        self.assertSetEqual(set(nstr1_values), { None, '1', '3', '5', '7', '9'})
-        nstr2_values = [ r[0] for r in results.select("nstr2").distinct().collect() ]
-        print("nstr2_values", nstr2_values)
-        nstr3_values = [ r[0] for r in results.select("nstr3").distinct().collect() ]
-        print("nstr3_values", nstr3_values)
-        self.assertSetEqual(set(nstr3_values), {  '1.0', '3.0', '5.0', '7.0', '9.0'})
+        nstr1_values = [r[0] for r in results.select("nstr1").distinct().collect()]
+        self.assertSetEqual(set(nstr1_values), {None, '1', '3', '5', '7', '9'})
 
-        nstr4_values = [ r[0] for r in results.select("nstr4").distinct().collect() ]
+        nstr2_values = [r[0] for r in results.select("nstr2").distinct().collect()]
+        print("nstr2_values", nstr2_values)
+        self.assertSetEqual(set(nstr2_values), {'01.5', '01.8', '02.1', '02.4', None})
+
+        nstr3_values = [r[0] for r in results.select("nstr3").distinct().collect()]
+        print("nstr3_values", nstr3_values)
+        self.assertSetEqual(set(nstr3_values), {'1.0', '3.0', '5.0', '7.0', '9.0'})
+
+        nstr4_values = [r[0] for r in results.select("nstr4").distinct().collect()]
         print("nstr4_values", nstr4_values)
-        self.assertSetEqual(set(nstr2_values), { None, '1', '3', '5', '7', '9'})
+        self.assertSetEqual(set(nstr4_values), {None, '0001', '0003', '0005', '0007', '0009'})
 
     def test_iltext1(self):
         print("test data spec 2")
