@@ -512,7 +512,8 @@ class ColumnGenerationSpec(object):
         assert self.name is not None, "`self.name` must not be None"
         assert scale is not None, "`scale` must not be None"
         assert (compute_method is None or compute_method == HASH_COMPUTE_METHOD
-                or compute_method == VALUES_COMPUTE_METHOD), "`compute_method` must be valid value "
+                or compute_method == VALUES_COMPUTE_METHOD
+                or compute_method == RAW_VALUES_COMPUTE_METHOD), "`compute_method` must be valid value "
         assert base_columns is not None and type(base_columns) is list and len(
             base_columns) > 0, "Base columns must be a non-empty list"
 
@@ -835,12 +836,14 @@ class ColumnGenerationSpec(object):
         else:
             crange = datarange.getDiscreteRange()
             modulo_factor = lit(crange + 1)
-            # following expression is need as spark sql modulo of negative number is negative
+            # following expression is needed as spark sql modulo of negative number is negative
             modulo_exp = ((self.getSeedExpression(base_column) % modulo_factor) + modulo_factor) % modulo_factor
             baseval = (modulo_exp * lit(datarange.step)) if not is_random else (
                     sql_round(random_generator * lit(crange)) * lit(datarange.step))
 
-        if self.base_column_compute_method == "values":
+        if self.base_column_compute_method == VALUES_COMPUTE_METHOD:
+            new_def = baseval
+        elif self.base_column_compute_method == RAW_VALUES_COMPUTE_METHOD:
             new_def = baseval
         else:
             new_def = self._adjustForMinValue(baseval, datarange, force=True)
@@ -915,7 +918,8 @@ class ColumnGenerationSpec(object):
                 sql_random_generator = self.getUniformRandomSQLExpression(self.name)
                 new_def = expr("date_sub(current_date, round({}*1024))".format(sql_random_generator)).astype(col_type)
             else:
-                if self.base_column_compute_method == VALUES_COMPUTE_METHOD:
+                if self.base_column_compute_method == VALUES_COMPUTE_METHOD or \
+                    self.base_column_compute_method == RAW_VALUES_COMPUTE_METHOD:
                     new_def = self.getSeedExpression(base_col)
                 else:
                     self.logger.warning("Assuming a seeded base expression with minimum value for column %s", self.name)
@@ -924,52 +928,88 @@ class ColumnGenerationSpec(object):
             if self.values is not None:
                 new_def = array([lit(x) for x in self.values])[new_def.astype(IntegerType())]
             elif type(col_type) is StringType and sql_expr is None:
-                # string value generation is simply handled by combining with a suffix or prefix
-                if cprefix is not None:
-                    new_def = concat(lit(cprefix), lit('_'), new_def.astype(IntegerType()))
-                elif csuffix is not None:
-                    new_def = concat(new_def.astype(IntegerType(), lit('_'), lit(csuffix)))
-                else:
-                    new_def = new_def
+                new_def = self.applyPrefixSuffixExpressions(cprefix, csuffix, new_def)
 
             # use string generation template if available passing in what was generated to date
             if type(col_type) is StringType and self.text_generator is not None:
-                # note :
-                # while it seems like this could use a shared instance, this does not work if initialized
-                # in a class method
-                tg = self.text_generator
-                if use_pandas_optimizations:
-                    self.execution_history.append(".. text generation via pandas scalar udf `{}`"
-                                                  .format(str(tg)))
-                    u_value_from_generator = pandas_udf(tg.pandasGenerateText,
-                                                        returnType=StringType()).asNondeterministic()
-                else:
-                    self.execution_history.append(".. text generation via udf `{}`"
-                                                  .format(str(tg)))
-                    u_value_from_generator = udf(tg.classicGenerateText,
-                                                 StringType()).asNondeterministic()
-                new_def = u_value_from_generator(new_def)
+                new_def = self.applyTextGenerationExpression(new_def, use_pandas_optimizations)
 
             if type(col_type) is StringType and sformat is not None:
-                # note :
-                # while it seems like this could use a shared instance, this does not work if initialized
-                # in a class method
-                self.execution_history.append(".. applying column format  `{}`".format(sformat))
-                new_def = format_string(sformat, new_def)
+                new_def = self.applyTextFormatExpression(new_def, sformat)
 
-            self.execution_history.append(".. casting to  `{}`".format(col_type))
-
-            if type(col_type) is DateType:
-                new_def = new_def.astype(TimestampType()).astype(col_type)
-            else:
-                new_def = new_def.astype(col_type)
+            new_def = self.applyFinalCastExpression(col_type, new_def)
 
         if percent_nulls is not None:
-            assert self.nullable, "Column `{}` must be nullable for `percent_nulls` option".format(self.name)
-            self.execution_history.append(".. applying null generator - `when rnd > prob then value - else null`")
-            prob_nulls = percent_nulls / 100.0
-            random_generator = self.getUniformRandomExpression(self.name)
-            new_def = when(random_generator > lit(prob_nulls), new_def).otherwise(lit(None))
+            new_def = self.applyComputePercentNullsExpression(new_def, percent_nulls)
+        return new_def
+
+    def applyTextFormatExpression(self, new_def, sformat):
+        # note :
+        # while it seems like this could use a shared instance, this does not work if initialized
+        # in a class method
+        self.execution_history.append(".. applying column format  `{}`".format(sformat))
+        new_def = format_string(sformat, new_def)
+        return new_def
+
+    def applyPrefixSuffixExpressions(self, cprefix, csuffix, new_def):
+        # string value generation is simply handled by combining with a suffix or prefix
+        if cprefix is not None:
+            new_def = concat(lit(cprefix), lit('_'), new_def.astype(IntegerType()))
+        elif csuffix is not None:
+            new_def = concat(new_def.astype(IntegerType(), lit('_'), lit(csuffix)))
+        return new_def
+
+    def applyTextGenerationExpression(self, new_def, use_pandas_optimizations):
+        """Apply text generation expression to column expression
+
+        :param new_def : column definition being created
+        :param use_pandas_optimizations: Whether Pandas optimizations should be applied
+        :returns: new column definition
+        """
+        # note :
+        # while it seems like this could use a shared instance, this does not work if initialized
+        # in a class method
+        tg = self.text_generator
+        if use_pandas_optimizations:
+            self.execution_history.append(".. text generation via pandas scalar udf `{}`"
+                                          .format(str(tg)))
+            u_value_from_generator = pandas_udf(tg.pandasGenerateText,
+                                                returnType=StringType()).asNondeterministic()
+        else:
+            self.execution_history.append(".. text generation via udf `{}`"
+                                          .format(str(tg)))
+            u_value_from_generator = udf(tg.classicGenerateText,
+                                         StringType()).asNondeterministic()
+        new_def = u_value_from_generator(new_def)
+        return new_def
+
+    def applyFinalCastExpression(self, col_type, new_def):
+        """ Apply final cast expression for column data
+
+        :param col_type: final column type
+        :param new_def:  column definition being created
+        :returns: new column definition
+        """
+        self.execution_history.append(".. casting column [{}] to  `{}`".format(self.name, col_type))
+        if type(col_type) is DateType:
+            new_def = new_def.astype(TimestampType()).astype(col_type)
+        else:
+            new_def = new_def.astype(col_type)
+
+        return new_def
+
+    def applyComputePercentNullsExpression(self, new_def, percent_nulls):
+        """Compute percentage nulls for column being generated
+
+           :param new_def: Column definition being created
+           :param percent_nulls: Percentage of nulls to be generated
+           :returns: new column definition with percentage of nulls applied
+        """
+        assert self.nullable, "Column `{}` must be nullable for `percent_nulls` option".format(self.name)
+        self.execution_history.append(".. applying null generator - `when rnd > prob then value - else null`")
+        prob_nulls = percent_nulls / 100.0
+        random_generator = self.getUniformRandomExpression(self.name)
+        new_def = when(random_generator > lit(prob_nulls), new_def).otherwise(lit(None))
         return new_def
 
     def computeImpliedRangeIfNeeded(self, col_type):
