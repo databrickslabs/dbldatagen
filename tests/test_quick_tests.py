@@ -240,6 +240,115 @@ class TestQuickTests(unittest.TestCase):
         self.assertEqual(100, result[1])
         self.assertEqual(100, result[2])
 
+    def test_basic_formatting1(self):
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
+                                         partitions=4)
+                        .withIdOutput()
+                        .withColumn("val1", IntegerType(), unique_values=100)
+                        .withColumn("val2", IntegerType(), min=1, max=100)
+                        .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"],
+                                    base_column_type="values")
+                        )
+
+        formattedDF = testDataSpec.build(withTempView=True)
+        formattedDF.show()
+
+        rowCount = formattedDF.count()
+        self.assertEqual(rowCount, 100000)
+
+    def test_basic_formatting2(self):
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
+                                         partitions=4)
+                        .withIdOutput()
+                        .withColumn("val1", IntegerType(), unique_values=100)
+                        .withColumn("val2", IntegerType(), min=1, max=100)
+                        .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"],
+                                    base_column_type="hash")
+                        )
+
+        formattedDF = testDataSpec.build(withTempView=True)
+        formattedDF.show()
+
+        rowCount = formattedDF.count()
+        self.assertEqual(rowCount, 100000)
+
+    def test_basic_formatting_discrete_values(self):
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
+                                         partitions=4)
+                        .withIdOutput()
+                        .withColumn("val1", IntegerType(), unique_values=100)
+                        .withColumn("val2", IntegerType(), min=1, max=100)
+                        .withColumn("str6", StringType(), template=r"\v0 \v1", base_column=["val1", "val2"])
+                        )
+
+        formattedDF = testDataSpec.build(withTempView=True)
+        formattedDF.show()
+
+        rowCount = formattedDF.count()
+        self.assertEqual(rowCount, 100000)
+
+
+    def test_basic_formatting3(self):
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
+                                         partitions=4)
+                        .withIdOutput()
+                        .withColumn("val1", IntegerType(), unique_values=100)
+                        .withColumn("val2", IntegerType(), min=1, max=100)
+
+                        .withColumn("str5b", StringType(), format="test %s", base_column=["val1", "val2"],
+                                    values=["one", "two", "three"])
+
+                        )
+
+        formattedDF = testDataSpec.build(withTempView=True)
+        formattedDF.show()
+
+        rowCount = formattedDF.count()
+        self.assertEqual(rowCount, 100000)
+
+    def test_basic_formatting4(self):
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
+                                         partitions=4)
+                        .withIdOutput()
+                        .withColumn("val1", IntegerType(), unique_values=100)
+                        .withColumn("val2", IntegerType(), min=1, max=100)
+
+                        .withColumn("str5b", StringType(), format="test %s %s", base_column=["val1", "val2"])
+
+                        )
+
+        formattedDF = testDataSpec.build(withTempView=True)
+        formattedDF.show()
+
+        rowCount = formattedDF.count()
+        self.assertEqual(rowCount, 100000)
+
+    def test_basic_formatting5(self):
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
+                                         partitions=4)
+                        .withIdOutput()
+                        .withColumn("val1", IntegerType(), unique_values=100)
+                        .withColumn("val2", IntegerType(), min=1, max=100)
+
+                        .withColumn("str1", StringType(), format="test %s", base_column=["val1", "val2"],
+                                    values=["one", "two", "three"])
+                        .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"],
+                                    values=["one", "two", "three"], weights=[3,1,1])
+
+                        .withColumn("str3", StringType(), format="test %s", base_column=["val1", "val2"],
+                                    values=["one", "two", "three"], template=r"test \v0")
+                        .withColumn("str4", StringType(), format="test %s", base_column=["val1", "val2"],
+                                    values=["one", "two", "three"], weights=[3, 1, 1], template=r"test \v0")
+
+                        )
+
+        formattedDF = testDataSpec.build(withTempView=True)
+        formattedDF.show()
+
+        rowCount = formattedDF.count()
+        self.assertEqual(rowCount, 100000)
+
+
     def test_basic_formatting(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
                                          partitions=4)
