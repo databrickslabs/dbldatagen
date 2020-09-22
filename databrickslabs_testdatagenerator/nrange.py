@@ -97,7 +97,9 @@ class NRange(DataRange):
         if type(self.min) is int and type(self.max) is int and self.step == 1:
             return self.max - self.min
         else:
-            return (self.max - self.min) * float(1.0 / self.step)
+            # when any component is a float, we will return a float for the discrete range
+            # to simplify computations
+            return float(math.floor((self.max - self.min) * float(1.0 / self.step)))
 
     def getContinuousRange(self):
         """Convert range to continuous range

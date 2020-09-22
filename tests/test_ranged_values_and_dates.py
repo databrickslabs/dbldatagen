@@ -737,7 +737,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertSetEqual(set(double3_values), { None, 1.5, 2.0, 2.5, 3.0, 3.5 })
 
     @staticmethod
-    def _round(x, scale):
+    def roundIfNotNull(x, scale):
         if x is None:
             return x
         return round(x, scale)
@@ -759,23 +759,23 @@ class TestRangedValuesAndDates(unittest.TestCase):
         testDataSpec.explain()
 
         # check ranged floating point data
-        float_values = [ round(r[0],1) for r in results.select("fval").distinct().collect() ]
+        float_values = [ self.roundIfNotNull(r[0],1) for r in results.select("fval").distinct().collect() ]
         self.assertSetEqual(set(float_values), {  1.5, 1.8, 2.1, 2.4 })
 
-        float2_values = [ round(r[0],1) for r in results.select("fval2").distinct().collect() ]
+        float2_values = [ self.roundIfNotNull(r[0],1) for r in results.select("fval2").distinct().collect() ]
         self.assertSetEqual(set(float2_values), { None, 1.5, 1.8, 2.1, 2.4 })
 
-        float3_values = [ round(r[0],1) for r in results.select("fval3").distinct().collect() ]
+        float3_values = [ self.roundIfNotNull(r[0],1) for r in results.select("fval3").distinct().collect() ]
         self.assertSetEqual(set(float3_values), { None, 1.5, 1.8, 2.1, 2.4 })
 
         # check ranged double data
-        double_values = [ round(r[0],1) for r in results.select("dval1").distinct().collect() ]
+        double_values = [ self.roundIfNotNull(r[0],1) for r in results.select("dval1").distinct().collect() ]
         self.assertSetEqual(set(double_values), {  1.5, 1.8, 2.1, 2.4 })
 
-        double2_values = [ round(r[0],1) for r in results.select("dval2").distinct().collect() ]
+        double2_values = [ self.roundIfNotNull(r[0],1) for r in results.select("dval2").distinct().collect() ]
         self.assertSetEqual(set(double2_values), { None, 1.5, 1.8, 2.1, 2.4 })
 
-        double3_values = [ round(r[0],1) for r in results.select("dval2").distinct().collect() ]
+        double3_values = [ self.roundIfNotNull(r[0],1) for r in results.select("dval2").distinct().collect() ]
         self.assertSetEqual(set(double3_values), { None, 1.5, 1.8, 2.1, 2.4 })
 
     def test_ranged_data_decimal1(self):
