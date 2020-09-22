@@ -182,15 +182,6 @@ class ColumnGenerationSpec(object):
         else:
             self.text_generator = None
 
-        # handle default method of computing the base column value
-        if self.base_column_compute_method is None and (self.text_generator is not None or self['format'] is not None):
-            self.logger.warning("""Column [%s] has no `base_column_type` attribute specified and output is formatted text
-                                   => Assuming `values` for attribute `base_column_type`. 
-                                   => Use explicit value for `base_column_type` if alternate interpretation is needed
-                                   
-            """, self.name)
-            self.base_column_compute_method = VALUES_COMPUTE_METHOD
-
         # compute required temporary values
         self.temporary_columns = []
 
@@ -921,9 +912,13 @@ class ColumnGenerationSpec(object):
                 sql_random_generator = self.getUniformRandomSQLExpression(self.name)
                 new_def = expr("date_sub(current_date, round({}*1024))".format(sql_random_generator)).astype(col_type)
             else:
-                if self.base_column_compute_method == VALUES_COMPUTE_METHOD or \
-                    self.base_column_compute_method == RAW_VALUES_COMPUTE_METHOD:
+                if self.base_column_compute_method == VALUES_COMPUTE_METHOD:
                     new_def = self.getSeedExpression(base_col)
+                elif self.base_column_compute_method == RAW_VALUES_COMPUTE_METHOD:
+                    new_def = self.getSeedExpression(base_col)
+                # TODO: resolve issues with hash when using templates
+                #elif self.base_column_compute_method == HASH_COMPUTE_METHOD:
+                #    new_def = self.getSeedExpression(base_col)
                 else:
                     self.logger.warning("Assuming a seeded base expression with minimum value for column %s", self.name)
                     new_def = (self.getSeedExpression(base_col) + lit(self.data_range.min)).astype(col_type)
