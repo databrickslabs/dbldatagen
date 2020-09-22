@@ -133,7 +133,7 @@ class ColumnSpecOptions(object):
         :param optional: If True (default), indicates that value is optional and
                          that `None` is a valid value for the option
         """
-        assert name is not None
+        assert name is not None, "`name` must be specified"
         if optional:
             ensure(v is None or type(v) is bool,
                    "Option `{}` must be boolean if specified - value: {}, type:".format(name, v, type(v)))
@@ -147,7 +147,7 @@ class ColumnSpecOptions(object):
         :param options: list of options that will be mutually exclusive
         """
         assert options is not None, "options must be non empty"
-        assert type(options) is list
+        assert type(options) is list, "`options` must be list"
         assert len([self[x] for x in options if self[x] is not None]) <= 1, \
             f" only one of of the options: {options} may be specified "
 
@@ -158,7 +158,7 @@ class ColumnSpecOptions(object):
         :param option_values: list of possible option values that will be mutually exclusive
         """
         assert option is not None and len(option.strip()) > 0, "option must be non empty"
-        assert type(option_values) is list
+        assert type(option_values) is list, "`option_values` must be list"
         assert self[option] in option_values, "option: `{}` must have one of the values {}".format(option,
                                                                                                    option_values)
 

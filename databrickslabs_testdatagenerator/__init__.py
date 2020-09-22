@@ -23,18 +23,18 @@ the `DataGenerator` class.
 Most of the other classes are used for internal purposes only
 """
 
-from databrickslabs_testdatagenerator.data_generator import DataGenerator
-from databrickslabs_testdatagenerator.utils import ensure, topologicalSort, mkBoundsList, coalesce
-from databrickslabs_testdatagenerator.column_generation_spec import ColumnGenerationSpec
-from databrickslabs_testdatagenerator.column_spec_options import ColumnSpecOptions
-from databrickslabs_testdatagenerator.data_analyzer import DataAnalyzer
-from databrickslabs_testdatagenerator.schema_parser import SchemaParser
-from databrickslabs_testdatagenerator.daterange import DateRange
-from databrickslabs_testdatagenerator.datarange import DataRange
-from databrickslabs_testdatagenerator.nrange import NRange
-from databrickslabs_testdatagenerator.function_builder import ColumnGeneratorBuilder
+from .data_generator import DataGenerator
+from .utils import ensure, topologicalSort, mkBoundsList, coalesce
+from .column_generation_spec import ColumnGenerationSpec
+from .column_spec_options import ColumnSpecOptions
+from .data_analyzer import DataAnalyzer
+from .schema_parser import SchemaParser
+from .daterange import DateRange
+from .datarange import DataRange
+from .nrange import NRange
+from .function_builder import ColumnGeneratorBuilder
 from .spark_singleton import SparkSingleton
-from databrickslabs_testdatagenerator.text_generators import TemplateGenerator, ILText
+from .text_generators import TemplateGenerator, ILText
 
 
 __all__ = ["data_generator", "data_analyzer", "schema_parser", "daterange", "nrange",

@@ -106,11 +106,11 @@ class DataAnalyzer:
         partition_count = self.df.rdd.getNumPartitions()
 
         results = []
-        summary = """
-           count: {}
-           distinct count: {}
-           partition count: {} 
-        """.format(count, distinct_count, partition_count)
+        summary = f"""
+           count: {count}
+           distinct count: {distinct_count}
+           partition count: {partition_count} 
+        """
 
         results.append(summary)
         results.append("schema: " + self.summarizeFields(self.df.schema))
