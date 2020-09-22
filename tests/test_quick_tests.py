@@ -9,7 +9,6 @@ from datetime import timedelta, datetime
 from pyspark.sql import SparkSession
 import unittest
 
-
 schema = StructType([
     StructField("site_id", IntegerType(), True),
     StructField("site_cd", StringType(), True),
@@ -39,7 +38,6 @@ schema = StructType([
 
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
-
 # build spark session
 
 # global spark
@@ -52,6 +50,7 @@ class TestQuickTests(unittest.TestCase):
 
     The goal for these tests is that they should run fast so focus is on quick execution
     """
+
     def setUp(self):
         print("setting up")
 
@@ -67,16 +66,23 @@ class TestQuickTests(unittest.TestCase):
 
         analyzer = dg.DataAnalyzer(testDataDF)
 
-        print("Summary;", analyzer.summarize())
+        results = analyzer.summarize()
+        self.assertIsNotNone(results)
+        self.assertTrue('min' in results)
+        self.assertTrue('max' in results)
+        self.assertTrue('count' in results)
+        self.assertTrue('stddev' in results)
+        print("Summary;", results)
+
 
     def test_complex_datagen(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
                                          partitions=4)
                         .withIdOutput()
                         .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)")
-                        .withColumn("code1a", IntegerType(),unique_values=100)
+                        .withColumn("code1a", IntegerType(), unique_values=100)
                         .withColumn("code1b", IntegerType(), min=1, max=200)
-                        .withColumn("code2", IntegerType(),  max=10)
+                        .withColumn("code2", IntegerType(), max=10)
                         .withColumn("code3", StringType(), values=['a', 'b', 'c'])
                         .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
                         .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
@@ -85,15 +91,18 @@ class TestQuickTests(unittest.TestCase):
 
         testDataDF2 = testDataSpec.build()
 
+        rowCount = testDataDF2.count()
+        self.assertEqual(rowCount, 1000)
+
         print("schema", testDataDF2.schema)
         testDataDF2.printSchema()
 
         testDataSpec.computeBuildPlan().explain()
 
-        #testDataDF2.show()
+        # testDataDF2.show()
 
         testDataDF2.createOrReplaceTempView("testdata")
-        df_stats=spark.sql("""select min(code1a) as min1a, 
+        df_stats = spark.sql("""select min(code1a) as min1a, 
                               max(code1a) as max1a, 
                               min(code1b) as min1b, 
                               max(code1b) as max1b,
@@ -102,12 +111,13 @@ class TestQuickTests(unittest.TestCase):
                               from testdata""")
         stats = df_stats.collect()[0]
 
-        print("stats",stats)
+        print("stats", stats)
 
-        #self.assertEqual(stats.min1, 1)
-        #self.assertEqual(stats.min2, 1)
-        #self.assertLessEqual(stats.max1, 100)
-        #self.assertLessEqual(stats.max1, 200)
+        # self.assertEqual(stats.min1, 1)
+        # self.assertEqual(stats.min2, 1)
+        self.assertLessEqual(stats.max1b, 200)
+        self.assertGreaterEqual(stats.min1b, 1)
+
 
     def test_generate_name(self):
         print("test_generate_name")
@@ -205,16 +215,15 @@ class TestQuickTests(unittest.TestCase):
         print("inferred columns", t2.getInferredColumnNames())
         self.assertEqual(expectedColumns, set((t2.getOutputColumnNames())))
 
-
     def test_basic_ranges_with_view(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="ranged_data", rows=100000,
                                          partitions=4)
                         .withIdOutput()
-                        .withColumn("code1a", IntegerType(),unique_values=100)
+                        .withColumn("code1a", IntegerType(), unique_values=100)
                         .withColumn("code1b", IntegerType(), min=1, max=100)
                         .withColumn("code1c", IntegerType(), min=1, max=200, unique_values=100)
                         .withColumn("code1d", IntegerType(), min=1, max=200, step=3, unique_values=50)
-                        .withColumn("code2", IntegerType(),  max=10)
+                        .withColumn("code2", IntegerType(), max=10)
                         .withColumn("code3", StringType(), values=['a', 'b', 'c'])
                         .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
                         .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
@@ -235,21 +244,28 @@ class TestQuickTests(unittest.TestCase):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
                                          partitions=4)
                         .withIdOutput()
-                        .withColumn("val1", IntegerType(),unique_values=100)
+                        .withColumn("val1", IntegerType(), unique_values=100)
                         .withColumn("val2", IntegerType(), min=1, max=100)
                         .withColumn("str1", StringType(), format="test %d")
-                        #.withColumn("str1a", StringType(), format="test %s")
-                        .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"], base_column_type="values")
-                        .withColumn("str3", StringType(), format="test %s", base_column=["val1", "val2"], base_column_type="hash")
-                        .withColumn("str4", StringType(), format="test %s", base_column=["val1", "val2"], base_column_type="hash")
+                        # .withColumn("str1a", StringType(), format="test %s")
+                        .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"],
+                                    base_column_type="values")
+                        .withColumn("str3", StringType(), format="test %s", base_column=["val1", "val2"],
+                                    base_column_type="hash")
+                        .withColumn("str4", StringType(), format="test %s", base_column=["val1", "val2"],
+                                    base_column_type="hash")
                         .withColumn("str5", StringType(), format="test %s", base_column=["val1", "val2"])
                         .withColumn("str5a", StringType(), format="test %s", base_column=["val1", "val2"])
-                        .withColumn("str5b", StringType(),  format="test %s", base_column=["val1", "val2"], values=["one", "two", "three"] )
+                        .withColumn("str5b", StringType(), format="test %s", base_column=["val1", "val2"],
+                                    values=["one", "two", "three"])
                         .withColumn("str6", StringType(), template=r"\v0 \v1", base_column=["val1", "val2"])
                         )
 
         formattedDF = testDataSpec.build(withTempView=True)
         formattedDF.show()
+
+        rowCount = formattedDF.count()
+        self.assertEqual(rowCount, 100000)
 
     def test_reversed_ranges(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="ranged_data", rows=100000,
@@ -257,12 +273,12 @@ class TestQuickTests(unittest.TestCase):
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), min=100, max=1, step=-1)
                         .withColumn("val2", IntegerType(), min=100, max=1, step=-3, unique_values=5)
-                        .withColumn("val3", IntegerType(), data_range=NRange(100,1,-1), unique_values=5)
+                        .withColumn("val3", IntegerType(), data_range=NRange(100, 1, -1), unique_values=5)
                         .withColumn("val4", IntegerType(), min=1, max=100, step=3, unique_values=5)
                         .withColumn("code1b", IntegerType(), min=1, max=100)
                         .withColumn("code1c", IntegerType(), min=1, max=200, unique_values=100)
                         .withColumn("code1d", IntegerType(), min=1, max=200)
-                        .withColumn("code2", IntegerType(),  max=10)
+                        .withColumn("code2", IntegerType(), max=10)
                         .withColumn("code3", StringType(), values=['a', 'b', 'c'])
                         .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
                         .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
@@ -271,6 +287,9 @@ class TestQuickTests(unittest.TestCase):
 
         rangedDF = testDataSpec.build()
         rangedDF.show()
+
+        rowCount = rangedDF.count()
+        self.assertEqual(rowCount, 100000)
 
     def test_date_time_ranges(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="ranged_data", rows=100000,
@@ -311,65 +330,125 @@ class TestQuickTests(unittest.TestCase):
         rangedDF = testDataSpec.build()
         rangedDF.show()
 
+        rowCount = rangedDF.count()
+        self.assertEqual(rowCount, 100000)
+
+        # TODO: add additional validation statement
+
     def test_script_table(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
                                          partitions=4)
                         .withIdOutput()
-                        .withColumn("val1", IntegerType(),unique_values=100)
+                        .withColumn("val1", IntegerType(), unique_values=100)
                         .withColumn("val2", IntegerType(), min=1, max=100)
                         .withColumn("str1", StringType(), format="test %d")
-                        #.withColumn("str1a", StringType(), format="test %s")
-                        .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"], base_column_type="values")
-                        .withColumn("str3", StringType(), format="test %s", base_column=["val1", "val2"], base_column_type="hash")
-                        .withColumn("str4", StringType(), format="test %s", base_column=["val1", "val2"], base_column_type="hash")
+                        # .withColumn("str1a", StringType(), format="test %s")
+                        .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"],
+                                    base_column_type="values")
+                        .withColumn("str3", StringType(), format="test %s", base_column=["val1", "val2"],
+                                    base_column_type="hash")
+                        .withColumn("str4", StringType(), format="test %s", base_column=["val1", "val2"],
+                                    base_column_type="hash")
                         .withColumn("str5", StringType(), format="test %s", base_column=["val1", "val2"])
                         .withColumn("str5a", StringType(), format="test %s", base_column=["val1", "val2"])
-                        .withColumn("str5b", StringType(),  format="test %s", base_column=["val1", "val2"], values=["one", "two", "three"] )
+                        .withColumn("str5b", StringType(), format="test %s", base_column=["val1", "val2"],
+                                    values=["one", "two", "three"])
                         .withColumn("str6", StringType(), template=r"\v0 \v1", base_column=["val1", "val2"])
                         )
 
-        print(testDataSpec.scriptTable(name="Test"))
+        script=testDataSpec.scriptTable(name="Test")
+        print(script)
+
+        self.assertIsNotNone(script)
+
+        output_columns = testDataSpec.getOutputColumnNames()
+        print(output_columns)
+        self.assertSetEqual(set(output_columns), {'id', 'val1', 'val2', 'str1', 'str2', 'str3', 'str4', 'str5',
+                                                  'str5a', 'str5b',   'str6'})
+
+        self.assertIsNotNone(script)
+
+        self.assertIn("CREATE TABLE IF NOT EXISTS", script)
+
+        for col in output_columns:
+            self.assertTrue(col in script)
 
     def test_script_merge1(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
                                          partitions=4)
                         .withIdOutput()
-                        .withColumn("val1", IntegerType(),unique_values=100)
+                        .withColumn("val1", IntegerType(), unique_values=100)
                         .withColumn("val2", IntegerType(), min=1, max=100)
                         .withColumn("str1", StringType(), format="test %d")
-                        #.withColumn("str1a", StringType(), format="test %s")
-                        .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"], base_column_type="values")
-                        .withColumn("str3", StringType(), format="test %s", base_column=["val1", "val2"], base_column_type="hash")
-                        .withColumn("str4", StringType(), format="test %s", base_column=["val1", "val2"], base_column_type="hash")
+                        # .withColumn("str1a", StringType(), format="test %s")
+                        .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"],
+                                    base_column_type="values")
+                        .withColumn("str3", StringType(), format="test %s", base_column=["val1", "val2"],
+                                    base_column_type="hash")
+                        .withColumn("str4", StringType(), format="test %s", base_column=["val1", "val2"],
+                                    base_column_type="hash")
                         .withColumn("str5", StringType(), format="test %s", base_column=["val1", "val2"])
                         .withColumn("str5a", StringType(), format="test %s", base_column=["val1", "val2"])
-                        .withColumn("action", StringType(),  format="test %s", base_column=["val1", "val2"], values=["INS", "DEL", "UPDATE"] )
+                        .withColumn("action", StringType(), format="test %s", base_column=["val1", "val2"],
+                                    values=["INS", "DEL", "UPDATE"])
                         .withColumn("str6", StringType(), template=r"\v0 \v1", base_column=["val1", "val2"])
                         )
 
-        print(testDataSpec.scriptMerge(tgt_name="Test", src_name="TestInc", join_expr="src.id=tgt.id", del_expr="src.action='DEL'", update_expr="src.action='UPDATE"))
+        script = testDataSpec.scriptMerge(tgt_name="Test", src_name="TestInc", join_expr="src.id=tgt.id",
+                                       del_expr="src.action='DEL'", update_expr="src.action='UPDATE")
+        print(script)
+
+        output_columns = testDataSpec.getOutputColumnNames()
+        print(output_columns)
+        self.assertSetEqual(set(output_columns), {'id', 'val1', 'val2', 'str1', 'str2', 'str3', 'str4', 'str5', 'str5a', 'action', 'str6'})
+
+        self.assertIsNotNone(script)
+
+        self.assertIn("WHEN MATCHED", script)
+        self.assertIn("WHEN NOT MATCHED", script)
+        self.assertIn("MERGE INTO", script)
+
+        for col in output_columns:
+            self.assertTrue(col in script)
 
     def test_script_merge_min(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
                                          partitions=4)
                         .withIdOutput()
-                        .withColumn("val1", IntegerType(),unique_values=100)
+                        .withColumn("val1", IntegerType(), unique_values=100)
                         .withColumn("val2", IntegerType(), min=1, max=100)
                         .withColumn("str1", StringType(), format="test %d")
-                        #.withColumn("str1a", StringType(), format="test %s")
-                        .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"], base_column_type="values")
-                        .withColumn("str3", StringType(), format="test %s", base_column=["val1", "val2"], base_column_type="hash")
-                        .withColumn("str4", StringType(), format="test %s", base_column=["val1", "val2"], base_column_type="hash")
+                        # .withColumn("str1a", StringType(), format="test %s")
+                        .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"],
+                                    base_column_type="values")
+                        .withColumn("str3", StringType(), format="test %s", base_column=["val1", "val2"],
+                                    base_column_type="hash")
+                        .withColumn("str4", StringType(), format="test %s", base_column=["val1", "val2"],
+                                    base_column_type="hash")
                         .withColumn("str5", StringType(), format="test %s", base_column=["val1", "val2"])
                         .withColumn("str5a", StringType(), format="test %s", base_column=["val1", "val2"])
-                        .withColumn("action", StringType(),  format="test %s", base_column=["val1", "val2"], values=["INS", "DEL", "UPDATE"] )
+                        .withColumn("action", StringType(), format="test %s", base_column=["val1", "val2"],
+                                    values=["INS", "DEL", "UPDATE"])
                         .withColumn("str6", StringType(), template=r"\v0 \v1", base_column=["val1", "val2"])
                         )
 
-        print(testDataSpec.scriptMerge(tgt_name="Test", src_name="TestInc", join_expr="src.id=tgt.id"))
+        script=testDataSpec.scriptMerge(tgt_name="Test", src_name="TestInc", join_expr="src.id=tgt.id")
+        self.assertIsNotNone(script)
 
+        print(script)
 
+        output_columns = testDataSpec.getOutputColumnNames()
+        print(output_columns)
+        self.assertSetEqual(set(output_columns), {'id', 'val1', 'val2', 'str1', 'str2', 'str3', 'str4', 'str5', 'str5a', 'action', 'str6'})
 
+        self.assertIsNotNone(script)
+
+        self.assertIn("WHEN MATCHED", script)
+        self.assertIn("WHEN NOT MATCHED", script)
+        self.assertIn("MERGE INTO", script)
+
+        for col in output_columns:
+            self.assertTrue(col in script)
 
 
 # run the tests
