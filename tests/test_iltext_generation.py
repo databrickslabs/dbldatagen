@@ -1,11 +1,14 @@
-import unittest
-
-from pyspark.sql.functions import expr
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType, DecimalType
 from pyspark.sql.types import BooleanType, DateType
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, TimestampType
-
 import databrickslabs_testdatagenerator as dg
-from databrickslabs_testdatagenerator import ILText
+from databrickslabs_testdatagenerator import NRange, ILText
+import databrickslabs_testdatagenerator.distributions as dist
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import expr, lit, udf, when, rand
+
+import unittest
+import re
+import pandas as pd
 
 schema = StructType([
     StructField("PK1", StringType(), True),
@@ -32,7 +35,7 @@ schema = StructType([
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
 spark.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", "500")
-
+spark.conf.set("spark.sql.execution.arrow.enabled", "true")
 
 
 # Test manipulation and generation of test data for a large schema
@@ -53,16 +56,13 @@ class TestILTextGeneration(unittest.TestCase):
                             .withSchema(schema)
                             .withIdOutput()
                             .withColumnSpec("date", percent_nulls=10.0)
-                            .withColumnSpec("nint", percent_nulls=10.0, minValue=1, maxValue=9, step=2)
-                            .withColumnSpec("nstr1", percent_nulls=10.0, minValue=1, maxValue=9, step=2)
-                            .withColumnSpec("nstr2", percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3,
-                                            format="%04.1f")
-                            .withColumnSpec("nstr3", minValue=1.0, maxValue=9.0, step=2.0)
-                            .withColumnSpec("nstr4", percent_nulls=10.0, minValue=1, maxValue=9, step=2, format="%04d")
-                            .withColumnSpec("nstr5", percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3,
-                                            random=True)
-                            .withColumnSpec("nstr6", percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3,
-                                            random=True,
+                            .withColumnSpec("nint", percent_nulls=10.0, min=1, max=9, step=2)
+                            .withColumnSpec("nstr1", percent_nulls=10.0, min=1, max=9, step=2)
+                            .withColumnSpec("nstr2", percent_nulls=10.0, min=1.5, max=2.5, step=0.3, format="%04.1f")
+                            .withColumnSpec("nstr3", min=1.0, max=9.0, step=2.0)
+                            .withColumnSpec("nstr4", percent_nulls=10.0, min=1, max=9, step=2, format="%04d")
+                            .withColumnSpec("nstr5", percent_nulls=10.0, min=1.5, max=2.5, step=0.3, random=True)
+                            .withColumnSpec("nstr6", percent_nulls=10.0, min=1.5, max=2.5, step=0.3, random=True,
                                             format="%04f")
                             .withColumnSpec("email", template=r'\\w.\\w@\\w.com|\\w@\\w.co.u\\k')
                             .withColumnSpec("ip_addr", template=r'\\n.\\n.\\n.\\n')
@@ -73,35 +73,32 @@ class TestILTextGeneration(unittest.TestCase):
         results = self.testDataSpec.build()
 
         # check ranged int data
-        nint_values = [r[0] for r in results.select("nint").distinct().collect()]
-        self.assertSetEqual(set(nint_values), {None, 1, 3, 5, 7, 9})
+        nint_values = [ r[0] for r in results.select("nint").distinct().collect() ]
+        self.assertSetEqual(set(nint_values), { None, 1, 3, 5, 7, 9})
 
     def test_phone_number_generation(self):
         results = self.testDataSpec.build()
 
         # check phone numbers
-        phone_values = [r[0] for r in
-                        results.select(expr(r"regexp_replace(phone, '(\\d+)', 'num')")).distinct().collect()]
+        phone_values = [ r[0] for r in results.select(expr(r"regexp_replace(phone, '(\\d+)', 'num')")).distinct().collect() ]
         print(phone_values)
-        self.assertSetEqual(set(phone_values), {'num num', '(num)-num-num', 'num(num) num-num'})
+        self.assertSetEqual(set(phone_values), { 'num num', '(num)-num-num', 'num(num) num-num'})
 
     def test_email_generation(self):
         results = self.testDataSpec.build()
 
         # check email addresses
-        email_values = [r[0] for r in
-                        results.select(expr(r"regexp_replace(email, '(\\w+)', 'word')")).distinct().collect()]
+        email_values = [ r[0] for r in results.select(expr(r"regexp_replace(email, '(\\w+)', 'word')")).distinct().collect() ]
         print(email_values)
-        self.assertSetEqual(set(email_values), {'word@word.word.word', 'word.word@word.word'})
+        self.assertSetEqual(set(email_values), { 'word@word.word.word', 'word.word@word.word'})
 
     def test_ip_address_generation(self):
         results = self.testDataSpec.build()
 
         # check ip address
-        ip_address_values = [r[0] for r in
-                             results.select(expr(r"regexp_replace(ip_addr, '(\\d+)', 'num')")).distinct().collect()]
+        ip_address_values = [ r[0] for r in results.select(expr(r"regexp_replace(ip_addr, '(\\d+)', 'num')")).distinct().collect() ]
         print(ip_address_values)
-        self.assertSetEqual(set(ip_address_values), {'num.num.num.num'})
+        self.assertSetEqual(set(ip_address_values), { 'num.num.num.num'})
 
     def test_basic_text_data_generation(self):
         results = self.testDataSpec.build()
@@ -212,18 +209,6 @@ class TestILTextGeneration(unittest.TestCase):
                          )
 
         testDataSpec2.build().select("id", "phone").show()
-
-        # TODO: add validation statement
-
-    def test_iltext7(self):
-        print("test data spec 2")
-        testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
-                                          partitions=self.partitions_requested)
-                         .withIdOutput()
-                         .withColumn("sample_text", text=ILText(paragraphs=1, sentences=5, words=4))
-                         )
-
-        testDataSpec2.build().select("id", "sample_text").show()
 
         # TODO: add validation statement
 

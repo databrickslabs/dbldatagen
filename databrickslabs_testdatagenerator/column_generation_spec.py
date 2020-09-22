@@ -842,7 +842,7 @@ class ColumnGenerationSpec(object):
                     sql_round(random_generator * lit(crange)) * lit(datarange.step))
 
         if self.base_column_compute_method == VALUES_COMPUTE_METHOD:
-            new_def = baseval
+            new_def = self._adjustForMinValue(baseval, datarange)
         elif self.base_column_compute_method == RAW_VALUES_COMPUTE_METHOD:
             new_def = baseval
         else:
@@ -851,7 +851,10 @@ class ColumnGenerationSpec(object):
         # for ranged values in strings, use type of min, max and step as output type
         if type(self.datatype) is StringType:
             if type(datarange.min) is float or type(datarange.max) is float or type(datarange.step) is float:
-                new_def = new_def.astype(DoubleType())
+                if datarange.getScale() > 0:
+                    new_def = sql_round(new_def.astype(FloatType()), datarange.getScale())
+                else:
+                    new_def = new_def.astype(DoubleType())
             else:
                 new_def = new_def.astype(IntegerType())
 
