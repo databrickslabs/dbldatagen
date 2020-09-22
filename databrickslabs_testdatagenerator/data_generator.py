@@ -790,50 +790,9 @@ class DataGenerator:
 
         # build columns
         if self.generateWithSelects:
-            self.execution_history.append("Generating data with selects")
-
-            # generation with selects may be more efficient as less intermediate data frames
-            # are generated resulting in shorter lineage
-
-            for colNames in self.build_order:
-                build_round = ["*"]
-                inx_col = 0
-                self.execution_history.append("building round for : {}".format(colNames))
-                for colName in colNames:
-                    col1 = self.columnSpecsByName[colName]
-                    column_generators = col1.makeGenerationExpressions(self.use_pandas)
-                    self.execution_history.extend(col1.execution_history)
-                    if type(column_generators) is list and len(column_generators) == 1:
-                        build_round.append(column_generators[0].alias(colName))
-                    elif type(column_generators) is list and len(column_generators) > 1:
-                        i = 0
-                        for cg in column_generators:
-                            build_round.append(cg.alias('{0}_{1}'.format(colName, i)))
-                            i += 1
-                    else:
-                        build_round.append(column_generators.alias(colName))
-                    inx_col = inx_col + 1
-
-                df1 = df1.select(*build_round)
+            df1 = self._build_column_expressions_with_selects(df1)
         else:
-            # build columns
-            self.execution_history.append("Generating data with withColumn statements")
-
-            column_build_order = [item for sublist in self.build_order for item in sublist]
-            for colName in column_build_order:
-                col1 = self.columnSpecsByName[colName]
-                column_generators = col1.makeGenerationExpressions()
-                self.execution_history.extend(col1.execution_history)
-
-                if type(column_generators) is list and len(column_generators) == 1:
-                    df1 = df1.withColumn(colName, column_generators[0])
-                elif type(column_generators) is list and len(column_generators) > 1:
-                    i = 0
-                    for cg in column_generators:
-                        df1 = df1.withColumn('{0}_{1}'.format(colName, i), cg)
-                        i += 1
-                else:
-                    df1 = df1.withColumn(colName, column_generators)
+            df1 = self._build_column_expressions_using_withColumn(df1)
 
         df1 = df1.select(*self.getOutputColumnNames())
         self.execution_history.append("selecting columns: {}".format(self.getOutputColumnNames()))
@@ -850,6 +809,62 @@ class DataGenerator:
             df1.createOrReplaceTempView(self.name)
             self.logger.info("Registered!")
 
+        return df1
+
+    def _build_column_expressions_using_withColumn(self, df1):
+        """
+        Build column expressions using withColumn
+        :param df1: dataframe for base data generator
+        :return: new dataframe
+        """
+        # build columns
+        self.execution_history.append("Generating data with withColumn statements")
+        column_build_order = [item for sublist in self.build_order for item in sublist]
+        for colName in column_build_order:
+            col1 = self.columnSpecsByName[colName]
+            column_generators = col1.makeGenerationExpressions()
+            self.execution_history.extend(col1.execution_history)
+
+            if type(column_generators) is list and len(column_generators) == 1:
+                df1 = df1.withColumn(colName, column_generators[0])
+            elif type(column_generators) is list and len(column_generators) > 1:
+                i = 0
+                for cg in column_generators:
+                    df1 = df1.withColumn('{0}_{1}'.format(colName, i), cg)
+                    i += 1
+            else:
+                df1 = df1.withColumn(colName, column_generators)
+        return df1
+
+    def _build_column_expressions_with_selects(self, df1):
+        """
+        Build column generation expressions with selects
+        :param df1: dataframe for base data generator
+        :return: new dataframe
+        """
+        self.execution_history.append("Generating data with selects")
+        # generation with selects may be more efficient as less intermediate data frames
+        # are generated resulting in shorter lineage
+        for colNames in self.build_order:
+            build_round = ["*"]
+            inx_col = 0
+            self.execution_history.append("building round for : {}".format(colNames))
+            for colName in colNames:
+                col1 = self.columnSpecsByName[colName]
+                column_generators = col1.makeGenerationExpressions(self.use_pandas)
+                self.execution_history.extend(col1.execution_history)
+                if type(column_generators) is list and len(column_generators) == 1:
+                    build_round.append(column_generators[0].alias(colName))
+                elif type(column_generators) is list and len(column_generators) > 1:
+                    i = 0
+                    for cg in column_generators:
+                        build_round.append(cg.alias('{0}_{1}'.format(colName, i)))
+                        i += 1
+                else:
+                    build_round.append(column_generators.alias(colName))
+                inx_col = inx_col + 1
+
+            df1 = df1.select(*build_round)
         return df1
 
     def sqlTypeFromSparkType(self, dt):
