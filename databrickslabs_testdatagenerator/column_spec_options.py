@@ -98,7 +98,8 @@ class ColumnSpecOptions(object):
                           'unique_values', 'data_range', 'text',
                           'precision', 'scale',
                           'random_seed_method', 'random_seed',
-                          'nullable', 'implicit'
+                          'nullable', 'implicit',
+                          'suffix'
 
                           }
 
