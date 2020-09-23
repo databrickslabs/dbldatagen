@@ -12,7 +12,7 @@ from pyspark.sql.functions import expr, lit, udf, when, rand
 
 # global spark
 
-spark = datagen.SparkSingleton.getLocalInstance("unit tests")
+spark = datagen.SparkSingleton.getLocalInstance("ranged values")
 
 
 class TestRangedValuesAndDates(unittest.TestCase):

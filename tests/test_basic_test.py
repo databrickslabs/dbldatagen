@@ -1,10 +1,9 @@
-import logging
-import unittest
-
-from pyspark.sql import functions as F
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType
-
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
 import databrickslabs_testdatagenerator as dg
+from pyspark.sql import SparkSession
+import unittest
+from pyspark.sql import functions as F
+import logging
 
 spark = dg.SparkSingleton.getLocalInstance("basic tests")
 
@@ -37,37 +36,6 @@ class TestBasicOperation(unittest.TestCase):
 
         cls.dfTestData = cls.testDataSpec.build().cache()
 
-    def test_row_count(self):
-        """Test row count property"""
-        rc = self.testDataSpec.rowCount
-
-        self.assertEqual(rc, self.row_count)
-
-    def test_basic_data_generation(self):
-        """Test basic data generation of distinct values"""
-        counts = self.dfTestData.agg(F.countDistinct("id").alias("id_count"),
-                                     F.countDistinct("code1").alias("code1_count"),
-                                     F.countDistinct("code2").alias("code2_count"),
-                                     F.countDistinct("code3").alias("code3_count"),
-                                     F.countDistinct("code4").alias("code4_count"),
-                                     F.countDistinct("code5").alias("code5_count")
-                                     ).collect()[0]
-
-        self.assertEqual(counts["id_count"], self.row_count)
-        self.assertEqual(counts["code1_count"], 101)
-        self.assertEqual(counts["code2_count"], 11)
-        self.assertEqual(counts["code3_count"], 3)
-        self.assertLessEqual(counts["code4_count"], 3)
-        self.assertLessEqual(counts["code5_count"], 3)
-
-    def test_fieldnames(self):
-        """Test field names in data spec correspond with schema"""
-        fieldsFromGenerator = set(self.testDataSpec.getOutputColumnNames())
-
-        fieldsFromSchema = set([fld.name for fld in self.dfTestData.schema.fields])
-
-        self.assertEqual(fieldsFromGenerator, fieldsFromSchema)
-
     def test_clone(self):
         """Test clone method"""
         ds_copy1 = self.testDataSpec.clone()
@@ -81,12 +49,6 @@ class TestBasicOperation(unittest.TestCase):
         fields1 = ds_copy1.getOutputColumnNames()
         fields2 = self.testDataSpec.getOutputColumnNames()
         self.assertNotEqual(fields1, fields2)
-
-        # check that new fields is superset of old fields
-        fields_original = set(fields2)
-        fields_new = set(fields1)
-
-        self.assertEqual(fields_new - fields_original, set(['another_column']))
 
     def test_multiple_base_columns(self):
         """Test data generation with multiple base columns"""
@@ -137,7 +99,8 @@ class TestBasicOperation(unittest.TestCase):
                                 where count_ac1 < 1 or count_ac1 > 1
                                 """)
 
-        self.assertEqual(df_check.count(), 0)
+        self.assertEquals(df_check.count(), 0)
+
 
     def test_multiple_hash_methods(self):
         """ Test different types of seeding for random values"""
@@ -156,6 +119,7 @@ class TestBasicOperation(unittest.TestCase):
 
         df_underlimit = df.where("code2 <= 10 or code2 >= 0")
         self.assertEqual(df_underlimit.count(), 1000)
+
 
         df_count_values = df.where("code3 not in ('a', 'b', 'c')")
         self.assertEqual(df_count_values.count(), 0)
@@ -191,6 +155,7 @@ class TestBasicOperation(unittest.TestCase):
         df2_count_values3 = df2.where("code5 not in ('a', 'b', 'c')")
         self.assertEqual(df2_count_values3.count(), 0)
 
+
         ds3 = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
                                 partitions=4, seed_method=None)
                .withIdOutput()
@@ -218,6 +183,7 @@ class TestBasicOperation(unittest.TestCase):
         df3_count_values3 = df3.where("code5  in ('a', 'b', 'c')")
         self.assertEqual(df3_count_values3.count(), 1000)
 
+
     def test_generated_data_count(self):
         """ Test that rows are generated for the number of rows indicated by the row count"""
         count = self.dfTestData.count()
@@ -235,17 +201,17 @@ class TestBasicOperation(unittest.TestCase):
 
     def test_values_code1(self):
         """Test values"""
-        values = self.dfTestData.select('code1').groupBy().agg(F.min('code1').alias('minValue'),
-                                                               F.max('code1').alias('maxValue')).collect()[0]
-        print("minValue and maxValue", values)
-        self.assertEqual({100, 200}, {values.minValue, values.maxValue})
+        values = self.dfTestData.select('code1').groupBy().agg(F.min('code1').alias('min'),
+                                                               F.max('code1').alias('max')).collect()[0]
+        print("min and max", values)
+        self.assertEqual({100, 200}, {values.min, values.max})
 
     def test_values_code2(self):
         """Test values"""
-        values = self.dfTestData.select('code2').groupBy().agg(F.min('code2').alias('minValue'),
-                                                               F.max('code2').alias('maxValue')).collect()[0]
-        print("minValue and maxValue", values)
-        self.assertEqual({0, 10}, {values.minValue, values.maxValue})
+        values = self.dfTestData.select('code2').groupBy().agg(F.min('code2').alias('min'),
+                                                               F.max('code2').alias('max')).collect()[0]
+        print("min and max", values)
+        self.assertEqual({0, 10}, {values.min, values.max})
 
     def test_values_code3(self):
         """Test generated values"""
@@ -319,9 +285,8 @@ class TestBasicOperation(unittest.TestCase):
     def test_partitions(self):
         """Test partitioning"""
         id_partitions = 11
-        rows_wanted = 100000000
         testdata_defn = (
-            dg.DataGenerator(name="basic_dataset", rows=rows_wanted, partitions=id_partitions, verbose=True)
+            dg.DataGenerator(name="basic_dataset", rows=100000000, partitions=id_partitions, verbose=True)
                 .withColumn("code1", IntegerType(), min=1, max=20, step=1)
                 .withColumn("code2", IntegerType(), max=1000, step=5)
                 .withColumn("code3", IntegerType(), min=100, max=200, step=1, random=True)
@@ -336,7 +301,6 @@ class TestBasicOperation(unittest.TestCase):
         partitions_created = df.rdd.getNumPartitions()
         print("partitions created", partitions_created)
         self.assertEqual(id_partitions, partitions_created)
-        self.assertEqual(count, rows_wanted)
 
 
 # run the tests

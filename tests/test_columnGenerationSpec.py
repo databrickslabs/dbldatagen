@@ -1,8 +1,8 @@
-import unittest
-
-from pyspark.sql.types import StringType, TimestampType
-
+from unittest import TestCase
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
 import databrickslabs_testdatagenerator as dg
+
+import unittest
 
 
 class TestColumnGenerationSpec(unittest.TestCase):
@@ -33,37 +33,31 @@ class TestColumnGenerationSpec(unittest.TestCase):
         dt = StringType()
         cd = dg.ColumnGenerationSpec(name="test", colType=StringType(), prefix="test_")
         self.assertEqual(cd.prefix, "test_")
-        self.assertEqual(type(cd.datatype), type(dt))
 
     def test_suffix(self):
         dt = StringType()
         cd = dg.ColumnGenerationSpec(name="test", colType=StringType(), suffix="_test")
         self.assertEqual(cd.suffix, "_test")
-        self.assertEqual(type(cd.datatype), type(dt))
 
     def test_baseColumn(self):
         dt = StringType()
         cd = dg.ColumnGenerationSpec(name="test", colType=StringType(), base_column='test0')
         self.assertEqual(cd.baseColumn, 'test0', "baseColumn should be as expected")
         self.assertEqual(cd.baseColumns, ['test0'])
-        self.assertEqual(type(cd.datatype), type(dt))
 
     def test_baseColumnMultiple(self):
         dt = StringType()
         cd = dg.ColumnGenerationSpec(name="test", colType=StringType(), base_column=['test0', 'test_1'])
-        self.assertEqual(cd.baseColumn, ['test0', 'test_1'], "baseColumn should be as expected")
-        self.assertEqual(cd.baseColumns, ['test0', 'test_1'])
-        self.assertEqual(type(cd.datatype), type(dt))
+        self.assertEquals(cd.baseColumn, ['test0', 'test_1'], "baseColumn should be as expected")
+        self.assertEquals(cd.baseColumns, ['test0', 'test_1'])
 
     def test_baseColumnMultiple2(self):
         dt = StringType()
         cd = dg.ColumnGenerationSpec(name="test", colType=StringType(), base_column='test0,test_1')
-        self.assertEqual(cd.baseColumn, 'test0,test_1', "baseColumn should be as expected")
-        self.assertEqual(cd.baseColumns, ['test0', 'test_1'])
-        self.assertEqual(type(cd.datatype), type(dt))
+        self.assertEquals(cd.baseColumn, 'test0,test_1', "baseColumn should be as expected")
+        self.assertEquals(cd.baseColumns, ['test0', 'test_1'])
 
     def test_expr(self):
         dt = StringType()
         cd = dg.ColumnGenerationSpec(name="test", colType=StringType(), base_column='test0,test_1', expr="concat(1,2)")
-        self.assertEqual(cd.expr, 'concat(1,2)')
-        self.assertEqual(type(cd.datatype), type(dt))
+        self.assertEquals(cd.expr, 'concat(1,2)')
