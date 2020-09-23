@@ -103,7 +103,11 @@ class ColumnSpecOptions(object):
                           'precision', 'scale',
                           'random_seed_method', 'random_seed',
                           'nullable', 'implicit',
+<<<<<<< HEAD
                           'suffix', 'text_separator'
+=======
+                          'suffix'
+>>>>>>> e989171... work in progress
 
                           }
 
