@@ -25,6 +25,7 @@ import copy
 HASH_COMPUTE_METHOD = "hash"
 VALUES_COMPUTE_METHOD = "values"
 RAW_VALUES_COMPUTE_METHOD = "raw_values"
+AUTO_COMPUTE_METHOD = "auto"
 
 
 class ColumnGenerationSpec(object):
@@ -168,9 +169,11 @@ class ColumnGenerationSpec(object):
         # compute dependencies
         self.dependencies = self.computeBasicDependencies()
 
-        # value of `base_column_type` must be `None`,"values" or "hash"
+        # value of `base_column_type` must be `None`,"values", "raw_values", "auto",  or "hash"
         # this is the method of comouting current column value from base column, not the data type of the base column
-        column_spec_options.checkOptionValues("base_column_type", [VALUES_COMPUTE_METHOD, HASH_COMPUTE_METHOD, RAW_VALUES_COMPUTE_METHOD, None])
+        allowed_compute_methods = [AUTO_COMPUTE_METHOD, VALUES_COMPUTE_METHOD, HASH_COMPUTE_METHOD,
+                                   RAW_VALUES_COMPUTE_METHOD, None]
+        column_spec_options.checkOptionValues("base_column_type", allowed_compute_methods )
         self.base_column_compute_method = self['base_column_type']
 
         # handle text generation templates
@@ -208,7 +211,8 @@ class ColumnGenerationSpec(object):
         # handle default method of computing the base column value
         # if we have text manipulation, use 'values' as default for format but 'hash' as default if
         # its a column with multiple values
-        if self.base_column_compute_method is None and (self.text_generator is not None or self['format'] is not None):
+        if ((self.base_column_compute_method is None) or (self.base_column_compute_method is AUTO_COMPUTE_METHOD)) \
+                and (self.text_generator is not None or self['format'] is not None):
             if self.values is not None:
                 self.logger.warning("""Column [%s] has no `base_column_type` attribute specified and uses discrete values
                                        => Assuming `hash` for attribute `base_column_type`. 
@@ -503,6 +507,7 @@ class ColumnGenerationSpec(object):
         assert self.name is not None, "`self.name` must not be None"
         assert scale is not None, "`scale` must not be None"
         assert (compute_method is None or compute_method == HASH_COMPUTE_METHOD
+                or compute_method == AUTO_COMPUTE_METHOD
                 or compute_method == VALUES_COMPUTE_METHOD
                 or compute_method == RAW_VALUES_COMPUTE_METHOD), "`compute_method` must be valid value "
         assert base_columns is not None and type(base_columns) is list and len(
@@ -517,7 +522,7 @@ class ColumnGenerationSpec(object):
                     "For column generation with values and multiple base columns,  data will  be computed with `hash`")
             effective_compute_method = HASH_COMPUTE_METHOD
 
-        if effective_compute_method is None:
+        if effective_compute_method is None or effective_compute_method is AUTO_COMPUTE_METHOD:
             effective_compute_method = VALUES_COMPUTE_METHOD
 
         column_set = ",".join(base_columns)
@@ -912,21 +917,21 @@ class ColumnGenerationSpec(object):
                 new_def = expr(self.expr).astype(self.datatype)
             elif self.data_range is not None and self.data_range.isFullyPopulated():
                 self.execution_history.append(".. computing ranged value: {}".format(self.data_range))
-                new_def = self._computeRangedColumn(base_column=base_col, datarange=self.data_range, is_random=col_is_rand)
+                new_def = self._computeRangedColumn(base_column=self.baseColumn, datarange=self.data_range, is_random=col_is_rand)
             elif type(self.datatype) is DateType:
                 sql_random_generator = self.getUniformRandomSQLExpression(self.name)
                 new_def = expr("date_sub(current_date, round({}*1024))".format(sql_random_generator)).astype(self.datatype)
             else:
                 if self.base_column_compute_method == VALUES_COMPUTE_METHOD:
-                    new_def = self.getSeedExpression(base_col)
+                    new_def = self.getSeedExpression(self.baseColumn)
                 elif self.base_column_compute_method == RAW_VALUES_COMPUTE_METHOD:
-                    new_def = self.getSeedExpression(base_col)
+                    new_def = self.getSeedExpression(self.baseColumn)
                 # TODO: resolve issues with hash when using templates
                 #elif self.base_column_compute_method == HASH_COMPUTE_METHOD:
-                #    new_def = self.getSeedExpression(base_col)
+                #    new_def = self.getSeedExpression(self.baseColumn)
                 else:
                     self.logger.warning("Assuming a seeded base expression with minimum value for column %s", self.name)
-                    new_def = (self.getSeedExpression(base_col) + lit(self.data_range.min)).astype(self.datatype)
+                    new_def = (self.getSeedExpression(self.baseColumn) + lit(self.data_range.min)).astype(self.datatype)
 
             if self.values is not None:
                 new_def = array([lit(x) for x in self.values])[new_def.astype(IntegerType())]
