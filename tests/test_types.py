@@ -5,12 +5,7 @@ import databrickslabs_testdatagenerator as datagen
 from pyspark.sql import SparkSession
 import unittest
 
-spark = SparkSession.builder \
-    .master("local[4]") \
-    .appName("spark unit tests") \
-    .config("spark.sql.warehouse.dir", "/tmp/spark-warehouse") \
-    .getOrCreate()
-
+spark = datagen.SparkSingleton.getLocalInstance("unit tests")
 
 class TestTypes(unittest.TestCase):
     row_count = 1000
