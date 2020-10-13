@@ -77,6 +77,16 @@ class ColumnSpecOptions(object):
     :param data_range: An instance of an `NRange` or `DateRange` object. This can be used in place of `min`, `max`,
                        `step` or `begin`, `end`, `interval`.
 
+    :param template: template controlling how text should be generated
+
+    :param text_separator: string specifying separator to be used when constructing strings with prefix and suffix
+
+    :param prefix: string specifying prefix text to construct field from prefix and numeric value. Both `prefix` and
+    `suffix` can be used together
+
+    :param suffix: string specifying suffix text to construct field from suffix and numeric value. Both `prefix` and
+    `suffix` can be used together
+
     .. note::
         If the `data_range` parameter is specified as well as the `min`, `max` or `step`, the results are undetermined.
         For more information, see :doc:`/reference/api/databrickslabs_testdatagenerator.daterange`
@@ -99,7 +109,7 @@ class ColumnSpecOptions(object):
                           'precision', 'scale',
                           'random_seed_method', 'random_seed',
                           'nullable', 'implicit',
-                          'suffix'
+                          'suffix', 'text_separator'
 
                           }
 

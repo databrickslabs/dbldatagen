@@ -635,6 +635,12 @@ class ColumnGenerationSpec(object):
         return self['expr']
 
     @property
+    def text_separator(self):
+        """get the `expr` attributed used to generate values for this column"""
+        return self['text_separator']
+
+
+    @property
     def begin(self):
         """get the `begin` attribute used to generate values for this column
 
@@ -961,10 +967,14 @@ class ColumnGenerationSpec(object):
 
     def applyPrefixSuffixExpressions(self, cprefix, csuffix, new_def):
         # string value generation is simply handled by combining with a suffix or prefix
-        if cprefix is not None:
-            new_def = concat(lit(cprefix), lit('_'), new_def.astype(IntegerType()))
-        if csuffix is not None:
-            new_def = concat(new_def.astype(IntegerType(), lit('_'), lit(csuffix)))
+        # TODO: prefix and suffix only apply to base columns that are numeric types
+        text_separator = self.text_separator if self.text_separator is not None else '_'
+        if cprefix is not None and csuffix is not None:
+            new_def = concat(lit(cprefix), lit(text_separator), new_def.astype(IntegerType()), lit(text_separator), lit(csuffix))
+        elif cprefix is not None:
+            new_def = concat(lit(cprefix), lit(text_separator), new_def.astype(IntegerType()))
+        elif csuffix is not None:
+            new_def = concat(new_def.astype(IntegerType()), lit(text_separator), lit(csuffix))
         return new_def
 
     def applyTextGenerationExpression(self, new_def, use_pandas_optimizations):

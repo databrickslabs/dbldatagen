@@ -172,6 +172,144 @@ class TestTextGeneration(unittest.TestCase):
         # here the values for val3 are undefined as the base value for the column is a hash of the base columns
         testDataSpec9.build().show()
 
+    def test_prefix(self):
+        # will have implied column `id` for ordinal of row
+        testdata_generator = (
+            dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=100000, partitions=20)
+                .withIdOutput()  # id column will be emitted in the output
+                .withColumn("code1", "integer", min=1, max=20, step=1)
+                .withColumn("code2", "integer", min=1, max=20, step=1)
+                .withColumn("code3", "integer", min=1, max=20, step=1)
+                .withColumn("code4", "integer", min=1, max=20, step=1)
+                # base column specifies dependent column
+
+                .withColumn("site_cd", "string", prefix='site', base_column='code1')
+                .withColumn("device_status", "string", min=1, max=200, step=1, prefix='status', random=True)
+
+                .withColumn("site_cd2", "string", prefix='site', base_column='code1', text_separator=":")
+                .withColumn("device_status2", "string", min=1, max=200, step=1, prefix='status', text_separator=":")
+
+        )
+
+        df = testdata_generator.build()  # build our dataset
+
+        numRows = df.count()
+
+        self.assertEqual(numRows, 100000)
+
+        df2 = testdata_generator.option("starting_id", 200000).build()  # build our dataset
+
+        df2.count()
+
+        print("output columns", testdata_generator.getOutputColumnNames())
+
+        # check `code` values
+        code1_values = [ r[0] for r in df.select("code1").distinct().collect() ]
+        self.assertSetEqual(set(code1_values), set(range(1,21)))
+
+        code2_values = [ r[0] for r in df.select("code2").distinct().collect() ]
+        self.assertSetEqual(set(code2_values), set(range(1,21)))
+
+        code3_values = [ r[0] for r in df.select("code3").distinct().collect() ]
+        self.assertSetEqual(set(code3_values), set(range(1,21)))
+
+        code4_values = [ r[0] for r in df.select("code3").distinct().collect() ]
+        self.assertSetEqual(set(code4_values), set(range(1,21)))
+
+        site_codes = [ f"site_{x}" for x in range(1,21)]
+        site_code_values = [ r[0] for r in df.select("site_cd").distinct().collect() ]
+        self.assertSetEqual(set(site_code_values), set(site_codes))
+
+        status_codes = [ f"status_{x}" for x in range(1,201)]
+        status_code_values = [ r[0] for r in df.select("device_status").distinct().collect() ]
+        self.assertSetEqual(set(status_code_values), set(status_codes))
+
+        site_codes = [ f"site:{x}" for x in range(1,21)]
+        site_code_values = [ r[0] for r in df.select("site_cd2").distinct().collect() ]
+        self.assertSetEqual(set(site_code_values), set(site_codes))
+
+        status_codes = [ f"status:{x}" for x in range(1,201)]
+        status_code_values = [ r[0] for r in df.select("device_status2").distinct().collect() ]
+        self.assertSetEqual(set(status_code_values), set(status_codes))
+
+    def test_suffix(self):
+        # will have implied column `id` for ordinal of row
+        testdata_generator = (
+            dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=100000, partitions=20)
+                .withIdOutput()  # id column will be emitted in the output
+                .withColumn("code1", "integer", min=1, max=20, step=1)
+                .withColumn("code2", "integer", min=1, max=20, step=1)
+                .withColumn("code3", "integer", min=1, max=20, step=1)
+                .withColumn("code4", "integer", min=1, max=20, step=1)
+                # base column specifies dependent column
+
+                .withColumn("site_cd", "string", suffix='site', base_column='code1')
+                .withColumn("device_status", "string", min=1, max=200, step=1, suffix='status', random=True)
+
+                .withColumn("site_cd2", "string", suffix='site', base_column='code1', text_separator=":")
+                .withColumn("device_status2", "string", min=1, max=200, step=1, suffix='status', text_separator=":")
+        )
+
+        df = testdata_generator.build()  # build our dataset
+
+        numRows = df.count()
+
+        self.assertEqual(numRows, 100000)
+
+        site_codes = [ f"{x}_site" for x in range(1,21)]
+        site_code_values = [ r[0] for r in df.select("site_cd").distinct().collect() ]
+        self.assertSetEqual(set(site_code_values), set(site_codes))
+
+        status_codes = [ f"{x}_status" for x in range(1,201)]
+        status_code_values = [ r[0] for r in df.select("device_status").distinct().collect() ]
+        self.assertSetEqual(set(status_code_values), set(status_codes))
+
+        site_codes = [ f"{x}:site" for x in range(1,21)]
+        site_code_values = [ r[0] for r in df.select("site_cd2").distinct().collect() ]
+        self.assertSetEqual(set(site_code_values), set(site_codes))
+
+        status_codes = [ f"{x}:status" for x in range(1,201)]
+        status_code_values = [ r[0] for r in df.select("device_status2").distinct().collect() ]
+        self.assertSetEqual(set(status_code_values), set(status_codes))
+
+    def test_prefix_and_suffix(self):
+        # will have implied column `id` for ordinal of row
+        testdata_generator = (
+            dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=100000, partitions=20)
+                .withIdOutput()  # id column will be emitted in the output
+                .withColumn("code1", "integer", min=1, max=20, step=1)
+                .withColumn("code2", "integer", min=1, max=20, step=1)
+                .withColumn("code3", "integer", min=1, max=20, step=1)
+                .withColumn("code4", "integer", min=1, max=20, step=1)
+                # base column specifies dependent column
+
+                .withColumn("site_cd", "string", suffix='site', base_column='code1', prefix="test")
+                .withColumn("device_status", "string", min=1, max=200, step=1, suffix='status',  prefix="test")
+
+                .withColumn("site_cd2", "string", suffix='site', base_column='code1', text_separator=":", prefix="test")
+                .withColumn("device_status2", "string", min=1, max=200, step=1, suffix='status', text_separator=":", prefix="test")
+        )
+
+        df = testdata_generator.build()  # build our dataset
+
+        numRows = df.count()
+
+        self.assertEqual(numRows, 100000)
+
+        status_codes = [ f"test_{x}_status" for x in range(1,201)]
+        status_code_values = [ r[0] for r in df.select("device_status").distinct().collect() ]
+        self.assertSetEqual(set(status_code_values), set(status_codes))
+
+        site_codes = [ f"test:{x}:site" for x in range(1,21)]
+        site_code_values = [ r[0] for r in df.select("site_cd2").distinct().collect() ]
+        self.assertSetEqual(set(site_code_values), set(site_codes))
+
+        status_codes = [ f"test:{x}:status" for x in range(1,201)]
+        status_code_values = [ r[0] for r in df.select("device_status2").distinct().collect() ]
+        self.assertSetEqual(set(status_code_values), set(status_codes))
+
+
+
 # run the tests
 # if __name__ == '__main__':
 #  print("Trying to run tests")
