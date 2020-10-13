@@ -371,6 +371,21 @@ class TestQuickTests(unittest.TestCase):
         rowCount = formattedDF.count()
         self.assertEqual(rowCount, 100000)
 
+    def test_basic_prefix(self):
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=1000,
+                                         partitions=4)
+                        .withIdOutput()
+                        .withColumn("val1", IntegerType(), unique_values=100)
+                        .withColumn("val2", IntegerType(), min=1, max=100)
+                        .withColumn("val3", StringType(), values=["one", "two", "three"])
+                        )
+
+        formattedDF = testDataSpec.build(withTempView=True)
+        formattedDF.show()
+
+        rowCount = formattedDF.count()
+        self.assertEqual(rowCount, 1000)
+
     def test_reversed_ranges(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="ranged_data", rows=100000,
                                          partitions=4)
