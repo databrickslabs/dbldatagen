@@ -967,7 +967,6 @@ class ColumnGenerationSpec(object):
 
     def applyPrefixSuffixExpressions(self, cprefix, csuffix, new_def):
         # string value generation is simply handled by combining with a suffix or prefix
-        # TODO: prefix and suffix only apply to base columns that are numeric types
         text_separator = self.text_separator if self.text_separator is not None else '_'
         if cprefix is not None and csuffix is not None:
             new_def = concat(lit(cprefix), lit(text_separator), new_def.astype(IntegerType()), lit(text_separator), lit(csuffix))

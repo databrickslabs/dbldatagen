@@ -302,6 +302,21 @@ class TestBasicOperation(unittest.TestCase):
         print("partitions created", partitions_created)
         self.assertEqual(id_partitions, partitions_created)
 
+    def test_reg_ex(self):
+        test_string = """concat('test one', `test 2`, test3, " tets `1` 2")"""
+
+        sequences = []
+        current_sequence = []
+        preceding_char = None
+
+        for x in test_string:
+            if x == '`':
+                
+
+            print('char', x)
+
+        for x in sequences:
+            print('seq', x)
 
 
 
