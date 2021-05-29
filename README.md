@@ -68,6 +68,8 @@ The code base must be built with Python 3.6.x or later
 
 Either `pip` or `conda` can be used for building.
 
+Either `pip` or `conda` can be used for building.
+
 For full library compatibility for a specific Databricks Spark release, see the Databricks 
 release notes for library compatibility
 

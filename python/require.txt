@@ -16,8 +16,7 @@ bumpversion
 pytest
 pytest-cov
 pytest-timeout
-rstcheck
-prospector
+pylint
 
 # The following packages are only required for building documentation and are not required at runtime
 sphinx>=2.0.0,<3.1.0
