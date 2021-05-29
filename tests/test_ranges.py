@@ -4,13 +4,15 @@ from pyspark.sql import SparkSession
 import unittest
 from pyspark.sql import functions as F
 import logging
-from databrickslabs_testdatagenerator import ensure, mkBoundsList, coalesce
 
-spark = dg.SparkSingleton.getLocalInstance("unit tests")
+spark = dg.SparkSingleton.getLocalInstance("basic tests")
 
 
-class TestUtils(unittest.TestCase):
-    x = 1
+class TestRanges(unittest.TestCase):
+    testDataSpec = None
+    dfTestData = None
+    row_count = 100000
+    column_count = 50
 
     def setUp(self):
         print("setting up")
@@ -21,29 +23,28 @@ class TestUtils(unittest.TestCase):
     def setUpClass(cls):
         pass
 
-    def testMkBoundsList1(self):
-        """ Test utils mkBoundsList"""
-        test = mkBoundsList(None, 1)
+    def test_numeric_range1(self):
+        r1 = dg.NRange(1, 20, 1)
 
-        self.assertEqual(len(test), 2)
+        print(r1.getDiscreteRange())
 
-        test2 = mkBoundsList(None, [1, 1])
+    def test_numeric_range2(self):
+        r1 = dg.NRange(1.5, 2.5, 0.35)
 
-        self.assertEqual(len(test2), 2)
+        print(r1.getDiscreteRange())
 
-    def testCoalesce(self):
-        """ Test utils coalesce function"""
-        result = coalesce(None, 1)
+        self.assertEqual(r1.getScale(), 2)
 
-        self.assertEqual(result, 1)
+    def test_numeric_range3(self):
+        r1 = dg.NRange(1.5, 2.5, 0.5)
 
-        result2 = coalesce(3, None, 1)
+        print(r1.getDiscreteRange())
 
-        self.assertEqual(result2, 3)
+    def test_numeric_range4(self):
+        r1 = dg.NRange(0, 4, 0.5)
 
-        result3 = coalesce(None, None, None)
+        print(r1.getDiscreteRange())
 
-        self.assertIsNone(result3)
 
 # run the tests
 # if __name__ == '__main__':
@@ -60,3 +61,6 @@ class TestUtils(unittest.TestCase):
 
 
 # runTests([TestBasicOperation])
+
+if __name__ == '__main__':
+    unittest.main()

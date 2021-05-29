@@ -9,16 +9,15 @@ import pandas as pd
 import numpy as np
 
 schema = StructType([
-StructField("PK1",StringType(),True),
-StructField("LAST_MODIFIED_UTC",TimestampType(),True),
-StructField("date",DateType(),True),
-StructField("str1",StringType(),True),
-StructField("email",StringType(),True),
-StructField("ip_addr",StringType(),True),
-StructField("phone",StringType(),True),
-StructField("isDeleted",BooleanType(),True)
+    StructField("PK1", StringType(), True),
+    StructField("LAST_MODIFIED_UTC", TimestampType(), True),
+    StructField("date", DateType(), True),
+    StructField("str1", StringType(), True),
+    StructField("email", StringType(), True),
+    StructField("ip_addr", StringType(), True),
+    StructField("phone", StringType(), True),
+    StructField("isDeleted", BooleanType(), True)
 ])
-
 
 print("schema", schema)
 
@@ -28,6 +27,7 @@ spark = SparkSession.builder \
     .config("spark.sql.warehouse.dir", "/tmp/spark-warehouse") \
     .config("spark.sql.execution.arrow.maxRecordsPerBatch", "1000") \
     .getOrCreate()
+
 
 
 
@@ -56,7 +56,7 @@ class TestPandasIntegration(unittest.TestCase):
             i = i + 1
         return pd.Series(retvals)
 
-    #@unittest.skip("not yet implemented")
+    # @unittest.skip("not yet implemented")
     def test_pandas(self):
         import numpy as np
         import pandas as pd
@@ -75,6 +75,9 @@ class TestPandasIntegration(unittest.TestCase):
         # Convert the Spark DataFrame back to a Pandas DataFrame using Arrow
         df.select("*").show()
 
+        rowCount = df.count()
+        self.assertGreater(rowCount, 0)
+
     @unittest.skip("not yet debugged")
     def test_pandas_udf(self):
         utest_pandas = pandas_udf(pandas_udf_example, returnType=StringType()).asNondeterministic()
@@ -86,16 +89,20 @@ class TestPandasIntegration(unittest.TestCase):
 
         df.show()
 
+        rowCount = df.count()
+        self.assertGreater(rowCount, 0)
+
     def test_numpy(self):
-        data=np.arange(10)
+        data = np.arange(10)
         print(np.sum(data))
+
+        self.assertGreater(np.sum(data), 0)
 
     def test_numpy2(self):
         data = np.arange(1000000)
         print(np.sum(data))
 
-
-
+        self.assertGreater(np.sum(data), 0)
 
 # run the tests
 # if __name__ == '__main__':

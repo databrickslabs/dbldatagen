@@ -105,6 +105,17 @@ class DataGenerator:
             """)
 
         # set up use of pandas udfs if necessary
+        self._setup_pandas_if_needed(pandas_udf_batch_size)
+
+        if seed_method is not None and seed_method != "fixed" and seed_method != "hash_fieldname":
+            raise DataGenError("""seed_method should be None, 'fixed' or 'hash_fieldname' """)
+
+    def _setup_pandas_if_needed(self, pandas_udf_batch_size):
+        """
+        Set up pandas if needed
+        :param pandas_udf_batch_size: batch size for pandas, may be None
+        :return: nothing
+        """
         assert pandas_udf_batch_size is None or type(pandas_udf_batch_size) is int, \
             "If pandas_batch_size is specified, it must be an integer"
         if self.use_pandas:
@@ -118,9 +129,6 @@ class DataGenerator:
 
             if self.pandas_udf_batch_size is not None:
                 self.sparkSession.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", self.pandas_udf_batch_size)
-
-        if seed_method is not None and seed_method != "fixed" and seed_method != "hash_fieldname":
-            raise DataGenError("""seed_method should be None, 'fixed' or 'hash_fieldname' """)
 
     def _setup_logger(self):
         """Set up logging
@@ -193,9 +201,10 @@ class DataGenerator:
         self.build_plan_computed = False
         return self
 
-    def explain(self):
+    def explain(self, suppress_output=False):
         """Explain the test data generation process
 
+        :param suppress_output: If True, suppress display of build plan
         :returns: String containing explanation of test data generation for this specification
         """
         if not self.build_plan_computed:
@@ -215,9 +224,13 @@ class DataGenerator:
         output.append("====================")
         output.append("")
 
-        print("\n".join(output))
+        explain_results = "\n".join(output)
+        if not suppress_output:
+            print(explain_results)
 
-    def setRowCount(self, rc):
+        return explain_results
+
+    def withRowCount(self, rc):
         """Modify the row count - useful when starting a new spec from a clone
 
         :param rc: The count of rows to generate
@@ -226,6 +239,20 @@ class DataGenerator:
         """
         self._rowCount = rc
         return self
+
+    def setRowCount(self, rc):
+        """Modify the row count - useful when starting a new spec from a clone
+
+        .. warning::
+           Method is deprecated - use `withRowCount` instead
+
+        :param rc: The count of rows to generate
+        :returns: modified in-place instance of test data generator allowing for chaining of calls following
+                  Builder pattern
+
+        """
+        self.logger.warning("method `setRowCount` is deprecated, use `withRowCount` instead")
+        return self.withRowCount(rc)
 
     @property
     def rowCount(self):
@@ -421,6 +448,7 @@ class DataGenerator:
 
         :returns: effective min, max, step as tuple
         """
+        # TODO: may also need to check for instance of DataRnage
         if data_range is not None and isinstance(data_range, range):
             if max is not None or min != 0 or step != 1:
                 raise ValueError("You cant specify both a range and min, max or step values")
@@ -762,50 +790,9 @@ class DataGenerator:
 
         # build columns
         if self.generateWithSelects:
-            self.execution_history.append("Generating data with selects")
-
-            # generation with selects may be more efficient as less intermediate data frames
-            # are generated resulting in shorter lineage
-
-            for colNames in self.build_order:
-                build_round = ["*"]
-                inx_col = 0
-                self.execution_history.append("building round for : {}".format(colNames))
-                for colName in colNames:
-                    col1 = self.columnSpecsByName[colName]
-                    column_generators = col1.makeGenerationExpressions(self.use_pandas)
-                    self.execution_history.extend(col1.execution_history)
-                    if type(column_generators) is list and len(column_generators) == 1:
-                        build_round.append(column_generators[0].alias(colName))
-                    elif type(column_generators) is list and len(column_generators) > 1:
-                        i = 0
-                        for cg in column_generators:
-                            build_round.append(cg.alias('{0}_{1}'.format(colName, i)))
-                            i += 1
-                    else:
-                        build_round.append(column_generators.alias(colName))
-                    inx_col = inx_col + 1
-
-                df1 = df1.select(*build_round)
+            df1 = self._build_column_expressions_with_selects(df1)
         else:
-            # build columns
-            self.execution_history.append("Generating data with withColumn statements")
-
-            column_build_order = [item for sublist in self.build_order for item in sublist]
-            for colName in column_build_order:
-                col1 = self.columnSpecsByName[colName]
-                column_generators = col1.makeGenerationExpressions()
-                self.execution_history.extend(col1.execution_history)
-
-                if type(column_generators) is list and len(column_generators) == 1:
-                    df1 = df1.withColumn(colName, column_generators[0])
-                elif type(column_generators) is list and len(column_generators) > 1:
-                    i = 0
-                    for cg in column_generators:
-                        df1 = df1.withColumn('{0}_{1}'.format(colName, i), cg)
-                        i += 1
-                else:
-                    df1 = df1.withColumn(colName, column_generators)
+            df1 = self._build_column_expressions_using_withColumn(df1)
 
         df1 = df1.select(*self.getOutputColumnNames())
         self.execution_history.append("selecting columns: {}".format(self.getOutputColumnNames()))
@@ -822,6 +809,62 @@ class DataGenerator:
             df1.createOrReplaceTempView(self.name)
             self.logger.info("Registered!")
 
+        return df1
+
+    def _build_column_expressions_using_withColumn(self, df1):
+        """
+        Build column expressions using withColumn
+        :param df1: dataframe for base data generator
+        :return: new dataframe
+        """
+        # build columns
+        self.execution_history.append("Generating data with withColumn statements")
+        column_build_order = [item for sublist in self.build_order for item in sublist]
+        for colName in column_build_order:
+            col1 = self.columnSpecsByName[colName]
+            column_generators = col1.makeGenerationExpressions()
+            self.execution_history.extend(col1.execution_history)
+
+            if type(column_generators) is list and len(column_generators) == 1:
+                df1 = df1.withColumn(colName, column_generators[0])
+            elif type(column_generators) is list and len(column_generators) > 1:
+                i = 0
+                for cg in column_generators:
+                    df1 = df1.withColumn('{0}_{1}'.format(colName, i), cg)
+                    i += 1
+            else:
+                df1 = df1.withColumn(colName, column_generators)
+        return df1
+
+    def _build_column_expressions_with_selects(self, df1):
+        """
+        Build column generation expressions with selects
+        :param df1: dataframe for base data generator
+        :return: new dataframe
+        """
+        self.execution_history.append("Generating data with selects")
+        # generation with selects may be more efficient as less intermediate data frames
+        # are generated resulting in shorter lineage
+        for colNames in self.build_order:
+            build_round = ["*"]
+            inx_col = 0
+            self.execution_history.append("building round for : {}".format(colNames))
+            for colName in colNames:
+                col1 = self.columnSpecsByName[colName]
+                column_generators = col1.makeGenerationExpressions(self.use_pandas)
+                self.execution_history.extend(col1.execution_history)
+                if type(column_generators) is list and len(column_generators) == 1:
+                    build_round.append(column_generators[0].alias(colName))
+                elif type(column_generators) is list and len(column_generators) > 1:
+                    i = 0
+                    for cg in column_generators:
+                        build_round.append(cg.alias('{0}_{1}'.format(colName, i)))
+                        i += 1
+                else:
+                    build_round.append(column_generators.alias(colName))
+                inx_col = inx_col + 1
+
+            df1 = df1.select(*build_round)
         return df1
 
     def sqlTypeFromSparkType(self, dt):
@@ -858,7 +901,7 @@ class DataGenerator:
         :param table_format: table format for table
         :returns: SQL string for scripted table
         """
-        assert name is not None
+        assert name is not None, "`name` must be specified"
 
         self.computeBuildPlan()
 

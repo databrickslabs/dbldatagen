@@ -3,8 +3,6 @@ import databrickslabs_testdatagenerator as datagen
 from pyspark.sql import SparkSession
 import unittest
 
-
-
 spark = datagen.SparkSingleton.getLocalInstance("unit tests")
 
 
@@ -12,8 +10,7 @@ class TestScripting(unittest.TestCase):
     row_count = 1000
     column_count = 10
 
-
-    def compareTableScriptWithDataset(self, script, name,  df):
+    def compareTableScriptWithDataset(self, script, name, df):
         pass
 
     def checkGeneratedScript(self, script, name):
@@ -25,28 +22,27 @@ class TestScripting(unittest.TestCase):
         # check schemas are the same
         self.assertEqual(len(schema1.fields), len(schema2.fields), "schemas should have same numbers of fields")
 
-        for c1,c2 in zip(schema1.fields, schema2.fields):
+        for c1, c2 in zip(schema1.fields, schema2.fields):
             self.assertEqual(c1.name, c2.name, msg="{} != {}".format(c1.name, c2.name))
             self.assertEqual(c1.dataType, c2.dataType, msg="{}.datatype ({}) != {}.datatype ({})".format(
-                c1.name,c1.dataType, c2.name, c2.dataType))
-
+                c1.name, c1.dataType, c2.name, c2.dataType))
 
     def test_generate_table_script(self):
         tbl_name = "scripted_table1"
         spark.sql("drop table if exists {}".format(tbl_name))
 
         testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count,
-                                                  partitions=4)
-                            .withIdOutput()
-                            .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
-                                        numColumns=self.column_count)
-                            .withColumn("code1", IntegerType(), min=100, max=200)
-                            .withColumn("code2", IntegerType(), min=0, max=10)
-                            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-                            .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
-                            .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+                                              partitions=4)
+                        .withIdOutput()
+                        .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
+                                    numColumns=self.column_count)
+                        .withColumn("code1", IntegerType(), min=100, max=200)
+                        .withColumn("code2", IntegerType(), min=0, max=10)
+                        .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+                        .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+                        .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
 
-                            )
+                        )
 
         creation_script = testDataSpec.scriptTable(name=tbl_name, table_format="parquet")
 
@@ -56,7 +52,6 @@ class TestScripting(unittest.TestCase):
         print("Table Creation Script:")
         print(creation_script)
         print("====")
-
 
         result1 = spark.sql(creation_script)
         df_result = spark.sql("select * from {}".format(tbl_name))
@@ -73,17 +68,17 @@ class TestScripting(unittest.TestCase):
         spark.sql("drop table if exists {}".format(tbl_name))
 
         testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
-                                                  partitions=4)
-                            .withIdOutput()
-                            .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
-                                        numColumns=self.column_count)
-                            .withColumn("code1", IntegerType(), min=100, max=200)
-                            .withColumn("code2", IntegerType(), min=0, max=10)
-                            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-                            .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
-                            .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+                                              partitions=4)
+                        .withIdOutput()
+                        .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
+                                    numColumns=self.column_count)
+                        .withColumn("code1", IntegerType(), min=100, max=200)
+                        .withColumn("code2", IntegerType(), min=0, max=10)
+                        .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+                        .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+                        .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
 
-                            )
+                        )
 
         creation_script = testDataSpec.scriptTable(name=tbl_name, table_format="parquet", location="/tmp/test")
 
@@ -95,7 +90,6 @@ class TestScripting(unittest.TestCase):
         print(creation_script)
         print("====")
 
-
         result1 = spark.sql(creation_script)
         df_result = spark.sql("select * from {}".format(tbl_name))
 
@@ -105,5 +99,3 @@ class TestScripting(unittest.TestCase):
         schema2 = dfTestData.schema
 
         self.checkSchemaEquality(schema1, schema2)
-
-

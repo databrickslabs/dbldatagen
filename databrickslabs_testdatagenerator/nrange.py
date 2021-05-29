@@ -68,10 +68,10 @@ class NRange(DataRange):
                 self.step = 1.0
 
         if type(ctype) is ShortType and self.max is not None:
-            assert self.max <= 65536
+            assert self.max <= 65536, "`max` must be in range of short"
 
         if type(ctype) is ByteType and self.max is not None:
-            assert self.max <= 256
+            assert self.max <= 256, "`max` must be in range of byte (0 - 256)"
 
         if (type(ctype) is DoubleType
             or type(ctype) is FloatType) and self.step is None:
@@ -97,7 +97,9 @@ class NRange(DataRange):
         if type(self.min) is int and type(self.max) is int and self.step == 1:
             return self.max - self.min
         else:
-            return (self.max - self.min) * float(1.0 / self.step)
+            # when any component is a float, we will return a float for the discrete range
+            # to simplify computations
+            return float(math.floor((self.max - self.min) * float(1.0 / self.step)))
 
     def getContinuousRange(self):
         """Convert range to continuous range
@@ -105,3 +107,31 @@ class NRange(DataRange):
         :returns: float value for size of interval from `min` to `max`
         """
         return (self.max - self.min) * float(1.0)
+
+    def getScale(self):
+        """Get scale of range"""
+        smin, smax, sstep = 0, 0, 0
+
+        if self.min is not None:
+            smin = self._precision_and_scale(self.min)[1]
+        if self.max is not None:
+            smax = self._precision_and_scale(self.max)[1]
+        if self.step is not None:
+            sstep = self._precision_and_scale(self.step)[1]
+
+        # return maximum scale of components
+        return max(smin, smax, sstep)
+
+    def _precision_and_scale(self, x):
+        max_digits = 14
+        int_part = int(abs(x))
+        magnitude = 1 if int_part == 0 else int(math.log10(int_part)) + 1
+        if magnitude >= max_digits:
+            return (magnitude, 0)
+        frac_part = abs(x) - int_part
+        multiplier = 10 ** (max_digits - magnitude)
+        frac_digits = multiplier + int(multiplier * frac_part + 0.5)
+        while frac_digits % 10 == 0:
+            frac_digits /= 10
+        scale = int(math.log10(frac_digits))
+        return (magnitude + scale, scale)

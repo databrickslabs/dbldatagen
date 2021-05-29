@@ -77,6 +77,16 @@ class ColumnSpecOptions(object):
     :param data_range: An instance of an `NRange` or `DateRange` object. This can be used in place of `min`, `max`,
                        `step` or `begin`, `end`, `interval`.
 
+    :param template: template controlling how text should be generated
+
+    :param text_separator: string specifying separator to be used when constructing strings with prefix and suffix
+
+    :param prefix: string specifying prefix text to construct field from prefix and numeric value. Both `prefix` and
+    `suffix` can be used together
+
+    :param suffix: string specifying suffix text to construct field from suffix and numeric value. Both `prefix` and
+    `suffix` can be used together
+
     .. note::
         If the `data_range` parameter is specified as well as the `min`, `max` or `step`, the results are undetermined.
         For more information, see :doc:`/reference/api/databrickslabs_testdatagenerator.daterange`
@@ -98,7 +108,8 @@ class ColumnSpecOptions(object):
                           'unique_values', 'data_range', 'text',
                           'precision', 'scale',
                           'random_seed_method', 'random_seed',
-                          'nullable', 'implicit'
+                          'nullable', 'implicit',
+                          'suffix', 'text_separator'
 
                           }
 
@@ -133,7 +144,7 @@ class ColumnSpecOptions(object):
         :param optional: If True (default), indicates that value is optional and
                          that `None` is a valid value for the option
         """
-        assert name is not None
+        assert name is not None, "`name` must be specified"
         if optional:
             ensure(v is None or type(v) is bool,
                    "Option `{}` must be boolean if specified - value: {}, type:".format(name, v, type(v)))
@@ -147,7 +158,7 @@ class ColumnSpecOptions(object):
         :param options: list of options that will be mutually exclusive
         """
         assert options is not None, "options must be non empty"
-        assert type(options) is list
+        assert type(options) is list, "`options` must be list"
         assert len([self[x] for x in options if self[x] is not None]) <= 1, \
             f" only one of of the options: {options} may be specified "
 
@@ -158,7 +169,7 @@ class ColumnSpecOptions(object):
         :param option_values: list of possible option values that will be mutually exclusive
         """
         assert option is not None and len(option.strip()) > 0, "option must be non empty"
-        assert type(option_values) is list
+        assert type(option_values) is list, "`option_values` must be list"
         assert self[option] in option_values, "option: `{}` must have one of the values {}".format(option,
                                                                                                    option_values)
 

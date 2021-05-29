@@ -52,7 +52,7 @@ class SchemaParser(object):
         :param type_string: String representation of SQL type such as 'integer' etc.
         :returns: Spark SQL type
         """
-        assert type_string is not None
+        assert type_string is not None, "`type_string` must be specified"
 
         s = type_string.strip().lower()
         if s == "string" or s == "varchar" or s == "char" or s == "nvarchar":
@@ -88,8 +88,8 @@ class SchemaParser(object):
             :param source_schema: should be a table definition minus the create table statement
             :returns: Spark SQL schema instance
         """
-        assert (source_schema is not None)
-        assert (sparkSession is not None)
+        assert (source_schema is not None), "`source_schema` must be specified"
+        assert (sparkSession is not None), "`sparkSession` must be specified"
         lines = [x.strip() for x in source_schema.split("\n") if x is not None]
         table_defn = " ".join(lines)
 
