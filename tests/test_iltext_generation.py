@@ -211,6 +211,18 @@ class TestILTextGeneration(unittest.TestCase):
 
         # TODO: add validation statement
 
+    def test_iltext7(self):
+        print("test data spec 2")
+        testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
+                                          partitions=self.partitions_requested)
+                         .withIdOutput()
+                         .withColumn("sample_text", text=ILText(paragraphs=1, sentences=5, words=4))
+                         )
+
+        testDataSpec2.build().select("id", "sample_text").show()
+
+        # TODO: add validation statement
+
 # run the tests
 # if __name__ == '__main__':
 #  print("Trying to run tests")
