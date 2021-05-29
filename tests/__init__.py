@@ -34,7 +34,7 @@ __all__ = ["test_basic_test", "test_quick_tests", "test_columnGenerationSpec",
            "test_dependent_data"
            ]
 
-from unit_tests.test_pandas_integration import TestPandasIntegration
+#from ./test_pandas_integration import TestPandasIntegration
 
 if __name__ == '__main__':
     unittest.main()

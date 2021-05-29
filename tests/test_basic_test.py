@@ -36,6 +36,20 @@ class TestBasicOperation(unittest.TestCase):
 
         cls.dfTestData = cls.testDataSpec.build().cache()
 
+    def test_spark_version(self):
+        print(spark.version)
+        ds_copy1 = self.testDataSpec.clone()
+
+        df_copy1 = (ds_copy1.setRowCount(1000)
+                    .withColumn("another_column", StringType(), values=['a', 'b', 'c'], random=True)
+                    .build())
+
+        self.assertEqual(df_copy1.count(), 1000)
+
+        fields1 = ds_copy1.getOutputColumnNames()
+        fields2 = self.testDataSpec.getOutputColumnNames()
+        self.assertNotEqual(fields1, fields2)
+
     def test_clone(self):
         ds_copy1 = self.testDataSpec.clone()
 
