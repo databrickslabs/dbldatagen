@@ -1,16 +1,22 @@
 # The following packages are used in building the test data generator framework
 # All packages used are already installed in the Databricks runtime environment for version 6.5 or later
-numpy==1.16.2
-pandas==0.24.2
+numpy==1.18.1
+pandas==1.0.1
 pickleshare==0.7.5
-py4j==0.10.7
-pyarrow==0.13.0
-pyspark==2.4.5
-python-dateutil==2.8.0
-six==1.12.0
-wheel==0.33.1
-setuptools==40.8.0
+py4j==0.10.9
+pyarrow==1.0.1
+pyspark>=3.0.1
+python-dateutil==2.8.1
+six==1.14.0
+
+# The following packages are required for development only
+wheel==0.34.2
+setuptools==45.2.0
 bumpversion
+pytest
+pytest-cov
+pytest-timeout
+pylint
 
 # The following packages are only required for building documentation and are not required at runtime
 sphinx>=2.0.0,<3.1.0

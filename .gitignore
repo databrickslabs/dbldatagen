@@ -1,16 +1,25 @@
 #intellij
 .idea/
 *.iml
+
 #local spark context data from unit tests
 spark-warehouse/
-#Build dirctories
+
+# Mac
+.DS_Store
+
+# Byte-compiled / optimized / DLL files
+__pycache__
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
 env/
 build/
 target/
 project/project/
 project/target/
 ./testData
-*.DS_Store
 /bin/
 /python/dist/
 /dist
@@ -20,3 +29,7 @@ project/target/
 build_env/
 python/docs/source/relnotes/*.md
 python/docs/source/reference/api/*.rst
+
+# code coverage related
+.coverage
+htmlcov/

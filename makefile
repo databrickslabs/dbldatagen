@@ -1,4 +1,7 @@
+# This Makefile is for project development purposes only.
 .PHONY: clean wheel dist tests buildenv install
+
+ENV_NAME=dbl_testdatagenerator
 
 NO_COLOR = \x1b[0m
 OK_COLOR = \x1b[32;01m
@@ -20,27 +23,32 @@ prepare: clean
 	git status
 	git commit -m "cleanup before release"
 
+create-dev-env:
+	conda create -n $(ENV_NAME) python=3.7.5
+
+install-dev-dependencies:
+	pip install -r python/require.txt
+
 build_env/bin/activate: python/require.txt
 	@echo "$(OK_COLOR)=> Updating build virtual environment ...$(NO_COLOR)"
 	@test -d build_env || python3 -m venv build_env
 	@. build_env/bin/activate; pip install -Ur python/require.txt
 	@touch build_env/bin/activate
 
-buildenv: build_env/bin/activate
+buildenv: install-dev-dependencies
 	@echo "$(OK_COLOR)=> Checking build virtual environment ...$(NO_COLOR)"
 
 describe_buildenv: buildenv
 	@echo "$(OK_COLOR)=> Validating build virtual environment ...$(NO_COLOR)"
 	@echo "The following packages are installed:"
-	@source `pwd`/build_env/bin/activate; pip3 list
+	@pip3 list
 
 clean_buildenv:
 	@echo "$(OK_COLOR)=> Cleaning build virtual environment ...$(NO_COLOR)"
 	@rm -rf ./build_env
 	@echo "directory is `pwd`"
 	@echo "$(OK_COLOR)=> Creating build virtual environment ...$(NO_COLOR)"
-	@python3 -m venv build_env
-	@. build_env/bin/activate; pip install -r python/require.txt
+	@pip install -r python/require.txt
 
 docs: install
 	@echo "$(OK_COLOR)=> Creating docs ...$(NO_COLOR)"
@@ -49,7 +57,7 @@ docs: install
 	@cp -f CONTRIBUTING.md python/docs/source/relnotes/
 	@cp -f RELEASE_NOTES.md python/docs/source/relnotes/
 	@cp -f python/docs/APIDOCS.md python/docs/source/relnotes/
-	@. build_env/bin/activate; cd python/docs && make docs
+	@cd python/docs && make docs
 
 
 # Tests
@@ -59,22 +67,27 @@ tests: export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 #tests: export PYSPARK_PYTHON=`which python3`
 #tests: export PYSPARK_DRIVER_PYTHON=`which python3`
 
-tests: buildenv dist/install_flag.txt
+tests:
 	@echo "$(OK_COLOR)=> Running unit tests$(NO_COLOR)"
-	. `pwd`/build_env/bin/activate; python3 -m unittest discover -s "tests" -p "test_*.py"
+	pytest tests/ --cov databrickslabs_testdatagenerator
+
+test-with-html-report:
+	@echo "$(OK_COLOR)=> Running unit tests with HTML test coverage report$(NO_COLOR)"
+	pytest --cov databrickslabs_testdatagenerator --cov-report html -s
+	@echo "$(OK_COLOR)=> the test coverage report can be found at htmlcov/index.html$(NO_COLOR)"
+
 
 # Version commands
 
 bump:
 ifdef part
 ifdef version
-	@. `pwd`/build_env/bin/activate; \
-	bumpversion --config-file python/.bumpversion.cfg --allow-dirty --new-version $(version) $(part) ; \
+	@bumpversion --config-file python/.bumpversion.cfg --allow-dirty --new-version $(version) $(part) ; \
 	grep current python/.bumpversion.cfg ; \
 	grep -H version setup.py ; \
 	grep -H "Version" RELEASE_NOTES.md
 else
-	. `pwd`/build_env/bin/activate; bumpversion --config-file python/.bumpversion.cfg --allow-dirty $(part) ; \
+	bumpversion --config-file python/.bumpversion.cfg --allow-dirty $(part) ; \
 	grep current python/.bumpversion.cfg ; \
 	grep -H "version" setup.py ; \
 	grep -H "Version" RELEASE_NOTES.md
@@ -93,7 +106,7 @@ dist: buildenv
 	@echo "$(OK_COLOR)=> building dist of wheel$(NO_COLOR)"
 	# clean out old dist files - ignore any errors flagged
 	@- test -d `pwd`/dist && test -n "$(find `pwd`/dist/ -name '*.whl' -print -quit)" && echo "found" && rm `pwd`/dist/*
-	@source `pwd`/build_env/bin/activate; python3 setup.py sdist bdist_wheel
+	@python3 setup.py sdist bdist_wheel
 	@touch `pwd`/dist/dist_flag.txt
 	export NEW_WHEEL=`find ./dist -name "*.whl" -print`
 	@echo "new package is $(NEW_WHEEL)"
@@ -107,7 +120,7 @@ new_artifact: buildenv
 dist/dist_flag.txt: dist
 
 newbuild:
-	. `pwd`/build_env/bin/activate; bumpversion --config-file python/.bumpversion.cfg --allow-dirty part=build ; \
+	bumpversion --config-file python/.bumpversion.cfg --allow-dirty part=build ; \
 	grep current python/.bumpversion.cfg ; \
 	grep -H "version" setup.py ; \
 	grep -H "Version" RELEASE_NOTES.md
@@ -128,7 +141,7 @@ release:
 install: buildenv dist/dist_flag.txt
 	@echo "$(OK_COLOR)=> Installing databrickslabs_testdatagenerator$(NO_COLOR)"
 	@cp README.md python/
-	@source `pwd`/build_env/bin/activate; pip3 install --upgrade .
+	@pip3 install --upgrade .
 	@touch `pwd`/dist/install_flag.txt
 
 dist/install_flag.txt: install

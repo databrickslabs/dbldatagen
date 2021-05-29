@@ -42,6 +42,8 @@ Any issues discovered through the use of this project should be filed as GitHub 
 ## Compatibility
 The code base must be built with Python 3.x. 
 
+Either `pip` or `conda` can be used for building.
+
 For full library compatibility for a specific Databricks Spark release, see the Databricks 
 release notes for library compatibility
 
