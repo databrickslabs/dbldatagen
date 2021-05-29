@@ -26,19 +26,9 @@ spark = SparkSession.builder \
     .appName("spark unit tests") \
     .config("spark.sql.warehouse.dir", "/tmp/spark-warehouse") \
     .config("spark.sql.execution.arrow.maxRecordsPerBatch", "1000") \
-    .config("spark.sql.execution.arrow.enabled", "true") \
     .getOrCreate()
 
 
-def test_pandas(v, s):
-    retvals = []
-
-    vlen = v.size
-    i = 0
-    while i < vlen:
-        retvals.append(v.at[i] + s.at[i])
-        i = i + 1
-    return pd.Series(retvals)
 
 
 # Test manipulation and generation of test data for a large schema
@@ -54,6 +44,17 @@ class TestPandasIntegration(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         pass
+
+    @staticmethod
+    def pandas_udf_example(v, s):
+        retvals = []
+
+        vlen = v.size
+        i = 0
+        while i < vlen:
+            retvals.append(v.at[i] + s.at[i])
+            i = i + 1
+        return pd.Series(retvals)
 
     # @unittest.skip("not yet implemented")
     def test_pandas(self):
@@ -79,7 +80,7 @@ class TestPandasIntegration(unittest.TestCase):
 
     @unittest.skip("not yet debugged")
     def test_pandas_udf(self):
-        utest_pandas = pandas_udf(test_pandas, returnType=StringType()).asNondeterministic()
+        utest_pandas = pandas_udf(pandas_udf_example, returnType=StringType()).asNondeterministic()
         df = (spark.range(1000000)
               .withColumn("x", expr("cast(id as string)"))
               .withColumn("y", expr("cast(id as string)"))
