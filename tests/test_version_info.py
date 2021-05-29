@@ -1,6 +1,7 @@
-import unittest
-
 from databrickslabs_testdatagenerator._version import get_version, __version__
+import unittest
+import logging
+
 
 
 class TestVersionInfo(unittest.TestCase):
@@ -12,6 +13,7 @@ class TestVersionInfo(unittest.TestCase):
         self.assertIsNotNone(vi.major)
         self.assertIsNotNone(vi.minor)
         self.assertIsNotNone(vi.release)
+
 
 
 # run the tests

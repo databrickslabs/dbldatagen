@@ -1,11 +1,12 @@
-import unittest
-
-import numpy as np
-import pandas as pd
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import expr, col, pandas_udf
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType, DecimalType
 from pyspark.sql.types import BooleanType, DateType
-from pyspark.sql.types import StructType, StructField, StringType, TimestampType
+import databrickslabs_testdatagenerator as datagen
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import expr, col, lit, udf, when, rand, pandas_udf
+
+import unittest
+import pandas as pd
+import numpy as np
 
 schema = StructType([
     StructField("PK1", StringType(), True),
@@ -26,6 +27,7 @@ spark = SparkSession.builder \
     .config("spark.sql.warehouse.dir", "/tmp/spark-warehouse") \
     .config("spark.sql.execution.arrow.maxRecordsPerBatch", "1000") \
     .getOrCreate()
+
 
 
 
@@ -56,6 +58,9 @@ class TestPandasIntegration(unittest.TestCase):
 
     # @unittest.skip("not yet implemented")
     def test_pandas(self):
+        import numpy as np
+        import pandas as pd
+
         print("numpy version ", np.version)
 
         # Enable Arrow-based columnar data transfers
@@ -75,7 +80,7 @@ class TestPandasIntegration(unittest.TestCase):
 
     @unittest.skip("not yet debugged")
     def test_pandas_udf(self):
-        utest_pandas = pandas_udf(self.pandas_udf_example, returnType=StringType()).asNondeterministic()
+        utest_pandas = pandas_udf(pandas_udf_example, returnType=StringType()).asNondeterministic()
         df = (spark.range(1000000)
               .withColumn("x", expr("cast(id as string)"))
               .withColumn("y", expr("cast(id as string)"))
