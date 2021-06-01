@@ -301,6 +301,26 @@ class TestQuickTests(unittest.TestCase):
         rowCount = formattedDF.count()
         self.assertEqual(rowCount, 100000)
 
+    def test_basic_formatting3a(self):
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
+                                         partitions=4)
+                        .withIdOutput()
+                        .withColumn("val1", IntegerType(), unique_values=100)
+                        .withColumn("val2", IntegerType(), min=1, max=100)
+
+                        # in this case values from base column are passed as array
+                        .withColumn("str5b", StringType(), format="test %s", base_column=["val1", "val2"])
+
+                        )
+
+        formattedDF = testDataSpec.build(withTempView=True)
+        formattedDF.show()
+
+        rowCount = formattedDF.count()
+        self.assertEqual(rowCount, 100000)
+
+
+    @unittest.skip("not yet implemented for multiple base columns")
     def test_basic_formatting4(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
                                          partitions=4)
@@ -308,7 +328,8 @@ class TestQuickTests(unittest.TestCase):
                         .withColumn("val1", IntegerType(), unique_values=100)
                         .withColumn("val2", IntegerType(), min=1, max=100)
 
-                        .withColumn("str5b", StringType(), format="test %s %s", base_column=["val1", "val2"])
+                        # when specifying multiple base columns
+                        .withColumn("str5b", StringType(), format="test %s %s", base_column=["val1", "val2"], base_column_type="values")
 
                         )
 
