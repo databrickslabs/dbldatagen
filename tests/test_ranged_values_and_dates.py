@@ -1,12 +1,13 @@
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
-from pyspark.sql.types import DoubleType, ShortType, LongType, DecimalType, ByteType
+from pyspark.sql.types import DoubleType, ShortType, LongType, DecimalType, ByteType, DateType
 
 import databrickslabs_testdatagenerator as datagen
 from pyspark.sql import SparkSession
 import unittest
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, date
 from databrickslabs_testdatagenerator import DateRange, NRange
 from pyspark.sql.functions import expr, lit, udf, when, rand
+import pyspark.sql.functions as F
 
 # build spark session
 
@@ -54,12 +55,48 @@ class TestRangedValuesAndDates(unittest.TestCase):
                       .build()
                       )
 
-        print("schema", testDataDF.schema)
-        testDataDF.printSchema()
-
-        testDataDF.show()
+        self.assertIsNotNone(testDataDF.schema)
+        self.assertIs(testDataDF.schema.fields[1].dataType, TimestampType())
 
         # TODO: add validation statement
+        df_min_and_max = testDataDF.agg(F.min("last_sync_dt").alias("min_ts"), F.max("last_sync_dt").alias("max_ts"))
+
+        min_and_max = df_min_and_max.collect()[0]
+        min_ts = min_and_max['min_ts']
+        max_ts = min_and_max['max_ts']
+        self.assertGreaterEqual(min_ts, start)
+        self.assertLessEqual(max_ts, end)
+
+        count_distinct = testDataDF.select(F.countDistinct("last_sync_dt")).collect()[0][0]
+        self.assertLessEqual(10, count_distinct)
+
+    def test_basic_dates_non_random(self):
+        interval = timedelta(days=7, hours=1)
+        start = datetime(2017, 10, 1, 0, 0, 0)
+        end = datetime(2018, 10, 1, 6, 0, 0)
+
+        testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+                      .withIdOutput()
+                      .withColumn("last_sync_dt", "timestamp", begin=start, end=end, interval=interval)
+                      .build()
+                      )
+
+        self.assertIsNotNone(testDataDF.schema)
+        self.assertIs(testDataDF.schema.fields[1].dataType, TimestampType())
+
+        # validation statements
+        df_min_and_max = testDataDF.agg(F.min("last_sync_dt").alias("min_ts"), F.max("last_sync_dt").alias("max_ts"))
+
+        min_and_max = df_min_and_max.collect()[0]
+        min_ts = min_and_max['min_ts']
+        max_ts = min_and_max['max_ts']
+        self.assertGreaterEqual(min_ts, start)
+        self.assertLessEqual(max_ts, end)
+
+        count_distinct = testDataDF.select(F.countDistinct("last_sync_dt")).collect()[0][0]
+        self.assertLessEqual(10, count_distinct)
+
+
 
     def test_date_range1(self):
         interval = timedelta(days=1, hours=1)
@@ -75,17 +112,27 @@ class TestRangedValuesAndDates(unittest.TestCase):
                       .build()
                       )
 
-        print("schema", testDataDF.schema)
-        testDataDF.printSchema()
+        self.assertIsNotNone(testDataDF.schema)
+        self.assertIs(testDataDF.schema.fields[2].dataType, TimestampType())
 
-        testDataDF.show()
+        # validation statements
+        df_min_and_max = testDataDF.agg(F.min("last_sync_dt1").alias("min_ts"), F.max("last_sync_dt1").alias("max_ts"))
 
-        # TODO: add validation statement
+        min_and_max = df_min_and_max.collect()[0]
+        min_ts = min_and_max['min_ts']
+        max_ts = min_and_max['max_ts']
+        self.assertGreaterEqual(min_ts, start)
+        self.assertLessEqual(max_ts, end)
+
+        count_distinct = testDataDF.select(F.countDistinct("last_sync_dt1")).collect()[0][0]
+        self.assertLessEqual(10, count_distinct)
+
+
 
     def test_date_range2(self):
         interval = timedelta(days=1, hours=1)
         start = datetime(2017, 10, 1, 0, 0, 0)
-        end = datetime(2018, 10, 1, 6, 0, 0)
+        end = datetime(2018, 10, 6, 0, 0, 0)
 
         print(DateRange("2017-10-01 00:00:00",
                         "2018-10-06 00:00:00",
@@ -100,15 +147,22 @@ class TestRangedValuesAndDates(unittest.TestCase):
                       .build()
                       )
 
-        print("schema", testDataDF.schema)
-        testDataDF.printSchema()
+        self.assertIsNotNone(testDataDF.schema)
+        self.assertIs(testDataDF.schema.fields[1].dataType, TimestampType())
 
-        testDataDF.show()
+        # validation statement
+        df_min_and_max = testDataDF.agg(F.min("last_sync_dt1").alias("min_ts"), F.max("last_sync_dt1").alias("max_ts"))
 
-        # TODO: add validation statement
+        min_and_max = df_min_and_max.collect()[0]
+        min_ts = min_and_max['min_ts']
+        max_ts = min_and_max['max_ts']
+        self.assertGreaterEqual(min_ts, start)
+        self.assertLessEqual(max_ts, end)
 
-    # @unittest.skip("not yet implemented")
     def test_date_range3(self):
+        start = date(2017, 10, 1)
+        end = date(2018, 10, 6)
+
         testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
                       .withColumn("last_sync_date", "date",
@@ -119,20 +173,24 @@ class TestRangedValuesAndDates(unittest.TestCase):
                       .build()
                       )
 
-        print("schema", testDataDF.schema)
-        testDataDF.printSchema()
+        self.assertIsNotNone(testDataDF.schema)
+        self.assertIs(testDataDF.schema.fields[1].dataType, DateType())
 
-        testDataDF.limit(100).show()
+        # TODO: add validation statement
+        df_min_and_max = testDataDF.agg(F.min("last_sync_date").alias("min_dt"), F.max("last_sync_date").alias("max_dt"))
+
+        min_and_max = df_min_and_max.collect()[0]
+        min_dt = min_and_max['min_dt']
+        max_dt = min_and_max['max_dt']
+        self.assertGreaterEqual(min_dt, start)
+        self.assertLessEqual(max_dt, end)
 
         df_outside1 = testDataDF.where("last_sync_date > '2018-10-06' ")
-        df_outside1.show()
         self.assertEqual(df_outside1.count(), 0)
 
         df_outside2 = testDataDF.where("last_sync_date < '2017-10-01' ")
-        df_outside2.show()
         self.assertEqual(df_outside2.count(), 0)
 
-    # @unittest.skip("not yet implemented")
     def test_date_range3a(self):
         testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
@@ -157,7 +215,6 @@ class TestRangedValuesAndDates(unittest.TestCase):
         df_outside2.show()
         self.assertEqual(df_outside2.count(), 0)
 
-    # @unittest.skip("not yet implemented")
     def test_date_range4(self):
         testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
@@ -183,7 +240,6 @@ class TestRangedValuesAndDates(unittest.TestCase):
         df_outside2.show()
         self.assertEqual(df_outside2.count(), 0)
 
-    # @unittest.skip("not yet finalized")
     def test_date_range4a(self):
         testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
@@ -234,7 +290,6 @@ class TestRangedValuesAndDates(unittest.TestCase):
         df_outside2.show()
         self.assertEqual(df_outside2.count(), 0)
 
-    # @unittest.skip("not yet finalized")
     def test_timestamp_range3a(self):
         testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
@@ -259,7 +314,6 @@ class TestRangedValuesAndDates(unittest.TestCase):
         df_outside2.show()
         self.assertEqual(df_outside2.count(), 0)
 
-    # @unittest.skip("not yet finalized")
     def test_timestamp_range4(self):
         testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
@@ -285,7 +339,6 @@ class TestRangedValuesAndDates(unittest.TestCase):
         df_outside2.show()
         self.assertEqual(df_outside2.count(), 0)
 
-    # @unittest.skip("not yet finalized")
     def test_timestamp_range4a(self):
         testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
