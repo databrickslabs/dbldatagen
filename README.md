@@ -49,7 +49,14 @@ release notes for library compatibility
 
 - https://docs.databricks.com/release-notes/runtime/releases.html
 
-## Building the code
+# Using a pre-built release
+The release binaries can be accessed at:
+- Github Test Data Generator releases - https://github.com/databrickslabs/data-generator/releases
+
+To use download a wheel file and install using the Databricks install mechanism to install a wheel based
+library into your workspace.
+
+# Building the code
 
 Our recommended mechanism for building the code is to use a conda based development process. 
 
