@@ -24,7 +24,7 @@ Most of the other classes are used for internal purposes only
 """
 
 from .data_generator import DataGenerator
-from .utils import ensure, topologicalSort, mkBoundsList, coalesce
+from .utils import ensure, topologicalSort, mkBoundsList, coalesce_values
 from .column_generation_spec import ColumnGenerationSpec
 from .column_spec_options import ColumnSpecOptions
 from .data_analyzer import DataAnalyzer

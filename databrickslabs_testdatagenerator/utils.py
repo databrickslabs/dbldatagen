@@ -14,7 +14,7 @@ class DataGenError(Exception):
     pass
 
 
-def coalesce(*args):
+def coalesce_values(*args):
     """For a supplied list of arguments, returns the first argument that does not have the value `None`
 
     :param args: variable list of arguments which are evaluated

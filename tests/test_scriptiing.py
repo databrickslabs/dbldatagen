@@ -2,6 +2,7 @@ from pyspark.sql.types import StructType, StructField, IntegerType, StringType, 
 import databrickslabs_testdatagenerator as datagen
 from pyspark.sql import SparkSession
 import unittest
+import os
 
 spark = datagen.SparkSingleton.getLocalInstance("unit tests")
 
@@ -90,12 +91,22 @@ class TestScripting(unittest.TestCase):
         print(creation_script)
         print("====")
 
+        dfTestData = testDataSpec.build().cache()
+
         result1 = spark.sql(creation_script)
+
+        # write the data
+        dfTestData.write.mode("overwrite").saveAsTable(tbl_name)
+
         df_result = spark.sql("select * from {}".format(tbl_name))
 
-        dfTestData = testDataSpec.build().cache()
 
         schema1 = df_result.schema
         schema2 = dfTestData.schema
 
         self.checkSchemaEquality(schema1, schema2)
+
+        self.assertEqual(df_result.count(), dfTestData.count())
+
+        # cleanup
+        spark.sql("drop table if exists {}".format(tbl_name))

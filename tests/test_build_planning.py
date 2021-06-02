@@ -184,6 +184,16 @@ class TestBuildPlanning(unittest.TestCase):
         print("")
         cls.dfTestData = cls.testDataSpec.build()
 
+    def test_fieldnames_for_schema(self):
+        """Test field names in data spec correspond with schema"""
+        fieldsFromGenerator = set(self.testDataSpec.getOutputColumnNames())
+
+        fieldsFromSchema = set([ fld.name for fld in schema.fields ])
+
+        # output fields should be same + 'id' field
+        self.assertEqual(fieldsFromGenerator - fieldsFromSchema, set(['id']))
+
+
     def test_explain(self):
         self.testDataSpec.computeBuildPlan()
         explain_results = self.testDataSpec.explain()

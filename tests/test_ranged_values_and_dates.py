@@ -56,7 +56,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
                       )
 
         self.assertIsNotNone(testDataDF.schema)
-        self.assertIs(testDataDF.schema.fields[1].dataType, TimestampType())
+        self.assertIs(type(testDataDF.schema.fields[1].dataType), type(TimestampType()))
 
         # TODO: add validation statement
         df_min_and_max = testDataDF.agg(F.min("last_sync_dt").alias("min_ts"), F.max("last_sync_dt").alias("max_ts"))
@@ -82,7 +82,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
                       )
 
         self.assertIsNotNone(testDataDF.schema)
-        self.assertIs(testDataDF.schema.fields[1].dataType, TimestampType())
+        self.assertIs(type(testDataDF.schema.fields[1].dataType), type(TimestampType()))
 
         # validation statements
         df_min_and_max = testDataDF.agg(F.min("last_sync_dt").alias("min_ts"), F.max("last_sync_dt").alias("max_ts"))
@@ -113,7 +113,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
                       )
 
         self.assertIsNotNone(testDataDF.schema)
-        self.assertIs(testDataDF.schema.fields[2].dataType, TimestampType())
+        self.assertIs(type(testDataDF.schema.fields[2].dataType), type(TimestampType()))
 
         # validation statements
         df_min_and_max = testDataDF.agg(F.min("last_sync_dt1").alias("min_ts"), F.max("last_sync_dt1").alias("max_ts"))
@@ -148,7 +148,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
                       )
 
         self.assertIsNotNone(testDataDF.schema)
-        self.assertIs(testDataDF.schema.fields[1].dataType, TimestampType())
+        self.assertIs(type(testDataDF.schema.fields[1].dataType), type(TimestampType()))
 
         # validation statement
         df_min_and_max = testDataDF.agg(F.min("last_sync_dt1").alias("min_ts"), F.max("last_sync_dt1").alias("max_ts"))
@@ -174,7 +174,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
                       )
 
         self.assertIsNotNone(testDataDF.schema)
-        self.assertIs(testDataDF.schema.fields[1].dataType, DateType())
+        self.assertIs(type(testDataDF.schema.fields[1].dataType), type(DateType()))
 
         # TODO: add validation statement
         df_min_and_max = testDataDF.agg(F.min("last_sync_date").alias("min_dt"), F.max("last_sync_date").alias("max_dt"))

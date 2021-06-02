@@ -26,12 +26,14 @@ class TestRanges(unittest.TestCase):
     def test_numeric_range1(self):
         r1 = dg.NRange(1, 20, 1)
 
+        self.assertEqual(r1.getDiscreteRange(), 19)
         print(r1.getDiscreteRange())
 
     def test_numeric_range2(self):
         r1 = dg.NRange(1.5, 2.5, 0.35)
 
         print(r1.getDiscreteRange())
+        self.assertEqual(r1.getDiscreteRange(), 2.0)
 
         self.assertEqual(r1.getScale(), 2)
 
@@ -42,6 +44,7 @@ class TestRanges(unittest.TestCase):
 
     def test_numeric_range4(self):
         r1 = dg.NRange(0, 4, 0.5)
+        self.assertEqual(r1.getDiscreteRange(), 8.0)
 
         print(r1.getDiscreteRange())
 
