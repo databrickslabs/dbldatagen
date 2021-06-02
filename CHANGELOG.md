@@ -7,6 +7,8 @@ See the contents of the file [python/require.txt] to see the Python package depe
 ### Version 0.10.0-prerel5
 
 #### Features
+* Uses Conda based build process
+* Uses `pytest-cov` to track unit test coverage
 * Added HTML help - use `make docs` to create it
 * Added support for weights with non-random columns
 * Added support for generation of streaming data sets

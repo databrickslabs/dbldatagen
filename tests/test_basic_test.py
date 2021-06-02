@@ -36,19 +36,36 @@ class TestBasicOperation(unittest.TestCase):
 
         cls.dfTestData = cls.testDataSpec.build().cache()
 
-    def test_spark_version(self):
-        print(spark.version)
-        ds_copy1 = self.testDataSpec.clone()
+    def test_row_count(self):
+        """Test row count property"""
+        rc = self.testDataSpec.rowCount
 
-        df_copy1 = (ds_copy1.setRowCount(1000)
-                    .withColumn("another_column", StringType(), values=['a', 'b', 'c'], random=True)
-                    .build())
+        self.assertEqual(rc, self.row_count)
 
-        self.assertEqual(df_copy1.count(), 1000)
+    def test_basic_data_generation(self):
+        """Test basic data generation of distinct values"""
+        counts = self.dfTestData.agg(F.countDistinct("id").alias("id_count"),
+                                     F.countDistinct("code1").alias("code1_count"),
+                                     F.countDistinct("code2").alias("code2_count"),
+                                     F.countDistinct("code3").alias("code3_count"),
+                                     F.countDistinct("code4").alias("code4_count"),
+                                     F.countDistinct("code5").alias("code5_count")
+                                     ).collect()[0]
 
-        fields1 = ds_copy1.getOutputColumnNames()
-        fields2 = self.testDataSpec.getOutputColumnNames()
-        self.assertNotEqual(fields1, fields2)
+        self.assertEqual(counts["id_count"], self.row_count)
+        self.assertEqual(counts["code1_count"], 101)
+        self.assertEqual(counts["code2_count"], 11)
+        self.assertEqual(counts["code3_count"], 3)
+        self.assertLessEqual(counts["code4_count"], 3)
+        self.assertLessEqual(counts["code5_count"], 3)
+
+    def test_fieldnames(self):
+        """Test field names in data spec correspond with schema"""
+        fieldsFromGenerator = set(self.testDataSpec.getOutputColumnNames())
+
+        fieldsFromSchema = set([fld.name for fld in self.dfTestData.schema.fields])
+
+        self.assertEqual(fieldsFromGenerator, fieldsFromSchema)
 
     def test_clone(self):
         """Test clone method"""
@@ -63,6 +80,12 @@ class TestBasicOperation(unittest.TestCase):
         fields1 = ds_copy1.getOutputColumnNames()
         fields2 = self.testDataSpec.getOutputColumnNames()
         self.assertNotEqual(fields1, fields2)
+
+        # check that new fields is superset of old fields
+        fields_original = set(fields2)
+        fields_new = set(fields1)
+
+        self.assertEqual(fields_new - fields_original, set(['another_column']))
 
     def test_multiple_base_columns(self):
         """Test data generation with multiple base columns"""
@@ -115,7 +138,6 @@ class TestBasicOperation(unittest.TestCase):
 
         self.assertEquals(df_check.count(), 0)
 
-
     def test_multiple_hash_methods(self):
         """ Test different types of seeding for random values"""
         ds1 = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
@@ -133,7 +155,6 @@ class TestBasicOperation(unittest.TestCase):
 
         df_underlimit = df.where("code2 <= 10 or code2 >= 0")
         self.assertEqual(df_underlimit.count(), 1000)
-
 
         df_count_values = df.where("code3 not in ('a', 'b', 'c')")
         self.assertEqual(df_count_values.count(), 0)
@@ -169,7 +190,6 @@ class TestBasicOperation(unittest.TestCase):
         df2_count_values3 = df2.where("code5 not in ('a', 'b', 'c')")
         self.assertEqual(df2_count_values3.count(), 0)
 
-
         ds3 = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
                                 partitions=4, seed_method=None)
                .withIdOutput()
@@ -196,7 +216,6 @@ class TestBasicOperation(unittest.TestCase):
 
         df3_count_values3 = df3.where("code5  in ('a', 'b', 'c')")
         self.assertEqual(df3_count_values3.count(), 1000)
-
 
     def test_generated_data_count(self):
         """ Test that rows are generated for the number of rows indicated by the row count"""
@@ -315,8 +334,6 @@ class TestBasicOperation(unittest.TestCase):
         partitions_created = df.rdd.getNumPartitions()
         print("partitions created", partitions_created)
         self.assertEqual(id_partitions, partitions_created)
-
-
 
 
 # run the tests

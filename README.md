@@ -1,16 +1,15 @@
 # Databricks Labs TestDataGenerator
-[Release Notes](CHANGELOG.md) |
+[Release Notes](RELEASE_NOTES.md) |
 [Python Wheel](https://github.com/databrickslabs/data-generator/releases/tag/0.10.0_prerel5-py3-06022021) |
 [Developer Docs](python/docs/APIDOCS.md) |
 [Examples](examples) |
-[Tutorial](tutorial) 
-
+[Tutorial](tutorial) |
+[Contributors](#core-contribution-team)
 
 
 ## Project Description
 This Databricks Labs project is a Python library for generating synthetic test data within the Databricks 
-environment using Spark. It operates by defining a test data generation specification in code for 
-how the test data is to be generated.
+environment using Spark. It operates by defining a test data generation specification in code for how the test data is to be generated.
 
 The specification may incorporate use of existing schemas, or create data in an adhoc fashion.
 
@@ -32,6 +31,62 @@ used in other computations
 * Applying weights to the occurence of values
 * Generating values to conform to a schema or independent of an existing schema
 * use of SQL expressions in test data generation
+
+ 
+
+## Project Support
+Please note that all projects in the `databrickslabs` github space are provided for your exploration only, and are not formally supported by Databricks with Service Level Agreements (SLAs).  They are provided AS-IS and we do not make any guarantees of any kind.  Please do not submit a support ticket relating to any issues arising from the use of these projects.
+
+Any issues discovered through the use of this project should be filed as GitHub Issues on the Repo.  They will be reviewed as time permits, but there are no formal SLAs for support.
+
+## Compatibility
+The code base must be built with Python 3.x. 
+
+Either `pip` or `conda` can be used for building.
+
+For full library compatibility for a specific Databricks Spark release, see the Databricks 
+release notes for library compatibility
+
+- https://docs.databricks.com/release-notes/runtime/releases.html
+
+# Using a pre-built release
+The release binaries can be accessed at:
+- Github Test Data Generator releases - https://github.com/databrickslabs/data-generator/releases
+
+To use download a wheel file and install using the Databricks install mechanism to install a wheel based
+library into your workspace.
+
+Latest pre-release is code complete and fully functional barring some issues with generation of date ranges. 
+
+# Building the code
+
+Our recommended mechanism for building the code is to use a conda based development process. 
+
+To use this, perform the following commands:
+  - `make create-dev-env` from the main project directory
+  - activate the conda environment - e.g `conda activate dbl_testdatagenerator`
+  - install the necessary dependencies in your conda environment via `make install-dev-dependencies`
+  
+  use the following to build and run the tests with a coverage report
+  - Run  ` make test-with-html-report` from the main project directory.
+
+Use the following command to make the distributable:
+  - Run `make dist` from the main project directory
+  - The resulting wheel file will be placed in the `dist` subdirectory
+  
+## Creating the HTML documentation
+
+Run  `make docs` from the main project directory.
+
+The main html document will be in the file (relative to the root of the build directory) `./python/docs/docs/build/html/index.html`
+
+## Running unit tests
+
+If using an environment with multiple Python versions, make sure to use virtual env or similar to pick up correct python versions.
+
+If necessary, set `PYSPARK_PYTHON` and `PYSPARK_DRIVER_PYTHON` to point to correct versions of Python.
+
+Run  `make tests` from the main project directory to run the unit tests.
 
 ## Using the Project
 To use the project, the generated wheel should be installed in your Python notebook as a wheel based library
@@ -57,54 +112,6 @@ df_spec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows
 df = df_spec.build()
 num_rows=df.count()                          
 ```
-
-## Project Support
-Please note that all projects in the `databrickslabs` github space are provided for your exploration only, and are not formally supported by Databricks with Service Level Agreements (SLAs).  They are provided AS-IS and we do not make any guarantees of any kind.  Please do not submit a support ticket relating to any issues arising from the use of these projects.
-
-Any issues discovered through the use of this project should be filed as GitHub Issues on the Repo.  They will be reviewed as time permits, but there are no formal SLAs for support.
-
-## Compatibility and build requirements
-The code base must be built with Python 3.6.x or later 
-
-Either `pip` or `conda` can be used for building.
-
-Either `pip` or `conda` can be used for building.
-
-For full library compatibility for a specific Databricks Spark release, see the Databricks 
-release notes for library compatibility
-
-- https://docs.databricks.com/release-notes/runtime/releases.html
-
-# Using a pre-built release
-The release binaries can be accessed at:
-- Github Test Data Generator releases - https://github.com/databrickslabs/data-generator/releases
-
-To use download a wheel file and install using the Databricks install mechanism to install a wheel based
-library into your workspace.
-
-Latest pre-release is code complete and fully functional barring some issues with generation of date ranges. 
-
-# Building the code
-
-Dependencies are maintained by [Pipenv](https://pipenv.pypa.io/). In order to start with depelopment, you should install `pipenv` and `pyenv`.
-
-Use `make test-with-html-report` to build and run the tests with a coverage report. Use `make dist` to make the distributable. The resulting wheel file will be placed in the `dist` subdirectory.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for build and testing instructions
-  
-## Creating the HTML documentation
-
-Run `make docs` from the main project directory.
-
-The main html document will be in the file (relative to the root of the build directory) `./python/docs/docs/build/html/index.html`
-
-## Running unit tests
-
-If using an environment with multiple Python versions, make sure to use virtual env or similar to pick up correct python versions.
-
-If necessary, set `PYSPARK_PYTHON` and `PYSPARK_DRIVER_PYTHON` to point to correct versions of Python.
-
-Run  `make test` from the main project directory to run the unit tests.
 
 ## Feedback
 

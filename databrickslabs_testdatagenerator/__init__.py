@@ -42,11 +42,11 @@ __all__ = ["data_generator", "data_analyzer", "schema_parser", "daterange", "nra
            "spark_singleton", "text_generators", "datarange"
            ]
 
+
 def python_version_check():
     import sys
     if not sys.version_info >= (3, 6):
         raise RuntimeError("Minimum version of Python supported is 3.6")
-
 
 # lets check for a correct python version or raise an exception
 python_version_check()

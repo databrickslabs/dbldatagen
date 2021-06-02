@@ -1,8 +1,6 @@
-import unittest
-
-from pyspark.sql.types import IntegerType, StringType, FloatType
-
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
 import databrickslabs_testdatagenerator as datagen
+import unittest
 
 spark = datagen.SparkSingleton.getLocalInstance("unit tests")
 
@@ -54,7 +52,7 @@ class TestScripting(unittest.TestCase):
         print(creation_script)
         print("====")
 
-        spark.sql(creation_script)
+        result1 = spark.sql(creation_script)
         df_result = spark.sql("select * from {}".format(tbl_name))
 
         dfTestData = testDataSpec.build().cache()
@@ -93,12 +91,13 @@ class TestScripting(unittest.TestCase):
 
         dfTestData = testDataSpec.build().cache()
 
-        spark.sql(creation_script)
+        result1 = spark.sql(creation_script)
 
         # write the data
         dfTestData.write.mode("overwrite").saveAsTable(tbl_name)
 
         df_result = spark.sql("select * from {}".format(tbl_name))
+
 
         schema1 = df_result.schema
         schema2 = dfTestData.schema

@@ -1,10 +1,10 @@
-import unittest
-
-import pyspark.sql.functions as F
-from pyspark.sql.types import IntegerType, StringType, LongType
-
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType, LongType
 import databrickslabs_testdatagenerator as datagen
-from databrickslabs_testdatagenerator import NRange
+from pyspark.sql import SparkSession
+import unittest
+from datetime import timedelta, datetime
+from databrickslabs_testdatagenerator import DateRange, NRange
+import pyspark.sql.functions as F
 
 # build spark session
 
@@ -17,8 +17,7 @@ class TestDependentData(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.country_codes = ['CN', 'US', 'FR', 'CA', 'IN', 'JM', 'IE', 'PK',
-                             'GB', 'IL', 'AU', 'SG', 'ES', 'GE', 'MX',
+        cls.country_codes = ['CN', 'US', 'FR', 'CA', 'IN', 'JM', 'IE', 'PK', 'GB', 'IL', 'AU', 'SG', 'ES', 'GE', 'MX',
                              'ET', 'SA', 'LB', 'NL']
         cls.country_weights = [1300, 365, 67, 38, 1300, 3, 7, 212, 67, 9, 25, 6, 47, 83, 126, 109, 58, 8, 17]
 
@@ -33,8 +32,7 @@ class TestDependentData(unittest.TestCase):
         cls.testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="device_data_set", rows=cls.rows,
                                                   partitions=4, seed_method='hash_fieldname', debug=True, verbose=False)
                             .withIdOutput()
-                            # we'll use hash of the base field to generate the ids to avoid
-                            # generating a simple incrementing sequence
+                            # we'll use hash of the base field to generate the ids to avoid a simple incrementing sequence
                             .withColumn("internal_device_id", LongType(), min=0x1000000000000,
                                         unique_values=cls.devices)
 
@@ -43,8 +41,7 @@ class TestDependentData(unittest.TestCase):
                                         base_column="internal_device_id")
                             # .withColumn("device_id", StringType(), format='0x%013x', base_column="internal_device_id")
 
-                            # the device / user attributes will be the same for the same device id
-                            # - so lets use the internal device id as the base column for these attribute
+                            # the device / user attributes will be the same for the same device id - so lets use the internal device id as the base column for these attribute
                             .withColumn("country", StringType(), values=cls.country_codes, weights=cls.country_weights,
                                         base_column="internal_device_id",
                                         base_column_type="hash")
@@ -189,10 +186,11 @@ class TestDependentData(unittest.TestCase):
 
         # check data is not null and has unique values
         count_distinct = (df_copy1.where("device_id_2 is not null")
-            .agg(F.countDistinct('device_id_2').alias('count_d'))
-            .collect()[0]['count_d']
-            )
+                                 .agg(F.countDistinct('device_id_2').alias('count_d'))
+                                 .collect()[0]['count_d']
+                          )
         self.assertGreaterEqual(count_distinct, 1)
+
 
     def test_format_dependent_data2(self):
         """ Test without specifying the base column type"""
@@ -206,7 +204,8 @@ class TestDependentData(unittest.TestCase):
 
         # check data is not null and has unique values
         count_distinct = (df_copy1.where("device_id_2 is not null")
-            .agg(F.countDistinct('device_id_2').alias('count_d'))
-            .collect()[0]['count_d']
-            )
+                                 .agg(F.countDistinct('device_id_2').alias('count_d'))
+                                 .collect()[0]['count_d']
+                          )
         self.assertGreaterEqual(count_distinct, 1)
+

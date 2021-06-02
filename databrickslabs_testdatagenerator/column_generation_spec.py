@@ -6,13 +6,13 @@
 This file defines the `ColumnGenerationSpec` class
 """
 
-from pyspark.sql.functions import  lit, concat, rand, round as sql_round, array, expr, when, udf, \
+from pyspark.sql.functions import lit, concat, rand, round as sql_round, array, expr, when, udf, \
     format_string
-from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
-    StructType, StructField, TimestampType, DataType, DateType
+from pyspark.sql.types import FloatType, IntegerType, StringType, DoubleType, BooleanType, \
+    TimestampType, DataType, DateType
 import math
-from datetime import date, datetime, timedelta
-from .utils import ensure, coalesce
+from datetime import datetime, timedelta
+from .utils import ensure, coalesce_values
 from .column_spec_options import ColumnSpecOptions
 from .text_generators import TemplateGenerator
 from .daterange import DateRange
@@ -26,7 +26,10 @@ HASH_COMPUTE_METHOD = "hash"
 VALUES_COMPUTE_METHOD = "values"
 RAW_VALUES_COMPUTE_METHOD = "raw_values"
 AUTO_COMPUTE_METHOD = "auto"
-
+COMPUTE_METHOD_VALID_VALUES = [ HASH_COMPUTE_METHOD,
+                                AUTO_COMPUTE_METHOD,
+                                VALUES_COMPUTE_METHOD,
+                                RAW_VALUES_COMPUTE_METHOD ]
 
 class ColumnGenerationSpec(object):
     """ Column generation spec object - specifies how column is to be generated
@@ -173,7 +176,7 @@ class ColumnGenerationSpec(object):
         # this is the method of comouting current column value from base column, not the data type of the base column
         allowed_compute_methods = [AUTO_COMPUTE_METHOD, VALUES_COMPUTE_METHOD, HASH_COMPUTE_METHOD,
                                    RAW_VALUES_COMPUTE_METHOD, None]
-        column_spec_options.checkOptionValues("base_column_type", allowed_compute_methods )
+        column_spec_options.checkOptionValues("base_column_type", allowed_compute_methods)
         self.base_column_compute_method = self['base_column_type']
 
         # handle text generation templates
@@ -214,16 +217,16 @@ class ColumnGenerationSpec(object):
         if ((self.base_column_compute_method is None) or (self.base_column_compute_method is AUTO_COMPUTE_METHOD)) \
                 and (self.text_generator is not None or self['format'] is not None):
             if self.values is not None:
-                self.logger.warning("""Column [%s] has no `base_column_type` attribute specified and uses discrete values
+                self.logger.warning("""Column [%s] has no `base_column_type` attribute and uses discrete values
                                        => Assuming `hash` for attribute `base_column_type`. 
-                                       => Use explicit value for `base_column_type` if alternate interpretation is needed
+                                       => Use explicit value for `base_column_type` if alternate interpretation needed
 
                                     """, self.name)
                 self.base_column_compute_method = HASH_COMPUTE_METHOD
             else:
-                self.logger.warning("""Column [%s] has no `base_column_type` attribute specified and output is formatted text
+                self.logger.warning("""Column [%s] has no `base_column_type` attribute specified for formatted text
                                        => Assuming `values` for attribute `base_column_type`. 
-                                       => Use explicit value for `base_column_type` if alternate interpretation is needed
+                                       => Use explicit value for `base_column_type` if alternate interpretation  needed
 
                                     """, self.name)
                 self.base_column_compute_method = VALUES_COMPUTE_METHOD
@@ -276,7 +279,9 @@ class ColumnGenerationSpec(object):
             return [self.baseColumn]
 
     def computeBasicDependencies(self):
-        """ get set of basic column dependencies
+        """ get set of basic column dependencies.
+
+        These are used to compute the order of field evaluation
 
         :return: base columns as list with dependency on seed column added
         """
@@ -291,13 +296,17 @@ class ColumnGenerationSpec(object):
         :param column_datatypes: = list of data types for the base columns
 
         """
-        assert type(column_datatypes) is list,  " `column_datatypes` parameter must be list"
+        assert type(column_datatypes) is list, " `column_datatypes` parameter must be list"
         ensure(len(column_datatypes) == len(self.baseColumns),
                "number of base column datatypes must match number of  base columns")
         self._base_column_datatypes = [].append(column_datatypes)
 
     def _setup_temporary_columns(self):
-        """ Set up any temporary columns needed for test data generation"""
+        """ Set up any temporary columns needed for test data generation.
+
+        For some types of test data, intermediate columns are used in the data generation process
+        but dropped from the final output
+        """
         if self.isWeightedValuesColumn:
             # if its a weighted values column, then create temporary for it
             # not supported for feature / array columns for now
@@ -322,7 +331,8 @@ class ColumnGenerationSpec(object):
                 self.initial_build_plan.append(desc)
 
                 # use a base expression based on mapping base column to size of data
-                sql_scaled_generator = self.getScaledIntegerSQLExpression(self.name, scale=sum(self.weights),
+                sql_scaled_generator = self.getScaledIntegerSQLExpression(self.name,
+                                                                          scale=sum(self.weights),
                                                                           base_columns=self.baseColumns,
                                                                           base_datatypes=self._base_column_datatypes,
                                                                           compute_method=self.base_column_compute_method,
@@ -367,7 +377,7 @@ class ColumnGenerationSpec(object):
         """Determine adjusted range for data column
 
         Rules:
-        - if a datarange is specified , use that
+        - if a datarange is specified , use that range
         - if begin and end are specified or min and max are specified, use that
         - if unique values is specified, compute min and max depending on type
 
@@ -381,9 +391,9 @@ class ColumnGenerationSpec(object):
                 effective_min = c_range.min
                 effective_step = c_range.step
                 effective_max = c_range.max
-            effective_min = coalesce(effective_min, c_min, 1)
-            effective_step = coalesce(effective_step, c_step, 1)
-            effective_max = coalesce(effective_max, c_max)
+            effective_min = coalesce_values(effective_min, c_min, 1)
+            effective_step = coalesce_values(effective_step, c_step, 1)
+            effective_max = coalesce_values(effective_max, c_max)
 
             # due to floating point errors in some Python floating point calculations, we need to apply rounding
             # if any of the components are float
@@ -400,8 +410,8 @@ class ColumnGenerationSpec(object):
             result = c_range
         elif c_range is None:
             effective_min, effective_max, effective_step = None, None, None
-            effective_min = coalesce(c_min, 0)
-            effective_step = coalesce(c_step, 1)
+            effective_min = coalesce_values(c_min, 0)
+            effective_step = coalesce_values(c_step, 1)
             result = NRange(effective_min, c_max, effective_step)
         else:
             result = NRange(0, None, None)
@@ -424,25 +434,27 @@ class ColumnGenerationSpec(object):
                 effective_interval = c_range.interval
 
             if type(colType) is DateType:
-                effective_interval = coalesce(effective_interval, c_interval, timedelta(days=1))
+                effective_interval = coalesce_values(effective_interval, c_interval, timedelta(days=1))
             else:
-                effective_interval = coalesce(effective_interval, c_interval, timedelta(minutes=1))
+                effective_interval = coalesce_values(effective_interval, c_interval, timedelta(minutes=1))
 
-            effective_end = coalesce(effective_end, c_end,
-                                     datetime.now().replace(hour=0, minute=0, second=0, day=1) - timedelta(days=1))
+            effective_end = coalesce_values(effective_end, c_end,
+                                            datetime.now().replace(hour=0, minute=0, second=0, day=1) - timedelta(
+                                                days=1))
             effective_begin = effective_end - effective_interval * (c_unique - 1)
 
             result = DateRange(effective_begin, effective_end, effective_interval)
         elif c_range is not None:
             result = c_range
         elif c_range is None:
-            effective_end = coalesce(c_end,
-                                     datetime.now().replace(hour=0, minute=0, second=0, day=1) - timedelta(days=1))
-            effective_begin = coalesce(c_begin, effective_end - timedelta(days=365))
+            effective_end = coalesce_values(c_end,
+                                            datetime.now().replace(hour=0, minute=0, second=0, day=1) - timedelta(
+                                                days=1))
+            effective_begin = coalesce_values(c_begin, effective_end - timedelta(days=365))
             if type(colType) is DateType:
-                effective_interval = coalesce(c_interval, timedelta(days=1))
+                effective_interval = coalesce_values(c_interval, timedelta(days=1))
             else:
-                effective_interval = coalesce(c_interval, timedelta(minutes=1))
+                effective_interval = coalesce_values(c_interval, timedelta(minutes=1))
 
             result = DateRange(effective_begin, effective_end, effective_interval)
         else:
@@ -506,12 +518,11 @@ class ColumnGenerationSpec(object):
         assert col_name is not None, "`col_name` must not be None"
         assert self.name is not None, "`self.name` must not be None"
         assert scale is not None, "`scale` must not be None"
-        assert (compute_method is None or compute_method == HASH_COMPUTE_METHOD
-                or compute_method == AUTO_COMPUTE_METHOD
-                or compute_method == VALUES_COMPUTE_METHOD
-                or compute_method == RAW_VALUES_COMPUTE_METHOD), "`compute_method` must be valid value "
-        assert base_columns is not None and type(base_columns) is list and len(
-            base_columns) > 0, "Base columns must be a non-empty list"
+        assert (compute_method is None or
+                compute_method in COMPUTE_METHOD_VALID_VALUES), "`compute_method` must be valid value "
+        assert (base_columns is not None and
+                type(base_columns) is list
+                and len(base_columns) > 0), "Base columns must be a non-empty list"
 
         effective_compute_method = compute_method
 
@@ -565,12 +576,12 @@ class ColumnGenerationSpec(object):
 
     def keys(self):
         """ Get the keys as list of strings """
-        assert self._column_spec_options is not None,  "self._column_spec_options should be non-empty"
+        assert self._column_spec_options is not None, "self._column_spec_options should be non-empty"
         return self._column_spec_options.keys()
 
     def __getitem__(self, key):
         """ implement the built in dereference by key behavior """
-        assert key is not None,  "key should be non-empty"
+        assert key is not None, "key should be non-empty"
         return self._column_spec_options.get(key, None)
 
     @property
@@ -639,7 +650,6 @@ class ColumnGenerationSpec(object):
         """get the `expr` attributed used to generate values for this column"""
         return self['text_separator']
 
-
     @property
     def begin(self):
         """get the `begin` attribute used to generate values for this column
@@ -704,7 +714,7 @@ class ColumnGenerationSpec(object):
 
         :raises: assertion or exception of checks fail
         """
-        assert column_props is not None,  "Column definition properties should be non-empty"
+        assert column_props is not None, "Column definition properties should be non-empty"
         assert self.datatype is not None, "Column datatype must be specified"
 
         if self.datatype.typeName() in self._max_type_range:
@@ -923,17 +933,19 @@ class ColumnGenerationSpec(object):
                 new_def = expr(self.expr).astype(self.datatype)
             elif self.data_range is not None and self.data_range.isFullyPopulated():
                 self.execution_history.append(".. computing ranged value: {}".format(self.data_range))
-                new_def = self._computeRangedColumn(base_column=self.baseColumn, datarange=self.data_range, is_random=col_is_rand)
+                new_def = self._computeRangedColumn(base_column=self.baseColumn, datarange=self.data_range,
+                                                    is_random=col_is_rand)
             elif type(self.datatype) is DateType:
                 sql_random_generator = self.getUniformRandomSQLExpression(self.name)
-                new_def = expr("date_sub(current_date, round({}*1024))".format(sql_random_generator)).astype(self.datatype)
+                new_def = expr("date_sub(current_date, round({}*1024))".format(sql_random_generator)).astype(
+                    self.datatype)
             else:
                 if self.base_column_compute_method == VALUES_COMPUTE_METHOD:
                     new_def = self.getSeedExpression(self.baseColumn)
                 elif self.base_column_compute_method == RAW_VALUES_COMPUTE_METHOD:
                     new_def = self.getSeedExpression(self.baseColumn)
                 # TODO: resolve issues with hash when using templates
-                #elif self.base_column_compute_method == HASH_COMPUTE_METHOD:
+                # elif self.base_column_compute_method == HASH_COMPUTE_METHOD:
                 #    new_def = self.getSeedExpression(self.baseColumn)
                 else:
                     self.logger.warning("Assuming a seeded base expression with minimum value for column %s", self.name)
@@ -970,7 +982,8 @@ class ColumnGenerationSpec(object):
         # TODO: prefix and suffix only apply to base columns that are numeric types
         text_separator = self.text_separator if self.text_separator is not None else '_'
         if cprefix is not None and csuffix is not None:
-            new_def = concat(lit(cprefix), lit(text_separator), new_def.astype(IntegerType()), lit(text_separator), lit(csuffix))
+            new_def = concat(lit(cprefix), lit(text_separator), new_def.astype(IntegerType()), lit(text_separator),
+                             lit(csuffix))
         elif cprefix is not None:
             new_def = concat(lit(cprefix), lit(text_separator), new_def.astype(IntegerType()))
         elif csuffix is not None:
@@ -1009,6 +1022,8 @@ class ColumnGenerationSpec(object):
         :returns: new column definition
         """
         self.execution_history.append(".. casting column [{}] to  `{}`".format(self.name, col_type))
+
+        # cast the result to the appropriate type. For dates, cast first to timestamp, then to date
         if type(col_type) is DateType:
             new_def = new_def.astype(TimestampType()).astype(col_type)
         else:

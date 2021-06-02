@@ -1,11 +1,9 @@
-import os
-import shutil
-import time
-import unittest
-
-from pyspark.sql.types import IntegerType, StringType, FloatType
-
+from pyspark.sql.types import  IntegerType, StringType, FloatType
 import databrickslabs_testdatagenerator as dg
+import unittest
+import os
+import time
+import shutil
 
 spark = dg.SparkSingleton.getLocalInstance("streaming tests")
 

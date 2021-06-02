@@ -102,7 +102,7 @@ endif
 
 # wheel:
 
-dist: buildenv
+dist:
 	@echo "$(OK_COLOR)=> building dist of wheel$(NO_COLOR)"
 	# clean out old dist files - ignore any errors flagged
 	@- test -d `pwd`/dist && test -n "$(find `pwd`/dist/ -name '*.whl' -print -quit)" && echo "found" && rm `pwd`/dist/*
