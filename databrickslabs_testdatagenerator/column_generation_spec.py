@@ -26,7 +26,10 @@ HASH_COMPUTE_METHOD = "hash"
 VALUES_COMPUTE_METHOD = "values"
 RAW_VALUES_COMPUTE_METHOD = "raw_values"
 AUTO_COMPUTE_METHOD = "auto"
-
+COMPUTE_METHOD_VALID_VALUES = [ HASH_COMPUTE_METHOD,
+                                AUTO_COMPUTE_METHOD,
+                                VALUES_COMPUTE_METHOD,
+                                RAW_VALUES_COMPUTE_METHOD ]
 
 class ColumnGenerationSpec(object):
     """ Column generation spec object - specifies how column is to be generated
@@ -276,7 +279,9 @@ class ColumnGenerationSpec(object):
             return [self.baseColumn]
 
     def computeBasicDependencies(self):
-        """ get set of basic column dependencies
+        """ get set of basic column dependencies.
+
+        These are used to compute the order of field evaluation
 
         :return: base columns as list with dependency on seed column added
         """
@@ -297,7 +302,11 @@ class ColumnGenerationSpec(object):
         self._base_column_datatypes = [].append(column_datatypes)
 
     def _setup_temporary_columns(self):
-        """ Set up any temporary columns needed for test data generation"""
+        """ Set up any temporary columns needed for test data generation.
+
+        For some types of test data, intermediate columns are used in the data generation process
+        but dropped from the final output
+        """
         if self.isWeightedValuesColumn:
             # if its a weighted values column, then create temporary for it
             # not supported for feature / array columns for now
@@ -368,7 +377,7 @@ class ColumnGenerationSpec(object):
         """Determine adjusted range for data column
 
         Rules:
-        - if a datarange is specified , use that
+        - if a datarange is specified , use that range
         - if begin and end are specified or min and max are specified, use that
         - if unique values is specified, compute min and max depending on type
 
@@ -509,12 +518,11 @@ class ColumnGenerationSpec(object):
         assert col_name is not None, "`col_name` must not be None"
         assert self.name is not None, "`self.name` must not be None"
         assert scale is not None, "`scale` must not be None"
-        assert (compute_method is None or compute_method == HASH_COMPUTE_METHOD
-                or compute_method == AUTO_COMPUTE_METHOD
-                or compute_method == VALUES_COMPUTE_METHOD
-                or compute_method == RAW_VALUES_COMPUTE_METHOD), "`compute_method` must be valid value "
-        assert base_columns is not None and type(base_columns) is list and len(
-            base_columns) > 0, "Base columns must be a non-empty list"
+        assert (compute_method is None or
+                compute_method in COMPUTE_METHOD_VALID_VALUES), "`compute_method` must be valid value "
+        assert (base_columns is not None and
+                type(base_columns) is list
+                and len(base_columns) > 0), "Base columns must be a non-empty list"
 
         effective_compute_method = compute_method
 
@@ -1014,6 +1022,8 @@ class ColumnGenerationSpec(object):
         :returns: new column definition
         """
         self.execution_history.append(".. casting column [{}] to  `{}`".format(self.name, col_type))
+
+        # cast the result to the appropriate type. For dates, cast first to timestamp, then to date
         if type(col_type) is DateType:
             new_def = new_def.astype(TimestampType()).astype(col_type)
         else:

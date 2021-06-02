@@ -12,6 +12,7 @@ for use cases like unit testing rather than in a Databricks workspace environmen
 from pyspark.sql import SparkSession
 import os
 import math
+import logging
 
 
 class SparkSingleton:
@@ -34,7 +35,7 @@ class SparkSingleton:
         :returns: A Spark instance
         """
         cpu_count = int(math.floor(os.cpu_count() * 0.75))
-        print("cpus", cpu_count)
+        logging.info(f"cpu count: {cpu_count}")
 
         return SparkSession.builder \
             .master("local[{}]".format(cpu_count)) \
