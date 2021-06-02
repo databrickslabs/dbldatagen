@@ -106,10 +106,12 @@ dist:
 	@echo "$(OK_COLOR)=> building dist of wheel$(NO_COLOR)"
 	# clean out old dist files - ignore any errors flagged
 	@- test -d `pwd`/dist && test -n "$(find `pwd`/dist/ -name '*.whl' -print -quit)" && echo "found" && rm `pwd`/dist/*
+	@echo "current dir is `pwd`"
+	@echo "`ls ./dist`"
 	@python3 setup.py sdist bdist_wheel
 	@touch `pwd`/dist/dist_flag.txt
-	export NEW_WHEEL=`find ./dist -name "*.whl" -print`
-	@echo "new package is $(NEW_WHEEL)"
+	@echo "new package is located in dist - listing wheel files"
+	@find ./dist -name "*.whl" -print
 
 new_artifact: buildenv
 	@echo "$(OK_COLOR)=> committing new artifact$(NO_COLOR)"
