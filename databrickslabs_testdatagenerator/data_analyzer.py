@@ -118,8 +118,7 @@ class DataAnalyzer:
         field_names = self.getFieldNames(self.df.schema)
         select_fields = ["summary"]
         select_fields.extend(field_names)
-        #        print("select fields:", select_fields)
-        #        print("field names", field_names)
+
         distinct_expressions = [fns.countDistinct(x).alias(x) for x in self.getFieldNames(self.df.schema)]
         results.append(self.displayRow(
             self.prependSummary(self.df.agg(*distinct_expressions),

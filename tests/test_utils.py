@@ -1,7 +1,7 @@
 import databrickslabs_testdatagenerator as dg
 import unittest
 import logging
-from databrickslabs_testdatagenerator import ensure, mkBoundsList, coalesce_values
+from databrickslabs_testdatagenerator import ensure, mkBoundsList, coalesce_values, deprecated
 
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
@@ -16,6 +16,10 @@ class TestUtils(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        pass
+
+    @deprecated("testing deprecated")
+    def testDeprecatedMethod(self):
         pass
 
     @unittest.expectedFailure

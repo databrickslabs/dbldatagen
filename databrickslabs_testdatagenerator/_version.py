@@ -5,7 +5,7 @@
 """
 This module defines the version information for the test data generator library
 
-Management of version identifiers for releases uses the bumpversion python package
+Management of version identifiers for releases uses the `bumpversion` python package
 which supports automatic modification of files when the version labels need to be modified
 
 See: https://pypi.org/project/bumpversion/
@@ -15,16 +15,18 @@ Note the use of `get_version` for method name to conform with bumpversion conven
 
 from collections import namedtuple
 import re
+import logging
 
 VersionInfo = namedtuple('VersionInfo', ['major', 'minor', 'patch', 'release', 'build'])
 
 
 def get_version(version):
-    """ Get version string for library"""
+    """ Get version string for library.
+    Layout should be compatible with `bump` package"""
     r = re.compile(r'(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)\-{0,1}(?P<release>\D*)(?P<build>\d*)')
     major, minor, patch, release, build = r.match(version).groups()
     version_info = VersionInfo(major, minor, patch, release, build)
-    print("Version : ", version_info)
+    logging.info("Version : ", version_info)
     return version_info
 
 

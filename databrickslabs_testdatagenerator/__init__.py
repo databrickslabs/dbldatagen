@@ -24,7 +24,7 @@ Most of the other classes are used for internal purposes only
 """
 
 from .data_generator import DataGenerator
-from .utils import ensure, topologicalSort, mkBoundsList, coalesce_values
+from .utils import ensure, topologicalSort, mkBoundsList, coalesce_values, deprecated
 from .column_generation_spec import ColumnGenerationSpec
 from .column_spec_options import ColumnSpecOptions
 from .data_analyzer import DataAnalyzer
@@ -48,5 +48,5 @@ def python_version_check():
     if not sys.version_info >= (3, 6):
         raise RuntimeError("Minimum version of Python supported is 3.6")
 
-
+# lets check for a correct python version or raise an exception
 python_version_check()
