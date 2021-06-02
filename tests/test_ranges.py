@@ -1,8 +1,5 @@
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
 import databrickslabs_testdatagenerator as dg
-from pyspark.sql import SparkSession
 import unittest
-from pyspark.sql import functions as F
 import logging
 
 spark = dg.SparkSingleton.getLocalInstance("basic tests")

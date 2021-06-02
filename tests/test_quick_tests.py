@@ -1,12 +1,9 @@
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
-from datetime import datetime, timedelta
 from databrickslabs_testdatagenerator import DataGenerator
 import databrickslabs_testdatagenerator as dg
 from databrickslabs_testdatagenerator import NRange, DateRange
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType, DateType
 from datetime import timedelta, datetime
 
-from pyspark.sql import SparkSession
 import unittest
 
 schema = StructType([

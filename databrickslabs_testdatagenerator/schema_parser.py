@@ -10,13 +10,14 @@ from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, Doub
     StructType, StructField, TimestampType, DateType, DecimalType, ByteType
 import re
 
+
 class SchemaParser(object):
     """ SchemaParser class
 
         Creates pyspark SQL datatype from string
     """
-    _match_precision_only = re.compile("decimal\s*\(\s*([0-9]+)\s*\)")
-    _match_precision_and_scale = re.compile("decimal\s*\(\s*([0-9]+)\s*,\s*([0-9]+)\s*\)")
+    _match_precision_only = re.compile(r"decimal\s*\(\s*([0-9]+)\s*\)")
+    _match_precision_and_scale = re.compile(r"decimal\s*\(\s*([0-9]+)\s*,\s*([0-9]+)\s*\)")
 
     @classmethod
     def parseDecimal(cls, valueStr):

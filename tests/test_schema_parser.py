@@ -2,7 +2,6 @@ from pyspark.sql.types import StructType, StructField, IntegerType, StringType, 
 from pyspark.sql.types import BooleanType, ByteType
 
 from databrickslabs_testdatagenerator import SchemaParser
-from pyspark.sql import SparkSession
 import unittest
 import databrickslabs_testdatagenerator as dg
 
@@ -41,16 +40,16 @@ class TestSchemaParser(unittest.TestCase):
         self.assertEqual(x_dec3.scale, 4)
 
     def test_type_parser_byte(self):
-        x_byte= SchemaParser.columnTypeFromString("byte")
+        x_byte = SchemaParser.columnTypeFromString("byte")
 
         self.assertIsInstance(x_byte, ByteType().__class__)
 
     def test_type_parser_boolean(self):
-        x_bool1= SchemaParser.columnTypeFromString("bool")
+        x_bool1 = SchemaParser.columnTypeFromString("bool")
 
         self.assertIsInstance(x_bool1, BooleanType().__class__)
 
-        x_bool2= SchemaParser.columnTypeFromString("boolean")
+        x_bool2 = SchemaParser.columnTypeFromString("boolean")
 
         self.assertIsInstance(x_bool2, BooleanType().__class__)
 

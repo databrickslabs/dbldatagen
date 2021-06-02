@@ -43,7 +43,7 @@ class TestBasicOperation(unittest.TestCase):
         self.assertEqual(rc, self.row_count)
 
     def test_basic_data_generation(self):
-        """Test basic data generation of distinct valuess"""
+        """Test basic data generation of distinct values"""
         counts = self.dfTestData.agg(F.countDistinct("id").alias("id_count"),
                                      F.countDistinct("code1").alias("code1_count"),
                                      F.countDistinct("code2").alias("code2_count"),
@@ -63,7 +63,7 @@ class TestBasicOperation(unittest.TestCase):
         """Test field names in data spec correspond with schema"""
         fieldsFromGenerator = set(self.testDataSpec.getOutputColumnNames())
 
-        fieldsFromSchema = set([ fld.name for fld in self.dfTestData.schema.fields ])
+        fieldsFromSchema = set([fld.name for fld in self.dfTestData.schema.fields])
 
         self.assertEqual(fieldsFromGenerator, fieldsFromSchema)
 
@@ -138,7 +138,6 @@ class TestBasicOperation(unittest.TestCase):
 
         self.assertEquals(df_check.count(), 0)
 
-
     def test_multiple_hash_methods(self):
         """ Test different types of seeding for random values"""
         ds1 = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
@@ -156,7 +155,6 @@ class TestBasicOperation(unittest.TestCase):
 
         df_underlimit = df.where("code2 <= 10 or code2 >= 0")
         self.assertEqual(df_underlimit.count(), 1000)
-
 
         df_count_values = df.where("code3 not in ('a', 'b', 'c')")
         self.assertEqual(df_count_values.count(), 0)
@@ -192,7 +190,6 @@ class TestBasicOperation(unittest.TestCase):
         df2_count_values3 = df2.where("code5 not in ('a', 'b', 'c')")
         self.assertEqual(df2_count_values3.count(), 0)
 
-
         ds3 = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
                                 partitions=4, seed_method=None)
                .withIdOutput()
@@ -219,7 +216,6 @@ class TestBasicOperation(unittest.TestCase):
 
         df3_count_values3 = df3.where("code5  in ('a', 'b', 'c')")
         self.assertEqual(df3_count_values3.count(), 1000)
-
 
     def test_generated_data_count(self):
         """ Test that rows are generated for the number of rows indicated by the row count"""
@@ -338,8 +334,6 @@ class TestBasicOperation(unittest.TestCase):
         partitions_created = df.rdd.getNumPartitions()
         print("partitions created", partitions_created)
         self.assertEqual(id_partitions, partitions_created)
-
-
 
 
 # run the tests

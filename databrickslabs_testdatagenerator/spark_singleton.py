@@ -13,6 +13,7 @@ from pyspark.sql import SparkSession
 import os
 import math
 
+
 class SparkSingleton:
     """A singleton class which returns one Spark session instance"""
 

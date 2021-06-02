@@ -1,7 +1,6 @@
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType, DecimalType
 from pyspark.sql.types import BooleanType, DateType
 import databrickslabs_testdatagenerator as dg
-from pyspark.sql import SparkSession
 import unittest
 import re
 

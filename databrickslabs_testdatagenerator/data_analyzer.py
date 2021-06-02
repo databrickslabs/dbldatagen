@@ -6,7 +6,7 @@
 This module defines the DataAnalyzer class. This is still a work in progress.
 """
 from pyspark.sql.types import StructField
-from pyspark.sql.functions import expr, lit
+from pyspark.sql.functions import lit
 from pyspark.sql import functions as fns
 
 
