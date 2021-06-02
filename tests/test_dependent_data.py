@@ -4,6 +4,7 @@ from pyspark.sql import SparkSession
 import unittest
 from datetime import timedelta, datetime
 from databrickslabs_testdatagenerator import DateRange, NRange
+import pyspark.sql.functions as F
 
 # build spark session
 
@@ -183,6 +184,14 @@ class TestDependentData(unittest.TestCase):
 
         df_copy1.show()
 
+        # check data is not null and has unique values
+        count_distinct = (df_copy1.where("device_id_2 is not null")
+                                 .agg(F.countDistinct('device_id_2').alias('count_d'))
+                                 .collect()[0]['count_d']
+                          )
+        self.assertGreaterEqual(count_distinct, 1)
+
+
     def test_format_dependent_data2(self):
         """ Test without specifying the base column type"""
         ds_copy1 = self.testDataSpec.clone()
@@ -192,3 +201,11 @@ class TestDependentData(unittest.TestCase):
                     .build())
 
         df_copy1.show()
+
+        # check data is not null and has unique values
+        count_distinct = (df_copy1.where("device_id_2 is not null")
+                                 .agg(F.countDistinct('device_id_2').alias('count_d'))
+                                 .collect()[0]['count_d']
+                          )
+        self.assertGreaterEqual(count_distinct, 1)
+

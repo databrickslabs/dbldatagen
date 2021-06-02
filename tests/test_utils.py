@@ -4,7 +4,7 @@ from pyspark.sql import SparkSession
 import unittest
 from pyspark.sql import functions as F
 import logging
-from databrickslabs_testdatagenerator import ensure, mkBoundsList, coalesce
+from databrickslabs_testdatagenerator import ensure, mkBoundsList, coalesce_values
 
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
@@ -33,15 +33,15 @@ class TestUtils(unittest.TestCase):
 
     def testCoalesce(self):
         """ Test utils coalesce function"""
-        result = coalesce(None, 1)
+        result = coalesce_values(None, 1)
 
         self.assertEqual(result, 1)
 
-        result2 = coalesce(3, None, 1)
+        result2 = coalesce_values(3, None, 1)
 
         self.assertEqual(result2, 3)
 
-        result3 = coalesce(None, None, None)
+        result3 = coalesce_values(None, None, None)
 
         self.assertIsNone(result3)
 

@@ -36,19 +36,36 @@ class TestBasicOperation(unittest.TestCase):
 
         cls.dfTestData = cls.testDataSpec.build().cache()
 
-    def test_spark_version(self):
-        print(spark.version)
-        ds_copy1 = self.testDataSpec.clone()
+    def test_row_count(self):
+        """Test row count property"""
+        rc = self.testDataSpec.rowCount
 
-        df_copy1 = (ds_copy1.setRowCount(1000)
-                    .withColumn("another_column", StringType(), values=['a', 'b', 'c'], random=True)
-                    .build())
+        self.assertEqual(rc, self.row_count)
 
-        self.assertEqual(df_copy1.count(), 1000)
+    def test_basic_data_generation(self):
+        """Test basic data generation of distinct valuess"""
+        counts = self.dfTestData.agg(F.countDistinct("id").alias("id_count"),
+                                     F.countDistinct("code1").alias("code1_count"),
+                                     F.countDistinct("code2").alias("code2_count"),
+                                     F.countDistinct("code3").alias("code3_count"),
+                                     F.countDistinct("code4").alias("code4_count"),
+                                     F.countDistinct("code5").alias("code5_count")
+                                     ).collect()[0]
 
-        fields1 = ds_copy1.getOutputColumnNames()
-        fields2 = self.testDataSpec.getOutputColumnNames()
-        self.assertNotEqual(fields1, fields2)
+        self.assertEqual(counts["id_count"], self.row_count)
+        self.assertEqual(counts["code1_count"], 101)
+        self.assertEqual(counts["code2_count"], 11)
+        self.assertEqual(counts["code3_count"], 3)
+        self.assertLessEqual(counts["code4_count"], 3)
+        self.assertLessEqual(counts["code5_count"], 3)
+
+    def test_fieldnames(self):
+        """Test field names in data spec correspond with schema"""
+        fieldsFromGenerator = set(self.testDataSpec.getOutputColumnNames())
+
+        fieldsFromSchema = set([ fld.name for fld in self.dfTestData.schema.fields ])
+
+        self.assertEqual(fieldsFromGenerator, fieldsFromSchema)
 
     def test_clone(self):
         """Test clone method"""
@@ -63,6 +80,12 @@ class TestBasicOperation(unittest.TestCase):
         fields1 = ds_copy1.getOutputColumnNames()
         fields2 = self.testDataSpec.getOutputColumnNames()
         self.assertNotEqual(fields1, fields2)
+
+        # check that new fields is superset of old fields
+        fields_original = set(fields2)
+        fields_new = set(fields1)
+
+        self.assertEqual(fields_new - fields_original, set(['another_column']))
 
     def test_multiple_base_columns(self):
         """Test data generation with multiple base columns"""

@@ -12,7 +12,7 @@ from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, Doub
     StructType, StructField, TimestampType, DataType, DateType
 import math
 from datetime import date, datetime, timedelta
-from .utils import ensure, coalesce
+from .utils import ensure, coalesce_values
 from .column_spec_options import ColumnSpecOptions
 from .text_generators import TemplateGenerator
 from .daterange import DateRange
@@ -381,9 +381,9 @@ class ColumnGenerationSpec(object):
                 effective_min = c_range.min
                 effective_step = c_range.step
                 effective_max = c_range.max
-            effective_min = coalesce(effective_min, c_min, 1)
-            effective_step = coalesce(effective_step, c_step, 1)
-            effective_max = coalesce(effective_max, c_max)
+            effective_min = coalesce_values(effective_min, c_min, 1)
+            effective_step = coalesce_values(effective_step, c_step, 1)
+            effective_max = coalesce_values(effective_max, c_max)
 
             # due to floating point errors in some Python floating point calculations, we need to apply rounding
             # if any of the components are float
@@ -400,8 +400,8 @@ class ColumnGenerationSpec(object):
             result = c_range
         elif c_range is None:
             effective_min, effective_max, effective_step = None, None, None
-            effective_min = coalesce(c_min, 0)
-            effective_step = coalesce(c_step, 1)
+            effective_min = coalesce_values(c_min, 0)
+            effective_step = coalesce_values(c_step, 1)
             result = NRange(effective_min, c_max, effective_step)
         else:
             result = NRange(0, None, None)
@@ -424,11 +424,11 @@ class ColumnGenerationSpec(object):
                 effective_interval = c_range.interval
 
             if type(colType) is DateType:
-                effective_interval = coalesce(effective_interval, c_interval, timedelta(days=1))
+                effective_interval = coalesce_values(effective_interval, c_interval, timedelta(days=1))
             else:
-                effective_interval = coalesce(effective_interval, c_interval, timedelta(minutes=1))
+                effective_interval = coalesce_values(effective_interval, c_interval, timedelta(minutes=1))
 
-            effective_end = coalesce(effective_end, c_end,
+            effective_end = coalesce_values(effective_end, c_end,
                                      datetime.now().replace(hour=0, minute=0, second=0, day=1) - timedelta(days=1))
             effective_begin = effective_end - effective_interval * (c_unique - 1)
 
@@ -436,13 +436,13 @@ class ColumnGenerationSpec(object):
         elif c_range is not None:
             result = c_range
         elif c_range is None:
-            effective_end = coalesce(c_end,
+            effective_end = coalesce_values(c_end,
                                      datetime.now().replace(hour=0, minute=0, second=0, day=1) - timedelta(days=1))
-            effective_begin = coalesce(c_begin, effective_end - timedelta(days=365))
+            effective_begin = coalesce_values(c_begin, effective_end - timedelta(days=365))
             if type(colType) is DateType:
-                effective_interval = coalesce(c_interval, timedelta(days=1))
+                effective_interval = coalesce_values(c_interval, timedelta(days=1))
             else:
-                effective_interval = coalesce(c_interval, timedelta(minutes=1))
+                effective_interval = coalesce_values(c_interval, timedelta(minutes=1))
 
             result = DateRange(effective_begin, effective_end, effective_interval)
         else:
