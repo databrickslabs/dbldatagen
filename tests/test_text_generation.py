@@ -1,10 +1,8 @@
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType, DecimalType
 from pyspark.sql.types import BooleanType, DateType
 import databrickslabs_testdatagenerator as dg
-from databrickslabs_testdatagenerator import NRange, ILText
-import databrickslabs_testdatagenerator.distributions as dist
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import expr, lit, udf, when, rand
+from databrickslabs_testdatagenerator import NRange, ILText, TemplateGenerator
+import pyspark.sql.functions as F
 
 import unittest
 import re
@@ -41,8 +39,8 @@ spark.conf.set("spark.sql.execution.arrow.enabled", "true")
 # Test manipulation and generation of test data for a large schema
 class TestTextGeneration(unittest.TestCase):
     testDataSpec = None
-    row_count = 1000000
-    partitions_requested = 24
+    row_count = 100000
+    partitions_requested = 4
 
     def setUp(self):
         print("setting up TestTextDataGenerationTests")
@@ -51,26 +49,106 @@ class TestTextGeneration(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         print("setting up class ")
-        cls.testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
-                                             partitions=cls.partitions_requested)
-                            .withSchema(schema)
-                            .withIdOutput()
-                            .withColumnSpec("date", percent_nulls=10.0)
-                            .withColumnSpec("nint", percent_nulls=10.0, min=1, max=9, step=2)
-                            .withColumnSpec("nstr1", percent_nulls=10.0, min=1, max=9, step=2)
-                            .withColumnSpec("nstr2", percent_nulls=10.0, min=1.5, max=2.5, step=0.3, format="%04f")
-                            .withColumnSpec("nstr3", min=1.0, max=9.0, step=2.0)
-                            .withColumnSpec("nstr4", percent_nulls=10.0, min=1, max=9, step=2, format="%04d")
-                            .withColumnSpec("nstr5", percent_nulls=10.0, min=1.5, max=2.5, step=0.3, random=True)
-                            .withColumnSpec("nstr6", percent_nulls=10.0, min=1.5, max=2.5, step=0.3, random=True,
-                                            format="%04f")
-                            .withColumnSpec("email", template=r'\w.\w@\w.com|\w@\w.co.u\k')
-                            .withColumnSpec("ip_addr", template=r'\n.\n.\n.\n')
-                            .withColumnSpec("phone", template=r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd')
-                            )
 
-    def test_simple_data(self):
-        self.testDataSpec.build().show()
+    def test_simple_data_template(self):
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count,
+                                         partitions=self.partitions_requested)
+                        .withSchema(schema)
+                        .withIdOutput()
+                        .withColumnSpec("date", percent_nulls=10.0)
+                        .withColumnSpec("nint", percent_nulls=10.0, min=1, max=9, step=2)
+                        .withColumnSpec("nstr1", percent_nulls=10.0, min=1, max=9, step=2)
+                        .withColumnSpec("nstr2", percent_nulls=10.0, min=1.5, max=2.5, step=0.3, format="%04f")
+                        .withColumnSpec("nstr3", min=1.0, max=9.0, step=2.0)
+                        .withColumnSpec("nstr4", percent_nulls=10.0, min=1, max=9, step=2, format="%04d")
+                        .withColumnSpec("nstr5", percent_nulls=10.0, min=1.5, max=2.5, step=0.3, random=True)
+                        .withColumnSpec("nstr6", percent_nulls=10.0, min=1.5, max=2.5, step=0.3, random=True,
+                                        format="%04f")
+                        .withColumnSpec("email", template=r'\w.\w@\w.com|\w@\w.co.u\k')
+                        .withColumnSpec("ip_addr", template=r'\n.\n.\n.\n')
+                        .withColumnSpec("phone", template=r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd')
+                        )
+
+        df_template_data = testDataSpec.build().cache()
+
+        # check templated columns
+
+        counts = df_template_data.agg(
+            F.countDistinct("email").alias("email_count"),
+            F.countDistinct("ip_addr").alias("ip_addr_count"),
+            F.countDistinct("phone").alias("phone_count")
+        ).collect()[0]
+
+        self.assertGreaterEqual(counts['email_count'], 10)
+        self.assertGreaterEqual(counts['ip_addr_count'], 10)
+        self.assertGreaterEqual(counts['phone_count'], 10)
+
+    def test_large_template_driven_data_generation(self):
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000000,
+                                         partitions=24)
+                        .withSchema(schema)
+                        .withIdOutput()
+                        .withColumnSpec("date", percent_nulls=10.0)
+                        .withColumnSpec("nint", percent_nulls=10.0, min=1, max=9, step=2)
+                        .withColumnSpec("nstr1", percent_nulls=10.0, min=1, max=9, step=2)
+                        .withColumnSpec("nstr2", percent_nulls=10.0, min=1.5, max=2.5, step=0.3, format="%04f")
+                        .withColumnSpec("nstr3", min=1.0, max=9.0, step=2.0)
+                        .withColumnSpec("nstr4", percent_nulls=10.0, min=1, max=9, step=2, format="%04d")
+                        .withColumnSpec("nstr5", percent_nulls=10.0, min=1.5, max=2.5, step=0.3, random=True)
+                        .withColumnSpec("nstr6", percent_nulls=10.0, min=1.5, max=2.5, step=0.3, random=True,
+                                        format="%04f")
+                        .withColumnSpec("email", template=r'\w.\w@\w.com|\w@\w.co.u\k')
+                        .withColumnSpec("ip_addr", template=r'\n.\n.\n.\n')
+                        .withColumnSpec("phone", template=r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd')
+                        )
+
+        df_template_data = testDataSpec.build()
+
+        counts = df_template_data.agg(
+            F.countDistinct("email").alias("email_count"),
+            F.countDistinct("ip_addr").alias("ip_addr_count"),
+            F.countDistinct("phone").alias("phone_count")
+        ).collect()[0]
+
+        self.assertGreaterEqual(counts['email_count'], 100)
+        self.assertGreaterEqual(counts['ip_addr_count'], 100)
+        self.assertGreaterEqual(counts['phone_count'], 100)
+
+    def test_raw_template_text_generation1(self):
+        ''' As the test coverage tools dont detect code only used in UDFs, lets add some explicit tests for the underlying code'''
+        pattern = r'\n.\n.\n.\n'
+        match_pattern = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+")
+        test_template = TemplateGenerator(pattern)
+
+        test_values = [test_template.valueFromSingleTemplate(x, test_template.templates[0]) for x in range(1, 1000)]
+
+        for test_value in test_values:
+            self.assertIsNotNone(test_value)
+            self.assertTrue(match_pattern.match(test_value))
+
+    def test_raw_template_text_generation2(self):
+        ''' As the test coverage tools dont detect code only used in UDFs, lets add some explicit tests for the underlying code'''
+        pattern = r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd'
+        match_pattern = re.compile(r"(\([0-9]+\)-[0-9]+-[0-9]+)|(1\([0-9]+\) [0-9]+-[0-9]+)|([0-9]+ [0-9]+)")
+        test_template = TemplateGenerator(pattern)
+
+        test_values = [test_template.classicGenerateText(x) for x in range(1, 1000)]
+
+        for test_value in test_values:
+            self.assertIsNotNone(test_value)
+            self.assertTrue(match_pattern.match(test_value))
+
+    def test_raw_template_text_generation3(self):
+        ''' As the test coverage tools dont detect code only used in UDFs, lets add some explicit tests for the underlying code'''
+        pattern = r'\w.\w@\w.com|\w@\w.co.u\k'
+        match_pattern = re.compile(r"[a-z\.\@]+")
+        test_template = TemplateGenerator(pattern)
+
+        test_values = [test_template.classicGenerateText(x) for x in range(1, 1000)]
+
+        for test_value in test_values:
+            self.assertIsNotNone(test_value)
+            self.assertTrue(match_pattern.match(test_value))
 
     def test_simple_data2(self):
         testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
@@ -204,32 +282,32 @@ class TestTextGeneration(unittest.TestCase):
         print("output columns", testdata_generator.getOutputColumnNames())
 
         # check `code` values
-        code1_values = [ r[0] for r in df.select("code1").distinct().collect() ]
-        self.assertSetEqual(set(code1_values), set(range(1,21)))
+        code1_values = [r[0] for r in df.select("code1").distinct().collect()]
+        self.assertSetEqual(set(code1_values), set(range(1, 21)))
 
-        code2_values = [ r[0] for r in df.select("code2").distinct().collect() ]
-        self.assertSetEqual(set(code2_values), set(range(1,21)))
+        code2_values = [r[0] for r in df.select("code2").distinct().collect()]
+        self.assertSetEqual(set(code2_values), set(range(1, 21)))
 
-        code3_values = [ r[0] for r in df.select("code3").distinct().collect() ]
-        self.assertSetEqual(set(code3_values), set(range(1,21)))
+        code3_values = [r[0] for r in df.select("code3").distinct().collect()]
+        self.assertSetEqual(set(code3_values), set(range(1, 21)))
 
-        code4_values = [ r[0] for r in df.select("code3").distinct().collect() ]
-        self.assertSetEqual(set(code4_values), set(range(1,21)))
+        code4_values = [r[0] for r in df.select("code3").distinct().collect()]
+        self.assertSetEqual(set(code4_values), set(range(1, 21)))
 
-        site_codes = [ f"site_{x}" for x in range(1,21)]
-        site_code_values = [ r[0] for r in df.select("site_cd").distinct().collect() ]
+        site_codes = [f"site_{x}" for x in range(1, 21)]
+        site_code_values = [r[0] for r in df.select("site_cd").distinct().collect()]
         self.assertSetEqual(set(site_code_values), set(site_codes))
 
-        status_codes = [ f"status_{x}" for x in range(1,201)]
-        status_code_values = [ r[0] for r in df.select("device_status").distinct().collect() ]
+        status_codes = [f"status_{x}" for x in range(1, 201)]
+        status_code_values = [r[0] for r in df.select("device_status").distinct().collect()]
         self.assertSetEqual(set(status_code_values), set(status_codes))
 
-        site_codes = [ f"site:{x}" for x in range(1,21)]
-        site_code_values = [ r[0] for r in df.select("site_cd2").distinct().collect() ]
+        site_codes = [f"site:{x}" for x in range(1, 21)]
+        site_code_values = [r[0] for r in df.select("site_cd2").distinct().collect()]
         self.assertSetEqual(set(site_code_values), set(site_codes))
 
-        status_codes = [ f"status:{x}" for x in range(1,201)]
-        status_code_values = [ r[0] for r in df.select("device_status2").distinct().collect() ]
+        status_codes = [f"status:{x}" for x in range(1, 201)]
+        status_code_values = [r[0] for r in df.select("device_status2").distinct().collect()]
         self.assertSetEqual(set(status_code_values), set(status_codes))
 
     def test_suffix(self):
@@ -256,20 +334,20 @@ class TestTextGeneration(unittest.TestCase):
 
         self.assertEqual(numRows, 100000)
 
-        site_codes = [ f"{x}_site" for x in range(1,21)]
-        site_code_values = [ r[0] for r in df.select("site_cd").distinct().collect() ]
+        site_codes = [f"{x}_site" for x in range(1, 21)]
+        site_code_values = [r[0] for r in df.select("site_cd").distinct().collect()]
         self.assertSetEqual(set(site_code_values), set(site_codes))
 
-        status_codes = [ f"{x}_status" for x in range(1,201)]
-        status_code_values = [ r[0] for r in df.select("device_status").distinct().collect() ]
+        status_codes = [f"{x}_status" for x in range(1, 201)]
+        status_code_values = [r[0] for r in df.select("device_status").distinct().collect()]
         self.assertSetEqual(set(status_code_values), set(status_codes))
 
-        site_codes = [ f"{x}:site" for x in range(1,21)]
-        site_code_values = [ r[0] for r in df.select("site_cd2").distinct().collect() ]
+        site_codes = [f"{x}:site" for x in range(1, 21)]
+        site_code_values = [r[0] for r in df.select("site_cd2").distinct().collect()]
         self.assertSetEqual(set(site_code_values), set(site_codes))
 
-        status_codes = [ f"{x}:status" for x in range(1,201)]
-        status_code_values = [ r[0] for r in df.select("device_status2").distinct().collect() ]
+        status_codes = [f"{x}:status" for x in range(1, 201)]
+        status_code_values = [r[0] for r in df.select("device_status2").distinct().collect()]
         self.assertSetEqual(set(status_code_values), set(status_codes))
 
     def test_prefix_and_suffix(self):
@@ -284,10 +362,11 @@ class TestTextGeneration(unittest.TestCase):
                 # base column specifies dependent column
 
                 .withColumn("site_cd", "string", suffix='site', base_column='code1', prefix="test")
-                .withColumn("device_status", "string", min=1, max=200, step=1, suffix='status',  prefix="test")
+                .withColumn("device_status", "string", min=1, max=200, step=1, suffix='status', prefix="test")
 
                 .withColumn("site_cd2", "string", suffix='site', base_column='code1', text_separator=":", prefix="test")
-                .withColumn("device_status2", "string", min=1, max=200, step=1, suffix='status', text_separator=":", prefix="test")
+                .withColumn("device_status2", "string", min=1, max=200, step=1, suffix='status', text_separator=":",
+                            prefix="test")
         )
 
         df = testdata_generator.build()  # build our dataset
@@ -296,19 +375,17 @@ class TestTextGeneration(unittest.TestCase):
 
         self.assertEqual(numRows, 100000)
 
-        status_codes = [ f"test_{x}_status" for x in range(1,201)]
-        status_code_values = [ r[0] for r in df.select("device_status").distinct().collect() ]
+        status_codes = [f"test_{x}_status" for x in range(1, 201)]
+        status_code_values = [r[0] for r in df.select("device_status").distinct().collect()]
         self.assertSetEqual(set(status_code_values), set(status_codes))
 
-        site_codes = [ f"test:{x}:site" for x in range(1,21)]
-        site_code_values = [ r[0] for r in df.select("site_cd2").distinct().collect() ]
+        site_codes = [f"test:{x}:site" for x in range(1, 21)]
+        site_code_values = [r[0] for r in df.select("site_cd2").distinct().collect()]
         self.assertSetEqual(set(site_code_values), set(site_codes))
 
-        status_codes = [ f"test:{x}:status" for x in range(1,201)]
-        status_code_values = [ r[0] for r in df.select("device_status2").distinct().collect() ]
+        status_codes = [f"test:{x}:status" for x in range(1, 201)]
+        status_code_values = [r[0] for r in df.select("device_status2").distinct().collect()]
         self.assertSetEqual(set(status_code_values), set(status_codes))
-
-
 
 # run the tests
 # if __name__ == '__main__':

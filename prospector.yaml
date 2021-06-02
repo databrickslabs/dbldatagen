@@ -32,6 +32,14 @@ pep8:
     - W293 # disabled because we have newlines in docstrings
     - N802 # disabled as we use mixed case method names following pyspark style
     - N803 # disabled as we use mixed case argument names following pyspark style
+    - N806 # disabled as we use mixed case variable names following pyspark style
+    - E123 # disabled due to formatting preference
+    - E127 # disable minor formatting over-indent errors
+    - E131 # formatting issue only
+    - E201 # formatting only
+    - E202 # formatting only
+    - E128 # formatting only
+    - E126 # formatting only
 
 mccabe:
   disable:

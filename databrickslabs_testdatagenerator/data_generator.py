@@ -14,7 +14,7 @@ from datetime import date, datetime, timedelta
 import re
 
 from .column_generation_spec import ColumnGenerationSpec
-from .utils import ensure, topologicalSort, DataGenError
+from .utils import ensure, topologicalSort, DataGenError, deprecated
 from .daterange import DateRange
 from .spark_singleton import SparkSingleton
 import copy
@@ -240,6 +240,7 @@ class DataGenerator:
         self._rowCount = rc
         return self
 
+    @deprecated('Use `withRowCount` instead')
     def setRowCount(self, rc):
         """Modify the row count - useful when starting a new spec from a clone
 
@@ -448,7 +449,7 @@ class DataGenerator:
 
         :returns: effective min, max, step as tuple
         """
-        # TODO: may also need to check for instance of DataRnage
+        # TODO: may also need to check for instance of DataRange
         if data_range is not None and isinstance(data_range, range):
             if max is not None or min != 0 or step != 1:
                 raise ValueError("You cant specify both a range and min, max or step values")
@@ -684,6 +685,14 @@ class DataGenerator:
     def computeColumnBuildOrder(self):
         """ compute the build ordering using a topological sort on dependencies
 
+        In order to avoid references to columns that have not yet been generated, the test data generation process
+        sorts the columns according to the order they need to be built.
+
+        This determines which columns are built first.
+
+        The test generation process will select the columns in the correct order at the end so that the columns
+        appear in the correct order in the final output.
+
         :returns: the build ordering
         """
         dependency_ordering = [(x.name, set(x.dependencies)) if x.name != ColumnGenerationSpec.SEED_COLUMN else (
@@ -718,7 +727,10 @@ class DataGenerator:
         return [self.columnSpecsByName[col].datatype for col in columns]
 
     def computeBuildPlan(self):
-        """ prepare for building
+        """ prepare for building by computing a pseudo build plan
+
+        The build plan is not a true build plan - it is only used for debugging purposes, but does not actually
+        drive the column generation order.
 
         :returns: modified in-place instance of test data generator allowing for chaining of calls
                   following Builder pattern

@@ -6,10 +6,9 @@
 This file defines the `SchemaParser` class
 """
 
-import re
-
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
-    TimestampType, DateType, DecimalType, ByteType
+    StructType, StructField, TimestampType, DateType, DecimalType, ByteType
+import re
 
 
 class SchemaParser(object):
@@ -57,31 +56,30 @@ class SchemaParser(object):
         assert type_string is not None, "`type_string` must be specified"
 
         s = type_string.strip().lower()
-        if s in ["string", "varchar", "char", "nvarchar"]:
-            retval = StringType()
-        elif s in ["int", "integer"]:
-            retval = IntegerType()
-        elif s in ["bigint", "long"]:
-            retval = LongType()
-        elif s in ["bool", "boolean"]:
-            retval = BooleanType()
-        elif s in ["timestamp", "datetime"]:
-            retval = TimestampType()
+        if s == "string" or s == "varchar" or s == "char" or s == "nvarchar":
+            return StringType()
+        elif s == "int" or s == "integer":
+            return IntegerType()
+        elif s == "bigint" or s == "long":
+            return LongType()
+        elif s == "bool" or s == "boolean":
+            return BooleanType()
+        elif s == "timestamp" or s == "datetime":
+            return TimestampType()
         elif s.startswith("decimal") or s.startswith("number"):
-            retval = cls.parseDecimal(s)
+            return cls.parseDecimal(s)
         elif s == "double":
-            retval = DoubleType()
+            return DoubleType()
         elif s == "float":
-            retval = FloatType()
+            return FloatType()
         elif s == "date":
-            retval = DateType()
+            return DateType()
         elif s == "short":
-            retval = ShortType()
+            return ShortType()
         elif s == "byte":
-            retval = ByteType()
+            return ByteType()
         else:
-            retval = s
-        return retval
+            return s
 
     @classmethod
     def parseCreateTable(cls, sparkSession, source_schema):

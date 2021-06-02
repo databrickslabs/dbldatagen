@@ -1,7 +1,6 @@
-import logging
-import unittest
-
 import databrickslabs_testdatagenerator as dg
+import unittest
+import logging
 
 spark = dg.SparkSingleton.getLocalInstance("basic tests")
 
@@ -46,23 +45,6 @@ class TestRanges(unittest.TestCase):
 
         print(r1.getDiscreteRange())
 
-    def test_optional_min_max(self):
-
-        r1 = dg.NRange(-1, 100)
-
-        self.assertEqual(r1.minValue, -1)
-        self.assertEqual(r1.maxValue, 100)
-
-        r2 = dg.NRange(min=-1, max=100)
-
-        self.assertEqual(r2.minValue, -1)
-        self.assertEqual(r2.maxValue, 100)
-
-        r3 = dg.NRange(minValue=-1, maxValue=100)
-
-        self.assertEqual(r3.minValue, -1)
-        self.assertEqual(r3.maxValue, 100)
-
 
 # run the tests
 # if __name__ == '__main__':
@@ -80,9 +62,5 @@ class TestRanges(unittest.TestCase):
 
 # runTests([TestBasicOperation])
 
-<<<<<<< HEAD
-
-=======
->>>>>>> fe8d4d1... updates to tests
 if __name__ == '__main__':
     unittest.main()

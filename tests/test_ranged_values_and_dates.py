@@ -2,11 +2,9 @@ from pyspark.sql.types import StructType, StructField, IntegerType, StringType, 
 from pyspark.sql.types import DoubleType, ShortType, LongType, DecimalType, ByteType, DateType
 
 import databrickslabs_testdatagenerator as datagen
-from pyspark.sql import SparkSession
 import unittest
 from datetime import timedelta, datetime, date
 from databrickslabs_testdatagenerator import DateRange, NRange
-from pyspark.sql.functions import expr, lit, udf, when, rand
 import pyspark.sql.functions as F
 
 # build spark session
@@ -56,7 +54,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
                       )
 
         self.assertIsNotNone(testDataDF.schema)
-        self.assertIs(testDataDF.schema.fields[1].dataType, TimestampType())
+        self.assertIs(type(testDataDF.schema.fields[1].dataType), type(TimestampType()))
 
         # TODO: add validation statement
         df_min_and_max = testDataDF.agg(F.min("last_sync_dt").alias("min_ts"), F.max("last_sync_dt").alias("max_ts"))
@@ -82,7 +80,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
                       )
 
         self.assertIsNotNone(testDataDF.schema)
-        self.assertIs(testDataDF.schema.fields[1].dataType, TimestampType())
+        self.assertIs(type(testDataDF.schema.fields[1].dataType), type(TimestampType()))
 
         # validation statements
         df_min_and_max = testDataDF.agg(F.min("last_sync_dt").alias("min_ts"), F.max("last_sync_dt").alias("max_ts"))
@@ -113,7 +111,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
                       )
 
         self.assertIsNotNone(testDataDF.schema)
-        self.assertIs(testDataDF.schema.fields[2].dataType, TimestampType())
+        self.assertIs(type(testDataDF.schema.fields[2].dataType), type(TimestampType()))
 
         # validation statements
         df_min_and_max = testDataDF.agg(F.min("last_sync_dt1").alias("min_ts"), F.max("last_sync_dt1").alias("max_ts"))
@@ -148,7 +146,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
                       )
 
         self.assertIsNotNone(testDataDF.schema)
-        self.assertIs(testDataDF.schema.fields[1].dataType, TimestampType())
+        self.assertIs(type(testDataDF.schema.fields[1].dataType), type(TimestampType()))
 
         # validation statement
         df_min_and_max = testDataDF.agg(F.min("last_sync_dt1").alias("min_ts"), F.max("last_sync_dt1").alias("max_ts"))
@@ -174,7 +172,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
                       )
 
         self.assertIsNotNone(testDataDF.schema)
-        self.assertIs(testDataDF.schema.fields[1].dataType, DateType())
+        self.assertIs(type(testDataDF.schema.fields[1].dataType), type(DateType()))
 
         # TODO: add validation statement
         df_min_and_max = testDataDF.agg(F.min("last_sync_date").alias("min_dt"), F.max("last_sync_date").alias("max_dt"))
