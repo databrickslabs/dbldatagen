@@ -1,8 +1,5 @@
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
 import databrickslabs_testdatagenerator as dg
-from pyspark.sql import SparkSession
 import unittest
-from pyspark.sql import functions as F
 import logging
 from databrickslabs_testdatagenerator import ensure, mkBoundsList, coalesce_values
 
@@ -20,6 +17,10 @@ class TestUtils(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         pass
+
+    @unittest.expectedFailure
+    def test_ensure(self):
+        ensure(1 == 2, "Expected error")
 
     def testMkBoundsList1(self):
         """ Test utils mkBoundsList"""

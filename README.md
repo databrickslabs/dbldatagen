@@ -51,8 +51,20 @@ release notes for library compatibility
 
 ## Building the code
 
-Run  `make clean dist` from the main project directory.
+Our recommended mechanism for building the code is to use a conda based development process. 
 
+To use this, perform the following commands:
+  - `make create-dev-env` from the main project directory
+  - activate the conda environment - e.g `conda activate dbl_testdatagenerator`
+  - install the necessary dependencies in your conda environment via `make install-dev-dependencies`
+  
+  use the following to build and run the tests with a coverage report
+  - Run  ` make test-with-html-report` from the main project directory.
+
+Use the following command to make the distributable:
+  - Run `make dist` from the main project directory
+  - The resulting wheel file will be placed in the `dist` subdirectory
+  
 ## Creating the HTML documentation
 
 Run  `make docs` from the main project directory.
@@ -65,7 +77,7 @@ If using an environment with multiple Python versions, make sure to use virtual 
 
 If necessary, set `PYSPARK_PYTHON` and `PYSPARK_DRIVER_PYTHON` to point to correct versions of Python.
 
-Run  `make install tests` from the main project directory to run the unit tests.
+Run  `make tests` from the main project directory to run the unit tests.
 
 ## Using the Project
 To use the project, the generated wheel should be installed in your Python notebook as a wheel based library

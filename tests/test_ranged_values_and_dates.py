@@ -2,11 +2,9 @@ from pyspark.sql.types import StructType, StructField, IntegerType, StringType, 
 from pyspark.sql.types import DoubleType, ShortType, LongType, DecimalType, ByteType, DateType
 
 import databrickslabs_testdatagenerator as datagen
-from pyspark.sql import SparkSession
 import unittest
 from datetime import timedelta, datetime, date
 from databrickslabs_testdatagenerator import DateRange, NRange
-from pyspark.sql.functions import expr, lit, udf, when, rand
 import pyspark.sql.functions as F
 
 # build spark session

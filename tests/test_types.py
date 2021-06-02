@@ -2,7 +2,6 @@ from pyspark.sql.types import StructType, StructField, IntegerType, StringType, 
 from pyspark.sql.types import ByteType, ShortType, DoubleType, LongType, DecimalType
 
 import databrickslabs_testdatagenerator as datagen
-from pyspark.sql import SparkSession
 import unittest
 
 spark = datagen.SparkSingleton.getLocalInstance("unit tests")

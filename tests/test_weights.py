@@ -1,7 +1,5 @@
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
 import databrickslabs_testdatagenerator as dg
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, expr, rand, lit
+from pyspark.sql.functions import col
 import unittest
 import datetime
 
@@ -20,14 +18,14 @@ class TestWeights(unittest.TestCase):
         # will have implied column `id` for ordinal of row
         cls.testdata_generator = (
             dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=cls.rows, partitions=4)
-            .withIdOutput()  # id column will be emitted in the output
-            .withColumn("code1", "integer", min=1, max=20, step=1)
-            .withColumn("code4", "integer", min=1, max=40, step=1, random=True)
-            .withColumn("sector_status_desc", "string", min=1, max=200, step=1, prefix='status', random=True)
-            .withColumn("tech", "string", values=["GSM", "LTE", "UMTS", "UNKNOWN"],
-                        weights=desired_weights,
-                        random=True)
-            )
+                .withIdOutput()  # id column will be emitted in the output
+                .withColumn("code1", "integer", min=1, max=20, step=1)
+                .withColumn("code4", "integer", min=1, max=40, step=1, random=True)
+                .withColumn("sector_status_desc", "string", min=1, max=200, step=1, prefix='status', random=True)
+                .withColumn("tech", "string", values=["GSM", "LTE", "UMTS", "UNKNOWN"],
+                            weights=desired_weights,
+                            random=True)
+        )
         cls.testdata_generator.build().cache().createOrReplaceTempView("testdata")
 
     @classmethod
@@ -37,7 +35,7 @@ class TestWeights(unittest.TestCase):
 
     @classmethod
     def unique_timestamp_seconds(cls):
-        return (datetime.datetime.utcnow()-datetime.datetime.fromtimestamp(0)).total_seconds()
+        return (datetime.datetime.utcnow() - datetime.datetime.fromtimestamp(0)).total_seconds()
 
     @classmethod
     def weights_as_percentages(cls, w):
@@ -61,7 +59,7 @@ class TestWeights(unittest.TestCase):
         print(observed_weights)
 
         counts = {x.value: x.rc for x in observed_weights}
-        value_count_pairs = [{'value':x, 'count':counts[x]} for x in values]
+        value_count_pairs = [{'value': x, 'count': counts[x]} for x in values]
         print(value_count_pairs)
 
         return value_count_pairs
@@ -92,22 +90,19 @@ class TestWeights(unittest.TestCase):
                    .withColumn("alpha", "string", values=alpha_list, base_column="pk1",
                                weights=alpha_desired_weights, random=True)
                    )
-        dfAlpha=dsAlpha.build().cache()
+        dfAlpha = dsAlpha.build().cache()
 
         values = dsAlpha['alpha'].values
         self.assertTrue(values is not None)
 
-        observed_weights=self.get_observed_weights(dfAlpha, 'alpha', values)
+        observed_weights = self.get_observed_weights(dfAlpha, 'alpha', values)
         percentages = self.weights_as_percentages([x["count"] for x in observed_weights])
 
         desired_percentages = self.weights_as_percentages(alpha_desired_weights)
 
         self.assertPercentagesEqual(percentages, desired_percentages)
 
-
-
     def test_basic(self):
-
         print(self.unique_timestamp_seconds())
 
         df = self.testdata_generator.build()
@@ -146,8 +141,8 @@ class TestWeights(unittest.TestCase):
                                weights=alpha_desired_weights,
                                random=True)
                    )
-        dfAlpha=dsAlpha.build().cache()
-        observed_weights=self.get_observed_weights(dfAlpha, 'alpha', dsAlpha['alpha'].values)
+        dfAlpha = dsAlpha.build().cache()
+        observed_weights = self.get_observed_weights(dfAlpha, 'alpha', dsAlpha['alpha'].values)
 
         percentages = self.weights_as_percentages([x["count"] for x in observed_weights])
         desired_percentages = self.weights_as_percentages(alpha_desired_weights)
@@ -170,15 +165,15 @@ class TestWeights(unittest.TestCase):
                    .withColumn("alpha", "string", values=alpha_list,
                                weights=alpha_desired_weights)
                    )
-        dfAlpha=dsAlpha.build().cache()
-        observed_weights=self.get_observed_weights(dfAlpha, 'alpha', dsAlpha['alpha'].values)
+        dfAlpha = dsAlpha.build().cache()
+        observed_weights = self.get_observed_weights(dfAlpha, 'alpha', dsAlpha['alpha'].values)
 
         percentages = self.weights_as_percentages([x["count"] for x in observed_weights])
         desired_percentages = self.weights_as_percentages(alpha_desired_weights)
 
         self.assertPercentagesEqual(percentages, desired_percentages)
 
-    #@unittest.skip("not yet finalized")
+    # @unittest.skip("not yet finalized")
     def test_weighted_distribution_nr2(self):
         alpha_desired_weights = [9, 4, 1, 10, 5,
                                  9, 4, 1, 10, 5,
@@ -196,8 +191,8 @@ class TestWeights(unittest.TestCase):
                    .withColumn("alpha", "string", values=alpha_list, base_column="pk1",
                                weights=alpha_desired_weights)
                    )
-        dfAlpha=dsAlpha.build().cache()
-        observed_weights=self.get_observed_weights(dfAlpha, 'alpha', dsAlpha['alpha'].values)
+        dfAlpha = dsAlpha.build().cache()
+        observed_weights = self.get_observed_weights(dfAlpha, 'alpha', dsAlpha['alpha'].values)
 
         percentages = self.weights_as_percentages([x["count"] for x in observed_weights])
         desired_percentages = self.weights_as_percentages(alpha_desired_weights)
@@ -207,15 +202,15 @@ class TestWeights(unittest.TestCase):
         # for columns with non random values and a single base dependency `pk1`
         # each combination of pk1 and alpha should be the same
 
-        df_counts=(dfAlpha.cube("pk1", "alpha")
-                   .count()
-                   .where("pk1 is not null and alpha is not null")
-                   .orderBy("pk1").withColumnRenamed("count","rc")
-                   )
+        df_counts = (dfAlpha.cube("pk1", "alpha")
+                     .count()
+                     .where("pk1 is not null and alpha is not null")
+                     .orderBy("pk1").withColumnRenamed("count", "rc")
+                     )
 
         # get counts for each primary key from the cube
         # they should be 1 for each primary key
-        df_counts_by_key = df_counts.distinct().groupBy("pk1").count().withColumnRenamed("count","rc")
+        df_counts_by_key = df_counts.distinct().groupBy("pk1").count().withColumnRenamed("count", "rc")
         self.assertEqual(df_counts_by_key.where("rc > 1").count(), 0)
 
     def test_weighted_distribution2(self):
@@ -233,8 +228,8 @@ class TestWeights(unittest.TestCase):
                    .withColumn("alpha", "string", values=alpha_list, base_column="pk1",
                                weights=alpha_desired_weights, random=True)
                    )
-        dfAlpha=dsAlpha.build().cache()
-        observed_weights=self.get_observed_weights(dfAlpha, 'alpha', dsAlpha['alpha'].values)
+        dfAlpha = dsAlpha.build().cache()
+        observed_weights = self.get_observed_weights(dfAlpha, 'alpha', dsAlpha['alpha'].values)
 
         percentages = self.weights_as_percentages([x["count"] for x in observed_weights])
         desired_percentages = self.weights_as_percentages(alpha_desired_weights)
@@ -253,11 +248,11 @@ class TestWeights(unittest.TestCase):
                    .withIdOutput()  # id column will be emitted in the output
                    .withColumn("pk1", "int", unique_values=500)
                    .withColumn("pk2", "int", unique_values=500)
-                   .withColumn("alpha", "string", values=alpha_list, base_column=["pk1","pk2"],
+                   .withColumn("alpha", "string", values=alpha_list, base_column=["pk1", "pk2"],
                                weights=alpha_desired_weights, random=True)
                    )
-        dfAlpha=dsAlpha.build().cache()
-        observed_weights=self.get_observed_weights(dfAlpha, 'alpha', dsAlpha['alpha'].values)
+        dfAlpha = dsAlpha.build().cache()
+        observed_weights = self.get_observed_weights(dfAlpha, 'alpha', dsAlpha['alpha'].values)
 
         percentages = self.weights_as_percentages([x["count"] for x in observed_weights])
         desired_percentages = self.weights_as_percentages(alpha_desired_weights)
@@ -278,11 +273,11 @@ class TestWeights(unittest.TestCase):
                    .withIdOutput()  # id column will be emitted in the output
                    .withColumn("pk1", "int", unique_values=500)
                    .withColumn("pk2", "int", unique_values=500)
-                   .withColumn("alpha", "string", values=alpha_list, base_column=["pk1","pk2"],
+                   .withColumn("alpha", "string", values=alpha_list, base_column=["pk1", "pk2"],
                                weights=alpha_desired_weights)
                    )
-        dfAlpha=dsAlpha.build().cache()
-        observed_weights=self.get_observed_weights(dfAlpha, 'alpha', dsAlpha['alpha'].values)
+        dfAlpha = dsAlpha.build().cache()
+        observed_weights = self.get_observed_weights(dfAlpha, 'alpha', dsAlpha['alpha'].values)
 
         percentages = self.weights_as_percentages([x["count"] for x in observed_weights])
         desired_percentages = self.weights_as_percentages(alpha_desired_weights)
@@ -294,18 +289,16 @@ class TestWeights(unittest.TestCase):
         # for columns with non random values and base dependency on `pk1` and `pk2`
         # each combination of pk1, pk2 and alpha should be the same
 
-        df_counts=(dfAlpha.cube("pk1","pk2",  "alpha")
-                   .count()
-                   .where("pk1 is not null and alpha is not null and pk2 is not null")
-                   .orderBy("pk1", "pk2").withColumnRenamed("count","rc")
-                   )
+        df_counts = (dfAlpha.cube("pk1", "pk2", "alpha")
+                     .count()
+                     .where("pk1 is not null and alpha is not null and pk2 is not null")
+                     .orderBy("pk1", "pk2").withColumnRenamed("count", "rc")
+                     )
 
         # get counts for each primary key from the cube
         # they should be 1 for each primary key
-        df_counts_by_key = df_counts.distinct().groupBy("pk1", "pk2").count().withColumnRenamed("count","rc")
+        df_counts_by_key = df_counts.distinct().groupBy("pk1", "pk2").count().withColumnRenamed("count", "rc")
         self.assertEqual(df_counts_by_key.where("rc > 1").count(), 0)
-
-
 
     def test_weighted_distribution_int(self):
         num_desired_weights = [9, 4, 1, 10, 5]
@@ -313,12 +306,12 @@ class TestWeights(unittest.TestCase):
         dsInt1 = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4)
                   .withIdOutput()  # id column will be emitted in the output
                   .withColumn("code", "integer", values=num_list,
-                               weights=num_desired_weights,
-                               random=True)
+                              weights=num_desired_weights,
+                              random=True)
                   )
-        dfInt1=dsInt1.build().cache()
+        dfInt1 = dsInt1.build().cache()
 
-        observed_weights=self.get_observed_weights(dfInt1, 'code', dsInt1['code'].values)
+        observed_weights = self.get_observed_weights(dfInt1, 'code', dsInt1['code'].values)
 
         percentages = self.weights_as_percentages([x["count"] for x in observed_weights])
         desired_percentages = self.weights_as_percentages(num_desired_weights)
@@ -334,19 +327,18 @@ class TestWeights(unittest.TestCase):
         dsInt1 = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4, debug=True)
                   .withIdOutput()  # id column will be emitted in the output
                   .withColumn("code", "integer", values=num_list,
-                               weights=num_desired_weights, base_column_type="hash")
+                              weights=num_desired_weights, base_column_type="hash")
                   )
-        dfInt1=dsInt1.build().cache()
+        dfInt1 = dsInt1.build().cache()
 
-        observed_weights=self.get_observed_weights(dfInt1, 'code', dsInt1['code'].values)
+        observed_weights = self.get_observed_weights(dfInt1, 'code', dsInt1['code'].values)
 
         percentages = self.weights_as_percentages([x["count"] for x in observed_weights])
         desired_percentages = self.weights_as_percentages(num_desired_weights)
 
         self.assertPercentagesEqual(percentages, desired_percentages)
 
-
-    #@unittest.skip("not yet finalized")
+    # @unittest.skip("not yet finalized")
     def test_weighted_repeatable_non_random(self):
         alpha_desired_weights = [9, 4, 1, 10, 5,
                                  9, 4, 1, 10, 5,
@@ -403,11 +395,6 @@ class TestWeights(unittest.TestCase):
         values2 = dfAlpha2.collect()
 
         self.assertEqual(values1, values2)
-
-
-
-
-
 
 # run the tests
 # if __name__ == '__main__':

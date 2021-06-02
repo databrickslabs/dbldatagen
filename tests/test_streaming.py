@@ -1,6 +1,5 @@
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
+from pyspark.sql.types import  IntegerType, StringType, FloatType
 import databrickslabs_testdatagenerator as dg
-from pyspark.sql import SparkSession
 import unittest
 import os
 import time
