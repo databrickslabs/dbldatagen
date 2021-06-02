@@ -4,7 +4,7 @@
 
 See the contents of the file [python/require.txt] to see the Python package dependencies
 
-### Version 0.10.1-b5
+### Version 0.10.1-dev6
 
 #### Features
 * Uses Conda based build process
