@@ -1,10 +1,11 @@
-from databrickslabs_testdatagenerator import DataGenerator
-import databrickslabs_testdatagenerator as dg
-from databrickslabs_testdatagenerator import NRange, DateRange
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType, DateType
+import unittest
 from datetime import timedelta, datetime
 
-import unittest
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, DateType
+
+import databrickslabs_testdatagenerator as dg
+from databrickslabs_testdatagenerator import DataGenerator
+from databrickslabs_testdatagenerator import NRange, DateRange
 
 schema = StructType([
     StructField("site_id", IntegerType(), True),
@@ -66,7 +67,6 @@ class TestQuickTests(unittest.TestCase):
         self.assertTrue('stddev' in results)
         print("Summary;", results)
 
-
     def test_complex_datagen(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
                                          partitions=4)
@@ -110,7 +110,6 @@ class TestQuickTests(unittest.TestCase):
         self.assertLessEqual(stats.max1b, 200)
         self.assertGreaterEqual(stats.min1b, 1)
 
-
     def test_generate_name(self):
         print("test_generate_name")
         n1 = DataGenerator.generateName()
@@ -151,16 +150,6 @@ class TestQuickTests(unittest.TestCase):
         print("output columns", tgen.getOutputColumnNames())
         self.assertEqual(expectedColumns, set((tgen.getOutputColumnNames())))
 
-    def test_with_column_spec_for_missing_column(self):
-        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
-                .withSchema(schema)
-                .withColumn("sector_status_desc", StringType(), min=1, max=200, step=1, prefix='status', random=True)
-                .withColumn("s", StringType(), min=1, max=200, step=1, prefix='status', random=True, omit=True))
-
-        print("test_with_column_spec_for_missing_column")
-        with self.assertRaises(Exception):
-            t2 = tgen.withColumnSpec("site_dwkey", min=1, max=200, step=1, random=True)
-
     @unittest.expectedFailure
     def test_with_column_spec_for_missing_column(self):
         tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
@@ -170,7 +159,8 @@ class TestQuickTests(unittest.TestCase):
 
         print("test_with_column_spec_for_missing_column")
         # with self.assertRaises(Exception):
-        t2 = tgen.withColumnSpec("d", min=1, max=200, step=1, random=True)
+        t2 = tgen.withColumnSpec("d", minValue=1, maxValue=200, step=1, random=True)
+        assert t2 is not None, "expecting t2 to be a new generator spec"
 
     @unittest.expectedFailure
     def test_with_column_spec_for_duplicate_column(self):
@@ -181,8 +171,9 @@ class TestQuickTests(unittest.TestCase):
 
         print("test_with_column_spec_for_duplicate_column")
         # with self.assertRaises(Exception):
-        t2 = tgen.withColumnSpec("site_id", min=1, max=200, step=1, random=True)
-        t2 = t2.withColumnSpec("site_id", min=1, max=200, step=1, random=True)
+        t2 = tgen.withColumnSpec("site_id", minValue=1, maxValue=200, step=1, random=True)
+        t3 = t2.withColumnSpec("site_id", minValue=1, maxValue=200, step=1, random=True)
+        assert t3 is not None, "expecting t3 to be a new generator spec"
 
     # @unittest.expectedFailure
     def test_with_column_spec_for_duplicate_column2(self):
@@ -193,6 +184,7 @@ class TestQuickTests(unittest.TestCase):
 
         print("test_with_column_spec_for_duplicate_column2")
         t2 = tgen.withColumn("site_id", "string", min=1, max=200, step=1, random=True)
+        assert t2 is not None, "expecting t2 to be a new generator spec"
 
     def test_with_column_spec_for_id_column(self):
         tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
@@ -222,8 +214,9 @@ class TestQuickTests(unittest.TestCase):
 
                         )
 
-        rangedDF = testDataSpec.build(withTempView=True).cache()
+        testDataSpec.build(withTempView=True).cache()
 
+        # we refer to the view generated above
         result = spark.sql("""select count(distinct code1a), 
                                      count(distinct code1b), 
                                      count(distinct code1c) 
@@ -279,7 +272,6 @@ class TestQuickTests(unittest.TestCase):
         rowCount = formattedDF.count()
         self.assertEqual(rowCount, 100000)
 
-
     def test_basic_formatting3(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
                                          partitions=4)
@@ -316,7 +308,6 @@ class TestQuickTests(unittest.TestCase):
         rowCount = formattedDF.count()
         self.assertEqual(rowCount, 100000)
 
-
     @unittest.skip("not yet implemented for multiple base columns")
     def test_basic_formatting4(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
@@ -326,7 +317,8 @@ class TestQuickTests(unittest.TestCase):
                         .withColumn("val2", IntegerType(), min=1, max=100)
 
                         # when specifying multiple base columns
-                        .withColumn("str5b", StringType(), format="test %s %s", base_column=["val1", "val2"], base_column_type="values")
+                        .withColumn("str5b", StringType(), format="test %s %s", base_column=["val1", "val2"],
+                                    base_column_type="values")
 
                         )
 
@@ -346,7 +338,7 @@ class TestQuickTests(unittest.TestCase):
                         .withColumn("str1", StringType(), format="test %s", base_column=["val1", "val2"],
                                     values=["one", "two", "three"])
                         .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"],
-                                    values=["one", "two", "three"], weights=[3,1,1])
+                                    values=["one", "two", "three"], weights=[3, 1, 1])
 
                         .withColumn("str3", StringType(), format="test %s", base_column=["val1", "val2"],
                                     values=["one", "two", "three"], template=r"test \v0")
@@ -360,7 +352,6 @@ class TestQuickTests(unittest.TestCase):
 
         rowCount = formattedDF.count()
         self.assertEqual(rowCount, 100000)
-
 
     def test_basic_formatting(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
@@ -493,7 +484,7 @@ class TestQuickTests(unittest.TestCase):
                         .withColumn("str6", StringType(), template=r"\v0 \v1", base_column=["val1", "val2"])
                         )
 
-        script=testDataSpec.scriptTable(name="Test")
+        script = testDataSpec.scriptTable(name="Test")
         print(script)
 
         self.assertIsNotNone(script)
@@ -501,7 +492,7 @@ class TestQuickTests(unittest.TestCase):
         output_columns = testDataSpec.getOutputColumnNames()
         print(output_columns)
         self.assertSetEqual(set(output_columns), {'id', 'val1', 'val2', 'str1', 'str2', 'str3', 'str4', 'str5',
-                                                  'str5a', 'str5b',   'str6'})
+                                                  'str5a', 'str5b', 'str6'})
 
         self.assertIsNotNone(script)
 
@@ -532,12 +523,13 @@ class TestQuickTests(unittest.TestCase):
                         )
 
         script = testDataSpec.scriptMerge(tgt_name="Test", src_name="TestInc", join_expr="src.id=tgt.id",
-                                       del_expr="src.action='DEL'", update_expr="src.action='UPDATE")
+                                          del_expr="src.action='DEL'", update_expr="src.action='UPDATE")
         print(script)
 
         output_columns = testDataSpec.getOutputColumnNames()
         print(output_columns)
-        self.assertSetEqual(set(output_columns), {'id', 'val1', 'val2', 'str1', 'str2', 'str3', 'str4', 'str5', 'str5a', 'action', 'str6'})
+        self.assertSetEqual(set(output_columns),
+                            {'id', 'val1', 'val2', 'str1', 'str2', 'str3', 'str4', 'str5', 'str5a', 'action', 'str6'})
 
         self.assertIsNotNone(script)
 
@@ -569,14 +561,15 @@ class TestQuickTests(unittest.TestCase):
                         .withColumn("str6", StringType(), template=r"\v0 \v1", base_column=["val1", "val2"])
                         )
 
-        script=testDataSpec.scriptMerge(tgt_name="Test", src_name="TestInc", join_expr="src.id=tgt.id")
+        script = testDataSpec.scriptMerge(tgt_name="Test", src_name="TestInc", join_expr="src.id=tgt.id")
         self.assertIsNotNone(script)
 
         print(script)
 
         output_columns = testDataSpec.getOutputColumnNames()
         print(output_columns)
-        self.assertSetEqual(set(output_columns), {'id', 'val1', 'val2', 'str1', 'str2', 'str3', 'str4', 'str5', 'str5a', 'action', 'str6'})
+        self.assertSetEqual(set(output_columns),
+                            {'id', 'val1', 'val2', 'str1', 'str2', 'str3', 'str4', 'str5', 'str5a', 'action', 'str6'})
 
         self.assertIsNotNone(script)
 
@@ -586,7 +579,6 @@ class TestQuickTests(unittest.TestCase):
 
         for col in output_columns:
             self.assertTrue(col in script)
-
 
 # run the tests
 # if __name__ == '__main__':

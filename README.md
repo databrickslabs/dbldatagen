@@ -9,7 +9,8 @@
 
 ## Project Description
 This Databricks Labs project is a Python library for generating synthetic test data within the Databricks 
-environment using Spark. It operates by defining a test data generation specification in code for how the test data is to be generated.
+environment using Spark. It operates by defining a test data generation specification in code for 
+how the test data is to be generated.
 
 The specification may incorporate use of existing schemas, or create data in an adhoc fashion.
 
@@ -39,8 +40,8 @@ Please note that all projects in the `databrickslabs` github space are provided 
 
 Any issues discovered through the use of this project should be filed as GitHub Issues on the Repo.  They will be reviewed as time permits, but there are no formal SLAs for support.
 
-## Compatibility
-The code base must be built with Python 3.x. 
+## Compatibility and build requirements
+The code base must be built with Python 3.6.x or later 
 
 Either `pip` or `conda` can be used for building.
 
@@ -60,33 +61,13 @@ Latest pre-release is code complete and fully functional barring some issues wit
 
 # Building the code
 
-Our recommended mechanism for building the code is to use a conda based development process. 
-
-To use this, perform the following commands:
-  - `make create-dev-env` from the main project directory
-  - activate the conda environment - e.g `conda activate dbl_testdatagenerator`
-  - install the necessary dependencies in your conda environment via `make install-dev-dependencies`
-  
-  use the following to build and run the tests with a coverage report
-  - Run  ` make test-with-html-report` from the main project directory.
-
-Use the following command to make the distributable:
-  - Run `make dist` from the main project directory
-  - The resulting wheel file will be placed in the `dist` subdirectory
+See [CONTRIBUTING.md](CONTRIBUTING.md) for build and testing instructions
   
 ## Creating the HTML documentation
 
 Run  `make docs` from the main project directory.
 
 The main html document will be in the file (relative to the root of the build directory) `./python/docs/docs/build/html/index.html`
-
-## Running unit tests
-
-If using an environment with multiple Python versions, make sure to use virtual env or similar to pick up correct python versions.
-
-If necessary, set `PYSPARK_PYTHON` and `PYSPARK_DRIVER_PYTHON` to point to correct versions of Python.
-
-Run  `make tests` from the main project directory to run the unit tests.
 
 ## Using the Project
 To use the project, the generated wheel should be installed in your Python notebook as a wheel based library
@@ -101,8 +82,8 @@ df_spec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows
                             .withIdOutput()
                             .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
                                         numColumns=cls.column_count)
-                            .withColumn("code1", IntegerType(), min=100, max=200)
-                            .withColumn("code2", IntegerType(), min=0, max=10)
+                            .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
+                            .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
                             .withColumn("code3", StringType(), values=['a', 'b', 'c'])
                             .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
                             .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])

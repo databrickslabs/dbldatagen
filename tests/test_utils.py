@@ -1,9 +1,9 @@
-import databrickslabs_testdatagenerator as dg
-import unittest
 import logging
-from databrickslabs_testdatagenerator import ensure, mkBoundsList, coalesce_values, deprecated
+import unittest
 
-spark = dg.SparkSingleton.getLocalInstance("unit tests")
+from databrickslabs_testdatagenerator import ensure, mkBoundsList, coalesce_values, deprecated, SparkSingleton
+
+spark = SparkSingleton.getLocalInstance("unit tests")
 
 
 class TestUtils(unittest.TestCase):
