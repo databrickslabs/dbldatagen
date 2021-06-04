@@ -1,8 +1,10 @@
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType, DecimalType
-from pyspark.sql.types import BooleanType, DateType
-import databrickslabs_testdatagenerator as dg
-import unittest
 import re
+import unittest
+
+from pyspark.sql.types import BooleanType, DateType
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType, TimestampType, DecimalType
+
+import databrickslabs_testdatagenerator as dg
 
 schema = StructType([
     StructField("PK1", StringType(), True),
@@ -200,7 +202,6 @@ class TestLargeSchemaOperation(unittest.TestCase):
         for col in output_columns:
             self.assertTrue(col in tableScript)
 
-
     def test_large_clone(self):
         sale_values = ['RETAIL', 'ONLINE', 'WHOLESALE', 'RETURN']
         sale_weights = [1, 5, 5, 1]
@@ -208,12 +209,13 @@ class TestLargeSchemaOperation(unittest.TestCase):
         ds = (self.testDataSpec.clone().withRowCount(1000)
               .withColumnSpecs(patterns=".*_ID", match_types=StringType(), format="%010d", min=10, max=123, step=1)
               .withColumnSpecs(patterns=".*_IDS", match_types=StringType(), format="%010d", min=1, max=100, step=1)
-              .withColumnSpec("R_ID", min=1, max=100, step=1)
-              .withColumnSpec("XYYZ_IDS", min=1, max=123, step=1,
-                              format="%05d")  # .withColumnSpec("nstr4", percent_nulls=10.0, min=1, max=9, step=2,  format="%04d")
+              .withColumnSpec("R_ID", minValue=1, maxValue=100, step=1)
+              .withColumnSpec("XYYZ_IDS", minValue=1, maxValue=123, step=1,
+                              format="%05d")
+              # .withColumnSpec("nstr4", percent_nulls=10.0, minValue=1, maxValue=9, step=2,  format="%04d")
               # example of IS_SALE
               .withColumnSpec("IS_S", values=sale_values, weights=sale_weights, random=True)
-              # .withColumnSpec("nstr4", percent_nulls=10.0, min=1, max=9, step=2,  format="%04d")
+              # .withColumnSpec("nstr4", percent_nulls=10.0, minValue=1, maxValue=9, step=2,  format="%04d")
 
               )
 
@@ -221,25 +223,23 @@ class TestLargeSchemaOperation(unittest.TestCase):
         ds.explain()
         df.show()
 
-        rowCount=df.count()
+        rowCount = df.count()
         self.assertEqual(rowCount, 1000)
 
         # TODO: add additional validation statements
         # check `id` values
-        id_values1 = [ r[0] for r in df.select("R_ID").distinct().collect() ]
-        self.assertSetEqual(set(id_values1), set(range(1,101)))
+        id_values1 = [r[0] for r in df.select("R_ID").distinct().collect()]
+        self.assertSetEqual(set(id_values1), set(range(1, 101)))
 
         # check `cl_id` values
-        cl_id_expected_values = [ f"{x:010d}" for x in range(10,124) ]
-        cl_id_values = [ r[0] for r in df.select("CL_ID").distinct().collect() ]
+        cl_id_expected_values = [f"{x:010d}" for x in range(10, 124)]
+        cl_id_values = [r[0] for r in df.select("CL_ID").distinct().collect()]
         self.assertSetEqual(set(cl_id_values), set(cl_id_expected_values))
 
         # check `xyyz id` values
-        xyyz_values = [ f"{x:05}" for x in range(1,124) ]
-        id_values2 = [ r[0] for r in df.select("XYYZ_IDS").distinct().collect() ]
+        xyyz_values = [f"{x:05}" for x in range(1, 124)]
+        id_values2 = [r[0] for r in df.select("XYYZ_IDS").distinct().collect()]
         self.assertSetEqual(set(id_values2), set(xyyz_values))
-
-
 
 # run the tests
 # if __name__ == '__main__':

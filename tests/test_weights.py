@@ -1,7 +1,9 @@
-import databrickslabs_testdatagenerator as dg
-from pyspark.sql.functions import col
-import unittest
 import datetime
+import unittest
+
+from pyspark.sql.functions import col
+
+import databrickslabs_testdatagenerator as dg
 
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
@@ -30,7 +32,6 @@ class TestWeights(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        print("tear down")
         spark.stop()
 
     @classmethod
@@ -83,7 +84,7 @@ class TestWeights(unittest.TestCase):
                                  9, 4, 1, 10, 5,
                                  9, 4, 1, 10, 5, 9
                                  ]
-        alpha_list = [x for x in "abcdefghijklmnopqrstuvwxyz"]
+        alpha_list = list("abcdefghijklmnopqrstuvwxyz")
         dsAlpha = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4)
                    .withIdOutput()  # id column will be emitted in the output
                    .withColumn("pk1", "int", unique_values=100)
@@ -112,8 +113,7 @@ class TestWeights(unittest.TestCase):
 
     def test_basic2(self):
         count = spark.sql("select count(*) as rc from testdata").take(1)[0].rc
-
-        print("count ", count)
+        self.assertEqual(count, self.rows)
 
     def test_generate_values(self):
         df_values = spark.sql(
@@ -121,6 +121,7 @@ class TestWeights(unittest.TestCase):
         values = [x.tech for x in df_values]
         print("row values:", values)
         total_count = sum([x.rc for x in df_values])
+        self.assertEqual(total_count, self.rows)
 
         percentages = self.weights_as_percentages([x.rc for x in df_values])
         desired_percentages = self.weights_as_percentages(desired_weights)
@@ -134,7 +135,7 @@ class TestWeights(unittest.TestCase):
                                  9, 4, 1, 10, 5,
                                  9, 4, 1, 10, 5, 9
                                  ]
-        alpha_list = [x for x in "abcdefghijklmnopqrstuvwxyz"]
+        alpha_list = list("abcdefghijklmnopqrstuvwxyz")
         dsAlpha = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4)
                    .withIdOutput()  # id column will be emitted in the output
                    .withColumn("alpha", "string", values=alpha_list,
@@ -157,7 +158,7 @@ class TestWeights(unittest.TestCase):
                                  9, 4, 1, 10, 5,
                                  9, 4, 1, 10, 5, 9
                                  ]
-        alpha_list = [x for x in "abcdefghijklmnopqrstuvwxyz"]
+        alpha_list = list("abcdefghijklmnopqrstuvwxyz")
 
         # dont use seed value as non random fields should be repeatable
         dsAlpha = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4)
@@ -181,7 +182,7 @@ class TestWeights(unittest.TestCase):
                                  9, 4, 1, 10, 5,
                                  9, 4, 1, 10, 5, 9
                                  ]
-        alpha_list = [x for x in "abcdefghijklmnopqrstuvwxyz"]
+        alpha_list = list("abcdefghijklmnopqrstuvwxyz")
 
         # dont use seed value as non random fields should be repeatable
         dsAlpha = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4)
@@ -220,7 +221,7 @@ class TestWeights(unittest.TestCase):
                                  9, 4, 1, 10, 5,
                                  9, 4, 1, 10, 5, 9
                                  ]
-        alpha_list = [x for x in "abcdefghijklmnopqrstuvwxyz"]
+        alpha_list = list("abcdefghijklmnopqrstuvwxyz")
         dsAlpha = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4)
                    .withIdOutput()  # id column will be emitted in the output
                    .withColumn("pk1", "int", unique_values=500)
@@ -243,7 +244,7 @@ class TestWeights(unittest.TestCase):
                                  9, 4, 1, 10, 5,
                                  9, 4, 1, 10, 5, 9
                                  ]
-        alpha_list = [x for x in "abcdefghijklmnopqrstuvwxyz"]
+        alpha_list = list("abcdefghijklmnopqrstuvwxyz")
         dsAlpha = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4)
                    .withIdOutput()  # id column will be emitted in the output
                    .withColumn("pk1", "int", unique_values=500)
@@ -266,7 +267,7 @@ class TestWeights(unittest.TestCase):
                                  9, 4, 1, 10, 5,
                                  9, 4, 1, 10, 5, 9
                                  ]
-        alpha_list = [x for x in "abcdefghijklmnopqrstuvwxyz"]
+        alpha_list = list("abcdefghijklmnopqrstuvwxyz")
 
         # dont use seed value as non random fields should be repeatable
         dsAlpha = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4, debug=True)
@@ -346,7 +347,7 @@ class TestWeights(unittest.TestCase):
                                  9, 4, 1, 10, 5,
                                  9, 4, 1, 10, 5, 9
                                  ]
-        alpha_list = [x for x in "abcdefghijklmnopqrstuvwxyz"]
+        alpha_list = list("abcdefghijklmnopqrstuvwxyz")
 
         # dont use seed value as non random fields should be repeatable
         dsAlpha = (dg.DataGenerator(sparkSession=spark,
@@ -374,7 +375,7 @@ class TestWeights(unittest.TestCase):
                                  9, 4, 1, 10, 5,
                                  9, 4, 1, 10, 5, 9
                                  ]
-        alpha_list = [x for x in "abcdefghijklmnopqrstuvwxyz"]
+        alpha_list = list("abcdefghijklmnopqrstuvwxyz")
 
         # use seed for random repeatability
         dsAlpha = (dg.DataGenerator(sparkSession=spark,

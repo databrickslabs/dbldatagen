@@ -71,7 +71,6 @@ class TestUseOfOptions(unittest.TestCase):
 
         # check test cell values
         test_cell_values = [r[0] for r in df.select("test_cell_flg").distinct().collect()]
-
         self.assertSetEqual(set(test_cell_values), {0, 1})
 
 # run the tests

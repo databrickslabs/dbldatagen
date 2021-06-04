@@ -5,20 +5,23 @@
 """
 This file defines the `DataGenError` and `DataGenerator` classes
 """
-
-from pyspark.sql.functions import col, lit, concat, rand, ceil, floor, round, array, expr
-from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
-    StructType, StructField, TimestampType
 import math
 from datetime import date, datetime, timedelta
 import re
+import copy
+import logging
+
+from pyspark.sql.functions import col, lit, concat, rand, ceil, floor, round as sql_round, array, expr
+from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
+    StructType, StructField, TimestampType
 
 from .column_generation_spec import ColumnGenerationSpec
 from .utils import ensure, topologicalSort, DataGenError, deprecated
 from .daterange import DateRange
 from .spark_singleton import SparkSingleton
-import copy
-import logging
+
+OLD_MIN_OPTION = 'min'
+OLD_MAX_OPTION = 'max'
 
 
 class DataGenerator:
@@ -144,7 +147,7 @@ class DataGenerator:
             self.logger.setLevel(logging.WARNING)
 
     @classmethod
-    def seed(cls, seedVal):
+    def use_seed(cls, seedVal):
         """ set seed for random number generation
 
             Arguments:
@@ -181,7 +184,9 @@ class DataGenerator:
         try:
             # temporarily set the spark session to null
             self.sparkSession = None
-            self.logger = None
+
+            # set logger to None before copy, disable pylint warning to ensure not triggered for this statement
+            self.logger = None  # pylint: disable=attribute-defined-outside-init
             new_copy = copy.deepcopy(self)
             new_copy.sparkSession = old_spark_session
             new_copy.build_plan_computed = False
@@ -189,7 +194,8 @@ class DataGenerator:
         finally:
             # now set it back
             self.sparkSession = old_spark_session
-            self.logger = old_logger
+            # set logger to old value, disable pylint warning to ensure not triggered for this statement
+            self.logger = old_logger  # pylint: disable=attribute-defined-outside-init
         return new_copy
 
     def markForPlanRegen(self):
@@ -444,19 +450,19 @@ class DataGenerator:
             self.withColumn(fs.name, fs.dataType, implicit=True, omit=False, nullable=fs.nullable)
         return self
 
-    def _computeRange(self, data_range, min, max, step):
+    def _computeRange(self, data_range, minValue, maxValue, step):
         """ Compute merged range based on parameters
 
-        :returns: effective min, max, step as tuple
+        :returns: effective minValue, maxValue, step as tuple
         """
         # TODO: may also need to check for instance of DataRange
         if data_range is not None and isinstance(data_range, range):
-            if max is not None or min != 0 or step != 1:
-                raise ValueError("You cant specify both a range and min, max or step values")
+            if maxValue is not None or minValue != 0 or step != 1:
+                raise ValueError("You cant specify both a range and minValue, maxValue or step values")
 
             return data_range.start, data_range.stop, data_range.step
         else:
-            return min, max, step
+            return minValue, maxValue, step
 
     def withColumnSpecs(self, patterns=None, fields=None, match_types=None, **kwargs):
         """Add column specs for columns matching
@@ -520,7 +526,8 @@ class DataGenerator:
                    " column `{0}` must refer to defined column".format(columns))
         return True
 
-    def withColumnSpec(self, colName, min=None, max=None, step=1, prefix=None, random=False, distribution=None,
+    def withColumnSpec(self, colName, minValue=None, maxValue=None, step=1, prefix=None,
+                       random=False, distribution=None,
                        implicit=False, data_range=None, omit=False, base_column=None, **kwargs):
         """ add a column specification for an existing column
 
@@ -537,13 +544,27 @@ class DataGenerator:
             self._checkColumnOrColumnList(base_column)
         ensure(not self.isFieldExplicitlyDefined(colName), "duplicate column spec for column `{0}`".format(colName))
 
+        # handle migration of old `min` and `max` options
+        if OLD_MIN_OPTION in kwargs.keys():
+            assert minValue is None, \
+                "Only one of `minValue` and `minValue` can be specified. Use of `minValue` is preferred"
+            minValue = kwargs[OLD_MIN_OPTION]
+            kwargs.pop(OLD_MIN_OPTION, None)
+
+        if OLD_MAX_OPTION in kwargs.keys():
+            assert maxValue is None, \
+                "Only one of `maxValue` and `maxValue` can be specified. Use of `maxValue` is preferred"
+            maxValue = kwargs[OLD_MAX_OPTION]
+            kwargs.pop(OLD_MAX_OPTION, None)
+
         new_props = {}
         new_props.update(kwargs)
 
-        self.logger.info(
-            "adding column spec - `{0}` with baseColumn : `{1}`, implicit : {2} , omit {3}".format(colName, base_column,
-                                                                                                   implicit, omit))
-        self.generateColumnDefinition(colName, self.getColumnType(colName), min=min, max=max, step=step, prefix=prefix,
+        self.logger.info("adding column spec - `%s` with baseColumn : `%s`, implicit : %s , omit %s",
+                             colName, base_column, implicit, omit)
+
+        self.generateColumnDefinition(colName, self.getColumnType(colName), minValue=minValue, maxValue=maxValue,
+                                      step=step, prefix=prefix,
                                       random=random, data_range=data_range,
                                       distribution=distribution, base_column=base_column,
                                       implicit=implicit, omit=omit, **new_props)
@@ -555,9 +576,9 @@ class DataGenerator:
         :param colName: name of column to check for
         :returns: True if column has spec, False otherwise
         """
-        return True if colName in self.columnSpecsByName.keys() else False
+        return colName in self.columnSpecsByName.keys()
 
-    def withColumn(self, colName, colType=StringType(), min=None, max=None, step=1,
+    def withColumn(self, colName, colType=StringType(), minValue=None, maxValue=None, step=1,
                    data_range=None, prefix=None, random=False, distribution=None,
                    base_column=None, nullable=True,
                    omit=False, implicit=False,
@@ -575,6 +596,20 @@ class DataGenerator:
         ensure(colType is not None, "Must specify column type for column `{0}`".format(colName))
         if base_column is not None:
             self._checkColumnOrColumnList(base_column, allow_id=True)
+
+        # handle migration of old `min` and `max` options
+        if OLD_MIN_OPTION in kwargs.keys():
+            assert minValue is None, \
+                "Only one of `minValue` and `minValue` can be specified. Use of `minValue` is preferred"
+            minValue = kwargs[OLD_MIN_OPTION]
+            kwargs.pop(OLD_MIN_OPTION, None)
+
+        if OLD_MAX_OPTION in kwargs.keys():
+            assert maxValue is None, \
+                "Only one of `maxValue` and `maxValue` can be specified. Use of `maxValue` is preferred"
+            maxValue = kwargs[OLD_MAX_OPTION]
+            kwargs.pop(OLD_MAX_OPTION, None)
+
         new_props = {}
         new_props.update(kwargs)
 
@@ -582,11 +617,11 @@ class DataGenerator:
         if type(colType) == str:
             colType = SchemaParser.columnTypeFromString(colType)
 
-        self.logger.info("effective range: %s, %s, %s args: %s", min, max, step, kwargs)
-        self.logger.info(
-            "adding column - `{0}` with baseColumn : `{1}`, implicit : {2} , omit {3}".format(colName, base_column,
-                                                                                              implicit, omit))
-        self.generateColumnDefinition(colName, colType, min=min, max=max, step=step, prefix=prefix, random=random,
+        self.logger.info("effective range: %s, %s, %s args: %s", minValue, maxValue, step, kwargs)
+        self.logger.info("adding column - `%s` with baseColumn : `%s`, implicit : %s , omit %s",
+                         colName, base_column, implicit, omit)
+        self.generateColumnDefinition(colName, colType, minValue=minValue, maxValue=maxValue,
+                                      step=step, prefix=prefix, random=random,
                                       distribution=distribution, base_column=base_column, data_range=data_range,
                                       implicit=implicit, omit=omit, **new_props)
         self.inferredSchemaFields.append(StructField(colName, colType, nullable))
@@ -596,7 +631,8 @@ class DataGenerator:
                                  implicit=False, omit=False, nullable=True, **kwargs):
         """ generate field definition and column spec
 
-        .. note:: Any time that a new column definition is added, we'll mark that the build plan needs to be regenerated.
+        .. note:: Any time that a new column definition is added,
+                  we'll mark that the build plan needs to be regenerated.
            For our purposes, the build plan determines the order of column generation etc.
 
         :returns: modified in-place instance of test data generator allowing for chaining of calls
@@ -724,7 +760,7 @@ class DataGenerator:
 
         :param columns: list of columns to retrieve data types for
         """
-        return [self.columnSpecsByName[col].datatype for col in columns]
+        return [self.columnSpecsByName[colspec].datatype for colspec in columns]
 
     def computeBuildPlan(self):
         """ prepare for building by computing a pseudo build plan
@@ -738,7 +774,7 @@ class DataGenerator:
         self.build_plan = []
         self.execution_history = []
         self._processOptions()
-        self.build_plan.append("Build Spark data frame with seed column: %s".format(ColumnGenerationSpec.SEED_COLUMN))
+        self.build_plan.append("Build Spark data frame with seed column: {}".format(ColumnGenerationSpec.SEED_COLUMN))
 
         # add temporary columns
         for cs in self.allColumnSpecs:
@@ -812,12 +848,12 @@ class DataGenerator:
         # register temporary or global views if necessary
         if withView:
             self.execution_history.append("registering view")
-            self.logger.info("Registered global view [{0}]".format(self.name))
+            self.logger.info("Registered global view [%s]", self.name)
             df1.createGlobalTempView(self.name)
             self.logger.info("Registered!")
         elif withTempView:
             self.execution_history.append("registering temp view")
-            self.logger.info("Registering temporary view [{0}]".format(self.name))
+            self.logger.info("Registering temporary view [%s]", self.name)
             df1.createOrReplaceTempView(self.name)
             self.logger.info("Registered!")
 
@@ -860,7 +896,7 @@ class DataGenerator:
         for colNames in self.build_order:
             build_round = ["*"]
             inx_col = 0
-            self.execution_history.append("building round for : {}".format(colNames))
+            self.execution_history.append("building rounding for : {}".format(colNames))
             for colName in colNames:
                 col1 = self.columnSpecsByName[colName]
                 column_generators = col1.makeGenerationExpressions(self.use_pandas)
@@ -895,10 +931,10 @@ class DataGenerator:
         for x in substitutions:
             subs[x[0]] = x[1]
 
-        for col in columns:
-            new_val = subs[col]
+        for substitution_col in columns:
+            new_val = subs[substitution_col]
             if isUpdate:
-                results.append("{}={}".format(col, new_val))
+                results.append("{}={}".format(substitution_col, new_val))
             else:
                 results.append("{}".format(new_val))
 
@@ -927,8 +963,8 @@ class DataGenerator:
                """)
 
         col_expressions = []
-        for col in output_columns:
-            col_expressions.append("    {} {}".format(col[0], self.sqlTypeFromSparkType(col[1])))
+        for col_to_output in output_columns:
+            col_expressions.append("    {} {}".format(col_to_output[0], self.sqlTypeFromSparkType(col_to_output[1])))
         results.append(",\n".join(col_expressions))
         results.append(")")
         results.append("using {}".format(table_format))

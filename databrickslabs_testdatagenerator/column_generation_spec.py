@@ -6,21 +6,22 @@
 This file defines the `ColumnGenerationSpec` class
 """
 
+from datetime import datetime, timedelta
+import logging
+import copy
+
 from pyspark.sql.functions import lit, concat, rand, round as sql_round, array, expr, when, udf, \
     format_string
+from pyspark.sql.functions import col, pandas_udf
 from pyspark.sql.types import FloatType, IntegerType, StringType, DoubleType, BooleanType, \
     TimestampType, DataType, DateType
-import math
-from datetime import datetime, timedelta
+
 from .utils import ensure, coalesce_values
 from .column_spec_options import ColumnSpecOptions
 from .text_generators import TemplateGenerator
 from .daterange import DateRange
 from .nrange import NRange
 
-from pyspark.sql.functions import col, pandas_udf
-import logging
-import copy
 
 HASH_COMPUTE_METHOD = "hash"
 VALUES_COMPUTE_METHOD = "values"
@@ -30,6 +31,7 @@ COMPUTE_METHOD_VALID_VALUES = [ HASH_COMPUTE_METHOD,
                                 AUTO_COMPUTE_METHOD,
                                 VALUES_COMPUTE_METHOD,
                                 RAW_VALUES_COMPUTE_METHOD ]
+
 
 class ColumnGenerationSpec(object):
     """ Column generation spec object - specifies how column is to be generated
@@ -73,7 +75,7 @@ class ColumnGenerationSpec(object):
     #: row seed field for data set
     SEED_COLUMN = "id"
 
-    #: max values for each column type, only if where value is intentionally restricted
+    #: maxValue values for each column type, only if where value is intentionally restricted
     _max_type_range = {
         'byte': 256,
         'short': 65536
@@ -85,7 +87,7 @@ class ColumnGenerationSpec(object):
     logging.getLogger("py4j").setLevel(logging.WARNING)
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.NOTSET)
 
-    def __init__(self, name, colType=None, min=0, max=None, step=1, prefix='', random=False,
+    def __init__(self, name, colType=None, minValue=0, maxValue=None, step=1, prefix='', random=False,
                  distribution=None, base_column=None, random_seed=None, random_seed_method=None,
                  implicit=False, omit=False, nullable=True, debug=False, verbose=False, **kwargs):
 
@@ -112,7 +114,8 @@ class ColumnGenerationSpec(object):
 
         # to allow for open ended extension of many column attributes, we use a few specific
         # parameters and pass the rest as keyword arguments
-        self._column_spec_options = {'name': name, 'min': min, 'type': colType, 'max': max, 'step': step,
+        self._column_spec_options = {'name': name, 'minValue': minValue, 'type': colType,
+                                     'maxValue': maxValue, 'step': step,
                                      'prefix': prefix, 'base_column': base_column,
                                      'random': random, 'distribution': distribution,
                                      'random_seed_method': random_seed_method, 'random_seed': random_seed,
@@ -132,14 +135,14 @@ class ColumnGenerationSpec(object):
         column_spec_options.checkExclusiveOptions(["distribution", "weights"])
 
         # check for alternative forms of specifying range
-        # column_spec_options._checkExclusiveOptions(["min", "begin", "data_range"])
-        # column_spec_options._checkExclusiveOptions(["max", "end", "data_range"])
+        # column_spec_options._checkExclusiveOptions(["minValue", "minValue", "begin", "data_range"])
+        # column_spec_options._checkExclusiveOptions(["maxValue", "maxValue", "end", "data_range"])
         # column_spec_options._checkExclusiveOptions(["step", "interval", "data_range"])
 
         # we want to assign each of the properties to the appropriate instance variables
         # but compute sensible defaults in the process as needed
         # in particular, we want to ensure that things like values and weights match
-        # and that min and max are not inconsistent with distributions, ranges etc
+        # and that minValue and maxValue are not inconsistent with distributions, ranges etc
 
         # if a column spec is implicit, it can be overwritten
         # by default column specs added by wild cards or inferred from schemas are implicit
@@ -181,7 +184,7 @@ class ColumnGenerationSpec(object):
 
         # handle text generation templates
         if self['template'] is not None:
-            assert type(self['template']) is str, "template must be a string "
+            assert isinstance(self['template'], str), "template must be a string "
             self.text_generator = TemplateGenerator(self['template'])
         elif self['text'] is not None:
             self.text_generator = self['text']
@@ -195,7 +198,7 @@ class ColumnGenerationSpec(object):
 
         unique_values = self["unique_values"]
 
-        c_min, c_max, c_step = (self["min"], self["max"], self["step"])
+        c_min, c_max, c_step = (self["minValue"], self["maxValue"], self["step"])
         c_begin, c_end, c_interval = self['begin'], self['end'], self['interval']
 
         # handle weights / values and distributions
@@ -250,7 +253,7 @@ class ColumnGenerationSpec(object):
 
         :see https://docs.python.org/3/library/copy.html
         """
-        self.logger = None
+        self.logger = None  # pylint: disable=attribute-defined-outside-init
         result = None
 
         try:
@@ -331,12 +334,12 @@ class ColumnGenerationSpec(object):
                 self.initial_build_plan.append(desc)
 
                 # use a base expression based on mapping base column to size of data
-                sql_scaled_generator = self.getScaledIntegerSQLExpression(self.name,
-                                                                          scale=sum(self.weights),
-                                                                          base_columns=self.baseColumns,
-                                                                          base_datatypes=self._base_column_datatypes,
-                                                                          compute_method=self.base_column_compute_method,
-                                                                          normalize=True)
+                sql_scaled_generator = self.getScaledIntSQLExpression(self.name,
+                                                                      scale=sum(self.weights),
+                                                                      base_columns=self.baseColumns,
+                                                                      base_datatypes=self._base_column_datatypes,
+                                                                      compute_method=self.base_column_compute_method,
+                                                                      normalize=True)
 
                 self.logger.debug("""building scaled sql expression : '%s' 
                                       with base column: %s, dependencies: %s""",
@@ -378,19 +381,19 @@ class ColumnGenerationSpec(object):
 
         Rules:
         - if a datarange is specified , use that range
-        - if begin and end are specified or min and max are specified, use that
-        - if unique values is specified, compute min and max depending on type
+        - if begin and end are specified or minValue and maxValue are specified, use that
+        - if unique values is specified, compute minValue and maxValue depending on type
 
         """
         if c_unique is not None:
             assert type(c_unique) is int, "unique_values must be integer"
             assert c_unique >= 1, "if supplied, unique values must be > 0"
-            # TODO: set max to unique_values + min & add unit test
+            # TODO: set maxValue to unique_values + minValue & add unit test
             effective_min, effective_max, effective_step = None, None, None
             if c_range is not None and type(c_range) is NRange:
-                effective_min = c_range.min
+                effective_min = c_range.minValue
                 effective_step = c_range.step
-                effective_max = c_range.max
+                effective_max = c_range.maxValue
             effective_min = coalesce_values(effective_min, c_min, 1)
             effective_step = coalesce_values(effective_step, c_step, 1)
             effective_max = coalesce_values(effective_max, c_max)
@@ -403,9 +406,11 @@ class ColumnGenerationSpec(object):
                 unique_max = c_unique * effective_step + effective_min - effective_step
             result = NRange(effective_min, unique_max, effective_step)
 
-            if result.max is not None and effective_max is not None and result.max > effective_max:
-                self.logger.warning("Computed max for column [%s] of %s is greater than specified max %s", self.name,
-                                    result.max, effective_max)
+            if result.maxValue is not None and effective_max is not None and result.maxValue > effective_max:
+                self.logger.warning("Computed maxValue for column [%s] of %s is greater than specified maxValue %s",
+                                    self.name,
+                                    result.maxValue,
+                                    effective_max)
         elif c_range is not None:
             result = c_range
         elif c_range is None:
@@ -497,8 +502,8 @@ class ColumnGenerationSpec(object):
         else:
             return "rand()"
 
-    def getScaledIntegerSQLExpression(self, col_name, scale, base_columns, base_datatypes=None, compute_method=None,
-                                      normalize=False):
+    def getScaledIntSQLExpression(self, col_name, scale, base_columns, base_datatypes=None, compute_method=None,
+                                  normalize=False):
         """ Get scaled numeric expression
 
         This will produce a scaled SQL expression from the base columns
@@ -621,13 +626,13 @@ class ColumnGenerationSpec(object):
 
     @property
     def min(self):
-        """get the column generation `min` value used to generate values for this column"""
-        return self.data_range.min
+        """get the column generation `minValue` value used to generate values for this column"""
+        return self.data_range.minValue
 
     @property
     def max(self):
-        """get the column generation `max` value used to generate values for this column"""
-        return self['max']
+        """get the column generation `maxValue` value used to generate values for this column"""
+        return self['maxValue']
 
     @property
     def step(self):
@@ -654,7 +659,7 @@ class ColumnGenerationSpec(object):
     def begin(self):
         """get the `begin` attribute used to generate values for this column
 
-        For numeric columns, the range (min, max, step) is used to control data generation.
+        For numeric columns, the range (minValue, maxValue, step) is used to control data generation.
         For date and time columns, the range (begin, end, interval) are used to control data generation
         """
         return self['begin']
@@ -663,7 +668,7 @@ class ColumnGenerationSpec(object):
     def end(self):
         """get the `end` attribute used to generate values for this column
 
-        For numeric columns, the range (min, max, step) is used to control data generation.
+        For numeric columns, the range (minValue, maxValue, step) is used to control data generation.
         For date and time columns, the range (begin, end, interval) are used to control data generation
         """
         return self['end']
@@ -672,7 +677,7 @@ class ColumnGenerationSpec(object):
     def interval(self):
         """get the `interval` attribute used to generate values for this column
 
-        For numeric columns, the range (min, max, step) is used to control data generation.
+        For numeric columns, the range (minValue, maxValue, step) is used to control data generation.
         For date and time columns, the range (begin, end, interval) are used to control data generation
         """
         return self['interval']
@@ -718,11 +723,11 @@ class ColumnGenerationSpec(object):
         assert self.datatype is not None, "Column datatype must be specified"
 
         if self.datatype.typeName() in self._max_type_range:
-            min = self['min']
-            max = self['max']
+            minValue = self['minValue']
+            maxValue = self['maxValue']
 
-            if min is not None and max is not None:
-                effective_range = max - min
+            if minValue is not None and maxValue is not None:
+                effective_range = maxValue - minValue
                 if effective_range > self._max_type_range[self.datatype.typeName()]:
                     raise ValueError("Effective range greater than range of type")
 
@@ -779,7 +784,7 @@ class ColumnGenerationSpec(object):
         """
         col_type_name = self['type'].typeName()
 
-        return col_type_name == 'double' or col_type_name == 'float' or col_type_name == 'decimal'
+        return col_type_name in ['double',  'float',  'decimal']
 
     def _isDecimalColumn(self):
         """ determine if column is decimal column
@@ -833,13 +838,13 @@ class ColumnGenerationSpec(object):
     def _computeRangedColumn(self, datarange, base_column, is_random):
         """ compute a ranged column
 
-        max is max actual value
+        maxValue is maxValue actual value
 
         :returns: spark sql `column` or expression that can be used to generate a column
         """
         assert base_column is not None, "`base_column` must be specified"
         assert datarange is not None, "`datarange` must be specified"
-        assert datarange.isFullyPopulated(), "`datarange` must be fully populated (min, max, step)"
+        assert datarange.isFullyPopulated(), "`datarange` must be fully populated (minValue, maxValue, step)"
 
         random_generator = self.getUniformRandomExpression(self.name) if is_random else None
         if self._isContinuousValuedColumn() and self._isRealValuedColumn() and is_random:
@@ -860,7 +865,7 @@ class ColumnGenerationSpec(object):
         else:
             new_def = self._adjustForMinValue(baseval, datarange, force=True)
 
-        # for ranged values in strings, use type of min, max and step as output type
+        # for ranged values in strings, use type of minValue, maxValue and step as output type
         if type(self.datatype) is StringType:
             if type(datarange.min) is float or type(datarange.max) is float or type(datarange.step) is float:
                 if datarange.getScale() > 0:
@@ -879,9 +884,9 @@ class ColumnGenerationSpec(object):
         :param force: always adjust (possibly for implicit cast reasons)
         """
         if force and datarange is not None:
-            new_def = (baseval + lit(datarange.min))
-        elif (datarange is not None) and (datarange.min != 0) and (datarange.min != 0.0):
-            new_def = (baseval + lit(datarange.min))
+            new_def = (baseval + lit(datarange.minValue))
+        elif (datarange is not None) and (datarange.minValue != 0) and (datarange.minValue != 0.0):
+            new_def = (baseval + lit(datarange.minValue))
         else:
             new_def = baseval
         return new_def
@@ -891,7 +896,6 @@ class ColumnGenerationSpec(object):
 
             :returns: spark sql `column` or expression that can be used to generate a column
         """
-
         self.logger.debug("building column : %s", self.name)
 
         # get key column specification properties
@@ -920,7 +924,6 @@ class ColumnGenerationSpec(object):
 
             if type(self.datatype) is StringType and sformat is not None:
                 self.logger.warning("Formatting not supported for weighted columns")
-
         else:
             # rs: initialize the begin, end and interval if not initialized for date computations
             # defaults are start of day, now, and 1 minute respectively
@@ -937,7 +940,7 @@ class ColumnGenerationSpec(object):
                                                     is_random=col_is_rand)
             elif type(self.datatype) is DateType:
                 sql_random_generator = self.getUniformRandomSQLExpression(self.name)
-                new_def = expr("date_sub(current_date, round({}*1024))".format(sql_random_generator)).astype(
+                new_def = expr("date_sub(current_date, rounding({}*1024))".format(sql_random_generator)).astype(
                     self.datatype)
             else:
                 if self.base_column_compute_method == VALUES_COMPUTE_METHOD:
@@ -949,7 +952,8 @@ class ColumnGenerationSpec(object):
                 #    new_def = self.getSeedExpression(self.baseColumn)
                 else:
                     self.logger.warning("Assuming a seeded base expression with minimum value for column %s", self.name)
-                    new_def = (self.getSeedExpression(self.baseColumn) + lit(self.data_range.min)).astype(self.datatype)
+                    new_def = ((self.getSeedExpression(self.baseColumn) + lit(self.data_range.minValue))
+                               .astype(self.datatype))
 
             if self.values is not None:
                 new_def = array([lit(x) for x in self.values])[new_def.astype(IntegerType())]
