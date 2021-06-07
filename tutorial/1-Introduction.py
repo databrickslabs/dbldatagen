@@ -30,7 +30,7 @@
 # MAGIC * Augment the schema and column definitions with directive as to how data should be generated
 # MAGIC     * specify weighting of values
 # MAGIC     * specify random or predictable data
-# MAGIC     * specify min, max and incremental steps
+# MAGIC     * specify minValue, maxValue and incremental steps
 # MAGIC     * generate timestamps falling with specific date ranges
 # MAGIC     * specify data types
 # MAGIC     * support for arbitrary SQL expressions
@@ -101,7 +101,7 @@ schema = StructType([
 x3 = (datagen.DataGenerator(sparkSession=spark, name="association_oss_cell_info", rows=100000, partitions=20)
       .withSchema(schema)
       # withColumnSpec adds specification for existing column
-      .withColumnSpec("site_id", min=1, max=20, step=1)
+      .withColumnSpec("site_id", minValue=1, maxValue=20, step=1)
       # base column specifies dependent column
       .withIdOutput()
       .withColumnSpec("site_cd", prefix='site', base_column='site_id')

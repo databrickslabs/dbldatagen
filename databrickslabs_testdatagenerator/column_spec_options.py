@@ -25,9 +25,11 @@ class ColumnSpecOptions(object):
     :param type: Data type of column. Can be either instance of Spark SQL Datatype such as `IntegerType()`
                  or string containing SQL name of type
 
-    :param min: Minimum value for range of generated value. As an alternative, you may use the `data_range` parameter
+    :param minValue: Minimum value for range of generated value.
+                     As an alternative, you may use the `data_range` parameter
 
-    :param max: Maximum value for range of generated value. As an alternative, you may use the `data_range` parameter
+    :param maxValue: Maximum value for range of generated value.
+                     As an alternative, you may use the `data_range` parameter
 
     :param step: Step to use for range of generated value. As an alternative, you may use the `data_range` parameter
 
@@ -54,18 +56,18 @@ class ColumnSpecOptions(object):
 
     :param begin: Beginning of range for date and timestamp fields.
                    For dates and timestamp fields, use the `begin`, `end` and `interval`
-                   or `data_range` parameters instead of `min`, `max` and `step`
+                   or `data_range` parameters instead of `minValue`, `maxValue` and `step`
 
     :param end: End of range for date and timestamp fields.
                    For dates and timestamp fields, use the `begin`, `end` and `interval`
-                   or `data_range` parameters instead of `min`, `max` and `step`
+                   or `data_range` parameters instead of `minValue`, `maxValue` and `step`
 
     :param interval: Interval of range for date and timestamp fields.
                    For dates and timestamp fields, use the `begin`, `end` and `interval`
-                   or `data_range` parameters instead of `min`, `max` and `step`
+                   or `data_range` parameters instead of `minValue`, `maxValue` and `step`
 
-    :param data_range: An instance of an `NRange` or `DateRange` object. This can be used in place of `min`, `max`,
-                       `step` or `begin`, `end`, `interval`.
+    :param data_range: An instance of an `NRange` or `DateRange` object. This can be used in place of `minValue`,
+                       `maxValue`, `step` or `begin`, `end`, `interval`.
 
     :param template: template controlling how text should be generated
 
@@ -78,7 +80,9 @@ class ColumnSpecOptions(object):
     `suffix` can be used together
 
     .. note::
-        If the `data_range` parameter is specified as well as the `min`, `max` or `step`, the results are undetermined.
+        If the `data_range` parameter is specified as well as the `minValue`, `maxValue` or `step`,
+        the results are undetermined.
+
         For more information, see :doc:`/reference/api/databrickslabs_testdatagenerator.daterange`
         or :doc:`/reference/api/databrickslabs_testdatagenerator.nrange`.
 
@@ -88,7 +92,7 @@ class ColumnSpecOptions(object):
     required_properties = {'name', 'type'}
 
     #: the set of attributes that are permitted for any call to data generator `withColumn` or `withColumnSpec`
-    allowed_properties = {'name', 'type', 'min', 'max', 'step',
+    allowed_properties = {'name', 'type', 'minValue', 'maxValue', 'minValue', 'maxValue', 'step',
                           'prefix', 'random', 'distribution',
                           'range', 'base_column', 'base_column_type', 'values', 'base_columns',
                           'numColumns', 'numFeatures', 'structType',
@@ -108,13 +112,13 @@ class ColumnSpecOptions(object):
         'range'
     }
 
-    #: max values for each column type, only if where value is intentionally restricted
+    #: maxValue values for each column type, only if where value is intentionally restricted
     _max_type_range = {
         'byte': 256,
         'short': 65536
     }
 
-    def __init__(self, props, **kwargs):
+    def __init__(self, props):  # TODO: check if additional options are needed here as `**kwArgs`
         self._column_spec_options = props
 
     def _getOrElse(self, key, default=None):
@@ -137,10 +141,10 @@ class ColumnSpecOptions(object):
         assert name is not None, "`name` must be specified"
         if optional:
             ensure(v is None or type(v) is bool,
-                   "Option `{}` must be boolean if specified - value: {}, type:".format(name, v, type(v)))
+                   "Option `{}` must be boolean if specified - value: {}, type: {}".format(name, v, type(v)))
         else:
             ensure(type(v) is bool,
-                   "Option `{}` must be boolean  - value: {}, type:".format(name, v, type(v)))
+                   "Option `{}` must be boolean  - value: {}, type: {}".format(name, v, type(v)))
 
     def checkExclusiveOptions(self, options):
         """check if the options are exclusive - i.e only one is not None
@@ -172,11 +176,11 @@ class ColumnSpecOptions(object):
 
         col_type = self['type']
         if col_type.typeName() in self._max_type_range:
-            min = self['min']
-            max = self['max']
+            minValue = self['minValue']
+            maxValue = self['maxValue']
 
-            if min is not None and max is not None:
-                effective_range = max - min
+            if minValue is not None and maxValue is not None:
+                effective_range = maxValue - minValue
                 if effective_range > self._max_type_range[col_type.typeName()]:
                     raise ValueError("Effective range greater than range of type")
 

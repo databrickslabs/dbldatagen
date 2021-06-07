@@ -1,10 +1,13 @@
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
-from pyspark.sql.types import ByteType, ShortType, DoubleType, LongType, DecimalType
-
-import databrickslabs_testdatagenerator as datagen
 import unittest
 
+from pyspark.sql.types import ByteType, ShortType, DoubleType, LongType, DecimalType
+from pyspark.sql.types import IntegerType, StringType, FloatType
+import pyspark.sql.functions as F
+
+import databrickslabs_testdatagenerator as datagen
+
 spark = datagen.SparkSingleton.getLocalInstance("unit tests")
+
 
 class TestTypes(unittest.TestCase):
     row_count = 1000
@@ -43,16 +46,38 @@ class TestTypes(unittest.TestCase):
         self.assertEqual(DoubleType(), df.schema.fields[5].dataType)
 
     def test_reduced_range_types(self):
+        num_rows = 1000000
         id_partitions = 4
         testdata_defn = (
-            datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+            datagen.DataGenerator(name="basic_dataset", rows=num_rows, partitions=id_partitions, verbose=True)
                 .withColumn("basic_byte", ByteType())
                 .withColumn("basic_short", ShortType())
                 .withColumn("code1", ByteType(), min=1, max=20, step=1)
                 .withColumn("code2", ShortType(), max=1000, step=5))
 
-        df = testdata_defn.build().createOrReplaceTempView("testdata")
-        spark.sql("select * from testdata order by basic_short desc, basic_byte desc").show()
+        testdata_defn.build().createOrReplaceTempView("testdata")
+        df = spark.sql("select * from testdata order by basic_short desc, basic_byte desc")
+
+        self.assertEqual(df.count(), num_rows)
+
+        # check that range of code1 and code2 matches expectations
+        df_min_max = df.agg(F.min("code1").alias("min_code1"),
+                            F.max("code1").alias("max_code1"),
+                            F.min("code2").alias("min_code2"),
+                            F.max("code2").alias("max_code2"))
+
+        limits = df_min_max.collect()[0]
+        self.assertEqual(limits["min_code2"], 0)
+        self.assertEqual(limits["min_code1"], 1)
+        self.assertEqual(limits["max_code2"], 1000)
+        self.assertEqual(limits["max_code1"], 20)
+
+        # check expected types
+        types = {x.name: x.dataType for x in df.schema.fields}
+        self.assertEqual(type(types["basic_byte"]), type(ByteType()))
+        self.assertEqual(type(types["basic_short"]), type(ShortType()))
+        self.assertEqual(type(types["code1"]), type(ByteType()))
+        self.assertEqual(type(types["code2"]), type(ShortType()))
 
     @unittest.expectedFailure
     def test_out_of_range_types(self):
@@ -97,12 +122,13 @@ class TestTypes(unittest.TestCase):
 
     def test_for_values_with_multi_column_dependencies(self):
         id_partitions = 4
+        code_values = ["aa", "bb", "cc", "dd", "ee", "ff"]
         testdata_defn = (
             datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("basic_byte", ByteType())
                 .withColumn("basic_short", ShortType())
                 .withColumn("code1", StringType(),
-                            values=["aa", "bb", "cc", "dd", "ee", "ff"],
+                            values=code_values,
                             base_column=["basic_byte", "basic_short"])
         )
 
@@ -112,24 +138,20 @@ class TestTypes(unittest.TestCase):
 
         self.assertEqual(df.count(), 0)
 
-    def test_for_values_with_single_column_dependencies(self):
-        id_partitions = 4
-        testdata_defn = (
-            datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
-                .withColumn("basic_byte", ByteType())
-                .withColumn("basic_short", ShortType())
-                .withColumn("code1", StringType(),
-                            values=["aa", "bb", "cc", "dd", "ee", "ff"],
-                            base_column=["basic_byte"])
-        )
-        df = testdata_defn.build().where("code1 is  null")
-        self.assertEqual(df.count(), 0)
+        df2 = testdata_defn.build()
+
+        # check unique codes
+        unique_code1_count = df2.agg(F.countDistinct("code1").alias("code_count")).collect()[0]["code_count"]
+        self.assertEqual(unique_code1_count, 6)
+
+        unique_codes = [x["code1"] for x in df2.select("code1").distinct().collect()]
+
+        self.assertEqual(set(unique_codes), set(code_values))
 
     def test_for_values_with_single_column_dependencies(self):
         id_partitions = 4
         testdata_defn = (
             datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
-                .withIdOutput()
                 .withColumn("basic_byte", ByteType())
                 .withColumn("basic_short", ShortType())
                 .withColumn("code1", StringType(),
@@ -141,8 +163,9 @@ class TestTypes(unittest.TestCase):
 
     def test_for_values_with_single_column_dependencies2(self):
         id_partitions = 4
+        rows_wanted = 1000000
         testdata_defn = (
-            datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+            datagen.DataGenerator(name="basic_dataset", rows=rows_wanted, partitions=id_partitions, verbose=True)
                 .withIdOutput()
                 .withColumn("basic_byte", ByteType())
                 .withColumn("basic_short", ShortType())
@@ -153,6 +176,7 @@ class TestTypes(unittest.TestCase):
         df = testdata_defn.build()
         # df.show()
         testdata_defn.explain()
+        self.assertEqual(df.count(), rows_wanted)
 
     def test_for_values_with_default_column_dependencies(self):
         id_partitions = 4
@@ -219,15 +243,30 @@ class TestTypes(unittest.TestCase):
         testdata_defn.build().createOrReplaceTempView("testdata")
         data_row = spark.sql("select min(bb) as min_bb, max(bb) as max_bb from testdata ").limit(1).collect()
         self.assertEqual(data_row[0]["min_bb"], 1, "row0")
-        self.assertEqual(data_row[0]["max_bb"], 99, "row1")
+        self.assertEqual(data_row[0]["max_bb"], 100, "row1")
 
-    def test_short_types1(self):
+    def test_short_types1a(self):
         id_partitions = 4
         testdata_defn = (
             datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("bb", ByteType(), min=35, max=72)
                 .withColumn("basic_short", ShortType())
 
+                .withColumn("code2", ShortType(), max=10000, step=5))
+
+        testdata_defn.build().createOrReplaceTempView("testdata")
+        data_row = spark.sql("select min(bb) as min_bb, max(bb) as max_bb from testdata ").limit(1).collect()
+        self.assertEqual(data_row[0]["min_bb"], 35, "row0")
+        self.assertEqual(data_row[0]["max_bb"], 72, "row1")
+
+    def test_short_types1b(self):
+        id_partitions = 4
+
+        # result should be the same whether using `minValue` or `min` as options
+        testdata_defn = (
+            datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+                .withColumn("bb", ByteType(), minValue=35, maxValue=72)
+                .withColumn("basic_short", ShortType())
                 .withColumn("code2", ShortType(), max=10000, step=5))
 
         testdata_defn.build().createOrReplaceTempView("testdata")

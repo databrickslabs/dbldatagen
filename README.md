@@ -39,8 +39,8 @@ Please note that all projects in the `databrickslabs` github space are provided 
 
 Any issues discovered through the use of this project should be filed as GitHub Issues on the Repo.  They will be reviewed as time permits, but there are no formal SLAs for support.
 
-## Compatibility
-The code base must be built with Python 3.x. 
+## Compatibility and build requirements
+The code base must be built with Python 3.6.x or later 
 
 Either `pip` or `conda` can be used for building.
 

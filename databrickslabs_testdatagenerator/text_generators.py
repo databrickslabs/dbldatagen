@@ -6,19 +6,21 @@
 This file defines various text generation classes and methods
 """
 
-from pyspark.sql.functions import col, lit, concat, rand, ceil, floor, array, expr, udf
-from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
-    StructType, StructField, TimestampType, DataType, DateType
 import math
 from datetime import date, datetime, timedelta
-from .utils import ensure
+import sys
+import random
+
+from pyspark.sql.functions import col, lit, concat, rand, ceil, floor, array, expr, udf
+from pyspark.sql.functions import pandas_udf
+from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
+    StructType, StructField, TimestampType, DataType, DateType
 import numpy as np
 import numpy.random as rnd
 import pandas as pd
-from pyspark.sql.functions import pandas_udf
 
-import sys
-import random
+from .utils import ensure
+
 
 #: list of hex digits for template generation
 _HEX_LOWER = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
@@ -248,7 +250,7 @@ class ILText(TextGenerator):
         self.para_dtype = f"U{paragraph_usize}"
         self.text_dtype = f"U{text_usize}"
 
-        # build array of min and max values for paragraphs, sentences and words
+        # build array of minValue and maxValue values for paragraphs, sentences and words
         self.max_vals = np.array([self.paragraphs[1], self.sentences[1], self.words[1]])
         self.min_vals = np.array([self.paragraphs[0], self.sentences[0], self.words[0]])
 
@@ -257,7 +259,7 @@ class ILText(TextGenerator):
         # this will determine number of paragraphs , sentences and words
 
         # so this will result in x paragraphs, each having y sentences, each having z words
-        # we could use for loops to generate the structure, but generating the max number of
+        # we could use for loops to generate the structure, but generating the maxValue number of
         # random numbers needed in numpy will be much faster and we'll just ignore what we dont need
         self.range_vals = self.max_vals - self.min_vals
         self.mean_vals = (self.range_vals / 2.0) + self.min_vals
@@ -352,9 +354,9 @@ class ILText(TextGenerator):
 
         :param seed: seed value to control generation of random numbers
         """
-        retval = [int(round(self.randomGauss(self.paragraphs))),
-                  int(round(self.randomGauss(self.sentences))),
-                  int(round(self.randomGauss(self.words)))]
+        #retval = [int(round(self.randomGauss(self.paragraphs))),
+        #          int(round(self.randomGauss(self.sentences))),
+        #          int(round(self.randomGauss(self.words)))]
 
         return self.generateText([seed], 42)[0]
 
