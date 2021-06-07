@@ -13,19 +13,31 @@ max-line-length: 120
 pylint:
   disable:
     - too-many-instance-attributes
-    - cyclic-import
-    - len-as-condition
     - invalid-name
     - no-else-return
     - no-self-use
     - protected-access
     - too-many-arguments
-    - too-many-locals # TBD: this rule is actually a good one, we need to disable it and refactor code
+    - too-many-locals  # TBD: this rule is actually a good one, we need to disable it and refactor code
     - inconsistent-return-statements
     - import-outside-toplevel
     - consider-using-set-comprehension
     - useless-object-inheritance
     - unnecessary-pass
+    - bad-whitespace
+    - unidiomatic-typecheck  # TBD: this rule is actually a good one, we need to disable it and refactor code
+    - too-many-lines
+    - too-many-statements  # is flagged due to large numbers of arguments
+    - unused-argument  # TBD: this rule is actually a good one, we need to disable it and refactor code
+    - unused-import  # TBD: this rule is actually a good one, we need to disable it and refactor code
+    - too-many-branches
+    - unnecessary-lambda
+    - unused-variable  # TBD: this rule is actually a good one, we need to disable it and refactor code
+
+pyflakes:
+  disable:
+    - F401 # disable unused imports until later refactoring
+    - F841 # disable warning about unused variables until completion of implementation of distribution functionality
 
 pep8:
   disable:
@@ -40,6 +52,7 @@ pep8:
     - E202 # formatting only
     - E128 # formatting only
     - E126 # formatting only
+    - N815 # disabled as we use mixed case names following pyspark convention
 
 mccabe:
   disable:

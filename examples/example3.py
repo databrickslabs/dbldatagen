@@ -17,8 +17,8 @@ import math
 # will have implied column `id` for ordinal of row
 # x3=(DataGenerator(rows=1000000, partitions=100).withSchema(schema)
 #    # withColumnSpec adds specification for existing column
-#    .withColumnSpec("a",  min=0, max = 1.5, step=0.3, random=True)
-#    .withColumnSpec("b",  min=10, max=17, step=2, random=True)
+#    .withColumnSpec("a",  minValue=0, maxValue = 1.5, step=0.3, random=True)
+#    .withColumnSpec("b",  minValue=10, maxValue=17, step=2, random=True)
 #    # base column specifies dependent column
 #    .withColumnSpec("c",  prefix='item', base_column='b')
 #    # withColumn adds specification for new column

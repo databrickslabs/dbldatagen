@@ -1,8 +1,9 @@
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType, DecimalType
-from pyspark.sql.types import BooleanType, DateType
-import databrickslabs_testdatagenerator as dg
-from pyspark.sql import SparkSession
 import unittest
+
+from pyspark.sql.types import BooleanType, DateType
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType, TimestampType, DecimalType
+
+import databrickslabs_testdatagenerator as dg
 
 schema = StructType([
     StructField("PK1", StringType(), True),
@@ -167,12 +168,15 @@ class TestBuildPlanning(unittest.TestCase):
                                              step=1)
                             .withColumnSpecs(patterns=".*_IDS", match_types=StringType(), format="%010d", min=1,
                                              max=100, step=1)
-                            #     .withColumnSpec("R3D3_CLUSTER_IDS", min=1, max=100, step=1)
-                            .withColumnSpec("XYYZ_IDS", min=1, max=123, step=1,
-                                            format="%05d")  # .withColumnSpec("nstr4", percent_nulls=10.0, min=1, max=9, step=2,  format="%04d")
+                            #     .withColumnSpec("R3D3_CLUSTER_IDS", minValue=1, maxValue=100, step=1)
+                            .withColumnSpec("XYYZ_IDS", minValue=1, maxValue=123, step=1,
+                                            format="%05d")
+                            # .withColumnSpec("nstr4", percent_nulls=10.0,
+                            # minValue=1, maxValue=9, step=2,  format="%04d")
                             # example of IS_SALE
                             .withColumnSpec("IS_S", values=sale_values, weights=sale_weights, random=True)
-                            # .withColumnSpec("nstr4", percent_nulls=10.0, min=1, max=9, step=2,  format="%04d")
+                            # .withColumnSpec("nstr4", percent_nulls=10.0,
+                            # minValue=1, maxValue=9, step=2,  format="%04d")
 
                             )
 

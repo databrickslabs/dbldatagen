@@ -13,16 +13,16 @@ Will have to handle the following cases:
 
 - columns with a set of discrete values
 - columns with a real valued boundaries
-- columns with a min and max value (and  optional step)
+- columns with a minValue and maxValue value (and  optional step)
 
 For all cases, the distribution may be defined with:
 
-min-value, max-value, median / mean and some other parameter
+minValue-value, maxValue-value, median / mean and some other parameter
 
 Here are the parameterisations for each of the distributions:
 
 exponential: unbounded range is 0 - inf (but effective range is 0 - 5?)
-   min, max , rate or mean
+   minValue, maxValue , rate or mean
 
 normal: main range is mean +/- 3.5 x std (values can occur up to mean +/- 6 x std )
 
@@ -44,12 +44,13 @@ Key aspects are the following
 - any parameters mean,median, mode refer to absolute values in data set
 - any parameters mean_value, median_value, mode_value refer to value in terms of range
 - so if a column has the values [ online, offline, outage, inactive ] and mean_value is offline
-- this may be translated behind the scenes to a normal distribution (min = 0, max = 3, mean=1, std=2/6)
+- this may be translated behind the scenes to a normal distribution (minValue = 0, maxValue = 3, mean=1, std=2/6)
 - this will essentially make it a truncated distribution
 
 - ways to map range of values to distribution
 - a: scale range to values, if bounds are predictable
-- b: truncate (making values < min= min , > max= max) - which may cause output to have different distribution than expected
+- b: truncate (making values < minValue= minValue , > maxValue= maxValue) - which may cause output to have different
+     distribution than expected
 - c: discard values outside of range
    - requires generation of more values than required to allow for discarded values
    - can sample correct values to fill in missing data
@@ -62,18 +63,9 @@ Key aspects are the following
 
 """
 
-from pyspark.sql.functions import col, lit, concat, rand, ceil, floor, round, array, expr, udf
-from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
-    StructType, StructField, TimestampType, DataType, DateType
-import math
-from datetime import date, datetime, timedelta
-from databrickslabs_testdatagenerator.utils import ensure
-import numpy as np
-import pandas as pd
-
-import random
 
 class DataDistribution(object):
     """ Base class for all distributions"""
-    def __init__(self, mean=None, median=None, std=None, min=None, max=None, rectify=True, std_range=3.5, round=False):
+    def __init__(self, mean=None, median=None, std=None, minValue=None, maxValue=None, rectify=True, std_range=3.5,
+                 rounding=False):
         pass
