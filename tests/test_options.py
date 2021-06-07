@@ -1,7 +1,6 @@
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
-import databrickslabs_testdatagenerator as dg
-from pyspark.sql import SparkSession
 import unittest
+
+import databrickslabs_testdatagenerator as dg
 
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
@@ -46,32 +45,32 @@ class TestUseOfOptions(unittest.TestCase):
         df2.show()
 
         # check `code` values
-        code1_values = [ r[0] for r in df.select("code1").distinct().collect() ]
-        self.assertSetEqual(set(code1_values), set(range(1,21)))
+        code1_values = [r[0] for r in df.select("code1").distinct().collect()]
+        self.assertSetEqual(set(code1_values), set(range(1, 21)))
 
-        code2_values = [ r[0] for r in df.select("code2").distinct().collect() ]
-        self.assertSetEqual(set(code2_values), set(range(1,21)))
+        code2_values = [r[0] for r in df.select("code2").distinct().collect()]
+        self.assertSetEqual(set(code2_values), set(range(1, 21)))
 
-        code3_values = [ r[0] for r in df.select("code3").distinct().collect() ]
-        self.assertSetEqual(set(code3_values), set(range(1,21)))
+        code3_values = [r[0] for r in df.select("code3").distinct().collect()]
+        self.assertSetEqual(set(code3_values), set(range(1, 21)))
 
-        code4_values = [ r[0] for r in df.select("code3").distinct().collect() ]
-        self.assertSetEqual(set(code4_values), set(range(1,21)))
+        code4_values = [r[0] for r in df.select("code3").distinct().collect()]
+        self.assertSetEqual(set(code4_values), set(range(1, 21)))
 
-        site_codes = [ f"site_{x}" for x in range(1,21)]
-        site_code_values = [ r[0] for r in df.select("site_cd").distinct().collect() ]
+        site_codes = [f"site_{x}" for x in range(1, 21)]
+        site_code_values = [r[0] for r in df.select("site_cd").distinct().collect()]
         self.assertSetEqual(set(site_code_values), set(site_codes))
 
-        status_codes = [ f"status_{x}" for x in range(1,201)]
-        status_code_values = [ r[0] for r in df.select("device_status").distinct().collect() ]
+        status_codes = [f"status_{x}" for x in range(1, 201)]
+        status_code_values = [r[0] for r in df.select("device_status").distinct().collect()]
         self.assertSetEqual(set(status_code_values), set(status_codes))
 
         # check `tech` values
-        tech_values = [ r[0] for r in df.select("tech").distinct().collect() ]
+        tech_values = [r[0] for r in df.select("tech").distinct().collect()]
         self.assertSetEqual(set(tech_values), set(["GSM", "UMTS", "LTE", "UNKNOWN"]))
 
         # check test cell values
-        test_cell_values = [ r[0] for r in df.select("test_cell_flg").distinct().collect() ]
+        test_cell_values = [r[0] for r in df.select("test_cell_flg").distinct().collect()]
         self.assertSetEqual(set(test_cell_values), {0, 1})
 
 # run the tests

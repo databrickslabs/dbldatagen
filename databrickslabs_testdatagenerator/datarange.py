@@ -36,3 +36,13 @@ class DataRange(object):
     def getScale(self):
         """Get scale of range"""
         raise NotImplementedError("method not implemented")
+
+    @property
+    def min(self):
+        """get the `min` attribute"""
+        return self.minValue
+        
+    @property
+    def max(self):
+        """get the `max` attribute"""
+        return self.maxValue

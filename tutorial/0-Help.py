@@ -45,7 +45,7 @@
 # MAGIC - If column has limited number of values, the base value will use modulo arithmetic to compute the value 
 # MAGIC for array based feature columns , the column spec will determine generation of each value
 # MAGIC - Column spec may specify sql expression which will override default column data generation
-# MAGIC column spec may specify min , max values and step to control value cycling
+# MAGIC column spec may specify minValue , maxValue values and step to control value cycling
 # MAGIC - Column spec may specify list of values to restruct values to specific values
 # MAGIC - String values are generated from prefix _ base value _ suffix
 # MAGIC - Use of omit=True omits column from final output

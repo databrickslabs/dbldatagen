@@ -3,10 +3,11 @@
 #
 from datetime import date, datetime, timedelta, timezone
 import math
-from .datarange import DataRange
 
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
     StructType, StructField, TimestampType, DataType, DateType, ByteType
+
+from .datarange import DataRange
 
 
 class DateRange(DataRange):
@@ -40,10 +41,10 @@ class DateRange(DataRange):
         self.end = end if not isinstance(end, str) else self._datetime_from_string(end, datetime_format)
         self.interval = interval if not isinstance(interval, str) else self._timedelta_from_string(interval)
 
-        self.min = self.begin.timestamp()
+        self.minValue = self.begin.timestamp()
 
-        self.max = (self.min + self.interval.total_seconds()
-                    * self.computeTimestampIntervals(self.begin, self.end, self.interval))
+        self.maxValue = (self.minValue + self.interval.total_seconds()
+                         * self.computeTimestampIntervals(self.begin, self.end, self.interval))
         self.step = self.interval.total_seconds()
 
     @classmethod
@@ -65,12 +66,12 @@ class DateRange(DataRange):
             key, value = kv.split('=')
             results.append("'{}':{}".format(key, value))
 
-        return eval("{{ {}  }} ".format(",".join(results)))
+        return eval("{{ {}  }} ".format(",".join(results)))  # pylint: disable=eval-used
 
     def __str__(self):
         """ create string representation of date range"""
         return "DateRange({},{},{} == {}, {}, {})".format(self.begin, self.end, self.interval,
-                                                          self.min, self.max, self.step)
+                                                          self.minValue, self.maxValue, self.step)
 
     def computeTimestampIntervals(self, start, end, interval):
         """ Compute number of intervals between start and end date """
@@ -82,8 +83,8 @@ class DateRange(DataRange):
         return math.floor(ni1)
 
     def isFullyPopulated(self):
-        """Check if min, max and step are specified """
-        return self.min is not None and self.max is not None and self.step is not None
+        """Check if minValue, maxValue and step are specified """
+        return self.minValue is not None and self.maxValue is not None and self.step is not None
 
     def adjustForColumnDatatype(self, ctype):
         """ adjust the range for the column output type
@@ -97,9 +98,9 @@ class DateRange(DataRange):
 
             Note does not modify range object.
 
-            :returns: range from min to max
+            :returns: range from minValue to maxValue
         """
-        return (self.max - self.min) * float(1.0 / self.step)
+        return (self.maxValue - self.minValue) * float(1.0 / self.step)
 
     def isEmpty(self):
         """Check if object is empty (i.e all instance vars of note are `None`)"""
@@ -107,11 +108,8 @@ class DateRange(DataRange):
 
     def getContinuousRange(self):
         """Convert range to continuous range"""
-        return (self.max - self.min) * float(1.0)
+        return (self.maxValue - self.minValue) * float(1.0)
 
     def getScale(self):
         """Get scale of range"""
         return 0
-
-
-

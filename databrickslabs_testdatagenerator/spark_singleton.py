@@ -9,10 +9,10 @@ This is primarily meant for situations where the test data generator is run on a
 for use cases like unit testing rather than in a Databricks workspace environment
 """
 
-from pyspark.sql import SparkSession
 import os
 import math
 import logging
+from pyspark.sql import SparkSession
 
 
 class SparkSingleton:
@@ -35,7 +35,7 @@ class SparkSingleton:
         :returns: A Spark instance
         """
         cpu_count = int(math.floor(os.cpu_count() * 0.75))
-        logging.info(f"cpu count: {cpu_count}")
+        logging.info("cpu count: %d", cpu_count)
 
         return SparkSession.builder \
             .master("local[{}]".format(cpu_count)) \

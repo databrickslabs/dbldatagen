@@ -1,9 +1,10 @@
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
-import databrickslabs_testdatagenerator as dg
-from pyspark.sql import SparkSession
-import unittest
-from pyspark.sql import functions as F
 import logging
+import unittest
+
+from pyspark.sql import functions as F
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType
+
+import databrickslabs_testdatagenerator as dg
 
 spark = dg.SparkSingleton.getLocalInstance("basic tests")
 
@@ -136,7 +137,7 @@ class TestBasicOperation(unittest.TestCase):
                                 where count_ac1 < 1 or count_ac1 > 1
                                 """)
 
-        self.assertEquals(df_check.count(), 0)
+        self.assertEqual(df_check.count(), 0)
 
     def test_multiple_hash_methods(self):
         """ Test different types of seeding for random values"""
@@ -234,17 +235,17 @@ class TestBasicOperation(unittest.TestCase):
 
     def test_values_code1(self):
         """Test values"""
-        values = self.dfTestData.select('code1').groupBy().agg(F.min('code1').alias('min'),
-                                                               F.max('code1').alias('max')).collect()[0]
-        print("min and max", values)
-        self.assertEqual({100, 200}, {values.min, values.max})
+        values = self.dfTestData.select('code1').groupBy().agg(F.min('code1').alias('minValue'),
+                                                               F.max('code1').alias('maxValue')).collect()[0]
+        print("minValue and maxValue", values)
+        self.assertEqual({100, 200}, {values.minValue, values.maxValue})
 
     def test_values_code2(self):
         """Test values"""
-        values = self.dfTestData.select('code2').groupBy().agg(F.min('code2').alias('min'),
-                                                               F.max('code2').alias('max')).collect()[0]
-        print("min and max", values)
-        self.assertEqual({0, 10}, {values.min, values.max})
+        values = self.dfTestData.select('code2').groupBy().agg(F.min('code2').alias('minValue'),
+                                                               F.max('code2').alias('maxValue')).collect()[0]
+        print("minValue and maxValue", values)
+        self.assertEqual({0, 10}, {values.minValue, values.maxValue})
 
     def test_values_code3(self):
         """Test generated values"""
@@ -318,8 +319,9 @@ class TestBasicOperation(unittest.TestCase):
     def test_partitions(self):
         """Test partitioning"""
         id_partitions = 11
+        rows_wanted = 100000000
         testdata_defn = (
-            dg.DataGenerator(name="basic_dataset", rows=100000000, partitions=id_partitions, verbose=True)
+            dg.DataGenerator(name="basic_dataset", rows=rows_wanted, partitions=id_partitions, verbose=True)
                 .withColumn("code1", IntegerType(), min=1, max=20, step=1)
                 .withColumn("code2", IntegerType(), max=1000, step=5)
                 .withColumn("code3", IntegerType(), min=100, max=200, step=1, random=True)
@@ -334,6 +336,7 @@ class TestBasicOperation(unittest.TestCase):
         partitions_created = df.rdd.getNumPartitions()
         print("partitions created", partitions_created)
         self.assertEqual(id_partitions, partitions_created)
+        self.assertEqual(count, rows_wanted)
 
 
 # run the tests

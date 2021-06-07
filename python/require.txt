@@ -16,7 +16,6 @@ bumpversion
 pytest
 pytest-cov
 pytest-timeout
-pylint
 rstcheck
 prospector
 

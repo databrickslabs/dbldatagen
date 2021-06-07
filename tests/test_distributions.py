@@ -1,11 +1,10 @@
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
+import datetime
+import unittest
+
+from pyspark.sql.functions import col
+
 import databrickslabs_testdatagenerator as dg
 import databrickslabs_testdatagenerator.distributions as dist
-
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, expr, rand, lit
-import unittest
-import datetime
 
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
