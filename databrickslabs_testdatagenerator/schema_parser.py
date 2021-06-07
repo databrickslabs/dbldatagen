@@ -6,9 +6,10 @@
 This file defines the `SchemaParser` class
 """
 
-from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
-    StructType, StructField, TimestampType, DateType, DecimalType, ByteType
 import re
+
+from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
+    TimestampType, DateType, DecimalType, ByteType
 
 
 class SchemaParser(object):
@@ -56,15 +57,15 @@ class SchemaParser(object):
         assert type_string is not None, "`type_string` must be specified"
 
         s = type_string.strip().lower()
-        if s == "string" or s == "varchar" or s == "char" or s == "nvarchar":
+        if s in ["string", "varchar", "char", "nvarchar"]:
             return StringType()
-        elif s == "int" or s == "integer":
+        elif s in ["int", "integer"]:
             return IntegerType()
-        elif s == "bigint" or s == "long":
+        elif s in ["bigint", "long"]:
             return LongType()
-        elif s == "bool" or s == "boolean":
+        elif s in ["bool", "boolean"]:
             return BooleanType()
-        elif s == "timestamp" or s == "datetime":
+        elif s in ["timestamp", "datetime"]:
             return TimestampType()
         elif s.startswith("decimal") or s.startswith("number"):
             return cls.parseDecimal(s)

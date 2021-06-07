@@ -11,47 +11,69 @@ from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, Doub
     StructType, StructField, TimestampType, DataType, DateType, ByteType
 from .datarange import DataRange
 
+OLD_MIN_OPTION = 'min'
+OLD_MAX_OPTION = 'max'
+
 
 class NRange(DataRange):
-    """ Ranged numeric interval representing the interval min .. max inclusive
+    """ Ranged numeric interval representing the interval minValue .. maxValue inclusive
 
-    A ranged object can be uses as an alternative to the `min`, `max`, `step` parameters
+    A ranged object can be uses as an alternative to the `minValue`, `maxValue`, `step` parameters
     to the DataGenerator `withColumn` and `withColumn` objects.
     Specify by passing an instance of `NRange` to the `data_range` parameter.
 
-    :param min: Minimum value of range. May be integer / long / float
-    :param max: Maximum value of range. May be integer / long / float
+    :param minValue: Minimum value of range. May be integer / long / float
+    :param maxValue: Maximum value of range. May be integer / long / float
     :param step: Step value for range. May be integer / long / float
-    :param until: Upper bound for range ( i.e max+1)
+    :param until: Upper bound for range ( i.e maxValue+1)
 
-    You may only specify a `max` or `until` value not both.
+    You may only specify a `maxValue` or `until` value not both.
 
     For a decreasing sequence, use a negative step value.
     """
 
-    def __init__(self, min=None, max=None, step=None, until=None):
-        assert until is None if max is not None else True, "Only one of max or until can be specified"
-        assert max is None if until is not None else True, "Only one of max or until can be specified"
-        self.min = min
-        self.max = max if until is None else until + 1
+    def __init__(self, minValue=None, maxValue=None, step=None, until=None, **kwArgs):
+        # check if older form of `minValue` and `maxValue` are used, and if so
+        if OLD_MIN_OPTION in kwArgs.keys():
+            assert minValue is None, \
+                "Only one of `minValue` and `minValue` can be specified. Use of `minValue` is preferred"
+            self.minValue = kwArgs[OLD_MIN_OPTION]
+            kwArgs.pop(OLD_MIN_OPTION, None)
+        else:
+            self.minValue = minValue
+
+        if OLD_MAX_OPTION in kwArgs.keys():
+            assert maxValue is None, \
+                "Only one of `maxValue` and `maxValue` can be specified. Use of `maxValue` is preferred"
+            self.maxValue = kwArgs[OLD_MAX_OPTION]
+            kwArgs.pop(OLD_MAX_OPTION, None)
+        else:
+            self.maxValue = maxValue
+        assert (len(kwArgs.keys()) == 0)
+
+        assert until is None if self.maxValue is not None else True, "Only one of maxValue or until can be specified"
+        assert self.maxValue is None if until is not None else True, "Only one of maxValue or until can be specified"
+
+        if until is not None:
+            self.maxValue = until + 1
         self.step = step
 
     def __str__(self):
-        return "NRange({}, {}, {})".format(self.min, self.max, self.step)
+        return "NRange({}, {}, {})".format(self.minValue, self.maxValue, self.step)
 
     def isEmpty(self):
         """Check if object is empty (i.e all instance vars of note are `None`
 
         :returns: `True` if empty, `False` otherwise
         """
-        return self.min is None and self.max is None and self.step is None
+        return self.minValue is None and self.maxValue is None and self.step is None
 
     def isFullyPopulated(self):
         """Check is all instance vars are populated
 
         :returns: `True` if fully populated, `False` otherwise
         """
-        return self.min is not None and self.max is not None and self.step is not None
+        return self.minValue is not None and self.maxValue is not None and self.step is not None
 
     def adjustForColumnDatatype(self, ctype):
         """ Adjust default values for column output type
@@ -60,18 +82,18 @@ class NRange(DataRange):
         :returns: No return value - executes for effect only
         """
         if ctype.typeName() == 'decimal':
-            if self.min is None:
-                self.min = 0.0
-            if self.max is None:
-                self.max = math.pow(10, ctype.precision - ctype.scale) - 1.0
+            if self.minValue is None:
+                self.minValue = 0.0
+            if self.maxValue is None:
+                self.maxValue = math.pow(10, ctype.precision - ctype.scale) - 1.0
             if self.step is None:
                 self.step = 1.0
 
-        if type(ctype) is ShortType and self.max is not None:
-            assert self.max <= 65536, "`max` must be in range of short"
+        if type(ctype) is ShortType and self.maxValue is not None:
+            assert self.maxValue <= 65536, "`maxValue` must be in range of short"
 
-        if type(ctype) is ByteType and self.max is not None:
-            assert self.max <= 256, "`max` must be in range of byte (0 - 256)"
+        if type(ctype) is ByteType and self.maxValue is not None:
+            assert self.maxValue <= 256, "`maxValue` must be in range of byte (0 - 256)"
 
         if (type(ctype) is DoubleType or type(ctype) is FloatType) and self.step is None:
             self.step = 1.0
@@ -88,33 +110,33 @@ class NRange(DataRange):
         :returns: number of discrete values in range. For example `NRange(1, 5, 0.5)` has 8 discrete values
 
         .. note::
-           A range of 0,4, 0.5 has 8 discrete values not 9 as the `max` value is not part of the range
+           A range of 0,4, 0.5 has 8 discrete values not 9 as the `maxValue` value is not part of the range
 
         TODO: check range of values
 
         """
-        if type(self.min) is int and type(self.max) is int and self.step == 1:
-            return self.max - self.min
+        if type(self.minValue) is int and type(self.maxValue) is int and self.step == 1:
+            return self.maxValue - self.minValue
         else:
             # when any component is a float, we will return a float for the discrete range
             # to simplify computations
-            return float(math.floor((self.max - self.min) * float(1.0 / self.step)))
+            return float(math.floor((self.maxValue - self.minValue) * float(1.0 / self.step)))
 
     def getContinuousRange(self):
         """Convert range to continuous range
 
-        :returns: float value for size of interval from `min` to `max`
+        :returns: float value for size of interval from `minValue` to `maxValue`
         """
-        return (self.max - self.min) * float(1.0)
+        return (self.maxValue - self.minValue) * float(1.0)
 
     def getScale(self):
         """Get scale of range"""
         smin, smax, sstep = 0, 0, 0
 
-        if self.min is not None:
-            smin = self._precision_and_scale(self.min)[1]
-        if self.max is not None:
-            smax = self._precision_and_scale(self.max)[1]
+        if self.minValue is not None:
+            smin = self._precision_and_scale(self.minValue)[1]
+        if self.maxValue is not None:
+            smax = self._precision_and_scale(self.maxValue)[1]
         if self.step is not None:
             sstep = self._precision_and_scale(self.step)[1]
 

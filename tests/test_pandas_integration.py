@@ -1,12 +1,11 @@
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType, DecimalType
-from pyspark.sql.types import BooleanType, DateType
-import databrickslabs_testdatagenerator as datagen
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import expr, col, lit, udf, when, rand, pandas_udf
-
 import unittest
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import expr, col, pandas_udf
+from pyspark.sql.types import BooleanType, DateType
+from pyspark.sql.types import StructType, StructField, StringType, TimestampType
 
 schema = StructType([
     StructField("PK1", StringType(), True),
@@ -27,8 +26,6 @@ spark = SparkSession.builder \
     .config("spark.sql.warehouse.dir", "/tmp/spark-warehouse") \
     .config("spark.sql.execution.arrow.maxRecordsPerBatch", "1000") \
     .getOrCreate()
-
-
 
 
 # Test manipulation and generation of test data for a large schema
@@ -58,9 +55,6 @@ class TestPandasIntegration(unittest.TestCase):
 
     # @unittest.skip("not yet implemented")
     def test_pandas(self):
-        import numpy as np
-        import pandas as pd
-
         print("numpy version ", np.version)
 
         # Enable Arrow-based columnar data transfers

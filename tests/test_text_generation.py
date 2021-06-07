@@ -1,12 +1,12 @@
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType, DecimalType
-from pyspark.sql.types import BooleanType, DateType
-import databrickslabs_testdatagenerator as dg
-from databrickslabs_testdatagenerator import NRange, ILText, TemplateGenerator
-import pyspark.sql.functions as F
-
-import unittest
 import re
-import pandas as pd
+import unittest
+
+import pyspark.sql.functions as F
+from pyspark.sql.types import BooleanType, DateType
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType, TimestampType
+
+import databrickslabs_testdatagenerator as dg
+from databrickslabs_testdatagenerator import TemplateGenerator
 
 schema = StructType([
     StructField("PK1", StringType(), True),
@@ -56,13 +56,13 @@ class TestTextGeneration(unittest.TestCase):
                         .withSchema(schema)
                         .withIdOutput()
                         .withColumnSpec("date", percent_nulls=10.0)
-                        .withColumnSpec("nint", percent_nulls=10.0, min=1, max=9, step=2)
-                        .withColumnSpec("nstr1", percent_nulls=10.0, min=1, max=9, step=2)
-                        .withColumnSpec("nstr2", percent_nulls=10.0, min=1.5, max=2.5, step=0.3, format="%04f")
-                        .withColumnSpec("nstr3", min=1.0, max=9.0, step=2.0)
-                        .withColumnSpec("nstr4", percent_nulls=10.0, min=1, max=9, step=2, format="%04d")
-                        .withColumnSpec("nstr5", percent_nulls=10.0, min=1.5, max=2.5, step=0.3, random=True)
-                        .withColumnSpec("nstr6", percent_nulls=10.0, min=1.5, max=2.5, step=0.3, random=True,
+                        .withColumnSpec("nint", percent_nulls=10.0, minValue=1, maxValue=9, step=2)
+                        .withColumnSpec("nstr1", percent_nulls=10.0, minValue=1, maxValue=9, step=2)
+                        .withColumnSpec("nstr2", percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3, format="%04f")
+                        .withColumnSpec("nstr3", minValue=1.0, maxValue=9.0, step=2.0)
+                        .withColumnSpec("nstr4", percent_nulls=10.0, minValue=1, maxValue=9, step=2, format="%04d")
+                        .withColumnSpec("nstr5", percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3, random=True)
+                        .withColumnSpec("nstr6", percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3, random=True,
                                         format="%04f")
                         .withColumnSpec("email", template=r'\w.\w@\w.com|\w@\w.co.u\k')
                         .withColumnSpec("ip_addr", template=r'\n.\n.\n.\n')
@@ -89,13 +89,13 @@ class TestTextGeneration(unittest.TestCase):
                         .withSchema(schema)
                         .withIdOutput()
                         .withColumnSpec("date", percent_nulls=10.0)
-                        .withColumnSpec("nint", percent_nulls=10.0, min=1, max=9, step=2)
-                        .withColumnSpec("nstr1", percent_nulls=10.0, min=1, max=9, step=2)
-                        .withColumnSpec("nstr2", percent_nulls=10.0, min=1.5, max=2.5, step=0.3, format="%04f")
-                        .withColumnSpec("nstr3", min=1.0, max=9.0, step=2.0)
-                        .withColumnSpec("nstr4", percent_nulls=10.0, min=1, max=9, step=2, format="%04d")
-                        .withColumnSpec("nstr5", percent_nulls=10.0, min=1.5, max=2.5, step=0.3, random=True)
-                        .withColumnSpec("nstr6", percent_nulls=10.0, min=1.5, max=2.5, step=0.3, random=True,
+                        .withColumnSpec("nint", percent_nulls=10.0, minValue=1, maxValue=9, step=2)
+                        .withColumnSpec("nstr1", percent_nulls=10.0, minValue=1, maxValue=9, step=2)
+                        .withColumnSpec("nstr2", percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3, format="%04f")
+                        .withColumnSpec("nstr3", minValue=1.0, maxValue=9.0, step=2.0)
+                        .withColumnSpec("nstr4", percent_nulls=10.0, minValue=1, maxValue=9, step=2, format="%04d")
+                        .withColumnSpec("nstr5", percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3, random=True)
+                        .withColumnSpec("nstr6", percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3, random=True,
                                         format="%04f")
                         .withColumnSpec("email", template=r'\w.\w@\w.com|\w@\w.co.u\k')
                         .withColumnSpec("ip_addr", template=r'\n.\n.\n.\n')

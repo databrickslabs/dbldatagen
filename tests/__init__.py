@@ -27,7 +27,7 @@ __all__ = ["test_basic_test", "test_quick_tests", "test_columnGenerationSpec",
            "test_ranges",
            "test_options",
            "test_topological_sort",
-           "test_large_schema", "test_schema_parser", "test_scripting",
+           "test_large_schema", "test_schema_parser", "test_scriptiing",
            "test_text_generation", "test_iltext_generation",
            "test_types",
            "test_utils",
@@ -35,7 +35,7 @@ __all__ = ["test_basic_test", "test_quick_tests", "test_columnGenerationSpec",
            "test_dependent_data"
            ]
 
-#from ./test_pandas_integration import TestPandasIntegration
+# from ./test_pandas_integration import TestPandasIntegration
 
 if __name__ == '__main__':
     unittest.main()

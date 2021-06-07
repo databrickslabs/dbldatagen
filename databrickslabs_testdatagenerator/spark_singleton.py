@@ -9,10 +9,10 @@ This is primarily meant for situations where the test data generator is run on a
 for use cases like unit testing rather than in a Databricks workspace environment
 """
 
-from pyspark.sql import SparkSession
 import os
 import math
 import logging
+from pyspark.sql import SparkSession
 
 
 class SparkSingleton:

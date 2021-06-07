@@ -1,6 +1,8 @@
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
-import databrickslabs_testdatagenerator as datagen
 import unittest
+
+from pyspark.sql.types import IntegerType, StringType, FloatType
+
+import databrickslabs_testdatagenerator as datagen
 
 spark = datagen.SparkSingleton.getLocalInstance("unit tests")
 
@@ -97,7 +99,6 @@ class TestScripting(unittest.TestCase):
         dfTestData.write.mode("overwrite").saveAsTable(tbl_name)
 
         df_result = spark.sql("select * from {}".format(tbl_name))
-
 
         schema1 = df_result.schema
         schema2 = dfTestData.schema

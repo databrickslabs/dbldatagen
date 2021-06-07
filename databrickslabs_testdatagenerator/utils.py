@@ -11,21 +11,26 @@ These are meant for internal use only
 import warnings
 import functools
 
-def deprecated(message=""):
-  ''' Define a deprecated decorator without dependencies on 3rd party libraries
 
-  Note there is a 3rd party library called `deprecated` that provides this feature but goal is to only have
-  dependencies on packages already used in the Databricks runtime
-  '''
-  def deprecated_decorator(func):
-      @functools.wraps(func)
-      def deprecated_func(*args, **kwargs):
-          warnings.warn("`{}` is a deprecated function or method. \n{}".format(func.__name__, message),
-                        category=DeprecationWarning, stacklevel=1)
-          warnings.simplefilter('default', DeprecationWarning)
-          return func(*args, **kwargs)
-      return deprecated_func
-  return deprecated_decorator
+def deprecated(message=""):
+    ''' Define a deprecated decorator without dependencies on 3rd party libraries
+
+    Note there is a 3rd party library called `deprecated` that provides this feature but goal is to only have
+    dependencies on packages already used in the Databricks runtime
+    '''
+
+    def deprecated_decorator(func):
+        @functools.wraps(func)
+        def deprecated_func(*args, **kwargs):
+            warnings.warn("`{}` is a deprecated function or method. \n{}".format(func.__name__, message),
+                          category=DeprecationWarning, stacklevel=1)
+            warnings.simplefilter('default', DeprecationWarning)
+            return func(*args, **kwargs)
+
+        return deprecated_func
+
+    return deprecated_decorator
+
 
 class DataGenError(Exception):
     """Exception class to represent data generation errors"""

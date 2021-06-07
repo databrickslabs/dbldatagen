@@ -93,10 +93,9 @@ class ColumnGeneratorBuilder:
         output = [" CASE "]
 
         conditions = zip(values, cdf_probs)
-        output_type = type(datatype)
 
         for v, cdf in conditions:
-            if output_type == StringType or output_type == DateType or output_type == TimestampType:
+            if isinstance(datatype, (StringType, DateType, TimestampType)):
                 output.append(" when {} <= {} then '{}' ".format(seed_column, cdf, v))
             else:
                 output.append(" when {} <= {} then {} ".format(seed_column, cdf, v))

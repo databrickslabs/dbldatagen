@@ -1,8 +1,8 @@
-from unittest import TestCase
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
-import databrickslabs_testdatagenerator as dg
-
 import unittest
+
+from pyspark.sql.types import StringType, TimestampType
+
+import databrickslabs_testdatagenerator as dg
 
 
 class TestColumnGenerationSpec(unittest.TestCase):
@@ -48,16 +48,16 @@ class TestColumnGenerationSpec(unittest.TestCase):
     def test_baseColumnMultiple(self):
         dt = StringType()
         cd = dg.ColumnGenerationSpec(name="test", colType=StringType(), base_column=['test0', 'test_1'])
-        self.assertEquals(cd.baseColumn, ['test0', 'test_1'], "baseColumn should be as expected")
-        self.assertEquals(cd.baseColumns, ['test0', 'test_1'])
+        self.assertEqual(cd.baseColumn, ['test0', 'test_1'], "baseColumn should be as expected")
+        self.assertEqual(cd.baseColumns, ['test0', 'test_1'])
 
     def test_baseColumnMultiple2(self):
         dt = StringType()
         cd = dg.ColumnGenerationSpec(name="test", colType=StringType(), base_column='test0,test_1')
-        self.assertEquals(cd.baseColumn, 'test0,test_1', "baseColumn should be as expected")
-        self.assertEquals(cd.baseColumns, ['test0', 'test_1'])
+        self.assertEqual(cd.baseColumn, 'test0,test_1', "baseColumn should be as expected")
+        self.assertEqual(cd.baseColumns, ['test0', 'test_1'])
 
     def test_expr(self):
         dt = StringType()
         cd = dg.ColumnGenerationSpec(name="test", colType=StringType(), base_column='test0,test_1', expr="concat(1,2)")
-        self.assertEquals(cd.expr, 'concat(1,2)')
+        self.assertEqual(cd.expr, 'concat(1,2)')
