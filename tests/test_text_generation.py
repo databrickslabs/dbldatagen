@@ -58,7 +58,8 @@ class TestTextGeneration(unittest.TestCase):
                         .withColumnSpec("date", percent_nulls=10.0)
                         .withColumnSpec("nint", percent_nulls=10.0, minValue=1, maxValue=9, step=2)
                         .withColumnSpec("nstr1", percent_nulls=10.0, minValue=1, maxValue=9, step=2)
-                        .withColumnSpec("nstr2", percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3, format="%04f")
+                        .withColumnSpec("nstr2", percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3,
+                                        format="%04f")
                         .withColumnSpec("nstr3", minValue=1.0, maxValue=9.0, step=2.0)
                         .withColumnSpec("nstr4", percent_nulls=10.0, minValue=1, maxValue=9, step=2, format="%04d")
                         .withColumnSpec("nstr5", percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3, random=True)
@@ -91,7 +92,8 @@ class TestTextGeneration(unittest.TestCase):
                         .withColumnSpec("date", percent_nulls=10.0)
                         .withColumnSpec("nint", percent_nulls=10.0, minValue=1, maxValue=9, step=2)
                         .withColumnSpec("nstr1", percent_nulls=10.0, minValue=1, maxValue=9, step=2)
-                        .withColumnSpec("nstr2", percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3, format="%04f")
+                        .withColumnSpec("nstr2", percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3,
+                                        format="%04f")
                         .withColumnSpec("nstr3", minValue=1.0, maxValue=9.0, step=2.0)
                         .withColumnSpec("nstr4", percent_nulls=10.0, minValue=1, maxValue=9, step=2, format="%04d")
                         .withColumnSpec("nstr5", percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3, random=True)
@@ -115,7 +117,8 @@ class TestTextGeneration(unittest.TestCase):
         self.assertGreaterEqual(counts['phone_count'], 100)
 
     def test_raw_template_text_generation1(self):
-        ''' As the test coverage tools dont detect code only used in UDFs, lets add some explicit tests for the underlying code'''
+        ''' As the test coverage tools dont detect code only used in UDFs,
+            lets add some explicit tests for the underlying code'''
         pattern = r'\n.\n.\n.\n'
         match_pattern = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+")
         test_template = TemplateGenerator(pattern)
@@ -127,7 +130,8 @@ class TestTextGeneration(unittest.TestCase):
             self.assertTrue(match_pattern.match(test_value))
 
     def test_raw_template_text_generation2(self):
-        ''' As the test coverage tools dont detect code only used in UDFs, lets add some explicit tests for the underlying code'''
+        ''' As the test coverage tools dont detect code only used in UDFs,
+            lets add some explicit tests for the underlying code'''
         pattern = r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd'
         match_pattern = re.compile(r"(\([0-9]+\)-[0-9]+-[0-9]+)|(1\([0-9]+\) [0-9]+-[0-9]+)|([0-9]+ [0-9]+)")
         test_template = TemplateGenerator(pattern)
@@ -139,7 +143,8 @@ class TestTextGeneration(unittest.TestCase):
             self.assertTrue(match_pattern.match(test_value))
 
     def test_raw_template_text_generation3(self):
-        ''' As the test coverage tools dont detect code only used in UDFs, lets add some explicit tests for the underlying code'''
+        ''' As the test coverage tools dont detect code only used in UDFs,
+            lets add some explicit tests for the underlying code'''
         pattern = r'\w.\w@\w.com|\w@\w.co.u\k'
         match_pattern = re.compile(r"[a-z\.\@]+")
         test_template = TemplateGenerator(pattern)

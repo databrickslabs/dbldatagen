@@ -211,7 +211,8 @@ class TestLargeSchemaOperation(unittest.TestCase):
               .withColumnSpecs(patterns=".*_IDS", match_types=StringType(), format="%010d", min=1, max=100, step=1)
               .withColumnSpec("R_ID", minValue=1, maxValue=100, step=1)
               .withColumnSpec("XYYZ_IDS", minValue=1, maxValue=123, step=1,
-                              format="%05d")  # .withColumnSpec("nstr4", percent_nulls=10.0, minValue=1, maxValue=9, step=2,  format="%04d")
+                              format="%05d")
+              # .withColumnSpec("nstr4", percent_nulls=10.0, minValue=1, maxValue=9, step=2,  format="%04d")
               # example of IS_SALE
               .withColumnSpec("IS_S", values=sale_values, weights=sale_weights, random=True)
               # .withColumnSpec("nstr4", percent_nulls=10.0, minValue=1, maxValue=9, step=2,  format="%04d")

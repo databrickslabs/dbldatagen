@@ -49,7 +49,8 @@ Key aspects are the following
 
 - ways to map range of values to distribution
 - a: scale range to values, if bounds are predictable
-- b: truncate (making values < minValue= minValue , > maxValue= maxValue) - which may cause output to have different distribution than expected
+- b: truncate (making values < minValue= minValue , > maxValue= maxValue)
+   - which may cause output to have different distribution than expected
 - c: discard values outside of range
    - requires generation of more values than required to allow for discarded values
    - can sample correct values to fill in missing data
@@ -76,7 +77,7 @@ import pandas as pd
 class Gamma(object):
     def __init__(self, mean=None, std=None, minValue=None, maxValue=None, rectify=True, std_range=3.5, rounding=False):
         self.mean = mean if mean is not None else 0.0
-        self.stddev, self.minValue, self.maxValue  = std if std is not None else 1.0, minValue, maxValue
+        self.stddev, self.minValue, self.maxValue = std if std is not None else 1.0, minValue, maxValue
         self.std_range, self.rectify = std_range, rectify
         self.round = rounding
 
@@ -114,56 +115,56 @@ class Gamma(object):
 
 
 class ExponentialDistribution(object):
-    def __init__(self, mean=None, median=None, min=None, max=None, rate=None, rectify=True, rounding=False):
-        self.mean, self.median, self.min, self.max = mean, median, min, max
+    def __init__(self, mean=None, median=None, minValue=None, maxValue=None, rate=None, rectify=True, rounding=False):
+        self.mean, self.median, self.minValue, self.maxValue = mean, median, minValue, maxValue
         self.rectify = rectify
         self.round = rounding
         self.rate = rate
 
-        if min is None:
-            self.min = 0.0
+        if minValue is None:
+            self.minValue = 0.0
 
-        assert (self.max is not None or
+        assert (self.maxValue is not None or
                 self.rate is not None or
                 self.median is not None or
                 self.mean is not None), "Must have an explicit mean, maxValue, median or rate"
 
         if rate is not None:
             assert (self.mean is None) or (self.mean == 1.0 / self.rate), "Cant specify rate and mean"
-            self.mean = (1.0 / rate) - self.min
-            self.median = (math.log(2.0) / self.rate) - self.min
+            self.mean = (1.0 / rate) - self.minValue
+            self.median = (math.log(2.0) / self.rate) - self.minValue
         elif mean is not None:
-            self.mean = self.mean - self.min
+            self.mean = self.mean - self.minValue
             self.rate = 1.0 / self.mean
             self.median = math.log(2.0) / self.rate
         elif median is not None:
-            self.median = self.median - self.min
+            self.median = self.median - self.minValue
             self.rate = 1.0 / (self.median / math.log(2.0))
             self.mean = 1.0 / self.rate
         else:
             # compute the rate if not specified
-            if max is not None:
+            if maxValue is not None:
                 if self.median is None:
-                    self.median = ((self.max + self.min) / 2.0 - self.min)
+                    self.median = ((self.maxValue + self.minValue) / 2.0 - self.minValue)
                     self.rate = 1.0 / (self.median / math.log(2.0))
                     self.mean = 1.0 / self.rate
 
     def __str__(self):
         return ("{}(minValue={}, maxValue={}, adjusted_mean={}, adjusted_median={}, rate={},  std={})"
-                .format("ExponentialDistribution", self.min, self.max,
-                        self.mean + self.min, self.median + self.min, self.rate, 1.0 / self.rate))
+                .format("ExponentialDistribution", self.minValue, self.maxValue,
+                        self.mean + self.minValue, self.median + self.minValue, self.rate, 1.0 / self.rate))
 
     def generate(self, size):
         retval = np.random.exponential(self.mean, size=size)
 
-        if self.min != 0.0 and self.min != 0:
-            retval = retval + self.min
+        if self.minValue != 0.0 and self.minValue != 0:
+            retval = retval + self.minValue
 
         if self.rectify:
-            retval = np.maximum(self.min, retval)
+            retval = np.maximum(self.minValue, retval)
 
-            if self.max is not None:
-                retval = np.minimum(self.max, retval)
+            if self.maxValue is not None:
+                retval = np.minimum(self.maxValue, retval)
 
         if self.round:
             retval = np.round(retval)

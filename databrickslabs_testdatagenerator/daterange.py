@@ -66,7 +66,7 @@ class DateRange(DataRange):
             key, value = kv.split('=')
             results.append("'{}':{}".format(key, value))
 
-        return eval("{{ {}  }} ".format(",".join(results)))
+        return eval("{{ {}  }} ".format(",".join(results)))  # pylint: disable=eval-used
 
     def __str__(self):
         """ create string representation of date range"""
@@ -113,6 +113,3 @@ class DateRange(DataRange):
     def getScale(self):
         """Get scale of range"""
         return 0
-
-
-

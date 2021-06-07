@@ -49,7 +49,8 @@ Key aspects are the following
 
 - ways to map range of values to distribution
 - a: scale range to values, if bounds are predictable
-- b: truncate (making values < minValue= minValue , > maxValue= maxValue) - which may cause output to have different distribution than expected
+- b: truncate (making values < minValue= minValue , > maxValue= maxValue) -
+    which may cause output to have different distribution than expected
 - c: discard values outside of range
    - requires generation of more values than required to allow for discarded values
    - can sample correct values to fill in missing data
@@ -72,8 +73,10 @@ import pandas as pd
 
 
 class Beta(object):
-    def __init__(self, mean=None, std=None, minValue=None, maxValue=None, rectify=True, std_range=3.5, rounding=False):
-        self.mean, self.stddev, self.minValue, self.maxValue = mean if mean is not None else 0.0, std if std is not None else 1.0, minValue, maxValue
+    def __init__(self, mean=None, std=None, minValue=None, maxValue=None, rectify=True,
+                 std_range=3.5, rounding=False):
+        self.mean = mean if mean is not None else 0.0
+        self.stddev, self.minValue, self.maxValue = std if std is not None else 1.0, minValue, maxValue
         self.std_range, self.rectify = std_range, rectify
         self.round = rounding
 
@@ -89,7 +92,8 @@ class Beta(object):
                 self.std = (self.mean - self.minValue) / self.std_range
 
     def __str__(self):
-        return "NormalDistribution(minValue={}, maxValue={}, mean={}, std={})".format(self.minValue, self.maxValue, self.mean, self.std)
+        return ("NormalDistribution(minValue={}, maxValue={}, mean={}, std={})"
+                .format(self.minValue, self.maxValue, self.mean, self.std))
 
     def generate(self, size):
         retval = np.random.normal(self.mean, self.std, size=size)

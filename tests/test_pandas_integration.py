@@ -74,7 +74,7 @@ class TestPandasIntegration(unittest.TestCase):
 
     @unittest.skip("not yet debugged")
     def test_pandas_udf(self):
-        utest_pandas = pandas_udf(pandas_udf_example, returnType=StringType()).asNondeterministic()
+        utest_pandas = pandas_udf(self.pandas_udf_example, returnType=StringType()).asNondeterministic()
         df = (spark.range(1000000)
               .withColumn("x", expr("cast(id as string)"))
               .withColumn("y", expr("cast(id as string)"))

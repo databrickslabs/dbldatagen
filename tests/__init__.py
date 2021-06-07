@@ -37,5 +37,5 @@ __all__ = ["test_basic_test", "test_quick_tests", "test_columnGenerationSpec",
 
 # from ./test_pandas_integration import TestPandasIntegration
 
-if __name__ == '__main__':
-    unittest.main()
+#if __name__ == '__main__':
+#    unittest.main()

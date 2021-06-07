@@ -23,6 +23,7 @@ from .spark_singleton import SparkSingleton
 OLD_MIN_OPTION = 'min'
 OLD_MAX_OPTION = 'max'
 
+
 class DataGenerator:
     """ Main Class for test data set generation
 
@@ -559,9 +560,9 @@ class DataGenerator:
         new_props = {}
         new_props.update(kwargs)
 
-        self.logger.info(
-            "adding column spec - `{0}` with baseColumn : `{1}`, implicit : {2} , omit {3}".format(colName, base_column,
-                                                                                                   implicit, omit))
+        self.logger.info("adding column spec - `%s` with baseColumn : `%s`, implicit : %s , omit %s",
+                             colName, base_column, implicit, omit)
+
         self.generateColumnDefinition(colName, self.getColumnType(colName), minValue=minValue, maxValue=maxValue,
                                       step=step, prefix=prefix,
                                       random=random, data_range=data_range,
@@ -617,10 +618,10 @@ class DataGenerator:
             colType = SchemaParser.columnTypeFromString(colType)
 
         self.logger.info("effective range: %s, %s, %s args: %s", minValue, maxValue, step, kwargs)
-        self.logger.info(
-            "adding column - `{0}` with baseColumn : `{1}`, implicit : {2} , omit {3}".format(colName, base_column,
-                                                                                              implicit, omit))
-        self.generateColumnDefinition(colName, colType, minValue=minValue, maxValue=maxValue, step=step, prefix=prefix, random=random,
+        self.logger.info("adding column - `%s` with baseColumn : `%s`, implicit : %s , omit %s",
+                         colName, base_column, implicit, omit)
+        self.generateColumnDefinition(colName, colType, minValue=minValue, maxValue=maxValue,
+                                      step=step, prefix=prefix, random=random,
                                       distribution=distribution, base_column=base_column, data_range=data_range,
                                       implicit=implicit, omit=omit, **new_props)
         self.inferredSchemaFields.append(StructField(colName, colType, nullable))
@@ -759,7 +760,7 @@ class DataGenerator:
 
         :param columns: list of columns to retrieve data types for
         """
-        return [self.columnSpecsByName[col].datatype for col in columns]
+        return [self.columnSpecsByName[colspec].datatype for colspec in columns]
 
     def computeBuildPlan(self):
         """ prepare for building by computing a pseudo build plan
@@ -773,7 +774,7 @@ class DataGenerator:
         self.build_plan = []
         self.execution_history = []
         self._processOptions()
-        self.build_plan.append("Build Spark data frame with seed column: %s".format(ColumnGenerationSpec.SEED_COLUMN))
+        self.build_plan.append("Build Spark data frame with seed column: {}".format(ColumnGenerationSpec.SEED_COLUMN))
 
         # add temporary columns
         for cs in self.allColumnSpecs:
@@ -847,12 +848,12 @@ class DataGenerator:
         # register temporary or global views if necessary
         if withView:
             self.execution_history.append("registering view")
-            self.logger.info("Registered global view [{0}]".format(self.name))
+            self.logger.info("Registered global view [%s]", self.name)
             df1.createGlobalTempView(self.name)
             self.logger.info("Registered!")
         elif withTempView:
             self.execution_history.append("registering temp view")
-            self.logger.info("Registering temporary view [{0}]".format(self.name))
+            self.logger.info("Registering temporary view [%s]", self.name)
             df1.createOrReplaceTempView(self.name)
             self.logger.info("Registered!")
 
@@ -930,10 +931,10 @@ class DataGenerator:
         for x in substitutions:
             subs[x[0]] = x[1]
 
-        for col in columns:
-            new_val = subs[col]
+        for substitution_col in columns:
+            new_val = subs[substitution_col]
             if isUpdate:
-                results.append("{}={}".format(col, new_val))
+                results.append("{}={}".format(substitution_col, new_val))
             else:
                 results.append("{}".format(new_val))
 
@@ -962,8 +963,8 @@ class DataGenerator:
                """)
 
         col_expressions = []
-        for col in output_columns:
-            col_expressions.append("    {} {}".format(col[0], self.sqlTypeFromSparkType(col[1])))
+        for col_to_output in output_columns:
+            col_expressions.append("    {} {}".format(col_to_output[0], self.sqlTypeFromSparkType(col_to_output[1])))
         results.append(",\n".join(col_expressions))
         results.append(")")
         results.append("using {}".format(table_format))

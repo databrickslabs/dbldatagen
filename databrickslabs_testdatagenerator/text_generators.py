@@ -354,9 +354,9 @@ class ILText(TextGenerator):
 
         :param seed: seed value to control generation of random numbers
         """
-        retval = [int(round(self.randomGauss(self.paragraphs))),
-                  int(round(self.randomGauss(self.sentences))),
-                  int(round(self.randomGauss(self.words)))]
+        #retval = [int(round(self.randomGauss(self.paragraphs))),
+        #          int(round(self.randomGauss(self.sentences))),
+        #          int(round(self.randomGauss(self.words)))]
 
         return self.generateText([seed], 42)[0]
 

@@ -58,29 +58,30 @@ class SchemaParser(object):
 
         s = type_string.strip().lower()
         if s in ["string", "varchar", "char", "nvarchar"]:
-            return StringType()
+            retval = StringType()
         elif s in ["int", "integer"]:
-            return IntegerType()
+            retval = IntegerType()
         elif s in ["bigint", "long"]:
-            return LongType()
+            retval = LongType()
         elif s in ["bool", "boolean"]:
-            return BooleanType()
+            retval = BooleanType()
         elif s in ["timestamp", "datetime"]:
-            return TimestampType()
+            retval = TimestampType()
         elif s.startswith("decimal") or s.startswith("number"):
-            return cls.parseDecimal(s)
+            retval = cls.parseDecimal(s)
         elif s == "double":
-            return DoubleType()
+            retval = DoubleType()
         elif s == "float":
-            return FloatType()
+            retval = FloatType()
         elif s == "date":
-            return DateType()
+            retval = DateType()
         elif s == "short":
-            return ShortType()
+            retval = ShortType()
         elif s == "byte":
-            return ByteType()
+            retval = ByteType()
         else:
-            return s
+            retval = s
+        return retval
 
     @classmethod
     def parseCreateTable(cls, sparkSession, source_schema):

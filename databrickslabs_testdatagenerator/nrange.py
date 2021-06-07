@@ -7,8 +7,10 @@ This module defines the `NRange` class used to specify data ranges
 """
 
 import math
-from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
-    StructType, StructField, TimestampType, DataType, DateType, ByteType
+
+from pyspark.sql.types import LongType, FloatType, IntegerType, DoubleType, ShortType, \
+    ByteType
+
 from .datarange import DataRange
 
 OLD_MIN_OPTION = 'min'
@@ -49,7 +51,7 @@ class NRange(DataRange):
             kwArgs.pop(OLD_MAX_OPTION, None)
         else:
             self.maxValue = maxValue
-        assert (len(kwArgs.keys()) == 0)
+        assert len(kwArgs.keys()) == 0, "no keyword options other than `min` and `max` allowed"
 
         assert until is None if self.maxValue is not None else True, "Only one of maxValue or until can be specified"
         assert self.maxValue is None if until is not None else True, "Only one of maxValue or until can be specified"
@@ -99,9 +101,9 @@ class NRange(DataRange):
             self.step = 1.0
 
         if (type(ctype) is ByteType
-            or type(ctype) is ShortType
-            or type(ctype) is IntegerType
-            or type(ctype) is LongType) and self.step is None:
+              or type(ctype) is ShortType
+              or type(ctype) is IntegerType
+              or type(ctype) is LongType) and self.step is None:
             self.step = 1
 
     def getDiscreteRange(self):

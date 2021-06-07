@@ -35,7 +35,7 @@ class SparkSingleton:
         :returns: A Spark instance
         """
         cpu_count = int(math.floor(os.cpu_count() * 0.75))
-        logging.info(f"cpu count: {cpu_count}")
+        logging.info("cpu count: %d", cpu_count)
 
         return SparkSession.builder \
             .master("local[{}]".format(cpu_count)) \

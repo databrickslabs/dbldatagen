@@ -319,8 +319,9 @@ class TestBasicOperation(unittest.TestCase):
     def test_partitions(self):
         """Test partitioning"""
         id_partitions = 11
+        rows_wanted = 100000000
         testdata_defn = (
-            dg.DataGenerator(name="basic_dataset", rows=100000000, partitions=id_partitions, verbose=True)
+            dg.DataGenerator(name="basic_dataset", rows=rows_wanted, partitions=id_partitions, verbose=True)
                 .withColumn("code1", IntegerType(), min=1, max=20, step=1)
                 .withColumn("code2", IntegerType(), max=1000, step=5)
                 .withColumn("code3", IntegerType(), min=100, max=200, step=1, random=True)
@@ -335,6 +336,7 @@ class TestBasicOperation(unittest.TestCase):
         partitions_created = df.rdd.getNumPartitions()
         print("partitions created", partitions_created)
         self.assertEqual(id_partitions, partitions_created)
+        self.assertEqual(count, rows_wanted)
 
 
 # run the tests

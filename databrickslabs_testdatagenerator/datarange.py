@@ -46,5 +46,3 @@ class DataRange(object):
     def max(self):
         """get the `max` attribute"""
         return self.maxValue
-
-

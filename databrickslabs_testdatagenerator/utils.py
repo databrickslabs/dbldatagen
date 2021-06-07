@@ -60,7 +60,7 @@ def ensure(cond, msg="condition does not hold true"):
     import re
 
     def strip_margin(text):
-        return re.sub('\n[ \t]*\|', '\n', text)
+        return re.sub(r'\n[ \t]*\|', '\n', text)
 
     if not cond:
         raise DataGenError(strip_margin(msg))

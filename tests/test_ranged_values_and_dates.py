@@ -125,13 +125,10 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertLessEqual(10, count_distinct)
 
     def test_date_range2(self):
-        interval = timedelta(days=1, hours=1)
+        #interval = timedelta(days=1, hours=1)
         start = datetime(2017, 10, 1, 0, 0, 0)
         end = datetime(2018, 10, 6, 0, 0, 0)
 
-        print(DateRange("2017-10-01 00:00:00",
-                        "2018-10-06 00:00:00",
-                        "days=1,hours=1"))
         testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
                       .withColumn("last_sync_dt1", "timestamp",
@@ -657,42 +654,6 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
         nint3_values = [r[0] for r in results.select("lint3").distinct().collect()]
         self.assertSetEqual(set(nint3_values), {None, long_min, long_min + 2, long_min + 4, long_min + 6, long_min + 8})
-
-    def test_ranged_data_int(self):
-        testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
-                        .withIdOutput()
-                        .withColumn("nint", IntegerType(), min=1, max=9, step=2)
-                        .withColumn("nint2", IntegerType(), percent_nulls=10.0, min=1, max=9, step=2)
-                        .withColumn("nint3", IntegerType(), percent_nulls=10.0, min=1, max=9, step=2, random=True)
-                        .withColumn("sint", ShortType(), min=1, max=9, step=2)
-                        .withColumn("sint2", ShortType(), percent_nulls=10.0, min=1, max=9, step=2)
-                        .withColumn("sint3", ShortType(), percent_nulls=10.0, min=1, max=9, step=2, random=True)
-                        .withColumn("byte1", ByteType(), min=1, max=9, step=2)
-                        .withColumn("byte2", ByteType(), percent_nulls=10.0, min=1, max=9, step=2)
-                        .withColumn("byte3", ByteType(), percent_nulls=10.0, min=1, max=9, step=2, random=True)
-                        )
-
-        results = testDataSpec.build()
-
-        # check ranged int data
-        nint_values = [r[0] for r in results.select("nint").distinct().collect()]
-        self.assertSetEqual(set(nint_values), {1, 3, 5, 7, 9})
-
-        nint2_values = [r[0] for r in results.select("nint2").distinct().collect()]
-        self.assertSetEqual(set(nint2_values), {None, 1, 3, 5, 7, 9})
-
-        nint3_values = [r[0] for r in results.select("nint3").distinct().collect()]
-        self.assertSetEqual(set(nint3_values), {None, 1, 3, 5, 7, 9})
-
-        # check ranged short int data
-        sint_values = [r[0] for r in results.select("sint").distinct().collect()]
-        self.assertSetEqual(set(sint_values), {1, 3, 5, 7, 9})
-
-        sint2_values = [r[0] for r in results.select("sint2").distinct().collect()]
-        self.assertSetEqual(set(sint2_values), {None, 1, 3, 5, 7, 9})
-
-        sint3_values = [r[0] for r in results.select("sint3").distinct().collect()]
-        self.assertSetEqual(set(sint3_values), {None, 1, 3, 5, 7, 9})
 
     def test_ranged_data_byte(self):
         testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)

@@ -54,7 +54,7 @@ class TestScripting(unittest.TestCase):
         print(creation_script)
         print("====")
 
-        result1 = spark.sql(creation_script)
+        spark.sql(creation_script)
         df_result = spark.sql("select * from {}".format(tbl_name))
 
         dfTestData = testDataSpec.build().cache()
@@ -93,7 +93,7 @@ class TestScripting(unittest.TestCase):
 
         dfTestData = testDataSpec.build().cache()
 
-        result1 = spark.sql(creation_script)
+        spark.sql(creation_script)
 
         # write the data
         dfTestData.write.mode("overwrite").saveAsTable(tbl_name)

@@ -150,16 +150,6 @@ class TestQuickTests(unittest.TestCase):
         print("output columns", tgen.getOutputColumnNames())
         self.assertEqual(expectedColumns, set((tgen.getOutputColumnNames())))
 
-    def test_with_column_spec_for_missing_column(self):
-        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
-                .withSchema(schema)
-                .withColumn("sector_status_desc", StringType(), min=1, max=200, step=1, prefix='status', random=True)
-                .withColumn("s", StringType(), min=1, max=200, step=1, prefix='status', random=True, omit=True))
-
-        print("test_with_column_spec_for_missing_column")
-        with self.assertRaises(Exception):
-            t2 = tgen.withColumnSpec("site_dwkey", minValue=1, maxValue=200, step=1, random=True)
-
     @unittest.expectedFailure
     def test_with_column_spec_for_missing_column(self):
         tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
@@ -170,6 +160,7 @@ class TestQuickTests(unittest.TestCase):
         print("test_with_column_spec_for_missing_column")
         # with self.assertRaises(Exception):
         t2 = tgen.withColumnSpec("d", minValue=1, maxValue=200, step=1, random=True)
+        assert t2 is not None, "expecting t2 to be a new generator spec"
 
     @unittest.expectedFailure
     def test_with_column_spec_for_duplicate_column(self):
@@ -181,7 +172,8 @@ class TestQuickTests(unittest.TestCase):
         print("test_with_column_spec_for_duplicate_column")
         # with self.assertRaises(Exception):
         t2 = tgen.withColumnSpec("site_id", minValue=1, maxValue=200, step=1, random=True)
-        t2 = t2.withColumnSpec("site_id", minValue=1, maxValue=200, step=1, random=True)
+        t3 = t2.withColumnSpec("site_id", minValue=1, maxValue=200, step=1, random=True)
+        assert t3 is not None, "expecting t3 to be a new generator spec"
 
     # @unittest.expectedFailure
     def test_with_column_spec_for_duplicate_column2(self):
@@ -192,6 +184,7 @@ class TestQuickTests(unittest.TestCase):
 
         print("test_with_column_spec_for_duplicate_column2")
         t2 = tgen.withColumn("site_id", "string", min=1, max=200, step=1, random=True)
+        assert t2 is not None, "expecting t2 to be a new generator spec"
 
     def test_with_column_spec_for_id_column(self):
         tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
@@ -221,8 +214,9 @@ class TestQuickTests(unittest.TestCase):
 
                         )
 
-        rangedDF = testDataSpec.build(withTempView=True).cache()
+        testDataSpec.build(withTempView=True).cache()
 
+        # we refer to the view generated above
         result = spark.sql("""select count(distinct code1a), 
                                      count(distinct code1b), 
                                      count(distinct code1c) 

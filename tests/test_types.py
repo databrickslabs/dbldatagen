@@ -122,12 +122,13 @@ class TestTypes(unittest.TestCase):
 
     def test_for_values_with_multi_column_dependencies(self):
         id_partitions = 4
+        code_values = ["aa", "bb", "cc", "dd", "ee", "ff"]
         testdata_defn = (
             datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("basic_byte", ByteType())
                 .withColumn("basic_short", ShortType())
                 .withColumn("code1", StringType(),
-                            values=["aa", "bb", "cc", "dd", "ee", "ff"],
+                            values=code_values,
                             base_column=["basic_byte", "basic_short"])
         )
 
@@ -136,6 +137,16 @@ class TestTypes(unittest.TestCase):
         testdata_defn.explain()
 
         self.assertEqual(df.count(), 0)
+
+        df2 = testdata_defn.build()
+
+        # check unique codes
+        unique_code1_count = df2.agg(F.countDistinct("code1").alias("code_count")).collect()[0]["code_count"]
+        self.assertEqual(unique_code1_count, 6)
+
+        unique_codes = [x["code1"] for x in df2.select("code1").distinct().collect()]
+
+        self.assertEqual(set(unique_codes), set(code_values))
 
     def test_for_values_with_single_column_dependencies(self):
         id_partitions = 4
@@ -152,8 +163,9 @@ class TestTypes(unittest.TestCase):
 
     def test_for_values_with_single_column_dependencies2(self):
         id_partitions = 4
+        rows_wanted = 1000000
         testdata_defn = (
-            datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+            datagen.DataGenerator(name="basic_dataset", rows=rows_wanted, partitions=id_partitions, verbose=True)
                 .withIdOutput()
                 .withColumn("basic_byte", ByteType())
                 .withColumn("basic_short", ShortType())
@@ -164,6 +176,7 @@ class TestTypes(unittest.TestCase):
         df = testdata_defn.build()
         # df.show()
         testdata_defn.explain()
+        self.assertEqual(df.count(), rows_wanted)
 
     def test_for_values_with_default_column_dependencies(self):
         id_partitions = 4
@@ -254,14 +267,12 @@ class TestTypes(unittest.TestCase):
             datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("bb", ByteType(), minValue=35, maxValue=72)
                 .withColumn("basic_short", ShortType())
-
                 .withColumn("code2", ShortType(), max=10000, step=5))
 
         testdata_defn.build().createOrReplaceTempView("testdata")
         data_row = spark.sql("select min(bb) as min_bb, max(bb) as max_bb from testdata ").limit(1).collect()
         self.assertEqual(data_row[0]["min_bb"], 35, "row0")
         self.assertEqual(data_row[0]["max_bb"], 72, "row1")
-
 
     def test_short_types2(self):
         id_partitions = 4
