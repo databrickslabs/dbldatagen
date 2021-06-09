@@ -32,7 +32,30 @@ used in other computations
 * Generating values to conform to a schema or independent of an existing schema
 * use of SQL expressions in test data generation
 
- 
+## Using the Project
+To use the project, the generated wheel should be installed in your Python notebook as a wheel based library
+
+Once the library has been installed, you can use it to generate a test data frame.
+
+For example
+
+```buildoutcfg
+df_spec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
+                                                  partitions=4)
+                            .withIdOutput()
+                            .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
+                                        numColumns=cls.column_count)
+                            .withColumn("code1", IntegerType(), min=100, max=200)
+                            .withColumn("code2", IntegerType(), min=0, max=10)
+                            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+                            .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+                            .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+
+                            )
+                            
+df = df_spec.build()
+num_rows=df.count()                          
+```
 
 ## Project Support
 Please note that all projects in the `databrickslabs` github space are provided for your exploration only, and are not formally supported by Databricks with Service Level Agreements (SLAs).  They are provided AS-IS and we do not make any guarantees of any kind.  Please do not submit a support ticket relating to any issues arising from the use of these projects.
@@ -60,23 +83,13 @@ Latest pre-release is code complete and fully functional barring some issues wit
 
 # Building the code
 
-Our recommended mechanism for building the code is to use a conda based development process. 
+Dependencies are maintained by [Pipenv](https://pipenv.pypa.io/). In order to start with depelopment, you should install `pipenv` and `pyenv`.
 
-To use this, perform the following commands:
-  - `make create-dev-env` from the main project directory
-  - activate the conda environment - e.g `conda activate dbl_testdatagenerator`
-  - install the necessary dependencies in your conda environment via `make install-dev-dependencies`
-  
-  use the following to build and run the tests with a coverage report
-  - Run  ` make test-with-html-report` from the main project directory.
-
-Use the following command to make the distributable:
-  - Run `make dist` from the main project directory
-  - The resulting wheel file will be placed in the `dist` subdirectory
+Use `make test-with-html-report` to build and run the tests with a coverage report. Use `make dist` to make the distributable. The resulting wheel file will be placed in the `dist` subdirectory.
   
 ## Creating the HTML documentation
 
-Run  `make docs` from the main project directory.
+Run `make docs` from the main project directory.
 
 The main html document will be in the file (relative to the root of the build directory) `./python/docs/docs/build/html/index.html`
 
@@ -86,32 +99,7 @@ If using an environment with multiple Python versions, make sure to use virtual 
 
 If necessary, set `PYSPARK_PYTHON` and `PYSPARK_DRIVER_PYTHON` to point to correct versions of Python.
 
-Run  `make tests` from the main project directory to run the unit tests.
-
-## Using the Project
-To use the project, the generated wheel should be installed in your Python notebook as a wheel based library
-
-Once the library has been installed, you can use it to generate a test data frame.
-
-For example
-
-```buildoutcfg
-df_spec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
-                                                  partitions=4)
-                            .withIdOutput()
-                            .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
-                                        numColumns=cls.column_count)
-                            .withColumn("code1", IntegerType(), min=100, max=200)
-                            .withColumn("code2", IntegerType(), min=0, max=10)
-                            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-                            .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
-                            .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
-
-                            )
-                            
-df = df_spec.build()
-num_rows=df.count()                          
-```
+Run  `make test` from the main project directory to run the unit tests.
 
 ## Feedback
 
