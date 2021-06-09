@@ -29,7 +29,7 @@ jobs:
       #       ${{ runner.os }}-go-
       
       - name: Install 
-        run: pip install pipenv pyenv
+        run: pip install pipenv
       
       - name: Run tests
         run: make test
