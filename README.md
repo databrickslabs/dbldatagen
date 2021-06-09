@@ -33,7 +33,30 @@ used in other computations
 * Generating values to conform to a schema or independent of an existing schema
 * use of SQL expressions in test data generation
 
- 
+## Using the Project
+To use the project, the generated wheel should be installed in your Python notebook as a wheel based library
+
+Once the library has been installed, you can use it to generate a test data frame.
+
+For example
+
+```buildoutcfg
+df_spec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
+                                                  partitions=4)
+                            .withIdOutput()
+                            .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
+                                        numColumns=cls.column_count)
+                            .withColumn("code1", IntegerType(), min=100, max=200)
+                            .withColumn("code2", IntegerType(), min=0, max=10)
+                            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+                            .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+                            .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+
+                            )
+                            
+df = df_spec.build()
+num_rows=df.count()                          
+```
 
 ## Project Support
 Please note that all projects in the `databrickslabs` github space are provided for your exploration only, and are not formally supported by Databricks with Service Level Agreements (SLAs).  They are provided AS-IS and we do not make any guarantees of any kind.  Please do not submit a support ticket relating to any issues arising from the use of these projects.
@@ -65,7 +88,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for build and testing instructions
   
 ## Creating the HTML documentation
 
-Run  `make docs` from the main project directory.
+Run `make docs` from the main project directory.
 
 The main html document will be in the file (relative to the root of the build directory) `./python/docs/docs/build/html/index.html`
 
