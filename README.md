@@ -1,10 +1,10 @@
 # Databricks Labs TestDataGenerator
-[Release Notes](RELEASE_NOTES.md) |
+[Release Notes](CHANGELOG.md) |
 [Python Wheel](https://github.com/databrickslabs/data-generator/releases/tag/0.10.0_prerel5-py3-06022021) |
 [Developer Docs](python/docs/APIDOCS.md) |
 [Examples](examples) |
-[Tutorial](tutorial) |
-[Contributors](#core-contribution-team)
+[Tutorial](tutorial) 
+
 
 
 ## Project Description

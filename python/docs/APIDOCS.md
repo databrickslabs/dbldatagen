@@ -75,64 +75,28 @@ There is also support for applying arbitrary SQL expressions, and generation of 
 
 
 
-## Creating simple test data sets
-
-### Create a data set withouut pre-existing schemas
+## Creating a simple test data set
 
 Here is an example of creating a simple test data set without use of a schema. 
 
 ```python 
-import databrickslabs_testdatagenerator as dg
-
 row_count=1000 * 100
-num_partitions=4
-column_count=10
-
-testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", 
-                                  rows=row_count,
-                                  partitions=num_partitions,
-                                  seed_method='hash_fieldname', 
+testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=row_count,
+                                  partitions=4, seed_method='hash_fieldname', 
                                   verbose=True)
-                            .withIdOutput()  # output the seed `id` column
-
-                            # generate 10 columns following the same space labelled `r1` through `r10`
+                            .withIdOutput()
                             .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
-                                        numColumns=column_count)
-  
-                            # generate some simple integer columns
+                                        numColumns=cls.column_count)
                             .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
                             .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
-
-                            # generate some string valued columns specifying a set of values
                             .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-
-                            # generate some random valued string columns
                             .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
                             .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
 
                             )
 
-# use the build method to generate the actual spark dataframe
 dfTestData = testDataSpec.build()
-
-# the spark data frame can now be used as per any standard pyspark data frame
-print("the data frame has a row count of: ", dfTestData.count())
 ```
-### Creating data set with pre-existing schema
-...
-
-#### Adding dataspecs to match multiple columns
-For large schemas, it can be unwieldy to specify column generation specs for every column in a schema. 
-
-To alleviate this , the framework provides mechanisms to add rules in bulk for multiple columns.
-
-
-
-### Creating data sets with dates
-...
-
-## Automatically creating views
-...
 
 ### Building Device IOT Test Data
 This example shows generation of IOT device style data:
