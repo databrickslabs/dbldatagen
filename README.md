@@ -1,15 +1,16 @@
 # Databricks Labs TestDataGenerator
-[Release Notes](RELEASE_NOTES.md) |
+[Release Notes](CHANGELOG.md) |
 [Python Wheel](https://github.com/databrickslabs/data-generator/releases/tag/0.10.0_prerel5-py3-06022021) |
 [Developer Docs](python/docs/APIDOCS.md) |
 [Examples](examples) |
-[Tutorial](tutorial) |
-[Contributors](#core-contribution-team)
+[Tutorial](tutorial) 
+
 
 
 ## Project Description
 This Databricks Labs project is a Python library for generating synthetic test data within the Databricks 
-environment using Spark. It operates by defining a test data generation specification in code for how the test data is to be generated.
+environment using Spark. It operates by defining a test data generation specification in code for 
+how the test data is to be generated.
 
 The specification may incorporate use of existing schemas, or create data in an adhoc fashion.
 
@@ -86,6 +87,8 @@ Latest pre-release is code complete and fully functional barring some issues wit
 Dependencies are maintained by [Pipenv](https://pipenv.pypa.io/). In order to start with depelopment, you should install `pipenv` and `pyenv`.
 
 Use `make test-with-html-report` to build and run the tests with a coverage report. Use `make dist` to make the distributable. The resulting wheel file will be placed in the `dist` subdirectory.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for build and testing instructions
   
 ## Creating the HTML documentation
 

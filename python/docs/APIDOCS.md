@@ -75,28 +75,64 @@ There is also support for applying arbitrary SQL expressions, and generation of 
 
 
 
-## Creating a simple test data set
+## Creating simple test data sets
+
+### Create a data set withouut pre-existing schemas
 
 Here is an example of creating a simple test data set without use of a schema. 
 
 ```python 
+import databrickslabs_testdatagenerator as dg
+
 row_count=1000 * 100
-testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=row_count,
-                                  partitions=4, seed_method='hash_fieldname', 
+num_partitions=4
+column_count=10
+
+testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", 
+                                  rows=row_count,
+                                  partitions=num_partitions,
+                                  seed_method='hash_fieldname', 
                                   verbose=True)
-                            .withIdOutput()
+                            .withIdOutput()  # output the seed `id` column
+
+                            # generate 10 columns following the same space labelled `r1` through `r10`
                             .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
-                                        numColumns=cls.column_count)
-                            .withColumn("code1", IntegerType(), min=100, max=200)
-                            .withColumn("code2", IntegerType(), min=0, max=10)
+                                        numColumns=column_count)
+  
+                            # generate some simple integer columns
+                            .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
+                            .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
+
+                            # generate some string valued columns specifying a set of values
                             .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+
+                            # generate some random valued string columns
                             .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
                             .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
 
                             )
 
+# use the build method to generate the actual spark dataframe
 dfTestData = testDataSpec.build()
+
+# the spark data frame can now be used as per any standard pyspark data frame
+print("the data frame has a row count of: ", dfTestData.count())
 ```
+### Creating data set with pre-existing schema
+...
+
+#### Adding dataspecs to match multiple columns
+For large schemas, it can be unwieldy to specify column generation specs for every column in a schema. 
+
+To alleviate this , the framework provides mechanisms to add rules in bulk for multiple columns.
+
+
+
+### Creating data sets with dates
+...
+
+## Automatically creating views
+...
 
 ### Building Device IOT Test Data
 This example shows generation of IOT device style data:
@@ -123,7 +159,7 @@ testDataSpec = (dg.DataGenerator(sparkSession=spark, name="device_data_set", row
                                              partitions=partitions_requested, seed_method='hash_fieldname', verbose=True, debug=True)
     .withIdOutput()
     # we'll use hash of the base field to generate the ids to avoid a simple incrementing sequence
-    .withColumn("internal_device_id", LongType(), min=0x1000000000000, unique_values=device_population)
+    .withColumn("internal_device_id", LongType(), minValue=0x1000000000000, unique_values=device_population)
 
     # note for format strings, we must use "%lx" not "%x" as the underlying value is a long
     .withColumn("device_id", StringType(), format="0x%013x", base_column="internal_device_id")
@@ -142,7 +178,7 @@ testDataSpec = (dg.DataGenerator(sparkSession=spark, name="device_data_set", row
     # use omit = True if you dont want a column to appear in the final output but just want to use it as part of generation of another column
     .withColumn("line", StringType(), values=lines, base_column="manufacturer", 
            base_column_type="hash", omit=True)
-    .withColumn("model_ser", IntegerType(), min=1, max=11,  base_column="device_id", base_column_type="hash", omit=True)
+    .withColumn("model_ser", IntegerType(), minValue=1, maxValue=11,  base_column="device_id", base_column_type="hash", omit=True)
 
     .withColumn("model_line", StringType(), expr="concat(line, '#', model_ser)", base_column=["line", "model_ser"])
     .withColumn("event_type", StringType(), values=["activation", "deactivation", "plan change", "telecoms activity", "internet activity", "device error"], random=True)

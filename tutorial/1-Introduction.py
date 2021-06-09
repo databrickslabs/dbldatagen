@@ -61,12 +61,12 @@ from pyspark.sql.types import IntegerType, StringType, FloatType, TimestampType
 
 # will have implied column `id` for ordinal of row
 testdata_defn = (datagen.DataGenerator(sparkSession=spark, name="basic_dataset", rows=100000000, partitions=20, verbose=True)
-      .withColumn("code1", IntegerType(), min=1, max=20, step=1)
-      .withColumn("code2", IntegerType(), max=1000, step=5)
-      .withColumn("code3", IntegerType(), min=100, max=200, step=1, random=True)
-      .withColumn("xcode", StringType(), values=[ "a","test", "value" ], random=True)
-      .withColumn("rating", FloatType(), min=1.0, max=5.0,step = 0.01, random=True)
-      .withColumn("non_scaled_rating", FloatType(), min=1.0, max=5.0, continuous=True,  random=True))
+      .withColumn("code1", IntegerType(), minValue=1, maxValue=20, step=1)
+      .withColumn("code2", IntegerType(), maxValue=1000, step=5)
+      .withColumn("code3", IntegerType(), minValue=100, maxValue=200, step=1, random=True)
+      .withColumn("xcode", StringType(), values=["a","test", "value"], random=True)
+      .withColumn("rating", FloatType(), minValue=1.0, maxValue=5.0, step=0.01, random=True)
+      .withColumn("non_scaled_rating", FloatType(), minValue=1.0, maxValue=5.0, continuous=True,  random=True))
 
 df = testdata_defn.build()
 
@@ -105,7 +105,7 @@ x3 = (datagen.DataGenerator(sparkSession=spark, name="association_oss_cell_info"
       # base column specifies dependent column
       .withIdOutput()
       .withColumnSpec("site_cd", prefix='site', base_column='site_id')
-      .withColumn("sector_status_desc", "string", min=1, max=200, step=1, prefix='status', random=True)
+      .withColumn("sector_status_desc", "string", minValue=1, maxValue=200, step=1, prefix='status', random=True)
       # withColumn adds specification for new column
       .withColumn("rand", "float", expr="floor(rand() * 350) * (86400 + 3600)")
       .withColumn("last_sync_dt", "timestamp", begin=start, end=end, interval=interval, random=True)
