@@ -34,5 +34,5 @@ setuptools.setup(
         "Test Data Generator",
         "Synthetic Data Generator"
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.8',
 )
