@@ -32,7 +32,6 @@ class TestWeights(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        print("tear down")
         spark.stop()
 
     @classmethod
