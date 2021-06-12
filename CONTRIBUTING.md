@@ -15,9 +15,16 @@ warrant that you have the legal authority to do so.
 
 ## Python compatibility
 
-The code has been tested with Python 3.7.6 
+The code has been tested with Python 3.7.5 and 3.8
+
+## Checking your code for common issues
+
+Run `./lint.sh` from the project root directory to run various code style checks. 
+These are based on the use of `prospector`, `pylint` and related tools.
 
 ## Setting up your build environment
+Run `make buildenv` from the root of the project directory to setup a `pipenv` based build environment.
+
 Run `make create-dev-env` from the root of the project directory to 
 set up a conda based virtualized Python build environment in the project directory.
 
@@ -27,23 +34,36 @@ directly in your environment.
 
 ## Build steps
 
-Our recommended mechanism for building the code is to use a conda based development process. 
+Our recommended mechanism for building the code is to use a `conda` or `pipenv` based development process. 
 
 But it can be built with any Python virtualization environment.
 
-To use this, perform the following commands:
+### Building with Conda
+To build with `conda`, perform the following commands:
   - `make create-dev-env` from the main project directory to create your conda environment, if using
   - activate the conda environment - e.g `conda activate dbl_testdatagenerator`
   - install the necessary dependencies in your conda environment via `make install-dev-dependencies`
   
-  use the following to build and run the tests with a coverage report
-  - Run  ` make test-with-html-report` from the main project directory.
+  - use the following to build and run the tests with a coverage report
+    - Run  `make dev-test-with-html-report` from the main project directory.
 
-Use the following command to make the distributable:
-  - Run `make dist` from the main project directory
+  - Use the following command to make the distributable:
+    - Run `make dev-dist` from the main project directory
   - The resulting wheel file will be placed in the `dist` subdirectory
   
-The resulting build has been tested against Spark 3.1
+### Building with Pipenv
+To build with `pipenv`, perform the following commands:
+  - `make buildenv` from the main project directory to create your conda environment, if using
+  - install the necessary dependencies in your conda environment via `make install-dev-dependencies`
+  
+  - use the following to build and run the tests with a coverage report
+    - Run  `make test-with-html-report` from the main project directory.
+
+  - Use the following command to make the distributable:
+    - Run `make dist` from the main project directory
+  - The resulting wheel file will be placed in the `dist` subdirectory
+
+The resulting build has been tested against Spark 3.0.1
 
 ## Creating the HTML documentation
 
@@ -63,9 +83,15 @@ similar to pick up correct python versions. The make target `create`
 
 If necessary, set `PYSPARK_PYTHON` and `PYSPARK_DRIVER_PYTHON` to point to correct versions of Python.
 
-Run  `make tests` from the main project directory to run the unit tests.
+To run the tests using a `conda` environment:
+  - Run `make dev-test` from the main project directory to run the unit tests.
 
-Run `make test-with-html-report` to generate test coverage report in `htmlcov/inxdex.html`
+  - Run `make dev-test-with-html-report` to generate test coverage report in `htmlcov/inxdex.html`
+
+To run the tests using a `pipenv` environment:
+  - Run `make test` from the main project directory to run the unit tests.
+
+  - Run `make test-with-html-report` to generate test coverage report in `htmlcov/inxdex.html`
 
 # Using the test data generator
 To use the project, the generated wheel should be installed in your Python notebook as a wheel based library
