@@ -2,12 +2,13 @@
 
 ### Requirements
 
-See the contents of the file [python/require.txt] to see the Python package dependencies
+See the contents of the file `python/require.txt` to see the Python package dependencies
 
-### Version 0.10.1-dev6
+### Version 0.10.1-dev10
 
 #### Features
-* Uses Conda based build process (optional)
+* Uses pipenv for main build process
+* Supports Conda based development build process
 * Uses `pytest-cov` to track unit test coverage
 * Added HTML help - use `make docs` to create it
 * Added support for weights with non-random columns

@@ -1,6 +1,8 @@
 # This Makefile is for project development purposes only.
 .PHONY: clean wheel dist test buildenv install
 
+ENV_NAME=dbl_testdatagenerator
+
 NO_COLOR = \x1b[0m
 OK_COLOR = \x1b[32;01m
 ERROR_COLOR = \x1b[31;01m
@@ -20,8 +22,28 @@ prepare: clean
 	git status
 	git commit -m "cleanup before release"
 
+
+create-dev-env:
+	@echo "$(OK_COLOR)=> making conda dev environment$(NO_COLOR)"
+	conda create -n $(ENV_NAME) python=3.7.5
+
+create-github-build-env:
+	@echo "$(OK_COLOR)=> making conda dev environment$(NO_COLOR)"
+	conda create -n pip_$(ENV_NAME) python=3.8
+
+install-dev-dependencies:
+	@echo "$(OK_COLOR)=> installing dev environment requirements$(NO_COLOR)"
+	pip install -r python/dev_require.txt
+
+clean-dev-env:
+	@echo "$(OK_COLOR)=> Cleaning dev environment$(NO_COLOR)"
+	@echo "Current version: $(CURRENT_VERSION)"
+	@rm -fr build dist $(EGGS) $(PYCACHE) databrickslabs_testdatagenerator/lib/* databrickslabs_testdatagenerator/env_files/*
+
+
 buildenv: 
-	@echo "$(OK_COLOR)=> Checking build virtual environment ...$(NO_COLOR)"
+	@echo "$(OK_COLOR)=> Creating and checking build virtual environment ...$(NO_COLOR)"
+	pip install pipenv
 	pipenv install --dev
 
 clean_buildenv:
@@ -33,12 +55,33 @@ docs: install
 	@-mkdir python/docs/source/relnotes
 	@cp -f python/require.txt python/docs/source/relnotes/require.md
 	@cp -f CONTRIBUTING.md python/docs/source/relnotes/
-	@cp -f RELEASE_NOTES.md python/docs/source/relnotes/
+	@cp -f CHANGELOG.md python/docs/source/relnotes/
+	@cp -f python/docs/APIDOCS.md python/docs/source/relnotes/
+	@cd python/docs && make docs
+
+dev-docs: dev-install
+	@echo "$(OK_COLOR)=> Creating docs ...$(NO_COLOR)"
+	@-mkdir python/docs/source/relnotes
+	@cp -f python/require.txt python/docs/source/relnotes/require.md
+	@cp -f CONTRIBUTING.md python/docs/source/relnotes/
+	@cp -f CHANGELOG.md python/docs/source/relnotes/
 	@cp -f python/docs/APIDOCS.md python/docs/source/relnotes/
 	@cd python/docs && make docs
 
 # Tests
 test: export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
+
+dev-test: export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
+
+dev-test:
+	@echo "$(OK_COLOR)=> Running unit tests$(NO_COLOR)"
+	pytest tests/ --cov databrickslabs_testdatagenerator
+
+dev-test-with-html-report:
+	@echo "$(OK_COLOR)=> Running unit tests with HTML test coverage report$(NO_COLOR)"
+	pytest --cov databrickslabs_testdatagenerator --cov-report html -s
+	@echo "$(OK_COLOR)=> the test coverage report can be found at htmlcov/index.html$(NO_COLOR)"
+
 
 test: buildenv
 	@echo "$(OK_COLOR)=> Running unit tests$(NO_COLOR)"
@@ -56,12 +99,12 @@ ifdef version
 	@bumpversion --config-file python/.bumpversion.cfg --allow-dirty --new-version $(version) $(part) ; \
 	grep current python/.bumpversion.cfg ; \
 	grep -H version setup.py ; \
-	grep -H "Version" RELEASE_NOTES.md
+	grep -H "Version" CHANGELOG.md
 else
 	bumpversion --config-file python/.bumpversion.cfg --allow-dirty $(part) ; \
 	grep current python/.bumpversion.cfg ; \
 	grep -H "version" setup.py ; \
-	grep -H "Version" RELEASE_NOTES.md
+	grep -H "Version" CHANGELOG.md
 endif
 else
 	@echo "$(ERROR_COLOR)Provide part=major|minor|patch|release|build and optionally version=x.y.z...$(NO_COLOR)"
@@ -84,6 +127,17 @@ dist:
 	@echo "new package is located in dist - listing wheel files"
 	@find ./dist -name "*.whl" -print
 
+dev-dist:
+	@echo "$(OK_COLOR)=> building dist of wheel$(NO_COLOR)"
+	# clean out old dist files - ignore any errors flagged
+	@- test -d `pwd`/dist && test -n "$(find `pwd`/dist/ -name '*.whl' -print -quit)" && echo "found" && rm `pwd`/dist/*
+	@echo "current dir is `pwd`"
+	@echo "`ls ./dist`"
+	@python3 setup.py sdist bdist_wheel
+	@touch `pwd`/dist/dev-dist_flag.txt
+	@echo "new package is located in dist - listing wheel files"
+	@find ./dist -name "*.whl" -print
+
 new_artifact: buildenv
 	@echo "$(OK_COLOR)=> committing new artifact$(NO_COLOR)"
 	-git rm --cached `pwd`/dist/"*.whl"
@@ -91,6 +145,8 @@ new_artifact: buildenv
 
 
 dist/dist_flag.txt: dist
+
+dist/dev-dist_flag.txt: dev-dist
 
 newbuild:
 	bumpversion --config-file python/.bumpversion.cfg --allow-dirty part=build ; \
@@ -117,4 +173,12 @@ install: buildenv dist/dist_flag.txt
 	@pip3 install --upgrade .
 	@touch `pwd`/dist/install_flag.txt
 
+dev-install: dist/dev-dist_flag.txt
+	@echo "$(OK_COLOR)=> Installing databrickslabs_testdatagenerator$(NO_COLOR)"
+	@cp README.md python/
+	@pip3 install --upgrade .
+	@touch `pwd`/dist/dev-install_flag.txt
+
 dist/install_flag.txt: install
+
+dist/dev-install_flag.txt: dev-install
