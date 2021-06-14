@@ -74,7 +74,7 @@ class TestQuickTests(unittest.TestCase):
                         .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)")
                         .withColumn("code1a", IntegerType(), unique_values=100)
                         .withColumn("code1b", IntegerType(), min=1, max=200)
-                        .withColumn("code2", IntegerType(), max=10)
+                        .withColumn("code2", IntegerType(), maxValue=10)
                         .withColumn("code3", StringType(), values=['a', 'b', 'c'])
                         .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
                         .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
@@ -121,8 +121,10 @@ class TestQuickTests(unittest.TestCase):
     def test_column_specifications(self):
         tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
                 .withSchema(schema)
-                .withColumn("sector_status_desc", StringType(), min=1, max=200, step=1, prefix='status', random=True)
-                .withColumn("s", StringType(), min=1, max=200, step=1, prefix='status', random=True, omit=True))
+                .withColumn("sector_status_desc", StringType(), minValue=1, maxValue=200, step=1,
+                            prefix='status', random=True)
+                .withColumn("s", StringType(), minValue=1, maxValue=200, step=1, prefix='status',
+                            random=True, omit=True))
 
         print("test_column_specifications")
         expectedColumns = set((["id", "site_id", "site_cd", "c", "c1", "sector_status_desc", "s"]))
@@ -131,8 +133,10 @@ class TestQuickTests(unittest.TestCase):
     def test_inferred_columns(self):
         tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
                 .withSchema(schema)
-                .withColumn("sector_status_desc", StringType(), min=1, max=200, step=1, prefix='status', random=True)
-                .withColumn("s", StringType(), min=1, max=200, step=1, prefix='status', random=True, omit=True))
+                .withColumn("sector_status_desc", StringType(), minValue=1, maxValue=200, step=1,
+                            prefix='status', random=True)
+                .withColumn("s", StringType(), minValue=1, maxValue=200, step=1, prefix='status',
+                            random=True, omit=True))
 
         print("test_inferred_columns")
         expectedColumns = set((["id", "site_id", "site_cd", "c", "c1", "sector_status_desc", "s"]))
@@ -142,8 +146,10 @@ class TestQuickTests(unittest.TestCase):
     def test_output_columns(self):
         tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
                 .withSchema(schema)
-                .withColumn("sector_status_desc", StringType(), min=1, max=200, step=1, prefix='status', random=True)
-                .withColumn("s", StringType(), min=1, max=200, step=1, prefix='status', random=True, omit=True))
+                .withColumn("sector_status_desc", StringType(), minValue=1, maxValue=200, step=1,
+                            prefix='status', random=True)
+                .withColumn("s", StringType(), minValue=1, maxValue=200, step=1, prefix='status',
+                            random=True, omit=True))
 
         print("test_output_columns")
         expectedColumns = set((["site_id", "site_cd", "c", "c1", "sector_status_desc"]))
@@ -154,8 +160,10 @@ class TestQuickTests(unittest.TestCase):
     def test_with_column_spec_for_missing_column(self):
         tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
                 .withSchema(schema)
-                .withColumn("sector_status_desc", StringType(), min=1, max=200, step=1, prefix='status', random=True)
-                .withColumn("s", StringType(), min=1, max=200, step=1, prefix='status', random=True, omit=True))
+                .withColumn("sector_status_desc", StringType(), minValue=1, maxValue=200, step=1,
+                            prefix='status', random=True)
+                .withColumn("s", StringType(), minValue=1, maxValue=200, step=1, prefix='status',
+                            random=True, omit=True))
 
         print("test_with_column_spec_for_missing_column")
         # with self.assertRaises(Exception):
@@ -166,8 +174,10 @@ class TestQuickTests(unittest.TestCase):
     def test_with_column_spec_for_duplicate_column(self):
         tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
                 .withSchema(schema)
-                .withColumn("sector_status_desc", StringType(), min=1, max=200, step=1, prefix='status', random=True)
-                .withColumn("s", StringType(), min=1, max=200, step=1, prefix='status', random=True, omit=True))
+                .withColumn("sector_status_desc", StringType(), minValue=1, maxValue=200, step=1,
+                            prefix='status', random=True)
+                .withColumn("s", StringType(), minValue=1, maxValue=200, step=1, prefix='status',
+                            random=True, omit=True))
 
         print("test_with_column_spec_for_duplicate_column")
         # with self.assertRaises(Exception):
@@ -179,18 +189,22 @@ class TestQuickTests(unittest.TestCase):
     def test_with_column_spec_for_duplicate_column2(self):
         tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
                 .withSchema(schema)
-                .withColumn("sector_status_desc", StringType(), min=1, max=200, step=1, prefix='status', random=True)
-                .withColumn("s", StringType(), min=1, max=200, step=1, prefix='status', random=True, omit=True))
+                .withColumn("sector_status_desc", StringType(), minValue=1, maxValue=200, step=1,
+                            prefix='status', random=True)
+                .withColumn("s", StringType(), minValue=1, maxValue=200, step=1, prefix='status',
+                            random=True, omit=True))
 
         print("test_with_column_spec_for_duplicate_column2")
-        t2 = tgen.withColumn("site_id", "string", min=1, max=200, step=1, random=True)
+        t2 = tgen.withColumn("site_id", "string", minValue=1, maxValue=200, step=1, random=True)
         assert t2 is not None, "expecting t2 to be a new generator spec"
 
     def test_with_column_spec_for_id_column(self):
         tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
                 .withSchema(schema)
-                .withColumn("sector_status_desc", StringType(), min=1, max=200, step=1, prefix='status', random=True)
-                .withColumn("s", StringType(), min=1, max=200, step=1, prefix='status', random=True, omit=True))
+                .withColumn("sector_status_desc", StringType(), minValue=1, maxValue=200, step=1,
+                            prefix='status', random=True)
+                .withColumn("s", StringType(), minValue=1, maxValue=200, step=1, prefix='status',
+                            random=True, omit=True))
 
         print("test_with_column_spec_for_id_column")
         t2 = tgen.withIdOutput()
@@ -204,10 +218,10 @@ class TestQuickTests(unittest.TestCase):
                                          partitions=4)
                         .withIdOutput()
                         .withColumn("code1a", IntegerType(), unique_values=100)
-                        .withColumn("code1b", IntegerType(), min=1, max=100)
-                        .withColumn("code1c", IntegerType(), min=1, max=200, unique_values=100)
-                        .withColumn("code1d", IntegerType(), min=1, max=200, step=3, unique_values=50)
-                        .withColumn("code2", IntegerType(), max=10)
+                        .withColumn("code1b", IntegerType(), minValue=1, maxValue=100)
+                        .withColumn("code1c", IntegerType(), minValue=1, maxValue=200, unique_values=100)
+                        .withColumn("code1d", IntegerType(), minValue=1, maxValue=200, step=3, unique_values=50)
+                        .withColumn("code2", IntegerType(), maxValue=10)
                         .withColumn("code3", StringType(), values=['a', 'b', 'c'])
                         .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
                         .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
@@ -230,7 +244,7 @@ class TestQuickTests(unittest.TestCase):
                                          partitions=4)
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), unique_values=100)
-                        .withColumn("val2", IntegerType(), min=1, max=100)
+                        .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
                         .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"],
                                     base_column_type="values")
                         )
@@ -246,7 +260,7 @@ class TestQuickTests(unittest.TestCase):
                                          partitions=4)
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), unique_values=100)
-                        .withColumn("val2", IntegerType(), min=1, max=100)
+                        .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
                         .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"],
                                     base_column_type="hash")
                         )
@@ -262,7 +276,7 @@ class TestQuickTests(unittest.TestCase):
                                          partitions=4)
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), unique_values=100)
-                        .withColumn("val2", IntegerType(), min=1, max=100)
+                        .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
                         .withColumn("str6", StringType(), template=r"\v0 \v1", base_column=["val1", "val2"])
                         )
 
@@ -277,7 +291,7 @@ class TestQuickTests(unittest.TestCase):
                                          partitions=4)
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), unique_values=100)
-                        .withColumn("val2", IntegerType(), min=1, max=100)
+                        .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
 
                         .withColumn("str5b", StringType(), format="test %s", base_column=["val1", "val2"],
                                     values=["one", "two", "three"])
@@ -295,7 +309,7 @@ class TestQuickTests(unittest.TestCase):
                                          partitions=4)
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), unique_values=100)
-                        .withColumn("val2", IntegerType(), min=1, max=100)
+                        .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
 
                         # in this case values from base column are passed as array
                         .withColumn("str5b", StringType(), format="test %s", base_column=["val1", "val2"])
@@ -314,7 +328,7 @@ class TestQuickTests(unittest.TestCase):
                                          partitions=4)
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), unique_values=100)
-                        .withColumn("val2", IntegerType(), min=1, max=100)
+                        .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
 
                         # when specifying multiple base columns
                         .withColumn("str5b", StringType(), format="test %s %s", base_column=["val1", "val2"],
@@ -333,7 +347,7 @@ class TestQuickTests(unittest.TestCase):
                                          partitions=4)
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), unique_values=100)
-                        .withColumn("val2", IntegerType(), min=1, max=100)
+                        .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
 
                         .withColumn("str1", StringType(), format="test %s", base_column=["val1", "val2"],
                                     values=["one", "two", "three"])
@@ -358,7 +372,7 @@ class TestQuickTests(unittest.TestCase):
                                          partitions=4)
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), unique_values=100)
-                        .withColumn("val2", IntegerType(), min=1, max=100)
+                        .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
                         .withColumn("str1", StringType(), format="test %d")
                         # .withColumn("str1a", StringType(), format="test %s")
                         .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"],
@@ -385,7 +399,7 @@ class TestQuickTests(unittest.TestCase):
                                          partitions=4)
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), unique_values=100)
-                        .withColumn("val2", IntegerType(), min=1, max=100)
+                        .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
                         .withColumn("val3", StringType(), values=["one", "two", "three"])
                         )
 
@@ -399,14 +413,14 @@ class TestQuickTests(unittest.TestCase):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="ranged_data", rows=100000,
                                          partitions=4)
                         .withIdOutput()
-                        .withColumn("val1", IntegerType(), min=100, max=1, step=-1)
-                        .withColumn("val2", IntegerType(), min=100, max=1, step=-3, unique_values=5)
+                        .withColumn("val1", IntegerType(), minValue=100, maxValue=1, step=-1)
+                        .withColumn("val2", IntegerType(), minValue=100, maxValue=1, step=-3, unique_values=5)
                         .withColumn("val3", IntegerType(), data_range=NRange(100, 1, -1), unique_values=5)
-                        .withColumn("val4", IntegerType(), min=1, max=100, step=3, unique_values=5)
-                        .withColumn("code1b", IntegerType(), min=1, max=100)
-                        .withColumn("code1c", IntegerType(), min=1, max=200, unique_values=100)
-                        .withColumn("code1d", IntegerType(), min=1, max=200)
-                        .withColumn("code2", IntegerType(), max=10)
+                        .withColumn("val4", IntegerType(), minValue=1, maxValue=100, step=3, unique_values=5)
+                        .withColumn("code1b", IntegerType(), minValue=1, maxValue=100)
+                        .withColumn("code1c", IntegerType(), minValue=1, maxValue=200, unique_values=100)
+                        .withColumn("code1d", IntegerType(), minValue=1, maxValue=200)
+                        .withColumn("code2", IntegerType(), maxValue=10)
                         .withColumn("code3", StringType(), values=['a', 'b', 'c'])
                         .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
                         .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
@@ -468,7 +482,7 @@ class TestQuickTests(unittest.TestCase):
                                          partitions=4)
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), unique_values=100)
-                        .withColumn("val2", IntegerType(), min=1, max=100)
+                        .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
                         .withColumn("str1", StringType(), format="test %d")
                         # .withColumn("str1a", StringType(), format="test %s")
                         .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"],
@@ -506,7 +520,7 @@ class TestQuickTests(unittest.TestCase):
                                          partitions=4)
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), unique_values=100)
-                        .withColumn("val2", IntegerType(), min=1, max=100)
+                        .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
                         .withColumn("str1", StringType(), format="test %d")
                         # .withColumn("str1a", StringType(), format="test %s")
                         .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"],
@@ -545,7 +559,7 @@ class TestQuickTests(unittest.TestCase):
                                          partitions=4)
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), unique_values=100)
-                        .withColumn("val2", IntegerType(), min=1, max=100)
+                        .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
                         .withColumn("str1", StringType(), format="test %d")
                         # .withColumn("str1a", StringType(), format="test %s")
                         .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"],

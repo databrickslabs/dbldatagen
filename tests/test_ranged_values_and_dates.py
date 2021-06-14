@@ -27,7 +27,15 @@ class TestRangedValuesAndDates(unittest.TestCase):
         print("minValue", datetime.fromtimestamp(x.minValue))
         print("maxValue", datetime.fromtimestamp(x.maxValue))
 
-        # TODO: add validation statement
+        # validation statements
+        interval = timedelta(days=7, hours=0)
+        start = datetime(2017, 10, 1, 0, 0, 0)
+        end = datetime(2018, 10, 6, 11, 55, 0)
+
+        self.assertEqual(start, datetime.fromtimestamp(x.minValue))
+        # note end is normalized to max value, which may be less than desired max value due to interval range
+        self.assertGreaterEqual(end, datetime.fromtimestamp(x.maxValue))
+        self.assertEqual(interval, x.interval)
 
     def test_date_range_object2(self):
         interval = timedelta(days=7, hours=0)
@@ -42,6 +50,10 @@ class TestRangedValuesAndDates(unittest.TestCase):
         print("maxValue gm", datetime.utcfromtimestamp(x.maxValue))
 
         # TODO: add validation statement
+        self.assertEqual(start, datetime.fromtimestamp(x.minValue))
+        # note end is normalized to max value, which may be less than desired max value due to interval range
+        self.assertGreaterEqual(end, datetime.fromtimestamp(x.maxValue))
+        self.assertEqual(interval, x.interval)
 
     def test_basic_dates(self):
         interval = timedelta(days=7, hours=1)
@@ -361,7 +373,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
                       .withColumn("code1", "int", unique_values=7)
-                      .withColumn("code2", "int", unique_values=7, min=20)
+                      .withColumn("code2", "int", unique_values=7, minValue=20)
                       .build()
                       )
 
@@ -390,13 +402,13 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertEqual(summary[0], 51)
 
     def test_unique_values_ts2(self):
-        testDataUniqueDF2 = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
-                             .withIdOutput()
-                             .withColumn("test_ts", "timestamp", unique_values=51)
-                             .build()
-                             )
+        df_unique_ts2 = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+                         .withIdOutput()
+                         .withColumn("test_ts", "timestamp", unique_values=51)
+                         .build()
+                         )
 
-        testDataUniqueDF2.createOrReplaceTempView("testUnique2")
+        df_unique_ts2.createOrReplaceTempView("testUnique2")
 
         dfResults = spark.sql("select count(distinct test_ts) from testUnique2")
         summary = dfResults.collect()[0]
@@ -421,7 +433,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
     def test_unique_values_ts4(self):
 
-        testDataUniqueTSDF2 = (
+        df_unique_ts4 = (
             datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
                 .withIdOutput()
                 .withColumn("test_ts", "timestamp", unique_values=51, random=True,
@@ -429,7 +441,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
                 .build()
         )
 
-        testDataUniqueTSDF2.createOrReplaceTempView("testUniqueTS4")
+        df_unique_ts4.createOrReplaceTempView("testUniqueTS4")
 
         dfResults = spark.sql("select count(distinct test_ts) from testUniqueTS4")
         summary = dfResults.collect()[0]
@@ -453,13 +465,13 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
     def test_unique_values_date2(self):
         ''' Check for unique dates'''
-        testDataUniqueDF4 = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
-                             .withIdOutput()
-                             .withColumn("test_ts", "date", unique_values=51, random=True)
-                             .build()
-                             )
+        df_unique_date2 = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+                           .withIdOutput()
+                           .withColumn("test_ts", "date", unique_values=51, random=True)
+                           .build()
+                           )
 
-        testDataUniqueDF4.createOrReplaceTempView("testUnique4")
+        df_unique_date2.createOrReplaceTempView("testUnique4")
 
         dfResults = spark.sql("select count(distinct test_ts) from testUnique4")
         summary = dfResults.collect()[0]
@@ -467,7 +479,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
     def test_unique_values_date3(self):
         ''' Check for unique dates when begin, end and interval are specified'''
-        testDataUniqueDF4a = (
+        df_unique_date3 = (
             datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
                 .withIdOutput()
                 .withColumn("test_ts", "date", unique_values=51, random=True, begin="2017-10-01", end="2018-10-06",
@@ -475,7 +487,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
                 .build()
         )
 
-        testDataUniqueDF4a.createOrReplaceTempView("testUnique4a")
+        df_unique_date3.createOrReplaceTempView("testUnique4a")
 
         dfResults = spark.sql("select count(distinct test_ts) from testUnique4a")
         summary = dfResults.collect()[0]
@@ -573,20 +585,20 @@ class TestRangedValuesAndDates(unittest.TestCase):
         print("passed")
 
     def test_unique_values_float2(self):
-        testDataUniqueFloatssDF3 = (
+        df_unique_float2 = (
             datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4, verbose=True,
                                   debug=True)
                 .withIdOutput()
-                .withColumn("val1", "float", unique_values=51, random=True, min=1.0)
-                .withColumn("val2", "float", unique_values=57, min=-5.0)
-                .withColumn("val3", "double", unique_values=93, min=1.0, step=0.24)
-                .withColumn("val4", "double", unique_values=87, random=True, min=1.0, step=0.24)
+                .withColumn("val1", "float", unique_values=51, random=True, minValue=1.0)
+                .withColumn("val2", "float", unique_values=57, minValue=-5.0)
+                .withColumn("val3", "double", unique_values=93, minValue=1.0, step=0.24)
+                .withColumn("val4", "double", unique_values=87, random=True, minValue=1.0, step=0.24)
                 .build()
         )
 
-        testDataUniqueFloatssDF3.show()
+        df_unique_float2.show()
 
-        testDataUniqueFloatssDF3.createOrReplaceTempView("testUniqueFloats2")
+        df_unique_float2.createOrReplaceTempView("testUniqueFloats2")
 
         dfResults = spark.sql("""
         select count(distinct val1), 
@@ -603,17 +615,19 @@ class TestRangedValuesAndDates(unittest.TestCase):
         print("passed")
 
     def test_ranged_data_int(self):
-        testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
-                        .withIdOutput()
-                        .withColumn("nint", IntegerType(), min=1, max=9, step=2)
-                        .withColumn("nint2", IntegerType(), percent_nulls=10.0, min=1, max=9, step=2)
-                        .withColumn("nint3", IntegerType(), percent_nulls=10.0, min=1, max=9, step=2, random=True)
-                        .withColumn("sint", ShortType(), min=1, max=9, step=2)
-                        .withColumn("sint2", ShortType(), percent_nulls=10.0, min=1, max=9, step=2)
-                        .withColumn("sint3", ShortType(), percent_nulls=10.0, min=1, max=9, step=2, random=True)
-                        )
+        ds_data_int = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
+                       .withIdOutput()
+                       .withColumn("nint", IntegerType(), minValue=1, maxValue=9, step=2)
+                       .withColumn("nint2", IntegerType(), percent_nulls=10.0, minValue=1, maxValue=9, step=2)
+                       .withColumn("nint3", IntegerType(), percent_nulls=10.0, minValue=1, maxValue=9, step=2,
+                                   random=True)
+                       .withColumn("sint", ShortType(), minValue=1, maxValue=9, step=2)
+                       .withColumn("sint2", ShortType(), percent_nulls=10.0, minValue=1, maxValue=9, step=2)
+                       .withColumn("sint3", ShortType(), percent_nulls=10.0, minValue=1, maxValue=9, step=2,
+                                   random=True)
+                       )
 
-        results = testDataSpec.build()
+        results = ds_data_int.build()
 
         # check ranged int data
         nint_values = [r[0] for r in results.select("nint").distinct().collect()]
@@ -640,9 +654,11 @@ class TestRangedValuesAndDates(unittest.TestCase):
         long_min = 3147483651
         testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
                         .withIdOutput()
-                        .withColumn("lint", LongType(), min=long_min, max=long_min + 8, step=2)
-                        .withColumn("lint2", LongType(), percent_nulls=10.0, min=long_min, max=long_min + 8, step=2)
-                        .withColumn("lint3", LongType(), percent_nulls=10.0, min=long_min, max=long_min + 8, step=2,
+                        .withColumn("lint", LongType(), minValue=long_min, maxValue=long_min + 8, step=2)
+                        .withColumn("lint2", LongType(), minValue=long_min, maxValue=long_min + 8, step=2,
+                                    percent_nulls=10.0)
+                        .withColumn("lint3", LongType(), minValue=long_min, maxValue=long_min + 8, step=2,
+                                    percent_nulls=10.0,
                                     random=True)
                         )
 
@@ -661,10 +677,12 @@ class TestRangedValuesAndDates(unittest.TestCase):
     def test_ranged_data_byte(self):
         testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
                         .withIdOutput()
-                        .withColumn("byte1", ByteType(), min=1, max=9, step=2)
-                        .withColumn("byte2", ByteType(), percent_nulls=10.0, min=1, max=9, step=2)
-                        .withColumn("byte3", ByteType(), percent_nulls=10.0, min=1, max=9, step=2, random=True)
-                        .withColumn("byte4", ByteType(), percent_nulls=10.0, min=-5, max=5, step=2, random=True)
+                        .withColumn("byte1", ByteType(), minValue=1, maxValue=9, step=2)
+                        .withColumn("byte2", ByteType(), percent_nulls=10.0, minValue=1, maxValue=9, step=2)
+                        .withColumn("byte3", ByteType(), percent_nulls=10.0, minValue=1, maxValue=9, step=2,
+                                    random=True)
+                        .withColumn("byte4", ByteType(), percent_nulls=10.0, minValue=-5, maxValue=5, step=2,
+                                    random=True)
                         )
 
         results = testDataSpec.build()
@@ -685,12 +703,14 @@ class TestRangedValuesAndDates(unittest.TestCase):
     def test_ranged_data_float1(self):
         testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
                         .withIdOutput()
-                        .withColumn("fval", FloatType(), min=1.0, max=9.0, step=2.0)
-                        .withColumn("fval2", FloatType(), percent_nulls=10.0, min=1.0, max=9.0, step=2.0)
-                        .withColumn("fval3", FloatType(), percent_nulls=10.0, min=1.0, max=9.0, step=2.0, random=True)
-                        .withColumn("dval1", DoubleType(), min=1.0, max=9.0, step=2.0)
-                        .withColumn("dval2", DoubleType(), percent_nulls=10.0, min=1.0, max=9.0, step=2.0)
-                        .withColumn("dval3", DoubleType(), percent_nulls=10.0, min=1.0, max=9.0, step=2.0, random=True)
+                        .withColumn("fval", FloatType(), minValue=1.0, maxValue=9.0, step=2.0)
+                        .withColumn("fval2", FloatType(), percent_nulls=10.0, minValue=1.0, maxValue=9.0, step=2.0)
+                        .withColumn("fval3", FloatType(), percent_nulls=10.0, minValue=1.0, maxValue=9.0, step=2.0,
+                                    random=True)
+                        .withColumn("dval1", DoubleType(), minValue=1.0, maxValue=9.0, step=2.0)
+                        .withColumn("dval2", DoubleType(), percent_nulls=10.0, minValue=1.0, maxValue=9.0, step=2.0)
+                        .withColumn("dval3", DoubleType(), percent_nulls=10.0, minValue=1.0, maxValue=9.0, step=2.0,
+                                    random=True)
                         )
 
         results = testDataSpec.build()
@@ -719,12 +739,14 @@ class TestRangedValuesAndDates(unittest.TestCase):
     def test_ranged_data_float2(self):
         testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
                         .withIdOutput()
-                        .withColumn("fval", FloatType(), min=1.5, max=3.5, step=0.5)
-                        .withColumn("fval2", FloatType(), percent_nulls=10.0, min=1.5, max=3.5, step=0.5)
-                        .withColumn("fval3", FloatType(), percent_nulls=10.0, min=1.5, max=3.5, step=0.5, random=True)
-                        .withColumn("dval1", DoubleType(), min=1.5, max=3.5, step=0.5)
-                        .withColumn("dval2", DoubleType(), percent_nulls=10.0, min=1.5, max=3.5, step=0.5)
-                        .withColumn("dval3", DoubleType(), percent_nulls=10.0, min=1.5, max=3.5, step=0.5, random=True)
+                        .withColumn("fval", FloatType(), minValue=1.5, maxValue=3.5, step=0.5)
+                        .withColumn("fval2", FloatType(), percent_nulls=10.0, minValue=1.5, maxValue=3.5, step=0.5)
+                        .withColumn("fval3", FloatType(), percent_nulls=10.0, minValue=1.5, maxValue=3.5, step=0.5,
+                                    random=True)
+                        .withColumn("dval1", DoubleType(), minValue=1.5, maxValue=3.5, step=0.5)
+                        .withColumn("dval2", DoubleType(), percent_nulls=10.0, minValue=1.5, maxValue=3.5, step=0.5)
+                        .withColumn("dval3", DoubleType(), percent_nulls=10.0, minValue=1.5, maxValue=3.5, step=0.5,
+                                    random=True)
                         )
 
         results = testDataSpec.build()
@@ -759,12 +781,14 @@ class TestRangedValuesAndDates(unittest.TestCase):
         # when modulo arithmetic does not result in even integer such as '
         testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, verbose=True)
                         .withIdOutput()
-                        .withColumn("fval", FloatType(), min=1.5, max=2.5, step=0.3)
-                        .withColumn("fval2", FloatType(), percent_nulls=10.0, min=1.5, max=2.5, step=0.3)
-                        .withColumn("fval3", FloatType(), percent_nulls=10.0, min=1.5, max=2.5, step=0.3, random=True)
-                        .withColumn("dval1", DoubleType(), min=1.5, max=2.5, step=0.3)
-                        .withColumn("dval2", DoubleType(), percent_nulls=10.0, min=1.5, max=2.5, step=0.3)
-                        .withColumn("dval3", DoubleType(), percent_nulls=10.0, min=1.5, max=2.5, step=0.3, random=True)
+                        .withColumn("fval", FloatType(), minValue=1.5, maxValue=2.5, step=0.3)
+                        .withColumn("fval2", FloatType(), percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3)
+                        .withColumn("fval3", FloatType(), percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3,
+                                    random=True)
+                        .withColumn("dval1", DoubleType(), minValue=1.5, maxValue=2.5, step=0.3)
+                        .withColumn("dval2", DoubleType(), percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3)
+                        .withColumn("dval3", DoubleType(), percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3,
+                                    random=True)
                         )
 
         results = testDataSpec.build()
@@ -794,11 +818,14 @@ class TestRangedValuesAndDates(unittest.TestCase):
     def test_ranged_data_decimal1(self):
         testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
                         .withIdOutput()
-                        .withColumn("decimal1", DecimalType(10, 4), min=1.0, max=9.0, step=2.0)
-                        .withColumn("decimal2", DecimalType(10, 4), percent_nulls=10.0, min=1.0, max=9.0, step=2.0)
-                        .withColumn("decimal3", DecimalType(10, 4), percent_nulls=10.0, min=1.0, max=9.0, step=2.0,
+                        .withColumn("decimal1", DecimalType(10, 4), minValue=1.0, maxValue=9.0, step=2.0)
+                        .withColumn("decimal2", DecimalType(10, 4), percent_nulls=10.0, minValue=1.0, maxValue=9.0,
+                                    step=2.0)
+                        .withColumn("decimal3", DecimalType(10, 4), percent_nulls=10.0, minValue=1.0, maxValue=9.0,
+                                    step=2.0,
                                     random=True)
-                        .withColumn("decimal4", DecimalType(10, 4), percent_nulls=10.0, min=-5, max=5, step=2.0,
+                        .withColumn("decimal4", DecimalType(10, 4), percent_nulls=10.0, minValue=-5, maxValue=5,
+                                    step=2.0,
                                     random=True)
                         )
 
@@ -821,7 +848,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
     def test_ranged_data_string1(self):
         testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
                         .withIdOutput()
-                        .withColumn("s1", StringType(), min=1, max=123, step=1, format="testing %05d >>")
+                        .withColumn("s1", StringType(), minValue=1, maxValue=123, step=1, format="testing %05d >>")
                         )
 
         results = testDataSpec.build()
@@ -834,7 +861,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
     def test_ranged_data_string2(self):
         testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
                         .withIdOutput()
-                        .withColumn("s1", StringType(), min=10, max=123, step=1, format="testing %05d >>")
+                        .withColumn("s1", StringType(), minValue=10, maxValue=123, step=1, format="testing %05d >>")
                         )
 
         results = testDataSpec.build()
@@ -847,7 +874,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
     def test_ranged_data_string3(self):
         testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
                         .withIdOutput()
-                        .withColumn("s1", StringType(), min=10, max=123, step=1, format="testing %05d >>", random=True)
+                        .withColumn("s1", StringType(), minValue=10, maxValue=123, step=1,
+                                    format="testing %05d >>", random=True)
                         )
 
         results = testDataSpec.build()
@@ -860,7 +888,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
     def test_ranged_data_string4(self):
         testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
                         .withIdOutput()
-                        .withColumn("s1", StringType(), min=10, max=123, step=2, format="testing %05d >>", random=True)
+                        .withColumn("s1", StringType(), minValue=10, maxValue=123, step=2,
+                                    format="testing %05d >>", random=True)
                         )
 
         results = testDataSpec.build()
@@ -875,7 +904,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
     def test_ranged_data_string5(self):
         testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
                         .withIdOutput()
-                        .withColumn("s1", StringType(), min=1.5, max=2.5, step=0.3, format="testing %05.1f >>",
+                        .withColumn("s1", StringType(), minValue=1.5, maxValue=2.5, step=0.3,
+                                    format="testing %05.1f >>",
                                     random=True)
                         )
 

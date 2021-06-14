@@ -37,8 +37,8 @@ class TestScripting(unittest.TestCase):
                         .withIdOutput()
                         .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
                                     numColumns=self.column_count)
-                        .withColumn("code1", IntegerType(), min=100, max=200)
-                        .withColumn("code2", IntegerType(), min=0, max=10)
+                        .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
+                        .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
                         .withColumn("code3", StringType(), values=['a', 'b', 'c'])
                         .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
                         .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
@@ -73,8 +73,8 @@ class TestScripting(unittest.TestCase):
                         .withIdOutput()
                         .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
                                     numColumns=self.column_count)
-                        .withColumn("code1", IntegerType(), min=100, max=200)
-                        .withColumn("code2", IntegerType(), min=0, max=10)
+                        .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
+                        .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
                         .withColumn("code3", StringType(), values=['a', 'b', 'c'])
                         .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
                         .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])

@@ -35,7 +35,7 @@ class TestDependentData(unittest.TestCase):
                             .withIdOutput()
                             # we'll use hash of the base field to generate the ids to avoid
                             # generating a simple incrementing sequence
-                            .withColumn("internal_device_id", LongType(), min=0x1000000000000,
+                            .withColumn("internal_device_id", LongType(), minValue=0x1000000000000,
                                         unique_values=cls.devices)
 
                             # note for format strings, we must use "%lx" not "%x" as the underlying value is a long
@@ -57,7 +57,7 @@ class TestDependentData(unittest.TestCase):
                                         base_column_type="hash")
                             .withColumn("line2", StringType(), values=cls.lines, weights=cls.line_weights,
                                         base_column="manufacturer", base_column_type="hash")
-                            .withColumn("model_ser", IntegerType(), min=1, max=11, base_column="device_id",
+                            .withColumn("model_ser", IntegerType(), minValue=1, maxValue=11, base_column="device_id",
                                         base_column_type="hash")
                             .withColumn("model_ser2", IntegerType(), unique_values=11, base_column="device_id",
                                         base_column_type="hash")

@@ -30,6 +30,8 @@ class DateRange(DataRange):
 
     DEFAULT_UTC_TS_FORMAT = "%Y-%m-%d %H:%M:%S"
     DEFAULT_DATE_FORMAT = "%Y-%m-%d"
+    DEFAULT_START_DATE = datetime.strptime("2020-01-01", DEFAULT_DATE_FORMAT)
+    DEFAULT_END_DATE = datetime.strptime("2020-12-31", DEFAULT_DATE_FORMAT)
 
     # todo: deduce format from begin and end params
 

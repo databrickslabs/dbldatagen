@@ -24,12 +24,12 @@ class TestTypes(unittest.TestCase):
         id_partitions = 4
         testdata_defn = (
             datagen.DataGenerator(name="basic_dataset", rows=100000, partitions=id_partitions, verbose=True)
-                .withColumn("code1", IntegerType(), min=1, max=20, step=1)
-                .withColumn("code2", LongType(), max=1000, step=5)
-                .withColumn("code3", IntegerType(), min=100, max=200, step=1, random=True)
+                .withColumn("code1", IntegerType(), minValue=1, maxValue=20, step=1)
+                .withColumn("code2", LongType(), maxValue=1000, step=5)
+                .withColumn("code3", IntegerType(), minValue=100, maxValue=200, step=1, random=True)
                 .withColumn("xcode", StringType(), values=["a", "test", "value"], random=True)
-                .withColumn("rating", FloatType(), min=1.0, max=5.0, step=0.00001, random=True)
-                .withColumn("drating", DoubleType(), min=1.0, max=5.0, step=0.00001, random=True))
+                .withColumn("rating", FloatType(), minValue=1.0, maxValue=5.0, step=0.00001, random=True)
+                .withColumn("drating", DoubleType(), minValue=1.0, maxValue=5.0, step=0.00001, random=True))
 
         df = testdata_defn.build().cache()
         df.printSchema()
@@ -52,8 +52,8 @@ class TestTypes(unittest.TestCase):
             datagen.DataGenerator(name="basic_dataset", rows=num_rows, partitions=id_partitions, verbose=True)
                 .withColumn("basic_byte", ByteType())
                 .withColumn("basic_short", ShortType())
-                .withColumn("code1", ByteType(), min=1, max=20, step=1)
-                .withColumn("code2", ShortType(), max=1000, step=5))
+                .withColumn("code1", ByteType(), minValue=1, maxValue=20, step=1)
+                .withColumn("code2", ShortType(), maxValue=1000, step=5))
 
         testdata_defn.build().createOrReplaceTempView("testdata")
         df = spark.sql("select * from testdata order by basic_short desc, basic_byte desc")
@@ -86,7 +86,7 @@ class TestTypes(unittest.TestCase):
             datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("basic_byte", ByteType())
                 .withColumn("basic_short", ShortType())
-                .withColumn("code1", ByteType(), min=1, max=400, step=1))
+                .withColumn("code1", ByteType(), minValue=1, maxValue=400, step=1))
 
         testdata_defn.build().createOrReplaceTempView("testdata")
         spark.sql("select * from testdata order by basic_short desc, basic_byte desc").show()
@@ -97,7 +97,7 @@ class TestTypes(unittest.TestCase):
             datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("basic_byte", ByteType())
                 .withColumn("basic_short", ShortType())
-                .withColumn("code1", ByteType(), min=127, max=1, step=-1))
+                .withColumn("code1", ByteType(), minValue=127, maxValue=1, step=-1))
 
         df = testdata_defn.build().limit(130)
         data_row1 = df.collect()
@@ -113,7 +113,7 @@ class TestTypes(unittest.TestCase):
             datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("basic_byte", ByteType())
                 .withColumn("basic_short", ShortType())
-                .withColumn("code1", ByteType(), min=127, max=1, step=-1)
+                .withColumn("code1", ByteType(), minValue=127, maxValue=1, step=-1)
         )
 
         df = testdata_defn.build().limit(130)
@@ -226,7 +226,7 @@ class TestTypes(unittest.TestCase):
                 .withColumn("basic_byte", ByteType())
                 .withColumn("basic_short", ShortType())
 
-                .withColumn("code2", ShortType(), max=80000, step=5))
+                .withColumn("code2", ShortType(), maxValue=80000, step=5))
 
         testdata_defn.build().createOrReplaceTempView("testdata")
         spark.sql("select * from testdata order by basic_short desc, basic_byte desc").show()
@@ -238,7 +238,7 @@ class TestTypes(unittest.TestCase):
                 .withColumn("bb", ByteType(), unique_values=100)
                 .withColumn("basic_short", ShortType())
 
-                .withColumn("code2", ShortType(), max=10000, step=5))
+                .withColumn("code2", ShortType(), maxValue=10000, step=5))
 
         testdata_defn.build().createOrReplaceTempView("testdata")
         data_row = spark.sql("select min(bb) as min_bb, max(bb) as max_bb from testdata ").limit(1).collect()
@@ -249,10 +249,10 @@ class TestTypes(unittest.TestCase):
         id_partitions = 4
         testdata_defn = (
             datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
-                .withColumn("bb", ByteType(), min=35, max=72)
+                .withColumn("bb", ByteType(), minValue=35, maxValue=72)
                 .withColumn("basic_short", ShortType())
 
-                .withColumn("code2", ShortType(), max=10000, step=5))
+                .withColumn("code2", ShortType(), maxValue=10000, step=5))
 
         testdata_defn.build().createOrReplaceTempView("testdata")
         data_row = spark.sql("select min(bb) as min_bb, max(bb) as max_bb from testdata ").limit(1).collect()
@@ -267,7 +267,7 @@ class TestTypes(unittest.TestCase):
             datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("bb", ByteType(), minValue=35, maxValue=72)
                 .withColumn("basic_short", ShortType())
-                .withColumn("code2", ShortType(), max=10000, step=5))
+                .withColumn("code2", ShortType(), maxValue=10000, step=5))
 
         testdata_defn.build().createOrReplaceTempView("testdata")
         data_row = spark.sql("select min(bb) as min_bb, max(bb) as max_bb from testdata ").limit(1).collect()
@@ -281,7 +281,7 @@ class TestTypes(unittest.TestCase):
                 .withColumn("bb", ByteType(), unique_values=100)
                 .withColumn("basic_short", ShortType())
 
-                .withColumn("code2", ShortType(), max=4000, step=5))
+                .withColumn("code2", ShortType(), maxValue=4000, step=5))
 
         testdata_defn.build().show()
 
@@ -292,9 +292,9 @@ class TestTypes(unittest.TestCase):
                 .withIdOutput()
                 .withColumn("code1", DecimalType(10, 3))
                 .withColumn("code2", DecimalType(10, 5))
-                .withColumn("code3", DecimalType(10, 5), min=1.0, max=1000.0)
+                .withColumn("code3", DecimalType(10, 5), minValue=1.0, maxValue=1000.0)
                 .withColumn("code4", DecimalType(10, 5), random=True, continuous=True)
-                .withColumn("code5", DecimalType(10, 5), min=1.0, max=1000.0, random=True, continuous=True))
+                .withColumn("code5", DecimalType(10, 5), minValue=1.0, maxValue=1000.0, random=True, continuous=True))
 
         df = testdata_defn.build()
         df.show()
@@ -306,9 +306,9 @@ class TestTypes(unittest.TestCase):
                 .withIdOutput()
                 .withColumn("code1", DecimalType(10, 3))
                 .withColumn("code2", DecimalType(10, 5))
-                .withColumn("code3", DecimalType(10, 5), min=1.0, max=1000.0)
+                .withColumn("code3", DecimalType(10, 5), minValue=1.0, maxValue=1000.0)
                 .withColumn("code4", DecimalType(10, 5), random=True, continuous=True)
-                .withColumn("code5", DecimalType(10, 5), min=1.0, max=1000.0, random=True, continuous=True))
+                .withColumn("code5", DecimalType(10, 5), minValue=1.0, maxValue=1000.0, random=True, continuous=True))
 
         testdata_defn.build().createOrReplaceTempView("testdata")
 
@@ -321,9 +321,9 @@ class TestTypes(unittest.TestCase):
                 .withColumn("group1", IntegerType(), expr="1")
                 .withColumn("code1", DecimalType(10, 3))
                 .withColumn("code2", DecimalType(10, 5))
-                .withColumn("code3", DecimalType(10, 5), min=1.0, max=1000.0)
+                .withColumn("code3", DecimalType(10, 5), minValue=1.0, maxValue=1000.0)
                 .withColumn("code4", DecimalType(10, 5), random=True, continuous=True)
-                .withColumn("code5", DecimalType(10, 5), min=2.0, max=2000.0, random=True, continuous=True))
+                .withColumn("code5", DecimalType(10, 5), minValue=2.0, maxValue=2000.0, random=True, continuous=True))
 
         testdata_defn.build().createOrReplaceTempView("testdata")
 

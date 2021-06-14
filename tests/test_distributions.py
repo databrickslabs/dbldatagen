@@ -22,9 +22,10 @@ class TestDistributions(unittest.TestCase):
         cls.testdata_generator = (
             dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=cls.rows, partitions=4)
                 .withIdOutput()  # id column will be emitted in the output
-                .withColumn("code1", "integer", min=1, max=20, step=1)
-                .withColumn("code4", "integer", min=1, max=40, step=1, random=True)
-                .withColumn("sector_status_desc", "string", min=1, max=200, step=1, prefix='status', random=True)
+                .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
+                .withColumn("code4", "integer", minValue=1, maxValue=40, step=1, random=True)
+                .withColumn("sector_status_desc", "string", minValue=1, maxValue=200, step=1,
+                            prefix='status', random=True)
                 .withColumn("tech", "string", values=["GSM", "LTE", "UMTS", "UNKNOWN"],
                             weights=desired_weights,
                             random=True)
