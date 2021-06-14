@@ -221,5 +221,10 @@ of unique values.
 manufacturer value for each `internalDeviceId`. This allows us to generate IOT style events at random, but still 
 constrain properties whenever the same `internalDeviceId` occurs.  
 of unique values.
+
+> A column may be based on one or more other columns. This means the value of that column will be used as a seed for 
+>generating the new column. The `base_column_type` option determines if the actual value , or hash of the value is 
+>used as the seed value. 
+
 - The `withColumn` method call for the `line` column introduces a temporary column for purposes of 
 generating other columns, but through the use of the `omit` option, omits it from the final data set.
