@@ -157,6 +157,18 @@ To alleviate this , the framework provides mechanisms to add rules in bulk for m
 naming pattern or datatype. You can override the column specification for a specific column using 
 the `withColumnSpec` method.
 
+For example:
+
+```python
+    (dg
+       .withColumnSpecs(patterns=".*_ID", match_types=StringType(), format="%010d", 
+                               minValue=10, maxValue=123, step=1)
+       .withColumnSpecs(patterns=".*_IDS", match_types=StringType(), format="%010d", 
+                               minValue=1, maxValue=100, step=1)
+    )
+
+```
+
 ### Building Device IOT Test Data
 This example shows generation of IOT device style data consisting of events from devices. 
 

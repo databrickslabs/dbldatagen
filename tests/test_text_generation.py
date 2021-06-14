@@ -162,9 +162,9 @@ class TestTextGeneration(unittest.TestCase):
                          .withIdOutput()
                          .withColumnSpec("date", percent_nulls=10.0)
                          .withColumnSpecs(patterns="n.*", match_types=StringType(),
-                                          percent_nulls=10.0, min=1, max=9, step=2)
+                                          percent_nulls=10.0, minValue=1, maxValue=9, step=2)
                          .withColumnSpecs(patterns="n.*", match_types=IntegerType(),
-                                          percent_nulls=10.0, min=1, max=200, step=-2)
+                                          percent_nulls=10.0, minValue=1, maxValue=200, step=-2)
                          .withColumnSpec("email", template=r'\w.\w@\w.com|\w@\w.co.u\k')
                          .withColumnSpec("ip_addr", template=r'\n.\n.\n.\n')
                          .withColumnSpec("phone", template=r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd')
@@ -260,17 +260,18 @@ class TestTextGeneration(unittest.TestCase):
         testdata_generator = (
             dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=100000, partitions=20)
                 .withIdOutput()  # id column will be emitted in the output
-                .withColumn("code1", "integer", min=1, max=20, step=1)
-                .withColumn("code2", "integer", min=1, max=20, step=1)
-                .withColumn("code3", "integer", min=1, max=20, step=1)
-                .withColumn("code4", "integer", min=1, max=20, step=1)
+                .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
+                .withColumn("code2", "integer", minValue=1, maxValue=20, step=1)
+                .withColumn("code3", "integer", minValue=1, maxValue=20, step=1)
+                .withColumn("code4", "integer", minValue=1, maxValue=20, step=1)
                 # base column specifies dependent column
 
                 .withColumn("site_cd", "string", prefix='site', base_column='code1')
-                .withColumn("device_status", "string", min=1, max=200, step=1, prefix='status', random=True)
+                .withColumn("device_status", "string", minValue=1, maxValue=200, step=1, prefix='status', random=True)
 
                 .withColumn("site_cd2", "string", prefix='site', base_column='code1', text_separator=":")
-                .withColumn("device_status2", "string", min=1, max=200, step=1, prefix='status', text_separator=":")
+                .withColumn("device_status2", "string", minValue=1, maxValue=200, step=1,
+                            prefix='status', text_separator=":")
 
         )
 
@@ -320,17 +321,18 @@ class TestTextGeneration(unittest.TestCase):
         testdata_generator = (
             dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=100000, partitions=20)
                 .withIdOutput()  # id column will be emitted in the output
-                .withColumn("code1", "integer", min=1, max=20, step=1)
-                .withColumn("code2", "integer", min=1, max=20, step=1)
-                .withColumn("code3", "integer", min=1, max=20, step=1)
-                .withColumn("code4", "integer", min=1, max=20, step=1)
+                .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
+                .withColumn("code2", "integer", minValue=1, maxValue=20, step=1)
+                .withColumn("code3", "integer", minValue=1, maxValue=20, step=1)
+                .withColumn("code4", "integer", minValue=1, maxValue=20, step=1)
                 # base column specifies dependent column
 
                 .withColumn("site_cd", "string", suffix='site', base_column='code1')
-                .withColumn("device_status", "string", min=1, max=200, step=1, suffix='status', random=True)
+                .withColumn("device_status", "string", minValue=1, maxValue=200, step=1, suffix='status', random=True)
 
                 .withColumn("site_cd2", "string", suffix='site', base_column='code1', text_separator=":")
-                .withColumn("device_status2", "string", min=1, max=200, step=1, suffix='status', text_separator=":")
+                .withColumn("device_status2", "string", minValue=1, maxValue=200, step=1,
+                            suffix='status', text_separator=":")
         )
 
         df = testdata_generator.build()  # build our dataset
@@ -360,17 +362,18 @@ class TestTextGeneration(unittest.TestCase):
         testdata_generator = (
             dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=100000, partitions=20)
                 .withIdOutput()  # id column will be emitted in the output
-                .withColumn("code1", "integer", min=1, max=20, step=1)
-                .withColumn("code2", "integer", min=1, max=20, step=1)
-                .withColumn("code3", "integer", min=1, max=20, step=1)
-                .withColumn("code4", "integer", min=1, max=20, step=1)
+                .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
+                .withColumn("code2", "integer", minValue=1, maxValue=20, step=1)
+                .withColumn("code3", "integer", minValue=1, maxValue=20, step=1)
+                .withColumn("code4", "integer", minValue=1, maxValue=20, step=1)
                 # base column specifies dependent column
 
                 .withColumn("site_cd", "string", suffix='site', base_column='code1', prefix="test")
-                .withColumn("device_status", "string", min=1, max=200, step=1, suffix='status', prefix="test")
+                .withColumn("device_status", "string", minValue=1, maxValue=200, step=1, suffix='status', prefix="test")
 
                 .withColumn("site_cd2", "string", suffix='site', base_column='code1', text_separator=":", prefix="test")
-                .withColumn("device_status2", "string", min=1, max=200, step=1, suffix='status', text_separator=":",
+                .withColumn("device_status2", "string", minValue=1, maxValue=200, step=1,
+                            suffix='status', text_separator=":",
                             prefix="test")
         )
 

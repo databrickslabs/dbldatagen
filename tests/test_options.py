@@ -15,13 +15,13 @@ class TestUseOfOptions(unittest.TestCase):
             dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=100000, partitions=20)
                 .withIdOutput()  # id column will be emitted in the output
                 .withColumn("code1", "integer", min=1, max=20, step=1)
-                .withColumn("code2", "integer", min=1, max=20, step=1, random=True)
-                .withColumn("code3", "integer", min=1, max=20, step=1, random=True)
-                .withColumn("code4", "integer", min=1, max=20, step=1, random=True)
+                .withColumn("code2", "integer", minValue=1, maxValue=20, step=1, random=True)
+                .withColumn("code3", "integer", minValue=1, maxValue=20, step=1, random=True)
+                .withColumn("code4", "integer", minValue=1, maxValue=20, step=1, random=True)
                 # base column specifies dependent column
 
                 .withColumn("site_cd", "string", prefix='site', base_column='code1')
-                .withColumn("device_status", "string", min=1, max=200, step=1, prefix='status', random=True)
+                .withColumn("device_status", "string", minValue=1, maxValue=200, step=1, prefix='status', random=True)
                 .withColumn("tech", "string", values=["GSM", "UMTS", "LTE", "UNKNOWN"], random=True)
                 .withColumn("test_cell_flg", "integer", values=[0, 1], random=True)
         )

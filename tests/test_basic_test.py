@@ -93,8 +93,9 @@ class TestBasicOperation(unittest.TestCase):
         ds_copy1 = self.testDataSpec.clone()
 
         df_copy1 = (ds_copy1.withRowCount(1000)
-                    .withColumn("ac1", IntegerType(), base_column=['code1', 'code2'], min=100, max=200)
-                    .withColumn("ac2", IntegerType(), base_column=['code1', 'code2'], min=100, max=200, random=True)
+                    .withColumn("ac1", IntegerType(), base_column=['code1', 'code2'], minValue=100, maxValue=200)
+                    .withColumn("ac2", IntegerType(), base_column=['code1', 'code2'],
+                                minValue=100, maxValue=200, random=True)
                     .build())
 
         self.assertEqual(df_copy1.count(), 1000)
@@ -122,8 +123,9 @@ class TestBasicOperation(unittest.TestCase):
         ds_copy1 = self.testDataSpec.clone()
 
         df_copy1 = (ds_copy1.withRowCount(1000)
-                    .withColumn("ac1", IntegerType(), base_column=['code1', 'code2'], min=100, max=200)
-                    .withColumn("ac2", IntegerType(), base_column=['code1', 'code2'], min=100, max=200, random=True)
+                    .withColumn("ac1", IntegerType(), base_column=['code1', 'code2'], minValue=100, maxValue=200)
+                    .withColumn("ac2", IntegerType(), base_column=['code1', 'code2'],
+                                minValue=100, maxValue=200, random=True)
                     .build())
 
         self.assertEqual(df_copy1.count(), 1000)
@@ -144,7 +146,7 @@ class TestBasicOperation(unittest.TestCase):
         ds1 = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
                                 partitions=4, seed_method='hash_fieldname')
                .withIdOutput()
-               .withColumn("code2", IntegerType(), min=0, max=10)
+               .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
                .withColumn("code3", StringType(), values=['a', 'b', 'c'])
                .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
                .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
@@ -169,7 +171,7 @@ class TestBasicOperation(unittest.TestCase):
         ds2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
                                 partitions=4, seed_method='fixed')
                .withIdOutput()
-               .withColumn("code2", IntegerType(), min=0, max=10)
+               .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
                .withColumn("code3", StringType(), values=['a', 'b', 'c'])
                .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
                .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
@@ -194,7 +196,7 @@ class TestBasicOperation(unittest.TestCase):
         ds3 = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
                                 partitions=4, seed_method=None)
                .withIdOutput()
-               .withColumn("code2", IntegerType(), min=0, max=10)
+               .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
                .withColumn("code3", StringType(), values=['a', 'b', 'c'])
                .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
                .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
@@ -322,11 +324,11 @@ class TestBasicOperation(unittest.TestCase):
         rows_wanted = 100000000
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=rows_wanted, partitions=id_partitions, verbose=True)
-                .withColumn("code1", IntegerType(), min=1, max=20, step=1)
-                .withColumn("code2", IntegerType(), max=1000, step=5)
-                .withColumn("code3", IntegerType(), min=100, max=200, step=1, random=True)
+                .withColumn("code1", IntegerType(), minValue=1, maxValue=20, step=1)
+                .withColumn("code2", IntegerType(), maxValue=1000, step=5)
+                .withColumn("code3", IntegerType(), minValue=100, maxValue=200, step=1, random=True)
                 .withColumn("xcode", StringType(), values=["a", "test", "value"], random=True)
-                .withColumn("rating", FloatType(), min=1.0, max=5.0, step=0.00001, random=True))
+                .withColumn("rating", FloatType(), minValue=1.0, maxValue=5.0, step=0.00001, random=True))
 
         df = testdata_defn.build()
         df.printSchema()
