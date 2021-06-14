@@ -55,9 +55,11 @@ If no interval is specified, the default interval of 1 day will be used for date
 timestamps unless other criteria force a different interval criteria.
 
 As part of the overall goals for the test data generator is to be able to generate repeatable data sets, 
-if no starting datetime is specified for date time ranges, we will use 2020/1/1 as the starting date.
+if no starting datetime is specified for date time ranges, we will use the first day of the previous year as 
+the starting date. At the time of writing, this will be 2020/1/1
 
-If no start date and no end date is specified, then we will use a default end date of 2020/12/31
+If no start date and no end date is specified, then we will use a default end date of the last day of the previous year.
+At the time of writing, this will be 2020/12/31
 
 if starting and ending dates are specified, we will not produce dates or timestamps outside of these, but the number of 
 unique values may be reduced, if there are insufficient values in the range.
