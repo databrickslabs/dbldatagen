@@ -16,7 +16,7 @@ from pyspark.sql.functions import col, pandas_udf
 from pyspark.sql.types import FloatType, IntegerType, StringType, DoubleType, BooleanType, \
     TimestampType, DataType, DateType
 
-from .utils import ensure, coalesce_values
+from .utils import ensure, coalesce_values, parse_time_interval
 from .column_spec_options import ColumnSpecOptions
 from .text_generators import TemplateGenerator
 from .daterange import DateRange
@@ -431,47 +431,19 @@ class ColumnGenerationSpec(object):
     def computeAdjustedDateTimeRangeForColumn(self, colType, c_begin, c_end, c_interval, c_range, c_unique):
         """Determine adjusted range for Date or Timestamp data column
         """
-        if c_unique is not None:
-            assert type(c_unique) is int, "unique_values must be integer"
-            assert c_unique >= 1, "unique_values must be positive integer"
+        effective_begin, effective_end, effective_interval = None, None, None
+        if c_range is not None and type(c_range) is DateRange:
+            effective_begin = c_range.begin
+            effective_end = c_range.end
+            effective_interval = c_range.interval
+        effective_interval = coalesce_values(effective_interval, c_interval)
+        effective_end = coalesce_values(effective_end, c_end)
+        effective_begin = coalesce_values(effective_begin, c_begin)
 
-            effective_begin, effective_end, effective_interval = None, None, None
-            if c_range is not None and type(c_range) is DateRange:
-                effective_begin = c_range.begin
-                effective_end = c_range.end
-                effective_interval = c_range.interval
-
-            if type(colType) is DateType:
-                effective_interval = coalesce_values(effective_interval, c_interval, timedelta(days=1))
-            else:
-                effective_interval = coalesce_values(effective_interval, c_interval, timedelta(minutes=1))
-
-            effective_end = coalesce_values(effective_end, c_end,
-                                            datetime.now().replace(hour=0, minute=0, second=0, day=1) - timedelta(
-                                                days=1))
-            effective_begin = effective_end - effective_interval * (c_unique - 1)
-
-            result = DateRange(effective_begin, effective_end, effective_interval)
-        elif c_range is not None:
-            result = c_range
-        elif c_range is None:
-            effective_end = coalesce_values(c_end,
-                                            datetime.now().replace(hour=0, minute=0, second=0, day=1) - timedelta(
-                                                days=1))
-            effective_begin = coalesce_values(c_begin, effective_end - timedelta(days=365))
-            if type(colType) is DateType:
-                effective_interval = coalesce_values(c_interval, timedelta(days=1))
-            else:
-                effective_interval = coalesce_values(c_interval, timedelta(minutes=1))
-
-            result = DateRange(effective_begin, effective_end, effective_interval)
+        if type(colType) is DateType:
+            result = DateRange.computeDateRange(effective_begin, effective_end, effective_interval, c_unique)
         else:
-            default_end = datetime.now().replace(hour=0, minute=0, second=0, day=1) - timedelta(days=1)
-            default_begin = default_end - timedelta(days=365)
-            if type(colType) is DateType:
-                result = DateRange(default_begin, default_end, timedelta(days=1))
-            else:
-                result = DateRange(default_begin, default_end, timedelta(minutes=1))
+            result = DateRange.computeTimestampRange(effective_begin, effective_end, effective_interval, c_unique)
 
         self.logger.debug("Computing adjusted range for column: %s - %s", self.name, result)
         return result

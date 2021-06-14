@@ -8,8 +8,10 @@ This file defines the `DataGenError` classes and utility functions
 These are meant for internal use only
 """
 
-import warnings
 import functools
+import warnings
+from datetime import timedelta
+import re
 
 
 def deprecated(message=""):
@@ -132,3 +134,70 @@ def topologicalSort(sources, initial_columns=None, flatten=True):
         return [item for sublist in build_orders for item in sublist]
     else:
         return build_orders
+
+
+PATTERN_NAME_EQUALS_VALUE = re.compile(r"(\w+)\s*\=\s*([0-9]+)")
+PATTERN_VALUE_SPACE_NAME = re.compile(r"([0-9]+)\s+(\w+)")
+
+def parse_time_interval(spec):
+    '''parse time interval from string'''
+    hours = 0
+    minutes = 0
+    weeks = 0
+    microseconds = 0
+    milliseconds = 0
+    seconds = 0
+    years = 0
+    days = 0
+
+    assert spec is not None, "Must have valid time interval specification"
+
+    # get time specs such as 12 days, etc. Supported timespans are years, days, hours, minutes, seconds
+    timespecs = [x.strip() for x in spec.strip().split(",")]
+
+    for ts in timespecs:
+        # allow both 'days=1' and '1 day' syntax
+        timespec_parts = re.findall(PATTERN_NAME_EQUALS_VALUE,ts)
+        # findall returns list of tuples
+        if timespec_parts is not None and len(timespec_parts) > 0:
+            print("name = value pattern", timespec_parts)
+            num_parts = len(timespec_parts[0])
+            assert num_parts >= 1, "must have numeric specification and time element such as `12 hours` or `hours=12`"
+            time_value = int(timespec_parts[0][num_parts - 1])
+            time_type = timespec_parts[0][0].lower()
+        else:
+            timespec_parts = re.findall(PATTERN_VALUE_SPACE_NAME, ts)
+            print("value space name pattern", timespec_parts)
+            num_parts = len(timespec_parts[0])
+            assert num_parts >= 1, "must have numeric specification and time element such as `12 hours` or `hours=12`"
+            time_value = int(timespec_parts[0][0])
+            time_type = timespec_parts[0][num_parts - 1].lower()
+
+        if time_type == "years" or time_type == "year":
+            years = time_value
+        elif time_type == "weeks" or time_type == "weeks":
+            weeks = time_value
+        elif time_type == "days" or time_type == "day":
+            days = time_value
+        elif time_type == "hours" or time_type == "hour":
+            hours = time_value
+        elif time_type == "minutes" or time_type == "minute":
+            minutes = time_value
+        elif time_type == "seconds" or time_type == "seconds":
+            seconds = time_value
+        elif time_type == "microseconds" or time_type == "microseconds":
+            microseconds = time_value
+        elif time_type == "milliseconds" or time_type == "millisecond":
+            milliseconds = time_value
+
+    td = delta = timedelta(
+        days=days,
+        seconds=seconds,
+        microseconds=microseconds,
+        milliseconds=milliseconds,
+        minutes=minutes,
+        hours=hours,
+        weeks=weeks
+    )
+
+    return td
