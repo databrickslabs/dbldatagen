@@ -419,38 +419,40 @@ class TestRangedValuesAndDates(unittest.TestCase):
         summary = dfResults.collect()[0]
         self.assertEqual(summary[0], 51)
 
-    # def test_unique_values_ts4(self):
-    #     testDataUniqueTSDF2 = (
-    #         datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
-    #             .withIdOutput()
-    #             .withColumn("test_ts", "timestamp", unique_values=51, random=True,
-    #                         begin="2017-10-01", end="2018-10-06", interval="minutes=10")
-    #             .build()
-    #     )
+    def test_unique_values_ts4(self):
 
-    #     testDataUniqueTSDF2.createOrReplaceTempView("testUniqueTS4")
+        testDataUniqueTSDF2 = (
+            datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+                .withIdOutput()
+                .withColumn("test_ts", "timestamp", unique_values=51, random=True,
+                            begin="2017-10-01", end="2018-10-06", interval="minutes=10")
+                .build()
+        )
 
-    #     dfResults = spark.sql("select count(distinct test_ts) from testUniqueTS4")
-    #     summary = dfResults.collect()[0]
-    #     self.assertEqual(summary[0], 51)
+        testDataUniqueTSDF2.createOrReplaceTempView("testUniqueTS4")
 
-    # def test_unique_values_date(self):
-    #     testDataUniqueDF3spec = (
-    #         datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
-    #             .withIdOutput()
-    #             .withColumn("test_ts", "date", unique_values=51, interval="1 days")
-    #     )
-    #     testDataUniqueDF3 = testDataUniqueDF3spec.build()
+        dfResults = spark.sql("select count(distinct test_ts) from testUniqueTS4")
+        summary = dfResults.collect()[0]
+        self.assertEqual(summary[0], 51)
 
-    #     testDataUniqueDF3.createOrReplaceTempView("testUnique3")
+    def test_unique_values_date(self):
+        testDataUniqueDF3spec = (
+            datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+                .withIdOutput()
+                .withColumn("test_ts", "date", unique_values=51, interval="1 days")
+        )
+        testDataUniqueDF3 = testDataUniqueDF3spec.build()
 
-    #     testDataUniqueDF3spec.explain()
+        testDataUniqueDF3.createOrReplaceTempView("testUnique3")
 
-    #     dfResults = spark.sql("select count(distinct test_ts) from testUnique3")
-    #     summary = dfResults.collect()[0]
-    #     self.assertEqual(summary[0], 51)
+        testDataUniqueDF3spec.explain()
+
+        dfResults = spark.sql("select count(distinct test_ts) from testUnique3")
+        summary = dfResults.collect()[0]
+        self.assertEqual(summary[0], 51)
 
     def test_unique_values_date2(self):
+        ''' Check for unique dates'''
         testDataUniqueDF4 = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
                              .withIdOutput()
                              .withColumn("test_ts", "date", unique_values=51, random=True)
@@ -463,20 +465,21 @@ class TestRangedValuesAndDates(unittest.TestCase):
         summary = dfResults.collect()[0]
         self.assertEqual(summary[0], 51)
 
-    # def test_unique_values_date3(self):
-    #     testDataUniqueDF4a = (
-    #         datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
-    #             .withIdOutput()
-    #             .withColumn("test_ts", "date", unique_values=51, random=True, begin="2017-10-01", end="2018-10-06",
-    #                         interval="days=2")
-    #             .build()
-    #     )
+    def test_unique_values_date3(self):
+        ''' Check for unique dates when begin, end and interval are specified'''
+        testDataUniqueDF4a = (
+            datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+                .withIdOutput()
+                .withColumn("test_ts", "date", unique_values=51, random=True, begin="2017-10-01", end="2018-10-06",
+                            interval="days=2")
+                .build()
+        )
 
-    #     testDataUniqueDF4a.createOrReplaceTempView("testUnique4a")
+        testDataUniqueDF4a.createOrReplaceTempView("testUnique4a")
 
-    #     dfResults = spark.sql("select count(distinct test_ts) from testUnique4a")
-    #     summary = dfResults.collect()[0]
-    #     self.assertEqual(summary[0], 51)
+        dfResults = spark.sql("select count(distinct test_ts) from testUnique4a")
+        summary = dfResults.collect()[0]
+        self.assertEqual(summary[0], 51)
 
     def test_unique_values_integers(self):
         testDataUniqueIntegersDF = (

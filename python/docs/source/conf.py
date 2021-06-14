@@ -25,7 +25,11 @@ copyright = '2020, Databricks Inc'
 author = 'Databricks Inc'
 
 # The full version, including alpha/beta/rc tags
+<<<<<<< HEAD
 release = "0.10.1-dev11"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpversion
+=======
+release = "0.10.1-dev10"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpversion
+>>>>>>> fdf16b8ffcfc365e5cbc070c108d7d74a71769a8
 
 
 # -- General configuration ---------------------------------------------------
