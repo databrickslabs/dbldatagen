@@ -214,3 +214,12 @@ dfTestData.printSchema()
 
 display(dfTestData)
 ```
+
+- The `withColumn` method call for the `internalDeviceId` column uses the `uniqueValues` option to control the number 
+of unique values.
+- The `withColumn` method call for the `manufacture` column uses the `baseColumn` option to ensure we get the same 
+manufacturer value for each `internalDeviceId`. This allows us to generate IOT style events at random, but still 
+constrain properties whenever the same `internalDeviceId` occurs.  
+of unique values.
+- The `withColumn` method call for the `line` column introduces a temporary column for purposes of 
+generating other columns, but through the use of the `omit` option, omits it from the final data set.
