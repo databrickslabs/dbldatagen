@@ -98,7 +98,7 @@ class ColumnGenerationSpec(object):
         self._setup_logger()
 
         # set up default range and type for column
-        self.effective_data_range = NRange(None, None, None)  # by default range of values for  column is unconstrained
+        self.data_range = NRange(None, None, None)  # by default range of values for  column is unconstrained
 
         if colType is None:  # default to integer field if none specified
             colType = IntegerType()
@@ -236,14 +236,14 @@ class ColumnGenerationSpec(object):
 
         # adjust the range by merging type and range information
 
-        self.effective_data_range = self.computeAdjustedRangeForColumn(colType=colType,
-                                                                       c_min=c_min, c_max=c_max, c_step=c_step,
-                                                                       c_begin=c_begin, c_end=c_end,
-                                                                       c_interval=c_interval,
-                                                                       c_unique=unique_values, c_range=data_range)
+        self.data_range = self.computeAdjustedRangeForColumn(colType=colType,
+                                                             c_min=c_min, c_max=c_max, c_step=c_step,
+                                                             c_begin=c_begin, c_end=c_end,
+                                                             c_interval=c_interval,
+                                                             c_unique=unique_values, c_range=data_range)
 
         if self.distribution is not None:
-            ensure((self.effective_data_range is not None and self.effective_data_range.isFullyPopulated())
+            ensure((self.data_range is not None and self.data_range.isFullyPopulated())
                    or
                    self.values is not None,
                    """When using an explicit distribution, provide a fully populated range or a set of values""")
@@ -630,7 +630,7 @@ class ColumnGenerationSpec(object):
     @property
     def min(self):
         """get the column generation `minValue` value used to generate values for this column"""
-        return self.effective_data_range.minValue
+        return self.data_range.minValue
 
     @property
     def max(self):
@@ -908,10 +908,10 @@ class ColumnGenerationSpec(object):
         percent_nulls = self['percent_nulls']
         sformat = self['format']
 
-        if self.effective_data_range is not None:
-            self.effective_data_range.adjustForColumnDatatype(self.datatype)
+        if self.data_range is not None:
+            self.data_range.adjustForColumnDatatype(self.datatype)
 
-        self.execution_history.append(".. using effective range: {}".format(self.effective_data_range))
+        self.execution_history.append(".. using effective range: {}".format(self.data_range))
 
         new_def = None
 
@@ -937,9 +937,9 @@ class ColumnGenerationSpec(object):
             if self.expr is not None:
                 # note use of SQL expression ignores range specifications
                 new_def = expr(self.expr).astype(self.datatype)
-            elif self.effective_data_range is not None and self.effective_data_range.isFullyPopulated():
-                self.execution_history.append(".. computing ranged value: {}".format(self.effective_data_range))
-                new_def = self._computeRangedColumn(base_column=self.baseColumn, datarange=self.effective_data_range,
+            elif self.data_range is not None and self.data_range.isFullyPopulated():
+                self.execution_history.append(".. computing ranged value: {}".format(self.data_range))
+                new_def = self._computeRangedColumn(base_column=self.baseColumn, datarange=self.data_range,
                                                     is_random=col_is_rand)
             elif type(self.datatype) is DateType:
                 sql_random_generator = self.getUniformRandomSQLExpression(self.name)
@@ -955,7 +955,7 @@ class ColumnGenerationSpec(object):
                 #    new_def = self.getSeedExpression(self.baseColumn)
                 else:
                     self.logger.warning("Assuming a seeded base expression with minimum value for column %s", self.name)
-                    new_def = ((self.getSeedExpression(self.baseColumn) + lit(self.effective_data_range.minValue))
+                    new_def = ((self.getSeedExpression(self.baseColumn) + lit(self.data_range.minValue))
                                .astype(self.datatype))
 
             if self.values is not None:
@@ -1059,10 +1059,10 @@ class ColumnGenerationSpec(object):
         """
         # check for implied ranges
         if self.values is not None:
-            self.effective_data_range = NRange(0, len(self.values) - 1, 1)
+            self.data_range = NRange(0, len(self.values) - 1, 1)
         elif type(col_type) is BooleanType:
-            self.effective_data_range = NRange(0, 1, 1)
-        self.execution_history.append(".. using adjusted effective range: {}".format(self.effective_data_range))
+            self.data_range = NRange(0, 1, 1)
+        self.execution_history.append(".. using adjusted effective range: {}".format(self.data_range))
 
     def makeGenerationExpressions(self, use_pandas):
         """ Generate structured column if multiple columns or features are specified
