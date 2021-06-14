@@ -157,7 +157,6 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertLessEqual( count_distinct[2], 300)
         self.assertLessEqual(count_distinct[3], 300)
 
-
     def test_date_range1(self):
         '''test timestamps with explicit range'''
         interval = timedelta(days=1, hours=1)

@@ -59,8 +59,6 @@ def ensure(cond, msg="condition does not hold true"):
     :raises: `DataGenError` exception if condition does not hold true
     :returns: Does not return anything but raises exception if condition does not hold
     """
-    import re
-
     def strip_margin(text):
         return re.sub(r'\n[ \t]*\|', '\n', text)
 
@@ -139,6 +137,7 @@ def topologicalSort(sources, initial_columns=None, flatten=True):
 PATTERN_NAME_EQUALS_VALUE = re.compile(r"(\w+)\s*\=\s*([0-9]+)")
 PATTERN_VALUE_SPACE_NAME = re.compile(r"([0-9]+)\s+(\w+)")
 
+
 def parse_time_interval(spec):
     '''parse time interval from string'''
     hours = 0
@@ -157,7 +156,7 @@ def parse_time_interval(spec):
 
     for ts in timespecs:
         # allow both 'days=1' and '1 day' syntax
-        timespec_parts = re.findall(PATTERN_NAME_EQUALS_VALUE,ts)
+        timespec_parts = re.findall(PATTERN_NAME_EQUALS_VALUE, ts)
         # findall returns list of tuples
         if timespec_parts is not None and len(timespec_parts) > 0:
             print("name = value pattern", timespec_parts)
@@ -173,21 +172,21 @@ def parse_time_interval(spec):
             time_value = int(timespec_parts[0][0])
             time_type = timespec_parts[0][num_parts - 1].lower()
 
-        if time_type == "years" or time_type == "year":
+        if time_type in ["years", "year"]:
             years = time_value
-        elif time_type == "weeks" or time_type == "weeks":
+        elif time_type in ["weeks", "weeks"]:
             weeks = time_value
-        elif time_type == "days" or time_type == "day":
+        elif time_type in ["days", "day"]:
             days = time_value
-        elif time_type == "hours" or time_type == "hour":
+        elif time_type in ["hours", "hour"]:
             hours = time_value
-        elif time_type == "minutes" or time_type == "minute":
+        elif time_type in ["minutes", "minute"]:
             minutes = time_value
-        elif time_type == "seconds" or time_type == "seconds":
+        elif time_type in ["seconds", "seconds"]:
             seconds = time_value
-        elif time_type == "microseconds" or time_type == "microseconds":
+        elif time_type in ["microseconds", "microseconds"]:
             microseconds = time_value
-        elif time_type == "milliseconds" or time_type == "millisecond":
+        elif time_type in ["milliseconds", "millisecond"]:
             milliseconds = time_value
 
     td = delta = timedelta(
