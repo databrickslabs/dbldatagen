@@ -59,18 +59,8 @@ if no starting datetime is specified for date time ranges, we will use 2020/1/1 
 
 If no start date and no end date is specified, then we will use a default end date of 2020/12/31
 
-If the number of unique values required is greater than permissable from that date until May 2021 for that date, 
-we will incrementally step back one year at a time to an earliest datetime of 1970/1/1. As noted in our recommendation, 
-use of explicit begin and end date times are recommended to ensure best control over generated timestamps.
-
 if starting and ending dates are specified, we will not produce dates or timestamps outside of these, but the number of 
-unique values may be reduced.
-
-The net effect is as follows:
-
-- If unique values is specified for a date or timestamp field, we will generate dates from 2020/1/1 onwards. 
-If there are more than 365 unique values, we will generate dates from 2019/1/1 onwards unless explicit 
-start and end dates are specified.
+unique values may be reduced, if there are insufficient values in the range.
 
 
 ### Recommendations

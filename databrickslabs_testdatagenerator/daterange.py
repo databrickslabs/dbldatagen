@@ -8,7 +8,7 @@ from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, Doub
     StructType, StructField, TimestampType, DataType, DateType, ByteType
 
 from .datarange import DataRange
-
+from .utils import parse_time_interval
 
 class DateRange(DataRange):
     """Class to represent Date range
@@ -30,8 +30,16 @@ class DateRange(DataRange):
 
     DEFAULT_UTC_TS_FORMAT = "%Y-%m-%d %H:%M:%S"
     DEFAULT_DATE_FORMAT = "%Y-%m-%d"
-    DEFAULT_START_DATE = datetime.strptime("2020-01-01", DEFAULT_DATE_FORMAT)
-    DEFAULT_END_DATE = datetime.strptime("2020-12-31", DEFAULT_DATE_FORMAT)
+
+    DEFAULT_START = "2020-01-01"
+    DEFAULT_END = "2020-12-31"
+
+    DEFAULT_START_TIMESTAMP = datetime.strptime(DEFAULT_START, DEFAULT_DATE_FORMAT)
+    DEFAULT_END_TIMESTAMP = datetime.strptime(DEFAULT_END, DEFAULT_DATE_FORMAT)
+    DEFAULT_START_DATE = DEFAULT_START_TIMESTAMP.date()
+    DEFAULT_END_DATE = DEFAULT_END_TIMESTAMP.date()
+    DEFAULT_START_DATE_TIMESTAMP = DEFAULT_START_TIMESTAMP.replace(hour=0, minute=0, second=0)
+    DEFAULT_END_DATE_TIMESTAMP = DEFAULT_END_TIMESTAMP.replace(hour=0, minute=0, second=0)
 
     # todo: deduce format from begin and end params
 
@@ -57,18 +65,68 @@ class DateRange(DataRange):
 
     @classmethod
     def _timedelta_from_string(cls, interval):
-        return timedelta(**cls.parseInterval(interval))
+        return cls.parseInterval(interval)
 
     @classmethod
     def parseInterval(cls, interval_str):
         """Parse interval from string"""
         assert interval_str is not None, "`interval_str` must be specified"
-        results = []
-        for kv in interval_str.split(","):
-            key, value = kv.split('=')
-            results.append("'{}':{}".format(key, value))
+        return parse_time_interval(interval_str)
 
-        return eval("{{ {}  }} ".format(",".join(results)))  # pylint: disable=eval-used
+    @classmethod
+    def _getDateTime(cls, dt, format, default_value):
+        if isinstance(dt, str):
+            effective_dt = cls._datetime_from_string(dt, format)
+        elif dt is None:
+            effective_dt = default_value
+        else:
+            effective_dt = dt
+        return effective_dt
+
+    @classmethod
+    def _getInterval(cls, interval,default_value):
+        if isinstance(interval, str):
+            effective_interval = parse_time_interval(interval)
+        elif interval is None:
+            effective_interval = default_value
+        else:
+            effective_interval = interval
+        return effective_interval
+
+
+    @classmethod
+    def computeDateRange(cls, begin, end, interval, unique_values):
+        effective_interval = cls._getInterval(interval, timedelta(days=1))
+        effective_end = cls._getDateTime(end, DateRange.DEFAULT_DATE_FORMAT,
+                                         cls.DEFAULT_END_DATE_TIMESTAMP)
+        effective_begin = cls._getDateTime(begin, DateRange.DEFAULT_DATE_FORMAT, cls.DEFAULT_START_DATE_TIMESTAMP)
+
+        if unique_values is not None:
+            assert type(unique_values) is int, "unique_values must be integer"
+            assert unique_values >= 1, "unique_values must be positive integer"
+
+            effective_begin = effective_end - effective_interval * (unique_values - 1 )
+            print(effective_begin, effective_end, interval)
+
+        result = DateRange(effective_begin, effective_end, effective_interval)
+        return result
+
+
+    @classmethod
+    def computeTimestampRange(cls, begin, end, interval, unique_values):
+
+        effective_interval = cls._getInterval(interval, timedelta(days=1))
+        effective_end = cls._getDateTime(end, DateRange.DEFAULT_UTC_TS_FORMAT, cls.DEFAULT_END_TIMESTAMP)
+        effective_begin = cls._getDateTime(begin, DateRange.DEFAULT_UTC_TS_FORMAT, cls.DEFAULT_START_TIMESTAMP)
+
+        if unique_values is not None:
+            assert type(unique_values) is int, "unique_values must be integer"
+            assert unique_values >= 1, "unique_values must be positive integer"
+            effective_begin = effective_end - effective_interval * (unique_values - 1)
+        result = DateRange(effective_begin, effective_end, effective_interval)
+        return result
+
+
 
     def __str__(self):
         """ create string representation of date range"""

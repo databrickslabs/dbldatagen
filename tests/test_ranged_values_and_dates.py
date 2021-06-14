@@ -56,6 +56,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertEqual(interval, x.interval)
 
     def test_basic_dates(self):
+        '''test dates with explicit range'''
         interval = timedelta(days=7, hours=1)
         start = datetime(2017, 10, 1, 0, 0, 0)
         end = datetime(2018, 10, 1, 6, 0, 0)
@@ -69,7 +70,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertIsNotNone(testDataDF.schema)
         self.assertIs(type(testDataDF.schema.fields[1].dataType), type(TimestampType()))
 
-        # TODO: add validation statement
+        # validation statements
         df_min_and_max = testDataDF.agg(F.min("last_sync_dt").alias("min_ts"), F.max("last_sync_dt").alias("max_ts"))
 
         min_and_max = df_min_and_max.collect()[0]
@@ -82,6 +83,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertLessEqual(10, count_distinct)
 
     def test_basic_dates_non_random(self):
+        '''test dates with explicit range'''
         interval = timedelta(days=7, hours=1)
         start = datetime(2017, 10, 1, 0, 0, 0)
         end = datetime(2018, 10, 1, 6, 0, 0)
@@ -107,7 +109,57 @@ class TestRangedValuesAndDates(unittest.TestCase):
         count_distinct = testDataDF.select(F.countDistinct("last_sync_dt")).collect()[0][0]
         self.assertLessEqual(10, count_distinct)
 
+    def test_basic_dates_minimal(self):
+        '''test dates with just unique values'''
+        testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=10000, partitions=4)
+                      .withIdOutput()
+                      .withColumn("last_sync_dt", "date", unique_values=100, random=True)
+                      .withColumn("last_sync_dt2", "date", unique_values=100, base_column_type="values")
+                      .withColumn("last_sync_dt3", "date", unique_values=300, base_column_type="values")
+                      .withColumn("last_sync_dt4", "date", unique_values=300, random=True)
+                      .build()
+                      )
+
+        self.assertIsNotNone(testDataDF.schema)
+        self.assertIs(type(testDataDF.schema.fields[1].dataType), type(DateType()))
+        self.assertIs(type(testDataDF.schema.fields[2].dataType), type(DateType()))
+        self.assertIs(type(testDataDF.schema.fields[3].dataType), type(DateType()))
+        self.assertIs(type(testDataDF.schema.fields[4].dataType), type(DateType()))
+
+        # validation statements
+        df_min_and_max = testDataDF.agg(F.min("last_sync_dt").alias("min_dt1"),
+                                        F.max("last_sync_dt").alias("max_dt1"),
+                                        F.min("last_sync_dt2").alias("min_dt2"),
+                                        F.max("last_sync_dt2").alias("max_dt2"),
+                                        F.min("last_sync_dt3").alias("min_dt3"),
+                                        F.max("last_sync_dt3").alias("max_dt3"),
+                                        F.min("last_sync_dt4").alias("min_dt4"),
+                                        F.max("last_sync_dt4").alias("max_dt4"),
+                                        )
+
+        min_and_max = df_min_and_max.collect()[0]
+        self.assertGreaterEqual(min_and_max['min_dt1'], DateRange.DEFAULT_START_DATE)
+        self.assertGreaterEqual(min_and_max['min_dt2'], DateRange.DEFAULT_START_DATE)
+        self.assertGreaterEqual(min_and_max['min_dt3'], DateRange.DEFAULT_START_DATE)
+        self.assertGreaterEqual(min_and_max['min_dt4'], DateRange.DEFAULT_START_DATE)
+        self.assertLessEqual(min_and_max['max_dt1'], DateRange.DEFAULT_END_DATE)
+        self.assertLessEqual(min_and_max['max_dt2'], DateRange.DEFAULT_END_DATE)
+        self.assertLessEqual(min_and_max['max_dt3'], DateRange.DEFAULT_END_DATE)
+        self.assertLessEqual(min_and_max['max_dt4'], DateRange.DEFAULT_END_DATE)
+
+        count_distinct = testDataDF.select(F.countDistinct("last_sync_dt"),
+                                           F.countDistinct("last_sync_dt2"),
+                                           F.countDistinct("last_sync_dt3"),
+                                           F.countDistinct("last_sync_dt4"),
+                                           ).collect()[0]
+        self.assertLessEqual( count_distinct[0], 100)
+        self.assertLessEqual( count_distinct[1], 100)
+        self.assertLessEqual( count_distinct[2], 300)
+        self.assertLessEqual(count_distinct[3], 300)
+
+
     def test_date_range1(self):
+        '''test timestamps with explicit range'''
         interval = timedelta(days=1, hours=1)
         start = datetime(2017, 10, 1, 0, 0, 0)
         end = datetime(2018, 10, 1, 6, 0, 0)
@@ -180,7 +232,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertIsNotNone(testDataDF.schema)
         self.assertIs(type(testDataDF.schema.fields[1].dataType), type(DateType()))
 
-        # TODO: add validation statement
+        # validation statements
         df_min_and_max = testDataDF.agg(F.min("last_sync_date").alias("min_dt"),
                                         F.max("last_sync_date").alias("max_dt"))
 
@@ -437,7 +489,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
             datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
                 .withIdOutput()
                 .withColumn("test_ts", "timestamp", unique_values=51, random=True,
-                            begin="2017-10-01", end="2018-10-06", interval="minutes=10")
+                            begin="2017-10-01 00:00:00", end="2018-10-06 23:59:59", interval="minutes=10")
                 .build()
         )
 
@@ -484,6 +536,22 @@ class TestRangedValuesAndDates(unittest.TestCase):
                 .withIdOutput()
                 .withColumn("test_ts", "date", unique_values=51, random=True, begin="2017-10-01", end="2018-10-06",
                             interval="days=2")
+                .build()
+        )
+
+        df_unique_date3.createOrReplaceTempView("testUnique4a")
+
+        dfResults = spark.sql("select count(distinct test_ts) from testUnique4a")
+        summary = dfResults.collect()[0]
+        self.assertEqual(summary[0], 51)
+
+    def test_unique_values_date3a(self):
+        ''' Check for unique dates when begin, end and interval are specified'''
+        df_unique_date3 = (
+            datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+                .withIdOutput()
+                .withColumn("test_ts", "date", unique_values=51, random=True, begin="2017-10-01", end="2018-10-06",
+                            interval="days=1")
                 .build()
         )
 
@@ -883,7 +951,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         # check `s1` values
         s1_expected_values = [f"testing {x:05} >>" for x in range(10, 124)]
         s1_values = [r[0] for r in results.select("s1").distinct().collect()]
-        self.assertSetEqual(set(s1_expected_values), set(s1_values))
+        self.assertTrue( set(s1_values).issubset(set(s1_expected_values)))
 
     def test_ranged_data_string4(self):
         testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
