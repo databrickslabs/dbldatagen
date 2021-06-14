@@ -72,10 +72,11 @@ typically one of :
 
 There is also support for applying arbitrary SQL expressions, and generation of common data from templates
 
+## Creating simple test data sets
 
+You can use the test data generator with, or without the use of a pre-existing schema.
 
-
-## Creating a simple test data set
+### Create a data set withouut pre-existing schemas
 
 Here is an example of creating a simple test data set without use of a schema. 
 
@@ -88,15 +89,65 @@ testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows
                             .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
                                         numColumns=cls.column_count)
                             .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
-                            .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
-                            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-                            .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+                            .withColumn("code2", IntegerType(), minValue=0, maxValue=10, random=True)
+                            .withColumn("code3", StringType(), values=['online', 'offline', 'unknown'])
+                            .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True, percent_nulls=5)
                             .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
 
                             )
 
 dfTestData = testDataSpec.build()
 ```
+By default, the seed column for each row is the `id` column. Use of the method `withIdOutput()` retains the `id` 
+field in the output data. If this is not called, the `id` field is used during data generation, but it is dropped 
+from the final data output.
+
+Each of the `withColumn` method calls introduces a new column (or columns).
+
+The example above shows some common uses:
+
+- The `withColumn` method call for the `r` column introduces multiple columns labelled `r1` to `rN` as determined by 
+the `numColumns` option. Here, we use the `expr` option to introduce a SQL expression to control the generation of the 
+column. Note this expression can refer to any preceding column including the `id` column.
+
+- The `withColumn` method call for the `code1` column specifies the generation of values between 100 and 200 
+inclusive. These will be computed using modulo arithmetic on the `id` column. 
+
+- The `withColumn` method call for the `code2` column specifies the generation of values between 0 and 10 
+inclusive. These will be computed via a uniformly distributed random value. 
+
+> By default all random values are uniformly distributed 
+unless either the `weights` option is used or a specific distribution is used. 
+
+- The `withColumn` method call for the `code3` column specifies the generation of string values from 
+the allowable values `['online', 'offline', or 'unknown']`
+inclusive. These will be computed using modulo arithmetic on the `id` column and the resulting value mapped to the 
+set of allowable values
+
+> Specific value lists can be used with any data type fields - but user is responsible for ensuring the values are of 
+>a compatible data type.
+
+- The `withColumn` method call for the `code4` column specifies the generation of string values from 
+the allowable values `['a', 'b', or 'c']`
+inclusive. But the `percent_nulls` option gives a 5% chance of a null value being generated. 
+These will be computed via a uniformly distributed random value.
+
+> By default null values will not be generated for a field, unless the `percent_nulls` option is specified
+
+- The `withColumn` method call for the `code5` column specifies the generation of string values from 
+the allowable values `['a', 'b', or 'c']`
+inclusive. These will be computed via a uniformly distributed random value but with weighting applied so that
+the value `a` occurs 9 times as frequently as the values `b` or `c`
+
+### Creating data set with pre-existing schema
+What if we want to generate data conforming to a pre-existing schema? you can specify a schema for your data by either 
+taking a schema from an existing table, or computing an explicit schema. 
+
+In this case you would use the `withColumnSpec` method instead of the `withColumn` method.
+
+For fields imported from the schema, the schema controls the field name and data type, but the column specification 
+controls how the data is generated.
+
 
 ### Building Device IOT Test Data
 This example shows generation of IOT device style data:
