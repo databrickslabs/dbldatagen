@@ -148,6 +148,14 @@ In this case you would use the `withColumnSpec` method instead of the `withColum
 For fields imported from the schema, the schema controls the field name and data type, but the column specification 
 controls how the data is generated.
 
+#### Adding dataspecs to match multiple columns
+For large schemas, it can be unwieldy to specify column generation specs for every column in a schema. 
+
+To alleviate this , the framework provides mechanisms to add rules in bulk for multiple columns.
+
+- The `withColumnSpecs` method introduces a column generation specification for all columns matching a specific 
+naming pattern or datatype. You can override the column specification for a specific column using 
+the `withColumnSpec` method.
 
 ### Building Device IOT Test Data
 This example shows generation of IOT device style data:
