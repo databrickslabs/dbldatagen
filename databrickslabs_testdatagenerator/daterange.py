@@ -10,6 +10,7 @@ from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, Doub
 from .datarange import DataRange
 from .utils import parse_time_interval
 
+
 class DateRange(DataRange):
     """Class to represent Date range
 
@@ -74,9 +75,9 @@ class DateRange(DataRange):
         return parse_time_interval(interval_str)
 
     @classmethod
-    def _getDateTime(cls, dt, format, default_value):
+    def _getDateTime(cls, dt, datetime_format, default_value):
         if isinstance(dt, str):
-            effective_dt = cls._datetime_from_string(dt, format)
+            effective_dt = cls._datetime_from_string(dt, datetime_format)
         elif dt is None:
             effective_dt = default_value
         else:
@@ -84,7 +85,7 @@ class DateRange(DataRange):
         return effective_dt
 
     @classmethod
-    def _getInterval(cls, interval,default_value):
+    def _getInterval(cls, interval, default_value):
         if isinstance(interval, str):
             effective_interval = parse_time_interval(interval)
         elif interval is None:
@@ -92,7 +93,6 @@ class DateRange(DataRange):
         else:
             effective_interval = interval
         return effective_interval
-
 
     @classmethod
     def computeDateRange(cls, begin, end, interval, unique_values):
@@ -111,7 +111,6 @@ class DateRange(DataRange):
         result = DateRange(effective_begin, effective_end, effective_interval)
         return result
 
-
     @classmethod
     def computeTimestampRange(cls, begin, end, interval, unique_values):
 
@@ -125,8 +124,6 @@ class DateRange(DataRange):
             effective_begin = effective_end - effective_interval * (unique_values - 1)
         result = DateRange(effective_begin, effective_end, effective_interval)
         return result
-
-
 
     def __str__(self):
         """ create string representation of date range"""
