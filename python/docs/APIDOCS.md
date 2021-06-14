@@ -158,14 +158,18 @@ naming pattern or datatype. You can override the column specification for a spec
 the `withColumnSpec` method.
 
 ### Building Device IOT Test Data
-This example shows generation of IOT device style data:
+This example shows generation of IOT device style data consisting of events from devices. 
+
+Here we want to generate a random set of events but ensure that the device properties remain the same for the 
+device from event to event.
+
 ```python
 import databrickslabs_testdatagenerator as dg
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType, DateType, LongType
 from databrickslabs_testdatagenerator import DateRange, NRange
 
 shuffle_partitions_requested = 8
-device_population=100000
+device_population = 100000
 data_rows = 20 * 1000000
 
 spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
@@ -228,3 +232,10 @@ of unique values.
 
 - The `withColumn` method call for the `line` column introduces a temporary column for purposes of 
 generating other columns, but through the use of the `omit` option, omits it from the final data set.
+
+## Using generated data from SQL
+By defining a view over the generated data, you can use the generated data from SQL.
+
+To simply this process, you can use options to generate temporary or global views over the data.
+
+At the time of writing, the specification for generation of data needs to be authored in Python.
