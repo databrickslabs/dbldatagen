@@ -91,6 +91,21 @@ class ColumnSpecOptions(object):
     #: the set of attributes that must be present for any columns
     required_properties = {'name', 'type'}
 
+    # alternate names for properties
+    property_aliases = {
+        'max': 'maxValue',
+        'min': 'minValue',
+        'base_column': 'baseColumn',
+        'base_columns': 'baseColumns',
+        'base_column_type': 'baseColumnType',
+        'unique_values': 'uniqueValues',
+        'data_range': 'dataRange',
+        'percent_nulls': 'percentNulls',
+        'random_seed_method': 'randomSeedMethod',
+        'random_seed': 'randomSeed',
+        'text_separator': 'text_separator'
+    }
+
     #: the set of attributes that are permitted for any call to data generator `withColumn` or `withColumnSpec`
     allowed_properties = {'name', 'type', 'minValue', 'maxValue', 'minValue', 'maxValue', 'step',
                           'prefix', 'random', 'distribution',
@@ -120,6 +135,25 @@ class ColumnSpecOptions(object):
 
     def __init__(self, props):  # TODO: check if additional options are needed here as `**kwArgs`
         self._column_spec_options = props
+
+    def _replaceAliasedOptions(self):
+        ''' Replace each of the property entries with the old key names
+            using the aliased key names
+
+            Used to migrate options to consistent use of camelCase names
+        '''
+        # for each of the aliases
+        for key in self.property_aliases:
+            # if key is in the existing properties
+            if key in self._column_spec_options:
+                # add an entry for the alias with the existing value ..
+                newKey = self.property_aliases[key]
+                existingValue = self._column_spec_options[key]
+                self._column_spec_options[newKey] = existingValue
+                # and remove the old key entry
+                del self._column_spec_options[key]
+
+
 
     def _getOrElse(self, key, default=None):
         """ Get val for key if it exists or else return default"""

@@ -11,9 +11,26 @@ ignore-paths:
 max-line-length: 120
 
 pylint:
+  options:
+    argument-naming-style: camelCase
+    variable-naming-style: any
+
+    method-naming-style: camelCase
+
+    # relax naming requirements for test methods, use pyspark style camel case for all other methods
+    method-rgx: '(?P<testMethod>^test[\w_]+$)|(?P<pySparkNaming>^_{,2}[a-z]+[^\W_]+_{,2}$)'
+    include-naming-hint: y
+
+    function-naming-style: snake_case
+
+    class-attribute-naming-style: any
+    attr-naming-style: any
+
+    good-names: i, j, k, s, v, w, x, y, df, dt, rc
+
   disable:
     - too-many-instance-attributes
-    - invalid-name
+    #- invalid-name
     - no-else-return
     - no-self-use
     - protected-access
