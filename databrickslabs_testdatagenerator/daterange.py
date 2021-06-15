@@ -32,8 +32,8 @@ class DateRange(DataRange):
     DEFAULT_UTC_TS_FORMAT = "%Y-%m-%d %H:%M:%S"
     DEFAULT_DATE_FORMAT = "%Y-%m-%d"
 
-    DEFAULT_START_TIMESTAMP = datetime(year=datetime.now().year-1, month=1, day=1)
-    DEFAULT_END_TIMESTAMP = datetime(year=datetime.now().year-1, month=12, day=31,hour=23, minute=59, second=59)
+    DEFAULT_START_TIMESTAMP = datetime(year=datetime.now().year - 1, month=1, day=1)
+    DEFAULT_END_TIMESTAMP = datetime(year=datetime.now().year - 1, month=12, day=31, hour=23, minute=59, second=59)
     DEFAULT_START_DATE = DEFAULT_START_TIMESTAMP.date()
     DEFAULT_END_DATE = DEFAULT_END_TIMESTAMP.date()
     DEFAULT_START_DATE_TIMESTAMP = DEFAULT_START_TIMESTAMP.replace(hour=0, minute=0, second=0)
