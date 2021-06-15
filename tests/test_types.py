@@ -129,7 +129,7 @@ class TestTypes(unittest.TestCase):
                 .withColumn("basic_short", ShortType())
                 .withColumn("code1", StringType(),
                             values=code_values,
-                            base_column=["basic_byte", "basic_short"])
+                            baseColumn=["basic_byte", "basic_short"])
         )
 
         df = testdata_defn.build().where("code1 is  null")
@@ -156,7 +156,7 @@ class TestTypes(unittest.TestCase):
                 .withColumn("basic_short", ShortType())
                 .withColumn("code1", StringType(),
                             values=["aa", "bb", "cc", "dd", "ee", "ff"],
-                            base_column=["basic_byte"])
+                            baseColumn=["basic_byte"])
         )
         df = testdata_defn.build().where("code1 is  null")
         self.assertEqual(df.count(), 0)
@@ -171,7 +171,7 @@ class TestTypes(unittest.TestCase):
                 .withColumn("basic_short", ShortType())
                 .withColumn("code1", StringType(),
                             values=["aa", "bb", "cc", "dd", "ee", "ff"],
-                            base_column=["basic_byte"])
+                            baseColumn=["basic_byte"])
         )
         df = testdata_defn.build()
         # df.show()

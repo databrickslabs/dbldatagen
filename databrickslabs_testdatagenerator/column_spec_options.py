@@ -136,6 +136,8 @@ class ColumnSpecOptions(object):
     def __init__(self, props):  # TODO: check if additional options are needed here as `**kwArgs`
         self._column_spec_options = props
 
+        self._replaceAliasedOptions()
+
     def _replaceAliasedOptions(self):
         ''' Replace each of the property entries with the old key names
             using the aliased key names
@@ -162,7 +164,17 @@ class ColumnSpecOptions(object):
     def __getitem__(self, key):
         """ implement the built in dereference by key behavior """
         ensure(key is not None, "key should be non-empty")
-        return self._column_spec_options.get(key, None)
+
+        result = None
+        # if key in the options, get it
+        if key in self._column_spec_options:
+            result = self._column_spec_options.get(key, None)
+        # otherwise if the key is one of the aliased options, process it
+        elif key in self.property_aliases:
+            newKey = self.property_aliases[key]
+            if newKey in self._column_spec_options:
+                result = self._column_spec_options.get(newKey, None)
+        return result
 
     def checkBoolOption(self, v, name=None, optional=True):
         """ Check that option is either not specified or of type boolean

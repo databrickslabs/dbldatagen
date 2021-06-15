@@ -177,7 +177,7 @@ class TestTextGeneration(unittest.TestCase):
                          .withIdOutput()
                          .withColumn("val1", IntegerType(), percent_nulls=10.0)
                          .withColumn("val2", IntegerType(), percent_nulls=10.0)
-                         .withColumn("val3", StringType(), base_column=["val1", "val2"], base_column_type="values",
+                         .withColumn("val3", StringType(), baseColumn=["val1", "val2"], base_column_type="values",
                                      template=r"\v-1")
                          )
 
@@ -189,7 +189,7 @@ class TestTextGeneration(unittest.TestCase):
                          .withIdOutput()
                          .withColumn("val1", IntegerType(), percent_nulls=10.0)
                          .withColumn("val2", IntegerType(), percent_nulls=10.0)
-                         .withColumn("val3", StringType(), base_column=["val1", "val2"], base_column_type="values",
+                         .withColumn("val3", StringType(), baseColumn=["val1", "val2"], base_column_type="values",
                                      template=r"\v0-\v1")
                          )
         # in this case we expect values of the form `<first-value> - <second-value>`
@@ -201,7 +201,7 @@ class TestTextGeneration(unittest.TestCase):
                          .withIdOutput()
                          .withColumn("val1", IntegerType(), percent_nulls=10.0)
                          .withColumn("val2", IntegerType(), percent_nulls=10.0)
-                         .withColumn("val3", StringType(), base_column=["val1", "val2"], base_column_type="values",
+                         .withColumn("val3", StringType(), baseColumn=["val1", "val2"], base_column_type="values",
                                      template=r"\v\0-\v\1")
                          )
 
@@ -214,7 +214,7 @@ class TestTextGeneration(unittest.TestCase):
                          .withIdOutput()
                          .withColumn("val1", IntegerType(), percent_nulls=10.0)
                          .withColumn("val2", IntegerType(), percent_nulls=10.0)
-                         .withColumn("val3", StringType(), base_column=["val1", "val2"], base_column_type="hash",
+                         .withColumn("val3", StringType(), baseColumn=["val1", "val2"], base_column_type="hash",
                                      template=r"\v0-\v1")
                          )
         # here the values for val3 are undefined as the base value for the column is a hash of the base columns
@@ -226,7 +226,7 @@ class TestTextGeneration(unittest.TestCase):
                          .withIdOutput()
                          .withColumn("val1", IntegerType(), percent_nulls=10.0)
                          .withColumn("val2", IntegerType(), percent_nulls=10.0)
-                         .withColumn("val3", StringType(), base_column=["val1", "val2"], base_column_type="hash",
+                         .withColumn("val3", StringType(), baseColumn=["val1", "val2"], base_column_type="hash",
                                      format="%s")
                          )
         # here the values for val3 are undefined as the base value for the column is a hash of the base columns
@@ -238,7 +238,7 @@ class TestTextGeneration(unittest.TestCase):
                          .withIdOutput()
                          .withColumn("val1", IntegerType(), percent_nulls=10.0)
                          .withColumn("val2", IntegerType(), percent_nulls=10.0)
-                         .withColumn("val3", StringType(), base_column=["val1", "val2"], base_column_type="values",
+                         .withColumn("val3", StringType(), baseColumn=["val1", "val2"], base_column_type="values",
                                      format="%s")
                          )
         # here the values for val3 are undefined as the base value for the column is a hash of the base columns
@@ -250,7 +250,7 @@ class TestTextGeneration(unittest.TestCase):
                          .withIdOutput()
                          .withColumn("val1", IntegerType(), percent_nulls=10.0)
                          .withColumn("val2", IntegerType(), percent_nulls=10.0)
-                         .withColumn("val3", StringType(), base_column=["val1", "val2"], format="%s")
+                         .withColumn("val3", StringType(), baseColumn=["val1", "val2"], format="%s")
                          )
         # here the values for val3 are undefined as the base value for the column is a hash of the base columns
         testDataSpec9.build().show()
@@ -266,10 +266,10 @@ class TestTextGeneration(unittest.TestCase):
                 .withColumn("code4", "integer", minValue=1, maxValue=20, step=1)
                 # base column specifies dependent column
 
-                .withColumn("site_cd", "string", prefix='site', base_column='code1')
+                .withColumn("site_cd", "string", prefix='site', baseColumn='code1')
                 .withColumn("device_status", "string", minValue=1, maxValue=200, step=1, prefix='status', random=True)
 
-                .withColumn("site_cd2", "string", prefix='site', base_column='code1', text_separator=":")
+                .withColumn("site_cd2", "string", prefix='site', baseColumn='code1', text_separator=":")
                 .withColumn("device_status2", "string", minValue=1, maxValue=200, step=1,
                             prefix='status', text_separator=":")
 
@@ -327,10 +327,10 @@ class TestTextGeneration(unittest.TestCase):
                 .withColumn("code4", "integer", minValue=1, maxValue=20, step=1)
                 # base column specifies dependent column
 
-                .withColumn("site_cd", "string", suffix='site', base_column='code1')
+                .withColumn("site_cd", "string", suffix='site', baseColumn='code1')
                 .withColumn("device_status", "string", minValue=1, maxValue=200, step=1, suffix='status', random=True)
 
-                .withColumn("site_cd2", "string", suffix='site', base_column='code1', text_separator=":")
+                .withColumn("site_cd2", "string", suffix='site', baseColumn='code1', text_separator=":")
                 .withColumn("device_status2", "string", minValue=1, maxValue=200, step=1,
                             suffix='status', text_separator=":")
         )
@@ -368,10 +368,10 @@ class TestTextGeneration(unittest.TestCase):
                 .withColumn("code4", "integer", minValue=1, maxValue=20, step=1)
                 # base column specifies dependent column
 
-                .withColumn("site_cd", "string", suffix='site', base_column='code1', prefix="test")
+                .withColumn("site_cd", "string", suffix='site', baseColumn='code1', prefix="test")
                 .withColumn("device_status", "string", minValue=1, maxValue=200, step=1, suffix='status', prefix="test")
 
-                .withColumn("site_cd2", "string", suffix='site', base_column='code1', text_separator=":", prefix="test")
+                .withColumn("site_cd2", "string", suffix='site', baseColumn='code1', text_separator=":", prefix="test")
                 .withColumn("device_status2", "string", minValue=1, maxValue=200, step=1,
                             suffix='status', text_separator=":",
                             prefix="test")

@@ -40,34 +40,34 @@ class TestDependentData(unittest.TestCase):
 
                             # note for format strings, we must use "%lx" not "%x" as the underlying value is a long
                             .withColumn("device_id", StringType(), expr="format_string('0x%013x', internal_device_id)",
-                                        base_column="internal_device_id")
+                                        baseColumn="internal_device_id")
                             # .withColumn("device_id", StringType(), format='0x%013x', base_column="internal_device_id")
 
                             # the device / user attributes will be the same for the same device id
                             # - so lets use the internal device id as the base column for these attribute
                             .withColumn("country", StringType(), values=cls.country_codes, weights=cls.country_weights,
-                                        base_column="internal_device_id",
+                                        baseColumn="internal_device_id",
                                         base_column_type="hash")
                             .withColumn("country2", StringType(), values=cls.country_codes, weights=cls.country_weights,
-                                        base_column="internal_device_id",
+                                        baseColumn="internal_device_id",
                                         base_column_type="values")
                             .withColumn("manufacturer", StringType(), values=cls.manufacturers,
-                                        base_column="internal_device_id")
-                            .withColumn("line", StringType(), values=cls.lines, base_column="manufacturer",
+                                        baseColumn="internal_device_id")
+                            .withColumn("line", StringType(), values=cls.lines, baseColumn="manufacturer",
                                         base_column_type="hash")
                             .withColumn("line2", StringType(), values=cls.lines, weights=cls.line_weights,
-                                        base_column="manufacturer", base_column_type="hash")
-                            .withColumn("model_ser", IntegerType(), minValue=1, maxValue=11, base_column="device_id",
+                                        baseColumn="manufacturer", base_column_type="hash")
+                            .withColumn("model_ser", IntegerType(), minValue=1, maxValue=11, baseColumn="device_id",
                                         base_column_type="hash")
-                            .withColumn("model_ser2", IntegerType(), unique_values=11, base_column="device_id",
+                            .withColumn("model_ser2", IntegerType(), unique_values=11, baseColumn="device_id",
                                         base_column_type="hash")
-                            .withColumn("model_ser3", IntegerType(), data_range=NRange(1, 11, 1),
-                                        base_column="internal_device_id")
-                            .withColumn("model_ser4", IntegerType(), data_range=NRange(1, 11, 1),
-                                        base_column="device_id",
+                            .withColumn("model_ser3", IntegerType(), dataRange=NRange(1, 11, 1),
+                                        baseColumn="internal_device_id")
+                            .withColumn("model_ser4", IntegerType(), dataRange=NRange(1, 11, 1),
+                                        baseColumn="device_id",
                                         base_column_type="hash")
-                            .withColumn("model_ser5", IntegerType(), data_range=NRange(1, 11),
-                                        base_column="device_id",
+                            .withColumn("model_ser5", IntegerType(), dataRange=NRange(1, 11),
+                                        baseColumn="device_id",
                                         base_column_type="hash")
 
                             )
@@ -181,7 +181,7 @@ class TestDependentData(unittest.TestCase):
         ds_copy1 = self.testDataSpec.clone()
 
         df_copy1 = (ds_copy1.withRowCount(1000)
-                    .withColumn("device_id_2", StringType(), format='0x%013x', base_column="internal_device_id",
+                    .withColumn("device_id_2", StringType(), format='0x%013x', baseColumn="internal_device_id",
                                 base_column_type="values")
                     .build())
 
@@ -199,7 +199,7 @@ class TestDependentData(unittest.TestCase):
         ds_copy1 = self.testDataSpec.clone()
 
         df_copy1 = (ds_copy1.withRowCount(1000)
-                    .withColumn("device_id_2", StringType(), format='0x%013x', base_column="internal_device_id")
+                    .withColumn("device_id_2", StringType(), format='0x%013x', baseColumn="internal_device_id")
                     .build())
 
         df_copy1.show()

@@ -54,9 +54,9 @@ class ColumnGenerationSpec(object):
     :param prefix: string used as prefix to the column underlying value to produce a string value
     :param random: Boolean, if True, will generate random values
     :param distribution: Instance of distribution, that will control the distribution of the generated values
-    :param base_column: String or list of strings representing columns used as basis for generating the column data
-    :param random_seed: random seed value used to generate the random value, if column data is random
-    :param random_seed_method: method for computing random values from the random seed
+    :param baseColumn: String or list of strings representing columns used as basis for generating the column data
+    :param randomSeed: random seed value used to generate the random value, if column data is random
+    :param randomSeedMethod: method for computing random values from the random seed
 
     :param implicit: If True, the specification for the column can be replaced by a later definition.
            If not, a later attempt to replace the definition will flag an error.
@@ -88,7 +88,7 @@ class ColumnGenerationSpec(object):
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.NOTSET)
 
     def __init__(self, name, colType=None, minValue=0, maxValue=None, step=1, prefix='', random=False,
-                 distribution=None, base_column=None, random_seed=None, random_seed_method=None,
+                 distribution=None, baseColumn=None, randomSeed=None, randomSeedMethod=None,
                  implicit=False, omit=False, nullable=True, debug=False, verbose=False, **kwargs):
 
         # set up logging
@@ -109,16 +109,16 @@ class ColumnGenerationSpec(object):
         self.execution_history = []  # the execution history for the column
 
         # If no base column is specified, assume its dependent on the seed column
-        if base_column is None:
-            base_column = self.SEED_COLUMN
+        if baseColumn is None:
+            baseColumn = self.SEED_COLUMN
 
         # to allow for open ended extension of many column attributes, we use a few specific
         # parameters and pass the rest as keyword arguments
         self._column_spec_options = {'name': name, 'minValue': minValue, 'type': colType,
                                      'maxValue': maxValue, 'step': step,
-                                     'prefix': prefix, 'base_column': base_column,
+                                     'prefix': prefix, 'base_column': baseColumn,
                                      'random': random, 'distribution': distribution,
-                                     'random_seed_method': random_seed_method, 'random_seed': random_seed,
+                                     'random_seed_method': randomSeedMethod, 'random_seed': randomSeed,
                                      'omit': omit, 'nullable': nullable, 'implicit': implicit
                                      }
 
@@ -166,10 +166,10 @@ class ColumnGenerationSpec(object):
 
         # should be either a literal or None
         # use of a random seed method will ensure that we have repeatability of data generation
-        self.random_seed = random_seed
+        self.random_seed = randomSeed
 
         # should be "fixed" or "hash_fieldname"
-        self.random_seed_method = random_seed_method
+        self.random_seed_method = randomSeedMethod
         self.random = random
 
         # compute dependencies

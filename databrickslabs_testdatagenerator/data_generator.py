@@ -450,17 +450,17 @@ class DataGenerator:
             self.withColumn(fs.name, fs.dataType, implicit=True, omit=False, nullable=fs.nullable)
         return self
 
-    def _computeRange(self, data_range, minValue, maxValue, step):
+    def _computeRange(self, dataRange, minValue, maxValue, step):
         """ Compute merged range based on parameters
 
         :returns: effective minValue, maxValue, step as tuple
         """
         # TODO: may also need to check for instance of DataRange
-        if data_range is not None and isinstance(data_range, range):
+        if dataRange is not None and isinstance(dataRange, range):
             if maxValue is not None or minValue != 0 or step != 1:
                 raise ValueError("You cant specify both a range and minValue, maxValue or step values")
 
-            return data_range.start, data_range.stop, data_range.step
+            return dataRange.start, dataRange.stop, dataRange.step
         else:
             return minValue, maxValue, step
 
@@ -528,7 +528,7 @@ class DataGenerator:
 
     def withColumnSpec(self, colName, minValue=None, maxValue=None, step=1, prefix=None,
                        random=False, distribution=None,
-                       implicit=False, data_range=None, omit=False, base_column=None, **kwargs):
+                       implicit=False, dataRange=None, omit=False, baseColumn=None, **kwargs):
         """ add a column specification for an existing column
 
         :returns: modified in-place instance of test data generator allowing for chaining of calls
@@ -540,8 +540,8 @@ class DataGenerator:
         """
         ensure(colName is not None, "Must specify column name for column")
         ensure(colName in self.getInferredColumnNames(), " column `{0}` must refer to defined column".format(colName))
-        if base_column is not None:
-            self._checkColumnOrColumnList(base_column)
+        if baseColumn is not None:
+            self._checkColumnOrColumnList(baseColumn)
         ensure(not self.isFieldExplicitlyDefined(colName), "duplicate column spec for column `{0}`".format(colName))
 
         # handle migration of old `min` and `max` options
@@ -561,12 +561,12 @@ class DataGenerator:
         new_props.update(kwargs)
 
         self.logger.info("adding column spec - `%s` with baseColumn : `%s`, implicit : %s , omit %s",
-                             colName, base_column, implicit, omit)
+                         colName, baseColumn, implicit, omit)
 
         self.generateColumnDefinition(colName, self.getColumnType(colName), minValue=minValue, maxValue=maxValue,
                                       step=step, prefix=prefix,
-                                      random=random, data_range=data_range,
-                                      distribution=distribution, base_column=base_column,
+                                      random=random, data_range=dataRange,
+                                      distribution=distribution, base_column=baseColumn,
                                       implicit=implicit, omit=omit, **new_props)
         return self
 
@@ -579,8 +579,8 @@ class DataGenerator:
         return colName in self.columnSpecsByName.keys()
 
     def withColumn(self, colName, colType=StringType(), minValue=None, maxValue=None, step=1,
-                   data_range=None, prefix=None, random=False, distribution=None,
-                   base_column=None, nullable=True,
+                   dataRange=None, prefix=None, random=False, distribution=None,
+                   baseColumn=None, nullable=True,
                    omit=False, implicit=False,
                    **kwargs):
         """ add a new column for specification
@@ -594,8 +594,8 @@ class DataGenerator:
         """
         ensure(colName is not None, "Must specify column name for column")
         ensure(colType is not None, "Must specify column type for column `{0}`".format(colName))
-        if base_column is not None:
-            self._checkColumnOrColumnList(base_column, allow_id=True)
+        if baseColumn is not None:
+            self._checkColumnOrColumnList(baseColumn, allow_id=True)
 
         # handle migration of old `min` and `max` options
         if OLD_MIN_OPTION in kwargs.keys():
@@ -619,10 +619,10 @@ class DataGenerator:
 
         self.logger.info("effective range: %s, %s, %s args: %s", minValue, maxValue, step, kwargs)
         self.logger.info("adding column - `%s` with baseColumn : `%s`, implicit : %s , omit %s",
-                         colName, base_column, implicit, omit)
+                         colName, baseColumn, implicit, omit)
         self.generateColumnDefinition(colName, colType, minValue=minValue, maxValue=maxValue,
                                       step=step, prefix=prefix, random=random,
-                                      distribution=distribution, base_column=base_column, data_range=data_range,
+                                      distribution=distribution, base_column=baseColumn, data_range=dataRange,
                                       implicit=implicit, omit=omit, **new_props)
         self.inferredSchemaFields.append(StructField(colName, colType, nullable))
         return self
@@ -642,11 +642,11 @@ class DataGenerator:
             colType = self.getColumnType(base_column)
 
         column_spec = ColumnGenerationSpec(colName, colType,
-                                           base_column=base_column,
+                                           baseColumn=base_column,
                                            implicit=implicit,
                                            omit=omit,
-                                           random_seed=self._randomSeed,
-                                           random_seed_method=self.seed_method,
+                                           randomSeed=self._randomSeed,
+                                           randomSeedMethod=self.seed_method,
                                            nullable=nullable,
                                            verbose=self.verbose,
                                            debug=self.debug,

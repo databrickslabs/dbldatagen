@@ -33,7 +33,7 @@ x3 = (datagen.DataGenerator(sparkSession=spark, name="association_oss_cell_info"
       .withColumnSpec("site_id", minValue=1, maxValue=20, step=1)
       # base column specifies dependent column
       .withIdOutput()
-      .withColumnSpec("site_cd", prefix='site', base_column='site_id')
+      .withColumnSpec("site_cd", prefix='site', baseColumn='site_id')
       .withColumn("sector_status_desc", "string", minValue=1, maxValue=200, step=1, prefix='status', random=True)
       # withColumn adds specification for new column
       .withColumn("rand", "float", expr="floor(rand() * 350) * (86400 + 3600)")

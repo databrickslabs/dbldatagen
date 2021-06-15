@@ -201,25 +201,25 @@ testDataSpec = (dg.DataGenerator(sparkSession=spark, name="device_data_set", row
     .withColumn("internal_device_id", LongType(), minValue=0x1000000000000, unique_values=device_population)
 
     # note for format strings, we must use "%lx" not "%x" as the underlying value is a long
-    .withColumn("device_id", StringType(), format="0x%013x", base_column="internal_device_id")
+    .withColumn("device_id", StringType(), format="0x%013x", baseColumn="internal_device_id")
     #.withColumn("device_id_2", StringType(), format='0x%013x', base_column="internal_device_id")
 
     # the device / user attributes will be the same for the same device id - so lets use the internal device id as the base column for these attribute
     .withColumn("country", StringType(), values=country_codes, weights=country_weights,
-          base_column="internal_device_id", base_column_type="hash")
+          baseColumn="internal_device_id", base_column_type="hash")
     .withColumn("country2a", LongType(), expr="((hash(internal_device_id) % 3847) + 3847) % 3847", 
-          base_column="internal_device_id")
+          baseColumn="internal_device_id")
     .withColumn("country2", IntegerType(), expr="floor(cast( (((internal_device_id % 3847) + 3847) % 3847) as double) )", 
-          base_column="internal_device_id")
-    .withColumn("country3", StringType(), values=country_codes, base_column="country2")
-    .withColumn("manufacturer", StringType(), values=manufacturers, base_column="internal_device_id")
+          baseColumn="internal_device_id")
+    .withColumn("country3", StringType(), values=country_codes, baseColumn="country2")
+    .withColumn("manufacturer", StringType(), values=manufacturers, baseColumn="internal_device_id")
 
     # use omit = True if you dont want a column to appear in the final output but just want to use it as part of generation of another column
-    .withColumn("line", StringType(), values=lines, base_column="manufacturer", 
+    .withColumn("line", StringType(), values=lines, baseColumn="manufacturer", 
            base_column_type="hash", omit=True)
-    .withColumn("model_ser", IntegerType(), minValue=1, maxValue=11,  base_column="device_id", base_column_type="hash", omit=True)
+    .withColumn("model_ser", IntegerType(), minValue=1, maxValue=11,  baseColumn="device_id", base_column_type="hash", omit=True)
 
-    .withColumn("model_line", StringType(), expr="concat(line, '#', model_ser)", base_column=["line", "model_ser"])
+    .withColumn("model_line", StringType(), expr="concat(line, '#', model_ser)", baseColumn=["line", "model_ser"])
     .withColumn("event_type", StringType(), values=["activation", "deactivation", "plan change", "telecoms activity", "internet activity", "device error"], random=True)
 
     )

@@ -93,8 +93,8 @@ class TestBasicOperation(unittest.TestCase):
         ds_copy1 = self.testDataSpec.clone()
 
         df_copy1 = (ds_copy1.withRowCount(1000)
-                    .withColumn("ac1", IntegerType(), base_column=['code1', 'code2'], minValue=100, maxValue=200)
-                    .withColumn("ac2", IntegerType(), base_column=['code1', 'code2'],
+                    .withColumn("ac1", IntegerType(), baseColumn=['code1', 'code2'], minValue=100, maxValue=200)
+                    .withColumn("ac2", IntegerType(), baseColumn=['code1', 'code2'],
                                 minValue=100, maxValue=200, random=True)
                     .build())
 
@@ -123,8 +123,8 @@ class TestBasicOperation(unittest.TestCase):
         ds_copy1 = self.testDataSpec.clone()
 
         df_copy1 = (ds_copy1.withRowCount(1000)
-                    .withColumn("ac1", IntegerType(), base_column=['code1', 'code2'], minValue=100, maxValue=200)
-                    .withColumn("ac2", IntegerType(), base_column=['code1', 'code2'],
+                    .withColumn("ac1", IntegerType(), baseColumn=['code1', 'code2'], minValue=100, maxValue=200)
+                    .withColumn("ac2", IntegerType(), baseColumn=['code1', 'code2'],
                                 minValue=100, maxValue=200, random=True)
                     .build())
 
