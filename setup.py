@@ -20,13 +20,6 @@ setuptools.setup(
     packages=['databrickslabs_testdatagenerator',
               'databrickslabs_testdatagenerator.distributions'
               ],
-    install_requires=[
-        'pyspark>=2.4.0',
-        'numpy',
-        'pandas',
-        'pyarrow>=0.8.0'
-    ],
-    # packages=setuptools.find_packages(exclude=['contrib', 'unit_tests', 'tests']),
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
