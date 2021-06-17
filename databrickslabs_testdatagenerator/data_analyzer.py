@@ -39,7 +39,7 @@ class DataAnalyzer:
         #            i.e DataGenerator(sparkSession=spark, name="test", ...)
         #            """)
 
-    def lookupFieldType(self, typ):
+    def _lookupFieldType(self, typ):
         """Perform lookup of type name by Spark SQL type name"""
         type_mappings = {
             "LongType": "Long",
@@ -54,10 +54,10 @@ class DataAnalyzer:
         else:
             return typ
 
-    def summarizeField(self, field):
+    def _summarizeField(self, field):
         """Generate summary for individual field"""
         if isinstance(field, StructField):
-            return "{} {}".format(field.name, self.lookupFieldType(str(field.dataType)))
+            return "{} {}".format(field.name, self._lookupFieldType(str(field.dataType)))
         else:
             return str(field)
 
@@ -65,23 +65,23 @@ class DataAnalyzer:
         """ Generate summary for all fields in schema"""
         if schema is not None:
             fields = schema.fields
-            fields_desc = [self.summarizeField(x) for x in fields]
+            fields_desc = [self._summarizeField(x) for x in fields]
             return "Record(" + ",".join(fields_desc) + ")"
         else:
             return "N/A"
 
-    def getFieldNames(self, schema):
+    def _getFieldNames(self, schema):
         """ get field names from schema"""
         if schema is not None and schema.fields is not None:
             return [x.name for x in schema.fields if isinstance(x, StructField)]
         else:
             return []
 
-    def getDistinctCounts(self):
+    def _getDistinctCounts(self):
         """ Get distinct counts"""
         pass
 
-    def displayRow(self, row):
+    def _displayRow(self, row):
         """Display details for row"""
         results = []
         row_key_pairs = row.asDict()
@@ -90,9 +90,9 @@ class DataAnalyzer:
 
         return ", ".join(results)
 
-    def prependSummary(self, df, heading):
+    def _prependSummary(self, df, heading):
         """ Prepend summary information"""
-        field_names = self.getFieldNames(self.df.schema)
+        field_names = self._getFieldNames(self.df.schema)
         select_fields = ["summary"]
         select_fields.extend(field_names)
 
@@ -100,7 +100,7 @@ class DataAnalyzer:
                 .select(*select_fields))
 
     def summarize(self):
-        """Generate summary"""
+        """Generate summary of data frame attributes"""
         count = self.df.count()
         distinct_count = self.df.distinct().count()
         partition_count = self.df.rdd.getNumPartitions()
@@ -115,19 +115,19 @@ class DataAnalyzer:
         results.append(summary)
         results.append("schema: " + self.summarizeFields(self.df.schema))
 
-        field_names = self.getFieldNames(self.df.schema)
+        field_names = self._getFieldNames(self.df.schema)
         select_fields = ["summary"]
         select_fields.extend(field_names)
 
-        distinct_expressions = [fns.countDistinct(x).alias(x) for x in self.getFieldNames(self.df.schema)]
-        results.append(self.displayRow(
-            self.prependSummary(self.df.agg(*distinct_expressions),
+        distinct_expressions = [fns.countDistinct(x).alias(x) for x in self._getFieldNames(self.df.schema)]
+        results.append(self._displayRow(
+            self._prependSummary(self.df.agg(*distinct_expressions),
                                 'distinct_count')
                 .select(*select_fields)
                 .collect()[0]
         ))
 
         for r in self.df.describe().collect():
-            results.append(self.displayRow(r))
+            results.append(self._displayRow(r))
 
         return "\n".join([str(x) for x in results])
