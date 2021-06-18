@@ -13,8 +13,8 @@ from pyspark.sql.types import LongType, FloatType, IntegerType, DoubleType, Shor
 
 from .datarange import DataRange
 
-OLD_MIN_OPTION = 'min'
-OLD_MAX_OPTION = 'max'
+_OLD_MIN_OPTION = 'min'
+_OLD_MAX_OPTION = 'max'
 
 
 class NRange(DataRange):
@@ -36,19 +36,19 @@ class NRange(DataRange):
 
     def __init__(self, minValue=None, maxValue=None, step=None, until=None, **kwArgs):
         # check if older form of `minValue` and `maxValue` are used, and if so
-        if OLD_MIN_OPTION in kwArgs.keys():
+        if _OLD_MIN_OPTION in kwArgs.keys():
             assert minValue is None, \
                 "Only one of `minValue` and `minValue` can be specified. Use of `minValue` is preferred"
-            self.minValue = kwArgs[OLD_MIN_OPTION]
-            kwArgs.pop(OLD_MIN_OPTION, None)
+            self.minValue = kwArgs[_OLD_MIN_OPTION]
+            kwArgs.pop(_OLD_MIN_OPTION, None)
         else:
             self.minValue = minValue
 
-        if OLD_MAX_OPTION in kwArgs.keys():
+        if _OLD_MAX_OPTION in kwArgs.keys():
             assert maxValue is None, \
                 "Only one of `maxValue` and `maxValue` can be specified. Use of `maxValue` is preferred"
-            self.maxValue = kwArgs[OLD_MAX_OPTION]
-            kwArgs.pop(OLD_MAX_OPTION, None)
+            self.maxValue = kwArgs[_OLD_MAX_OPTION]
+            kwArgs.pop(_OLD_MAX_OPTION, None)
         else:
             self.maxValue = maxValue
         assert len(kwArgs.keys()) == 0, "no keyword options other than `min` and `max` allowed"
