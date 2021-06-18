@@ -1,4 +1,4 @@
-# The following packages are used in building the test data generator framework
+# The following packages are used in building the test data generator framework.
 # All packages used are already installed in the Databricks runtime environment for version 6.5 or later
 numpy==1.18.1
 pandas==1.0.1
@@ -21,10 +21,11 @@ prospector
 
 # The following packages are only required for building documentation and are not required at runtime
 sphinx>=2.0.0,<3.1.0
+sphinx_rtd_theme
 nbsphinx
 numpydoc==0.8
 pypandoc
 ipython==7.4.0
-pydata-sphinx-theme
 recommonmark
 sphinx-markdown-builder
+rst2pdf==0.98

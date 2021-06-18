@@ -6,25 +6,30 @@
 SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = source
+DOC_DIR     = .
 BUILDDIR      = `pwd`/build
 MODULEDIR      = ../../databrickslabs_testdatagenerator
+PROJECT_DIR      = ../..
 
 # Put it first so that "make" without argument is like "make help".
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-.PHONY: help apidoc Makefile clean
+.PHONY: help apidoc Makefile clean quick_index
 
 clean: Makefile
 	@echo "$(SPHINXBUILD) -M $@ '$(SOURCEDIR)' '$(BUILDDIR)' $(SPHINXOPTS) $(O)"
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 	@- rm "$(SOURCEDIR)/reference/api"/*.rst
+	@- rm "$(SOURCEDIR)/relnotes"/*.*
+	@- rm "htmldocs"/*.*
 
 
 relnotes: Makefile
 	@echo "Copying release notes etc"
 	@mkdir -p source/relnotes
-	@cp ../../*.md source/relnotes/
+	@cp "$(PROJECT_DIR)"/CHANGELOG.md "$(SOURCEDIR)"/relnotes/
+	@cp "$(PROJECT_DIR)"/CONTRIBUTING.md "$(SOURCEDIR)"/relnotes/
 
 markdown: Makefile
 	@echo "Making md5 files"
@@ -37,15 +42,31 @@ apidoc: Makefile
 
 requirements:
 	@echo "Making requirements"
-	@python3 mk_requirements.py `pwd`/source/relnotes/require.md `pwd`/source/relnotes/requirements.md
-	@-rm -f `pwd`/source/relnotes/require.md
+	@python3 ./mk_requirements.py "$(PROJECT_DIR)/python/require.txt" "$(SOURCEDIR)/relnotes"/requirements.md
+
+quick_index:
+	@echo "Making quick index"
+	python3 ./utils/mk_quick_index.py "$(MODULEDIR)" "$(SOURCEDIR)/relnotes"/quickindex.rst
+	@echo "done"
+
+
+license:
+	@echo "Making license"
+	@cp -f "$(PROJECT_DIR)/LICENSE" "$(SOURCEDIR)/relnotes"/LICENSE.txt
+
+dependent_files: relnotes requirements license quick_index
+	@echo "Making dependent files"
+	@-mkdir python/docs/source/relnotes
+	@cp -f "$(DOC_DIR)/APIDOCS.md" "$(SOURCEDIR)"/relnotes/
+	@cp -f "$(DOC_DIR)/DATARANGES.md" "$(SOURCEDIR)"/relnotes/
+
 
 html: Makefile
 	@echo "Making HTML"
 	@echo "$(SPHINXBUILD) -M $@ '$(SOURCEDIR)' '$(BUILDDIR)' $(SPHINXOPTS) $(O)"
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-docs: clean requirements Makefile apidoc html markdown
+docs: clean dependent_files Makefile apidoc html
 	@echo "Making full docs"
 	@echo "Full path to HTML docs is [$(BUILDDIR)/html]"
 

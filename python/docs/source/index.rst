@@ -17,8 +17,31 @@ As the data generator generates a PYSpark data frame, it is simple to create a v
 to Scala or R based Spark applications also.
 
 .. toctree::
-   :maxdepth: 4
-   :caption: Contents:
+   :maxdepth: 1
+   :caption: Getting Started
 
-   Documentation from code <reference/api/modules>
-   relnotes/relnotes_and_docs
+   Get Started Here <relnotes/APIDOCS>
+   Installation instructions <TOBEADDED>
+   Using data ranges <relnotes/DATARANGES>
+
+.. toctree::
+   :maxdepth: 1
+   :caption: API
+
+   Quick index <relnotes/quickindex>
+   API Documentation <reference/api/modules>
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Development
+
+   Building and contributing <relnotes/CONTRIBUTING>
+   Change log <relnotes/CHANGELOG>
+   Build requirements <relnotes/requirements>
+
+.. toctree::
+   :maxdepth: 1
+   :caption: License
+
+   license
+
