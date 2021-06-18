@@ -52,20 +52,10 @@ clean_buildenv:
 
 docs: install
 	@echo "$(OK_COLOR)=> Creating docs ...$(NO_COLOR)"
-	@-mkdir python/docs/source/relnotes
-	@cp -f python/require.txt python/docs/source/relnotes/require.md
-	@cp -f CONTRIBUTING.md python/docs/source/relnotes/
-	@cp -f CHANGELOG.md python/docs/source/relnotes/
-	@cp -f python/docs/APIDOCS.md python/docs/source/relnotes/
 	@cd python/docs && make docs
 
 dev-docs: dev-install
 	@echo "$(OK_COLOR)=> Creating docs ...$(NO_COLOR)"
-	@-mkdir python/docs/source/relnotes
-	@cp -f python/require.txt python/docs/source/relnotes/require.md
-	@cp -f CONTRIBUTING.md python/docs/source/relnotes/
-	@cp -f CHANGELOG.md python/docs/source/relnotes/
-	@cp -f python/docs/APIDOCS.md python/docs/source/relnotes/
 	@cd python/docs && make docs
 
 # Tests
@@ -169,13 +159,13 @@ release:
 
 install: buildenv dist/dist_flag.txt
 	@echo "$(OK_COLOR)=> Installing databrickslabs_testdatagenerator$(NO_COLOR)"
-	@cp README.md python/
+	#@cp README.md python/
 	@pip3 install --upgrade .
 	@touch `pwd`/dist/install_flag.txt
 
 dev-install: dist/dev-dist_flag.txt
 	@echo "$(OK_COLOR)=> Installing databrickslabs_testdatagenerator$(NO_COLOR)"
-	@cp README.md python/
+	#@cp README.md python/
 	@pip3 install --upgrade .
 	@touch `pwd`/dist/dev-install_flag.txt
 
