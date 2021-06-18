@@ -42,7 +42,7 @@ apidoc: Makefile
 
 requirements:
 	@echo "Making requirements"
-	@python3 ./mk_requirements.py "$(PROJECT_DIR)/python/require.txt" "$(SOURCEDIR)/relnotes"/requirements.md
+	@python3 ./utils/mk_requirements.py "$(PROJECT_DIR)/python/require.txt" "$(SOURCEDIR)/relnotes"/requirements.md
 
 quick_index:
 	@echo "Making quick index"
