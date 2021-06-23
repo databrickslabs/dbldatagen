@@ -69,7 +69,8 @@ The resulting build has been tested against Spark 3.0.1
 
 Run  `make docs` from the main project directory.
 
-The main html document will be in the file (relative to the root of the build directory) `./python/docs/docs/build/html/index.html`
+The main html document will be in the file (relative to the root of the build directory)
+ `./docs/docs/build/html/index.html`
 
 ## Building the Python wheel
 Run  `make clean dist` from the main project directory.

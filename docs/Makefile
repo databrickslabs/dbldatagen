@@ -8,8 +8,8 @@ SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = source
 DOC_DIR     = .
 BUILDDIR      = `pwd`/build
-MODULEDIR      = ../../databrickslabs_testdatagenerator
-PROJECT_DIR      = ../..
+MODULEDIR      = ../databrickslabs_testdatagenerator
+PROJECT_DIR      = ..
 
 # Put it first so that "make" without argument is like "make help".
 help:

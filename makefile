@@ -52,11 +52,11 @@ clean_buildenv:
 
 docs: install
 	@echo "$(OK_COLOR)=> Creating docs ...$(NO_COLOR)"
-	@cd python/docs && make docs
+	@cd docs && make docs
 
 dev-docs: dev-install
 	@echo "$(OK_COLOR)=> Creating docs ...$(NO_COLOR)"
-	@cd python/docs && make docs
+	@cd docs && make docs
 
 # Tests
 test: export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
