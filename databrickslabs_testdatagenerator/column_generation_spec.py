@@ -21,6 +21,7 @@ from .column_spec_options import ColumnSpecOptions
 from .text_generators import TemplateGenerator
 from .daterange import DateRange
 from .nrange import NRange
+from .distributions import Normal, DataDistribution
 
 
 HASH_COMPUTE_METHOD = "hash"
@@ -203,7 +204,12 @@ class ColumnGenerationSpec(object):
 
         # handle weights / values and distributions
         self.weights, self.values = (self["weights"], self["values"])
+
         self.distribution = self["distribution"]
+
+        # if distribution is just specified as `normal` use standard normal distribution
+        if self.distribution == "normal":
+            self.distribution = Normal.standardNormal()
 
         # force weights and values to list
         if self.weights is not None:
@@ -821,7 +827,14 @@ class ColumnGenerationSpec(object):
         assert datarange is not None, "`datarange` must be specified"
         assert datarange.isFullyPopulated(), "`datarange` must be fully populated (minValue, maxValue, step)"
 
-        random_generator = self._getUniformRandomExpression(self.name) if is_random else None
+        if is_random:
+            if self.distribution is not None:
+                random_generator = self._getRandomExpressionForDistribution(self.name, self.distribution)
+            else:
+                random_generator = self._getUniformRandomExpression(self.name)
+        else:
+            random_generator = None
+
         if self._isContinuousValuedColumn() and self._isRealValuedColumn() and is_random:
             crange = datarange.getContinuousRange()
             baseval = random_generator * lit(crange)

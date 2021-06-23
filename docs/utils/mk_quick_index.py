@@ -19,7 +19,7 @@ sourceFiles = {
 
     "distributions/beta.py": "Beta distribution related code",
     "distributions/data_distribution.py": "Data distribution related code",
-    "distributions/distributions.py": "Misc data distribution related code",
+    "distributions/normal_distribution.py": "Misc data distribution related code",
     "distributions/gamma.py": "Gamma data distribution related code"
 }
 

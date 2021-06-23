@@ -1,7 +1,7 @@
 import datetime
 import unittest
 
-from pyspark.sql.functions import col
+import pyspark.sql.functions as F
 
 import databrickslabs_testdatagenerator as dg
 import databrickslabs_testdatagenerator.distributions as dist
@@ -84,6 +84,50 @@ class TestDistributions(unittest.TestCase):
     def no_basic_distribution(self):
         base_dist = dist.DataDistribution()
         self.assertTrue(base_dist is not None)
+
+    def test_basic_normal_distribution(self):
+        normal_dist = dist.Normal(mean=0.0, stddev=1.0)
+        self.assertIsNotNone(normal_dist)
+        print(normal_dist)
+
+        normal_dist2 = normal_dist.withRandomSeed(42)
+
+        self.assertEqual(normal_dist2.randomSeed, 42)
+        print(normal_dist2)
+
+        normal_dist3 = normal_dist2.withRange(201, 301, 2)
+
+        self.assertEqual(normal_dist3.minValue, 201)
+        self.assertEqual(normal_dist3.maxValue, 301)
+        self.assertEqual(normal_dist3.step, 2)
+        print(normal_dist3)
+
+        normal_dist4 = normal_dist3.withRounding(True)
+        self.assertTrue(normal_dist4.rounding)
+
+
+    def test_simple_normal_distribution(self):
+        # will have implied column `id` for ordinal of row
+        normal_data_generator = (
+            dg.DataGenerator(sparkSession=spark, rows=self.rows, partitions=4)
+                .withIdOutput()  # id column will be emitted in the output
+                .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
+                .withColumn("code4", "integer", minValue=1, maxValue=40, step=1, random=True, distribution="normal")
+                .withColumn("sector_status_desc", "string", minValue=1, maxValue=200, step=1,
+                            prefix='status', random=True, distribution="normal")
+                .withColumn("tech", "string", values=["GSM", "LTE", "UMTS", "UNKNOWN"],
+                            weights=desired_weights,
+                            random=True)
+        )
+        df_normal_data = normal_data_generator.build().cache()
+
+        df_summary_general = df_normal_data.agg(F.min('code4').alias('min_c4'),
+                                                F.max('code4').alias('max_c4'),
+                                                F.avg('code4').alias('mean_c4'),
+                                                F.stddev('code4').alias('stddev_c4'))
+        df_summary_general.show()
+
+
 
 # run the tests
 # if __name__ == '__main__':

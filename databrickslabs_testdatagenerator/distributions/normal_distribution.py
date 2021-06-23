@@ -49,8 +49,8 @@ Key aspects are the following
 
 - ways to map range of values to distribution
 - a: scale range to values, if bounds are predictable
-- b: truncate (making values < minValue= minValue , > maxValue= maxValue) -
-    which may cause output to have different distribution than expected
+- b: truncate (making values < minValue= minValue , > maxValue= maxValue)
+     which may cause output to have different distribution than expected
 - c: discard values outside of range
    - requires generation of more values than required to allow for discarded values
    - can sample correct values to fill in missing data
@@ -59,40 +59,51 @@ Key aspects are the following
 - high priority distributions are normal, exponential, gamma, beta
 
 
+
+
 """
 
 import math
-from datetime import date, datetime, timedelta
 import random
+from datetime import date, datetime, timedelta
 
 import numpy as np
 import pandas as pd
-from . import DataDistribution
+from .data_distribution import DataDistribution
 
 
-class Beta(DataDistribution):
-    def __init__(self, mean=None, std=None, minValue=None, maxValue=None, rectify=True,
-                 std_range=3.5, rounding=False):
+class Normal(DataDistribution):
+    def __init__(self, mean, stddev, bounding_range=3.5):
+        ''' Specify that data should follow normal distribution
+
+        :param mean: mean of distribution
+        :param stddev: standard deviation of distribution
+        :param bounding_range: when scaling, cut off values that are outside bounding_range * stddev from mean
+        '''
         DataDistribution.__init__(self)
         self.mean = mean if mean is not None else 0.0
-        self.stddev, self.minValue, self.maxValue = std if std is not None else 1.0, minValue, maxValue
-        self.std_range, self.rectify = std_range, rectify
-        self.round = rounding
+        self.stddev = stddev if stddev is not None else 1.0
+        self.bounding_range = bounding_range
 
-        if minValue is None and rectify:
-            self.minValue = 0.0
+        #if minValue is None and rectify:
+        #    self.minValue = 0.0
 
-        assert type(std_range) is int or type(std_range) is float
+        assert type(bounding_range) is int or type(bounding_range) is float
 
-        if maxValue is not None:
-            if mean is None:
-                self.mean = (self.minValue + self.maxValue) / 2.0
-            if std is None:
-                self.std = (self.mean - self.minValue) / self.std_range
+        #if maxValue is not None:
+        #    if mean is None:
+        #        self.mean = (self.minValue + self.maxValue) / 2.0
+        #    if std is None:
+        #        self.std = (self.mean - self.minValue) / self.std_range
 
     def __str__(self):
-        return ("NormalDistribution(minValue={}, maxValue={}, mean={}, std={})"
-                .format(self.minValue, self.maxValue, self.mean, self.std))
+        return ("NormalDistribution(minValue={}, maxValue={}, mean={}, stddev={}, randomSeed={})"
+                .format(self._minValue, self._maxValue, self.mean, self.stddev, self.randomSeed))
+
+    @classmethod
+    def standardNormal(cls):
+        """ return instance of standard normal distribution """
+        return Normal(mean=0.0, stddev=1.0)
 
     def generate(self, size):
         retval = np.random.normal(self.mean, self.std, size=size)
@@ -110,3 +121,4 @@ class Beta(DataDistribution):
     def test_bounds(self, size):
         retval = self.generate(size)
         return (min(retval), max(retval), np.mean(retval), np.std(retval))
+

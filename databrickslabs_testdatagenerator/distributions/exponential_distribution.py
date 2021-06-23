@@ -50,7 +50,7 @@ Key aspects are the following
 - ways to map range of values to distribution
 - a: scale range to values, if bounds are predictable
 - b: truncate (making values < minValue= minValue , > maxValue= maxValue)
-     which may cause output to have different distribution than expected
+   - which may cause output to have different distribution than expected
 - c: discard values outside of range
    - requires generation of more values than required to allow for discarded values
    - can sample correct values to fill in missing data
@@ -64,49 +64,57 @@ Key aspects are the following
 """
 
 import math
-import random
-from datetime import date, datetime, timedelta
-
-from pyspark.sql.functions import col, lit, concat, rand, ceil, floor, round as sql_round, array, expr, udf
-from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
-    StructType, StructField, TimestampType, DataType, DateType
 import numpy as np
 import pandas as pd
-
-from databrickslabs_testdatagenerator.utils import ensure
-
-
-class DataDistribution(object):
-    """ Base class for all distributions"""
-    def __init__(self, mean=None, median=None, std=None, minValue=None,
-                 maxValue=None, rectify=True, std_range=3.5, rounding=False):
-        pass
+from .data_distribution import DataDistribution
 
 
-class Normal(object):
-    def __init__(self, mean=None, std=None, minValue=None, maxValue=None, rectify=True, std_range=3.5, rounding=False):
-        self.mean = mean if mean is not None else 0.0
-        self.stddev, self.minValue, self.maxValue = std if std is not None else 1.0, minValue, maxValue
-        self.std_range, self.rectify = std_range, rectify
+class ExponentialDistribution(DataDistribution):
+    def __init__(self, mean=None, median=None, minValue=None, maxValue=None, rate=None, rectify=True, rounding=False):
+        DataDistribution.__init__(self)
+        self.mean, self.median, self.minValue, self.maxValue = mean, median, minValue, maxValue
+        self.rectify = rectify
         self.round = rounding
+        self.rate = rate
 
-        if minValue is None and rectify:
+        if minValue is None:
             self.minValue = 0.0
 
-        assert type(std_range) is int or type(std_range) is float
+        assert (self.maxValue is not None or
+                self.rate is not None or
+                self.median is not None or
+                self.mean is not None), "Must have an explicit mean, maxValue, median or rate"
 
-        if maxValue is not None:
-            if mean is None:
-                self.mean = (self.minValue + self.maxValue) / 2.0
-            if std is None:
-                self.std = (self.mean - self.minValue) / self.std_range
+        if rate is not None:
+            assert (self.mean is None) or (self.mean == 1.0 / self.rate), "Cant specify rate and mean"
+            self.mean = (1.0 / rate) - self.minValue
+            self.median = (math.log(2.0) / self.rate) - self.minValue
+        elif mean is not None:
+            self.mean = self.mean - self.minValue
+            self.rate = 1.0 / self.mean
+            self.median = math.log(2.0) / self.rate
+        elif median is not None:
+            self.median = self.median - self.minValue
+            self.rate = 1.0 / (self.median / math.log(2.0))
+            self.mean = 1.0 / self.rate
+        else:
+            # compute the rate if not specified
+            if maxValue is not None:
+                if self.median is None:
+                    self.median = ((self.maxValue + self.minValue) / 2.0 - self.minValue)
+                    self.rate = 1.0 / (self.median / math.log(2.0))
+                    self.mean = 1.0 / self.rate
 
     def __str__(self):
-        return ("NormalDistribution(minValue={}, maxValue={}, mean={}, std={})"
-                .format(self.minValue, self.maxValue, self.mean, self.std))
+        return ("{}(minValue={}, maxValue={}, adjusted_mean={}, adjusted_median={}, rate={},  std={})"
+                .format("ExponentialDistribution", self.minValue, self.maxValue,
+                        self.mean + self.minValue, self.median + self.minValue, self.rate, 1.0 / self.rate))
 
     def generate(self, size):
-        retval = np.random.normal(self.mean, self.std, size=size)
+        retval = np.random.exponential(self.mean, size=size)
+
+        if self.minValue != 0.0 and self.minValue != 0:
+            retval = retval + self.minValue
 
         if self.rectify:
             retval = np.maximum(self.minValue, retval)
@@ -120,7 +128,7 @@ class Normal(object):
 
     def test_bounds(self, size):
         retval = self.generate(size)
-        return (min(retval), max(retval), np.mean(retval), np.std(retval))
+        return min(retval), max(retval), np.mean(retval), np.std(retval), np.median(retval)
 
 
 class Exponential(object):
