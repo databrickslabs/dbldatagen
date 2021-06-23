@@ -44,4 +44,3 @@ to Scala or R based Spark applications also.
    :caption: License
 
    license
-
