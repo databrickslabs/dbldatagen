@@ -77,7 +77,7 @@ def include_template(outputFile):
         outputFile.write(templateFile.read())
         outputFile.write("\n\n")
 
-PROJECT_PATH="../../databrickslabs_testdatagenerator"
+PROJECT_PATH="../databrickslabs_testdatagenerator"
 
 def processSection(outputFile, items, sectionTitle, module):
     if items is not None and len(items) > 0:
