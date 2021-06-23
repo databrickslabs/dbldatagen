@@ -23,6 +23,7 @@ to Scala or R based Spark applications also.
    Get Started Here <relnotes/APIDOCS>
    Installation instructions <TOBEADDED>
    Using data ranges <relnotes/DATARANGES>
+   Using data distributions <relnotes/DISTRIBUTIONS>
 
 .. toctree::
    :maxdepth: 1
