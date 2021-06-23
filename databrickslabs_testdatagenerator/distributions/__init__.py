@@ -19,9 +19,15 @@ This module defines the package contents for the test data generator library dis
 """
 
 
-from .distributions import Normal, Exponential
+from .normal_distribution import Normal
 from .data_distribution import DataDistribution
 from .beta import Beta
 from .gamma import Gamma
+from .exponential_distribution import Exponential
 
-__all__ = ["distributions", "gamma", "beta", "data_distribution" ]
+
+__all__ = ["normal_distribution",
+           "gamma",
+           "beta",
+           "data_distribution",
+           "exponential_distribution"]

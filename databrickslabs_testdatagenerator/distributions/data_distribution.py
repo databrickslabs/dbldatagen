@@ -3,69 +3,88 @@
 #
 
 """
-This file defines the statistical distributions related classes
+This file defines the base class for statistical distributions
 
-The general pattern will be as follows:
+Each inherited version of the DataDistribution object is used to generate random numbers drawn from
+a specific distribution.
 
-Distribibution will be defined by class such as NormalDistribution
+As the test data generator needs to scale the set of values generated across different data ranges,
+the generate function is intended to generate values scaled to values between 0 and 1.
 
-Will have to handle the following cases:
+AS some distributions don't have easily predicted bounds, we scale the random data sets
+by taking the minimum and maximum value of each generated data set and using that as the range for the generated data.
 
-- columns with a set of discrete values
-- columns with a real valued boundaries
-- columns with a minValue and maxValue value (and  optional step)
+For some distributions, there may be alternative more efficient mechanisms for scaling the data to the [0, 1] interval.
 
-For all cases, the distribution may be defined with:
-
-minValue-value, maxValue-value, median / mean and some other parameter
-
-Here are the parameterisations for each of the distributions:
-
-exponential: unbounded range is 0 - inf (but effective range is 0 - 5?)
-   minValue, maxValue , rate or mean
-
-normal: main range is mean +/- 3.5 x std (values can occur up to mean +/- 6 x std )
-
-gamma: main range is mean +/- 3.5 x std (values can occur up to mean +/- 6 x std )
-
-beta: range is zero - 1
-
-There are multiple parameterizations
-shape k, and scale (phi)
-shape alpha and rate beta (1/scale)
-shape k and mean miu= (k x scale)
-
-Key aspects are the following
-
-- how to map mean from mean value of column range
-- how to map resulting distribution back to data set
-
-- Key decisions
-- any parameters mean,median, mode refer to absolute values in data set
-- any parameters mean_value, median_value, mode_value refer to value in terms of range
-- so if a column has the values [ online, offline, outage, inactive ] and mean_value is offline
-- this may be translated behind the scenes to a normal distribution (minValue = 0, maxValue = 3, mean=1, std=2/6)
-- this will essentially make it a truncated distribution
-
-- ways to map range of values to distribution
-- a: scale range to values, if bounds are predictable
-- b: truncate (making values < minValue= minValue , > maxValue= maxValue) - which may cause output to have different
-     distribution than expected
-- c: discard values outside of range
-   - requires generation of more values than required to allow for discarded values
-   - can sample correct values to fill in missing data
-- d: modulo - will change distribution
-
-- high priority distributions are normal, exponential, gamma, beta
-
-
-
-
+Some data distributions are scaled to the [0,1] interval as part of their data generation
+and no further scaling is needed.
 """
+import copy
+import pyspark.sql.functions as F
+import numpy as np
 
 
 class DataDistribution(object):
     """ Base class for all distributions"""
-    def __init__(self, mean=None, median=None, std=None, minValue=None, maxValue=None, rectify=True, std_range=3.5,
-                 rounding=False):
-        pass
+    def __init__(self):
+        self._rounding = False
+        self._randomSeed = None
+
+    @staticmethod
+    def get_np_random_generator(random_seed):
+        """ Get numpy random number generator
+
+        :param random_seed: Numeric random seed to use. If < 0, then no random
+        :return:
+        """
+        assert random_seed is None or type(random_seed) in [ np.int32, np.int64],\
+               f"`random_seed` must be int or int-like not {type(random_seed)}"
+        from numpy.random import default_rng
+        if random_seed not in (-1, -1.0):
+            rng = default_rng(random_seed)
+        else:
+            rng = default_rng()
+
+        return rng
+
+    def generateNormalizedDistributionSample(self):
+        """ Generate sample of data for distribution
+
+        :return: random samples from distribution scaled to values between 0 and 1
+        """
+        if self.randomSeed == -1 or self.randomSeed is None:
+            newDef = F.expr("rand()")
+        else:
+            assert type(self.randomSeed) in [int, float],  "random seed should be numeric"
+            newDef = F.expr(f"rand({self.randomSeed})")
+        return newDef
+
+    def withRounding(self, rounding):
+        """ Create copy of object and set the rounding attribute
+
+        :param rounding: rounding value to set. Should be True or False
+        :return: new instance of data distribution object with rounding set
+        """
+        new_distribution_instance = copy.copy(self)
+        new_distribution_instance._rounding = rounding
+        return new_distribution_instance
+
+    @property
+    def rounding(self):
+        """get the `rounding` attribute """
+        return self._rounding
+
+    def withRandomSeed(self, seed):
+        """ Create copy of object and set the random seed attribute
+
+        :param seed: random generator seed value to set. Should be integer,  float or None
+        :return: new instance of data distribution object with rounding set
+        """
+        new_distribution_instance = copy.copy(self)
+        new_distribution_instance._randomSeed = seed
+        return new_distribution_instance
+
+    @property
+    def randomSeed(self):
+        """get the `randomSeed` attribute """
+        return self._randomSeed

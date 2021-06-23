@@ -3,173 +3,79 @@
 #
 
 """
-This file defines the statistical distributions related classes
-
-The general pattern will be as follows:
-
-Distribibution will be defined by class such as NormalDistribution
-
-Will have to handle the following cases:
-
-- columns with a set of discrete values
-- columns with a real valued boundaries
-- columns with a minValue and maxValue value (and  optional step)
-
-For all cases, the distribution may be defined with:
-
-minValue-value, maxValue-value, median / mean and some other parameter
-
-Here are the parameterisations for each of the distributions:
-
-exponential: unbounded range is 0 - inf (but effective range is 0 - 5?)
-   minValue, maxValue , rate or mean
-
-normal: main range is mean +/- 3.5 x std (values can occur up to mean +/- 6 x std )
-
-gamma: main range is mean +/- 3.5 x std (values can occur up to mean +/- 6 x std )
-
-beta: range is zero - 1
-
-There are multiple parameterizations
-shape k, and scale (phi)
-shape alpha and rate beta (1/scale)
-shape k and mean miu= (k x scale)
-
-Key aspects are the following
-
-- how to map mean from mean value of column range
-- how to map resulting distribution back to data set
-
-- Key decisions
-- any parameters mean,median, mode refer to absolute values in data set
-- any parameters mean_value, median_value, mode_value refer to value in terms of range
-- so if a column has the values [ online, offline, outage, inactive ] and mean_value is offline
-- this may be translated behind the scenes to a normal distribution (minValue = 0, maxValue = 3, mean=1, std=2/6)
-- this will essentially make it a truncated distribution
-
-- ways to map range of values to distribution
-- a: scale range to values, if bounds are predictable
-- b: truncate (making values < minValue= minValue , > maxValue= maxValue)
-   - which may cause output to have different distribution than expected
-- c: discard values outside of range
-   - requires generation of more values than required to allow for discarded values
-   - can sample correct values to fill in missing data
-- d: modulo - will change distribution
-
-- high priority distributions are normal, exponential, gamma, beta
-
-
-
+This file defines the Gamma statistical distributions related classes
 
 """
 
-import math
-from datetime import date, datetime, timedelta
-import random
-
-from pyspark.sql.functions import col, lit, concat, rand, ceil, floor, round as sql_round, array, expr, udf
-from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
-    StructType, StructField, TimestampType, DataType, DateType
 import numpy as np
 import pandas as pd
+import pyspark.sql.functions as F
+from pyspark.sql.types import FloatType
+
+from .data_distribution import DataDistribution
 
 
-class Gamma(object):
-    def __init__(self, mean=None, std=None, minValue=None, maxValue=None, rectify=True, std_range=3.5, rounding=False):
-        self.mean = mean if mean is not None else 0.0
-        self.stddev, self.minValue, self.maxValue = std if std is not None else 1.0, minValue, maxValue
-        self.std_range, self.rectify = std_range, rectify
-        self.round = rounding
+class Gamma(DataDistribution):
+    """ Specify Gamma distribution with specific shape and scale
 
-        if minValue is None and rectify:
-            self.minValue = 0.0
+    :param shape: shape parameter (k)
+    :param scale: scale parameter (theta)
 
-        assert type(std_range) is int or type(std_range) is float
+    See https://en.wikipedia.org/wiki/Gamma_distribution
 
-        if maxValue is not None:
-            if mean is None:
-                self.mean = (self.minValue + self.maxValue) / 2.0
-            if std is None:
-                self.std = (self.mean - self.minValue) / self.std_range
+    Scaling is performed to normalize values between 0 and 1
 
-    def __str__(self):
-        return ("NormalDistribution(minValue={}, maxValue={}, mean={}, std={})"
-                .format(self.minValue, self.maxValue, self.mean, self.std))
+    """
 
-    def generate(self, size):
-        retval = np.random.normal(self.mean, self.std, size=size)
-
-        if self.rectify:
-            retval = np.maximum(self.minValue, retval)
-
-            if self.maxValue is not None:
-                retval = np.minimum(self.maxValue, retval)
-
-        if self.round:
-            retval = np.round(retval)
-        return retval
-
-    def test_bounds(self, size):
-        retval = self.generate(size)
-        return (min(retval), max(retval), np.mean(retval), np.std(retval))
-
-
-class ExponentialDistribution(object):
-    def __init__(self, mean=None, median=None, minValue=None, maxValue=None, rate=None, rectify=True, rounding=False):
-        self.mean, self.median, self.minValue, self.maxValue = mean, median, minValue, maxValue
-        self.rectify = rectify
-        self.round = rounding
-        self.rate = rate
-
-        if minValue is None:
-            self.minValue = 0.0
-
-        assert (self.maxValue is not None or
-                self.rate is not None or
-                self.median is not None or
-                self.mean is not None), "Must have an explicit mean, maxValue, median or rate"
-
-        if rate is not None:
-            assert (self.mean is None) or (self.mean == 1.0 / self.rate), "Cant specify rate and mean"
-            self.mean = (1.0 / rate) - self.minValue
-            self.median = (math.log(2.0) / self.rate) - self.minValue
-        elif mean is not None:
-            self.mean = self.mean - self.minValue
-            self.rate = 1.0 / self.mean
-            self.median = math.log(2.0) / self.rate
-        elif median is not None:
-            self.median = self.median - self.minValue
-            self.rate = 1.0 / (self.median / math.log(2.0))
-            self.mean = 1.0 / self.rate
-        else:
-            # compute the rate if not specified
-            if maxValue is not None:
-                if self.median is None:
-                    self.median = ((self.maxValue + self.minValue) / 2.0 - self.minValue)
-                    self.rate = 1.0 / (self.median / math.log(2.0))
-                    self.mean = 1.0 / self.rate
+    def __init__(self, shape, scale):
+        DataDistribution.__init__(self)
+        assert type(shape) in [float, int, np.float64, np.int32, np.int64], "alpha must be int-like or float-like"
+        assert type(scale) in [float, int, np.float64, np.int32, np.int64], "beta must be int-like or float-like"
+        self._shape = shape
+        self._scale = scale
 
     def __str__(self):
-        return ("{}(minValue={}, maxValue={}, adjusted_mean={}, adjusted_median={}, rate={},  std={})"
-                .format("ExponentialDistribution", self.minValue, self.maxValue,
-                        self.mean + self.minValue, self.median + self.minValue, self.rate, 1.0 / self.rate))
+        """ Return string representation of object """
+        return ("GammaDistribution(shape(`k`)={}, scale(`theta`)={}, randomSeed={})"
+                .format(self._shape, self._scale, self.randomSeed))
 
-    def generate(self, size):
-        retval = np.random.exponential(self.mean, size=size)
+    @staticmethod
+    def gamma_func(shape_series: pd.Series, scale_series: pd.Series, random_seed: pd.Series) -> pd.Series:
+        """ Pandas / Numpy based function to generate gamma samples
 
-        if self.minValue != 0.0 and self.minValue != 0:
-            retval = retval + self.minValue
+        :param shape_series: pandas series of shape (k) values
+        :param scale_series: pandas series of scale (theta) values
+        :param random_seed:  pandas series of random seed values
 
-        if self.rectify:
-            retval = np.maximum(self.minValue, retval)
+        :return: Samples scaled from 0 .. 1
+        """
+        shape = shape_series.to_numpy()
+        scale = scale_series.to_numpy()
+        random_seed = random_seed.to_numpy()[0]
 
-            if self.maxValue is not None:
-                retval = np.minimum(self.maxValue, retval)
+        rng = DataDistribution.get_np_random_generator(random_seed)
 
-        if self.round:
-            retval = np.round(retval)
-        return retval
+        results = rng.gamma(shape, scale)
 
-    def test_bounds(self, size):
-        retval = self.generate(size)
-        return (min(retval), max(retval), np.mean(retval), np.std(retval), np.median(retval))
+        # scale results to range [0, 1]
+        amin = np.amin(results) * 1.0
+        amax = np.amax(results) * 1.0
+
+        adjusted_results = results - amin
+
+        scaling_factor = amax - amin
+
+        results2 = adjusted_results / scaling_factor
+        return pd.Series(results2)
+
+    def generateNormalizedDistributionSample(self):
+        """ Generate sample of data for distribution
+
+        :return: random samples from distribution scaled to values between 0 and 1
+        """
+        gamma_sample = F.pandas_udf(self.gamma_func, returnType=FloatType()).asNondeterministic()
+
+        newDef = gamma_sample(F.lit(self._shape),
+                             F.lit(self._scale),
+                             F.lit(self.randomSeed) if self.randomSeed is not None else F.lit(-1.0))
+        return newDef
