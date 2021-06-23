@@ -68,6 +68,8 @@ pygments_style = 'sphinx'
 # The master toctree document.
 master_doc = 'index'
 
+python_use_unqualified_type_names = True
+
 # -- Options for auto output -------------------------------------------------
 
 autoclass_content = 'class'
