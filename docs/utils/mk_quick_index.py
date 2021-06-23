@@ -95,7 +95,7 @@ def processDirectory(outputFile, pathToProcess):
         filesToProcess = pathToProcess.glob("*.py")
         for fp in filesToProcess:
             relativeFile = fp.relative_to(projectDirectory)
-            print(relativeFile)
+            print("processing file:", relativeFile)
             if relativeFile.name in sourceFiles:
                 title = sourceFiles[relativeFile.name]
                 print(relativeFile, title)
