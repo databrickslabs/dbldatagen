@@ -17,10 +17,11 @@ sourceFiles = {
     "spark_singleton.py": "Spark singleton for test purposes",
     "utils.py": "Internal general purpose utils",
 
-    "distributions/beta.py": "Beta distribution related code",
-    "distributions/data_distribution.py": "Data distribution related code",
-    "distributions/normal_distribution.py": "Misc data distribution related code",
-    "distributions/gamma.py": "Gamma data distribution related code"
+    "beta.py": "Beta distribution related code",
+    "data_distribution.py": "Data distribution related code",
+    "normal_distribution.py": "Normal data distribution related code",
+    "gamma.py": "Gamma data distribution related code",
+    "exponential_distribution.py": "Exponential data distribution related code"
 }
 
 def writeUnderlined(outputFile, text, underline="="):
