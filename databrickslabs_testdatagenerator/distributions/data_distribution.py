@@ -7,6 +7,7 @@ This file defines the base class for statistical distributions
 
 """
 import copy
+import pyspark.sql.functions as F
 
 
 class DataDistribution(object):
@@ -18,6 +19,10 @@ class DataDistribution(object):
         self._randomSeed = None
         self._rounding = False
 
+    def generateNormalizedDistributionSample(self, seed=-1):
+        newDef = F.expr("rand({})".format(seed))
+        return newDef
+
     def withRandomSeed(self, randomSeed):
         """ Create copy of object and set the random seed
 
@@ -26,11 +31,15 @@ class DataDistribution(object):
 
         Using -1 for randomSeed parameter means don't set specific random seed
         """
-        assert isinstance(randomSeed, int), "seed value should be int"
+        assert randomSeed is None or  isinstance(randomSeed, int), "seed value should be int"
+        assert randomSeed is None or randomSeed >= 0, "seed must be positive integer"
 
-        new_distribution_instance = copy.copy(self)
-        new_distribution_instance._randomSeed = randomSeed
-        return new_distribution_instance
+        if randomSeed is not None:
+            new_distribution_instance = copy.copy(self)
+            new_distribution_instance._randomSeed = randomSeed
+            return new_distribution_instance
+        else:
+            return self
 
     @property
     def randomSeed(self):

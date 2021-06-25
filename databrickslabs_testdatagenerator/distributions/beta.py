@@ -71,7 +71,7 @@ from . import DataDistribution
 
 
 class Beta(DataDistribution):
-    def __init__(self, mean=None, std=None, minValue=None, maxValue=None, rectify=True,
+    def __init__(self, alpha=None, beta=None, minValue=None, maxValue=None, rectify=True,
                  std_range=3.5, rounding=False):
         DataDistribution.__init__(self)
         self.mean = mean if mean is not None else 0.0
@@ -82,7 +82,8 @@ class Beta(DataDistribution):
         if minValue is None and rectify:
             self.minValue = 0.0
 
-        assert type(std_range) is int or type(std_range) is float
+        assert type(alpha) is int or type(alpha) is float, "alpha must be int or float"
+        assert type(beta) is int or type(beta) is float, "beta must be int or float"
 
         if maxValue is not None:
             if mean is None:
@@ -106,7 +107,3 @@ class Beta(DataDistribution):
         if self.round:
             retval = np.round(retval)
         return retval
-
-    def test_bounds(self, size):
-        retval = self.generate(size)
-        return (min(retval), max(retval), np.mean(retval), np.std(retval))

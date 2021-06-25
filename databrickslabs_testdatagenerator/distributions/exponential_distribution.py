@@ -126,10 +126,6 @@ class ExponentialDistribution(DataDistribution):
             retval = np.round(retval)
         return retval
 
-    def test_bounds(self, size):
-        retval = self.generate(size)
-        return min(retval), max(retval), np.mean(retval), np.std(retval), np.median(retval)
-
 
 class Exponential(object):
     def __init__(self, mean=None, median=None, minValue=None, maxValue=None, rate=None, rectify=True, rounding=False):
@@ -189,7 +185,3 @@ class Exponential(object):
         if self.round:
             retval = np.round(retval)
         return retval
-
-    def test_bounds(self, size):
-        retval = self.generate(size)
-        return min(retval), max(retval), np.mean(retval), np.std(retval), np.median(retval)

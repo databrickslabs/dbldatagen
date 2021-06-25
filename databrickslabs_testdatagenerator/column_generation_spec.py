@@ -458,6 +458,8 @@ class ColumnGenerationSpec(object):
         """ Get random expression accounting for seed method
 
         :returns: expression of ColDef form - i.e `lit`, `expr` etc
+
+        The value returned will be a number between 0 and 1 inclusive
         """
         assert col_name is not None, "`col_name` must not be None"
         if self.random_seed_method == "fixed":
@@ -467,6 +469,28 @@ class ColumnGenerationSpec(object):
             return expr("rand(hash('{}'))".format(self.name))
         else:
             return rand()
+
+    def _getRandomExpressionForDistribution(self, col_name, col_distribution):
+        """ Get random expression accounting for seed method
+
+        :returns: expression of ColDef form - i.e `lit`, `expr` etc
+
+        The value returned will be a number between 0 and 1 inclusive
+        """
+        assert col_name is not None, "`col_name` must not be None"
+        assert col_distribution is not None, "`col_distribution` must not be None"
+
+        self.execution_history.append(".. random number generation via distribution `{}`"
+                                      .format(str(col_distribution)))
+
+        if self.random_seed_method == "fixed":
+            return col_distribution.generateNormalizedDistributionSample(seed=self.random_seed)
+        elif self.random_seed_method == "hash_fieldname":
+            assert self.name is not None, " `self.name` must not be none"
+            return col_distribution.generateNormalizedDistributionSample(seed=hash(self.name))
+        else:
+            print(col_distribution)
+            return col_distribution.generateNormalizedDistributionSample(seed=-1)
 
     def _getUniformRandomSQLExpression(self, col_name):
         """ Get random SQL expression accounting for seed method
