@@ -97,8 +97,8 @@ class Normal(DataDistribution):
         #        self.std = (self.mean - self.minValue) / self.std_range
 
     def __str__(self):
-        return ("NormalDistribution(minValue={}, maxValue={}, mean={}, stddev={}, randomSeed={})"
-                .format(self._minValue, self._maxValue, self.mean, self.stddev, self.randomSeed))
+        return ("NormalDistribution( mean={}, stddev={}, randomSeed={})"
+                .format( self.mean, self.stddev, self.randomSeed))
 
     @classmethod
     def standardNormal(cls):

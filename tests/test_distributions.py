@@ -95,15 +95,8 @@ class TestDistributions(unittest.TestCase):
         self.assertEqual(normal_dist2.randomSeed, 42)
         print(normal_dist2)
 
-        normal_dist3 = normal_dist2.withRange(201, 301, 2)
-
-        self.assertEqual(normal_dist3.minValue, 201)
-        self.assertEqual(normal_dist3.maxValue, 301)
-        self.assertEqual(normal_dist3.step, 2)
-        print(normal_dist3)
-
-        normal_dist4 = normal_dist3.withRounding(True)
-        self.assertTrue(normal_dist4.rounding)
+        normal_dist3 = normal_dist2.withRounding(True)
+        self.assertTrue(normal_dist3.rounding)
 
 
     def test_simple_normal_distribution(self):

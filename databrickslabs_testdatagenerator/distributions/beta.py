@@ -71,8 +71,7 @@ from . import DataDistribution
 
 
 class Beta(DataDistribution):
-    def __init__(self, alpha=None, beta=None, minValue=None, maxValue=None, rectify=True,
-                 std_range=3.5, rounding=False):
+    def __init__(self, alpha=None, beta=None):
         DataDistribution.__init__(self)
         self.mean = mean if mean is not None else 0.0
         self.stddev, self.minValue, self.maxValue = std if std is not None else 1.0, minValue, maxValue
