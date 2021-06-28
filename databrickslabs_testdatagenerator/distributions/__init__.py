@@ -23,7 +23,7 @@ from .normal_distribution import Normal
 from .data_distribution import DataDistribution
 from .beta import Beta
 from .gamma import Gamma
-from .exponential_distribution import ExponentialDistribution, Exponential
+from .exponential_distribution import Exponential
 
 
 __all__ = ["normal_distribution",

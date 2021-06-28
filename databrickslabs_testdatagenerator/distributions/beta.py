@@ -73,26 +73,15 @@ from . import DataDistribution
 class Beta(DataDistribution):
     def __init__(self, alpha=None, beta=None):
         DataDistribution.__init__(self)
-        self.mean = mean if mean is not None else 0.0
-        self.stddev, self.minValue, self.maxValue = std if std is not None else 1.0, minValue, maxValue
-        self.std_range, self.rectify = std_range, rectify
-        self.round = rounding
 
-        if minValue is None and rectify:
-            self.minValue = 0.0
-
-        assert type(alpha) is int or type(alpha) is float, "alpha must be int or float"
-        assert type(beta) is int or type(beta) is float, "beta must be int or float"
-
-        if maxValue is not None:
-            if mean is None:
-                self.mean = (self.minValue + self.maxValue) / 2.0
-            if std is None:
-                self.std = (self.mean - self.minValue) / self.std_range
+        assert type(alpha) in [float, int, np.float64, np.int32, np.int64], "alpha must be int-like or float-like"
+        assert type(beta) in [float, int, np.float64, np.int32, np.int64], "beta must be int-like or float-like"
+        self._alpha = alpha
+        self._beta = beta
 
     def __str__(self):
-        return ("NormalDistribution(minValue={}, maxValue={}, mean={}, std={})"
-                .format(self.minValue, self.maxValue, self.mean, self.std))
+        return ("NormalDistribution(alpha={}, beta={})"
+                .format(self._alpha, self._beta))
 
     def generate(self, size):
         retval = np.random.normal(self.mean, self.std, size=size)

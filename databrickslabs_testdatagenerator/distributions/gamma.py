@@ -68,30 +68,20 @@ from datetime import date, datetime, timedelta
 import random
 import numpy as np
 import pandas as pd
+from .data_distribution import DataDistribution
 
 
-class Gamma(object):
-    def __init__(self, mean=None, std=None, minValue=None, maxValue=None, rectify=True, std_range=3.5, rounding=False):
+class Gamma(DataDistribution):
+    def __init__(self, shape, scale):
         DataDistribution.__init__(self)
-        self.mean = mean if mean is not None else 0.0
-        self.stddev, self.minValue, self.maxValue = std if std is not None else 1.0, minValue, maxValue
-        self.std_range, self.rectify = std_range, rectify
-        self.round = rounding
-
-        if minValue is None and rectify:
-            self.minValue = 0.0
-
-        assert type(std_range) is int or type(std_range) is float
-
-        if maxValue is not None:
-            if mean is None:
-                self.mean = (self.minValue + self.maxValue) / 2.0
-            if std is None:
-                self.std = (self.mean - self.minValue) / self.std_range
+        assert type(shape) in [float, int, np.float64, np.int32, np.int64], "alpha must be int-like or float-like"
+        assert type(scale) in [float, int, np.float64, np.int32, np.int64], "beta must be int-like or float-like"
+        self._shape = shape
+        self._scale = scale
 
     def __str__(self):
-        return ("NormalDistribution(minValue={}, maxValue={}, mean={}, std={})"
-                .format(self.minValue, self.maxValue, self.mean, self.std))
+        return ("GammaDistribution(shape(`k`)={}, scale(`theta`)={})"
+                .format(self._shape, self._scale))
 
     def generate(self, size):
         retval = np.random.normal(self.mean, self.std, size=size)

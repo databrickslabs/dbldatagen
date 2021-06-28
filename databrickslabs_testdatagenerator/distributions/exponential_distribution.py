@@ -69,7 +69,7 @@ import pandas as pd
 from .data_distribution import DataDistribution
 
 
-class ExponentialDistribution(DataDistribution):
+class Exponential(DataDistribution):
     def __init__(self, mean=None, median=None, minValue=None, maxValue=None, rate=None, rectify=True, rounding=False):
         DataDistribution.__init__(self)
         self.mean, self.median, self.minValue, self.maxValue = mean, median, minValue, maxValue
@@ -126,62 +126,3 @@ class ExponentialDistribution(DataDistribution):
             retval = np.round(retval)
         return retval
 
-
-class Exponential(object):
-    def __init__(self, mean=None, median=None, minValue=None, maxValue=None, rate=None, rectify=True, rounding=False):
-        self.mean, self.median, self.minValue, self.maxValue = mean, median, minValue, maxValue
-        self.rectify = rectify
-        self.round = rounding
-        self.rate = rate
-
-        if minValue is None:
-            self.minValue = 0.0
-
-        assert (self.maxValue is not None or
-                self.rate is not None or
-                self.median is not None or
-                self.mean is not None), "Must have an explicit mean, maxValue, median or rate"
-
-        if rate is not None:
-            assert (self.mean is None) or (self.mean == 1.0 / self.rate), "Cant specify rate and mean"
-            self.mean = (1.0 / rate) - self.minValue
-            self.median = (math.log(2.0) / self.rate) - self.minValue
-        elif mean is not None:
-            self.mean = self.mean - self.minValue
-            self.rate = 1.0 / self.mean
-            self.median = math.log(2.0) / self.rate
-        elif median is not None:
-            self.median = self.median - self.minValue
-            self.rate = 1.0 / (self.median / math.log(2.0))
-            self.mean = 1.0 / self.rate
-        else:
-            # compute the rate if not specified
-            if maxValue is not None:
-                if self.median is None:
-                    self.median = ((self.maxValue + self.minValue) / 2.0 - self.minValue)
-                    self.rate = 1.0 / (self.median / math.log(2.0))
-                    self.mean = 1.0 / self.rate
-
-    def __str__(self):
-        return ("{}(minValue={}, maxValue={}, adjusted_mean={}, adjusted_median={}, rate={},  std={})"
-                .format("ExponentialDistribution", self.minValue,
-                        self.maxValue,
-                        self.mean + self.minValue,
-                        self.median + self.minValue,
-                        self.rate, 1.0 / self.rate))
-
-    def generate(self, size):
-        retval = np.random.exponential(self.mean, size=size)
-
-        if self.minValue != 0.0 and self.minValue != 0:
-            retval = retval + self.minValue
-
-        if self.rectify:
-            retval = np.maximum(self.minValue, retval)
-
-            if self.maxValue is not None:
-                retval = np.minimum(self.maxValue, retval)
-
-        if self.round:
-            retval = np.round(retval)
-        return retval

@@ -24,7 +24,11 @@ class DataDistribution(object):
         :param seed: seed to random number generator. -1 means dont use any seed
         :return:
         """
-        newDef = F.expr("rand({})".format(seed))
+        if seed == -1 or seed is None:
+            newDef = F.expr("rand()")
+        else:
+            assert type(seed) in [int, float],  "random seed should be numeric"
+            newDef = F.expr(f"rand({seed})")
         return newDef
 
     def withRounding(self, rounding):
