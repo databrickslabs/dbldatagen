@@ -22,7 +22,7 @@ class DataDistribution(object):
         """ Generate sample of data for distribution
 
         :param seed: seed to random number generator. -1 means dont use any seed
-        :return:
+        :return: random samples from distribution scaled to values between 0 and 1
         """
         if seed == -1 or seed is None:
             newDef = F.expr("rand()")

@@ -477,8 +477,12 @@ class ColumnGenerationSpec(object):
 
         The value returned will be a number between 0 and 1 inclusive
         """
-        assert col_name is not None, "`col_name` must not be None"
+        assert col_name is not None and len(col_name) > 0, "`col_name` must not be None and non empty"
         assert col_distribution is not None, "`col_distribution` must not be None"
+        assert isinstance(col_distribution, DataDistribution), \
+            "`distribution` object must be an instance of data distribution"
+
+        print(f"Generating random expression for {col_name} with {col_distribution}")
 
         self.execution_history.append(".. random number generation via distribution `{}`"
                                       .format(str(col_distribution)))
