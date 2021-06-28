@@ -167,9 +167,15 @@ class ColumnGenerationSpec(object):
 
         # should be either a literal or None
         # use of a random seed method will ensure that we have repeatability of data generation
+        assert random_seed is None or type(random_seed) in [int, float], "seed should be None or numeric"
         self.random_seed = random_seed
 
         # should be "fixed" or "hash_fieldname"
+        if random_seed is not None and random_seed_method is None:
+            random_seed_method = "fixed"
+
+        assert random_seed_method is None or random_seed_method in ["fixed", "hash_fieldname"], \
+            "`random_seed_method` should be none or `fixed` or `hash_fieldname`"
         self.random_seed_method = random_seed_method
         self.random = random
 
@@ -210,6 +216,14 @@ class ColumnGenerationSpec(object):
         # if distribution is just specified as `normal` use standard normal distribution
         if self.distribution == "normal":
             self.distribution = Normal.standardNormal()
+
+        # specify random seed for distribution if one is in effect
+        if self.distribution is not None and self.random_seed is not None:
+            if self.random_seed_method == "hash_fieldname":
+                assert self.name is not None, "field name cannot be None"
+                self.distribution = self.distribution.withRandomSeed(abs(hash(self.name)))
+            else:
+                self.distribution = self.distribution.withRandomSeed(self.random_seed)
 
         # force weights and values to list
         if self.weights is not None:

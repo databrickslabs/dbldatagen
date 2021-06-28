@@ -80,8 +80,8 @@ class Beta(DataDistribution):
         self._beta = beta
 
     def __str__(self):
-        return ("NormalDistribution(alpha={}, beta={})"
-                .format(self._alpha, self._beta))
+        return ("BetaDistribution(alpha={}, beta={}, randomSeed={})"
+                .format(self._alpha, self._beta, self.randomSeed))
 
     def generate(self, size):
         retval = np.random.normal(self.mean, self.std, size=size)

@@ -80,8 +80,8 @@ class Gamma(DataDistribution):
         self._scale = scale
 
     def __str__(self):
-        return ("GammaDistribution(shape(`k`)={}, scale(`theta`)={})"
-                .format(self._shape, self._scale))
+        return ("GammaDistribution(shape(`k`)={}, scale(`theta`)={}, randomSeed={})"
+                .format(self._shape, self._scale, self.randomSeed))
 
     def generate(self, size):
         retval = np.random.normal(self.mean, self.std, size=size)

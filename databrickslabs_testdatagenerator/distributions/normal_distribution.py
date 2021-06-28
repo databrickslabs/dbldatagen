@@ -85,16 +85,7 @@ class Normal(DataDistribution):
         self.stddev = stddev if stddev is not None else 1.0
         self.bounding_range = bounding_range
 
-        #if minValue is None and rectify:
-        #    self.minValue = 0.0
-
         assert type(bounding_range) is int or type(bounding_range) is float
-
-        #if maxValue is not None:
-        #    if mean is None:
-        #        self.mean = (self.minValue + self.maxValue) / 2.0
-        #    if std is None:
-        #        self.std = (self.mean - self.minValue) / self.std_range
 
     def __str__(self):
         return ("NormalDistribution( mean={}, stddev={}, randomSeed={})"
