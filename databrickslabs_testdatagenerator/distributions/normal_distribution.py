@@ -63,29 +63,59 @@ Key aspects are the following
 
 """
 
-import math
-import random
-from datetime import date, datetime, timedelta
-
 import numpy as np
 import pandas as pd
+
+import pyspark.sql.functions as F
+from pyspark.sql.types import DoubleType, FloatType
+
 from .data_distribution import DataDistribution
 
 
 class Normal(DataDistribution):
-    def __init__(self, mean, stddev, bounding_range=3.5):
+    def __init__(self, mean, stddev):
         ''' Specify that data should follow normal distribution
 
         :param mean: mean of distribution
         :param stddev: standard deviation of distribution
-        :param bounding_range: when scaling, cut off values that are outside bounding_range * stddev from mean
         '''
         DataDistribution.__init__(self)
         self.mean = mean if mean is not None else 0.0
         self.stddev = stddev if stddev is not None else 1.0
-        self.bounding_range = bounding_range
 
-        assert type(bounding_range) is int or type(bounding_range) is float
+    @staticmethod
+    def normal_func(mean_series:pd.Series, std_dev_series:pd.Series, random_seed: pd.Series) -> pd.Series:
+        mean = mean_series.to_numpy()
+        std_dev = std_dev_series.to_numpy()
+        random_seed = random_seed.to_numpy()[0]
+
+        rng = DataDistribution.get_np_random_generator(random_seed)
+
+        results = rng.normal(mean, std_dev)
+        amin = np.amin(results) * 1.0
+        amax = np.amax(results) * 1.0
+
+        adjusted_results = results - amin
+
+        scaling_factor = amax - amin
+
+        results2 = adjusted_results / scaling_factor
+        return pd.Series(results2)
+
+    def generateNormalizedDistributionSample(self):
+        """ Generate sample of data for distribution
+
+        :return: random samples from distribution scaled to values between 0 and 1
+        """
+        normal_sample = F.pandas_udf(self.normal_func, returnType=FloatType()).asNondeterministic()
+
+        # scala formulation uses scale = 1/rate
+        newDef = normal_sample(F.lit(self.mean),
+                               F.lit(self.stddev),
+                             F.lit(self.randomSeed) if self.randomSeed is not None else F.lit(-1.0))
+        return newDef
+
+
 
     def __str__(self):
         return ("NormalDistribution( mean={}, stddev={}, randomSeed={})"
@@ -95,21 +125,4 @@ class Normal(DataDistribution):
     def standardNormal(cls):
         """ return instance of standard normal distribution """
         return Normal(mean=0.0, stddev=1.0)
-
-    def generate(self, size):
-        retval = np.random.normal(self.mean, self.std, size=size)
-
-        if self.rectify:
-            retval = np.maximum(self.minValue, retval)
-
-            if self.maxValue is not None:
-                retval = np.minimum(self.maxValue, retval)
-
-        if self.round:
-            retval = np.round(retval)
-        return retval
-
-    def test_bounds(self, size):
-        retval = self.generate(size)
-        return (min(retval), max(retval), np.mean(retval), np.std(retval))
 

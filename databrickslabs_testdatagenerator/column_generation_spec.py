@@ -496,19 +496,10 @@ class ColumnGenerationSpec(object):
         assert isinstance(col_distribution, DataDistribution), \
             "`distribution` object must be an instance of data distribution"
 
-        print(f"Generating random expression for {col_name} with {col_distribution}")
-
         self.execution_history.append(".. random number generation via distribution `{}`"
                                       .format(str(col_distribution)))
 
-        if self.random_seed_method == "fixed":
-            return col_distribution.generateNormalizedDistributionSample(seed=self.random_seed)
-        elif self.random_seed_method == "hash_fieldname":
-            assert self.name is not None, " `self.name` must not be none"
-            return col_distribution.generateNormalizedDistributionSample(seed=hash(self.name))
-        else:
-            print(col_distribution)
-            return col_distribution.generateNormalizedDistributionSample(seed=-1)
+        return col_distribution.generateNormalizedDistributionSample()
 
     def _getUniformRandomSQLExpression(self, col_name):
         """ Get random SQL expression accounting for seed method

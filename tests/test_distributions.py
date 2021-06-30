@@ -33,11 +33,6 @@ class TestDistributions(unittest.TestCase):
         cls.testdata_generator.build().cache().createOrReplaceTempView("testdata")
 
     @classmethod
-    def tearDownClass(cls):
-        print("tear down")
-        spark.stop()
-
-    @classmethod
     def unique_timestamp_seconds(cls):
         return (datetime.datetime.utcnow() - datetime.datetime.fromtimestamp(0)).total_seconds()
 
@@ -84,7 +79,6 @@ class TestDistributions(unittest.TestCase):
         base_dist = dist.DataDistribution()
         self.assertTrue(base_dist is not None)
 
-    #@unittest.skip("not yet debugged")
     def test_basic_normal_distribution(self):
         normal_dist = dist.Normal(mean=0.0, stddev=1.0)
         self.assertIsNotNone(normal_dist)
@@ -98,7 +92,6 @@ class TestDistributions(unittest.TestCase):
         normal_dist3 = normal_dist2.withRounding(True)
         self.assertTrue(normal_dist3.rounding)
 
-    #@unittest.skip("not yet debugged")
     def test_simple_normal_distribution(self):
         # will have implied column `id` for ordinal of row
         normal_data_generator = (
@@ -119,6 +112,12 @@ class TestDistributions(unittest.TestCase):
                                                 F.avg('code4').alias('mean_c4'),
                                                 F.stddev('code4').alias('stddev_c4'))
         df_summary_general.show()
+
+        summary_data = df_summary_general.collect()[0]
+
+        self.assertEquals(summary_data['min_c4'], 1)
+        self.assertEquals(summary_data['max_c4'], 40)
+
 
     def test_normal_distribution(self):
         # will have implied column `id` for ordinal of row
@@ -142,6 +141,12 @@ class TestDistributions(unittest.TestCase):
                                                 F.stddev('code4').alias('stddev_c4'))
         df_summary_general.show()
 
+        summary_data = df_summary_general.collect()[0]
+
+        self.assertEquals(summary_data['min_c4'], 1)
+        self.assertEquals(summary_data['max_c4'], 40)
+
+
     def test_normal_distribution_seeded1(self):
         # will have implied column `id` for ordinal of row
         normal_data_generator = (
@@ -163,6 +168,12 @@ class TestDistributions(unittest.TestCase):
                                                 F.avg('code4').alias('mean_c4'),
                                                 F.stddev('code4').alias('stddev_c4'))
         df_summary_general.show()
+
+        summary_data = df_summary_general.collect()[0]
+
+        self.assertEquals(summary_data['min_c4'], 1)
+        self.assertEquals(summary_data['max_c4'], 40)
+
 
     def test_normal_distribution_seeded2(self):
         # will have implied column `id` for ordinal of row
@@ -187,6 +198,10 @@ class TestDistributions(unittest.TestCase):
                                                 F.stddev('code4').alias('stddev_c4'))
         df_summary_general.show()
 
+        summary_data = df_summary_general.collect()[0]
+
+        self.assertEquals(summary_data['min_c4'], 1)
+        self.assertEquals(summary_data['max_c4'], 40)
 
 
 
@@ -212,6 +227,10 @@ class TestDistributions(unittest.TestCase):
                                                 F.stddev('code4').alias('stddev_c4'))
         df_summary_general.show()
 
+        summary_data = df_summary_general.collect()[0]
+
+        self.assertEquals(summary_data['min_c4'], 1)
+        self.assertEquals(summary_data['max_c4'], 40)
 
     def test_beta_distribution(self):
         # will have implied column `id` for ordinal of row
@@ -235,6 +254,11 @@ class TestDistributions(unittest.TestCase):
                                                 F.stddev('code4').alias('stddev_c4'))
         df_summary_general.show()
 
+        summary_data = df_summary_general.collect()[0]
+
+        self.assertEquals(summary_data['min_c4'], 1)
+        self.assertEquals(summary_data['max_c4'], 40)
+
     def test_exponential_distribution(self):
         # will have implied column `id` for ordinal of row
         exponential_data_generator = (
@@ -257,6 +281,10 @@ class TestDistributions(unittest.TestCase):
                                                 F.stddev('code4').alias('stddev_c4'))
         df_summary_general.show()
 
+        summary_data = df_summary_general.collect()[0]
+
+        self.assertEquals(summary_data['min_c4'], 1)
+        self.assertEquals(summary_data['max_c4'], 40)
 
 
 

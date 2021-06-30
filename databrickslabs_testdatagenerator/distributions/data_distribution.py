@@ -5,6 +5,19 @@
 """
 This file defines the base class for statistical distributions
 
+Each inherited version of the DataDistribution object is used to generate random numbers drawn from
+a specific distribution.
+
+As the test data generator needs to scale the set of values generated across different data ranges,
+the generate function is intended to generate values scaled to values between 0 and 1.
+
+AS some distributions dont have easily predicted bounds, we scale the random data sets by taking the minimum and maxium
+value of each generated data set and using that as the range for the generated data.
+
+For some distributions, there may be alternative more efficient mechanisms for scaling the data to the [0, 1] interval.
+
+Some data distributions are scaled to the [0,1] interval as part of their data generation
+and no further scaling is needed.
 """
 import copy
 import pyspark.sql.functions as F
@@ -18,17 +31,33 @@ class DataDistribution(object):
         self._rounding = False
         self._randomSeed = None
 
-    def generateNormalizedDistributionSample(self, seed=-1):
+    @staticmethod
+    def get_np_random_generator(random_seed):
+        """ Get numpy random number generator
+
+        :param random_seed: Numeric random seed to use. If < 0, then no random
+        :return:
+        """
+        assert random_seed is None or type(random_seed) in [ np.int32, np.int64],\
+               f"`random_seed` must be int or int-like not {type(random_seed)}"
+        from numpy.random import default_rng
+        if random_seed != -1 and random_seed != -1.0:
+            rng = default_rng(random_seed)
+        else:
+            rng = default_rng()
+
+        return rng
+
+    def generateNormalizedDistributionSample(self):
         """ Generate sample of data for distribution
 
-        :param seed: seed to random number generator. -1 means dont use any seed
         :return: random samples from distribution scaled to values between 0 and 1
         """
-        if seed == -1 or seed is None:
+        if self.randomSeed == -1 or self.randomSeed is None:
             newDef = F.expr("rand()")
         else:
-            assert type(seed) in [int, float],  "random seed should be numeric"
-            newDef = F.expr(f"rand({seed})")
+            assert type(self.randomSeed) in [int, float],  "random seed should be numeric"
+            newDef = F.expr(f"rand({self.randomSeed})")
         return newDef
 
     def withRounding(self, rounding):

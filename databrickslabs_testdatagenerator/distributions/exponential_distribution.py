@@ -63,13 +63,25 @@ Key aspects are the following
 
 """
 
-import math
 import numpy as np
 import pandas as pd
+
+import pyspark.sql.functions as F
+from pyspark.sql.types import DoubleType, FloatType
+
 from .data_distribution import DataDistribution
 
 
 class Exponential(DataDistribution):
+    """ Specify that random samples should be drawn from the exponential distribution parameterized by rate
+
+    :param rate: value for rate parameter - float, int or other numeric value, greater than 0
+
+    See https://en.wikipedia.org/wiki/Exponential_distribution
+
+    Scaling is performed to normalize values between 0 and 1
+    """
+
     def __init__(self, rate=None):
         DataDistribution.__init__(self)
         self._rate = rate
@@ -79,23 +91,38 @@ class Exponential(DataDistribution):
         return ("{}(rate={}, randomSeed={})"
                 .format("ExponentialDistribution", self.rate, self.randomSeed))
 
+    @staticmethod
+    def exponential_func(scale_series: pd.Series, random_seed: pd.Series) -> pd.Series:
+        scale_param = scale_series.to_numpy()
+        random_seed = random_seed.to_numpy()[0]
+
+        rng = DataDistribution.get_np_random_generator(random_seed)
+
+        results = rng.exponential(scale_param)
+        amin = np.amin(results) * 1.0
+        amax = np.amax(results) * 1.0
+
+        adjusted_results = results - amin
+
+        scaling_factor = amax - amin
+
+        results2 = adjusted_results / scaling_factor
+
+        return pd.Series(results2)
+
     @property
     def rate(self):
         return self._rate
 
-    def generate(self, size):
-        retval = np.random.exponential(self.mean, size=size)
+    def generateNormalizedDistributionSample(self):
+        """ Generate sample of data for distribution
 
-        if self.minValue != 0.0 and self.minValue != 0:
-            retval = retval + self.minValue
+        :return: random samples from distribution scaled to values between 0 and 1
+        """
+        exponential_sample = F.pandas_udf(self.exponential_func, returnType=FloatType()).asNondeterministic()
 
-        if self.rectify:
-            retval = np.maximum(self.minValue, retval)
-
-            if self.maxValue is not None:
-                retval = np.minimum(self.maxValue, retval)
-
-        if self.round:
-            retval = np.round(retval)
-        return retval
+        # scala formulation uses scale = 1/rate
+        newDef = exponential_sample(F.lit(1.0 / self._rate),
+                             F.lit(self.randomSeed) if self.randomSeed is not None else F.lit(-1.0))
+        return newDef
 
