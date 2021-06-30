@@ -12,7 +12,8 @@ from pyspark.sql.types import FloatType
 
 import numpy as np
 import pandas as pd
-from . import DataDistribution
+
+from .data_distribution import DataDistribution
 
 
 class Beta(DataDistribution):

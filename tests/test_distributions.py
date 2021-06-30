@@ -145,7 +145,6 @@ class TestDistributions(unittest.TestCase):
         self.assertEqual(summary_data['min_c4'], 1)
         self.assertEqual(summary_data['max_c4'], 40)
 
-
     def test_normal_distribution_seeded1(self):
         # will have implied column `id` for ordinal of row
         normal_data_generator = (
@@ -172,7 +171,6 @@ class TestDistributions(unittest.TestCase):
 
         self.assertEqual(summary_data['min_c4'], 1)
         self.assertEqual(summary_data['max_c4'], 40)
-
 
     def test_normal_distribution_seeded2(self):
         # will have implied column `id` for ordinal of row
@@ -201,8 +199,6 @@ class TestDistributions(unittest.TestCase):
 
         self.assertEqual(summary_data['min_c4'], 1)
         self.assertEqual(summary_data['max_c4'], 40)
-
-
 
     def test_gamma_distribution(self):
         # will have implied column `id` for ordinal of row
@@ -284,8 +280,6 @@ class TestDistributions(unittest.TestCase):
 
         self.assertEqual(summary_data['min_c4'], 1)
         self.assertEqual(summary_data['max_c4'], 40)
-
-
 
 # run the tests
 # if __name__ == '__main__':
