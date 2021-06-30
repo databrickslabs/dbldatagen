@@ -5,11 +5,10 @@
 """
 This file defines the Beta statistical distributions related classes
 
-
 """
 
 import pyspark.sql.functions as F
-from pyspark.sql.types import DoubleType, FloatType
+from pyspark.sql.types import FloatType
 
 import numpy as np
 import pandas as pd
@@ -40,9 +39,17 @@ class Beta(DataDistribution):
         return ("BetaDistribution(alpha={}, beta={}, randomSeed={})"
                 .format(self._alpha, self._beta, self.randomSeed))
 
-
     @staticmethod
     def beta_func(alpha_series: pd.Series, beta_series: pd.Series, random_seed: pd.Series) -> pd.Series:
+        """ Generate sample of beta distribution using pandas / numpy
+
+        :param alpha_series: value for alpha parameter as Pandas Series
+        :param beta_series: value for beta parameter as Pandas Series
+        :param random_seed: value for random_seed parameter as Pandas Series
+
+        :return: random samples from distribution scaled to values between 0 and 1
+
+        """
         alpha = alpha_series.to_numpy()
         beta = beta_series.to_numpy()
         random_seed = random_seed.to_numpy()[0]

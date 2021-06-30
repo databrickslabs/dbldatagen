@@ -11,8 +11,8 @@ a specific distribution.
 As the test data generator needs to scale the set of values generated across different data ranges,
 the generate function is intended to generate values scaled to values between 0 and 1.
 
-AS some distributions dont have easily predicted bounds, we scale the random data sets by taking the minimum and maxium
-value of each generated data set and using that as the range for the generated data.
+AS some distributions don't have easily predicted bounds, we scale the random data sets
+by taking the minimum and maximum value of each generated data set and using that as the range for the generated data.
 
 For some distributions, there may be alternative more efficient mechanisms for scaling the data to the [0, 1] interval.
 
@@ -22,7 +22,6 @@ and no further scaling is needed.
 import copy
 import pyspark.sql.functions as F
 import numpy as np
-import pandas as pd
 
 
 class DataDistribution(object):
@@ -41,7 +40,7 @@ class DataDistribution(object):
         assert random_seed is None or type(random_seed) in [ np.int32, np.int64],\
                f"`random_seed` must be int or int-like not {type(random_seed)}"
         from numpy.random import default_rng
-        if random_seed != -1 and random_seed != -1.0:
+        if random_seed not in (-1, -1.0):
             rng = default_rng(random_seed)
         else:
             rng = default_rng()
@@ -89,5 +88,3 @@ class DataDistribution(object):
     def randomSeed(self):
         """get the `randomSeed` attribute """
         return self._randomSeed
-
-

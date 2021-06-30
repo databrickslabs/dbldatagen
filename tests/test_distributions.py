@@ -46,7 +46,7 @@ class TestDistributions(unittest.TestCase):
     @classmethod
     def get_observed_weights(cls, df, column, values):
         assert df is not None
-        assert col is not None
+        assert column is not None
         assert values is not None
 
         observed_weights = (df.cube(column).count()
@@ -115,9 +115,8 @@ class TestDistributions(unittest.TestCase):
 
         summary_data = df_summary_general.collect()[0]
 
-        self.assertEquals(summary_data['min_c4'], 1)
-        self.assertEquals(summary_data['max_c4'], 40)
-
+        self.assertEqual(summary_data['min_c4'], 1)
+        self.assertEqual(summary_data['max_c4'], 40)
 
     def test_normal_distribution(self):
         # will have implied column `id` for ordinal of row
@@ -143,8 +142,8 @@ class TestDistributions(unittest.TestCase):
 
         summary_data = df_summary_general.collect()[0]
 
-        self.assertEquals(summary_data['min_c4'], 1)
-        self.assertEquals(summary_data['max_c4'], 40)
+        self.assertEqual(summary_data['min_c4'], 1)
+        self.assertEqual(summary_data['max_c4'], 40)
 
 
     def test_normal_distribution_seeded1(self):
@@ -171,8 +170,8 @@ class TestDistributions(unittest.TestCase):
 
         summary_data = df_summary_general.collect()[0]
 
-        self.assertEquals(summary_data['min_c4'], 1)
-        self.assertEquals(summary_data['max_c4'], 40)
+        self.assertEqual(summary_data['min_c4'], 1)
+        self.assertEqual(summary_data['max_c4'], 40)
 
 
     def test_normal_distribution_seeded2(self):
@@ -200,8 +199,8 @@ class TestDistributions(unittest.TestCase):
 
         summary_data = df_summary_general.collect()[0]
 
-        self.assertEquals(summary_data['min_c4'], 1)
-        self.assertEquals(summary_data['max_c4'], 40)
+        self.assertEqual(summary_data['min_c4'], 1)
+        self.assertEqual(summary_data['max_c4'], 40)
 
 
 
@@ -229,8 +228,8 @@ class TestDistributions(unittest.TestCase):
 
         summary_data = df_summary_general.collect()[0]
 
-        self.assertEquals(summary_data['min_c4'], 1)
-        self.assertEquals(summary_data['max_c4'], 40)
+        self.assertEqual(summary_data['min_c4'], 1)
+        self.assertEqual(summary_data['max_c4'], 40)
 
     def test_beta_distribution(self):
         # will have implied column `id` for ordinal of row
@@ -256,8 +255,8 @@ class TestDistributions(unittest.TestCase):
 
         summary_data = df_summary_general.collect()[0]
 
-        self.assertEquals(summary_data['min_c4'], 1)
-        self.assertEquals(summary_data['max_c4'], 40)
+        self.assertEqual(summary_data['min_c4'], 1)
+        self.assertEqual(summary_data['max_c4'], 40)
 
     def test_exponential_distribution(self):
         # will have implied column `id` for ordinal of row
@@ -283,8 +282,8 @@ class TestDistributions(unittest.TestCase):
 
         summary_data = df_summary_general.collect()[0]
 
-        self.assertEquals(summary_data['min_c4'], 1)
-        self.assertEquals(summary_data['max_c4'], 40)
+        self.assertEqual(summary_data['min_c4'], 1)
+        self.assertEqual(summary_data['max_c4'], 40)
 
 
 
