@@ -1,6 +1,6 @@
 import unittest
 
-import databrickslabs_testdatagenerator as datagen
+import databricks_datagen as datagen
 
 
 class TestTopologicalSort(unittest.TestCase):

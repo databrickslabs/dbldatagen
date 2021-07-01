@@ -2,7 +2,7 @@ import unittest
 
 from pyspark.sql.types import IntegerType, StringType, FloatType
 
-import databrickslabs_testdatagenerator as datagen
+import databricks_datagen as datagen
 
 spark = datagen.SparkSingleton.getLocalInstance("unit tests")
 

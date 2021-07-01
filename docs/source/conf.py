@@ -10,12 +10,12 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-from databrickslabs_testdatagenerator import *
-from databrickslabs_testdatagenerator.distributions import *
+from databricks_datagen import *
+from databricks_datagen.distributions import *
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../databrickslabs_testdatagenerator'))
-sys.path.insert(0, os.path.abspath('../../databrickslabs_testdatagenerator/distributions'))
+sys.path.insert(0, os.path.abspath('../../databricks_datagen'))
+sys.path.insert(0, os.path.abspath('../../databricks_datagen/distributions'))
 
 
 # -- Project information -----------------------------------------------------

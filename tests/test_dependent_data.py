@@ -3,8 +3,8 @@ import unittest
 import pyspark.sql.functions as F
 from pyspark.sql.types import IntegerType, StringType, LongType
 
-import databrickslabs_testdatagenerator as datagen
-from databrickslabs_testdatagenerator import NRange
+import databricks_datagen as datagen
+from databricks_datagen import NRange
 
 # build spark session
 

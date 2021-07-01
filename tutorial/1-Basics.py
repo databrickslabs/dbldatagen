@@ -16,7 +16,7 @@
 
 # COMMAND ----------
 
-import databrickslabs_testdatagenerator as datagen
+import databricks_datagen as datagen
 
 # will have implied column `id` for ordinal of row
 testdata_generator = (datagen.DataGenerator(sparkSession=spark, name="test_dataset1", rows=100000, partitions=20)
@@ -65,7 +65,7 @@ display(df2)
 
 # COMMAND ----------
 
-import databrickslabs_testdatagenerator as datagen
+import databricks_datagen as datagen
 
 # will have implied column `id` for ordinal of row
 testdata_generator2 = (datagen.DataGenerator(sparkSession=spark, name="test_dataset2", rows=100000, partitions=20)
@@ -98,8 +98,8 @@ display(df3)
 from datetime import timedelta, datetime
 import math
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
-# from databrickslabs_testdatagenerator.data_generator import DataGenerator,ensure
-import databrickslabs_testdatagenerator as datagen
+# from databricks_datagen.data_generator import DataGenerator,ensure
+import databricks_datagen as datagen
 
 interval = timedelta(days=1, hours=1)
 start = datetime(2017, 10, 1, 0, 0, 0)

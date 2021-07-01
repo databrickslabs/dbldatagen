@@ -3,8 +3,8 @@ import unittest
 
 import pyspark.sql.functions as F
 
-import databrickslabs_testdatagenerator as dg
-import databrickslabs_testdatagenerator.distributions as dist
+import databricks_datagen as dg
+import databricks_datagen.distributions as dist
 
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 

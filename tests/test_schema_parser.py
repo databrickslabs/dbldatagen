@@ -3,8 +3,8 @@ import unittest
 from pyspark.sql.types import BooleanType, ByteType
 from pyspark.sql.types import IntegerType, StringType, DecimalType
 
-import databrickslabs_testdatagenerator as dg
-from databrickslabs_testdatagenerator import SchemaParser
+import databricks_datagen as dg
+from databricks_datagen import SchemaParser
 
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 

@@ -1,8 +1,7 @@
 from datetime import timedelta, datetime
 import math
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
-# from databrickslabs_testdatagenerator.data_generator import DataGenerator,ensure
-import databrickslabs_testdatagenerator as datagen
+import databricks_datagen as datagen
 from pyspark.conf import SparkConf
 from pyspark.sql import SparkSession
 

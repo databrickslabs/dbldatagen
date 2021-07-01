@@ -5,8 +5,8 @@ import pyspark.sql.functions as F
 from pyspark.sql.types import DoubleType, ShortType, LongType, DecimalType, ByteType, DateType
 from pyspark.sql.types import IntegerType, StringType, FloatType, TimestampType
 
-import databrickslabs_testdatagenerator as datagen
-from databrickslabs_testdatagenerator import DateRange
+import databricks_datagen as datagen
+from databricks_datagen import DateRange
 
 # build spark session
 

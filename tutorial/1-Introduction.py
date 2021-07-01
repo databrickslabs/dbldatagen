@@ -56,7 +56,7 @@
 
 # COMMAND ----------
 
-import databrickslabs_testdatagenerator as datagen
+import databricks_datagen as datagen
 from pyspark.sql.types import IntegerType, StringType, FloatType, TimestampType
 
 # will have implied column `id` for ordinal of row
@@ -77,8 +77,8 @@ display(df)
 from datetime import timedelta, datetime
 import math
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
-#from databrickslabs_testdatagenerator.data_generator import DataGenerator,ensure
-import databrickslabs_testdatagenerator as datagen
+#from databricks_datagen.data_generator import DataGenerator,ensure
+import databricks_datagen as datagen
 
 
 interval = timedelta(days=1, hours=1)

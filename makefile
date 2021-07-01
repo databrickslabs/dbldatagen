@@ -11,10 +11,12 @@ PYCACHE := $(shell find . -name '__pycache__')
 EGGS :=  $(shell find . -name '*.egg-info')
 CURRENT_VERSION := $(shell awk '/current_version/ {print $$3}' python/.bumpversion.cfg)
 
+PACKAGE_DIR=databricks_datagen
+
 clean:
 	@echo "$(OK_COLOR)=> Cleaning$(NO_COLOR)"
 	@echo "Current version: $(CURRENT_VERSION)"
-	@rm -fr build dist $(EGGS) $(PYCACHE) databrickslabs_testdatagenerator/lib/* databrickslabs_testdatagenerator/env_files/*
+	@rm -fr build dist $(EGGS) $(PYCACHE) $(PACKAGE_DIR)/lib/* $(PACKAGE_DIR)/env_files/*
 
 prepare: clean
 	@echo "$(OK_COLOR)=> Preparing ...$(NO_COLOR)"
@@ -38,7 +40,7 @@ install-dev-dependencies:
 clean-dev-env:
 	@echo "$(OK_COLOR)=> Cleaning dev environment$(NO_COLOR)"
 	@echo "Current version: $(CURRENT_VERSION)"
-	@rm -fr build dist $(EGGS) $(PYCACHE) databrickslabs_testdatagenerator/lib/* databrickslabs_testdatagenerator/env_files/*
+	@rm -fr build dist $(EGGS) $(PYCACHE) $(PACKAGE_DIR)/lib/* $(PACKAGE_DIR)/env_files/*
 
 
 buildenv: 
@@ -65,21 +67,21 @@ dev-test: export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 
 dev-test:
 	@echo "$(OK_COLOR)=> Running unit tests$(NO_COLOR)"
-	pytest tests/ --cov databrickslabs_testdatagenerator
+	pytest tests/ --cov $(PACKAGE_DIR)
 
 dev-test-with-html-report:
 	@echo "$(OK_COLOR)=> Running unit tests with HTML test coverage report$(NO_COLOR)"
-	pytest --cov databrickslabs_testdatagenerator --cov-report html -s
+	pytest --cov $(PACKAGE_DIR) --cov-report html -s
 	@echo "$(OK_COLOR)=> the test coverage report can be found at htmlcov/index.html$(NO_COLOR)"
 
 
 test: buildenv
 	@echo "$(OK_COLOR)=> Running unit tests$(NO_COLOR)"
-	pipenv run pytest tests --cov databrickslabs_testdatagenerator
+	pipenv run pytest tests --cov $(PACKAGE_DIR)
 
 test-with-html-report: buildenv
 	@echo "$(OK_COLOR)=> Running unit tests with HTML test coverage report$(NO_COLOR)"
-	pipenv run pytest --cov databrickslabs_testdatagenerator --cov-report html -s
+	pipenv run pytest --cov $(PACKAGE_DIR) --cov-report html -s
 	@echo "$(OK_COLOR)=> the test coverage report can be found at htmlcov/index.html$(NO_COLOR)"
 
 # Version commands
@@ -158,13 +160,13 @@ release:
 	#git tag -a v$(CURRENT_VERSION) -m "Latest release: $(CURRENT_VERSION)"
 
 install: buildenv dist/dist_flag.txt
-	@echo "$(OK_COLOR)=> Installing databrickslabs_testdatagenerator$(NO_COLOR)"
+	@echo "$(OK_COLOR)=> Installing $(PACKAGE_DIR)$(NO_COLOR)"
 	#@cp README.md python/
 	@pip3 install --upgrade .
 	@touch `pwd`/dist/install_flag.txt
 
 dev-install: dist/dev-dist_flag.txt
-	@echo "$(OK_COLOR)=> Installing databrickslabs_testdatagenerator$(NO_COLOR)"
+	@echo "$(OK_COLOR)=> Installing $(PACKAGE_DIR)$(NO_COLOR)"
 	#@cp README.md python/
 	@pip3 install --upgrade .
 	@touch `pwd`/dist/dev-install_flag.txt

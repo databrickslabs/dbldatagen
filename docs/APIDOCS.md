@@ -1,6 +1,6 @@
 # Getting started with the Databricks Labs Test Data Generator
 
-The Databricks labs test data generator is a Spark based solution for generating 
+The Databricks Labs test data generator is a Spark based solution for generating 
 realistic synthetic data. It uses the features of Spark dataframes and Spark SQL 
 to generate test data. As the output of the process is a dataframe populated 
 with test data , it may be saved to storage in a variety of formats, saved to tables 
@@ -176,9 +176,9 @@ Here we want to generate a random set of events but ensure that the device prope
 device from event to event.
 
 ```python
-import databrickslabs_testdatagenerator as dg
+import databricks_datagen as dg
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType, DateType, LongType
-from databrickslabs_testdatagenerator import DateRange, NRange
+from databricks_datagen import DateRange, NRange
 
 shuffle_partitions_requested = 8
 device_population = 100000

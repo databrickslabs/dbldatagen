@@ -65,6 +65,8 @@ Once the library has been installed, you can use it to generate a test data fram
 For example
 
 ```buildoutcfg
+import databricks_datagen as datagen
+
 df_spec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
                                                   partitions=4)
                             .withIdOutput()

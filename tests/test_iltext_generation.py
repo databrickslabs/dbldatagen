@@ -4,8 +4,8 @@ from pyspark.sql.functions import expr
 from pyspark.sql.types import BooleanType, DateType
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, TimestampType
 
-import databrickslabs_testdatagenerator as dg
-from databrickslabs_testdatagenerator import ILText
+import databricks_datagen as dg
+from databricks_datagen import ILText
 
 schema = StructType([
     StructField("PK1", StringType(), True),

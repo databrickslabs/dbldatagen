@@ -4,7 +4,7 @@ from pyspark.sql.types import ByteType, ShortType, DoubleType, LongType, Decimal
 from pyspark.sql.types import IntegerType, StringType, FloatType
 import pyspark.sql.functions as F
 
-import databrickslabs_testdatagenerator as datagen
+import databricks_datagen as datagen
 
 spark = datagen.SparkSingleton.getLocalInstance("unit tests")
 

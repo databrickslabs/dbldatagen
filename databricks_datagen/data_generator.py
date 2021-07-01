@@ -479,7 +479,7 @@ class DataGenerator:
                   Builder pattern
 
         You may also add a variety of options to further control the test data generation process.
-        For full list of options, see :doc:`/reference/api/databrickslabs_testdatagenerator.column_spec_options`.
+        For full list of options, see :doc:`/reference/api/databricks_datagen.column_spec_options`.
 
         """
         if fields is not None and type(fields) is str:
@@ -535,7 +535,7 @@ class DataGenerator:
                   following Builder pattern
 
         You may also add a variety of options to further control the test data generation process.
-        For full list of options, see :doc:`/reference/api/databrickslabs_testdatagenerator.column_spec_options`.
+        For full list of options, see :doc:`/reference/api/databricks_datagen.column_spec_options`.
 
         """
         ensure(colName is not None, "Must specify column name for column")
@@ -589,7 +589,7 @@ class DataGenerator:
                   following Builder pattern
 
         You may also add a variety of options to further control the test data generation process.
-        For full list of options, see :doc:`/reference/api/databrickslabs_testdatagenerator.column_spec_options`.
+        For full list of options, see :doc:`/reference/api/databricks_datagen.column_spec_options`.
 
         """
         ensure(colName is not None, "Must specify column name for column")

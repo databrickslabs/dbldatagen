@@ -78,14 +78,14 @@ def include_template(outputFile):
         outputFile.write(templateFile.read())
         outputFile.write("\n\n")
 
-PROJECT_PATH="../databrickslabs_testdatagenerator"
+PROJECT_PATH="../databricks_datagen"
 
 def processSection(outputFile, items, sectionTitle, module):
     if items is not None and len(items) > 0:
         outputFile.write(f"{sectionTitle}\n\n")
 
     for item in items:
-        outputFile.write(f"* :data:`~databrickslabs_testdatagenerator.{module}.{item}`\n")
+        outputFile.write(f"* :data:`~databricks_datagen.{module}.{item}`\n")
 
     outputFile.write("\n")
 
