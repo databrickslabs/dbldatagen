@@ -30,5 +30,5 @@ def get_version(version):
     return version_info
 
 
-__version__ = "0.10.1-dev12"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpversion
+__version__ = "0.11.0-dev1"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpversion
 __version_info__ = get_version(__version__)

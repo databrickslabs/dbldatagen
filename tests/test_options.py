@@ -1,6 +1,6 @@
 import unittest
 
-import databrickslabs_testdatagenerator as dg
+import dbldatagen as dg
 
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 

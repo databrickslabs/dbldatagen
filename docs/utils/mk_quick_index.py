@@ -24,6 +24,9 @@ sourceFiles = {
     "exponential_distribution.py": "Exponential data distribution related code"
 }
 
+PACKAGE_NAME="dbldatagen"
+PROJECT_PATH=f"../{PACKAGE_NAME}"
+
 def writeUnderlined(outputFile, text, underline="="):
     assert outputFile is not None
     assert text is not None and len(text) > 0
@@ -78,18 +81,21 @@ def include_template(outputFile):
         outputFile.write(templateFile.read())
         outputFile.write("\n\n")
 
-PROJECT_PATH="../databrickslabs_testdatagenerator"
 
-def processSection(outputFile, items, sectionTitle, module):
+def processSection(outputFile, items, sectionTitle, module, subpackage=None):
     if items is not None and len(items) > 0:
         outputFile.write(f"{sectionTitle}\n\n")
 
     for item in items:
-        outputFile.write(f"* :data:`~databrickslabs_testdatagenerator.{module}.{item}`\n")
+        if subpackage is not None:
+            outputFile.write(f"* :data:`~{PACKAGE_NAME}.{subpackage}.{module}.{item}`\n")
+        else:
+            outputFile.write(f"* :data:`~{PACKAGE_NAME}.{module}.{item}`\n")
+
 
     outputFile.write("\n")
 
-def processDirectory(outputFile, pathToProcess):
+def processDirectory(outputFile, pathToProcess, subpackage=None):
     projectDirectory = Path(PROJECT_PATH)
     print("directory: ", pathToProcess)
     if pathToProcess.exists():
@@ -108,9 +114,18 @@ def processDirectory(outputFile, pathToProcess):
                 if len(classList) > 0 or len(functionList) > 0 or len(typeList) > 0:
                     outputFile.write("\n")
                     writeUnderlined(outputFile, title, underline="~")
-                    processSection(outputFile, classList, sectionTitle="Classes", module=moduleName)
-                    processSection(outputFile, functionList, sectionTitle="Functions", module=moduleName)
-                    processSection(outputFile, typeList, sectionTitle="Types", module=moduleName)
+                    processSection(outputFile, classList,
+                                   sectionTitle="Classes",
+                                   module=moduleName,
+                                   subpackage=subpackage)
+                    processSection(outputFile, functionList,
+                                   sectionTitle="Functions",
+                                   module=moduleName,
+                                   subpackage=subpackage)
+                    processSection(outputFile, typeList,
+                                   sectionTitle="Types",
+                                   module=moduleName,
+                                   subpackage=subpackage)
 
 
 def main(dirToSearch, outputPath):
@@ -122,15 +137,15 @@ def main(dirToSearch, outputPath):
     with open(outputPath, 'w') as outputFile:
         include_template(outputFile)
 
-        writeUnderlined(outputFile, f"The ``TestDataGenerator`` package",
+        writeUnderlined(outputFile, f"The ``{PACKAGE_NAME}`` package",
                         underline="_")
 
         processDirectory(outputFile, Path(f"{PROJECT_PATH}"))
 
-        writeUnderlined(outputFile, f"The ``TestDataGenerator.distributions`` package",
+        writeUnderlined(outputFile, f"The ``{PACKAGE_NAME}.distributions`` package",
                         underline="_")
 
-        processDirectory(outputFile, Path(f"{PROJECT_PATH}/distributions"))
+        processDirectory(outputFile, Path(f"{PROJECT_PATH}/distributions"), subpackage="distributions")
 
 
 main(sys.argv[1], sys.argv[2])

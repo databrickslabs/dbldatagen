@@ -4,9 +4,9 @@ from pyspark.sql.types import ByteType, ShortType, DoubleType, LongType, Decimal
 from pyspark.sql.types import IntegerType, StringType, FloatType
 import pyspark.sql.functions as F
 
-import databrickslabs_testdatagenerator as datagen
+import dbldatagen as dg
 
-spark = datagen.SparkSingleton.getLocalInstance("unit tests")
+spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
 
 class TestTypes(unittest.TestCase):
@@ -23,7 +23,7 @@ class TestTypes(unittest.TestCase):
     def test_basic_types(self):
         id_partitions = 4
         testdata_defn = (
-            datagen.DataGenerator(name="basic_dataset", rows=100000, partitions=id_partitions, verbose=True)
+            dg.DataGenerator(name="basic_dataset", rows=100000, partitions=id_partitions, verbose=True)
                 .withColumn("code1", IntegerType(), minValue=1, maxValue=20, step=1)
                 .withColumn("code2", LongType(), maxValue=1000, step=5)
                 .withColumn("code3", IntegerType(), minValue=100, maxValue=200, step=1, random=True)
@@ -49,7 +49,7 @@ class TestTypes(unittest.TestCase):
         num_rows = 1000000
         id_partitions = 4
         testdata_defn = (
-            datagen.DataGenerator(name="basic_dataset", rows=num_rows, partitions=id_partitions, verbose=True)
+            dg.DataGenerator(name="basic_dataset", rows=num_rows, partitions=id_partitions, verbose=True)
                 .withColumn("basic_byte", ByteType())
                 .withColumn("basic_short", ShortType())
                 .withColumn("code1", ByteType(), minValue=1, maxValue=20, step=1)
@@ -83,7 +83,7 @@ class TestTypes(unittest.TestCase):
     def test_out_of_range_types(self):
         id_partitions = 4
         testdata_defn = (
-            datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+            dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("basic_byte", ByteType())
                 .withColumn("basic_short", ShortType())
                 .withColumn("code1", ByteType(), minValue=1, maxValue=400, step=1))
@@ -94,7 +94,7 @@ class TestTypes(unittest.TestCase):
     def test_for_reverse_range(self):
         id_partitions = 4
         testdata_defn = (
-            datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+            dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("basic_byte", ByteType())
                 .withColumn("basic_short", ShortType())
                 .withColumn("code1", ByteType(), minValue=127, maxValue=1, step=-1))
@@ -110,7 +110,7 @@ class TestTypes(unittest.TestCase):
     def test_for_reverse_range2(self):
         id_partitions = 4
         testdata_defn = (
-            datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+            dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("basic_byte", ByteType())
                 .withColumn("basic_short", ShortType())
                 .withColumn("code1", ByteType(), minValue=127, maxValue=1, step=-1)
@@ -124,7 +124,7 @@ class TestTypes(unittest.TestCase):
         id_partitions = 4
         code_values = ["aa", "bb", "cc", "dd", "ee", "ff"]
         testdata_defn = (
-            datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+            dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("basic_byte", ByteType())
                 .withColumn("basic_short", ShortType())
                 .withColumn("code1", StringType(),
@@ -151,7 +151,7 @@ class TestTypes(unittest.TestCase):
     def test_for_values_with_single_column_dependencies(self):
         id_partitions = 4
         testdata_defn = (
-            datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+            dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("basic_byte", ByteType())
                 .withColumn("basic_short", ShortType())
                 .withColumn("code1", StringType(),
@@ -165,7 +165,7 @@ class TestTypes(unittest.TestCase):
         id_partitions = 4
         rows_wanted = 1000000
         testdata_defn = (
-            datagen.DataGenerator(name="basic_dataset", rows=rows_wanted, partitions=id_partitions, verbose=True)
+            dg.DataGenerator(name="basic_dataset", rows=rows_wanted, partitions=id_partitions, verbose=True)
                 .withIdOutput()
                 .withColumn("basic_byte", ByteType())
                 .withColumn("basic_short", ShortType())
@@ -181,7 +181,7 @@ class TestTypes(unittest.TestCase):
     def test_for_values_with_default_column_dependencies(self):
         id_partitions = 4
         testdata_defn = (
-            datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+            dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("basic_byte", ByteType())
                 .withColumn("basic_short", ShortType())
                 .withColumn("code1", StringType(),
@@ -194,7 +194,7 @@ class TestTypes(unittest.TestCase):
     def test_for_weighted_values_with_default_column_dependencies(self):
         id_partitions = 4
         testdata_defn = (
-            datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+            dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("basic_byte", ByteType())
                 .withColumn("basic_short", ShortType())
                 .withColumn("code1", StringType(),
@@ -207,7 +207,7 @@ class TestTypes(unittest.TestCase):
     def test_for_weighted_values_with_default_column_dependencies2(self):
         id_partitions = 4
         testdata_defn = (
-            datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+            dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withIdOutput()
                 .withColumn("basic_byte", ByteType())
                 .withColumn("basic_short", ShortType())
@@ -222,7 +222,7 @@ class TestTypes(unittest.TestCase):
     def test_out_of_range_types2(self):
         id_partitions = 4
         testdata_defn = (
-            datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+            dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("basic_byte", ByteType())
                 .withColumn("basic_short", ShortType())
 
@@ -234,7 +234,7 @@ class TestTypes(unittest.TestCase):
     def test_short_types1(self):
         id_partitions = 4
         testdata_defn = (
-            datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+            dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("bb", ByteType(), unique_values=100)
                 .withColumn("basic_short", ShortType())
 
@@ -248,7 +248,7 @@ class TestTypes(unittest.TestCase):
     def test_short_types1a(self):
         id_partitions = 4
         testdata_defn = (
-            datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+            dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("bb", ByteType(), minValue=35, maxValue=72)
                 .withColumn("basic_short", ShortType())
 
@@ -264,7 +264,7 @@ class TestTypes(unittest.TestCase):
 
         # result should be the same whether using `minValue` or `min` as options
         testdata_defn = (
-            datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+            dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("bb", ByteType(), minValue=35, maxValue=72)
                 .withColumn("basic_short", ShortType())
                 .withColumn("code2", ShortType(), maxValue=10000, step=5))
@@ -277,7 +277,7 @@ class TestTypes(unittest.TestCase):
     def test_short_types2(self):
         id_partitions = 4
         testdata_defn = (
-            datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+            dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("bb", ByteType(), unique_values=100)
                 .withColumn("basic_short", ShortType())
 
@@ -288,7 +288,7 @@ class TestTypes(unittest.TestCase):
     def test_decimal(self):
         id_partitions = 4
         testdata_defn = (
-            datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+            dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withIdOutput()
                 .withColumn("code1", DecimalType(10, 3))
                 .withColumn("code2", DecimalType(10, 5))
@@ -302,7 +302,7 @@ class TestTypes(unittest.TestCase):
     def test_decimal2(self):
         id_partitions = 4
         testdata_defn = (
-            datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+            dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withIdOutput()
                 .withColumn("code1", DecimalType(10, 3))
                 .withColumn("code2", DecimalType(10, 5))
@@ -315,7 +315,7 @@ class TestTypes(unittest.TestCase):
     def test_decimal_min_and_max_values(self):
         id_partitions = 4
         testdata_defn = (
-            datagen.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
+            dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
 
                 .withIdOutput()
                 .withColumn("group1", IntegerType(), expr="1")

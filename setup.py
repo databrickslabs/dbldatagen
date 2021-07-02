@@ -9,16 +9,16 @@ package_long_description = """###Databricks Labs Spark Test Data Generator###
     """
 
 setuptools.setup(
-    name="databrickslabs-testdatagenerator",
-    version="0.10.1-dev12",
+    name="dbldatagen",
+    version="0.11.0-dev1",
     author="Ronan Stokes, Databricks",
     author_email="ronan.stokes@databricks.com",
     description="Databricks Labs -  PySpark Test Data Generator",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/databrickslabs/data-generator",
-    packages=['databrickslabs_testdatagenerator',
-              'databrickslabs_testdatagenerator.distributions'
+    packages=['dbldatagen',
+              'dbldatagen.distributions'
               ],
     classifiers=[
         "Programming Language :: Python :: 3",

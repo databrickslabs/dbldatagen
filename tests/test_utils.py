@@ -2,7 +2,7 @@ import logging
 import unittest
 from datetime import timedelta
 
-from databrickslabs_testdatagenerator import ensure, mkBoundsList, coalesce_values, deprecated, SparkSingleton, \
+from dbldatagen import ensure, mkBoundsList, coalesce_values, deprecated, SparkSingleton, \
     parse_time_interval
 
 spark = SparkSingleton.getLocalInstance("unit tests")
