@@ -10,12 +10,15 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-from databrickslabs_testdatagenerator import *
-from databrickslabs_testdatagenerator.distributions import *
+from dbldatagen import *
+from dbldatagen.distributions import *
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../databrickslabs_testdatagenerator'))
-sys.path.insert(0, os.path.abspath('../../databrickslabs_testdatagenerator/distributions'))
+
+PACKAGE_DIR = "../../dbldatagen"
+
+sys.path.insert(0, os.path.abspath(f"{PACKAGE_DIR}"))
+sys.path.insert(0, os.path.abspath(f"{PACKAGE_DIR}/distributions"))
 
 
 # -- Project information -----------------------------------------------------
@@ -25,7 +28,7 @@ copyright = '2020, Databricks Inc'
 author = 'Databricks Inc'
 
 # The full version, including alpha/beta/rc tags
-release = "0.10.1-dev12"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpversion
+release = "0.11.0-dev1"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpversion
 
 
 # -- General configuration ---------------------------------------------------

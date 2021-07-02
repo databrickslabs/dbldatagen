@@ -16,10 +16,10 @@
 
 # COMMAND ----------
 
-import databrickslabs_testdatagenerator as datagen
+import dbldatagen as dg
 
 # will have implied column `id` for ordinal of row
-testdata_generator = (datagen.DataGenerator(sparkSession=spark, name="test_dataset1", rows=100000, partitions=20)
+testdata_generator = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=100000, partitions=20)
                       .withIdOutput()  # id column will be emitted in the output
                       .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
                       .withColumn("code2", "integer", minValue=1, maxValue=20, step=1, random=True)
@@ -65,10 +65,10 @@ display(df2)
 
 # COMMAND ----------
 
-import databrickslabs_testdatagenerator as datagen
+import dbldatagen as dg
 
 # will have implied column `id` for ordinal of row
-testdata_generator2 = (datagen.DataGenerator(sparkSession=spark, name="test_dataset2", rows=100000, partitions=20)
+testdata_generator2 = (dg.DataGenerator(sparkSession=spark, name="test_dataset2", rows=100000, partitions=20)
                        .withIdOutput()  # id column will be emitted in the output
                        .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
                        .withColumn("code2", "integer", minValue=1, maxValue=20, step=1, random=True)
@@ -98,8 +98,8 @@ display(df3)
 from datetime import timedelta, datetime
 import math
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
-# from databrickslabs_testdatagenerator.data_generator import DataGenerator,ensure
-import databrickslabs_testdatagenerator as datagen
+# from dbldatagen.data_generator import DataGenerator,ensure
+import dbldatagen as dg
 
 interval = timedelta(days=1, hours=1)
 start = datetime(2017, 10, 1, 0, 0, 0)
@@ -118,7 +118,7 @@ schema = StructType([
 
 
 # will have implied column `id` for ordinal of row
-x3 = (datagen.DataGenerator(sparkSession=spark, name="association_oss_cell_info", rows=100000, partitions=20)
+x3 = (dg.DataGenerator(sparkSession=spark, name="association_oss_cell_info", rows=100000, partitions=20)
       .withSchema(schema)
       # withColumnSpec adds specification for existing column
       .withColumnSpec("site_id", minValue=1, maxValue=20, step=1)
@@ -139,7 +139,7 @@ print(x3.schema)
 x3_output.printSchema()
 # display(x3_output)
 
-analyzer = datagen.DataAnalyzer(x3_output)
+analyzer = dg.DataAnalyzer(x3_output)
 
 print("Summary;", analyzer.summarize())
 

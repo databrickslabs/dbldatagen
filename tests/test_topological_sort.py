@@ -1,6 +1,6 @@
 import unittest
 
-import databrickslabs_testdatagenerator as datagen
+import dbldatagen as dg
 
 
 class TestTopologicalSort(unittest.TestCase):
@@ -16,7 +16,7 @@ class TestTopologicalSort(unittest.TestCase):
             ('_r_code3', [])
         ]
 
-        output = list(datagen.topologicalSort(src))
+        output = list(dg.topologicalSort(src))
         print("output1", output)
 
         self.assertEqual(output, ['id', 'code3a', '_r_code1', '_r_code3', 'code1', 'code3', 'code2'])
@@ -32,7 +32,7 @@ class TestTopologicalSort(unittest.TestCase):
             ('_r_code3', ['id'])
         ]
 
-        output = list(datagen.topologicalSort(src, initial_columns=['id'], flatten=False))
+        output = list(dg.topologicalSort(src, initial_columns=['id'], flatten=False))
 
         print("output1", output)
 
@@ -40,14 +40,14 @@ class TestTopologicalSort(unittest.TestCase):
 
     def test_empty_list(self):
         src = []
-        output = list(datagen.topologicalSort(src))
+        output = list(dg.topologicalSort(src))
         print("output", output)
 
         self.assertEqual(output, [])
 
     def test_singleton_list(self):
         src = [('id', [])]
-        output = list(datagen.topologicalSort(src))
+        output = list(dg.topologicalSort(src))
         print("output", output)
 
         self.assertEqual(output, ['id'])
