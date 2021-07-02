@@ -1,7 +1,7 @@
 import logging
 import unittest
 
-import databricks_datagen as dg
+import dbldatagen as dg
 
 spark = dg.SparkSingleton.getLocalInstance("basic tests")
 

@@ -2,7 +2,7 @@ import unittest
 
 from pyspark.sql.types import StringType, TimestampType
 
-import databricks_datagen as dg
+import dbldatagen as dg
 
 
 class TestColumnGenerationSpec(unittest.TestCase):

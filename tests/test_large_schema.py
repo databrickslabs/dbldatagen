@@ -4,7 +4,7 @@ import unittest
 from pyspark.sql.types import BooleanType, DateType
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, TimestampType, DecimalType
 
-import databricks_datagen as dg
+import dbldatagen as dg
 
 schema = StructType([
     StructField("PK1", StringType(), True),

@@ -5,7 +5,7 @@ import unittest
 
 from pyspark.sql.types import IntegerType, StringType, FloatType
 
-import databricks_datagen as dg
+import dbldatagen as dg
 
 spark = dg.SparkSingleton.getLocalInstance("streaming tests")
 

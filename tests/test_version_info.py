@@ -1,6 +1,6 @@
 import unittest
 
-from databricks_datagen._version import get_version, __version__
+from dbldatagen._version import get_version, __version__
 
 
 class TestVersionInfo(unittest.TestCase):

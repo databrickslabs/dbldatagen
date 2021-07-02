@@ -81,6 +81,7 @@ You can use the test data generator with, or without the use of a pre-existing s
 Here is an example of creating a simple test data set without use of a schema. 
 
 ```python 
+import databrickslabs_datagen as dg
 row_count=1000 * 100
 testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=row_count,
                                   partitions=4, seed_method='hash_fieldname', 
@@ -176,9 +177,9 @@ Here we want to generate a random set of events but ensure that the device prope
 device from event to event.
 
 ```python
-import databricks_datagen as dg
+import dbldatagen as dg
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType, DateType, LongType
-from databricks_datagen import DateRange, NRange
+from dbldatagen import DateRange, NRange
 
 shuffle_partitions_requested = 8
 device_population = 100000

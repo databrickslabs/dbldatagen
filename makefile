@@ -11,7 +11,7 @@ PYCACHE := $(shell find . -name '__pycache__')
 EGGS :=  $(shell find . -name '*.egg-info')
 CURRENT_VERSION := $(shell awk '/current_version/ {print $$3}' python/.bumpversion.cfg)
 
-PACKAGE_DIR=databricks_datagen
+PACKAGE_DIR=databrickslabs_datagen
 
 clean:
 	@echo "$(OK_COLOR)=> Cleaning$(NO_COLOR)"

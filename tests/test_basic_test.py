@@ -4,7 +4,7 @@ import unittest
 from pyspark.sql import functions as F
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType
 
-import databricks_datagen as dg
+import dbldatagen as dg
 
 spark = dg.SparkSingleton.getLocalInstance("basic tests")
 

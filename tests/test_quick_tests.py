@@ -3,9 +3,9 @@ from datetime import timedelta, datetime
 
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, DateType
 
-import databricks_datagen as dg
-from databricks_datagen import DataGenerator
-from databricks_datagen import NRange, DateRange
+import dbldatagen as dg
+from dbldatagen import DataGenerator
+from dbldatagen import NRange, DateRange
 
 schema = StructType([
     StructField("site_id", IntegerType(), True),

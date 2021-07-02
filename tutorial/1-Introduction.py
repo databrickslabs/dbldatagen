@@ -56,17 +56,17 @@
 
 # COMMAND ----------
 
-import databricks_datagen as datagen
+import dbldatagen as dg
 from pyspark.sql.types import IntegerType, StringType, FloatType, TimestampType
 
 # will have implied column `id` for ordinal of row
-testdata_defn = (datagen.DataGenerator(sparkSession=spark, name="basic_dataset", rows=100000000, partitions=20, verbose=True)
-      .withColumn("code1", IntegerType(), minValue=1, maxValue=20, step=1)
-      .withColumn("code2", IntegerType(), maxValue=1000, step=5)
-      .withColumn("code3", IntegerType(), minValue=100, maxValue=200, step=1, random=True)
-      .withColumn("xcode", StringType(), values=["a","test", "value"], random=True)
-      .withColumn("rating", FloatType(), minValue=1.0, maxValue=5.0, step=0.01, random=True)
-      .withColumn("non_scaled_rating", FloatType(), minValue=1.0, maxValue=5.0, continuous=True,  random=True))
+testdata_defn = (dg.DataGenerator(sparkSession=spark, name="basic_dataset", rows=100000000, partitions=20, verbose=True)
+                 .withColumn("code1", IntegerType(), minValue=1, maxValue=20, step=1)
+                 .withColumn("code2", IntegerType(), maxValue=1000, step=5)
+                 .withColumn("code3", IntegerType(), minValue=100, maxValue=200, step=1, random=True)
+                 .withColumn("xcode", StringType(), values=["a","test", "value"], random=True)
+                 .withColumn("rating", FloatType(), minValue=1.0, maxValue=5.0, step=0.01, random=True)
+                 .withColumn("non_scaled_rating", FloatType(), minValue=1.0, maxValue=5.0, continuous=True,  random=True))
 
 df = testdata_defn.build()
 
@@ -77,8 +77,8 @@ display(df)
 from datetime import timedelta, datetime
 import math
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
-#from databricks_datagen.data_generator import DataGenerator,ensure
-import databricks_datagen as datagen
+#from dbldatagen.data_generator import DataGenerator,ensure
+import dbldatagen as dg
 
 
 interval = timedelta(days=1, hours=1)
@@ -98,7 +98,7 @@ schema = StructType([
 
 
 # will have implied column `id` for ordinal of row
-x3 = (datagen.DataGenerator(sparkSession=spark, name="association_oss_cell_info", rows=100000, partitions=20)
+x3 = (dg.DataGenerator(sparkSession=spark, name="association_oss_cell_info", rows=100000, partitions=20)
       .withSchema(schema)
       # withColumnSpec adds specification for existing column
       .withColumnSpec("site_id", minValue=1, maxValue=20, step=1)
@@ -119,7 +119,7 @@ print(x3.schema)
 x3_output.printSchema()
 # display(x3_output)
 
-analyzer = datagen.DataAnalyzer(x3_output)
+analyzer = dg.DataAnalyzer(x3_output)
 
 print("Summary;", analyzer.summarize())
 

@@ -70,7 +70,7 @@ class ColumnGenerationSpec(object):
     :param verbose: If True, output logging statements at the info level. If False (the default),
                     only output warning and error logging statements.
 
-    For full list of options, see :doc:`/reference/api/databricks_datagen.column_spec_options`.
+    For full list of options, see :doc:`/reference/api/dbldatagen.column_spec_options`.
     """
 
     #: row seed field for data set

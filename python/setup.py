@@ -17,12 +17,12 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/databricks",
-    #packages=['databricks_datagen',
-    #          'databricks_datagen/distributions'],
+    #packages=['dbldatagen',
+    #          'dbldatagen/distributions'],
     install_requires=[
         'pyspark>=2.4.0'],
     packages=setuptools.find_packages(exclude=['contrib', 'unit_tests', 'tests'],
-                                      include=['databricks_datagen.*']),
+                                      include=['dbldatagen.*']),
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

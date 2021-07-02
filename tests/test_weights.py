@@ -3,7 +3,7 @@ import unittest
 
 from pyspark.sql.functions import col
 
-import databricks_datagen as dg
+import dbldatagen as dg
 
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
