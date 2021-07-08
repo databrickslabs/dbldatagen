@@ -1,7 +1,7 @@
-# Databricks Labs TestDataGenerator
+# Databricks Labs TestDataGenerator (dbldatagen)
 [Release Notes](CHANGELOG.md) |
-[Python Wheel](https://github.com/databrickslabs/data-generator/releases/tag/0.10.0_prerel5-py3-06022021) |
-[Developer Docs](python/docs/APIDOCS.md) |
+[Python Wheel](https://github.com/databrickslabs/data-generator/releases/tag/v1-0.11.0-dev1) |
+[Developer Docs](docs/APIDOCS.md) |
 [Examples](examples) |
 [Tutorial](tutorial) 
 
@@ -38,7 +38,7 @@ Please note that all projects in the `databrickslabs` github space are provided 
 Any issues discovered through the use of this project should be filed as GitHub Issues on the Repo.  They will be reviewed as time permits, but there are no formal SLAs for support.
 
 ## Compatibility 
-The test data generator framework can be used with Pyspark 2.4.x and Python 3.6 or later
+The Databricks Labs data generator framework can be used with Pyspark 3.x and Python 3.6 or later
 
 However prebuilt releases are tested against Pyspark 3.0.1 (compatible with the Databricks runtime 7.3 LTS 
 or later) and built with Python 3.7.5
@@ -50,12 +50,12 @@ release notes for library compatibility
 
 ## Using a pre-built release
 The release binaries can be accessed at:
-- Github Test Data Generator releases - https://github.com/databrickslabs/data-generator/releases
+- Databricks Labs Github Data Generator releases - https://github.com/databrickslabs/dbldatagen/releases
 
 To use download a wheel file and install using the Databricks install mechanism to install a wheel based
 library into your workspace.
 
-Latest pre-release is code complete and fully functional barring some issues with generation of date ranges. 
+Latest pre-release is code complete and fully functional. 
 
 ## Using the Project
 To use the project, the generated wheel should be installed in your Python notebook as a wheel based library
@@ -115,6 +115,12 @@ Run  `make test` from the main project directory to run the unit tests.
 Issues with the application?  Found a bug?  Have a great idea for an addition?
 Feel free to file an issue.
 
-## Core Contribution team
-* Lead Developer, co-designer: Ronan Stokes,RSA, Databricks
-* Design: Daniel Tomes, RSA Practice Leader, Databricks
+## Project Support
+
+Please note that all projects in the /databrickslabs github account are provided for your exploration only, and are 
+not formally supported by Databricks with Service Level Agreements (SLAs). They are provided AS-IS and we do not 
+make any guarantees of any kind. Please do not submit a support ticket relating to any issues arising from the use 
+of these projects.
+
+Any issues discovered through the use of this project should be filed as GitHub Issues on the Repo. They will 
+be reviewed as time permits, but there are no formal SLAs for support.

@@ -7,7 +7,7 @@ with open(sys.argv[1]) as reader:
     lines = reader.readlines()
 
     with open(sys.argv[2], "w") as writer:
-        writer.write("# Dependencies for the Test Data Generator framework\n\n")
+        writer.write("# Dependencies for the Data Generator framework\n\n")
         writer.write("Building the framework will install a number of packages in the virtual environment used for building the framework.\n")
         writer.write("Some of these are required at runtime, while a number of packages are used for building the documentation only.\n\n")
         for line in lines:
