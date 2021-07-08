@@ -22,3 +22,41 @@ The following distributions are supported:
 
 > Note the `distribution` option will have no effect for values that are not randomly generated as
 > per use of the `random` option
+
+### Examples 
+
+In the following example (taken from the section on date ranges), we will simulate returns and ensure the return
+ date is after the purchase date.
+
+Here we specify an explicit date range and add a random number of days for the return.
+
+However, unlike the example in the date range section, we will use a specific distribution to make returns more frequent in the period
+immediately following the purchase.
+
+```python 
+import dbldatagen as dg
+import dbldatagen.distributions as dist
+
+
+row_count=1000 * 100
+testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=row_count,
+                                  partitions=4, seed_method='hash_fieldname', 
+                                  verbose=True)
+                   .withColumn("purchase_id", IntegerType(), minValue=1000000, maxValue=2000000)
+                   .withColumn("product_code", IntegerType(), unique_values=10000, random=True)
+                   .withColumn("purchase_date", "date", data_range=dg.DateRange("2017-10-01 00:00:00",
+                                                                             "2018-10-06 11:55:00",
+                                                                             "days=3"), 
+                                                                                   random=True)
+                   .withColumn("return_delay", "int", minValue=1, maxValue=100, omit=True, random=True, 
+                                distribution=dist.Gamma(1.0, 2.0))
+                   .withColumn("return_date", "date", 
+                                expr="date_add('purchase_date', 'return_delay' )")
+
+                   )
+
+dfTestData = testDataSpec.build()
+```
+
+Here we use a computed column, `return_delay`, for effect only. By specifying `omit=True`, it is omitted from the 
+final data set.

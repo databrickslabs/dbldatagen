@@ -1,6 +1,6 @@
 # Understanding and using data ranges
 
-The test data generator uses data ranges to constrain the values for generated data. 
+The data generator uses data ranges to constrain the values for generated data. 
 
 By default, the data is only constrained to the range of the fields data type. 
 
@@ -19,6 +19,24 @@ The range of values for the generated data may be controlled in the following wa
 The set of actual values generated will be further constrained by the possible values of the underlying seed column. 
 For example if a column is specified to have 10 possible values but the seed column only generates two values 
 and random value generation is not used, then there will only be two values generated.
+
+Here is an example illustrating use of some of the range constraints 
+
+```python 
+import dbldatagen as dg
+
+row_count=1000 * 100
+testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=row_count,
+                                  partitions=4, seed_method='hash_fieldname', 
+                                  verbose=True)
+                   .withIdOutput()
+                   .withColumn("purchase_id", IntegerType(), minValue=1000000, maxValue=2000000, random=True)
+                   .withColumn("product_code", IntegerType(), unique_values=10000, random=True)
+                   .withColumn("in_stock", StringType(), values=['yes', 'no', 'unknown'])
+                   )
+
+dfTestData = testDataSpec.build()
+```
 
 ## Precedence rules for constraining the range of values
 
@@ -54,7 +72,7 @@ the interval will be computed to evenly space the values if possible.
 If no interval is specified, the default interval of 1 day will be used for dates and 1 minute will be used for 
 timestamps unless other criteria force a different interval criteria.
 
-As part of the overall goals for the test data generator is to be able to generate repeatable data sets, 
+As part of the overall goals for the Databricks Labs data generator is to be able to generate repeatable data sets, 
 if no starting datetime is specified for date time ranges, we will use the first day of the previous year as 
 the starting date. At the time of writing, this will be 2020/1/1
 
@@ -63,6 +81,53 @@ At the time of writing, this will be 2020/12/31
 
 if starting and ending dates are specified, we will not produce dates or timestamps outside of these, but the number of 
 unique values may be reduced, if there are insufficient values in the range.
+
+#### Examples
+Here is an example illustrating use of simple date range constraints. In this case, we are only specifying that
+ we will have 300 unique dates. Note that we are not making `purchase_id` random to ensure unique values for every row
+
+```python 
+import dbldatagen as dg
+
+row_count=1000 * 100
+testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=row_count,
+                                  partitions=4, seed_method='hash_fieldname', 
+                                  verbose=True)
+                   .withColumn("purchase_id", IntegerType(), minValue=1000000, 
+                                  maxValue=2000000)
+                   .withColumn("product_code", IntegerType(), unique_values=10000, 
+                                  random=True)
+                   .withColumn("purchase_date", "date", unique_values=300, 
+                                  random=True)
+                   )
+
+dfTestData = testDataSpec.build()
+```
+
+In the following example, we will simulate returns and ensure the return date is after the purchase date.
+
+Here we specify an explicit date range and add a random number of days for the return.
+
+```python 
+import dbldatagen as dg
+
+row_count=1000 * 100
+testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=row_count,
+                                  partitions=4, seed_method='hash_fieldname', 
+                                  verbose=True)
+                   .withColumn("purchase_id", IntegerType(), minValue=1000000, maxValue=2000000)
+                   .withColumn("product_code", IntegerType(), unique_values=10000, random=True)
+                   .withColumn("purchase_date", "date", data_range=dg.DateRange("2017-10-01 00:00:00",
+                                                                             "2018-10-06 11:55:00",
+                                                                             "days=3"), 
+                                                                                   random=True)
+                   .withColumn("return_date", "date", 
+                                expr="date_add('purchase_date', cast(floor(rand() * 100 + 1) as int))")
+
+                   )
+
+dfTestData = testDataSpec.build()
+```
 
 
 ### Recommendations

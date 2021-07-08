@@ -1,4 +1,4 @@
-# Contributing to the Test Data Generator
+# Contributing to the Databricks Labs Data Generator
 We happily welcome contributions to *data-generator*. 
 
 We use GitHub Issues to track community reported issues and GitHub Pull Requests for accepting changes.
@@ -6,9 +6,9 @@ We use GitHub Issues to track community reported issues and GitHub Pull Requests
 ## License
 
 When you contribute code, you affirm that the contribution is your original work and that you 
-license the work to the project under the project's open source license. Whether or not you 
+license the work to the project under the project's Databricks license. Whether or not you 
 state this explicitly, by submitting any copyrighted material via pull request, email, or 
-other means you agree to license the material under the project's open source license and 
+other means you agree to license the material under the project's Databricks license and 
 warrant that you have the legal authority to do so.
 
 # Building the code
@@ -94,7 +94,7 @@ To run the tests using a `pipenv` environment:
 
   - Run `make test-with-html-report` to generate test coverage report in `htmlcov/inxdex.html`
 
-# Using the test data generator
+# Using the Databricks Labs data generator
 To use the project, the generated wheel should be installed in your Python notebook as a wheel based library
 
 Once the library has been installed, you can use it to generate a test data frame.
@@ -103,6 +103,7 @@ Once the library has been installed, you can use it to generate a test data fram
 
 The code follows the Pyspark coding conventions. 
 
-Basically it follows the Python PEP8 coding conventions - but method and argument names used mixed case starting with a lower case letter rather than underscores.
+Basically it follows the Python PEP8 coding conventions - but method and argument names used mixed case starting 
+with a lower case letter rather than underscores.
 
 See https://legacy.python.org/dev/peps/pep-0008/

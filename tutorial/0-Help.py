@@ -1,13 +1,13 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC ### Test Data Generator ###
-# MAGIC The test data generator automates the process of generating test data of a given size, conforming to a specific layout, and allows specification of how data is generated for each field.
+# MAGIC ### Databricks Labs Data Generator ###
+# MAGIC The Databricks Labs data generator automates the process of generating test data of a given size, conforming to a specific layout, and allows specification of how data is generated for each field.
 # MAGIC 
 # MAGIC A schema can be optionally supplied, and new fields can be added to augment the set of fields defined in the schema.
 # MAGIC 
-# MAGIC The test data generator allows specification of options for number of rows to be generated and how the generated test set is partitioned. 
+# MAGIC The Databricks labs data generator allows specification of options for number of rows to be generated and how the generated test set is partitioned.
 # MAGIC 
-# MAGIC The test data generator produces a spark data frame ( in Python) - which may be subsequently be saved, transformed, cached, persisted or used in any way a PySpark data frame can be used. 
+# MAGIC The data generator produces a spark data frame ( in Python) - which may be subsequently be saved, transformed, cached, persisted or used in any way a PySpark data frame can be used.
 # MAGIC 
 # MAGIC By declaring a view (temporary or otherwise) over the dataframe, the test data may be exposed to Scala usage also. 
 
@@ -15,7 +15,9 @@
 
 # MAGIC %md #### General Operation ####
 # MAGIC 
-# MAGIC The test data generator operates by initially generating an `id` column with an integer id in a strictly increasing sequence. Each additional column can be generated based on a transformation of this id, the transformation of some other previously defined column, or based on a random number. 
+# MAGIC The data generator operates by initially generating an `id` column with an integer id in a strictly increasing
+# MAGIC sequence. Each additional column can be generated based on a transformation of this id, the transformation of
+# MAGIC some other previously defined column, or based on a random number.
 
 # COMMAND ----------
 
