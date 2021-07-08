@@ -1,6 +1,6 @@
-# Getting started with the Databricks Labs Test Data Generator
+# Getting started with the Databricks Labs Data Generator
 
-The Databricks labs test data generator is a Spark based solution for generating 
+The Databricks Labs data generator is a Spark based solution for generating 
 realistic synthetic data. It uses the features of Spark dataframes and Spark SQL 
 to generate test data. As the output of the process is a dataframe populated 
 with test data , it may be saved to storage in a variety of formats, saved to tables 
@@ -15,12 +15,13 @@ or generally manipulated using the existing Spark Dataframe APIs.
 
 ## General Overview
 
-The Test Data Generator is a Python Library that can be used in several different ways:
-1. Generate a test data set for an existing Spark SQL schema. 
-2. Generate a test data set adding columns according to specifiers provided
-3. Start with an existing schema and add columns along with specifications as to how values are generated
+The Databricks Labs Data Generator is a Python Library that can be used in several different ways:
+1. Generate a test data set without defining a schema in advance
+2. Generate a test data set for an existing Spark SQL schema. 
+3. Generate a test data set adding columns according to specifiers provided
+4. Start with an existing schema and add columns along with specifications as to how values are generated
 
-The test data generator includes the following features:
+The data generator includes the following features:
 
 * Specify number of rows to generate
 * Specify numeric, time and date ranges for columns
@@ -29,6 +30,7 @@ The test data generator includes the following features:
 * Use template based generation and formatting on string columns
 * Use SQL based  expression to control or augment column generation
 * Script Spark SQL table creation statement for dataset 
+* Specify a statistical distribution for random values
 
 
 ## Tutorials and examples
@@ -41,14 +43,14 @@ The examples in the `tutorials` folder are in notebook export format and are int
  
 ## Basic concepts
 
-The Test Data Generator is a Python framework that uses Spark to generate a dataframe of test data. 
+The Databricks Labs Data Generator is a Python framework that uses Spark to generate a dataframe of test data. 
 
 Once the data frame is generated, it can be used with any Spark dataframee compatible API to save or persist data, 
 to analyze data, to write it to an external database or stream, or generally used in the same manner as a regular dataframe.
 
 To consume it from Scala, R, SQL or other languages, create a view over the resulting test dataframe and you can use
 it from any Databricks Spark runtime compatible language. By use of the appropriate parameters, 
-you can instruct the test data generator to automatically register a view as part of generating the test data.
+you can instruct the data generator to automatically register a view as part of generating the test data.
 
 ### Generating the test data
 The test data generation process is controlled by a test data generation spec which can build a schema implicitly, 
@@ -74,27 +76,44 @@ There is also support for applying arbitrary SQL expressions, and generation of 
 
 ## Creating simple test data sets
 
-You can use the test data generator with, or without the use of a pre-existing schema.
+You can use the data generator with, or without the use of a pre-existing schema.
 
-### Create a data set withouut pre-existing schemas
+### Getting started
+
+Before you can use the data generator, you need to install the package in your environment and import it in your code.
+
+For example:
+
+```python 
+import dbldatagen as dg
+```
+
+Creating the data set is performed by creating a definition for your dataset via the `DataGenerator` instance, which 
+specifies the rules that control data generation. 
+
+Once the `DataGenerator` specification is created, you use the `build` method to generate a Spark dataframe for the 
+data
+
+### Create a data set without pre-existing schemas
 
 Here is an example of creating a simple test data set without use of a schema. 
 
 ```python 
+import dbldatagen as dg
+
 row_count=1000 * 100
 testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=row_count,
                                   partitions=4, seed_method='hash_fieldname', 
                                   verbose=True)
-                            .withIdOutput()
-                            .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
-                                        numColumns=cls.column_count)
-                            .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
-                            .withColumn("code2", IntegerType(), minValue=0, maxValue=10, random=True)
-                            .withColumn("code3", StringType(), values=['online', 'offline', 'unknown'])
-                            .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True, percent_nulls=5)
-                            .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
-
-                            )
+                   .withIdOutput()
+                   .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
+                                    numColumns=cls.column_count)
+                   .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
+                   .withColumn("code2", IntegerType(), minValue=0, maxValue=10, random=True)
+                   .withColumn("code3", StringType(), values=['online', 'offline', 'unknown'])
+                   .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True, percent_nulls=5)
+                   .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+                   )
 
 dfTestData = testDataSpec.build()
 ```

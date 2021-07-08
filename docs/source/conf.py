@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.abspath(f"{PACKAGE_DIR}/distributions"))
 
 # -- Project information -----------------------------------------------------
 
-project = 'Test Data Generator'
+project = 'Databricks Labs Data Generator'
 copyright = '2020, Databricks Inc'
 author = 'Databricks Inc'
 
@@ -85,12 +85,14 @@ add_module_names = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-#html_theme = "pydata_sphinx_theme"
+import sphinx_rtd_theme
 html_theme = "sphinx_rtd_theme"
+
+html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = "../tdg-logo-medium.png"
+#html_logo = "../tdg-logo-medium.png"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -106,8 +108,9 @@ html_css_files = [
 #}
 
 html_theme_options= {
-    "extra_nav_links": [
-            {"Databricks Labs": "https://github.com/databrickslabs"}
+    "display_version" : False,
+    "navbar_links": [
+        ("Databricks Labs", "https://github.com/databrickslabs", True)
         ]
 }
 

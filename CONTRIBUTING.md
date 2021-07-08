@@ -1,4 +1,4 @@
-# Contributing to the Test Data Generator
+# Contributing to the Databricks Labs Data Generator
 We happily welcome contributions to *data-generator*. 
 
 We use GitHub Issues to track community reported issues and GitHub Pull Requests for accepting changes.
@@ -94,7 +94,7 @@ To run the tests using a `pipenv` environment:
 
   - Run `make test-with-html-report` to generate test coverage report in `htmlcov/inxdex.html`
 
-# Using the test data generator
+# Using the Databricks Labs data generator
 To use the project, the generated wheel should be installed in your Python notebook as a wheel based library
 
 Once the library has been installed, you can use it to generate a test data frame.

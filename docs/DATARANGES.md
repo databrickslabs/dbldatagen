@@ -1,6 +1,6 @@
 # Understanding and using data ranges
 
-The test data generator uses data ranges to constrain the values for generated data. 
+The data generator uses data ranges to constrain the values for generated data. 
 
 By default, the data is only constrained to the range of the fields data type. 
 
@@ -54,7 +54,7 @@ the interval will be computed to evenly space the values if possible.
 If no interval is specified, the default interval of 1 day will be used for dates and 1 minute will be used for 
 timestamps unless other criteria force a different interval criteria.
 
-As part of the overall goals for the test data generator is to be able to generate repeatable data sets, 
+As part of the overall goals for the Databricks Labs data generator is to be able to generate repeatable data sets, 
 if no starting datetime is specified for date time ranges, we will use the first day of the previous year as 
 the starting date. At the time of writing, this will be 2020/1/1
 

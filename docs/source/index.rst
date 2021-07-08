@@ -3,17 +3,17 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Test Data Generator documentation
-=================================
+Databricks Labs Data Generator documentation
+============================================
 
-The Databricks Labs Test Data Generator project provides a convenient way to
+The Databricks Labs Data Generator project provides a convenient way to
 generate large volumes of synthetic test data from within a Databricks notebook
 (or regular Spark application).
 
-By defining a test data generation spec, either in conjunction with an existing schema
-or through creating a schema on the fly, you can control how test data is generated.
+By defining a data generation spec, either in conjunction with an existing schema
+or through creating a schema on the fly, you can control how synthetic data is generated.
 
-As the data generator generates a PYSpark data frame, it is simple to create a view over it to expose it
+As the data generator generates a PySpark data frame, it is simple to create a view over it to expose it
 to Scala or R based Spark applications also.
 
 .. toctree::
@@ -29,8 +29,8 @@ to Scala or R based Spark applications also.
    :maxdepth: 1
    :caption: API
 
-   Quick index <relnotes/quickindex>
-   API Documentation <reference/api/modules>
+   Quick API index <relnotes/quickindex>
+   The dbldatagen package API <reference/api/modules>
 
 .. toctree::
    :maxdepth: 1

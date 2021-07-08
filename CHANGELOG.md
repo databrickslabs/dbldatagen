@@ -1,4 +1,4 @@
-## Test Data Generator Release Notes
+## Databricks Labs Data Generator Release Notes
 
 ### Requirements
 

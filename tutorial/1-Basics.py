@@ -1,8 +1,9 @@
 # Databricks notebook source
-# MAGIC %md ### Using the Test Data Generator ###
+# MAGIC %md ### Using the Databricks Labs Data Generator ###
 # MAGIC 
 # MAGIC #### Setup ####
-# MAGIC Import the Test Data Generator library wheel file into your environment and attach to cluster being used to run notebook
+# MAGIC Import the Data Generator library wheel file into your environment and attach to cluster being used to
+# MAGIC run notebook
 
 # COMMAND ----------
 
@@ -11,7 +12,8 @@
 # MAGIC Lets look at generating a simple data set as follows:
 # MAGIC 
 # MAGIC - use the `id` field as the key
-# MAGIC - generate a predictable value for a theoretical field `code1` that will be the same on every run. The field will be generated based on modulo arithmetic on the `id` field to produce a code
+# MAGIC - generate a predictable value for a theoretical field `code1` that will be the same on every run.
+# MAGIC The field will be generated based on modulo arithmetic on the `id` field to produce a code
 # MAGIC - generate random fields `code2`, `code3` and `code4` 
 
 # COMMAND ----------

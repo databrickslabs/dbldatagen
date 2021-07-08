@@ -1,4 +1,4 @@
-# Databricks Labs TestDataGenerator
+# Databricks Labs TestDataGenerator (dbldatagen)
 [Release Notes](CHANGELOG.md) |
 [Python Wheel](https://github.com/databrickslabs/data-generator/releases/tag/0.10.0_prerel5-py3-06022021) |
 [Developer Docs](python/docs/APIDOCS.md) |
@@ -38,7 +38,7 @@ Please note that all projects in the `databrickslabs` github space are provided 
 Any issues discovered through the use of this project should be filed as GitHub Issues on the Repo.  They will be reviewed as time permits, but there are no formal SLAs for support.
 
 ## Compatibility 
-The test data generator framework can be used with Pyspark 2.4.x and Python 3.6 or later
+The Databricks Labs data generator framework can be used with Pyspark 2.4.x and Python 3.6 or later
 
 However prebuilt releases are tested against Pyspark 3.0.1 (compatible with the Databricks runtime 7.3 LTS 
 or later) and built with Python 3.7.5
@@ -50,7 +50,7 @@ release notes for library compatibility
 
 ## Using a pre-built release
 The release binaries can be accessed at:
-- Github Test Data Generator releases - https://github.com/databrickslabs/data-generator/releases
+- Databricks Labs Github Data Generator releases - https://github.com/databrickslabs/data-generator/releases
 
 To use download a wheel file and install using the Databricks install mechanism to install a wheel based
 library into your workspace.

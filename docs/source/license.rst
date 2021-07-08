@@ -6,7 +6,7 @@
 License
 =======
 
-The use of the Test Data Generator is covered by the following license:
+The use of the Databricks Labs Data Generator is covered by the following license:
 
 ----
 

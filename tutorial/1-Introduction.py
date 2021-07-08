@@ -1,30 +1,33 @@
 # Databricks notebook source
-# MAGIC %md ## Introducing the test data generator ##
+# MAGIC %md ## Introducing the Databricks Labs Data Generator ##
 
 # COMMAND ----------
 
 # MAGIC %md ### First Steps ###
 # MAGIC 
-# MAGIC You will need to import the test generator library to workspace in order to use it.
+# MAGIC You will need to import the data generator library to workspace in order to use it.
 # MAGIC 
 # MAGIC Steps:
-# MAGIC 1. In your Databricks environment, using the left hand pane to select your workspace, create a library entry for the test data generator library
-# MAGIC     1. if theres an older library already installed:
+# MAGIC 1. In your Databricks environment, using the left hand pane to select your workspace, create a library entry
+# MAGIC for the test data generator library
+# MAGIC     1. if there's an older library already installed:
 # MAGIC         1. uninstall it from existing clusters that it is installed on
 # MAGIC         9. restart the cluster(s) to have the uninstall take effect 
 # MAGIC         9. move the library to trash
 # MAGIC     9. use the create option for the workspace folder
 # MAGIC     9. select library 
 # MAGIC     9. select Python Wheel library type (by setting the library type option to `python whl`)
-# MAGIC 9. Once the library reference is created, you can install it on your clusters. You may need to restart them to take effect
+# MAGIC 9. Once the library reference is created, you can install it on your clusters. You may need to restart them
+# MAGIC to take effect
 # MAGIC     
-# MAGIC 9. You can now refer to the library in your notebooks. Note the library is a Python 3 wheel library and must be run on a compatible cluster
+# MAGIC 9. You can now refer to the library in your notebooks. Note the library is a Python 3 wheel library and
+# MAGIC must be run on a compatible cluster
 
 # COMMAND ----------
 
 # MAGIC %md ### Brief Introduction ###
 # MAGIC 
-# MAGIC You can use the test data generator to 
+# MAGIC You can use the data generator to
 # MAGIC 
 # MAGIC * Generate Pyspark data frames from individual column declarations and schema definitions
 # MAGIC * Augment the schema and column definitions with directive as to how data should be generated
@@ -37,13 +40,15 @@
 # MAGIC * Analyze an existing data source and generate data similar to the source data
 # MAGIC * All of the above can be done within the Databricks notebook environment
 # MAGIC 
-# MAGIC The resulting data frames can be saved, used as a source for other operations, converted to view for consumption from Scala and other languages / environments. 
+# MAGIC The resulting data frames can be saved, used as a source for other operations, converted to view for
+# MAGIC consumption from Scala and other languages / environments.
 # MAGIC 
-# MAGIC As the resulting dataframe is a full defined PySpark dataframe, you can supplement resulting data frame with regular spark code to address scenarios not covered by the library.  
+# MAGIC As the resulting dataframe is a full defined PySpark dataframe, you can supplement resulting data frame with
+# MAGIC regular spark code to address scenarios not covered by the library.
 
 # COMMAND ----------
 
-# MAGIC %md ### Using the Test Data Generator ###
+# MAGIC %md ### Using the Data Generator ###
 # MAGIC 
 # MAGIC lets look at several basic scenarios:
 # MAGIC * generating a test data set from manually specified columns
