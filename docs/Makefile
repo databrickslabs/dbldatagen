@@ -8,7 +8,7 @@ SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = source
 DOC_DIR     = .
 BUILDDIR      = `pwd`/build
-MODULEDIR      = ../databrickslabs_testdatagenerator
+MODULEDIR      = ../dbldatagen
 PROJECT_DIR      = ..
 
 # Put it first so that "make" without argument is like "make help".
@@ -56,7 +56,7 @@ license:
 
 dependent_files: relnotes requirements license quick_index
 	@echo "Making dependent files"
-	@-mkdir python/docs/source/relnotes
+	@-mkdir source/relnotes
 	@cp -f "$(DOC_DIR)/APIDOCS.md" "$(SOURCEDIR)"/relnotes/
 	@cp -f "$(DOC_DIR)/DATARANGES.md" "$(SOURCEDIR)"/relnotes/
 	@cp -f "$(DOC_DIR)/DISTRIBUTIONS.md" "$(SOURCEDIR)"/relnotes/
@@ -70,6 +70,7 @@ html: Makefile
 docs: clean dependent_files Makefile apidoc html
 	@echo "Making full docs"
 	@echo "Full path to HTML docs is [$(BUILDDIR)/html]"
+	@echo "The starting point for the documentation is '[$(BUILDDIR)/html/index.html]'"
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).

@@ -5,8 +5,8 @@ import pyspark.sql.functions as F
 from pyspark.sql.types import BooleanType, DateType
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, TimestampType
 
-import databrickslabs_testdatagenerator as dg
-from databrickslabs_testdatagenerator import TemplateGenerator
+import dbldatagen as dg
+from dbldatagen import TemplateGenerator
 
 schema = StructType([
     StructField("PK1", StringType(), True),

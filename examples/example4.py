@@ -1,8 +1,8 @@
 from datetime import timedelta, datetime
 import math
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
-# from databrickslabs_testdatagenerator.data_generator import DataGenerator,ensure
-import databrickslabs_testdatagenerator as datagen
+# from dbldatagen.data_generator import DataGenerator,ensure
+import dbldatagen as dg
 from pyspark.conf import SparkConf
 from pyspark.sql import SparkSession
 
@@ -26,7 +26,7 @@ spark = SparkSession.builder \
     .getOrCreate()
 
 # will have implied column `id` for ordinal of row
-x3 = (datagen.DataGenerator(sparkSession=spark, name="association_oss_cell_info", rows=1000000, partitions=20)
+x3 = (dg.DataGenerator(sparkSession=spark, name="association_oss_cell_info", rows=1000000, partitions=20)
       .withSchema(schema)
       # withColumnSpec adds specification for existing column
       .withColumnSpec("site_id", minValue=1, maxValue=20, step=1)

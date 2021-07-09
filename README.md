@@ -65,7 +65,8 @@ Once the library has been installed, you can use it to generate a test data fram
 For example
 
 ```buildoutcfg
-df_spec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
+import dbldatagen as dg
+df_spec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
                                                   partitions=4)
                             .withIdOutput()
                             .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
