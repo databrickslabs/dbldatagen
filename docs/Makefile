@@ -72,6 +72,12 @@ docs: clean dependent_files Makefile apidoc html
 	@echo "Full path to HTML docs is [$(BUILDDIR)/html]"
 	@echo "The starting point for the documentation is '[$(BUILDDIR)/html/index.html]'"
 
+public-docs: docs
+	@echo "Making github pages docs from $(BUILDDIR)/html"
+	@echo "cp -R $(BUILDDIR)/html/* ./public_docs/"
+	@cp -R $(BUILDDIR)/html/* ./public_docs/
+
+
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile

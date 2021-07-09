@@ -240,33 +240,36 @@ def processDirectory(outputFile, pathToProcess, subpackage=None):
                         assert type(newEntry) is list
                         fileGroupings[fileMetaInfo.grouping] = newEntry
 
-        for grp in fileGroupings:
-            writeUnderlined(outputFile, groupings[grp]["heading"], underline="~")
-            fileMetaInfoList = fileGroupings[grp]
+        print("file groupings")
+        for grp in groupings:
+            print("group", grp)
+            if grp in fileGroupings:
+                writeUnderlined(outputFile, groupings[grp]["heading"], underline="~")
+                fileMetaInfoList = fileGroupings[grp]
 
-            classList = [(f"{fileMetaInfo.moduleName}.{cls}", fileMetaInfo.description)
-                       for fileMetaInfo in fileMetaInfoList for cls in fileMetaInfo.classes
-                       if fileMetaInfo.isPopulated]
+                classList = [(f"{fileMetaInfo.moduleName}.{cls}", fileMetaInfo.description)
+                           for fileMetaInfo in fileMetaInfoList for cls in fileMetaInfo.classes
+                           if fileMetaInfo.isPopulated]
 
-            functionList = [(f"{fileMetaInfo.moduleName}.{fn}", fileMetaInfo.description)
-                       for fileMetaInfo in fileMetaInfoList for fn in fileMetaInfo.functions
-                       if fileMetaInfo.isPopulated]
+                functionList = [(f"{fileMetaInfo.moduleName}.{fn}", fileMetaInfo.description)
+                           for fileMetaInfo in fileMetaInfoList for fn in fileMetaInfo.functions
+                           if fileMetaInfo.isPopulated]
 
-            typeList = [(f"{fileMetaInfo.moduleName}.{typ}", "")
-                       for fileMetaInfo in fileMetaInfoList for typ in fileMetaInfo.types
-                       if fileMetaInfo.isPopulated]
+                typeList = [(f"{fileMetaInfo.moduleName}.{typ}", "")
+                           for fileMetaInfo in fileMetaInfoList for typ in fileMetaInfo.types
+                           if fileMetaInfo.isPopulated]
 
 
-            print(classList)
-            processItemList(outputFile, classList,
-                            sectionTitle="Classes",
-                            subpackage=subpackage)
-            processItemList(outputFile, functionList,
-                            sectionTitle="Functions",
-                            subpackage=subpackage)
-            processItemList(outputFile, typeList,
-                            sectionTitle="Types",
-                            subpackage=subpackage)
+                print(classList)
+                processItemList(outputFile, classList,
+                                sectionTitle="Classes",
+                                subpackage=subpackage)
+                processItemList(outputFile, functionList,
+                                sectionTitle="Functions",
+                                subpackage=subpackage)
+                processItemList(outputFile, typeList,
+                                sectionTitle="Types",
+                                subpackage=subpackage)
 
 
 def main(dirToSearch, outputPath):
