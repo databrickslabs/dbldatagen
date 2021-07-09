@@ -59,6 +59,7 @@ dependent_files: relnotes requirements license quick_index
 	@-mkdir python/docs/source/relnotes
 	@cp -f "$(DOC_DIR)/APIDOCS.md" "$(SOURCEDIR)"/relnotes/
 	@cp -f "$(DOC_DIR)/DATARANGES.md" "$(SOURCEDIR)"/relnotes/
+	@cp -f "$(DOC_DIR)/DISTRIBUTIONS.md" "$(SOURCEDIR)"/relnotes/
 
 
 html: Makefile

@@ -21,6 +21,7 @@ from .column_spec_options import ColumnSpecOptions
 from .text_generators import TemplateGenerator
 from .daterange import DateRange
 from .nrange import NRange
+from .distributions import Normal, DataDistribution
 
 
 HASH_COMPUTE_METHOD = "hash"
@@ -166,9 +167,15 @@ class ColumnGenerationSpec(object):
 
         # should be either a literal or None
         # use of a random seed method will ensure that we have repeatability of data generation
+        assert random_seed is None or type(random_seed) in [int, float], "seed should be None or numeric"
         self.random_seed = random_seed
 
         # should be "fixed" or "hash_fieldname"
+        if random_seed is not None and random_seed_method is None:
+            random_seed_method = "fixed"
+
+        assert random_seed_method is None or random_seed_method in ["fixed", "hash_fieldname"], \
+            "`random_seed_method` should be none or `fixed` or `hash_fieldname`"
         self.random_seed_method = random_seed_method
         self.random = random
 
@@ -203,7 +210,20 @@ class ColumnGenerationSpec(object):
 
         # handle weights / values and distributions
         self.weights, self.values = (self["weights"], self["values"])
+
         self.distribution = self["distribution"]
+
+        # if distribution is just specified as `normal` use standard normal distribution
+        if self.distribution == "normal":
+            self.distribution = Normal.standardNormal()
+
+        # specify random seed for distribution if one is in effect
+        if self.distribution is not None and self.random_seed is not None:
+            if self.random_seed_method == "hash_fieldname":
+                assert self.name is not None, "field name cannot be None"
+                self.distribution = self.distribution.withRandomSeed(abs(hash(self.name)))
+            else:
+                self.distribution = self.distribution.withRandomSeed(self.random_seed)
 
         # force weights and values to list
         if self.weights is not None:
@@ -452,6 +472,8 @@ class ColumnGenerationSpec(object):
         """ Get random expression accounting for seed method
 
         :returns: expression of ColDef form - i.e `lit`, `expr` etc
+
+        The value returned will be a number between 0 and 1 inclusive
         """
         assert col_name is not None, "`col_name` must not be None"
         if self.random_seed_method == "fixed":
@@ -461,6 +483,23 @@ class ColumnGenerationSpec(object):
             return expr("rand(hash('{}'))".format(self.name))
         else:
             return rand()
+
+    def _getRandomExpressionForDistribution(self, col_name, col_distribution):
+        """ Get random expression accounting for seed method
+
+        :returns: expression of ColDef form - i.e `lit`, `expr` etc
+
+        The value returned will be a number between 0 and 1 inclusive
+        """
+        assert col_name is not None and len(col_name) > 0, "`col_name` must not be None and non empty"
+        assert col_distribution is not None, "`col_distribution` must not be None"
+        assert isinstance(col_distribution, DataDistribution), \
+            "`distribution` object must be an instance of data distribution"
+
+        self.execution_history.append(".. random number generation via distribution `{}`"
+                                      .format(str(col_distribution)))
+
+        return col_distribution.generateNormalizedDistributionSample()
 
     def _getUniformRandomSQLExpression(self, col_name):
         """ Get random SQL expression accounting for seed method
@@ -821,7 +860,14 @@ class ColumnGenerationSpec(object):
         assert datarange is not None, "`datarange` must be specified"
         assert datarange.isFullyPopulated(), "`datarange` must be fully populated (minValue, maxValue, step)"
 
-        random_generator = self._getUniformRandomExpression(self.name) if is_random else None
+        if is_random:
+            if self.distribution is not None:
+                random_generator = self._getRandomExpressionForDistribution(self.name, self.distribution)
+            else:
+                random_generator = self._getUniformRandomExpression(self.name)
+        else:
+            random_generator = None
+
         if self._isContinuousValuedColumn() and self._isRealValuedColumn() and is_random:
             crange = datarange.getContinuousRange()
             baseval = random_generator * lit(crange)
