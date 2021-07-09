@@ -1,4 +1,4 @@
-# Databricks Labs TestDataGenerator (dbldatagen)
+# Databricks Labs Data Generator (`dbldatagen`)
 [Release Notes](CHANGELOG.md) |
 [Python Wheel](https://github.com/databrickslabs/data-generator/releases/tag/v1-0.11.0-dev1) |
 [Developer Docs](docs/APIDOCS.md) |
@@ -7,7 +7,7 @@
 
 
 ## Project Description
-This Databricks Labs project is a Python library for generating synthetic test data within the Databricks 
+The `dbldatgen` Databricks Labs project is a Python library for generating synthetic test data within the Databricks 
 environment using Spark. It operates by defining a test data generation specification in code for 
 how the test data is to be generated.
 
