@@ -81,6 +81,9 @@ You can use the data generator with, or without the use of a pre-existing schema
 ### Getting started
 
 Before you can use the data generator, you need to install the package in your environment and import it in your code.
+You can install the package from the Github releases as a library on your cluster. 
+
+Once installed, import the framework in your Python code to use it.
 
 For example:
 

@@ -19,4 +19,6 @@ See the contents of the file `python/require.txt` to see the Python package depe
 * Resolved / triaged prospector / pylint issues
 * Changed help to RTD scheme and added additional help content
 * moved docs to docs folder
+* added support for specific distributions
+* renamed packaging to `dbldatagen`
  
