@@ -1,33 +1,85 @@
-import os
 import re
-from pathlib import Path
 import sys
+from pathlib import Path
 
+# metadata about source files
+""" Metadata controlling index entries for types in the source files
+
+The metadata has brief description and a grouping for each file
+
+The generation of the quick index will find the metadata for each file and use the `grouping` attribute
+ to group related classes , types and functions together.
+ 
+The brief description attribute will be used to provide a brief description of classes, types and functions
+for a given module.
+
+NOTE: when a new source code file is added, an entry should be added for that file in this metadata.
+
+"""
 sourceFiles = {
-    "data_generator.py": "Main generator classes",
-    "column_generation_spec.py" : "Column Generation Spec types",
-    "column_spec_options.py": "Column Generation Options",
-    "datarange.py": "Internal data range abstract types",
-    "daterange.py": "Date and time ranges",
-    "nrange.py": "Numeric ranges",
-    "text_generators.py": "Text data generation",
-    "data_analyzer.py": "Analysis of existing data",
-    "function_builder.py": "Internal utilities to create functions related to weights",
-    "schema_parser.py": "Internal utilities to parse Spark SQL schema information",
-    "spark_singleton.py": "Spark singleton for test purposes",
-    "utils.py": "Internal general purpose utils",
+    "data_generator.py": {"briefDesc": "Main generator classes",
+                          "grouping": "main classes"},
+    "column_generation_spec.py": {"briefDesc": "Column Generation Spec types",
+                                  "grouping": "main classes"},
+    "column_spec_options.py": {"briefDesc": "Column Generation Options",
+                               "grouping": "main classes"},
+    "datarange.py": {"briefDesc": "Internal data range abstract types",
+                     "grouping": "main classes"},
+    "daterange.py": {"briefDesc": "Date and time ranges",
+                     "grouping": "main classes"},
+    "nrange.py": {"briefDesc": "Numeric ranges",
+                  "grouping": "main classes"},
+    "text_generators.py": {"briefDesc": "Text data generation",
+                           "grouping": "main classes"},
+    "data_analyzer.py": {"briefDesc": "Analysis of existing data",
+                         "grouping": "main classes"},
+    "function_builder.py": {"briefDesc": "Internal utilities to create functions related to weights",
+                            "grouping": "internal classes"},
+    "schema_parser.py": {"briefDesc": "Internal utilities to parse Spark SQL schema information",
+                         "grouping": "internal classes"},
+    "spark_singleton.py": {"briefDesc": "Spark singleton for test purposes",
+                           "grouping": "internal classes"},
+    "utils.py": {"briefDesc": "",
+                 "grouping": "internal classes"},
 
-    "beta.py": "Beta distribution related code",
-    "data_distribution.py": "Data distribution related code",
-    "normal_distribution.py": "Normal data distribution related code",
-    "gamma.py": "Gamma data distribution related code",
-    "exponential_distribution.py": "Exponential data distribution related code"
+    "beta.py": {"briefDesc": "Beta distribution related code",
+                "grouping": "data distribution"},
+    "data_distribution.py": {"briefDesc": "Data distribution related code",
+                             "grouping": "data distribution"},
+    "normal_distribution.py": {"briefDesc": "Normal data distribution related code",
+                               "grouping": "data distribution"},
+    "gamma.py": {"briefDesc": "Gamma data distribution related code",
+                 "grouping": "data distribution"},
+    "exponential_distribution.py": {"briefDesc": "Exponential data distribution related code",
+                                    "grouping": "data distribution"}
 }
 
-PACKAGE_NAME="dbldatagen"
-PROJECT_PATH=f"../{PACKAGE_NAME}"
+# grouping metadata information
+# note that the groupings will be output in the order that they appear here
+groupings = {
+    "main classes": {
+        "heading": "Main user facing classes, functions and types"
+    },
+    "internal classes": {
+        "heading": "Internal classes, functions and types"
+    },
+    "data distribution": {
+        "heading": "Data distribution related classes, functions and types"
+    }
+}
+
+PACKAGE_NAME = "dbldatagen"
+PROJECT_PATH = f"../{PACKAGE_NAME}"
+
 
 def writeUnderlined(outputFile, text, underline="="):
+    """ write underlined text in RST markup format
+
+    :param outputFile: output file to write to
+    :param text:  text to write
+    :param underline: character for underline
+    :return: nothing
+    """
     assert outputFile is not None
     assert text is not None and len(text) > 0
 
@@ -37,12 +89,49 @@ def writeUnderlined(outputFile, text, underline="="):
     outputFile.write(underline * lenText)
     outputFile.write("\n\n")
 
-def find_members(sourceFile):
-    '''
+
+class FileMeta:
+    UNGROUPED = "ungrouped"
+    GROUPING = "grouping"
+    BRIEF_DESCRIPTION = "briefDesc"
+    def __init__(self, moduleName: str, metadata, classes, functions, types,
+                 subpackage: str = None):
+        """ Constructor for File Meta
+
+        :param moduleName:
+        :param metadata:
+        :param classes:
+        :param functions:
+        :param types:
+        :param subpackage:
+        """
+        self.moduleName, self.metadata, self.subPackage = moduleName, metadata, subpackage
+        self.classes, self.functions, self.types = classes, functions, types
+        print("module", moduleName, "metadata", metadata, self.metadata)
+        assert self.metadata[self.GROUPING] is not None
+        if metadata is not None and type(metadata) is dict:
+            self.description = self.metadata[self.BRIEF_DESCRIPTION]
+            if self.GROUPING in metadata:
+                self.grouping = self.metadata[self.GROUPING]
+            else:
+                self.grouping = self.UNGROUPED
+
+    @property
+    def isPopulated(self):
+        """ Check if instance has any classes, functions or types"""
+        return ((self.classes is not None and len(self.classes) > 0)
+              or (self.functions is not None and len(self.functions) > 0)
+                or (self.types is not None and  len(self.types) > 0))
+
+
+def find_members(sourceFile, fileMetadata, fileSubpackage):
+    """
     Find classes, types and functions in file
+    :param fileMetadata: metadata for file
+    :param fileSubpackage: subpackage for file
     :param sourceFile: file to search
     :return: tuple of classes, types and functions
-    '''
+    """
     class_pattern = re.compile(r"^class\s+([\w_]+)")
     function_pattern = re.compile(r"^def\s+([\w_]+)")
     types_pattern = re.compile(r"^([\w_]+)\s*=")
@@ -59,15 +148,21 @@ def find_members(sourceFile):
                 classNames = class_pattern.findall(line)
                 classes.extend(classNames)
                 functionNames = function_pattern.findall(line)
-                functions.extend(functionNames)
+
+                filteredFunctionNames = [fn for fn in functionNames if not fn.startswith("_")]
+                functions.extend(filteredFunctionNames)
+
                 typeNames = types_pattern.findall(line)
-                types.extend(typeNames)
+                filteredTypeNames = [typ for typ in typeNames if not typ.startswith("_")]
+                types.extend(filteredTypeNames)
 
         except Exception as e:
             print(f"*** failed to process file: {fname}")
 
-    return sorted(classes), sorted(types), sorted(functions)
-
+    return FileMeta(moduleName=Path(sourceFile.name).stem,
+                    metadata=fileMetadata,
+                    subpackage=fileSubpackage,
+                    classes=sorted(classes), functions=sorted(functions), types=sorted(types))
 
 
 def include_template(outputFile):
@@ -82,21 +177,41 @@ def include_template(outputFile):
         outputFile.write("\n\n")
 
 
-def processSection(outputFile, items, sectionTitle, module, subpackage=None):
-    if items is not None and len(items) > 0:
+def processItemList(outputFile, items, sectionTitle, subpackage=None):
+    """ process list of items
+
+    :param outputFile:
+    :param items: list of items. each item is a tuple of ( "moduleName.typename", "type description")
+    :param sectionTitle:
+    :param subpackage:
+    :return:
+    """
+    if items is not None and len(items) > 0 and sectionTitle is not None and len(sectionTitle) > 0:
         outputFile.write(f"{sectionTitle}\n\n")
 
     for item in items:
+        desc = ""
+        if item[1] is not None and len(item[1]) > 0:
+            desc = f" - {item[1]}"
         if subpackage is not None:
-            outputFile.write(f"* :data:`~{PACKAGE_NAME}.{subpackage}.{module}.{item}`\n")
+            outputFile.write(f"* :data:`~{PACKAGE_NAME}.{subpackage}.{item[0]}`{desc}\n")
         else:
-            outputFile.write(f"* :data:`~{PACKAGE_NAME}.{module}.{item}`\n")
-
+            outputFile.write(f"* :data:`~{PACKAGE_NAME}.{item[0]}`{desc}\n")
 
     outputFile.write("\n")
 
+
 def processDirectory(outputFile, pathToProcess, subpackage=None):
+    """ process directory for package or subpackage
+
+    :param outputFile:
+    :param pathToProcess:
+    :param subpackage:
+    :return:
+    """
     projectDirectory = Path(PROJECT_PATH)
+    fileGroupings = {} # map of lists of file metainfo keyed by grouping
+
     print("directory: ", pathToProcess)
     if pathToProcess.exists():
         filesToProcess = pathToProcess.glob("*.py")
@@ -104,28 +219,57 @@ def processDirectory(outputFile, pathToProcess, subpackage=None):
             relativeFile = fp.relative_to(projectDirectory)
             print("processing file:", relativeFile)
             if relativeFile.name in sourceFiles:
-                title = sourceFiles[relativeFile.name]
+                print("dict", sourceFiles[relativeFile.name])
+                title = sourceFiles[relativeFile.name]["briefDesc"]
                 print(relativeFile, title)
-                moduleName = Path(fp.name).stem
 
-                classList, typeList, functionList = find_members(fp)
+                fileMetaInfo = find_members(fp,
+                                            fileMetadata=sourceFiles[relativeFile.name],
+                                            fileSubpackage=subpackage)
 
-                # print title
-                if len(classList) > 0 or len(functionList) > 0 or len(typeList) > 0:
-                    outputFile.write("\n")
-                    writeUnderlined(outputFile, title, underline="~")
-                    processSection(outputFile, classList,
-                                   sectionTitle="Classes",
-                                   module=moduleName,
-                                   subpackage=subpackage)
-                    processSection(outputFile, functionList,
-                                   sectionTitle="Functions",
-                                   module=moduleName,
-                                   subpackage=subpackage)
-                    processSection(outputFile, typeList,
-                                   sectionTitle="Types",
-                                   module=moduleName,
-                                   subpackage=subpackage)
+                assert fileMetaInfo is not None
+                if fileMetaInfo.isPopulated:
+                    if fileMetaInfo.grouping in fileGroupings:
+                        print(f"extending entry for `{fileMetaInfo.grouping}`")
+                        assert type(fileMetaInfo.grouping) is str
+                        assert type(fileGroupings[fileMetaInfo.grouping]) is list
+                        fileGroupings[fileMetaInfo.grouping].append(fileMetaInfo)
+                    else:
+                        print(f"adding new entry for `{fileMetaInfo.grouping}`")
+                        newEntry = [fileMetaInfo, ]
+                        assert type(newEntry) is list
+                        fileGroupings[fileMetaInfo.grouping] = newEntry
+
+        print("file groupings")
+        for grp in groupings:
+            print("group", grp)
+            if grp in fileGroupings:
+                writeUnderlined(outputFile, groupings[grp]["heading"], underline="~")
+                fileMetaInfoList = fileGroupings[grp]
+
+                classList = [(f"{fileMetaInfo.moduleName}.{cls}", fileMetaInfo.description)
+                           for fileMetaInfo in fileMetaInfoList for cls in fileMetaInfo.classes
+                           if fileMetaInfo.isPopulated]
+
+                functionList = [(f"{fileMetaInfo.moduleName}.{fn}", fileMetaInfo.description)
+                           for fileMetaInfo in fileMetaInfoList for fn in fileMetaInfo.functions
+                           if fileMetaInfo.isPopulated]
+
+                typeList = [(f"{fileMetaInfo.moduleName}.{typ}", "")
+                           for fileMetaInfo in fileMetaInfoList for typ in fileMetaInfo.types
+                           if fileMetaInfo.isPopulated]
+
+
+                print(classList)
+                processItemList(outputFile, classList,
+                                sectionTitle="Classes",
+                                subpackage=subpackage)
+                processItemList(outputFile, functionList,
+                                sectionTitle="Functions",
+                                subpackage=subpackage)
+                processItemList(outputFile, typeList,
+                                sectionTitle="Types",
+                                subpackage=subpackage)
 
 
 def main(dirToSearch, outputPath):
@@ -149,4 +293,3 @@ def main(dirToSearch, outputPath):
 
 
 main(sys.argv[1], sys.argv[2])
-
