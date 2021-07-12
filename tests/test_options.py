@@ -21,7 +21,7 @@ class TestUseOfOptions(unittest.TestCase):
 
                 # base column specifies dependent column
                 .withColumn("site_cd", "string", prefix='site', baseColumn='code1')
-            
+
                 .withColumn("device_status", "string", minValue=1, maxValue=200, step=1, prefix='status', random=True)
                 .withColumn("tech", "string", values=["GSM", "UMTS", "LTE", "UNKNOWN"], random=True)
                 .withColumn("test_cell_flg", "integer", values=[0, 1], random=True)
