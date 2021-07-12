@@ -11,10 +11,12 @@ PYCACHE := $(shell find . -name '__pycache__')
 EGGS :=  $(shell find . -name '*.egg-info')
 CURRENT_VERSION := $(shell awk '/current_version/ {print $$3}' python/.bumpversion.cfg)
 
+PACKAGE_NAME = "dbldatagen"
+
 clean:
 	@echo "$(OK_COLOR)=> Cleaning$(NO_COLOR)"
 	@echo "Current version: $(CURRENT_VERSION)"
-	@rm -fr build dist $(EGGS) $(PYCACHE) databrickslabs_testdatagenerator/lib/* databrickslabs_testdatagenerator/env_files/*
+	@rm -fr build dist $(EGGS) $(PYCACHE)
 
 prepare: clean
 	@echo "$(OK_COLOR)=> Preparing ...$(NO_COLOR)"
@@ -38,7 +40,7 @@ install-dev-dependencies:
 clean-dev-env:
 	@echo "$(OK_COLOR)=> Cleaning dev environment$(NO_COLOR)"
 	@echo "Current version: $(CURRENT_VERSION)"
-	@rm -fr build dist $(EGGS) $(PYCACHE) databrickslabs_testdatagenerator/lib/* databrickslabs_testdatagenerator/env_files/*
+	@rm -fr build dist $(EGGS) $(PYCACHE)
 
 
 buildenv: 
@@ -52,21 +54,11 @@ clean_buildenv:
 
 docs: install
 	@echo "$(OK_COLOR)=> Creating docs ...$(NO_COLOR)"
-	@-mkdir python/docs/source/relnotes
-	@cp -f python/require.txt python/docs/source/relnotes/require.md
-	@cp -f CONTRIBUTING.md python/docs/source/relnotes/
-	@cp -f CHANGELOG.md python/docs/source/relnotes/
-	@cp -f python/docs/APIDOCS.md python/docs/source/relnotes/
-	@cd python/docs && make docs
+	@cd docs && make docs
 
 dev-docs: dev-install
 	@echo "$(OK_COLOR)=> Creating docs ...$(NO_COLOR)"
-	@-mkdir python/docs/source/relnotes
-	@cp -f python/require.txt python/docs/source/relnotes/require.md
-	@cp -f CONTRIBUTING.md python/docs/source/relnotes/
-	@cp -f CHANGELOG.md python/docs/source/relnotes/
-	@cp -f python/docs/APIDOCS.md python/docs/source/relnotes/
-	@cd python/docs && make docs
+	@cd docs && make docs
 
 # Tests
 test: export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
@@ -75,21 +67,21 @@ dev-test: export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 
 dev-test:
 	@echo "$(OK_COLOR)=> Running unit tests$(NO_COLOR)"
-	pytest tests/ --cov databrickslabs_testdatagenerator
+	pytest tests/ --cov $(PACKAGE_NAME)
 
 dev-test-with-html-report:
 	@echo "$(OK_COLOR)=> Running unit tests with HTML test coverage report$(NO_COLOR)"
-	pytest --cov databrickslabs_testdatagenerator --cov-report html -s
+	pytest --cov $(PACKAGE_NAME) --cov-report html -s
 	@echo "$(OK_COLOR)=> the test coverage report can be found at htmlcov/index.html$(NO_COLOR)"
 
 
 test: buildenv
 	@echo "$(OK_COLOR)=> Running unit tests$(NO_COLOR)"
-	pipenv run pytest tests --cov databrickslabs_testdatagenerator
+	pipenv run pytest tests --cov $(PACKAGE_NAME)
 
 test-with-html-report: buildenv
 	@echo "$(OK_COLOR)=> Running unit tests with HTML test coverage report$(NO_COLOR)"
-	pipenv run pytest --cov databrickslabs_testdatagenerator --cov-report html -s
+	pipenv run pytest --cov $(PACKAGE_NAME) --cov-report html -s
 	@echo "$(OK_COLOR)=> the test coverage report can be found at htmlcov/index.html$(NO_COLOR)"
 
 # Version commands
@@ -168,14 +160,14 @@ release:
 	#git tag -a v$(CURRENT_VERSION) -m "Latest release: $(CURRENT_VERSION)"
 
 install: buildenv dist/dist_flag.txt
-	@echo "$(OK_COLOR)=> Installing databrickslabs_testdatagenerator$(NO_COLOR)"
-	@cp README.md python/
+	@echo "$(OK_COLOR)=> Installing $(PACKAGE_NAME) $(NO_COLOR)"
+	#@cp README.md python/
 	@pip3 install --upgrade .
 	@touch `pwd`/dist/install_flag.txt
 
 dev-install: dist/dev-dist_flag.txt
-	@echo "$(OK_COLOR)=> Installing databrickslabs_testdatagenerator$(NO_COLOR)"
-	@cp README.md python/
+	@echo "$(OK_COLOR)=> Installing $(PACKAGE_NAME)$(NO_COLOR)"
+	#@cp README.md python/
 	@pip3 install --upgrade .
 	@touch `pwd`/dist/dev-install_flag.txt
 

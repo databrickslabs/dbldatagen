@@ -5,14 +5,14 @@ import pyspark.sql.functions as F
 from pyspark.sql.types import DoubleType, ShortType, LongType, DecimalType, ByteType, DateType
 from pyspark.sql.types import IntegerType, StringType, FloatType, TimestampType
 
-import databrickslabs_testdatagenerator as datagen
-from databrickslabs_testdatagenerator import DateRange
+import dbldatagen as dg
+from dbldatagen import DateRange
 
 # build spark session
 
 # global spark
 
-spark = datagen.SparkSingleton.getLocalInstance("ranged values")
+spark = dg.SparkSingleton.getLocalInstance("ranged values")
 
 
 class TestRangedValuesAndDates(unittest.TestCase):
@@ -56,12 +56,12 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertEqual(interval, x.interval)
 
     def test_basic_dates(self):
-        '''test dates with explicit range'''
+        """test dates with explicit range"""
         interval = timedelta(days=7, hours=1)
         start = datetime(2017, 10, 1, 0, 0, 0)
         end = datetime(2018, 10, 1, 6, 0, 0)
 
-        testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
                       .withColumn("last_sync_dt", "timestamp", begin=start, end=end, interval=interval, random=True)
                       .build()
@@ -83,12 +83,12 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertLessEqual(10, count_distinct)
 
     def test_basic_dates_non_random(self):
-        '''test dates with explicit range'''
+        """test dates with explicit range"""
         interval = timedelta(days=7, hours=1)
         start = datetime(2017, 10, 1, 0, 0, 0)
         end = datetime(2018, 10, 1, 6, 0, 0)
 
-        testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
                       .withColumn("last_sync_dt", "timestamp", begin=start, end=end, interval=interval)
                       .build()
@@ -110,8 +110,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertLessEqual(10, count_distinct)
 
     def test_basic_dates_minimal(self):
-        '''test dates with just unique values'''
-        testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=10000, partitions=4)
+        """test dates with just unique values"""
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=10000, partitions=4)
                       .withIdOutput()
                       .withColumn("last_sync_dt", "date", unique_values=100, random=True)
                       .withColumn("last_sync_dt2", "date", unique_values=100, base_column_type="values")
@@ -158,12 +158,12 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertLessEqual(count_distinct[3], 300)
 
     def test_date_range1(self):
-        '''test timestamps with explicit range'''
+        """test timestamps with explicit range"""
         interval = timedelta(days=1, hours=1)
         start = datetime(2017, 10, 1, 0, 0, 0)
         end = datetime(2018, 10, 1, 6, 0, 0)
 
-        testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
                       .withColumn("last_sync_dt", "timestamp", begin=start, end=end, interval=interval, random=True)
                       .withColumn("last_sync_dt1", "timestamp",
@@ -192,7 +192,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         start = datetime(2017, 10, 1, 0, 0, 0)
         end = datetime(2018, 10, 6, 0, 0, 0)
 
-        testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
                       .withColumn("last_sync_dt1", "timestamp",
                                   dataRange=DateRange("2017-10-01 00:00:00",
@@ -218,7 +218,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         start = date(2017, 10, 1)
         end = date(2018, 10, 6)
 
-        testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
                       .withColumn("last_sync_date", "date",
                                   dataRange=DateRange("2017-10-01 00:00:00",
@@ -248,7 +248,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertEqual(df_outside2.count(), 0)
 
     def test_date_range3a(self):
-        testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
                       .withColumn("last_sync_date", "date",
                                   dataRange=DateRange("2017-10-01 00:00:00",
@@ -272,7 +272,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertEqual(df_outside2.count(), 0)
 
     def test_date_range4(self):
-        testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
                       .withColumn("last_sync_date", "date",
                                   dataRange=DateRange("2017-10-01",
@@ -297,7 +297,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertEqual(df_outside2.count(), 0)
 
     def test_date_range4a(self):
-        testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
                       .withColumn("last_sync_date", "date",
                                   dataRange=DateRange("2017-10-01",
@@ -323,7 +323,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
     # @unittest.skip("not yet finalized")
     def test_timestamp_range3(self):
-        testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
                       .withColumn("last_sync_date", "timestamp",
                                   dataRange=DateRange("2017-10-01 00:00:00",
@@ -347,7 +347,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertEqual(df_outside2.count(), 0)
 
     def test_timestamp_range3a(self):
-        testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
                       .withColumn("last_sync_date", "timestamp",
                                   dataRange=DateRange("2017-10-01 00:00:00",
@@ -371,7 +371,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertEqual(df_outside2.count(), 0)
 
     def test_timestamp_range4(self):
-        testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
                       .withColumn("last_sync_date", "timestamp",
                                   dataRange=DateRange("2017-10-01",
@@ -396,7 +396,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertEqual(df_outside2.count(), 0)
 
     def test_timestamp_range4a(self):
-        testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
                       .withColumn("last_sync_date", "timestamp",
                                   dataRange=DateRange("2017-10-01",
@@ -421,7 +421,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertEqual(df_outside2.count(), 0)
 
     def test_unique_values1(self):
-        testDataDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
                       .withColumn("code1", "int", unique_values=7)
                       .withColumn("code2", "int", unique_values=7, minValue=20)
@@ -440,7 +440,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertEqual(summary[3], 26)
 
     def test_unique_values_ts(self):
-        testDataUniqueDF = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+        testDataUniqueDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
                             .withIdOutput()
                             .withColumn("test_ts", "timestamp", unique_values=51, random=True)
                             .build()
@@ -453,7 +453,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertEqual(summary[0], 51)
 
     def test_unique_values_ts2(self):
-        df_unique_ts2 = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+        df_unique_ts2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
                          .withIdOutput()
                          .withColumn("test_ts", "timestamp", unique_values=51)
                          .build()
@@ -467,7 +467,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
     def test_unique_values_ts3(self):
         testDataUniqueTSDF = (
-            datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
                 .withIdOutput()
                 .withColumn("test_ts", "timestamp", unique_values=51, random=True,
                             dataRange=DateRange("2017-10-01 00:00:00",
@@ -483,9 +483,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertEqual(summary[0], 51)
 
     def test_unique_values_ts4(self):
-
         df_unique_ts4 = (
-            datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
                 .withIdOutput()
                 .withColumn("test_ts", "timestamp", unique_values=51, random=True,
                             begin="2017-10-01 00:00:00", end="2018-10-06 23:59:59", interval="minutes=10")
@@ -500,7 +499,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
     def test_unique_values_date(self):
         testDataUniqueDF3spec = (
-            datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
                 .withIdOutput()
                 .withColumn("test_ts", "date", unique_values=51, interval="1 days")
         )
@@ -515,8 +514,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertEqual(summary[0], 51)
 
     def test_unique_values_date2(self):
-        ''' Check for unique dates'''
-        df_unique_date2 = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+        """ Check for unique dates"""
+        df_unique_date2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
                            .withIdOutput()
                            .withColumn("test_ts", "date", unique_values=51, random=True)
                            .build()
@@ -529,9 +528,9 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertEqual(summary[0], 51)
 
     def test_unique_values_date3(self):
-        ''' Check for unique dates when begin, end and interval are specified'''
+        """ Check for unique dates when begin, end and interval are specified"""
         df_unique_date3 = (
-            datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
                 .withIdOutput()
                 .withColumn("test_ts", "date", unique_values=51, random=True, begin="2017-10-01", end="2018-10-06",
                             interval="days=2")
@@ -545,9 +544,9 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertEqual(summary[0], 51)
 
     def test_unique_values_date3a(self):
-        ''' Check for unique dates when begin, end and interval are specified'''
+        """ Check for unique dates when begin, end and interval are specified"""
         df_unique_date3 = (
-            datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
                 .withIdOutput()
                 .withColumn("test_ts", "date", unique_values=51, random=True, begin="2017-10-01", end="2018-10-06",
                             interval="days=1")
@@ -562,7 +561,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
     def test_unique_values_integers(self):
         testDataUniqueIntegersDF = (
-            datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
                 .withIdOutput()
                 .withColumn("val1", "int", unique_values=51, random=True)
                 .withColumn("val2", "int", unique_values=57)
@@ -599,7 +598,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
     def test_unique_values_decimal(self):
         testDataUniqueDecimalsDF = (
-            datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
                 .withIdOutput()
                 .withColumn("val1", "decimal(15,5)", unique_values=51, random=True)
                 .withColumn("val2", "decimal(15,5)", unique_values=57)
@@ -626,7 +625,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
     def test_unique_values_float(self):
         testDataUniqueFloatssDF = (
-            datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
                 .withIdOutput()
                 .withColumn("val1", "float", unique_values=51, random=True)
                 .withColumn("val2", "float", unique_values=57)
@@ -653,8 +652,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
     def test_unique_values_float2(self):
         df_unique_float2 = (
-            datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4, verbose=True,
-                                  debug=True)
+            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4, verbose=True,
+                             debug=True)
                 .withIdOutput()
                 .withColumn("val1", "float", unique_values=51, random=True, minValue=1.0)
                 .withColumn("val2", "float", unique_values=57, minValue=-5.0)
@@ -682,7 +681,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         print("passed")
 
     def test_ranged_data_int(self):
-        ds_data_int = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
+        ds_data_int = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
                        .withIdOutput()
                        .withColumn("nint", IntegerType(), minValue=1, maxValue=9, step=2)
                        .withColumn("nint2", IntegerType(), percent_nulls=10.0, minValue=1, maxValue=9, step=2)
@@ -719,7 +718,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
     def test_ranged_data_long(self):
         # note python 3.6 does not support trailing long literal syntax (i.e 200L) - but all literal ints are long
         long_min = 3147483651
-        testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
                         .withIdOutput()
                         .withColumn("lint", LongType(), minValue=long_min, maxValue=long_min + 8, step=2)
                         .withColumn("lint2", LongType(), minValue=long_min, maxValue=long_min + 8, step=2,
@@ -742,7 +741,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertSetEqual(set(nint3_values), {None, long_min, long_min + 2, long_min + 4, long_min + 6, long_min + 8})
 
     def test_ranged_data_byte(self):
-        testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
                         .withIdOutput()
                         .withColumn("byte1", ByteType(), minValue=1, maxValue=9, step=2)
                         .withColumn("byte2", ByteType(), percent_nulls=10.0, minValue=1, maxValue=9, step=2)
@@ -768,7 +767,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertSetEqual(set(byte4_values), {None, -5, -3, -1, 1, 3, 5})
 
     def test_ranged_data_float1(self):
-        testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
                         .withIdOutput()
                         .withColumn("fval", FloatType(), minValue=1.0, maxValue=9.0, step=2.0)
                         .withColumn("fval2", FloatType(), percent_nulls=10.0, minValue=1.0, maxValue=9.0, step=2.0)
@@ -804,7 +803,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertSetEqual(set(double3_values), {None, 1, 3, 5, 7, 9})
 
     def test_ranged_data_float2(self):
-        testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
                         .withIdOutput()
                         .withColumn("fval", FloatType(), minValue=1.5, maxValue=3.5, step=0.5)
                         .withColumn("fval2", FloatType(), percent_nulls=10.0, minValue=1.5, maxValue=3.5, step=0.5)
@@ -846,7 +845,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
     def test_ranged_data_float3(self):
         # when modulo arithmetic does not result in even integer such as '
-        testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, verbose=True)
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, verbose=True)
                         .withIdOutput()
                         .withColumn("fval", FloatType(), minValue=1.5, maxValue=2.5, step=0.3)
                         .withColumn("fval2", FloatType(), percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3)
@@ -883,7 +882,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertSetEqual(set(double3_values), {None, 1.5, 1.8, 2.1, 2.4})
 
     def test_ranged_data_decimal1(self):
-        testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
                         .withIdOutput()
                         .withColumn("decimal1", DecimalType(10, 4), minValue=1.0, maxValue=9.0, step=2.0)
                         .withColumn("decimal2", DecimalType(10, 4), percent_nulls=10.0, minValue=1.0, maxValue=9.0,
@@ -913,7 +912,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertSetEqual(set(decimal4_values), {None, -5, -3, -1, 1, 3, 5})
 
     def test_ranged_data_string1(self):
-        testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
                         .withIdOutput()
                         .withColumn("s1", StringType(), minValue=1, maxValue=123, step=1, format="testing %05d >>")
                         )
@@ -926,7 +925,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertSetEqual(set(s1_expected_values), set(s1_values))
 
     def test_ranged_data_string2(self):
-        testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
                         .withIdOutput()
                         .withColumn("s1", StringType(), minValue=10, maxValue=123, step=1, format="testing %05d >>")
                         )
@@ -939,7 +938,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertSetEqual(set(s1_expected_values), set(s1_values))
 
     def test_ranged_data_string3(self):
-        testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
                         .withIdOutput()
                         .withColumn("s1", StringType(), minValue=10, maxValue=123, step=1,
                                     format="testing %05d >>", random=True)
@@ -953,7 +952,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertTrue( set(s1_values).issubset(set(s1_expected_values)))
 
     def test_ranged_data_string4(self):
-        testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
                         .withIdOutput()
                         .withColumn("s1", StringType(), minValue=10, maxValue=123, step=2,
                                     format="testing %05d >>", random=True)
@@ -969,7 +968,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertSetEqual(set(s1_expected_values), set(s1_values))
 
     def test_ranged_data_string5(self):
-        testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
                         .withIdOutput()
                         .withColumn("s1", StringType(), minValue=1.5, maxValue=2.5, step=0.3,
                                     format="testing %05.1f >>",

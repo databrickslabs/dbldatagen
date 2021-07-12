@@ -5,8 +5,8 @@ import pyspark.sql.functions as F
 from pyspark.sql.types import BooleanType, DateType
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, TimestampType
 
-import databrickslabs_testdatagenerator as dg
-from databrickslabs_testdatagenerator import TemplateGenerator
+import dbldatagen as dg
+from dbldatagen import TemplateGenerator
 
 schema = StructType([
     StructField("PK1", StringType(), True),
@@ -268,7 +268,6 @@ class TestTextGeneration(unittest.TestCase):
 
                 .withColumn("site_cd", "string", prefix='site', baseColumn='code1')
                 .withColumn("device_status", "string", minValue=1, maxValue=200, step=1, prefix='status', random=True)
-
                 .withColumn("site_cd2", "string", prefix='site', baseColumn='code1', text_separator=":")
                 .withColumn("device_status2", "string", minValue=1, maxValue=200, step=1,
                             prefix='status', text_separator=":")
@@ -329,7 +328,6 @@ class TestTextGeneration(unittest.TestCase):
 
                 .withColumn("site_cd", "string", suffix='site', baseColumn='code1')
                 .withColumn("device_status", "string", minValue=1, maxValue=200, step=1, suffix='status', random=True)
-
                 .withColumn("site_cd2", "string", suffix='site', baseColumn='code1', text_separator=":")
                 .withColumn("device_status2", "string", minValue=1, maxValue=200, step=1,
                             suffix='status', text_separator=":")
@@ -370,7 +368,6 @@ class TestTextGeneration(unittest.TestCase):
 
                 .withColumn("site_cd", "string", suffix='site', baseColumn='code1', prefix="test")
                 .withColumn("device_status", "string", minValue=1, maxValue=200, step=1, suffix='status', prefix="test")
-
                 .withColumn("site_cd2", "string", suffix='site', baseColumn='code1', text_separator=":", prefix="test")
                 .withColumn("device_status2", "string", minValue=1, maxValue=200, step=1,
                             suffix='status', text_separator=":",

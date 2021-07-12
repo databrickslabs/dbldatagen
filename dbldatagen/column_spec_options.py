@@ -83,8 +83,8 @@ class ColumnSpecOptions(object):
         If the `data_range` parameter is specified as well as the `minValue`, `maxValue` or `step`,
         the results are undetermined.
 
-        For more information, see :doc:`/reference/api/databrickslabs_testdatagenerator.daterange`
-        or :doc:`/reference/api/databrickslabs_testdatagenerator.nrange`.
+        For more information, see :doc:`/reference/api/dbldatagen.daterange`
+        or :doc:`/reference/api/dbldatagen.nrange`.
 
     """
 

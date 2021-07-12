@@ -4,7 +4,7 @@ import unittest
 from pyspark.sql import functions as F
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType
 
-import databrickslabs_testdatagenerator as dg
+import dbldatagen as dg
 
 spark = dg.SparkSingleton.getLocalInstance("basic tests")
 
@@ -123,8 +123,13 @@ class TestBasicOperation(unittest.TestCase):
         ds_copy1 = self.testDataSpec.clone()
 
         df_copy1 = (ds_copy1.withRowCount(1000)
+<<<<<<< HEAD
                     .withColumn("ac1", IntegerType(), baseColumn=['code1', 'code2'], minValue=100, maxValue=200)
                     .withColumn("ac2", IntegerType(), baseColumn=['code1', 'code2'],
+=======
+                    .withColumn("ac1", IntegerType(), base_column=['code1', 'code2'], minValue=100, maxValue=200)
+                    .withColumn("ac2", IntegerType(), base_column=['code1', 'code2'],
+>>>>>>> master
                                 minValue=100, maxValue=200, random=True)
                     .build())
 

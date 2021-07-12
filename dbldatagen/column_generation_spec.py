@@ -21,6 +21,7 @@ from .column_spec_options import ColumnSpecOptions
 from .text_generators import TemplateGenerator
 from .daterange import DateRange
 from .nrange import NRange
+from .distributions import Normal, DataDistribution
 
 
 HASH_COMPUTE_METHOD = "hash"
@@ -69,7 +70,7 @@ class ColumnGenerationSpec(object):
     :param verbose: If True, output logging statements at the info level. If False (the default),
                     only output warning and error logging statements.
 
-    For full list of options, see :doc:`/reference/api/databrickslabs_testdatagenerator.column_spec_options`.
+    For full list of options, see :doc:`/reference/api/dbldatagen.column_spec_options`.
     """
 
     #: row seed field for data set
@@ -166,14 +167,20 @@ class ColumnGenerationSpec(object):
 
         # should be either a literal or None
         # use of a random seed method will ensure that we have repeatability of data generation
-        self.random_seed = randomSeed
+        assert random_seed is None or type(random_seed) in [int, float], "seed should be None or numeric"
+        self.random_seed = random_seed
 
         # should be "fixed" or "hash_fieldname"
-        self.random_seed_method = randomSeedMethod
+        if random_seed is not None and random_seed_method is None:
+            random_seed_method = "fixed"
+
+        assert random_seed_method is None or random_seed_method in ["fixed", "hash_fieldname"], \
+            "`random_seed_method` should be none or `fixed` or `hash_fieldname`"
+        self.random_seed_method = random_seed_method
         self.random = random
 
         # compute dependencies
-        self.dependencies = self.computeBasicDependencies()
+        self.dependencies = self._computeBasicDependencies()
 
         # value of `base_column_type` must be `None`,"values", "raw_values", "auto",  or "hash"
         # this is the method of comouting current column value from base column, not the data type of the base column
@@ -203,7 +210,20 @@ class ColumnGenerationSpec(object):
 
         # handle weights / values and distributions
         self.weights, self.values = (self["weights"], self["values"])
+
         self.distribution = self["distribution"]
+
+        # if distribution is just specified as `normal` use standard normal distribution
+        if self.distribution == "normal":
+            self.distribution = Normal.standardNormal()
+
+        # specify random seed for distribution if one is in effect
+        if self.distribution is not None and self.random_seed is not None:
+            if self.random_seed_method == "hash_fieldname":
+                assert self.name is not None, "field name cannot be None"
+                self.distribution = self.distribution.withRandomSeed(abs(hash(self.name)))
+            else:
+                self.distribution = self.distribution.withRandomSeed(self.random_seed)
 
         # force weights and values to list
         if self.weights is not None:
@@ -236,11 +256,11 @@ class ColumnGenerationSpec(object):
 
         # adjust the range by merging type and range information
 
-        self.data_range = self.computeAdjustedRangeForColumn(colType=colType,
-                                                             c_min=c_min, c_max=c_max, c_step=c_step,
-                                                             c_begin=c_begin, c_end=c_end,
-                                                             c_interval=c_interval,
-                                                             c_unique=unique_values, c_range=data_range)
+        self.data_range = self._computeAdjustedRangeForColumn(colType=colType,
+                                                              c_min=c_min, c_max=c_max, c_step=c_step,
+                                                              c_begin=c_begin, c_end=c_end,
+                                                              c_interval=c_interval,
+                                                              c_unique=unique_values, c_range=data_range)
 
         if self.distribution is not None:
             ensure((self.data_range is not None and self.data_range.isFullyPopulated())
@@ -284,7 +304,7 @@ class ColumnGenerationSpec(object):
         else:
             return [self.baseColumn]
 
-    def computeBasicDependencies(self):
+    def _computeBasicDependencies(self):
         """ get set of basic column dependencies.
 
         These are used to compute the order of field evaluation
@@ -325,7 +345,7 @@ class ColumnGenerationSpec(object):
                 self.dependencies.append(temp_name)
                 desc = "adding temporary column {} required by {}".format(temp_name, self.name)
                 self.initial_build_plan.append(desc)
-                sql_random_generator = self.getUniformRandomSQLExpression(self.name)
+                sql_random_generator = self._getUniformRandomSQLExpression(self.name)
                 self.temporary_columns.append((temp_name, DoubleType(), {'expr': sql_random_generator, 'omit': True,
                                                                          'description': desc}))
                 self.weighted_base_column = temp_name
@@ -337,12 +357,12 @@ class ColumnGenerationSpec(object):
                 self.initial_build_plan.append(desc)
 
                 # use a base expression based on mapping base column to size of data
-                sql_scaled_generator = self.getScaledIntSQLExpression(self.name,
-                                                                      scale=sum(self.weights),
-                                                                      base_columns=self.baseColumns,
-                                                                      base_datatypes=self._base_column_datatypes,
-                                                                      compute_method=self.base_column_compute_method,
-                                                                      normalize=True)
+                sql_scaled_generator = self._getScaledIntSQLExpression(self.name,
+                                                                       scale=sum(self.weights),
+                                                                       base_columns=self.baseColumns,
+                                                                       base_datatypes=self._base_column_datatypes,
+                                                                       compute_method=self.base_column_compute_method,
+                                                                       normalize=True)
 
                 self.logger.debug("""building scaled sql expression : '%s' 
                                       with base column: %s, dependencies: %s""",
@@ -368,18 +388,18 @@ class ColumnGenerationSpec(object):
         else:
             self.logger.setLevel(logging.WARNING)
 
-    def computeAdjustedRangeForColumn(self, colType, c_min, c_max, c_step, c_begin, c_end, c_interval, c_range,
-                                      c_unique):
+    def _computeAdjustedRangeForColumn(self, colType, c_min, c_max, c_step, c_begin, c_end, c_interval, c_range,
+                                       c_unique):
         """Determine adjusted range for data column
         """
         assert colType is not None, "`colType` must be non-None instance"
 
         if type(colType) is DateType or type(colType) is TimestampType:
-            return self.computeAdjustedDateTimeRangeForColumn(colType, c_begin, c_end, c_interval, c_range, c_unique)
+            return self._computeAdjustedDateTimeRangeForColumn(colType, c_begin, c_end, c_interval, c_range, c_unique)
         else:
-            return self.computeAdjustedNumericRangeForColumn(colType, c_min, c_max, c_step, c_range, c_unique)
+            return self._computeAdjustedNumericRangeForColumn(colType, c_min, c_max, c_step, c_range, c_unique)
 
-    def computeAdjustedNumericRangeForColumn(self, colType, c_min, c_max, c_step, c_range, c_unique):
+    def _computeAdjustedNumericRangeForColumn(self, colType, c_min, c_max, c_step, c_range, c_unique):
         """Determine adjusted range for data column
 
         Rules:
@@ -428,7 +448,7 @@ class ColumnGenerationSpec(object):
 
         return result
 
-    def computeAdjustedDateTimeRangeForColumn(self, colType, c_begin, c_end, c_interval, c_range, c_unique):
+    def _computeAdjustedDateTimeRangeForColumn(self, colType, c_begin, c_end, c_interval, c_range, c_unique):
         """Determine adjusted range for Date or Timestamp data column
         """
         effective_begin, effective_end, effective_interval = None, None, None
@@ -448,10 +468,12 @@ class ColumnGenerationSpec(object):
         self.logger.debug("Computing adjusted range for column: %s - %s", self.name, result)
         return result
 
-    def getUniformRandomExpression(self, col_name):
+    def _getUniformRandomExpression(self, col_name):
         """ Get random expression accounting for seed method
 
         :returns: expression of ColDef form - i.e `lit`, `expr` etc
+
+        The value returned will be a number between 0 and 1 inclusive
         """
         assert col_name is not None, "`col_name` must not be None"
         if self.random_seed_method == "fixed":
@@ -462,7 +484,24 @@ class ColumnGenerationSpec(object):
         else:
             return rand()
 
-    def getUniformRandomSQLExpression(self, col_name):
+    def _getRandomExpressionForDistribution(self, col_name, col_distribution):
+        """ Get random expression accounting for seed method
+
+        :returns: expression of ColDef form - i.e `lit`, `expr` etc
+
+        The value returned will be a number between 0 and 1 inclusive
+        """
+        assert col_name is not None and len(col_name) > 0, "`col_name` must not be None and non empty"
+        assert col_distribution is not None, "`col_distribution` must not be None"
+        assert isinstance(col_distribution, DataDistribution), \
+            "`distribution` object must be an instance of data distribution"
+
+        self.execution_history.append(".. random number generation via distribution `{}`"
+                                      .format(str(col_distribution)))
+
+        return col_distribution.generateNormalizedDistributionSample()
+
+    def _getUniformRandomSQLExpression(self, col_name):
         """ Get random SQL expression accounting for seed method
 
         :returns: expression as a SQL string
@@ -477,8 +516,8 @@ class ColumnGenerationSpec(object):
         else:
             return "rand()"
 
-    def getScaledIntSQLExpression(self, col_name, scale, base_columns, base_datatypes=None, compute_method=None,
-                                  normalize=False):
+    def _getScaledIntSQLExpression(self, col_name, scale, base_columns, base_datatypes=None, compute_method=None,
+                                   normalize=False):
         """ Get scaled numeric expression
 
         This will produce a scaled SQL expression from the base columns
@@ -739,7 +778,7 @@ class ColumnGenerationSpec(object):
         else:
             return " |-- building column generator for column {}".format(self.name)
 
-    def makeWeightedColumnValuesExpression(self, values, weights, seed_column_name):
+    def _makeWeightedColumnValuesExpression(self, values, weights, seed_column_name):
         """make SQL expression to compute the weighted values expression
 
         :returns: Spark SQL expr
@@ -779,7 +818,7 @@ class ColumnGenerationSpec(object):
 
         return is_continuous
 
-    def getSeedExpression(self, base_column):
+    def _getSeedExpression(self, base_column):
         """ Get seed expression for column generation
 
         This is used to generate the base value for every column
@@ -821,7 +860,14 @@ class ColumnGenerationSpec(object):
         assert datarange is not None, "`datarange` must be specified"
         assert datarange.isFullyPopulated(), "`datarange` must be fully populated (minValue, maxValue, step)"
 
-        random_generator = self.getUniformRandomExpression(self.name) if is_random else None
+        if is_random:
+            if self.distribution is not None:
+                random_generator = self._getRandomExpressionForDistribution(self.name, self.distribution)
+            else:
+                random_generator = self._getUniformRandomExpression(self.name)
+        else:
+            random_generator = None
+
         if self._isContinuousValuedColumn() and self._isRealValuedColumn() and is_random:
             crange = datarange.getContinuousRange()
             baseval = random_generator * lit(crange)
@@ -829,7 +875,7 @@ class ColumnGenerationSpec(object):
             crange = datarange.getDiscreteRange()
             modulo_factor = lit(crange + 1)
             # following expression is needed as spark sql modulo of negative number is negative
-            modulo_exp = ((self.getSeedExpression(base_column) % modulo_factor) + modulo_factor) % modulo_factor
+            modulo_exp = ((self._getSeedExpression(base_column) % modulo_factor) + modulo_factor) % modulo_factor
             baseval = (modulo_exp * lit(datarange.step)) if not is_random else (
                     sql_round(random_generator * lit(crange)) * lit(datarange.step))
 
@@ -866,7 +912,7 @@ class ColumnGenerationSpec(object):
             new_def = baseval
         return new_def
 
-    def makeSingleGenerationExpression(self, index=None, use_pandas_optimizations=False):
+    def _makeSingleGenerationExpression(self, index=None, use_pandas_optimizations=False):
         """ generate column data for a single column value via Spark SQL expression
 
             :returns: spark sql `column` or expression that can be used to generate a column
@@ -892,7 +938,7 @@ class ColumnGenerationSpec(object):
         # handle weighted values for weighted value columns
         # a weighted values column will use a base value denoted by `self.weighted_base_column`
         if self.isWeightedValuesColumn:
-            new_def = self.makeWeightedColumnValuesExpression(self.values, self.weights, self.weighted_base_column)
+            new_def = self._makeWeightedColumnValuesExpression(self.values, self.weights, self.weighted_base_column)
 
             if type(self.datatype) is StringType and self.text_generator is not None:
                 self.logger.warning("Template generation / text generation not supported for weighted columns")
@@ -903,7 +949,7 @@ class ColumnGenerationSpec(object):
             # rs: initialize the begin, end and interval if not initialized for date computations
             # defaults are start of day, now, and 1 minute respectively
 
-            self.computeImpliedRangeIfNeeded(self.datatype)
+            self._computeImpliedRangeIfNeeded(self.datatype)
 
             # TODO: add full support for date value generation
             if self.expr is not None:
@@ -914,41 +960,41 @@ class ColumnGenerationSpec(object):
                 new_def = self._computeRangedColumn(base_column=self.baseColumn, datarange=self.data_range,
                                                     is_random=col_is_rand)
             elif type(self.datatype) is DateType:
-                sql_random_generator = self.getUniformRandomSQLExpression(self.name)
+                sql_random_generator = self._getUniformRandomSQLExpression(self.name)
                 new_def = expr("date_sub(current_date, rounding({}*1024))".format(sql_random_generator)).astype(
                     self.datatype)
             else:
                 if self.base_column_compute_method == VALUES_COMPUTE_METHOD:
-                    new_def = self.getSeedExpression(self.baseColumn)
+                    new_def = self._getSeedExpression(self.baseColumn)
                 elif self.base_column_compute_method == RAW_VALUES_COMPUTE_METHOD:
-                    new_def = self.getSeedExpression(self.baseColumn)
+                    new_def = self._getSeedExpression(self.baseColumn)
                 # TODO: resolve issues with hash when using templates
                 # elif self.base_column_compute_method == HASH_COMPUTE_METHOD:
-                #    new_def = self.getSeedExpression(self.baseColumn)
+                #    new_def = self._getSeedExpression(self.baseColumn)
                 else:
                     self.logger.warning("Assuming a seeded base expression with minimum value for column %s", self.name)
-                    new_def = ((self.getSeedExpression(self.baseColumn) + lit(self.data_range.minValue))
+                    new_def = ((self._getSeedExpression(self.baseColumn) + lit(self.data_range.minValue))
                                .astype(self.datatype))
 
             if self.values is not None:
                 new_def = array([lit(x) for x in self.values])[new_def.astype(IntegerType())]
             elif type(self.datatype) is StringType and self.expr is None:
-                new_def = self.applyPrefixSuffixExpressions(self.prefix, self.suffix, new_def)
+                new_def = self._applyPrefixSuffixExpressions(self.prefix, self.suffix, new_def)
 
             # use string generation template if available passing in what was generated to date
             if type(self.datatype) is StringType and self.text_generator is not None:
-                new_def = self.applyTextGenerationExpression(new_def, use_pandas_optimizations)
+                new_def = self._applyTextGenerationExpression(new_def, use_pandas_optimizations)
 
         if type(self.datatype) is StringType and sformat is not None:
-            new_def = self.applyTextFormatExpression(new_def, sformat)
+            new_def = self._applyTextFormatExpression(new_def, sformat)
 
-        new_def = self.applyFinalCastExpression(self.datatype, new_def)
+        new_def = self._applyFinalCastExpression(self.datatype, new_def)
 
         if percent_nulls is not None:
-            new_def = self.applyComputePercentNullsExpression(new_def, percent_nulls)
+            new_def = self._applyComputePercentNullsExpression(new_def, percent_nulls)
         return new_def
 
-    def applyTextFormatExpression(self, new_def, sformat):
+    def _applyTextFormatExpression(self, new_def, sformat):
         # note :
         # while it seems like this could use a shared instance, this does not work if initialized
         # in a class method
@@ -956,7 +1002,7 @@ class ColumnGenerationSpec(object):
         new_def = format_string(sformat, new_def)
         return new_def
 
-    def applyPrefixSuffixExpressions(self, cprefix, csuffix, new_def):
+    def _applyPrefixSuffixExpressions(self, cprefix, csuffix, new_def):
         # string value generation is simply handled by combining with a suffix or prefix
         # TODO: prefix and suffix only apply to base columns that are numeric types
         text_separator = self.text_separator if self.text_separator is not None else '_'
@@ -969,7 +1015,7 @@ class ColumnGenerationSpec(object):
             new_def = concat(new_def.astype(IntegerType()), lit(text_separator), lit(csuffix))
         return new_def
 
-    def applyTextGenerationExpression(self, new_def, use_pandas_optimizations):
+    def _applyTextGenerationExpression(self, new_def, use_pandas_optimizations):
         """Apply text generation expression to column expression
 
         :param new_def : column definition being created
@@ -993,7 +1039,7 @@ class ColumnGenerationSpec(object):
         new_def = u_value_from_generator(new_def)
         return new_def
 
-    def applyFinalCastExpression(self, col_type, new_def):
+    def _applyFinalCastExpression(self, col_type, new_def):
         """ Apply final cast expression for column data
 
         :param col_type: final column type
@@ -1010,7 +1056,7 @@ class ColumnGenerationSpec(object):
 
         return new_def
 
-    def applyComputePercentNullsExpression(self, new_def, percent_nulls):
+    def _applyComputePercentNullsExpression(self, new_def, percent_nulls):
         """Compute percentage nulls for column being generated
 
            :param new_def: Column definition being created
@@ -1020,11 +1066,11 @@ class ColumnGenerationSpec(object):
         assert self.nullable, "Column `{}` must be nullable for `percent_nulls` option".format(self.name)
         self.execution_history.append(".. applying null generator - `when rnd > prob then value - else null`")
         prob_nulls = percent_nulls / 100.0
-        random_generator = self.getUniformRandomExpression(self.name)
+        random_generator = self._getUniformRandomExpression(self.name)
         new_def = when(random_generator > lit(prob_nulls), new_def).otherwise(lit(None))
         return new_def
 
-    def computeImpliedRangeIfNeeded(self, col_type):
+    def _computeImpliedRangeIfNeeded(self, col_type):
         """ Compute implied range if necessary
             :param col_type" Column type
             :returns: nothing
@@ -1057,10 +1103,10 @@ class ColumnGenerationSpec(object):
 
         if num_columns == 1 or num_columns is None:
             self.execution_history.append("generating single column - `{0}`".format(self['name']))
-            retval = self.makeSingleGenerationExpression(use_pandas_optimizations=use_pandas)
+            retval = self._makeSingleGenerationExpression(use_pandas_optimizations=use_pandas)
         else:
             self.execution_history.append("generating multiple columns {0} - `{1}`".format(num_columns, self['name']))
-            retval = [self.makeSingleGenerationExpression(x) for x in range(num_columns)]
+            retval = [self._makeSingleGenerationExpression(x) for x in range(num_columns)]
 
             if struct_type == 'array':
                 self.execution_history.append(".. converting multiple columns to array")

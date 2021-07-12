@@ -2,9 +2,9 @@ import unittest
 
 from pyspark.sql.types import IntegerType, StringType, FloatType
 
-import databrickslabs_testdatagenerator as datagen
+import dbldatagen as dg
 
-spark = datagen.SparkSingleton.getLocalInstance("unit tests")
+spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
 
 class TestScripting(unittest.TestCase):
@@ -32,8 +32,8 @@ class TestScripting(unittest.TestCase):
         tbl_name = "scripted_table1"
         spark.sql("drop table if exists {}".format(tbl_name))
 
-        testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count,
-                                              partitions=4)
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count,
+                                         partitions=4)
                         .withIdOutput()
                         .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
                                     numColumns=self.column_count)
@@ -68,8 +68,8 @@ class TestScripting(unittest.TestCase):
         tbl_name = "scripted_table1"
         spark.sql("drop table if exists {}".format(tbl_name))
 
-        testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
-                                              partitions=4)
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
+                                         partitions=4)
                         .withIdOutput()
                         .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
                                     numColumns=self.column_count)

@@ -10,12 +10,15 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-from databrickslabs_testdatagenerator import *
-from databrickslabs_testdatagenerator.distributions import *
+from dbldatagen import *
+from dbldatagen.distributions import *
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../databrickslabs_testdatagenerator'))
-sys.path.insert(0, os.path.abspath('../../databrickslabs_testdatagenerator/distributions'))
+
+PACKAGE_DIR = "../../dbldatagen"
+
+sys.path.insert(0, os.path.abspath(f"{PACKAGE_DIR}"))
+sys.path.insert(0, os.path.abspath(f"{PACKAGE_DIR}/distributions"))
 
 
 # -- Project information -----------------------------------------------------
@@ -25,7 +28,7 @@ copyright = '2020, Databricks Inc'
 author = 'Databricks Inc'
 
 # The full version, including alpha/beta/rc tags
-release = "0.10.1-dev11"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpversion
+release = "0.11.0-dev1"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpversion
 
 
 # -- General configuration ---------------------------------------------------
@@ -34,23 +37,25 @@ release = "0.10.1-dev11"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpver
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx_rtd_theme',
     'sphinx.ext.autodoc',
-    'sphinx.ext.napoleon',
+    'sphinx.ext.napoleon',  # enable sphinx to parse NumPy and Google style doc strings
     #'sphinx.ext.autosummary',
-    'sphinx.ext.viewcode',
-    'numpydoc',  # handle NumPy documentation formatted docstrings. Needs to install
-    'recommonmark',
-    'sphinx_markdown_builder'
-    #'matplotlib.sphinxext.plot_directive',  # For visualize plot result
-    #'nbsphinx',  # Converts Jupyter Notebook to reStructuredText files for Sphinx.
-    # For ipython directive in reStructuredText files.
-    #'IPython.sphinxext.ipython_console_highlighting',
+    'sphinx.ext.viewcode',  # add links to source code
+    #'numpydoc',  # handle NumPy documentation formatted docstrings. Needs to install
+    'recommonmark'  # allow including Commonmark markdown in sources
 ]
 
 source_suffix = {
     '.rst': 'restructuredtext',
     '.md': 'markdown'
 }
+
+pdf_documents = [
+    ("index", project, project, author),
+]
+pdf_use_index = False
+pdf_stylesheets = ["a4"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -66,19 +71,22 @@ pygments_style = 'sphinx'
 # The master toctree document.
 master_doc = 'index'
 
+python_use_unqualified_type_names = True
+
 # -- Options for auto output -------------------------------------------------
 
 autoclass_content = 'class'
 autosummary_generate = False
 
-add_module_names=False
+add_module_names = False
 
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "pydata_sphinx_theme"
+#html_theme = "pydata_sphinx_theme"
+html_theme = "sphinx_rtd_theme"
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
@@ -98,10 +106,8 @@ html_css_files = [
 #}
 
 html_theme_options= {
-    "external_links": [
-            { "name": "Databricks Labs",
-              "url" : "https://github.com/databrickslabs"
-              }
+    "extra_nav_links": [
+            {"Databricks Labs": "https://github.com/databrickslabs"}
         ]
 }
 

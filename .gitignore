@@ -27,8 +27,10 @@ project/target/
 *.egg*
 *.py[cod]
 build_env/
-python/docs/source/relnotes/*.md
-python/docs/source/reference/api/*.rst
+docs/source/relnotes/*.md
+docs/source/relnotes/*.rst
+docs/source/relnotes/*.txt
+docs/source/reference/api/*.rst
 
 # code coverage related
 .coverage

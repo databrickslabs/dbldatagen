@@ -268,7 +268,7 @@ class ILText(TextGenerator):
     def __repr__(self):
         return f"ILText(paragraphs={self.paragraphs}, sentences={self.sentences}, words={self.words})"
 
-    def randomGauss(self, bounds):
+    def _randomGauss(self, bounds):
         """Compute random gauss value (truncated normal value) within bounds
 
         :param bounds: tuple containing lower and upper bound for random gaussian value
@@ -354,9 +354,9 @@ class ILText(TextGenerator):
 
         :param seed: seed value to control generation of random numbers
         """
-        #retval = [int(round(self.randomGauss(self.paragraphs))),
-        #          int(round(self.randomGauss(self.sentences))),
-        #          int(round(self.randomGauss(self.words)))]
+        #retval = [int(round(self._randomGauss(self.paragraphs))),
+        #          int(round(self._randomGauss(self.sentences))),
+        #          int(round(self._randomGauss(self.words)))]
 
         return self.generateText([seed], 42)[0]
 

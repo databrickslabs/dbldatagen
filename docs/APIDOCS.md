@@ -176,9 +176,9 @@ Here we want to generate a random set of events but ensure that the device prope
 device from event to event.
 
 ```python
-import databrickslabs_testdatagenerator as dg
+import dbldatagen as dg
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType, DateType, LongType
-from databrickslabs_testdatagenerator import DateRange, NRange
+from dbldatagen import DateRange, NRange
 
 shuffle_partitions_requested = 8
 device_population = 100000

@@ -20,8 +20,8 @@ from .utils import ensure, topologicalSort, DataGenError, deprecated
 from .daterange import DateRange
 from .spark_singleton import SparkSingleton
 
-OLD_MIN_OPTION = 'min'
-OLD_MAX_OPTION = 'max'
+_OLD_MIN_OPTION = 'min'
+_OLD_MAX_OPTION = 'max'
 
 
 class DataGenerator:
@@ -198,7 +198,7 @@ class DataGenerator:
             self.logger = old_logger  # pylint: disable=attribute-defined-outside-init
         return new_copy
 
-    def markForPlanRegen(self):
+    def _markForPlanRegen(self):
         """Mark that build plan needs to be regenerated
 
         :returns: modified in-place instance of test data generator allowing for chaining of calls following
@@ -279,7 +279,7 @@ class DataGenerator:
                   following Builder pattern
         """
         self.columnSpecsByName[ColumnGenerationSpec.SEED_COLUMN].omit = False
-        self.markForPlanRegen()
+        self._markForPlanRegen()
 
         return self
 
@@ -293,7 +293,7 @@ class DataGenerator:
         """
         ensure(option_key in self._allowed_keys)
         self._options[option_key] = option_value
-        self.markForPlanRegen()
+        self._markForPlanRegen()
         return self
 
     def options(self, **kwargs):
@@ -306,7 +306,7 @@ class DataGenerator:
         """
         for key, value in kwargs.items():
             self.option(key, value)
-        self.markForPlanRegen()
+        self._markForPlanRegen()
         return self
 
     def _processOptions(self):
@@ -479,7 +479,7 @@ class DataGenerator:
                   Builder pattern
 
         You may also add a variety of options to further control the test data generation process.
-        For full list of options, see :doc:`/reference/api/databrickslabs_testdatagenerator.column_spec_options`.
+        For full list of options, see :doc:`/reference/api/dbldatagen.column_spec_options`.
 
         """
         if fields is not None and type(fields) is str:
@@ -535,7 +535,7 @@ class DataGenerator:
                   following Builder pattern
 
         You may also add a variety of options to further control the test data generation process.
-        For full list of options, see :doc:`/reference/api/databrickslabs_testdatagenerator.column_spec_options`.
+        For full list of options, see :doc:`/reference/api/dbldatagen.column_spec_options`.
 
         """
         ensure(colName is not None, "Must specify column name for column")
@@ -545,17 +545,17 @@ class DataGenerator:
         ensure(not self.isFieldExplicitlyDefined(colName), "duplicate column spec for column `{0}`".format(colName))
 
         # handle migration of old `min` and `max` options
-        if OLD_MIN_OPTION in kwargs.keys():
+        if _OLD_MIN_OPTION in kwargs.keys():
             assert minValue is None, \
                 "Only one of `minValue` and `minValue` can be specified. Use of `minValue` is preferred"
-            minValue = kwargs[OLD_MIN_OPTION]
-            kwargs.pop(OLD_MIN_OPTION, None)
+            minValue = kwargs[_OLD_MIN_OPTION]
+            kwargs.pop(_OLD_MIN_OPTION, None)
 
-        if OLD_MAX_OPTION in kwargs.keys():
+        if _OLD_MAX_OPTION in kwargs.keys():
             assert maxValue is None, \
                 "Only one of `maxValue` and `maxValue` can be specified. Use of `maxValue` is preferred"
-            maxValue = kwargs[OLD_MAX_OPTION]
-            kwargs.pop(OLD_MAX_OPTION, None)
+            maxValue = kwargs[_OLD_MAX_OPTION]
+            kwargs.pop(_OLD_MAX_OPTION, None)
 
         new_props = {}
         new_props.update(kwargs)
@@ -563,11 +563,11 @@ class DataGenerator:
         self.logger.info("adding column spec - `%s` with baseColumn : `%s`, implicit : %s , omit %s",
                          colName, baseColumn, implicit, omit)
 
-        self.generateColumnDefinition(colName, self.getColumnType(colName), minValue=minValue, maxValue=maxValue,
-                                      step=step, prefix=prefix,
-                                      random=random, data_range=dataRange,
-                                      distribution=distribution, base_column=baseColumn,
-                                      implicit=implicit, omit=omit, **new_props)
+        self._generateColumnDefinition(colName, self.getColumnType(colName), minValue=minValue, maxValue=maxValue,
+                                       step=step, prefix=prefix,
+                                       random=random, data_range=dataRange,
+                                       distribution=distribution, base_column=baseColumn,
+                                       implicit=implicit, omit=omit, **new_props)
         return self
 
     def hasColumnSpec(self, colName):
@@ -589,7 +589,7 @@ class DataGenerator:
                   following Builder pattern
 
         You may also add a variety of options to further control the test data generation process.
-        For full list of options, see :doc:`/reference/api/databrickslabs_testdatagenerator.column_spec_options`.
+        For full list of options, see :doc:`/reference/api/dbldatagen.column_spec_options`.
 
         """
         ensure(colName is not None, "Must specify column name for column")
@@ -598,17 +598,17 @@ class DataGenerator:
             self._checkColumnOrColumnList(baseColumn, allow_id=True)
 
         # handle migration of old `min` and `max` options
-        if OLD_MIN_OPTION in kwargs.keys():
+        if _OLD_MIN_OPTION in kwargs.keys():
             assert minValue is None, \
                 "Only one of `minValue` and `minValue` can be specified. Use of `minValue` is preferred"
-            minValue = kwargs[OLD_MIN_OPTION]
-            kwargs.pop(OLD_MIN_OPTION, None)
+            minValue = kwargs[_OLD_MIN_OPTION]
+            kwargs.pop(_OLD_MIN_OPTION, None)
 
-        if OLD_MAX_OPTION in kwargs.keys():
+        if _OLD_MAX_OPTION in kwargs.keys():
             assert maxValue is None, \
                 "Only one of `maxValue` and `maxValue` can be specified. Use of `maxValue` is preferred"
-            maxValue = kwargs[OLD_MAX_OPTION]
-            kwargs.pop(OLD_MAX_OPTION, None)
+            maxValue = kwargs[_OLD_MAX_OPTION]
+            kwargs.pop(_OLD_MAX_OPTION, None)
 
         new_props = {}
         new_props.update(kwargs)
@@ -619,16 +619,16 @@ class DataGenerator:
 
         self.logger.info("effective range: %s, %s, %s args: %s", minValue, maxValue, step, kwargs)
         self.logger.info("adding column - `%s` with baseColumn : `%s`, implicit : %s , omit %s",
-                         colName, baseColumn, implicit, omit)
-        self.generateColumnDefinition(colName, colType, minValue=minValue, maxValue=maxValue,
-                                      step=step, prefix=prefix, random=random,
-                                      distribution=distribution, base_column=baseColumn, data_range=dataRange,
-                                      implicit=implicit, omit=omit, **new_props)
+                         colName, base_column, implicit, omit)
+        self._generateColumnDefinition(colName, colType, minValue=minValue, maxValue=maxValue,
+                                       step=step, prefix=prefix, random=random,
+                                       distribution=distribution, base_column=baseColumn, data_range=dataRange,
+                                       implicit=implicit, omit=omit, **new_props)
         self.inferredSchemaFields.append(StructField(colName, colType, nullable))
         return self
 
-    def generateColumnDefinition(self, colName, colType=None, base_column=None,
-                                 implicit=False, omit=False, nullable=True, **kwargs):
+    def _generateColumnDefinition(self, colName, colType=None, base_column=None,
+                                  implicit=False, omit=False, nullable=True, **kwargs):
         """ generate field definition and column spec
 
         .. note:: Any time that a new column definition is added,
@@ -662,11 +662,11 @@ class DataGenerator:
         self.allColumnSpecs.append(column_spec)
 
         # mark that the build plan needs to be regenerated
-        self.markForPlanRegen()
+        self._markForPlanRegen()
 
         return self
 
-    def getBaseDataFrame(self, start_id=0, streaming=False, options=None):
+    def _getBaseDataFrame(self, start_id=0, streaming=False, options=None):
         """ generate the base data frame and seed column (which defaults to `id`) , partitioning the data if necessary
 
         This is used when generating the test data.
@@ -718,7 +718,7 @@ class DataGenerator:
 
         return df1
 
-    def computeColumnBuildOrder(self):
+    def _computeColumnBuildOrder(self):
         """ compute the build ordering using a topological sort on dependencies
 
         In order to avoid references to columns that have not yet been generated, the test data generation process
@@ -755,7 +755,7 @@ class DataGenerator:
         """
         return [x for x in self._build_order if x != [ColumnGenerationSpec.SEED_COLUMN]]
 
-    def getColumnDataTypes(self, columns):
+    def _getColumnDataTypes(self, columns):
         """ Get data types for columns
 
         :param columns: list of columns to retrieve data types for
@@ -790,10 +790,10 @@ class DataGenerator:
 
         # TODO: set up the base column data type information
         for cs in self.allColumnSpecs:
-            base_column_datatypes = self.getColumnDataTypes(cs.baseColumns)
+            base_column_datatypes = self._getColumnDataTypes(cs.baseColumns)
             cs.setBaseColumnDatatypes(base_column_datatypes)
 
-        self.computeColumnBuildOrder()
+        self._computeColumnBuildOrder()
 
         for x1 in self._build_order:
             for x in x1:
@@ -831,7 +831,7 @@ class DataGenerator:
                 | - use withIdOutput() to output base seed column
                """)
 
-        df1 = self.getBaseDataFrame(self.starting_id, streaming=withStreaming, options=options)
+        df1 = self._getBaseDataFrame(self.starting_id, streaming=withStreaming, options=options)
 
         if self.use_pandas:
             self.execution_history.append("Using Pandas Optimizations {}".format(self.use_pandas))
@@ -915,7 +915,7 @@ class DataGenerator:
             df1 = df1.select(*build_round)
         return df1
 
-    def sqlTypeFromSparkType(self, dt):
+    def _sqlTypeFromSparkType(self, dt):
         """Get sql type for spark type
            :param dt: instance of Spark SQL type such as IntegerType()
         """
@@ -964,7 +964,7 @@ class DataGenerator:
 
         col_expressions = []
         for col_to_output in output_columns:
-            col_expressions.append("    {} {}".format(col_to_output[0], self.sqlTypeFromSparkType(col_to_output[1])))
+            col_expressions.append("    {} {}".format(col_to_output[0], self._sqlTypeFromSparkType(col_to_output[1])))
         results.append(",\n".join(col_expressions))
         results.append(")")
         results.append("using {}".format(table_format))

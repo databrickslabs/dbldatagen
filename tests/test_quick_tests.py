@@ -3,9 +3,9 @@ from datetime import timedelta, datetime
 
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, DateType
 
-import databrickslabs_testdatagenerator as dg
-from databrickslabs_testdatagenerator import DataGenerator
-from databrickslabs_testdatagenerator import NRange, DateRange
+import dbldatagen as dg
+from dbldatagen import DataGenerator
+from dbldatagen import NRange, DateRange
 
 schema = StructType([
     StructField("site_id", IntegerType(), True),
@@ -246,6 +246,7 @@ class TestQuickTests(unittest.TestCase):
                         .withColumn("val1", IntegerType(), unique_values=100)
                         .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
                         .withColumn("str2", StringType(), format="test %s", baseColumn=["val1", "val2"],
+                        .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"],
                                     base_column_type="values")
                         )
 

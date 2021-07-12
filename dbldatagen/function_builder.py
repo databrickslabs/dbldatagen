@@ -23,7 +23,7 @@ class ColumnGeneratorBuilder:
         return x[-1] if type(x) is list else x
 
     @classmethod
-    def mkCdfProbabilities(cls, weights):
+    def _mkCdfProbabilities(cls, weights):
         """ make cumulative distribution function probabilities for each value in values list
 
         a cumulative distribution function for discrete values can uses
@@ -88,7 +88,7 @@ class ColumnGeneratorBuilder:
         :param datatype: data type of function return value
 
         """
-        cdf_probs = cls.mkCdfProbabilities(weights)
+        cdf_probs = cls._mkCdfProbabilities(weights)
 
         output = [" CASE "]
 

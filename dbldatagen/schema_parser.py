@@ -21,7 +21,7 @@ class SchemaParser(object):
     _match_precision_and_scale = re.compile(r"decimal\s*\(\s*([0-9]+)\s*,\s*([0-9]+)\s*\)")
 
     @classmethod
-    def parseDecimal(cls, valueStr):
+    def _parseDecimal(cls, valueStr):
         """ parse a decimal specifier
 
         :param valueStr: decimal specifier string such as `decimal(19,4)`, `decimal` or `decimal(10)`
@@ -68,7 +68,7 @@ class SchemaParser(object):
         elif s in ["timestamp", "datetime"]:
             retval = TimestampType()
         elif s.startswith("decimal") or s.startswith("number"):
-            retval = cls.parseDecimal(s)
+            retval = cls._parseDecimal(s)
         elif s == "double":
             retval = DoubleType()
         elif s == "float":

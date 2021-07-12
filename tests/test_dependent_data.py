@@ -3,14 +3,14 @@ import unittest
 import pyspark.sql.functions as F
 from pyspark.sql.types import IntegerType, StringType, LongType
 
-import databrickslabs_testdatagenerator as datagen
-from databrickslabs_testdatagenerator import NRange
+import dbldatagen as dg
+from dbldatagen import NRange
 
 # build spark session
 
 # global spark
 
-spark = datagen.SparkSingleton.getLocalInstance("unit tests")
+spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
 
 class TestDependentData(unittest.TestCase):
@@ -30,8 +30,8 @@ class TestDependentData(unittest.TestCase):
         cls.rows = 1000000
         cls.devices = 30000
 
-        cls.testDataSpec = (datagen.DataGenerator(sparkSession=spark, name="device_data_set", rows=cls.rows,
-                                                  partitions=4, seed_method='hash_fieldname', debug=True, verbose=False)
+        cls.testDataSpec = (dg.DataGenerator(sparkSession=spark, name="device_data_set", rows=cls.rows,
+                                             partitions=4, seed_method='hash_fieldname', debug=True, verbose=False)
                             .withIdOutput()
                             # we'll use hash of the base field to generate the ids to avoid
                             # generating a simple incrementing sequence

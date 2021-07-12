@@ -9,24 +9,17 @@ package_long_description = """###Databricks Labs Spark Test Data Generator###
     """
 
 setuptools.setup(
-    name="databrickslabs-testdatagenerator",
-    version="0.10.1-dev11",
+    name="dbldatagen",
+    version="0.11.0-dev1",
     author="Ronan Stokes, Databricks",
     author_email="ronan.stokes@databricks.com",
     description="Databricks Labs -  PySpark Test Data Generator",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/databrickslabs/data-generator",
-    packages=['databrickslabs_testdatagenerator',
-              'databrickslabs_testdatagenerator.distributions'
+    packages=['dbldatagen',
+              'dbldatagen.distributions'
               ],
-    install_requires=[
-        'pyspark>=2.4.0',
-        'numpy',
-        'pandas',
-        'pyarrow>=0.8.0'
-    ],
-    # packages=setuptools.find_packages(exclude=['contrib', 'unit_tests', 'tests']),
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
