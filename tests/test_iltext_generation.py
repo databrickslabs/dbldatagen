@@ -165,7 +165,7 @@ class TestILTextGeneration(unittest.TestCase):
         print("test data spec 2")
         testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
                                           partitions=self.partitions_requested,
-                                          use_pandas=True, pandas_udf_batch_size=300)
+                                          usePandas=True, pandasUdfBatchSize=300)
                          .withSchema(schema)
                          .withIdOutput()
                          .withColumnSpec("phone", text=ILText(paragraphs=(1, 4), sentences=(2, 6)))
@@ -178,7 +178,7 @@ class TestILTextGeneration(unittest.TestCase):
     def test_iltext4b(self):
         print("test data spec 2")
         testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
-                                          partitions=self.partitions_requested, use_pandas=False)
+                                          partitions=self.partitions_requested, usePandas=False)
                          .withSchema(schema)
                          .withIdOutput()
                          .withColumnSpec("phone", text=ILText(paragraphs=(1, 4), sentences=(2, 6)))

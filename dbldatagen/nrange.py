@@ -22,7 +22,7 @@ class NRange(DataRange):
 
     A ranged object can be uses as an alternative to the `minValue`, `maxValue`, `step` parameters
     to the DataGenerator `withColumn` and `withColumn` objects.
-    Specify by passing an instance of `NRange` to the `data_range` parameter.
+    Specify by passing an instance of `NRange` to the `dataRange` parameter.
 
     :param minValue: Minimum value of range. May be integer / long / float
     :param maxValue: Maximum value of range. May be integer / long / float
@@ -51,7 +51,7 @@ class NRange(DataRange):
             kwArgs.pop(_OLD_MAX_OPTION, None)
         else:
             self.maxValue = maxValue
-        assert len(kwArgs.keys()) == 0, "no keyword options other than `min` and `max` allowed"
+        assert len(kwArgs.keys()) == 0, "no keyword suppliedOptions other than `min` and `max` allowed"
 
         assert until is None if self.maxValue is not None else True, "Only one of maxValue or until can be specified"
         assert self.maxValue is None if until is not None else True, "Only one of maxValue or until can be specified"

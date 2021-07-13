@@ -262,7 +262,7 @@ class TestTypes(unittest.TestCase):
     def test_short_types1b(self):
         id_partitions = 4
 
-        # result should be the same whether using `minValue` or `min` as options
+        # result should be the same whether using `minValue` or `min` as suppliedOptions
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("bb", ByteType(), minValue=35, maxValue=72)

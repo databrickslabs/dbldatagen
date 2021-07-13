@@ -41,7 +41,7 @@ class TestDependentData(unittest.TestCase):
                             # note for format strings, we must use "%lx" not "%x" as the underlying value is a long
                             .withColumn("device_id", StringType(), expr="format_string('0x%013x', internal_device_id)",
                                         baseColumn="internal_device_id")
-                            # .withColumn("device_id", StringType(), format='0x%013x', base_column="internal_device_id")
+                            # .withColumn("device_id", StringType(), format='0x%013x', baseColumn="internal_device_id")
 
                             # the device / user attributes will be the same for the same device id
                             # - so lets use the internal device id as the base column for these attribute

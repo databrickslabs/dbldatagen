@@ -41,7 +41,7 @@ class SchemaParser(object):
     def columnTypeFromString(cls, type_string):
         """ Generate a Spark SQL data type from a string
 
-        Allowable options for `type_string` parameter are:
+        Allowable suppliedOptions for `type_string` parameter are:
          * `string`, `varchar`, `char`, `nvarchar`,
          * `int`, `integer`,
          * `bigint`, `long`,

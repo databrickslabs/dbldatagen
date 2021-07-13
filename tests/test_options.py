@@ -37,7 +37,7 @@ class TestUseOfOptions(unittest.TestCase):
 
         df.show()
 
-        df2 = testdata_generator.option("starting_id", 200000).build()  # build our dataset
+        df2 = testdata_generator.option("startingId", 200000).build()  # build our dataset
 
         df2.count()
 

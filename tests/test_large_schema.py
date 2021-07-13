@@ -207,17 +207,17 @@ class TestLargeSchemaOperation(unittest.TestCase):
         sale_weights = [1, 5, 5, 1]
 
         ds = (self.testDataSpec.clone().withRowCount(1000)
-              .withColumnSpecs(patterns=".*_ID", match_types=StringType(), format="%010d",
+              .withColumnSpecs(patterns=".*_ID", matchTypes=StringType(), format="%010d",
                                minValue=10, maxValue=123, step=1)
-              .withColumnSpecs(patterns=".*_IDS", match_types=StringType(), format="%010d",
+              .withColumnSpecs(patterns=".*_IDS", matchTypes=StringType(), format="%010d",
                                minValue=1, maxValue=100, step=1)
               .withColumnSpec("R_ID", minValue=1, maxValue=100, step=1)
               .withColumnSpec("XYYZ_IDS", minValue=1, maxValue=123, step=1,
                               format="%05d")
-              # .withColumnSpec("nstr4", percent_nulls=10.0, minValue=1, maxValue=9, step=2,  format="%04d")
+              # .withColumnSpec("nstr4", percentNulls=10.0, minValue=1, maxValue=9, step=2,  format="%04d")
               # example of IS_SALE
               .withColumnSpec("IS_S", values=sale_values, weights=sale_weights, random=True)
-              # .withColumnSpec("nstr4", percent_nulls=10.0, minValue=1, maxValue=9, step=2,  format="%04d")
+              # .withColumnSpec("nstr4", percentNulls=10.0, minValue=1, maxValue=9, step=2,  format="%04d")
 
               )
 

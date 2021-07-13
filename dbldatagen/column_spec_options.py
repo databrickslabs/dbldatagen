@@ -11,14 +11,14 @@ from .utils import ensure
 
 
 class ColumnSpecOptions(object):
-    """ Column spec options object - manages options for column specs.
+    """ Column spec suppliedOptions object - manages suppliedOptions for column specs.
 
-    This class has limited functionality - mainly used to validate and document the options,
+    This class has limited functionality - mainly used to validate and document the suppliedOptions,
     and the class is meant for internal use only.
 
     :param props: Used to pass list of properties for column generation spec property checking.
 
-    The following options are permitted on data generator `withColumn`, `withColumnSpec` and `withColumnSpecs` methods:
+    The following suppliedOptions are permitted on data generator `withColumn`, `withColumnSpec` and `withColumnSpecs` methods:
 
     :param name: Column name
 
@@ -26,16 +26,16 @@ class ColumnSpecOptions(object):
                  or string containing SQL name of type
 
     :param minValue: Minimum value for range of generated value.
-                     As an alternative, you may use the `data_range` parameter
+                     As an alternative, you may use the `dataRange` parameter
 
     :param maxValue: Maximum value for range of generated value.
-                     As an alternative, you may use the `data_range` parameter
+                     As an alternative, you may use the `dataRange` parameter
 
-    :param step: Step to use for range of generated value. As an alternative, you may use the `data_range` parameter
+    :param step: Step to use for range of generated value. As an alternative, you may use the `dataRange` parameter
 
     :param random: If True, will generate random values for column value. Defaults to `False`
 
-    :param base_column: Either the string name of the base column, or a list of columns to use to
+    :param baseColumn: Either the string name of the base column, or a list of columns to use to
                         control data generation.
 
     :param values: List of discrete values for the colummn. Discrete values for the column can be strings, numbers
@@ -46,32 +46,32 @@ class ColumnSpecOptions(object):
                     the following statement:
                     `withColumn("status", StringType(), values=['online', 'offline', 'unknown'], weights=[3,2,1])`
 
-    :param percent_nulls: Specifies numeric percentage of generated values to be populated with SQL `null`.
-                          For example: `percent_nulls=12`
+    :param percentNulls: Specifies numeric percentage of generated values to be populated with SQL `null`.
+                          For example: `percentNulls=12`
 
-    :param unique_values: Number of unique values for column.
+    :param uniqueValues: Number of unique values for column.
                           If the unique values are specified for a timestamp or date field, the values will be chosen
                           working back from the end of the previous month,
                           unless `begin`, `end` and `interval` parameters are specified
 
     :param begin: Beginning of range for date and timestamp fields.
                    For dates and timestamp fields, use the `begin`, `end` and `interval`
-                   or `data_range` parameters instead of `minValue`, `maxValue` and `step`
+                   or `dataRange` parameters instead of `minValue`, `maxValue` and `step`
 
     :param end: End of range for date and timestamp fields.
                    For dates and timestamp fields, use the `begin`, `end` and `interval`
-                   or `data_range` parameters instead of `minValue`, `maxValue` and `step`
+                   or `dataRange` parameters instead of `minValue`, `maxValue` and `step`
 
     :param interval: Interval of range for date and timestamp fields.
                    For dates and timestamp fields, use the `begin`, `end` and `interval`
-                   or `data_range` parameters instead of `minValue`, `maxValue` and `step`
+                   or `dataRange` parameters instead of `minValue`, `maxValue` and `step`
 
-    :param data_range: An instance of an `NRange` or `DateRange` object. This can be used in place of `minValue`,
+    :param dataRange: An instance of an `NRange` or `DateRange` object. This can be used in place of `minValue`,
                        `maxValue`, `step` or `begin`, `end`, `interval`.
 
     :param template: template controlling how text should be generated
 
-    :param text_separator: string specifying separator to be used when constructing strings with prefix and suffix
+    :param textSeparator: string specifying separator to be used when constructing strings with prefix and suffix
 
     :param prefix: string specifying prefix text to construct field from prefix and numeric value. Both `prefix` and
     `suffix` can be used together
@@ -80,7 +80,7 @@ class ColumnSpecOptions(object):
     `suffix` can be used together
 
     .. note::
-        If the `data_range` parameter is specified as well as the `minValue`, `maxValue` or `step`,
+        If the `dataRange` parameter is specified as well as the `minValue`, `maxValue` or `step`,
         the results are undetermined.
 
         For more information, see :doc:`/reference/api/dbldatagen.daterange`
@@ -89,10 +89,10 @@ class ColumnSpecOptions(object):
     """
 
     #: the set of attributes that must be present for any columns
-    required_properties = {'name', 'type'}
+    _required_properties = {'name', 'type'}
 
     # alternate names for properties
-    property_aliases = {
+    _property_aliases = {
         'max': 'maxValue',
         'min': 'minValue',
         'base_column': 'baseColumn',
@@ -103,27 +103,27 @@ class ColumnSpecOptions(object):
         'percent_nulls': 'percentNulls',
         'random_seed_method': 'randomSeedMethod',
         'random_seed': 'randomSeed',
-        'text_separator': 'text_separator'
+        'text_separator': 'textSeparator'
     }
 
     #: the set of attributes that are permitted for any call to data generator `withColumn` or `withColumnSpec`
-    allowed_properties = {'name', 'type', 'minValue', 'maxValue', 'minValue', 'maxValue', 'step',
+    _allowed_properties = {'name', 'type', 'minValue', 'maxValue', 'minValue', 'maxValue', 'step',
                           'prefix', 'random', 'distribution',
-                          'range', 'base_column', 'base_column_type', 'values', 'base_columns',
+                          'range', 'baseColumn', 'baseColumnType', 'values', 'baseColumns',
                           'numColumns', 'numFeatures', 'structType',
                           'begin', 'end', 'interval', 'expr', 'omit',
                           'weights', 'description', 'continuous',
-                          'percent_nulls', 'template', 'format',
-                          'unique_values', 'data_range', 'text',
+                          'percentNulls', 'template', 'format',
+                          'uniqueValues', 'dataRange', 'text',
                           'precision', 'scale',
-                          'random_seed_method', 'random_seed',
+                          'randomSeedMethod', 'randomSeed',
                           'nullable', 'implicit',
-                          'suffix', 'text_separator'
+                           'suffix', 'textSeparator'
 
-                          }
+                           }
 
     #: the set of disallowed column attributes for any call to data generator `withColumn` or `withColumnSpec`
-    forbidden_properties = {
+    _forbidden_properties = {
         'range'
     }
 
@@ -133,7 +133,7 @@ class ColumnSpecOptions(object):
         'short': 65536
     }
 
-    def __init__(self, props):  # TODO: check if additional options are needed here as `**kwArgs`
+    def __init__(self, props):  # TODO: check if additional suppliedOptions are needed here as `**kwArgs`
         self._column_spec_options = props
 
         self._replaceAliasedOptions()
@@ -142,14 +142,14 @@ class ColumnSpecOptions(object):
         ''' Replace each of the property entries with the old key names
             using the aliased key names
 
-            Used to migrate options to consistent use of camelCase names
+            Used to migrate suppliedOptions to consistent use of camelCase names
         '''
         # for each of the aliases
-        for key in self.property_aliases:
+        for key in self._property_aliases:
             # if key is in the existing properties
             if key in self._column_spec_options:
                 # add an entry for the alias with the existing value ..
-                newKey = self.property_aliases[key]
+                newKey = self._property_aliases[key]
                 existingValue = self._column_spec_options[key]
                 self._column_spec_options[newKey] = existingValue
                 # and remove the old key entry
@@ -166,15 +166,21 @@ class ColumnSpecOptions(object):
         ensure(key is not None, "key should be non-empty")
 
         result = None
-        # if key in the options, get it
+        # if key in the suppliedOptions, get it
         if key in self._column_spec_options:
             result = self._column_spec_options.get(key, None)
-        # otherwise if the key is one of the aliased options, process it
-        elif key in self.property_aliases:
-            newKey = self.property_aliases[key]
+        # otherwise if the key is one of the aliased suppliedOptions, process it
+        elif key in self._property_aliases:
+            newKey = self._property_aliases[key]
             if newKey in self._column_spec_options:
                 result = self._column_spec_options.get(newKey, None)
         return result
+
+    def __getattr__(self, name):
+        """ get property dereference for options"""
+        assert name is not None and len(name.strip()) > 0, "attribute must be valid non empty option name"
+        assert name in self._allowed_properties, f"attribute `{name}` must be valid non empty option name"
+        return self._column_spec_options.get(name, None)
 
     def checkBoolOption(self, v, name=None, optional=True):
         """ Check that option is either not specified or of type boolean
@@ -193,19 +199,19 @@ class ColumnSpecOptions(object):
                    "Option `{}` must be boolean  - value: {}, type: {}".format(name, v, type(v)))
 
     def checkExclusiveOptions(self, options):
-        """check if the options are exclusive - i.e only one is not None
+        """check if the suppliedOptions are exclusive - i.e only one is not None
 
-        :param options: list of options that will be mutually exclusive
+        :param options: list of suppliedOptions that will be mutually exclusive
         """
-        assert options is not None, "options must be non empty"
-        assert type(options) is list, "`options` must be list"
+        assert options is not None, "suppliedOptions must be non empty"
+        assert type(options) is list, "`suppliedOptions` must be list"
         assert len([self[x] for x in options if self[x] is not None]) <= 1, \
-            f" only one of of the options: {options} may be specified "
+            f" only one of of the suppliedOptions: {options} may be specified "
 
     def checkOptionValues(self, option, option_values):
         """check if option value is in list of values
 
-        :param option: list of options that will be mutually exclusive
+        :param option: list of suppliedOptions that will be mutually exclusive
         :param option_values: list of possible option values that will be mutually exclusive
         """
         assert option is not None and len(option.strip()) > 0, "option must be non empty"
@@ -218,7 +224,7 @@ class ColumnSpecOptions(object):
             check that column definition properties are recognized
             and that the column definition has required properties
         """
-        ensure(column_props is not None, "column_props should be non-empty")
+        ensure(column_props is not None, "columnProps should be non-empty")
 
         col_type = self['type']
         if col_type.typeName() in self._max_type_range:
@@ -231,15 +237,11 @@ class ColumnSpecOptions(object):
                     raise ValueError("Effective range greater than range of type")
 
         for k in column_props.keys():
-            ensure(k in ColumnSpecOptions.allowed_properties, 'invalid column option {0}'.format(k))
+            self.checkIfOptionAllowed(k)
 
-        for arg in self.required_properties:
-            ensure(arg in column_props.keys() and column_props[arg] is not None,
-                   'missing column option {0}'.format(arg))
+        self.checkForRequiredProperties(column_props)
 
-        for arg in self.forbidden_properties:
-            ensure(arg not in column_props.keys(),
-                   'forbidden column option {0}'.format(arg))
+        self.checkForForbiddenProperties(column_props)
 
         # check weights and values
         if 'weights' in column_props.keys():
@@ -251,3 +253,38 @@ class ColumnSpecOptions(object):
             ensure(len(column_props['values']) == len(column_props['weights']),
                    "length of list of weights must be  equal to length of list of values - column '{}' ".format(
                        column_props['name']))
+
+    def checkIfOptionAllowed(self, optionName):
+        """
+        check if option is allowed
+        :param optionName: name of option
+        :raises: DataGenError exception if option is not allowed or supported
+        :return: nothing
+        """
+        assert optionName is not None, "option name must be non null"
+        ensure(optionName in self._allowed_properties
+               or optionName in self._property_aliases.keys(), 'invalid column option {0}'.format(optionName))
+
+    def checkForRequiredProperties(self, suppliedOptions):
+        """ Check list of options for required properties expected to have value that is not None
+
+        :param suppliedOptions: dictionary of options (key is option name, value is option value)
+        :return: nothing
+        :raises: DataGenError exception if required option is not present
+        """
+        assert suppliedOptions is not None, "suppliedOptions must be non null"
+        for arg in self._required_properties:
+            ensure(arg in suppliedOptions.keys() and suppliedOptions[arg] is not None,
+                   'missing column option {0}'.format(arg))
+
+    def checkForForbiddenProperties(self, suppliedOptions):
+        """ Check list of options for forbidden properties
+
+        :param suppliedOptions: dictionary of options (key is option name, value is option value)
+        :return: nothing
+        :raises: DataGenError exception if forbidden option is  present
+        """
+        assert suppliedOptions is not None, "suppliedOptions must be non null"
+        for arg in self._forbidden_properties:
+            ensure(arg not in suppliedOptions.keys(),
+                   'forbidden column option {0}'.format(arg))

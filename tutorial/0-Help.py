@@ -5,7 +5,7 @@
 # MAGIC 
 # MAGIC A schema can be optionally supplied, and new fields can be added to augment the set of fields defined in the schema.
 # MAGIC 
-# MAGIC The test data generator allows specification of options for number of rows to be generated and how the generated test set is partitioned. 
+# MAGIC The test data generator allows specification of suppliedOptions for number of rows to be generated and how the generated test set is partitioned.
 # MAGIC 
 # MAGIC The test data generator produces a spark data frame ( in Python) - which may be subsequently be saved, transformed, cached, persisted or used in any way a PySpark data frame can be used. 
 # MAGIC 

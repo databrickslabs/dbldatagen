@@ -246,7 +246,6 @@ class TestQuickTests(unittest.TestCase):
                         .withColumn("val1", IntegerType(), unique_values=100)
                         .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
                         .withColumn("str2", StringType(), format="test %s", baseColumn=["val1", "val2"],
-                        .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"],
                                     base_column_type="values")
                         )
 
@@ -537,8 +536,8 @@ class TestQuickTests(unittest.TestCase):
                         .withColumn("str6", StringType(), template=r"\v0 \v1", baseColumn=["val1", "val2"])
                         )
 
-        script = testDataSpec.scriptMerge(tgt_name="Test", src_name="TestInc", join_expr="src.id=tgt.id",
-                                          del_expr="src.action='DEL'", update_expr="src.action='UPDATE")
+        script = testDataSpec.scriptMerge(tgtName="Test", srcName="TestInc", joinExpr="src.id=tgt.id",
+                                          delExpr="src.action='DEL'", updateExpr="src.action='UPDATE")
         print(script)
 
         output_columns = testDataSpec.getOutputColumnNames()
@@ -576,7 +575,7 @@ class TestQuickTests(unittest.TestCase):
                         .withColumn("str6", StringType(), template=r"\v0 \v1", baseColumn=["val1", "val2"])
                         )
 
-        script = testDataSpec.scriptMerge(tgt_name="Test", src_name="TestInc", join_expr="src.id=tgt.id")
+        script = testDataSpec.scriptMerge(tgtName="Test", srcName="TestInc", joinExpr="src.id=tgt.id")
         self.assertIsNotNone(script)
 
         print(script)

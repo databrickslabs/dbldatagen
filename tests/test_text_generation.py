@@ -161,9 +161,9 @@ class TestTextGeneration(unittest.TestCase):
                          .withSchema(schema)
                          .withIdOutput()
                          .withColumnSpec("date", percent_nulls=10.0)
-                         .withColumnSpecs(patterns="n.*", match_types=StringType(),
+                         .withColumnSpecs(patterns="n.*", matchTypes=StringType(),
                                           percent_nulls=10.0, minValue=1, maxValue=9, step=2)
-                         .withColumnSpecs(patterns="n.*", match_types=IntegerType(),
+                         .withColumnSpecs(patterns="n.*", matchTypes=IntegerType(),
                                           percent_nulls=10.0, minValue=1, maxValue=200, step=-2)
                          .withColumnSpec("email", template=r'\w.\w@\w.com|\w@\w.co.u\k')
                          .withColumnSpec("ip_addr", template=r'\n.\n.\n.\n')
@@ -280,7 +280,7 @@ class TestTextGeneration(unittest.TestCase):
 
         self.assertEqual(numRows, 100000)
 
-        df2 = testdata_generator.option("starting_id", 200000).build()  # build our dataset
+        df2 = testdata_generator.option("startingId", 200000).build()  # build our dataset
 
         df2.count()
 

@@ -32,14 +32,14 @@ class DataGenerator:
     :param sparkSession: spark Session object to use
     :param name: is name of data set
     :param seed_method: = seed method for random numbers - either None, 'fixed', 'hash_fieldname'
-    :param generate_with_selects: = if `True`, optimize datae generation with selects, otherwise use `withColumn`
+    :param generateWithSelects: = if `True`, optimize data generation with selects, otherwise use `withColumn`
     :param rows: = amount of rows to generate
-    :param starting_id: = starting value for generated seed column
+    :param startingId: = starting value for generated seed column
     :param seed: = seed for random number generator
     :param partitions: = number of partitions to generate
     :param verbose: = if `True`, generate verbose output
-    :param use_pandas: = if `True`, use Pandas UDFs during test data generation
-    :param pandas_udf_batch_size: = UDF batch number of rows to pass via Apache Arrow to Pandas UDFs
+    :param usePandas: = if `True`, use Pandas UDFs during data generation
+    :param pandasUdfBatchSize: = UDF batch number of rows to pass via Apache Arrow to Pandas UDFs
     :param debug: = if set to True, output debug level of information
     """
 
@@ -48,7 +48,7 @@ class DataGenerator:
     _untitledNamePrefix = "Untitled"
     _randomSeed = 42
 
-    _allowed_keys = ["starting_id", "row_count", "output_id"]
+    _allowed_keys = ["startingId", "row_count", "output_id"]
 
     # set up logging
 
@@ -56,42 +56,42 @@ class DataGenerator:
     logging.getLogger("py4j").setLevel(logging.WARNING)
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.NOTSET)
 
-    def __init__(self, sparkSession=None, name=None, seed_method=None, generate_with_selects=True,
-                 rows=1000000, starting_id=0, seed=None, partitions=None, verbose=False,
-                 use_pandas=True, pandas_udf_batch_size=None, debug=False):
+    def __init__(self, sparkSession=None, name=None, seed_method=None, generateWithSelects=True,
+                 rows=1000000, startingId=0, seed=None, partitions=None, verbose=False,
+                 usePandas=True, pandasUdfBatchSize=None, debug=False):
         """ Constructor for data generator object """
 
         # set up logging
         self.verbose = verbose
         self.debug = debug
 
-        self._setup_logger()
+        self._setupLogger()
 
         self.name = name if name is not None else self.generateName()
         self._rowCount = rows
-        self.starting_id = starting_id
+        self.startingId = startingId
         self.__schema__ = None
 
-        self.seed_method = seed_method
+        self.seedMethod = seed_method
         self.seed = seed if seed is not None else self._randomSeed
 
         # if a seed was supplied but no seed method was applied, make the seed method "fixed"
         if seed is not None and seed_method is None:
-            self.seed_method = "fixed"
+            self.seedMethod = "fixed"
 
         self.columnSpecsByName = {}
         self.allColumnSpecs = []
         self.build_plan = []
         self.execution_history = []
         self._options = {}
-        self._build_order = []
+        self._buildOrder = []
         self.inferredSchemaFields = []
         self.partitions = partitions if partitions is not None else 10
         self.build_plan_computed = False
         self.withColumn(ColumnGenerationSpec.SEED_COLUMN, LongType(), nullable=False, implicit=True, omit=True)
-        self.generateWithSelects = generate_with_selects
-        self.use_pandas = use_pandas
-        self.pandas_udf_batch_size = pandas_udf_batch_size
+        self.generateWithSelects = generateWithSelects
+        self._usePandas = usePandas
+        self.pandas_udf_batch_size = pandasUdfBatchSize
 
         if sparkSession is None:
             sparkSession = SparkSingleton.getInstance()
@@ -108,20 +108,20 @@ class DataGenerator:
             """)
 
         # set up use of pandas udfs if necessary
-        self._setup_pandas_if_needed(pandas_udf_batch_size)
+        self._setupPandasIfNeeded(pandasUdfBatchSize)
 
         if seed_method is not None and seed_method != "fixed" and seed_method != "hash_fieldname":
             raise DataGenError("""seed_method should be None, 'fixed' or 'hash_fieldname' """)
 
-    def _setup_pandas_if_needed(self, pandas_udf_batch_size):
+    def _setupPandasIfNeeded(self, batchSize):
         """
         Set up pandas if needed
-        :param pandas_udf_batch_size: batch size for pandas, may be None
+        :param batchSize: batch size for pandas, may be None
         :return: nothing
         """
-        assert pandas_udf_batch_size is None or type(pandas_udf_batch_size) is int, \
+        assert batchSize is None or type(batchSize) is int, \
             "If pandas_batch_size is specified, it must be an integer"
-        if self.use_pandas:
+        if self._usePandas:
             self.logger.info("*** using pandas udf for custom functions ***")
             self.logger.info("Spark version: %s", self.sparkSession.version)
             if str(self.sparkSession.version).startswith("3"):
@@ -133,7 +133,7 @@ class DataGenerator:
             if self.pandas_udf_batch_size is not None:
                 self.sparkSession.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", self.pandas_udf_batch_size)
 
-    def _setup_logger(self):
+    def _setupLogger(self):
         """Set up logging
 
         This will set the logger at warning, info or debug levels depending on the instance construction parameters
@@ -147,7 +147,7 @@ class DataGenerator:
             self.logger.setLevel(logging.WARNING)
 
     @classmethod
-    def use_seed(cls, seedVal):
+    def useSeed(cls, seedVal):
         """ set seed for random number generation
 
             Arguments:
@@ -190,7 +190,7 @@ class DataGenerator:
             new_copy = copy.deepcopy(self)
             new_copy.sparkSession = old_spark_session
             new_copy.build_plan_computed = False
-            new_copy._setup_logger()
+            new_copy._setupLogger()
         finally:
             # now set it back
             self.sparkSession = old_spark_session
@@ -207,19 +207,19 @@ class DataGenerator:
         self.build_plan_computed = False
         return self
 
-    def explain(self, suppress_output=False):
+    def explain(self, suppressOutput=False):
         """Explain the test data generation process
 
-        :param suppress_output: If True, suppress display of build plan
+        :param suppressOutput: If True, suppress display of build plan
         :returns: String containing explanation of test data generation for this specification
         """
         if not self.build_plan_computed:
             self.computeBuildPlan()
 
         output = ["", "Data generation plan", "====================",
-                  """spec=DateGenerator(name={}, rows={}, starting_id={}, partitions={})"""
-                      .format(self.name, self._rowCount, self.starting_id, self.partitions), ")", "",
-                  "column build order: {}".format(self._build_order), "", "build plan:"]
+                  """spec=DateGenerator(name={}, rows={}, startingId={}, partitions={})"""
+                      .format(self.name, self._rowCount, self.startingId, self.partitions), ")", "",
+                  "column build order: {}".format(self._buildOrder), "", "build plan:"]
 
         for plan_action in self.build_plan:
             output.append(" ==> " + plan_action)
@@ -231,7 +231,7 @@ class DataGenerator:
         output.append("")
 
         explain_results = "\n".join(output)
-        if not suppress_output:
+        if not suppressOutput:
             print(explain_results)
 
         return explain_results
@@ -283,23 +283,23 @@ class DataGenerator:
 
         return self
 
-    def option(self, option_key, option_value):
+    def option(self, optionKey, optionValue):
         """ set option to option value for later processing
 
-        :param option_key: key for option
-        :param option_value: value for option
+        :param optionKey: key for option
+        :param optionValue: value for option
         :returns: modified in-place instance of test data generator allowing for chaining of calls
                   following Builder pattern
         """
-        ensure(option_key in self._allowed_keys)
-        self._options[option_key] = option_value
+        ensure(optionKey in self._allowed_keys)
+        self._options[optionKey] = optionValue
         self._markForPlanRegen()
         return self
 
     def options(self, **kwargs):
-        """ set options in bulk
+        """ set suppliedOptions in bulk
 
-        Allows for multiple options with option=option_value style of option passing
+        Allows for multiple suppliedOptions with option=optionValue style of option passing
 
         :returns: modified in-place instance of test data generator allowing for chaining of calls
                   following Builder pattern
@@ -310,16 +310,16 @@ class DataGenerator:
         return self
 
     def _processOptions(self):
-        """ process options to give effect to the options supplied earlier
+        """ process suppliedOptions to give effect to the suppliedOptions supplied earlier
 
         :returns: modified in-place instance of test data generator allowing for chaining of calls
                   following Builder pattern
         """
-        self.logger.info("options: %s", str(self._options))
+        self.logger.info("suppliedOptions: %s", str(self._options))
 
         for key, value in self._options.items():
-            if key == "starting_id":
-                self.starting_id = value
+            if key == "startingId":
+                self.startingId = value
             elif key == "row_count":
                 self._rowCount = value
         return self
@@ -464,7 +464,7 @@ class DataGenerator:
         else:
             return minValue, maxValue, step
 
-    def withColumnSpecs(self, patterns=None, fields=None, match_types=None, **kwargs):
+    def withColumnSpecs(self, patterns=None, fields=None, matchTypes=None, **kwargs):
         """Add column specs for columns matching
            a) list of field names,
            b) one or more regex patterns
@@ -474,18 +474,18 @@ class DataGenerator:
                          that match the column names. May be omitted.
         :param fields: a string specifying an explicit field to match , or a list of strings specifying
                        explicit fields to match. May be omitted.
-        :param match_types: a single Spark SQL datatype or list of Spark SQL data types to match. May be omitted.
+        :param matchTypes: a single Spark SQL datatype or list of Spark SQL data types to match. May be omitted.
         :returns: modified in-place instance of test data generator allowing for chaining of calls following
                   Builder pattern
 
-        You may also add a variety of options to further control the test data generation process.
-        For full list of options, see :doc:`/reference/api/dbldatagen.column_spec_options`.
+        You may also add a variety of suppliedOptions to further control the test data generation process.
+        For full list of suppliedOptions, see :doc:`/reference/api/dbldatagen.column_spec_options`.
 
         """
         if fields is not None and type(fields) is str:
             fields = [fields]
-        if match_types is not None and type(match_types) is not list:
-            match_types = [match_types]
+        if matchTypes is not None and type(matchTypes) is not list:
+            matchTypes = [matchTypes]
         if patterns is not None and type(patterns) is str:
             patterns = ["^" + patterns + "$"]
         elif type(patterns) is list:
@@ -498,23 +498,23 @@ class DataGenerator:
         if patterns is not None:
             effective_fields = [x for x in effective_fields for y in patterns if re.search(y, x) is not None]
 
-        if match_types is not None:
-            effective_fields = [x for x in effective_fields for y in match_types
+        if matchTypes is not None:
+            effective_fields = [x for x in effective_fields for y in matchTypes
                                 if self.getColumnType(x) == y]
 
         for f in effective_fields:
             self.withColumnSpec(f, implicit=True, **kwargs)
         return self
 
-    def _checkColumnOrColumnList(self, columns, allow_id=False):
+    def _checkColumnOrColumnList(self, columns, allowId=False):
         """ Check if column or columns refer to existing columns
 
         :param columns: a single column or list of columns as strings
-        :param allow_id: If True, allows the specialized seed column (which defaults to `id`) to be present in columns
+        :param allowId: If True, allows the specialized seed column (which defaults to `id`) to be present in columns
         :returns: True if test passes
         """
         inferred_columns = self.getInferredColumnNames()
-        if allow_id and columns == ColumnGenerationSpec.SEED_COLUMN:
+        if allowId and columns == ColumnGenerationSpec.SEED_COLUMN:
             return True
 
         if type(columns) is list:
@@ -534,8 +534,8 @@ class DataGenerator:
         :returns: modified in-place instance of test data generator allowing for chaining of calls
                   following Builder pattern
 
-        You may also add a variety of options to further control the test data generation process.
-        For full list of options, see :doc:`/reference/api/dbldatagen.column_spec_options`.
+        You may also add a variety of suppliedOptions to further control the test data generation process.
+        For full list of suppliedOptions, see :doc:`/reference/api/dbldatagen.column_spec_options`.
 
         """
         ensure(colName is not None, "Must specify column name for column")
@@ -544,7 +544,7 @@ class DataGenerator:
             self._checkColumnOrColumnList(baseColumn)
         ensure(not self.isFieldExplicitlyDefined(colName), "duplicate column spec for column `{0}`".format(colName))
 
-        # handle migration of old `min` and `max` options
+        # handle migration of old `min` and `max` suppliedOptions
         if _OLD_MIN_OPTION in kwargs.keys():
             assert minValue is None, \
                 "Only one of `minValue` and `minValue` can be specified. Use of `minValue` is preferred"
@@ -566,7 +566,7 @@ class DataGenerator:
         self._generateColumnDefinition(colName, self.getColumnType(colName), minValue=minValue, maxValue=maxValue,
                                        step=step, prefix=prefix,
                                        random=random, data_range=dataRange,
-                                       distribution=distribution, base_column=baseColumn,
+                                       distribution=distribution, baseColumn=baseColumn,
                                        implicit=implicit, omit=omit, **new_props)
         return self
 
@@ -585,19 +585,22 @@ class DataGenerator:
                    **kwargs):
         """ add a new column for specification
 
+        :param colName: name of column to add
+        :param colType: type of column to add - should be either string of simple type name or type from 
+        
         :returns: modified in-place instance of test data generator allowing for chaining of calls
                   following Builder pattern
 
-        You may also add a variety of options to further control the test data generation process.
-        For full list of options, see :doc:`/reference/api/dbldatagen.column_spec_options`.
+        You may also add a variety of suppliedOptions to further control the test data generation process.
+        For full list of suppliedOptions, see :doc:`/reference/api/dbldatagen.column_spec_options`.
 
         """
         ensure(colName is not None, "Must specify column name for column")
         ensure(colType is not None, "Must specify column type for column `{0}`".format(colName))
         if baseColumn is not None:
-            self._checkColumnOrColumnList(baseColumn, allow_id=True)
+            self._checkColumnOrColumnList(baseColumn, allowId=True)
 
-        # handle migration of old `min` and `max` options
+        # handle migration of old `min` and `max` suppliedOptions
         if _OLD_MIN_OPTION in kwargs.keys():
             assert minValue is None, \
                 "Only one of `minValue` and `minValue` can be specified. Use of `minValue` is preferred"
@@ -619,15 +622,15 @@ class DataGenerator:
 
         self.logger.info("effective range: %s, %s, %s args: %s", minValue, maxValue, step, kwargs)
         self.logger.info("adding column - `%s` with baseColumn : `%s`, implicit : %s , omit %s",
-                         colName, base_column, implicit, omit)
+                         colName, baseColumn, implicit, omit)
         self._generateColumnDefinition(colName, colType, minValue=minValue, maxValue=maxValue,
                                        step=step, prefix=prefix, random=random,
-                                       distribution=distribution, base_column=baseColumn, data_range=dataRange,
+                                       distribution=distribution, baseColumn=baseColumn, data_range=dataRange,
                                        implicit=implicit, omit=omit, **new_props)
         self.inferredSchemaFields.append(StructField(colName, colType, nullable))
         return self
 
-    def _generateColumnDefinition(self, colName, colType=None, base_column=None,
+    def _generateColumnDefinition(self, colName, colType=None, baseColumn=None,
                                   implicit=False, omit=False, nullable=True, **kwargs):
         """ generate field definition and column spec
 
@@ -635,18 +638,18 @@ class DataGenerator:
                   we'll mark that the build plan needs to be regenerated.
            For our purposes, the build plan determines the order of column generation etc.
 
-        :returns: modified in-place instance of test data generator allowing for chaining of calls
+        :returns: modified in-place instance of data generator allowing for chaining of calls
                   following Builder pattern
         """
         if colType is None:
-            colType = self.getColumnType(base_column)
+            colType = self.getColumnType(baseColumn)
 
         column_spec = ColumnGenerationSpec(colName, colType,
-                                           baseColumn=base_column,
+                                           baseColumn=baseColumn,
                                            implicit=implicit,
                                            omit=omit,
                                            randomSeed=self._randomSeed,
-                                           randomSeedMethod=self.seed_method,
+                                           randomSeedMethod=self.seedMethod,
                                            nullable=nullable,
                                            verbose=self.verbose,
                                            debug=self.debug,
@@ -739,21 +742,21 @@ class DataGenerator:
 
         self.logger.info("dependency list: %s", str(dependency_ordering))
 
-        self._build_order = list(
+        self._buildOrder = list(
             topologicalSort(dependency_ordering, flatten=False, initial_columns=[ColumnGenerationSpec.SEED_COLUMN]))
 
-        self.logger.info("columnBuildOrder: %s", str(self._build_order))
+        self.logger.info("columnBuildOrder: %s", str(self._buildOrder))
 
-        # self.pp_list(self._build_order, "build order")
-        return self._build_order
+        # self.pp_list(self._buildOrder, "build order")
+        return self._buildOrder
 
     @property
-    def build_order(self):
+    def buildOrder(self):
         """ return the build order minus the seed column (which defaults to `id`)
 
         The build order will be a list of lists - each list specifying columns that can be built at the same time
         """
-        return [x for x in self._build_order if x != [ColumnGenerationSpec.SEED_COLUMN]]
+        return [x for x in self._buildOrder if x != [ColumnGenerationSpec.SEED_COLUMN]]
 
     def _getColumnDataTypes(self, columns):
         """ Get data types for columns
@@ -779,10 +782,10 @@ class DataGenerator:
         # add temporary columns
         for cs in self.allColumnSpecs:
             # extend overall build plan with build plan of each column spec
-            self.build_plan.extend(cs.initial_build_plan)
+            self.build_plan.extend(cs.initialBuildPlan)
 
             # handle generation of any temporary columns
-            for tmp_col in cs.temporary_columns:
+            for tmp_col in cs.temporaryColumns:
                 # create column spec for temporary column if its not already present
                 if not self.hasColumnSpec(tmp_col[0]):
                     self.build_plan.append("materializing temporary column {}".format(tmp_col[0]))
@@ -795,7 +798,7 @@ class DataGenerator:
 
         self._computeColumnBuildOrder()
 
-        for x1 in self._build_order:
+        for x1 in self._buildOrder:
             for x in x1:
                 cs = self.columnSpecsByName[x]
                 self.build_plan.append(cs.getPlanEntry())
@@ -807,17 +810,17 @@ class DataGenerator:
         """ build the test data set from the column definitions and return a dataframe for it
 
         if `withStreaming` is True, generates a streaming data set.
-        Use options to control the rate of generation of test data if streaming is used.
+        Use suppliedOptions to control the rate of generation of test data if streaming is used.
 
         For example:
 
-        `dfTestData = testDataSpec.build(withStreaming=True,options={ 'rowsPerSecond': 5000})`
+        `dfTestData = testDataSpec.build(withStreaming=True,suppliedOptions={ 'rowsPerSecond': 5000})`
 
         :param withTempView: if True, automatically creates temporary view for generated data set
         :param withView: If True, automatically creates global view for data set
         :param withStreaming: If True, generates data using Spark Structured Streaming Rate source suitable
                               for writing with `writeStream`
-        :param options: optional Dict of options to control generating of streaming data
+        :param options: optional Dict of suppliedOptions to control generating of streaming data
         :returns: Spark SQL dataframe of generated test data
         """
         self.logger.debug("starting build ... withStreaming [%s]", withStreaming)
@@ -831,16 +834,16 @@ class DataGenerator:
                 | - use withIdOutput() to output base seed column
                """)
 
-        df1 = self._getBaseDataFrame(self.starting_id, streaming=withStreaming, options=options)
+        df1 = self._getBaseDataFrame(self.startingId, streaming=withStreaming, options=options)
 
-        if self.use_pandas:
-            self.execution_history.append("Using Pandas Optimizations {}".format(self.use_pandas))
+        if self._usePandas:
+            self.execution_history.append("Using Pandas Optimizations {}".format(self._usePandas))
 
         # build columns
         if self.generateWithSelects:
-            df1 = self._build_column_expressions_with_selects(df1)
+            df1 = self._buildColumnExpressionsWithSelects(df1)
         else:
-            df1 = self._build_column_expressions_using_withColumn(df1)
+            df1 = self._buildColumnExpressionsUsingWithColumn(df1)
 
         df1 = df1.select(*self.getOutputColumnNames())
         self.execution_history.append("selecting columns: {}".format(self.getOutputColumnNames()))
@@ -859,7 +862,7 @@ class DataGenerator:
 
         return df1
 
-    def _build_column_expressions_using_withColumn(self, df1):
+    def _buildColumnExpressionsUsingWithColumn(self, df1):
         """
         Build column expressions using withColumn
         :param df1: dataframe for base data generator
@@ -867,7 +870,7 @@ class DataGenerator:
         """
         # build columns
         self.execution_history.append("Generating data with withColumn statements")
-        column_build_order = [item for sublist in self.build_order for item in sublist]
+        column_build_order = [item for sublist in self.buildOrder for item in sublist]
         for colName in column_build_order:
             col1 = self.columnSpecsByName[colName]
             column_generators = col1.makeGenerationExpressions()
@@ -884,7 +887,7 @@ class DataGenerator:
                 df1 = df1.withColumn(colName, column_generators)
         return df1
 
-    def _build_column_expressions_with_selects(self, df1):
+    def _buildColumnExpressionsWithSelects(self, df1):
         """
         Build column generation expressions with selects
         :param df1: dataframe for base data generator
@@ -893,13 +896,13 @@ class DataGenerator:
         self.execution_history.append("Generating data with selects")
         # generation with selects may be more efficient as less intermediate data frames
         # are generated resulting in shorter lineage
-        for colNames in self.build_order:
+        for colNames in self.buildOrder:
             build_round = ["*"]
             inx_col = 0
             self.execution_history.append("building rounding for : {}".format(colNames))
             for colName in colNames:
                 col1 = self.columnSpecsByName[colName]
-                column_generators = col1.makeGenerationExpressions(self.use_pandas)
+                column_generators = col1.makeGenerationExpressions(self._usePandas)
                 self.execution_history.extend(col1.execution_history)
                 if type(column_generators) is list and len(column_generators) == 1:
                     build_round.append(column_generators[0].alias(colName))
@@ -921,13 +924,13 @@ class DataGenerator:
         """
         return dt.simpleString()
 
-    def _mkInsertOrUpdateStatement(self, columns, src_alias, substitutions, isUpdate=True):
+    def _mkInsertOrUpdateStatement(self, columns, srcAlias, substitutions, isUpdate=True):
         if substitutions is None:
             substitutions = []
         results = []
         subs = {}
         for x in columns:
-            subs[x] = "{}.{}".format(src_alias, x)
+            subs[x] = "{}.{}".format(srcAlias, x)
         for x in substitutions:
             subs[x[0]] = x[1]
 
@@ -974,43 +977,43 @@ class DataGenerator:
 
         return "\n".join(results)
 
-    def scriptMerge(self, tgt_name=None, src_name=None, update_expr=None, del_expr=None, join_expr=None, time_expr=None,
-                    ins_expr=None,
-                    use_explicit_names=True,
-                    update_columns=None, update_column_exprs=None,
-                    insert_columns=None, insert_column_exprs=None,
-                    src_alias="src", tgt_alias="tgt"):
+    def scriptMerge(self, tgtName=None, srcName=None, updateExpr=None, delExpr=None, joinExpr=None, timeExpr=None,
+                    insExpr=None,
+                    useExplicitNames=True,
+                    updateColumns=None, updateColumnExprs=None,
+                    insertColumns=None, insertColumnExprs=None,
+                    srcAlias="src", tgtAlias="tgt"):
         """ generate merge table script suitable for format of test data set
 
-        :param tgt_name: name of target table to use in generated script
-        :param tgt_alias: alias for target table - defaults to `tgt`
-        :param src_name: name of source table to use in generated script
-        :param src_alias: alias for source table - defaults to `src`
-        :param update_expr: optional string representing updated condition. If not present, then
+        :param tgtName: name of target table to use in generated script
+        :param tgtAlias: alias for target table - defaults to `tgt`
+        :param srcName: name of source table to use in generated script
+        :param srcAlias: alias for source table - defaults to `src`
+        :param updateExpr: optional string representing updated condition. If not present, then
                             any row that does not match join condition is considered an update
-        :param del_expr: optional string representing delete condition - For example `src.action='DEL'`.
+        :param delExpr: optional string representing delete condition - For example `src.action='DEL'`.
                          If not present, no delete clause is generated
-        :param ins_expr: optional string representing insert condition - If not present,
+        :param insExpr: optional string representing insert condition - If not present,
                         there is no condition on insert other than no match
-        :param join_expr: string representing join condition. For example, `tgt.id=src.id`
-        :param time_expr: optional time travel expression - for example : `TIMESTAMP AS OF timestamp_expression`
+        :param joinExpr: string representing join condition. For example, `tgt.id=src.id`
+        :param timeExpr: optional time travel expression - for example : `TIMESTAMP AS OF timestamp_expression`
                         or `VERSION AS OF version`
-        :param insert_columns: Optional list of strings designating columns to insert.
+        :param insertColumns: Optional list of strings designating columns to insert.
                                If not supplied, uses all columns defined in spec
-        :param insert_column_exprs: Optional list of strings designating designating column expressions for insert.
+        :param insertColumnExprs: Optional list of strings designating designating column expressions for insert.
             By default, will use src column as insert value into
             target table. This should have the form [ ("insert_column_name", "insert column expr"), ...]
-        :param update_columns: List of strings designating columns to update.
+        :param updateColumns: List of strings designating columns to update.
                                If not supplied, uses all columns defined in spec
-        :param update_column_exprs: Optional list of strings designating designating column expressions for update.
+        :param updateColumnExprs: Optional list of strings designating designating column expressions for update.
             By default, will use src column as update value for
             target table. This should have the form [ ("update_column_name", "update column expr"), ...]
-        :param use_explicit_names: If True, generate explicit column names in insert and update statements
+        :param useExplicitNames: If True, generate explicit column names in insert and update statements
         :returns: SQL string for scripted merge statement
         """
-        assert tgt_name is not None, "you must specify a target table"
-        assert src_name is not None, "you must specify a source table"
-        assert join_expr is not None, "you must specify a join expression"
+        assert tgtName is not None, "you must specify a target table"
+        assert srcName is not None, "you must specify a source table"
+        assert joinExpr is not None, "you must specify a join expression"
 
         self.computeBuildPlan()
 
@@ -1024,58 +1027,58 @@ class DataGenerator:
                """)
 
         # use list of column names if not supplied
-        if insert_columns is None:
-            insert_columns = output_columns
+        if insertColumns is None:
+            insertColumns = output_columns
 
-        if update_columns is None:
-            update_columns = output_columns
+        if updateColumns is None:
+            updateColumns = output_columns
 
         # build merge statement
-        results = ["MERGE INTO `{}` as {}".format(tgt_name, tgt_alias)]
+        results = ["MERGE INTO `{}` as {}".format(tgtName, tgtAlias)]
 
         # use time expression if supplied
-        if time_expr is None:
-            results.append("USING `{}` as {}".format(src_name, src_alias))
+        if timeExpr is None:
+            results.append("USING `{}` as {}".format(srcName, srcAlias))
         else:
-            results.append("USING `{}` {} as {}".format(src_name, time_expr, src_alias))
+            results.append("USING `{}` {} as {}".format(srcName, timeExpr, srcAlias))
 
         # add join condition
-        results.append("ON {}".format(join_expr))
+        results.append("ON {}".format(joinExpr))
 
         # generate update clause
         update_clause = None
-        if update_expr is not None:
-            update_clause = """WHEN MATCHED and {} THEN UPDATE """.format(update_expr)
+        if updateExpr is not None:
+            update_clause = """WHEN MATCHED and {} THEN UPDATE """.format(updateExpr)
         else:
             update_clause = """WHEN MATCHED THEN UPDATE """
 
-        if not use_explicit_names:
+        if not useExplicitNames:
             update_clause = update_clause + " SET *"
         else:
             update_clause = (update_clause
                              + " SET "
-                             + self._mkInsertOrUpdateStatement(columns=update_columns, src_alias=src_alias,
-                                                               substitutions=update_column_exprs))
+                             + self._mkInsertOrUpdateStatement(columns=updateColumns, srcAlias=srcAlias,
+                                                               substitutions=updateColumnExprs))
 
         results.append(update_clause)
 
         # generate delete clause
-        if del_expr is not None:
-            results.append("WHEN MATCHED and {} THEN DELETE".format(del_expr))
+        if delExpr is not None:
+            results.append("WHEN MATCHED and {} THEN DELETE".format(delExpr))
 
-        if ins_expr is not None:
-            ins_clause = "WHEN NOT MATCHED and {} THEN INSERT ".format(ins_expr)
+        if insExpr is not None:
+            ins_clause = "WHEN NOT MATCHED and {} THEN INSERT ".format(insExpr)
         else:
             ins_clause = "WHEN NOT MATCHED THEN INSERT "
 
-        if not use_explicit_names:
+        if not useExplicitNames:
             ins_clause = ins_clause + " *"
         else:
             ins_clause = (ins_clause
-                          + "({})".format(",".join(insert_columns))
-                          + " VALUES ({})".format(self._mkInsertOrUpdateStatement(columns=insert_columns,
-                                                                                  src_alias=src_alias,
-                                                                                  substitutions=insert_column_exprs,
+                          + "({})".format(",".join(insertColumns))
+                          + " VALUES ({})".format(self._mkInsertOrUpdateStatement(columns=insertColumns,
+                                                                                  srcAlias=srcAlias,
+                                                                                  substitutions=insertColumnExprs,
                                                                                   isUpdate=False))
                           )
 

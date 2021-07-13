@@ -164,19 +164,19 @@ class TestBuildPlanning(unittest.TestCase):
                                              partitions=4)
                             .withSchema(schema)
                             .withIdOutput()
-                            .withColumnSpecs(patterns=".*_ID", match_types=StringType(), format="%010d",
+                            .withColumnSpecs(patterns=".*_ID", matchTypes=StringType(), format="%010d",
                                              minValue=1, maxValue=123,
                                              step=1)
-                            .withColumnSpecs(patterns=".*_IDS", match_types=StringType(), format="%010d", minValue=1,
+                            .withColumnSpecs(patterns=".*_IDS", matchTypes=StringType(), format="%010d", minValue=1,
                                              maxValue=100, step=1)
                             #     .withColumnSpec("R3D3_CLUSTER_IDS", minValue=1, maxValue=100, step=1)
                             .withColumnSpec("XYYZ_IDS", minValue=1, maxValue=123, step=1,
                                             format="%05d")
-                            # .withColumnSpec("nstr4", percent_nulls=10.0,
+                            # .withColumnSpec("nstr4", percentNulls=10.0,
                             # minValue=1, maxValue=9, step=2,  format="%04d")
                             # example of IS_SALE
                             .withColumnSpec("IS_S", values=sale_values, weights=sale_weights, random=True)
-                            # .withColumnSpec("nstr4", percent_nulls=10.0,
+                            # .withColumnSpec("nstr4", percentNulls=10.0,
                             # minValue=1, maxValue=9, step=2,  format="%04d")
 
                             )
@@ -206,7 +206,7 @@ class TestBuildPlanning(unittest.TestCase):
     def test_explain_on_clone(self):
         testDataSpec2 = self.testDataSpec.clone()
         testDataSpec2.computeBuildPlan()
-        explain_results = testDataSpec2.explain(suppress_output=True)
+        explain_results = testDataSpec2.explain(suppressOutput=True)
 
         self.assertIsNotNone(explain_results)
 

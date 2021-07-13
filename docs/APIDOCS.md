@@ -161,9 +161,9 @@ For example:
 
 ```python
     (dg
-       .withColumnSpecs(patterns=".*_ID", match_types=StringType(), format="%010d", 
+       .withColumnSpecs(patterns=".*_ID", matchTypes=StringType(), format="%010d", 
                                minValue=10, maxValue=123, step=1)
-       .withColumnSpecs(patterns=".*_IDS", match_types=StringType(), format="%010d", 
+       .withColumnSpecs(patterns=".*_IDS", matchTypes=StringType(), format="%010d", 
                                minValue=1, maxValue=100, step=1)
     )
 
@@ -202,7 +202,7 @@ testDataSpec = (dg.DataGenerator(sparkSession=spark, name="device_data_set", row
 
     # note for format strings, we must use "%lx" not "%x" as the underlying value is a long
     .withColumn("device_id", StringType(), format="0x%013x", baseColumn="internal_device_id")
-    #.withColumn("device_id_2", StringType(), format='0x%013x', base_column="internal_device_id")
+    #.withColumn("device_id_2", StringType(), format='0x%013x', baseColumn="internal_device_id")
 
     # the device / user attributes will be the same for the same device id - so lets use the internal device id as the base column for these attribute
     .withColumn("country", StringType(), values=country_codes, weights=country_weights,
