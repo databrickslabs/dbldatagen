@@ -104,6 +104,6 @@ Once the library has been installed, you can use it to generate a test data fram
 The code follows the Pyspark coding conventions. 
 
 Basically it follows the Python PEP8 coding conventions - but method and argument names used mixed case starting 
-with a lower case letter rather than underscores.
+with a lower case letter rather than underscores following Pyspark coding conventions.
 
 See https://legacy.python.org/dev/peps/pep-0008/

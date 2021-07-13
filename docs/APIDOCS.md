@@ -108,6 +108,7 @@ Here is an example of creating a simple test data set without use of a schema.
 
 ```python 
 import dbldatagen as dg
+from pyspark.sql.types import FloatType, IntegerType, StringType
 
 row_count=1000 * 100
 testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=row_count,
@@ -206,6 +207,7 @@ device from event to event.
 import dbldatagen as dg
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType, DateType, LongType
 from dbldatagen import DateRange, NRange
+from pyspark.sql.types import LongType, IntegerType, StringType
 
 shuffle_partitions_requested = 8
 device_population = 100000
@@ -222,7 +224,8 @@ lines = [ 'delta', 'xyzzy', 'lakehouse', 'gadget', 'droid']
 
 
 testDataSpec = (dg.DataGenerator(sparkSession=spark, name="device_data_set", rows=data_rows,
-                                             partitions=partitions_requested, seed_method='hash_fieldname', verbose=True, debug=True)
+                                             partitions=partitions_requested, seed_method='hash_fieldname', 
+                                             verbose=True, debug=True)
     .withIdOutput()
     # we'll use hash of the base field to generate the ids to avoid a simple incrementing sequence
     .withColumn("internal_device_id", LongType(), minValue=0x1000000000000, unique_values=device_population)
@@ -231,7 +234,8 @@ testDataSpec = (dg.DataGenerator(sparkSession=spark, name="device_data_set", row
     .withColumn("device_id", StringType(), format="0x%013x", base_column="internal_device_id")
     #.withColumn("device_id_2", StringType(), format='0x%013x', base_column="internal_device_id")
 
-    # the device / user attributes will be the same for the same device id - so lets use the internal device id as the base column for these attribute
+    # the device / user attributes will be the same for the same device id 
+    # so lets use the internal device id as the base column for these attribute
     .withColumn("country", StringType(), values=country_codes, weights=country_weights,
           base_column="internal_device_id", base_column_type="hash")
     .withColumn("country2a", LongType(), expr="((hash(internal_device_id) % 3847) + 3847) % 3847", 
@@ -241,13 +245,17 @@ testDataSpec = (dg.DataGenerator(sparkSession=spark, name="device_data_set", row
     .withColumn("country3", StringType(), values=country_codes, base_column="country2")
     .withColumn("manufacturer", StringType(), values=manufacturers, base_column="internal_device_id")
 
-    # use omit = True if you dont want a column to appear in the final output but just want to use it as part of generation of another column
+    # use omit = True if you don't want a column to appear in the final output 
+    # but just want to use it as part of generation of another column
     .withColumn("line", StringType(), values=lines, base_column="manufacturer", 
            base_column_type="hash", omit=True)
-    .withColumn("model_ser", IntegerType(), minValue=1, maxValue=11,  base_column="device_id", base_column_type="hash", omit=True)
+    .withColumn("model_ser", IntegerType(), minValue=1, maxValue=11,  base_column="device_id", 
+           base_column_type="hash", omit=True)
 
     .withColumn("model_line", StringType(), expr="concat(line, '#', model_ser)", base_column=["line", "model_ser"])
-    .withColumn("event_type", StringType(), values=["activation", "deactivation", "plan change", "telecoms activity", "internet activity", "device error"], random=True)
+    .withColumn("event_type", StringType(), 
+           values=["activation", "deactivation", "plan change", "telecoms activity", "internet activity", "device error"],
+           random=True)
 
     )
 
