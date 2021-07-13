@@ -25,6 +25,9 @@ to Scala or R based Spark applications also.
    Using data ranges <relnotes/DATARANGES>
    Generating text data <relnotes/TEXTDATA>
    Using data distributions <relnotes/DISTRIBUTIONS>
+   Options for column specification <OPTIONS_AND_FEATURES>
+   Generating test data for CDC scenarios <GENERATING_TEST_DATA_FOR_CDC>
+   Generating multiple table data <GENERATING_MULTIPLE_TABLES>
 
 .. toctree::
    :maxdepth: 1
