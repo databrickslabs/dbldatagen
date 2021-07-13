@@ -36,7 +36,7 @@ immediately following the purchase.
 ```python 
 import dbldatagen as dg
 import dbldatagen.distributions as dist
-
+from pyspark.sql.types import IntegerType
 
 row_count=1000 * 100
 testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=row_count,

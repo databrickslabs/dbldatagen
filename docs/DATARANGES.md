@@ -88,6 +88,7 @@ Here is an example illustrating use of simple date range constraints. In this ca
 
 ```python 
 import dbldatagen as dg
+from pyspark.sql.types import IntegerType
 
 row_count=1000 * 100
 testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=row_count,
@@ -110,6 +111,7 @@ Here we specify an explicit date range and add a random number of days for the r
 
 ```python 
 import dbldatagen as dg
+from pyspark.sql.types import IntegerType
 
 row_count=1000 * 100
 testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=row_count,
