@@ -16,7 +16,7 @@ for a given module.
 NOTE: when a new source code file is added, an entry should be added for that file in this metadata.
 
 """
-sourceFiles = {
+SOURCE_FILES = {
     "data_generator.py": {"briefDesc": "Main generator classes",
                           "grouping": "main classes"},
     "column_generation_spec.py": {"briefDesc": "Column Generation Spec types",
@@ -55,8 +55,8 @@ sourceFiles = {
 }
 
 # grouping metadata information
-# note that the groupings will be output in the order that they appear here
-groupings = {
+# note that the GROUPING_INFO will be output in the order that they appear here
+GROUPING_INFO = {
     "main classes": {
         "heading": "Main user facing classes, functions and types"
     },
@@ -94,8 +94,8 @@ class FileMeta:
     UNGROUPED = "ungrouped"
     GROUPING = "grouping"
     BRIEF_DESCRIPTION = "briefDesc"
-    def __init__(self, moduleName: str, metadata, classes, functions, types,
-                 subpackage: str = None):
+
+    def __init__(self, moduleName: str, metadata, classes, functions, types, subpackage: str = None):
         """ Constructor for File Meta
 
         :param moduleName:
@@ -107,7 +107,7 @@ class FileMeta:
         """
         self.moduleName, self.metadata, self.subPackage = moduleName, metadata, subpackage
         self.classes, self.functions, self.types = classes, functions, types
-        print("module", moduleName, "metadata", metadata, self.metadata)
+        print("creating file metadata for module: ", moduleName, ", with metadata: ", metadata)
         assert self.metadata[self.GROUPING] is not None
         if metadata is not None and type(metadata) is dict:
             self.description = self.metadata[self.BRIEF_DESCRIPTION]
@@ -120,13 +120,13 @@ class FileMeta:
     def isPopulated(self):
         """ Check if instance has any classes, functions or types"""
         return ((self.classes is not None and len(self.classes) > 0)
-              or (self.functions is not None and len(self.functions) > 0)
-                or (self.types is not None and  len(self.types) > 0))
+                or (self.functions is not None and len(self.functions) > 0)
+                or (self.types is not None and len(self.types) > 0))
 
 
-def find_members(sourceFile, fileMetadata, fileSubpackage):
-    """
-    Find classes, types and functions in file
+def findMembers(sourceFile, fileMetadata, fileSubpackage):
+    """  Find classes, types and functions in file
+
     :param fileMetadata: metadata for file
     :param fileSubpackage: subpackage for file
     :param sourceFile: file to search
@@ -142,7 +142,7 @@ def find_members(sourceFile, fileMetadata, fileSubpackage):
 
     with open(sourceFile, 'r') as fp:
         fname = fp.name
-        print("module :", Path(fp.name).stem)
+        print("scanning module for members:", Path(fp.name).stem)
         try:
             for line in fp:
                 classNames = class_pattern.findall(line)
@@ -162,16 +162,18 @@ def find_members(sourceFile, fileMetadata, fileSubpackage):
     return FileMeta(moduleName=Path(sourceFile.name).stem,
                     metadata=fileMetadata,
                     subpackage=fileSubpackage,
-                    classes=sorted(classes), functions=sorted(functions), types=sorted(types))
+                    classes=sorted(classes),
+                    functions=sorted(functions),
+                    types=sorted(types))
 
 
-def include_template(outputFile):
-    '''
+def includeTemplate(outputFile):
+    """
     Include template in output
 
     :param outputFile:
     :return: nothing
-    '''
+    """
     with open('utils/template_quick_index.rst', 'r') as templateFile:
         outputFile.write(templateFile.read())
         outputFile.write("\n\n")
@@ -180,87 +182,92 @@ def include_template(outputFile):
 def processItemList(outputFile, items, sectionTitle, subpackage=None):
     """ process list of items
 
-    :param outputFile:
+    :param outputFile: output file instance
     :param items: list of items. each item is a tuple of ( "moduleName.typename", "type description")
-    :param sectionTitle:
-    :param subpackage:
-    :return:
+    :param sectionTitle: title of section
+    :param subpackage: optional subpackage name
+    :return: nothing
     """
-    if items is not None and len(items) > 0 and sectionTitle is not None and len(sectionTitle) > 0:
-        outputFile.write(f"{sectionTitle}\n\n")
+    if items is not None and len(items) > 0:
+        if sectionTitle is not None and len(sectionTitle) > 0:
+            outputFile.write(f"{sectionTitle}\n\n")
 
-    for item in items:
-        desc = ""
-        if item[1] is not None and len(item[1]) > 0:
-            desc = f" - {item[1]}"
-        if subpackage is not None:
-            outputFile.write(f"* :data:`~{PACKAGE_NAME}.{subpackage}.{item[0]}`{desc}\n")
-        else:
-            outputFile.write(f"* :data:`~{PACKAGE_NAME}.{item[0]}`{desc}\n")
+        for item in items:
+            desc = ""
+            if item[1] is not None and len(item[1]) > 0:
+                desc = f" - {item[1]}"
+            if subpackage is not None:
+                outputFile.write(f"* :data:`~{PACKAGE_NAME}.{subpackage}.{item[0]}`{desc}\n")
+            else:
+                outputFile.write(f"* :data:`~{PACKAGE_NAME}.{item[0]}`{desc}\n")
 
-    outputFile.write("\n")
+        outputFile.write("\n")
 
 
 def processDirectory(outputFile, pathToProcess, subpackage=None):
     """ process directory for package or subpackage
 
-    :param outputFile:
-    :param pathToProcess:
-    :param subpackage:
-    :return:
+    :param outputFile: output file instance
+    :param pathToProcess: path to process
+    :param subpackage: subpackage to process
+    :return: nothing
     """
     projectDirectory = Path(PROJECT_PATH)
-    fileGroupings = {} # map of lists of file metainfo keyed by grouping
+    fileGroupings = {}  # map of lists of file metainfo keyed by grouping
 
-    print("directory: ", pathToProcess)
     if pathToProcess.exists():
-        filesToProcess = pathToProcess.glob("*.py")
-        for fp in filesToProcess:
-            relativeFile = fp.relative_to(projectDirectory)
-            print("processing file:", relativeFile)
-            if relativeFile.name in sourceFiles:
-                print("dict", sourceFiles[relativeFile.name])
-                title = sourceFiles[relativeFile.name]["briefDesc"]
-                print(relativeFile, title)
+        filesToProcess = pathToProcess.glob("*.py")  # get list of python files in path
 
-                fileMetaInfo = find_members(fp,
-                                            fileMetadata=sourceFiles[relativeFile.name],
-                                            fileSubpackage=subpackage)
+        # ... and process them - adding each file's members to the metadata for that file
+        for fp in filesToProcess:
+            relativeFile = fp.relative_to(projectDirectory)  # compute relative file name
+            print(f"processing file: [{fp}], relative_name: [{relativeFile}]")
+            if relativeFile.name in SOURCE_FILES:
+                title = SOURCE_FILES[relativeFile.name]["briefDesc"]
+
+                # get the classes, functions and types for the file
+                fileMetaInfo = findMembers(fp,
+                                           fileMetadata=SOURCE_FILES[relativeFile.name],
+                                           fileSubpackage=subpackage)
 
                 assert fileMetaInfo is not None
+
+                # for now, just store the metadata about the file
                 if fileMetaInfo.isPopulated:
                     if fileMetaInfo.grouping in fileGroupings:
-                        print(f"extending entry for `{fileMetaInfo.grouping}`")
                         assert type(fileMetaInfo.grouping) is str
                         assert type(fileGroupings[fileMetaInfo.grouping]) is list
                         fileGroupings[fileMetaInfo.grouping].append(fileMetaInfo)
                     else:
-                        print(f"adding new entry for `{fileMetaInfo.grouping}`")
                         newEntry = [fileMetaInfo, ]
                         assert type(newEntry) is list
                         fileGroupings[fileMetaInfo.grouping] = newEntry
+            elif not relativeFile.name.startswith("_"):
+                # generate warning if relative file name does not begin with `_`
+                print(f"*** warning entry not found for : [{relativeFile}]")
 
-        print("file groupings")
-        for grp in groupings:
-            print("group", grp)
+        # now processing the grouping information to generate the index entries
+        for grp in GROUPING_INFO:
             if grp in fileGroupings:
-                writeUnderlined(outputFile, groupings[grp]["heading"], underline="~")
+                writeUnderlined(outputFile, GROUPING_INFO[grp]["heading"], underline="~")
                 fileMetaInfoList = fileGroupings[grp]
 
+                # get the list of classes for the package
                 classList = [(f"{fileMetaInfo.moduleName}.{cls}", fileMetaInfo.description)
-                           for fileMetaInfo in fileMetaInfoList for cls in fileMetaInfo.classes
-                           if fileMetaInfo.isPopulated]
+                             for fileMetaInfo in fileMetaInfoList for cls in fileMetaInfo.classes
+                             if fileMetaInfo.isPopulated]
 
+                # get the list of functions for the package
                 functionList = [(f"{fileMetaInfo.moduleName}.{fn}", fileMetaInfo.description)
-                           for fileMetaInfo in fileMetaInfoList for fn in fileMetaInfo.functions
-                           if fileMetaInfo.isPopulated]
+                                for fileMetaInfo in fileMetaInfoList for fn in fileMetaInfo.functions
+                                if fileMetaInfo.isPopulated]
 
+                # get the list of types for the package
                 typeList = [(f"{fileMetaInfo.moduleName}.{typ}", "")
-                           for fileMetaInfo in fileMetaInfoList for typ in fileMetaInfo.types
-                           if fileMetaInfo.isPopulated]
+                            for fileMetaInfo in fileMetaInfoList for typ in fileMetaInfo.types
+                            if fileMetaInfo.isPopulated]
 
-
-                print(classList)
+                # emit each of the sections in the index
                 processItemList(outputFile, classList,
                                 sectionTitle="Classes",
                                 subpackage=subpackage)
@@ -275,21 +282,20 @@ def processDirectory(outputFile, pathToProcess, subpackage=None):
 def main(dirToSearch, outputPath):
     dirToSearch = sys.argv[1]
     outputFile = sys.argv[2]
-    print(f"scanning dir {dirToSearch}")
-    print(f"writing to output file {outputPath}")
+    print(f"scanning dir: {dirToSearch}")
+    print(f"writing to output file: {outputPath}")
 
     with open(outputPath, 'w') as outputFile:
-        include_template(outputFile)
+        includeTemplate(outputFile)
 
-        writeUnderlined(outputFile, f"The ``{PACKAGE_NAME}`` package",
-                        underline="_")
+        writeUnderlined(outputFile, f"The ``{PACKAGE_NAME}`` package", underline="_")
 
         processDirectory(outputFile, Path(f"{PROJECT_PATH}"))
 
-        writeUnderlined(outputFile, f"The ``{PACKAGE_NAME}.distributions`` package",
-                        underline="_")
+        writeUnderlined(outputFile, f"The ``{PACKAGE_NAME}.distributions`` package", underline="_")
 
         processDirectory(outputFile, Path(f"{PROJECT_PATH}/distributions"), subpackage="distributions")
 
 
-main(sys.argv[1], sys.argv[2])
+if __name__ == '__main__':
+    main(sys.argv[1], sys.argv[2])
