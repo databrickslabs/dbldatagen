@@ -18,7 +18,10 @@ runtime, and you can use it from Scala, R or other languages by defining
 a view over the generated data.
 
 It supports:
-* Generating test data for all of the 
+* Generating synthetic data at scale up to billions of rows within minutes using appropriately sized clusters 
+* Generating repeatable, predictable data supporting the needs for producing multiple tables, Change Data Capture, 
+merge and join scenarios with consistency between primary and foreign keys
+* Generating synthetic data for all of the 
 Spark SQL supported primitive types as a Spark data frame which may be persisted, 
 saved to external storage or 
 used in other computations
@@ -26,9 +29,9 @@ used in other computations
 * Generation of discrete values - both numeric and text
 * Generation of values at random and based on the values of other fields 
 (either based on the `hash` of the underlying values or the values themselves)
-* Specifying 
+* Ability to specify a distribution for random data generation 
 * Generating arrays of values for ML style feature arrays
-* Applying weights to the occurence of values
+* Applying weights to the occurrence of values
 * Generating values to conform to a schema or independent of an existing schema
 * use of SQL expressions in test data generation
 
