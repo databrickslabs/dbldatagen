@@ -115,7 +115,8 @@ class ColumnSpecOptions(object):
     #: maxValue values for each column type, only if where value is intentionally restricted
     _max_type_range = {
         'byte': 256,
-        'short': 65536
+        'short': 65536,
+        'int': 4294967296
     }
 
     def __init__(self, props):  # TODO: check if additional options are needed here as `**kwArgs`

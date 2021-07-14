@@ -896,7 +896,7 @@ class DataGenerator:
         for colNames in self.build_order:
             build_round = ["*"]
             inx_col = 0
-            self.execution_history.append("building rounding for : {}".format(colNames))
+            self.execution_history.append("building stage for columns: {}".format(colNames))
             for colName in colNames:
                 col1 = self.columnSpecsByName[colName]
                 column_generators = col1.makeGenerationExpressions(self.use_pandas)
