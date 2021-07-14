@@ -183,7 +183,7 @@ class ColumnGenerationSpec(object):
         self.dependencies = self._computeBasicDependencies()
 
         # value of `base_column_type` must be `None`,"values", "raw_values", "auto",  or "hash"
-        # this is the method of comouting current column value from base column, not the data type of the base column
+        # this is the method of computing current column value from base column, not the data type of the base column
         allowed_compute_methods = [AUTO_COMPUTE_METHOD, VALUES_COMPUTE_METHOD, HASH_COMPUTE_METHOD,
                                    RAW_VALUES_COMPUTE_METHOD, None]
         column_spec_options.checkOptionValues("base_column_type", allowed_compute_methods)
@@ -238,7 +238,8 @@ class ColumnGenerationSpec(object):
         # if we have text manipulation, use 'values' as default for format but 'hash' as default if
         # its a column with multiple values
         if ((self.base_column_compute_method is None) or (self.base_column_compute_method is AUTO_COMPUTE_METHOD)) \
-                and (self.text_generator is not None or self['format'] is not None):
+                and (self.text_generator is not None or self['format'] is not None
+                     or self['prefix'] is not None or self['suffix'] is not None):
             if self.values is not None:
                 self.logger.warning("""Column [%s] has no `base_column_type` attribute and uses discrete values
                                        => Assuming `hash` for attribute `base_column_type`. 
@@ -928,8 +929,7 @@ class ColumnGenerationSpec(object):
 
         if self.data_range is not None:
             self.data_range.adjustForColumnDatatype(self.datatype)
-
-        self.execution_history.append(".. using effective range: {}".format(self.data_range))
+            self.execution_history.append(f".. using effective range: {self.data_range}")
 
         new_def = None
 
@@ -938,13 +938,16 @@ class ColumnGenerationSpec(object):
         # handle weighted values for weighted value columns
         # a weighted values column will use a base value denoted by `self.weighted_base_column`
         if self.isWeightedValuesColumn:
+            self.execution_history.append(".. building weighted volumn values expression")
             new_def = self._makeWeightedColumnValuesExpression(self.values, self.weights, self.weighted_base_column)
 
             if type(self.datatype) is StringType and self.text_generator is not None:
                 self.logger.warning("Template generation / text generation not supported for weighted columns")
+                self.execution_history.append(".. WARNING: Template & text generation not supported for weights")
 
             if type(self.datatype) is StringType and sformat is not None:
                 self.logger.warning("Formatting not supported for weighted columns")
+                self.execution_history.append(".. WARNING: Formatting not supported for weighted columns")
         else:
             # rs: initialize the begin, end and interval if not initialized for date computations
             # defaults are start of day, now, and 1 minute respectively
@@ -955,24 +958,35 @@ class ColumnGenerationSpec(object):
             if self.expr is not None:
                 # note use of SQL expression ignores range specifications
                 new_def = expr(self.expr).astype(self.datatype)
+
+                # record execution history
+                self.execution_history.append(f".. using SQL expression `{self.expr}` as base")
+                self.execution_history.append(f".. casting to  `{self.datatype}`")
             elif self.data_range is not None and self.data_range.isFullyPopulated():
                 self.execution_history.append(".. computing ranged value: {}".format(self.data_range))
                 new_def = self._computeRangedColumn(base_column=self.baseColumn, datarange=self.data_range,
                                                     is_random=col_is_rand)
             elif type(self.datatype) is DateType:
+                # TODO: fixup for date generation
+
+                # record execution history
+                self.execution_history.append(f".. using random date expression")
                 sql_random_generator = self._getUniformRandomSQLExpression(self.name)
                 new_def = expr("date_sub(current_date, rounding({}*1024))".format(sql_random_generator)).astype(
                     self.datatype)
             else:
                 if self.base_column_compute_method == VALUES_COMPUTE_METHOD:
+                    self.execution_history.append(f".. using values compute expression for seed")
                     new_def = self._getSeedExpression(self.baseColumn)
                 elif self.base_column_compute_method == RAW_VALUES_COMPUTE_METHOD:
+                    self.execution_history.append(f".. using raw values compute expression for seed")
                     new_def = self._getSeedExpression(self.baseColumn)
                 # TODO: resolve issues with hash when using templates
                 # elif self.base_column_compute_method == HASH_COMPUTE_METHOD:
                 #    new_def = self._getSeedExpression(self.baseColumn)
                 else:
                     self.logger.warning("Assuming a seeded base expression with minimum value for column %s", self.name)
+                    self.execution_history.append(f".. seeding with minimum `{self.data_range.minValue}`")
                     new_def = ((self._getSeedExpression(self.baseColumn) + lit(self.data_range.minValue))
                                .astype(self.datatype))
 
@@ -1007,11 +1021,14 @@ class ColumnGenerationSpec(object):
         # TODO: prefix and suffix only apply to base columns that are numeric types
         text_separator = self.text_separator if self.text_separator is not None else '_'
         if cprefix is not None and csuffix is not None:
+            self.execution_history.append(".. applying column prefix and suffix")
             new_def = concat(lit(cprefix), lit(text_separator), new_def.astype(IntegerType()), lit(text_separator),
                              lit(csuffix))
         elif cprefix is not None:
+            self.execution_history.append(".. applying column prefix")
             new_def = concat(lit(cprefix), lit(text_separator), new_def.astype(IntegerType()))
         elif csuffix is not None:
+            self.execution_history.append(".. applying column suffix")
             new_def = concat(new_def.astype(IntegerType()), lit(text_separator), lit(csuffix))
         return new_def
 
@@ -1102,8 +1119,15 @@ class ColumnGenerationSpec(object):
             num_columns = self['numFeatures']
 
         if num_columns == 1 or num_columns is None:
-            self.execution_history.append("generating single column - `{0}`".format(self['name']))
+            # record execution history for troubleshooting
+            self.execution_history.append(f"generating single column - `{self.name}` having type `{self.datatype}`")
+
             retval = self._makeSingleGenerationExpression(use_pandas_optimizations=use_pandas)
+
+            # record how column was generated
+            exec_step_history = ".. computed from base values - "
+            exec_step_history += f"`{self.baseColumn}`, method: `{self.base_column_compute_method}`"
+            self.execution_history.append(exec_step_history)
         else:
             self.execution_history.append("generating multiple columns {0} - `{1}`".format(num_columns, self['name']))
             retval = [self._makeSingleGenerationExpression(x) for x in range(num_columns)]
