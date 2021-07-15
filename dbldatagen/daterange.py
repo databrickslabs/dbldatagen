@@ -25,8 +25,10 @@ class DateRange(DataRange):
     :param begin: start of date range as python `datetime` object. If specified as string, converted to datetime
     :param end: end of date range as python `datetime` object. If specified as string, converted to datetime
     :param interval: interval of date range as python `timedelta` object.
-    Note parsing format for interval uses standard timedelta parsing not the `datetime_format` string
+                     Note parsing format for interval uses standard timedelta parsing not
+                     the `datetime_format` string
     :param datetime_format: format for conversion of strings to datetime objects
+
     """
 
     DEFAULT_UTC_TS_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -144,6 +146,7 @@ class DateRange(DataRange):
         """ adjust the range for the column output type
 
         :param ctype: Spark SQL data type for column
+
         """
         pass
 
@@ -153,6 +156,7 @@ class DateRange(DataRange):
             Note does not modify range object.
 
             :returns: range from minValue to maxValue
+
         """
         return (self.maxValue - self.minValue) * float(1.0 / self.step)
 

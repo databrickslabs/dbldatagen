@@ -4,6 +4,7 @@
 
 """
 .. title::Column Spec Options
+
 This file defines the `ColumnSpecOptions` class
 """
 
@@ -22,13 +23,13 @@ class ColumnSpecOptions(object):
 
     :param name: Column name
 
-    :param type: Data type of column. Can be either instance of Spark SQL Datatype such as `IntegerType()`
+    :param type: Data type of column. Can be either instance of Spark SQL Datatype such as `IntegerType()` \
                  or string containing SQL name of type
 
-    :param minValue: Minimum value for range of generated value.
+    :param minValue: Minimum value for range of generated value. \
                      As an alternative, you may use the `data_range` parameter
 
-    :param maxValue: Maximum value for range of generated value.
+    :param maxValue: Maximum value for range of generated value. \
                      As an alternative, you may use the `data_range` parameter
 
     :param step: Step to use for range of generated value. As an alternative, you may use the `data_range` parameter
@@ -43,7 +44,7 @@ class ColumnSpecOptions(object):
 
     :param weights: List of discrete weights for the colummn. Should be integer values.
                     For example, you might declare a column for status values with a weighted distribution with
-                    the following statement:
+                    the following statement: \
                     `withColumn("status", StringType(), values=['online', 'offline', 'unknown'], weights=[3,2,1])`
 
     :param percent_nulls: Specifies numeric percentage of generated values to be populated with SQL `null`.
@@ -74,10 +75,10 @@ class ColumnSpecOptions(object):
     :param text_separator: string specifying separator to be used when constructing strings with prefix and suffix
 
     :param prefix: string specifying prefix text to construct field from prefix and numeric value. Both `prefix` and
-    `suffix` can be used together
+                   `suffix` can be used together
 
     :param suffix: string specifying suffix text to construct field from suffix and numeric value. Both `prefix` and
-    `suffix` can be used together
+                   `suffix` can be used together
 
     .. note::
         If the `data_range` parameter is specified as well as the `minValue`, `maxValue` or `step`,
