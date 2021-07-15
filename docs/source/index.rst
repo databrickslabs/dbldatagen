@@ -20,11 +20,11 @@ to Scala or R based Spark applications also.
    :maxdepth: 1
    :caption: Getting Started
 
-   Get Started Here <relnotes/APIDOCS>
+   Get Started Here <APIDOCS>
    Installation instructions <installation_notes>
-   Using data ranges <relnotes/DATARANGES>
-   Generating text data <relnotes/TEXTDATA>
-   Using data distributions <relnotes/DISTRIBUTIONS>
+   Using data ranges <DATARANGES>
+   Generating text data <TEXTDATA>
+   Using data distributions <DISTRIBUTIONS>
    Options for column specification <options_and_features>
    Troubleshooting data generation <troubleshooting>
 

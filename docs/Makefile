@@ -56,12 +56,6 @@ license:
 
 dependent_files: relnotes requirements license quick_index
 	@echo "Making dependent files"
-	@-mkdir source/relnotes
-	@cp -f "$(DOC_DIR)/APIDOCS.md" "$(SOURCEDIR)"/relnotes/
-	@cp -f "$(DOC_DIR)/DATARANGES.md" "$(SOURCEDIR)"/relnotes/
-	@cp -f "$(DOC_DIR)/DISTRIBUTIONS.md" "$(SOURCEDIR)"/relnotes/
-	@cp -f "$(DOC_DIR)/TEXTDATA.md" "$(SOURCEDIR)"/relnotes/
-
 
 html: Makefile
 	@echo "Making HTML"

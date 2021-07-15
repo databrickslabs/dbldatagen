@@ -1,7 +1,7 @@
 # Databricks Labs Data Generator (`dbldatagen`)
 [Release Notes](CHANGELOG.md) |
 [Python Wheel](https://github.com/databrickslabs/data-generator/releases/tag/v1-0.11.0-dev1) |
-[Developer Docs](docs/APIDOCS.md) |
+[Developer Docs](docs/source/APIDOCS.md) |
 [Examples](examples) |
 [Tutorial](tutorial) 
 
@@ -34,6 +34,10 @@ used in other computations
 * Applying weights to the occurrence of values
 * Generating values to conform to a schema or independent of an existing schema
 * use of SQL expressions in test data generation
+
+Details of these features can be found in the [Developer Docs](docs/source/APIDOCS.md) and the online help
+(which contains the full documentation).
+
 
 ## Project Support
 Please note that all projects in the `databrickslabs` github space are provided for your exploration only, and are not formally supported by Databricks with Service Level Agreements (SLAs).  They are provided AS-IS and we do not make any guarantees of any kind.  Please do not submit a support ticket relating to any issues arising from the use of these projects.

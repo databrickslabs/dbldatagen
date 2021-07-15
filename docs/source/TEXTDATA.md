@@ -17,7 +17,7 @@ This is the simplest way to specify a small set of discrete values for a column.
 
 The following example illustrates generating data for specific ranges of values:
 
-```buildoutcfg
+```python
 import dbldatagen as dg
 df_spec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
                                                   partitions=4)
@@ -61,7 +61,7 @@ See [Wikipedia article on `Lorem Ipsum](https://en.wikipedia.org/wiki/Lorem_ipsu
 
 For example
 
-```buildoutcfg
+```python
 import dbldatagen as dg
 df_spec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
                                                   partitions=4)
@@ -81,7 +81,7 @@ The `template` attribute allows specification of templated text generation.
 
 Here are some examples of its use to generate dummy email addresses, ip addressed and phone numbers
 
-```buildoutcfg
+```python
 import dbldatagen as dg
 df_spec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
                                                   partitions=4)
