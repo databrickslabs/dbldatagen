@@ -594,6 +594,112 @@ class TestQuickTests(unittest.TestCase):
         for col in output_columns:
             self.assertTrue(col in script)
 
+    def test_strings_from_numeric_string_field1(self):
+        """ Check that order_id always generates a non null value when using random values"""
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="stringsFromNumbers", rows=100000,
+                                         partitions=4)
+                        .withIdOutput()
+                        .withColumn("order_num",  minValue=1, maxValue=100000000, random=True)
+                        .withColumn("order_id",  prefix="order", base_column="order_num")
+                        )
+
+        testDataSpec.build(withTempView=True)
+
+        newDF = spark.sql("select * from stringsFromNumbers")
+        newDF.printSchema()
+
+        nullRowsDF = spark.sql("select * from stringsFromNumbers where order_id is null")
+
+        nullRowsDF.show()
+        rowCount = nullRowsDF.count()
+        self.assertEqual(rowCount, 0)
+
+    def test_strings_from_numeric_string_field2(self):
+        """ Check that order_id always generates a non null value when using non-random values"""
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="stringsFromNumbers", rows=100000,
+                                         partitions=4)
+                        .withIdOutput()
+                        # use step of -1 to ensure descending from max value
+                        .withColumn("order_num",  minValue=1, maxValue=100000000, step=-1)
+                        .withColumn("order_id",  prefix="order", base_column="order_num")
+                        )
+
+        testDataSpec.build(withTempView=True)
+
+        newDF = spark.sql("select * from stringsFromNumbers")
+        newDF.printSchema()
+
+        nullRowsDF = spark.sql("select * from stringsFromNumbers where order_id is null")
+
+        nullRowsDF.show()
+        rowCount = nullRowsDF.count()
+        self.assertEqual(rowCount, 0)
+
+    def test_strings_from_numeric_string_field2a(self):
+        """ Check that order_id always generates a non null value when using non-random values"""
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="stringsFromNumbers", rows=100000,
+                                         partitions=4)
+                        .withIdOutput()
+                        # use step of -1 to ensure descending from max value
+                        .withColumn("order_num",  minValue=1, maxValue=100000000, step=-1)
+                        .withColumn("order_id",  "string", minValue=None, suffix="_order", base_column="order_num")
+                        )
+
+        testDataSpec.build(withTempView=True)
+
+        testDataSpec.explain()
+
+        newDF = spark.sql("select * from stringsFromNumbers")
+        newDF.printSchema()
+
+        newDF.show()
+
+        nullRowsDF = spark.sql("select * from stringsFromNumbers where order_id is null")
+
+        nullRowsDF.show()
+        rowCount = nullRowsDF.count()
+        self.assertEqual(rowCount, 0)
+
+    def test_strings_from_numeric_string_field3(self):
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="stringsFromNumbers", rows=100000,
+                                         partitions=4)
+                        .withIdOutput()
+                        # default column type is string
+                        .withColumn("order_num",  minValue=1, maxValue=100000000, random=True)
+                        .withColumn("order_id",  prefix="order", base_column="order_num")
+                        )
+
+        testDataSpec.build(withTempView=True)
+
+        newDF = spark.sql("select * from stringsFromNumbers")
+        newDF.printSchema()
+
+        nullRowsDF = spark.sql("select * from stringsFromNumbers where order_num is null or length(order_num) = 0")
+
+        nullRowsDF.show()
+        rowCount = nullRowsDF.count()
+        self.assertEqual(rowCount, 0)
+
+    def test_strings_from_numeric_string_field4(self):
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="stringsFromNumbers", rows=100000,
+                                         partitions=4)
+                        .withIdOutput()
+                        # default column type is string
+                        .withColumn("order_num",  minValue=1, maxValue=100000000, step=-1)
+                        .withColumn("order_id",  prefix="order", base_column="order_num")
+                        )
+
+        df = testDataSpec.build(withTempView=True)
+
+        testDataSpec.explain()
+
+        nullRowsDF = spark.sql("select * from stringsFromNumbers where order_num is null or length(order_num) = 0")
+
+        rowCount = nullRowsDF.count()
+        self.assertEqual(rowCount, 0)
+
+
+
 # run the tests
 # if __name__ == '__main__':
 #  print("Trying to run tests")
