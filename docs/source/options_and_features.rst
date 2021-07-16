@@ -9,8 +9,42 @@ Options and additional features
 Options for column specification
 --------------------------------
 
-The full set of options for column specification which may be used with the `withColumn`, `withColumnSpec` and
-and `withColumnSpecs` method can be found at:
+The following table lists some of the common options that can be applied with the ``withColumn`` and ``withColumnSpec``
+methods.
+
+=============  ==============================
+Parameter      Usage
+=============  ==============================
+minValue       Minimum value for range of generated value. As alternative use ``data_range``.
+maxValue       Minimum value for range of generated value. As alternative use ``data_range``.
+step           Step to use for range of generated value. As an alternative, you may use the `data_range` parameter
+random         If True, will generate random values for column value. Defaults to `False`
+base_column    Either the string name of the base column, or a list of columns to use to control data generation.
+values         List of discrete values for the column. Discrete values can numeric, dates timestamps, strings etc.
+weights        List of discrete weights for the column. Controls spread of values
+percent_nulls  Percentage of nulls to generate for column
+unique_values  Number of distinct unqique values for the column. Use as alternative to data range.
+begin          Beginning of range for date and timestamp fields.
+end            End of range for date and timestamp fields.
+interval       Interval of range for date and timestamp fields.
+data_range     An instance of an `NRange` or `DateRange` object. This can be used in place of ``minValue``, etc.
+template       Template controlling text generation
+omit           If True, omit column from final output. Use when column is only needed to compute other columns.
+expr           SQL expression to control data generation
+=============  ==============================
+
+
+.. note::
+
+     If the `data_range` parameter is specified as well as the `minValue`, `maxValue` or `step`,
+     the results are undetermined.
+
+     For more information, see :data:`~dbldatagen.daterange.DateRange`
+     or :data:`~dbldatagen.daterange.NRange`.
+
+
+The full set of options for column specification which may be used with the ``withColumn``, ``withColumnSpec`` and
+and ``withColumnSpecs`` method can be found at:
 
    * :data:`~dbldatagen.column_spec_options.ColumnSpecOptions`
 
@@ -19,7 +53,7 @@ Generating views automatically
 
 Views can be automatically generated when the data set is generated.
 
-The view name will use the `name` argument specified when creating the data generator instance.
+The view name will use the ``name`` argument specified when creating the data generator instance.
 
 See the following links for more details:
 
@@ -30,7 +64,9 @@ Generating streaming data
 
 By default, the data generator produces data suitable for use in batch data frame processing.
 
-The following code sample illustrates generating a streaming data frame::
+The following code sample illustrates generating a streaming data frame:
+
+.. code-block:: python
 
    import os
    import time
@@ -80,3 +116,5 @@ The following code sample illustrates generating a streaming data frame::
        x.stop()
 
    end_time = time.time()
+
+

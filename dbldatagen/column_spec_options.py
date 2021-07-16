@@ -80,6 +80,19 @@ class ColumnSpecOptions(object):
     :param suffix: string specifying suffix text to construct field from suffix and numeric value. Both `prefix` and
                    `suffix` can be used together
 
+    :param omit: if True, column is omitted from the output. Used to use column for interim effect only.
+
+    :param expr: SQL expression to control data generation. Ignores column base value if present.
+
+    :param implicit: Used by system to mark that column has been inferred from a schema.
+                     Allows definition to be explicitly overridden.
+
+    :param precision: Used for rounding to specific decimal layout.
+
+    :param scale: Used for rounding to specific decimal layout.
+
+    :param distribution: Distribution for random number. Ignored if column is not random.
+
     .. note::
         If the `data_range` parameter is specified as well as the `minValue`, `maxValue` or `step`,
         the results are undetermined.
