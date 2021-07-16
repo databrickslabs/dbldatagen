@@ -9,11 +9,11 @@ Note that for Sphinx source documents (.rst docs), correct rendering is only pro
 
 ## Help resources browsable in Github
 
-- [Getting started with the Data Generator API](source/APIDOCS)
-- [Installation notes](source/installation_notes)
-- [Options and features](source/options_and_features)
-- [Using data ranges](source/DATARANGES)
-- [Using data distributions](source/DISTRIBUTIONS)
-- [Generating text data](source/textdata)
-- [Troubleshooting](source/troubleshooting)
+- [Getting started with the Data Generator API](source/APIDOCS.md)
+- [Installation notes](source/installation_notes.rst)
+- [Options and features](source/options_and_features.rst)
+- [Using data ranges](source/DATARANGES.md)
+- [Using data distributions](source/DISTRIBUTIONS.md)
+- [Generating text data](source/textdata.rst)
+- [Troubleshooting](source/troubleshooting.rst)
 - [License](source/license.rst)
