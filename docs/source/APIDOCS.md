@@ -469,7 +469,7 @@ shuffle_partitions_requested = 8
 partitions_requested = 8
 data_rows = 10000000
 
-dataspec = (dg.DataGenerator(spark, rows=10000000, partitions=8, seed_method="hash_field_value", seed=42)
+dataspec = (dg.DataGenerator(spark, rows=10000000, partitions=8, seed_method="hash_fieldname", seed=42)
                 .withColumn("name", percent_nulls=1.0, template=r'\\w \\w|\\w a. \\w') 
                 .withColumn("payment_instrument_type", values=['paypal', 'visa', 'mastercard', 'amex'], random=True)             
                 .withColumn("payment_instrument",  minValue=1000000, maxValue=10000000, template="dddd dddddd ddddd") 
