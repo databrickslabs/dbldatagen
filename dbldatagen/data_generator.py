@@ -24,6 +24,10 @@ from .spark_singleton import SparkSingleton
 _OLD_MIN_OPTION = 'min'
 _OLD_MAX_OPTION = 'max'
 
+# default random seed
+DEFAULT_RANDOM_SEED = 42
+RANDOM_SEED_RANDOM = -1
+RANDOM_SEED_RANDOM_FLOAT = -1.0
 
 class DataGenerator:
     """ Main Class for test data set generation
@@ -710,6 +714,22 @@ class DataGenerator:
         else:
             effective_random_seed_method = self._seedMethod
 
+
+
+        new_props = {}
+        new_props.update(kwargs)
+
+        # if the column  has the option `random` set to true
+        # then use the instance level random seed
+        # otherwise use the default random seed for the class
+        if "random_seed" in new_props:
+            effective_random_seed = new_props["random_seed"]
+            new_props.pop("random_seed")
+            new_props["random"] = True
+        elif "random" in new_props and new_props["random"]:
+            effective_random_seed = self._instanceRandomSeed
+        else:
+            effective_random_seed = self._randomSeed
 
 
         column_spec = ColumnGenerationSpec(colName, colType,

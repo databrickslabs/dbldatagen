@@ -26,6 +26,7 @@ to Scala or R based Spark applications also.
    Generating text data <textdata>
    Using data distributions <DISTRIBUTIONS>
    Options for column specification <options_and_features>
+   Generating repeatable data  <repeatable_data_generation>
    Troubleshooting data generation <troubleshooting>
 
 .. toctree::

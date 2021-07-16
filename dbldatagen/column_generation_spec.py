@@ -16,6 +16,7 @@ from pyspark.sql.types import FloatType, IntegerType, StringType, DoubleType, Bo
     TimestampType, DataType, DateType
 
 from .column_spec_options import ColumnSpecOptions
+from .text_generators import TemplateGenerator, TextGenerator
 from .daterange import DateRange
 from .distributions import Normal, DataDistribution
 from .nrange import NRange
@@ -184,6 +185,12 @@ class ColumnGenerationSpec(object):
         else:
             self._randomSeed = self["randomSeed"]
 
+        if random_seed_method == "hash_fieldname":
+            assert self.name is not None, "field name cannot be None"
+            self.random_seed = abs(hash(self.name))
+        else:
+            self.random_seed = random_seed
+
         # compute dependencies
         self.dependencies = self._computeBasicDependencies()
 
@@ -197,11 +204,16 @@ class ColumnGenerationSpec(object):
         # handle text generation templates
         if self['template'] is not None:
             assert isinstance(self['template'], str), "template must be a string "
-            self._textGenerator = TemplateGenerator(self['template'])
+            escapeSpecialChars = self['escapeSpecialChars'] if self['escapeSpecialChars'] is not None else False
+            self.text_generator = TemplateGenerator(self['template'], escapeSpecialChars)
         elif self['text'] is not None:
-            self._textGenerator = self['text']
+            self.text_generator = copy.deepcopy(self['text'])
         else:
             self._textGenerator = None
+
+        # specify random seed for text generator if one is in effect
+        if self.text_generator is not None and self.random_seed is not None:
+            self.text_generator = self.text_generator.withRandomSeed(self.random_seed)
 
         # compute required temporary values
         self.temporaryColumns = []
@@ -223,12 +235,8 @@ class ColumnGenerationSpec(object):
             self.distribution = Normal.standardNormal()
 
         # specify random seed for distribution if one is in effect
-        if self.distribution is not None and self._randomSeed is not None:
-            if self._randomSeedMethod == RANDOM_SEED_HASH_FIELD_NAME:
-                assert self.name is not None, "field name cannot be None"
-                self.distribution = self.distribution.withRandomSeed(abs(hash(self.name)))
-            else:
-                self.distribution = self.distribution.withRandomSeed(self._randomSeed)
+        if self.distribution is not None and self.random_seed is not None:
+            self.distribution = self.distribution.withRandomSeed(self.random_seed)
 
         # force weights and values to list
         if self.weights is not None:

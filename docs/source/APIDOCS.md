@@ -469,7 +469,7 @@ df1 = dataspec.build()
 df1.display()
 ```
 
-See the section on [text generation](TEXTDATA) for more details on these options.
+See the section on [text generation](textdata) for more details on these options.
 
 ### Generating repeatable data
 
@@ -497,12 +497,11 @@ shuffle_partitions_requested = 8
 partitions_requested = 8
 data_rows = 10000000
 
-
 spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
 
 dataspec = (
     dg.DataGenerator(spark, rows=10000000, partitions=8, seedMethod="hash_fieldname", seed=42)
-    .withColumn("name", percent_nulls=1.0, template=r'\\w \\w|\\w a. \\w')
+    .withColumn("name", percentNulls=1.0, template=r'\\w \\w|\\w a. \\w')
     .withColumn("payment_instrument_type", values=['paypal', 'visa', 'mastercard', 'amex'],
                 random=True)
     .withColumn("payment_instrument", minValue=1000000, maxValue=10000000,

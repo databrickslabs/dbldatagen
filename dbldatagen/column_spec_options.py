@@ -96,6 +96,8 @@ s
 
     :param distribution: Distribution for random number. Ignored if column is not random.
 
+    :param escapeSpecialChars: if True, require escape for all special chars in template
+
     .. note::
         If the `dataRange` parameter is specified as well as the `minValue`, `maxValue` or `step`,
         the results are undetermined.
@@ -133,7 +135,6 @@ s
                            'randomSeedMethod', 'randomSeed',
                            'nullable', 'implicit',
                            'suffix', 'textSeparator'
-
                            }
 
     #: the set of disallowed column attributes for any call to data generator `withColumn` or `withColumnSpec`
