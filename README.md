@@ -1,7 +1,7 @@
 # Databricks Labs Data Generator (`dbldatagen`)
 [Release Notes](CHANGELOG.md) |
 [Python Wheel](https://github.com/databrickslabs/data-generator/releases/tag/v1-0.11.0-dev1) |
-[Developer Docs](docs/source/APIDOCS.md) |
+[Developer Docs](docs/USING_THE_APIS.md) |
 [Examples](examples) |
 [Tutorial](tutorial) 
 
