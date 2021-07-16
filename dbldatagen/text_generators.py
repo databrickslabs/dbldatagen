@@ -77,13 +77,66 @@ class TemplateGenerator(TextGenerator):
     """This class handles the generation of text from templates
 
     :param template: template string to use in text generation
+    :param escapeSpecialChars: By default special chars in the template have special meaning if unescaped
+                               If set to true, then the special meaning requires escape char ``\``
+
+    The template generator generates text from a template to allow for generation of synthetic credit card numbers,
+    VINs, IBANs and many other structured codes.
+
+    The base value is passed to the template generation and may be used in the generated text. The base value is the
+    value the column would have if the template generation had not been applied.
+
+    It uses the following special chars:
+
+    ========  ======================================
+    Chars     Meaning
+    ========  ======================================
+    ``\``     Apply escape to next char.
+    0,1,..9   Use base value as an array of values and substitute the `nth` element ( 0 .. 9). Always escaped.
+    x         Insert a random lowercase hex digit
+    X         Insert an uppercase random hex digit
+    d         Insert a random lowercase decimal digit
+    D         Insert an uppercase random decimal digit
+    a         Insert a random lowercase alphabetical character
+    A         Insert a random uppercase alphabetical character
+    k         Insert a random lowercase alphanumeric character
+    K         Insert a random uppercase alphanumeric character
+    n         Insert a random number between 0 .. 255 inclusive. This option must always be escaped
+    N         Insert a random number between 0 .. 65535 inclusive. This option must always be escaped
+    w         Insert a random lowercase word from the ipsum lorem word set. Always escaped
+    W         Insert a random uppercase word from the ipsum lorem word set. Always escaped
+    ========  ======================================
+
+    .. note::
+              If escape is used and`escapeSpecialChars` is False, then the following
+              char is assumed to have no special meaning.
+
+              If the `escapeSpecialChars` option is set to True, then the following char only has its special
+              meaning when preceded by an escape.
+
+              Some options must be always escaped for example ``\\0``, ``\\v``, ``\\n`` and ``\\w``.
+
+              A special case exists for ``\\v`` - if immediately followed by a digit 0 - 9, the underlying base value
+              is interpreted as an array of values and the nth element is retrieved where `n` is the digit specified.
+
+    In all other cases, the char itself is used.
+
+    The setting of the `escapeSpecialChars` determines how templates generate data.
+
+    If set to False, then the template ``r"\\dr_\\v"`` will generate the values ``"dr_0"`` ... ``"dr_999"`` when applied
+    to the values zero to 999. This conforms to earlier implementations for backwards compatibility.
+
+    If set to True, then the template ``r"dr_\\v"`` will generate the values ``"dr_0"`` ... ``"dr_999"``
+    when applied to the values zero to 999. This conforms to the preferred style going forward
+
     """
 
-    def __init__(self, template):
+    def __init__(self, template, escapeSpecialChars=False):
         assert template is not None, "`template` must be specified"
         super().__init__()
 
         self.template = template
+        self.escapeSpecialMeaning = bool(escapeSpecialChars)
         template_str0 = self.template
         self.templates = [x.replace('$__sep__', '|') for x in template_str0.replace(r'\|', '$__sep__').split('|')]
 
@@ -96,12 +149,17 @@ class TemplateGenerator(TextGenerator):
         :param base_value: underlying base value to seed template generation.
           Ignored unless template outputs it
         :param gen_template: template string to control text generation
+
         """
         retval = []
 
         escape = False
         use_value = False
         template_len = len(gen_template)
+
+        # in the following code, the construct `(not escape) ^ self.escapeSpecialMeaning` means apply special meaning if
+        # either escape is not true or the option `self.escapeSpecialMeaning` is true.
+        # This corresponds to the logical xor operation
         for i in range(0, template_len):
             char = gen_template[i]
             following_char = gen_template[i + 1] if i + 1 < template_len else None
@@ -112,21 +170,21 @@ class TemplateGenerator(TextGenerator):
                 val_index = int(char)
                 retval.append(str(base_value[val_index]))
                 use_value = False
-            elif char == 'x' and not escape:
+            elif char == 'x' and (not escape) ^ self.escapeSpecialMeaning:
                 retval.append(_HEX_LOWER[random.randint(0, 15)])
-            elif char == 'X' and not escape:
+            elif char == 'X' and(not escape) ^ self.escapeSpecialMeaning:
                 retval.append(_HEX_UPPER[random.randint(0, 15)])
-            elif char == 'd' and not escape:
+            elif char == 'd' and (not escape) ^ self.escapeSpecialMeaning:
                 retval.append(_DIGITS_ZERO[random.randint(0, 9)])
-            elif char == 'D' and not escape:
+            elif char == 'D' and (not escape) ^ self.escapeSpecialMeaning:
                 retval.append(_DIGITS_NON_ZERO[random.randint(0, 8)])
-            elif char == 'a' and not escape:
+            elif char == 'a' and (not escape) ^ self.escapeSpecialMeaning:
                 retval.append(_LETTERS_LOWER[random.randint(0, 25)])
-            elif char == 'A' and not escape:
+            elif char == 'A' and (not escape) ^ self.escapeSpecialMeaning:
                 retval.append(_LETTERS_UPPER[random.randint(0, 25)])
-            elif char == 'k' and not escape:
+            elif char == 'k' and (not escape) ^ self.escapeSpecialMeaning:
                 retval.append(_ALNUM_LOWER[random.randint(0, 35)])
-            elif char == 'K' and not escape:
+            elif char == 'K' and (not escape) ^ self.escapeSpecialMeaning:
                 retval.append(_ALNUM_UPPER[random.randint(0, 35)])
             elif char == 'n' and escape:
                 retval.append(str(random.randint(0, 255)))
@@ -142,7 +200,7 @@ class TemplateGenerator(TextGenerator):
                 escape = False
             elif char == 'v' and escape:
                 escape = False
-                if '0' <= following_char <= '9':
+                if following_char is not None and ('0' <= following_char <= '9'):
                     use_value = True
                 else:
                     retval.append(str(base_value))

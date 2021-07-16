@@ -155,6 +155,21 @@ class TestTextGeneration(unittest.TestCase):
             self.assertIsNotNone(test_value)
             self.assertTrue(match_pattern.match(test_value))
 
+    def test_raw_template_text_generation4(self):
+        ''' As the test coverage tools dont detect code only used in UDFs,
+            lets add some explicit tests for the underlying code'''
+        pattern = r'\dr_\v'
+        match_pattern = re.compile(r"dr_[0-9]+")
+        test_template = TemplateGenerator(pattern)
+
+        test_values = [test_template.valueFromSingleTemplate(x, test_template.templates[0]) for x in range(1, 1000)]
+
+        for test_value in test_values:
+            print(f"{test_value}")
+            self.assertIsNotNone(test_value)
+            self.assertTrue(match_pattern.match(test_value))
+
+
     def test_simple_data2(self):
         testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
                                           partitions=self.partitions_requested)
