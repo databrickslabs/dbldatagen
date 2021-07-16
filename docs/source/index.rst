@@ -23,7 +23,7 @@ to Scala or R based Spark applications also.
    Get Started Here <APIDOCS>
    Installation instructions <installation_notes>
    Using data ranges <DATARANGES>
-   Generating text data <TEXTDATA>
+   Generating text data <textdata>
    Using data distributions <DISTRIBUTIONS>
    Options for column specification <options_and_features>
    Troubleshooting data generation <troubleshooting>
