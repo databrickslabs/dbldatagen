@@ -3,7 +3,7 @@ import unittest
 from datetime import timedelta
 
 from dbldatagen import ensure, mkBoundsList, coalesce_values, deprecated, SparkSingleton, \
-    parse_time_interval
+    parse_time_interval, DataGenError
 
 spark = SparkSingleton.getLocalInstance("unit tests")
 
@@ -84,6 +84,13 @@ class TestUtils(unittest.TestCase):
         interval = parse_time_interval("days=4, hours=1, minutes=2")
         self.assertEqual(timedelta(days=4, hours=1, minutes=2), interval)
 
+    def testDatagenExceptionObject(self):
+        testException = DataGenError("testing")
+
+        self.assertIsNotNone(testException)
+
+        print("error has repr", repr(testException))
+        print("error has str", str(testException))
 
 # run the tests
 # if __name__ == '__main__':

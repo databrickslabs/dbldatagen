@@ -19,15 +19,15 @@ minValue       Minimum value for range of generated value. As alternative use ``
 maxValue       Minimum value for range of generated value. As alternative use ``data_range``.
 step           Step to use for range of generated value. As an alternative, you may use the `data_range` parameter
 random         If True, will generate random values for column value. Defaults to `False`
-base_column    Either the string name of the base column, or a list of columns to use to control data generation.
+baseColumn     Either the string name of the base column, or a list of columns to use to control data generation.
 values         List of discrete values for the column. Discrete values can numeric, dates timestamps, strings etc.
 weights        List of discrete weights for the column. Controls spread of values
-percent_nulls  Percentage of nulls to generate for column. Fraction representing percentage between 0.0 and 1.0
-unique_values  Number of distinct unqique values for the column. Use as alternative to data range.
+percentNulls   Percentage of nulls to generate for column. Fraction representing percentage between 0.0 and 1.0
+uniqueValues   Number of distinct unqique values for the column. Use as alternative to data range.
 begin          Beginning of range for date and timestamp fields.
 end            End of range for date and timestamp fields.
 interval       Interval of range for date and timestamp fields.
-data_range     An instance of an `NRange` or `DateRange` object. This can be used in place of ``minValue``, etc.
+dataRange      An instance of an `NRange` or `DateRange` object. This can be used in place of ``minValue``, etc.
 template       Template controlling text generation
 omit           If True, omit column from final output. Use when column is only needed to compute other columns.
 expr           SQL expression to control data generation

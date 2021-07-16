@@ -35,8 +35,23 @@ def deprecated(message=""):
 
 
 class DataGenError(Exception):
-    """Exception class to represent data generation errors"""
-    pass
+    """Exception class to represent data generation errors
+
+        :param msg: message related to error
+        :param baseException: underlying exception, if any that caused the issue
+    """
+
+    def __init__(self, msg, baseException=None):
+        """ constructor
+        """
+        self._underlyingException = baseException
+        self._msg = msg
+
+    def __repr__(self):
+        return f"DataGenError(msg='{self._msg}', baseException={self._underlyingException})"
+
+    def __str__(self):
+        return f"DataGenError(msg='{self._msg}', baseException={self._underlyingException})"
 
 
 def coalesce_values(*args):
