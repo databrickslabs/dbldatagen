@@ -1,0 +1,7 @@
+dbldatagen.distributions.data\_distribution module
+==================================================
+
+.. automodule:: dbldatagen.distributions.data_distribution
+   :members:
+   :undoc-members:
+   :show-inheritance:

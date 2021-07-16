@@ -1,0 +1,70 @@
+.. _quick_index:
+
+Quick API Index
+===============
+
+The ``dbldatagen`` package
+__________________________
+
+Main user facing classes, functions and types
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Classes
+
+* :data:`~dbldatagen.column_spec_options.ColumnSpecOptions` - Column Generation Options
+* :data:`~dbldatagen.nrange.NRange` - Numeric ranges
+* :data:`~dbldatagen.text_generators.ILText` - Text data generation
+* :data:`~dbldatagen.text_generators.TemplateGenerator` - Text data generation
+* :data:`~dbldatagen.text_generators.TextGenerator` - Text data generation
+* :data:`~dbldatagen.column_generation_spec.ColumnGenerationSpec` - Column Generation Spec types
+* :data:`~dbldatagen.daterange.DateRange` - Date and time ranges
+* :data:`~dbldatagen.datarange.DataRange` - Internal data range abstract types
+* :data:`~dbldatagen.data_analyzer.DataAnalyzer` - Analysis of existing data
+* :data:`~dbldatagen.data_generator.DataGenerator` - Main generator classes
+
+Types
+
+* :data:`~dbldatagen.column_generation_spec.AUTO_COMPUTE_METHOD`
+* :data:`~dbldatagen.column_generation_spec.COMPUTE_METHOD_VALID_VALUES`
+* :data:`~dbldatagen.column_generation_spec.HASH_COMPUTE_METHOD`
+* :data:`~dbldatagen.column_generation_spec.RAW_VALUES_COMPUTE_METHOD`
+* :data:`~dbldatagen.column_generation_spec.VALUES_COMPUTE_METHOD`
+
+Internal classes, functions and types
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Classes
+
+* :data:`~dbldatagen.function_builder.ColumnGeneratorBuilder` - Internal utilities to create functions related to weights
+* :data:`~dbldatagen.spark_singleton.SparkSingleton` - Spark singleton for test purposes
+* :data:`~dbldatagen.utils.DataGenError`
+* :data:`~dbldatagen.schema_parser.SchemaParser` - Internal utilities to parse Spark SQL schema information
+
+Functions
+
+* :data:`~dbldatagen.utils.coalesce_values`
+* :data:`~dbldatagen.utils.deprecated`
+* :data:`~dbldatagen.utils.ensure`
+* :data:`~dbldatagen.utils.mkBoundsList`
+* :data:`~dbldatagen.utils.parse_time_interval`
+* :data:`~dbldatagen.utils.topologicalSort`
+
+Types
+
+* :data:`~dbldatagen.utils.PATTERN_NAME_EQUALS_VALUE`
+* :data:`~dbldatagen.utils.PATTERN_VALUE_SPACE_NAME`
+
+The ``dbldatagen.distributions`` package
+________________________________________
+
+Data distribution related classes, functions and types
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Classes
+
+* :data:`~dbldatagen.distributions.exponential_distribution.Exponential` - Exponential data distribution related code
+* :data:`~dbldatagen.distributions.beta.Beta` - Beta distribution related code
+* :data:`~dbldatagen.distributions.normal_distribution.Normal` - Normal data distribution related code
+* :data:`~dbldatagen.distributions.data_distribution.DataDistribution` - Data distribution related code
+* :data:`~dbldatagen.distributions.gamma.Gamma` - Gamma data distribution related code
+
