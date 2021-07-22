@@ -134,7 +134,7 @@ testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows
                    .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
                    .withColumn("code2", IntegerType(), minValue=0, maxValue=10, random=True)
                    .withColumn("code3", StringType(), values=['online', 'offline', 'unknown'])
-                   .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True, percent_nulls=5)
+                   .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True, percentNulls=0.05)
                    .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
                    )
 
@@ -216,7 +216,7 @@ dataspec = (dg.DataGenerator(spark, rows=10000000, partitions=8)
                 .withSchema(table_schema))
 
 dataspec = (dataspec
-                .withColumnSpec("name", percent_nulls=1.0, template=r'\\w \\w|\\w a. \\w')                                       
+                .withColumnSpec("name", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w')                                       
                 .withColumnSpec("serial_number", minValue=1000000, maxValue=10000000, prefix="dr", random=True) 
                 .withColumnSpec("email", template=r'\\w.\\w@\\w.com')       
                 .withColumnSpec("license_plate", template=r'\\n-\\n')
@@ -427,7 +427,7 @@ partitions_requested = 8
 data_rows = 10000000
 
 dataspec = (dg.DataGenerator(spark, rows=10000000, partitions=8)
-                .withColumn("name", percent_nulls=1.0, template=r'\\w \\w|\\w a. \\w') 
+                .withColumn("name", percent_nulls=0.01, template=r'\\w \\w|\\w a. \\w') 
                 .withColumn("payment_instrument_type", values=['paypal', 'visa', 'mastercard', 'amex'], random=True)             
                 .withColumn("payment_instrument",  minValue=1000000, maxValue=10000000, template="dddd dddddd ddddd") 
                 .withColumn("email", template=r'\\w.\\w@\\w.com')       
@@ -470,7 +470,7 @@ partitions_requested = 8
 data_rows = 10000000
 
 dataspec = (dg.DataGenerator(spark, rows=10000000, partitions=8, seed_method="hash_fieldname", seed=42)
-                .withColumn("name", percent_nulls=1.0, template=r'\\w \\w|\\w a. \\w') 
+                .withColumn("name", percent_nulls=0.01, template=r'\\w \\w|\\w a. \\w') 
                 .withColumn("payment_instrument_type", values=['paypal', 'visa', 'mastercard', 'amex'], random=True)             
                 .withColumn("payment_instrument",  minValue=1000000, maxValue=10000000, template="dddd dddddd ddddd") 
                 .withColumn("email", template=r'\\w.\\w@\\w.com')       

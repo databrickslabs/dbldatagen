@@ -51,16 +51,16 @@ class TestILTextGeneration(unittest.TestCase):
                                              partitions=cls.partitions_requested)
                             .withSchema(schema)
                             .withIdOutput()
-                            .withColumnSpec("date", percent_nulls=10.0)
-                            .withColumnSpec("nint", percent_nulls=10.0, minValue=1, maxValue=9, step=2)
-                            .withColumnSpec("nstr1", percent_nulls=10.0, minValue=1, maxValue=9, step=2)
-                            .withColumnSpec("nstr2", percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3,
+                            .withColumnSpec("date", percent_nulls=0.1)
+                            .withColumnSpec("nint", percent_nulls=0.1, minValue=1, maxValue=9, step=2)
+                            .withColumnSpec("nstr1", percent_nulls=0.1, minValue=1, maxValue=9, step=2)
+                            .withColumnSpec("nstr2", percent_nulls=0.1, minValue=1.5, maxValue=2.5, step=0.3,
                                             format="%04.1f")
                             .withColumnSpec("nstr3", minValue=1.0, maxValue=9.0, step=2.0)
-                            .withColumnSpec("nstr4", percent_nulls=10.0, minValue=1, maxValue=9, step=2, format="%04d")
-                            .withColumnSpec("nstr5", percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3,
+                            .withColumnSpec("nstr4", percent_nulls=0.1, minValue=1, maxValue=9, step=2, format="%04d")
+                            .withColumnSpec("nstr5", percent_nulls=0.1, minValue=1.5, maxValue=2.5, step=0.3,
                                             random=True)
-                            .withColumnSpec("nstr6", percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3,
+                            .withColumnSpec("nstr6", percent_nulls=0.1, minValue=1.5, maxValue=2.5, step=0.3,
                                             random=True,
                                             format="%04f")
                             .withColumnSpec("email", template=r'\\w.\\w@\\w.com|\\w@\\w.co.u\\k')

@@ -685,12 +685,12 @@ class TestRangedValuesAndDates(unittest.TestCase):
         ds_data_int = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
                        .withIdOutput()
                        .withColumn("nint", IntegerType(), minValue=1, maxValue=9, step=2)
-                       .withColumn("nint2", IntegerType(), percent_nulls=10.0, minValue=1, maxValue=9, step=2)
-                       .withColumn("nint3", IntegerType(), percent_nulls=10.0, minValue=1, maxValue=9, step=2,
+                       .withColumn("nint2", IntegerType(), percent_nulls=0.1, minValue=1, maxValue=9, step=2)
+                       .withColumn("nint3", IntegerType(), percent_nulls=0.1, minValue=1, maxValue=9, step=2,
                                    random=True)
                        .withColumn("sint", ShortType(), minValue=1, maxValue=9, step=2)
-                       .withColumn("sint2", ShortType(), percent_nulls=10.0, minValue=1, maxValue=9, step=2)
-                       .withColumn("sint3", ShortType(), percent_nulls=10.0, minValue=1, maxValue=9, step=2,
+                       .withColumn("sint2", ShortType(), percent_nulls=0.1, minValue=1, maxValue=9, step=2)
+                       .withColumn("sint3", ShortType(), percent_nulls=0.1, minValue=1, maxValue=9, step=2,
                                    random=True)
                        )
 
@@ -723,9 +723,9 @@ class TestRangedValuesAndDates(unittest.TestCase):
                         .withIdOutput()
                         .withColumn("lint", LongType(), minValue=long_min, maxValue=long_min + 8, step=2)
                         .withColumn("lint2", LongType(), minValue=long_min, maxValue=long_min + 8, step=2,
-                                    percent_nulls=10.0)
+                                    percent_nulls=0.1)
                         .withColumn("lint3", LongType(), minValue=long_min, maxValue=long_min + 8, step=2,
-                                    percent_nulls=10.0,
+                                    percent_nulls=0.1,
                                     random=True)
                         )
 
@@ -745,10 +745,10 @@ class TestRangedValuesAndDates(unittest.TestCase):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
                         .withIdOutput()
                         .withColumn("byte1", ByteType(), minValue=1, maxValue=9, step=2)
-                        .withColumn("byte2", ByteType(), percent_nulls=10.0, minValue=1, maxValue=9, step=2)
-                        .withColumn("byte3", ByteType(), percent_nulls=10.0, minValue=1, maxValue=9, step=2,
+                        .withColumn("byte2", ByteType(), percent_nulls=0.1, minValue=1, maxValue=9, step=2)
+                        .withColumn("byte3", ByteType(), percent_nulls=0.1, minValue=1, maxValue=9, step=2,
                                     random=True)
-                        .withColumn("byte4", ByteType(), percent_nulls=10.0, minValue=-5, maxValue=5, step=2,
+                        .withColumn("byte4", ByteType(), percent_nulls=0.1, minValue=-5, maxValue=5, step=2,
                                     random=True)
                         )
 
@@ -771,12 +771,12 @@ class TestRangedValuesAndDates(unittest.TestCase):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
                         .withIdOutput()
                         .withColumn("fval", FloatType(), minValue=1.0, maxValue=9.0, step=2.0)
-                        .withColumn("fval2", FloatType(), percent_nulls=10.0, minValue=1.0, maxValue=9.0, step=2.0)
-                        .withColumn("fval3", FloatType(), percent_nulls=10.0, minValue=1.0, maxValue=9.0, step=2.0,
+                        .withColumn("fval2", FloatType(), percent_nulls=0.1, minValue=1.0, maxValue=9.0, step=2.0)
+                        .withColumn("fval3", FloatType(), percent_nulls=0.1, minValue=1.0, maxValue=9.0, step=2.0,
                                     random=True)
                         .withColumn("dval1", DoubleType(), minValue=1.0, maxValue=9.0, step=2.0)
-                        .withColumn("dval2", DoubleType(), percent_nulls=10.0, minValue=1.0, maxValue=9.0, step=2.0)
-                        .withColumn("dval3", DoubleType(), percent_nulls=10.0, minValue=1.0, maxValue=9.0, step=2.0,
+                        .withColumn("dval2", DoubleType(), percent_nulls=0.1, minValue=1.0, maxValue=9.0, step=2.0)
+                        .withColumn("dval3", DoubleType(), percent_nulls=0.1, minValue=1.0, maxValue=9.0, step=2.0,
                                     random=True)
                         )
 
@@ -807,12 +807,12 @@ class TestRangedValuesAndDates(unittest.TestCase):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
                         .withIdOutput()
                         .withColumn("fval", FloatType(), minValue=1.5, maxValue=3.5, step=0.5)
-                        .withColumn("fval2", FloatType(), percent_nulls=10.0, minValue=1.5, maxValue=3.5, step=0.5)
-                        .withColumn("fval3", FloatType(), percent_nulls=10.0, minValue=1.5, maxValue=3.5, step=0.5,
+                        .withColumn("fval2", FloatType(), percent_nulls=0.1, minValue=1.5, maxValue=3.5, step=0.5)
+                        .withColumn("fval3", FloatType(), percent_nulls=0.1, minValue=1.5, maxValue=3.5, step=0.5,
                                     random=True)
                         .withColumn("dval1", DoubleType(), minValue=1.5, maxValue=3.5, step=0.5)
-                        .withColumn("dval2", DoubleType(), percent_nulls=10.0, minValue=1.5, maxValue=3.5, step=0.5)
-                        .withColumn("dval3", DoubleType(), percent_nulls=10.0, minValue=1.5, maxValue=3.5, step=0.5,
+                        .withColumn("dval2", DoubleType(), percent_nulls=0.1, minValue=1.5, maxValue=3.5, step=0.5)
+                        .withColumn("dval3", DoubleType(), percent_nulls=0.1, minValue=1.5, maxValue=3.5, step=0.5,
                                     random=True)
                         )
 
@@ -849,12 +849,12 @@ class TestRangedValuesAndDates(unittest.TestCase):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, verbose=True)
                         .withIdOutput()
                         .withColumn("fval", FloatType(), minValue=1.5, maxValue=2.5, step=0.3)
-                        .withColumn("fval2", FloatType(), percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3)
-                        .withColumn("fval3", FloatType(), percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3,
+                        .withColumn("fval2", FloatType(), percent_nulls=0.1, minValue=1.5, maxValue=2.5, step=0.3)
+                        .withColumn("fval3", FloatType(), percent_nulls=0.1, minValue=1.5, maxValue=2.5, step=0.3,
                                     random=True)
                         .withColumn("dval1", DoubleType(), minValue=1.5, maxValue=2.5, step=0.3)
-                        .withColumn("dval2", DoubleType(), percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3)
-                        .withColumn("dval3", DoubleType(), percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3,
+                        .withColumn("dval2", DoubleType(), percent_nulls=0.1, minValue=1.5, maxValue=2.5, step=0.3)
+                        .withColumn("dval3", DoubleType(), percent_nulls=0.1, minValue=1.5, maxValue=2.5, step=0.3,
                                     random=True)
                         )
 
@@ -886,12 +886,12 @@ class TestRangedValuesAndDates(unittest.TestCase):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
                         .withIdOutput()
                         .withColumn("decimal1", DecimalType(10, 4), minValue=1.0, maxValue=9.0, step=2.0)
-                        .withColumn("decimal2", DecimalType(10, 4), percent_nulls=10.0, minValue=1.0, maxValue=9.0,
+                        .withColumn("decimal2", DecimalType(10, 4), percent_nulls=0.1, minValue=1.0, maxValue=9.0,
                                     step=2.0)
-                        .withColumn("decimal3", DecimalType(10, 4), percent_nulls=10.0, minValue=1.0, maxValue=9.0,
+                        .withColumn("decimal3", DecimalType(10, 4), percent_nulls=0.1, minValue=1.0, maxValue=9.0,
                                     step=2.0,
                                     random=True)
-                        .withColumn("decimal4", DecimalType(10, 4), percent_nulls=10.0, minValue=-5, maxValue=5,
+                        .withColumn("decimal4", DecimalType(10, 4), percent_nulls=0.1, minValue=-5, maxValue=5,
                                     step=2.0,
                                     random=True)
                         )

@@ -938,7 +938,7 @@ class ColumnGenerationSpec(object):
         # handle weighted values for weighted value columns
         # a weighted values column will use a base value denoted by `self.weighted_base_column`
         if self.isWeightedValuesColumn:
-            self.execution_history.append(".. building weighted volumn values expression")
+            self.execution_history.append(".. building weighted volume values expression")
             new_def = self._makeWeightedColumnValuesExpression(self.values, self.weights, self.weighted_base_column)
 
             if type(self.datatype) is StringType and self.text_generator is not None:
@@ -983,7 +983,7 @@ class ColumnGenerationSpec(object):
                     new_def = self._getSeedExpression(self.baseColumn)
                 # TODO: resolve issues with hash when using templates
                 # elif self.base_column_compute_method == HASH_COMPUTE_METHOD:
-                #    new_def = self._getSeedExpression(self.baseColumn)
+                #    newDef = self._getSeedExpression(self.baseColumn)
                 else:
                     self.logger.warning("Assuming a seeded base expression with minimum value for column %s", self.name)
                     self.execution_history.append(f".. seeding with minimum `{self.data_range.minValue}`")
@@ -1073,19 +1073,23 @@ class ColumnGenerationSpec(object):
 
         return new_def
 
-    def _applyComputePercentNullsExpression(self, new_def, percent_nulls):
+    def _applyComputePercentNullsExpression(self, newDef, percentNulls):
         """Compute percentage nulls for column being generated
 
-           :param new_def: Column definition being created
-           :param percent_nulls: Percentage of nulls to be generated
+           :param newDef: Column definition being created
+           :param percentNulls: Percentage of nulls to be generated
            :returns: new column definition with percentage of nulls applied
         """
-        assert self.nullable, "Column `{}` must be nullable for `percent_nulls` option".format(self.name)
+        assert self.nullable, "Column `{}` must be nullable for `percentNulls` option".format(self.name)
         self.execution_history.append(".. applying null generator - `when rnd > prob then value - else null`")
-        prob_nulls = percent_nulls / 100.0
+
+        assert percentNulls is not None, "``percentNulls`` must not be null value or None"
+        assert type(percentNulls) in [int, float], "``percentNulls`` must be int or float"
+        assert 0.0 <= percentNulls <= 1.0, "``percentNulls`` must in the range [0.0 .. 1.0]"
+        prob_nulls = percentNulls * 1.0
         random_generator = self._getUniformRandomExpression(self.name)
-        new_def = when(random_generator > lit(prob_nulls), new_def).otherwise(lit(None))
-        return new_def
+        newDef = when(random_generator > lit(prob_nulls), newDef).otherwise(lit(None))
+        return newDef
 
     def _computeImpliedRangeIfNeeded(self, col_type):
         """ Compute implied range if necessary

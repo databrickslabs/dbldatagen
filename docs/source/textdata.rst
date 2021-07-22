@@ -25,7 +25,7 @@ The following example illustrates generating data for specific ranges of values:
                                                       partitions=4)
                            .withIdOutput()
                            .withColumn("code3", StringType(), values=['online', 'offline', 'unknown'])
-                           .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True, percent_nulls=5)
+                           .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True, percent_nulls=0.05)
                            .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
 
 Generating text from existing values

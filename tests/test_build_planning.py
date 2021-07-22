@@ -172,11 +172,11 @@ class TestBuildPlanning(unittest.TestCase):
                             #     .withColumnSpec("R3D3_CLUSTER_IDS", minValue=1, maxValue=100, step=1)
                             .withColumnSpec("XYYZ_IDS", minValue=1, maxValue=123, step=1,
                                             format="%05d")
-                            # .withColumnSpec("nstr4", percent_nulls=10.0,
+                            # .withColumnSpec("nstr4", percentNulls=0.1,
                             # minValue=1, maxValue=9, step=2,  format="%04d")
                             # example of IS_SALE
                             .withColumnSpec("IS_S", values=sale_values, weights=sale_weights, random=True)
-                            # .withColumnSpec("nstr4", percent_nulls=10.0,
+                            # .withColumnSpec("nstr4", percentNulls=0.1,
                             # minValue=1, maxValue=9, step=2,  format="%04d")
 
                             )
