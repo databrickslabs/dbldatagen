@@ -4,10 +4,10 @@ The data generator uses data ranges to constrain the values for generated data.
 
 By default, the data is only constrained to the range of the fields data type. 
 
-Additionally, unless the `percent_nulls` option is used, the value `null` will not be generated for a field value.
+Additionally, unless the `percentNulls` option is used, the value `null` will not be generated for a field value.
 
 The range of values for the generated data may be controlled in the following ways:
-- Specifying the `unique_values` option to control the unique values for a column
+- Specifying the `uniqueValues` option to control the unique values for a column
 - Specifying the `minValue`, `maxValue` and `step` options for a column
 - Specifying the `begin`, `end` and `interval` options for data and timestamp valued columns
 - Specifying an explicit set of values via the `values` option
@@ -27,11 +27,11 @@ import dbldatagen as dg
 
 row_count=1000 * 100
 testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=row_count,
-                                  partitions=4, seed_method='hash_fieldname', 
-                                  verbose=True)
+                                  partitions=4, seedMethod='hash_fieldname')
                    .withIdOutput()
-                   .withColumn("purchase_id", IntegerType(), minValue=1000000, maxValue=2000000, random=True)
-                   .withColumn("product_code", IntegerType(), unique_values=10000, random=True)
+                   .withColumn("purchase_id", IntegerType(), minValue=1000000, 
+                                maxValue=2000000, random=True)
+                   .withColumn("product_code", IntegerType(), uniqueValues=10000, random=True)
                    .withColumn("in_stock", StringType(), values=['yes', 'no', 'unknown'])
                    )
 
@@ -47,8 +47,8 @@ we may reduce the range
 
 The following rules apply to any ranged data specifications:
 
-- if the `unique_values` option is used, its combined with the any range options to produce the effective range. 
-The number of unique_values is given highest priority, but the interval, start and end of the values tries to take 
+- if the `uniqueValues` option is used, its combined with the any range options to produce the effective range. 
+The number of unique values is given highest priority, but the interval, start and end of the values tries to take 
 into account any range options specified. If the range does not allow for sufficient unique values to be generated, 
 the number of unique values is reduced. 
 - if `values` are specified, the implied range is the set of values for column. Any other range options are ignored
@@ -92,13 +92,13 @@ from pyspark.sql.types import IntegerType
 
 row_count=1000 * 100
 testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=row_count,
-                                  partitions=4, seed_method='hash_fieldname', 
+                                  partitions=4, seedMethod='hash_fieldname', 
                                   verbose=True)
                    .withColumn("purchase_id", IntegerType(), minValue=1000000, 
                                   maxValue=2000000)
-                   .withColumn("product_code", IntegerType(), unique_values=10000, 
+                   .withColumn("product_code", IntegerType(), uniqueValues=10000, 
                                   random=True)
-                   .withColumn("purchase_date", "date", unique_values=300, 
+                   .withColumn("purchase_date", "date", uniqueValues=300, 
                                   random=True)
                    )
 
@@ -118,13 +118,13 @@ testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows
                                   partitions=4, seed_method='hash_fieldname', 
                                   verbose=True)
                    .withColumn("purchase_id", IntegerType(), minValue=1000000, maxValue=2000000)
-                   .withColumn("product_code", IntegerType(), unique_values=10000, random=True)
+                   .withColumn("product_code", IntegerType(), uniqueValues=10000, random=True)
                    .withColumn("purchase_date", "date", data_range=dg.DateRange("2017-10-01 00:00:00",
                                                                              "2018-10-06 11:55:00",
                                                                              "days=3"), 
                                                                                    random=True)
                    .withColumn("return_date", "date", 
-                                expr="date_add('purchase_date', cast(floor(rand() * 100 + 1) as int))")
+                        expr="date_add('purchase_date', cast(floor(rand() * 100 + 1) as int))")
 
                    )
 

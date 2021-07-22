@@ -128,7 +128,7 @@ class TestQuickTests(unittest.TestCase):
 
         print("test_column_specifications")
         expectedColumns = set((["id", "site_id", "site_cd", "c", "c1", "sector_status_desc", "s"]))
-        self.assertEqual(expectedColumns, set(([x.name for x in tgen.allColumnSpecs])))
+        self.assertEqual(expectedColumns, set(([x.name for x in tgen._allColumnSpecs])))
 
     def test_inferred_columns(self):
         tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
@@ -245,7 +245,7 @@ class TestQuickTests(unittest.TestCase):
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), unique_values=100)
                         .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
-                        .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"],
+                        .withColumn("str2", StringType(), format="test %s", baseColumn=["val1", "val2"],
                                     base_column_type="values")
                         )
 
@@ -261,7 +261,7 @@ class TestQuickTests(unittest.TestCase):
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), unique_values=100)
                         .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
-                        .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"],
+                        .withColumn("str2", StringType(), format="test %s", baseColumn=["val1", "val2"],
                                     base_column_type="hash")
                         )
 
@@ -277,7 +277,7 @@ class TestQuickTests(unittest.TestCase):
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), unique_values=100)
                         .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
-                        .withColumn("str6", StringType(), template=r"\v0 \v1", base_column=["val1", "val2"])
+                        .withColumn("str6", StringType(), template=r"\v0 \v1", baseColumn=["val1", "val2"])
                         )
 
         formattedDF = testDataSpec.build(withTempView=True)
@@ -293,7 +293,7 @@ class TestQuickTests(unittest.TestCase):
                         .withColumn("val1", IntegerType(), unique_values=100)
                         .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
 
-                        .withColumn("str5b", StringType(), format="test %s", base_column=["val1", "val2"],
+                        .withColumn("str5b", StringType(), format="test %s", baseColumn=["val1", "val2"],
                                     values=["one", "two", "three"])
 
                         )
@@ -312,7 +312,7 @@ class TestQuickTests(unittest.TestCase):
                         .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
 
                         # in this case values from base column are passed as array
-                        .withColumn("str5b", StringType(), format="test %s", base_column=["val1", "val2"])
+                        .withColumn("str5b", StringType(), format="test %s", baseColumn=["val1", "val2"])
 
                         )
 
@@ -331,7 +331,7 @@ class TestQuickTests(unittest.TestCase):
                         .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
 
                         # when specifying multiple base columns
-                        .withColumn("str5b", StringType(), format="test %s %s", base_column=["val1", "val2"],
+                        .withColumn("str5b", StringType(), format="test %s %s", baseColumn=["val1", "val2"],
                                     base_column_type="values")
 
                         )
@@ -349,14 +349,14 @@ class TestQuickTests(unittest.TestCase):
                         .withColumn("val1", IntegerType(), unique_values=100)
                         .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
 
-                        .withColumn("str1", StringType(), format="test %s", base_column=["val1", "val2"],
+                        .withColumn("str1", StringType(), format="test %s", baseColumn=["val1", "val2"],
                                     values=["one", "two", "three"])
-                        .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"],
+                        .withColumn("str2", StringType(), format="test %s", baseColumn=["val1", "val2"],
                                     values=["one", "two", "three"], weights=[3, 1, 1])
 
-                        .withColumn("str3", StringType(), format="test %s", base_column=["val1", "val2"],
+                        .withColumn("str3", StringType(), format="test %s", baseColumn=["val1", "val2"],
                                     values=["one", "two", "three"], template=r"test \v0")
-                        .withColumn("str4", StringType(), format="test %s", base_column=["val1", "val2"],
+                        .withColumn("str4", StringType(), format="test %s", baseColumn=["val1", "val2"],
                                     values=["one", "two", "three"], weights=[3, 1, 1], template=r"test \v0")
 
                         )
@@ -375,17 +375,17 @@ class TestQuickTests(unittest.TestCase):
                         .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
                         .withColumn("str1", StringType(), format="test %d")
                         # .withColumn("str1a", StringType(), format="test %s")
-                        .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"],
+                        .withColumn("str2", StringType(), format="test %s", baseColumn=["val1", "val2"],
                                     base_column_type="values")
-                        .withColumn("str3", StringType(), format="test %s", base_column=["val1", "val2"],
+                        .withColumn("str3", StringType(), format="test %s", baseColumn=["val1", "val2"],
                                     base_column_type="hash")
-                        .withColumn("str4", StringType(), format="test %s", base_column=["val1", "val2"],
+                        .withColumn("str4", StringType(), format="test %s", baseColumn=["val1", "val2"],
                                     base_column_type="hash")
-                        .withColumn("str5", StringType(), format="test %s", base_column=["val1", "val2"])
-                        .withColumn("str5a", StringType(), format="test %s", base_column=["val1", "val2"])
-                        .withColumn("str5b", StringType(), format="test %s", base_column=["val1", "val2"],
+                        .withColumn("str5", StringType(), format="test %s", baseColumn=["val1", "val2"])
+                        .withColumn("str5a", StringType(), format="test %s", baseColumn=["val1", "val2"])
+                        .withColumn("str5b", StringType(), format="test %s", baseColumn=["val1", "val2"],
                                     values=["one", "two", "three"])
-                        .withColumn("str6", StringType(), template=r"\v0 \v1", base_column=["val1", "val2"])
+                        .withColumn("str6", StringType(), template=r"\v0 \v1", baseColumn=["val1", "val2"])
                         )
 
         formattedDF = testDataSpec.build(withTempView=True)
@@ -415,7 +415,7 @@ class TestQuickTests(unittest.TestCase):
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), minValue=100, maxValue=1, step=-1)
                         .withColumn("val2", IntegerType(), minValue=100, maxValue=1, step=-3, unique_values=5)
-                        .withColumn("val3", IntegerType(), data_range=NRange(100, 1, -1), unique_values=5)
+                        .withColumn("val3", IntegerType(), dataRange=NRange(100, 1, -1), unique_values=5)
                         .withColumn("val4", IntegerType(), minValue=1, maxValue=100, step=3, unique_values=5)
                         .withColumn("code1b", IntegerType(), minValue=1, maxValue=100)
                         .withColumn("code1c", IntegerType(), minValue=1, maxValue=200, unique_values=100)
@@ -438,34 +438,34 @@ class TestQuickTests(unittest.TestCase):
                                          partitions=4)
                         .withIdOutput()
                         .withColumn("last_sync_ts", "timestamp",
-                                    data_range=DateRange("2017-10-01 00:00:00",
+                                    dataRange=DateRange("2017-10-01 00:00:00",
                                                          "2018-10-06 00:00:00",
                                                          "days=1,hours=1"))
                         .withColumn("last_sync_ts", "timestamp",
-                                    data_range=DateRange("2017-10-01 00:00:00",
+                                    dataRange=DateRange("2017-10-01 00:00:00",
                                                          "2018-10-06 00:00:00",
                                                          "days=1,hours=1"), unique_values=5)
 
                         .withColumn("last_sync_ts", "timestamp",
-                                    data_range=DateRange("2017-10-01",
+                                    dataRange=DateRange("2017-10-01",
                                                          "2018-10-06",
                                                          "days=7",
-                                                         datetime_format="%Y-%m-%d"))
+                                                        datetime_format="%Y-%m-%d"))
 
                         .withColumn("last_sync_dt1", DateType(),
-                                    data_range=DateRange("2017-10-01 00:00:00",
+                                    dataRange=DateRange("2017-10-01 00:00:00",
                                                          "2018-10-06 00:00:00",
                                                          "days=1"))
                         .withColumn("last_sync_dt2", DateType(),
-                                    data_range=DateRange("2017-10-01 00:00:00",
+                                    dataRange=DateRange("2017-10-01 00:00:00",
                                                          "2018-10-06 00:00:00",
                                                          "days=1"), unique_values=5)
 
                         .withColumn("last_sync_date", DateType(),
-                                    data_range=DateRange("2017-10-01",
+                                    dataRange=DateRange("2017-10-01",
                                                          "2018-10-06",
                                                          "days=7",
-                                                         datetime_format="%Y-%m-%d"))
+                                                        datetime_format="%Y-%m-%d"))
 
                         )
 
@@ -485,17 +485,17 @@ class TestQuickTests(unittest.TestCase):
                         .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
                         .withColumn("str1", StringType(), format="test %d")
                         # .withColumn("str1a", StringType(), format="test %s")
-                        .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"],
+                        .withColumn("str2", StringType(), format="test %s", baseColumn=["val1", "val2"],
                                     base_column_type="values")
-                        .withColumn("str3", StringType(), format="test %s", base_column=["val1", "val2"],
+                        .withColumn("str3", StringType(), format="test %s", baseColumn=["val1", "val2"],
                                     base_column_type="hash")
-                        .withColumn("str4", StringType(), format="test %s", base_column=["val1", "val2"],
+                        .withColumn("str4", StringType(), format="test %s", baseColumn=["val1", "val2"],
                                     base_column_type="hash")
-                        .withColumn("str5", StringType(), format="test %s", base_column=["val1", "val2"])
-                        .withColumn("str5a", StringType(), format="test %s", base_column=["val1", "val2"])
-                        .withColumn("str5b", StringType(), format="test %s", base_column=["val1", "val2"],
+                        .withColumn("str5", StringType(), format="test %s", baseColumn=["val1", "val2"])
+                        .withColumn("str5a", StringType(), format="test %s", baseColumn=["val1", "val2"])
+                        .withColumn("str5b", StringType(), format="test %s", baseColumn=["val1", "val2"],
                                     values=["one", "two", "three"])
-                        .withColumn("str6", StringType(), template=r"\v0 \v1", base_column=["val1", "val2"])
+                        .withColumn("str6", StringType(), template=r"\v0 \v1", baseColumn=["val1", "val2"])
                         )
 
         script = testDataSpec.scriptTable(name="Test")
@@ -523,21 +523,21 @@ class TestQuickTests(unittest.TestCase):
                         .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
                         .withColumn("str1", StringType(), format="test %d")
                         # .withColumn("str1a", StringType(), format="test %s")
-                        .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"],
+                        .withColumn("str2", StringType(), format="test %s", baseColumn=["val1", "val2"],
                                     base_column_type="values")
-                        .withColumn("str3", StringType(), format="test %s", base_column=["val1", "val2"],
+                        .withColumn("str3", StringType(), format="test %s", baseColumn=["val1", "val2"],
                                     base_column_type="hash")
-                        .withColumn("str4", StringType(), format="test %s", base_column=["val1", "val2"],
+                        .withColumn("str4", StringType(), format="test %s", baseColumn=["val1", "val2"],
                                     base_column_type="hash")
-                        .withColumn("str5", StringType(), format="test %s", base_column=["val1", "val2"])
-                        .withColumn("str5a", StringType(), format="test %s", base_column=["val1", "val2"])
-                        .withColumn("action", StringType(), format="test %s", base_column=["val1", "val2"],
+                        .withColumn("str5", StringType(), format="test %s", baseColumn=["val1", "val2"])
+                        .withColumn("str5a", StringType(), format="test %s", baseColumn=["val1", "val2"])
+                        .withColumn("action", StringType(), format="test %s", baseColumn=["val1", "val2"],
                                     values=["INS", "DEL", "UPDATE"])
-                        .withColumn("str6", StringType(), template=r"\v0 \v1", base_column=["val1", "val2"])
+                        .withColumn("str6", StringType(), template=r"\v0 \v1", baseColumn=["val1", "val2"])
                         )
 
-        script = testDataSpec.scriptMerge(tgt_name="Test", src_name="TestInc", join_expr="src.id=tgt.id",
-                                          del_expr="src.action='DEL'", update_expr="src.action='UPDATE")
+        script = testDataSpec.scriptMerge(tgtName="Test", srcName="TestInc", joinExpr="src.id=tgt.id",
+                                          delExpr="src.action='DEL'", updateExpr="src.action='UPDATE")
         print(script)
 
         output_columns = testDataSpec.getOutputColumnNames()
@@ -562,20 +562,20 @@ class TestQuickTests(unittest.TestCase):
                         .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
                         .withColumn("str1", StringType(), format="test %d")
                         # .withColumn("str1a", StringType(), format="test %s")
-                        .withColumn("str2", StringType(), format="test %s", base_column=["val1", "val2"],
+                        .withColumn("str2", StringType(), format="test %s", baseColumn=["val1", "val2"],
                                     base_column_type="values")
-                        .withColumn("str3", StringType(), format="test %s", base_column=["val1", "val2"],
+                        .withColumn("str3", StringType(), format="test %s", baseColumn=["val1", "val2"],
                                     base_column_type="hash")
-                        .withColumn("str4", StringType(), format="test %s", base_column=["val1", "val2"],
+                        .withColumn("str4", StringType(), format="test %s", baseColumn=["val1", "val2"],
                                     base_column_type="hash")
-                        .withColumn("str5", StringType(), format="test %s", base_column=["val1", "val2"])
-                        .withColumn("str5a", StringType(), format="test %s", base_column=["val1", "val2"])
-                        .withColumn("action", StringType(), format="test %s", base_column=["val1", "val2"],
+                        .withColumn("str5", StringType(), format="test %s", baseColumn=["val1", "val2"])
+                        .withColumn("str5a", StringType(), format="test %s", baseColumn=["val1", "val2"])
+                        .withColumn("action", StringType(), format="test %s", baseColumn=["val1", "val2"],
                                     values=["INS", "DEL", "UPDATE"])
-                        .withColumn("str6", StringType(), template=r"\v0 \v1", base_column=["val1", "val2"])
+                        .withColumn("str6", StringType(), template=r"\v0 \v1", baseColumn=["val1", "val2"])
                         )
 
-        script = testDataSpec.scriptMerge(tgt_name="Test", src_name="TestInc", join_expr="src.id=tgt.id")
+        script = testDataSpec.scriptMerge(tgtName="Test", srcName="TestInc", joinExpr="src.id=tgt.id")
         self.assertIsNotNone(script)
 
         print(script)
@@ -600,7 +600,7 @@ class TestQuickTests(unittest.TestCase):
                                          partitions=4)
                         .withIdOutput()
                         .withColumn("order_num",  minValue=1, maxValue=100000000, random=True)
-                        .withColumn("order_id",  prefix="order", base_column="order_num")
+                        .withColumn("order_id", prefix="order", baseColumn="order_num")
                         )
 
         testDataSpec.build(withTempView=True)
@@ -621,7 +621,7 @@ class TestQuickTests(unittest.TestCase):
                         .withIdOutput()
                         # use step of -1 to ensure descending from max value
                         .withColumn("order_num",  minValue=1, maxValue=100000000, step=-1)
-                        .withColumn("order_id",  prefix="order", base_column="order_num")
+                        .withColumn("order_id", prefix="order", baseColumn="order_num")
                         )
 
         testDataSpec.build(withTempView=True)
@@ -642,7 +642,7 @@ class TestQuickTests(unittest.TestCase):
                         .withIdOutput()
                         # use step of -1 to ensure descending from max value
                         .withColumn("order_num",  minValue=1, maxValue=100000000, step=-1)
-                        .withColumn("order_id",  "string", minValue=None, suffix="_order", base_column="order_num")
+                        .withColumn("order_id",  "string", minValue=None, suffix="_order", baseColumn="order_num")
                         )
 
         testDataSpec.build(withTempView=True)
@@ -666,7 +666,7 @@ class TestQuickTests(unittest.TestCase):
                         .withIdOutput()
                         # default column type is string
                         .withColumn("order_num",  minValue=1, maxValue=100000000, random=True)
-                        .withColumn("order_id",  prefix="order", base_column="order_num")
+                        .withColumn("order_id", prefix="order", baseColumn="order_num")
                         )
 
         testDataSpec.build(withTempView=True)
@@ -686,7 +686,7 @@ class TestQuickTests(unittest.TestCase):
                         .withIdOutput()
                         # default column type is string
                         .withColumn("order_num",  minValue=1, maxValue=100000000, step=-1)
-                        .withColumn("order_id",  prefix="order", base_column="order_num")
+                        .withColumn("order_id", prefix="order", baseColumn="order_num")
                         )
 
         df = testDataSpec.build(withTempView=True)

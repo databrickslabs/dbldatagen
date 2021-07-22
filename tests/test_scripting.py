@@ -11,9 +11,6 @@ class TestScripting(unittest.TestCase):
     row_count = 1000
     column_count = 10
 
-    def compareTableScriptWithDataset(self, script, name, df):
-        pass
-
     def checkGeneratedScript(self, script, name):
         self.assertIsNotNone(script, "script is None")
         self.assertTrue(len(script.strip()) > 0, "empty script")
@@ -45,7 +42,7 @@ class TestScripting(unittest.TestCase):
 
                         )
 
-        creation_script = testDataSpec.scriptTable(name=tbl_name, table_format="parquet")
+        creation_script = testDataSpec.scriptTable(name=tbl_name, tableFormat="parquet")
 
         self.checkGeneratedScript(creation_script, name=tbl_name)
 
@@ -58,6 +55,7 @@ class TestScripting(unittest.TestCase):
         df_result = spark.sql("select * from {}".format(tbl_name))
 
         dfTestData = testDataSpec.build().cache()
+        spark.sql("drop table if exists {}".format(tbl_name))
 
         schema1 = df_result.schema
         schema2 = dfTestData.schema
@@ -81,7 +79,7 @@ class TestScripting(unittest.TestCase):
 
                         )
 
-        creation_script = testDataSpec.scriptTable(name=tbl_name, table_format="parquet", location="/tmp/test")
+        creation_script = testDataSpec.scriptTable(name=tbl_name, tableFormat="parquet", location="/tmp/test")
 
         self.checkGeneratedScript(creation_script, name=tbl_name)
         self.assertTrue("location" in creation_script, "location is not in script")

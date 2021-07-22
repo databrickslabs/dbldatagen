@@ -176,7 +176,7 @@ class TestDistributions(unittest.TestCase):
         # will have implied column `id` for ordinal of row
         normal_data_generator = (
             dg.DataGenerator(sparkSession=spark, rows=self.rows, partitions=4,
-                             seed=42, seed_method="hash_fieldname")
+                             seed=42, seedMethod="hash_fieldname")
                 .withIdOutput()  # id column will be emitted in the output
                 .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
                 .withColumn("code4", "integer", minValue=1, maxValue=40, step=1, random=True,

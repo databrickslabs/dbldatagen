@@ -206,7 +206,7 @@ class TestBuildPlanning(unittest.TestCase):
     def test_explain_on_clone(self):
         testDataSpec2 = self.testDataSpec.clone()
         testDataSpec2.computeBuildPlan()
-        explain_results = testDataSpec2.explain(suppress_output=True)
+        explain_results = testDataSpec2.explain(suppressOutput=True)
 
         self.assertIsNotNone(explain_results)
 

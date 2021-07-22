@@ -29,7 +29,7 @@ testdata_generator = (dg.DataGenerator(sparkSession=spark, name="test_dataset1",
                       .withColumn("code4", "integer", minValue=1, maxValue=20, step=1, random=True)
                       # base column specifies dependent column
 
-                      .withColumn("site_cd", "string", prefix='site', base_column='code1')
+                      .withColumn("site_cd", "string", prefix='site', baseColumn='code1')
                       .withColumn("sector_status_desc", "string", minValue=1, maxValue=200, step=1, prefix='status', random=True)
                       .withColumn("tech", "string", values=["GSM", "UMTS", "LTE", "UNKNOWN"], random=True)
                       .withColumn("test_cell_flg", "integer", values=[0, 1], random=True)
@@ -53,7 +53,7 @@ display(df)
 
 df = testdata_generator
 
-df2 = testdata_generator.option("starting_id", 200000).build()  # build our dataset
+df2 = testdata_generator.option("startingId", 200000).build()  # build our dataset
 
 display(df2)
 
@@ -78,7 +78,7 @@ testdata_generator2 = (dg.DataGenerator(sparkSession=spark, name="test_dataset2"
                        .withColumn("code4", "integer", minValue=1, maxValue=20, step=1, random=True)
                        # base column specifies dependent column
 
-                       .withColumn("site_cd", "string", prefix='site', base_column='code1')
+                       .withColumn("site_cd", "string", prefix='site', baseColumn='code1')
                        .withColumn("sector_status_desc", "string", minValue=1, maxValue=200, step=1, prefix='status', random=True)
                        .withColumn("tech", "string", values=["GSM", "UMTS", "LTE", "UNKNOWN"], weights=[5, 1, 1, 1],
                                    random=True)
@@ -126,7 +126,7 @@ x3 = (dg.DataGenerator(sparkSession=spark, name="association_oss_cell_info", row
       .withColumnSpec("site_id", minValue=1, maxValue=20, step=1)
       # base column specifies dependent column
       .withIdOutput()
-      .withColumnSpec("site_cd", prefix='site', base_column='site_id')
+      .withColumnSpec("site_cd", prefix='site', baseColumn='site_id')
       .withColumn("sector_status_desc", "string", minValue=1, maxValue=200, step=1, prefix='status', random=True)
       # withColumn adds specification for new column
       .withColumn("rand", "float", expr="floor(rand() * 350) * (86400 + 3600)")

@@ -22,4 +22,4 @@ See the contents of the file `python/require.txt` to see the Python package depe
 * added support for specific distributions
 * renamed packaging to `dbldatagen`
 * moved Github repo to https://github.com/databrickslabs/dbldatagen/releases
- 
+* code tidy up and rename of options

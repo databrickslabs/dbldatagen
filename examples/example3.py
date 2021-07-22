@@ -20,7 +20,7 @@ import math
 #    .withColumnSpec("a",  minValue=0, maxValue = 1.5, step=0.3, random=True)
 #    .withColumnSpec("b",  minValue=10, maxValue=17, step=2, random=True)
 #    # base column specifies dependent column
-#    .withColumnSpec("c",  prefix='item', base_column='b')
+#    .withColumnSpec("c",  prefix='item', baseColumn='b')
 #    # withColumn adds specification for new column
 #    .withColumn("rand", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)")
 #    .withColumn("start", TimestampType(), begin=start, end=end, interval=interval, random=True)

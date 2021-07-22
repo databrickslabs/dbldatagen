@@ -46,7 +46,7 @@ class Beta(DataDistribution):
 
         :param alpha_series: value for alpha parameter as Pandas Series
         :param beta_series: value for beta parameter as Pandas Series
-        :param random_seed: value for random_seed parameter as Pandas Series
+        :param random_seed: value for randomSeed parameter as Pandas Series
 
         :return: random samples from distribution scaled to values between 0 and 1
 

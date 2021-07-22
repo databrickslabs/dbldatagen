@@ -207,9 +207,11 @@ class TestLargeSchemaOperation(unittest.TestCase):
         sale_weights = [1, 5, 5, 1]
 
         ds = (self.testDataSpec.clone().withRowCount(1000)
+              # test legacy argument `match_types`
               .withColumnSpecs(patterns=".*_ID", match_types=StringType(), format="%010d",
                                minValue=10, maxValue=123, step=1)
-              .withColumnSpecs(patterns=".*_IDS", match_types=StringType(), format="%010d",
+              # test revised argument `matchTypes`
+              .withColumnSpecs(patterns=".*_IDS", matchTypes=StringType(), format="%010d",
                                minValue=1, maxValue=100, step=1)
               .withColumnSpec("R_ID", minValue=1, maxValue=100, step=1)
               .withColumnSpec("XYYZ_IDS", minValue=1, maxValue=123, step=1,
