@@ -10,6 +10,7 @@ from datetime import date, datetime, timedelta
 import re
 import copy
 import logging
+from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_RANDOM, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME
 
 from pyspark.sql.functions import col, lit, concat, rand, ceil, floor, round as sql_round, array, expr
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
@@ -23,12 +24,6 @@ from .spark_singleton import SparkSingleton
 _OLD_MIN_OPTION = 'min'
 _OLD_MAX_OPTION = 'max'
 
-# default random seed
-DEFAULT_RANDOM_SEED = 42
-RANDOM_SEED_RANDOM = -1
-RANDOM_SEED_RANDOM_FLOAT = -1.0
-RANDOM_SEED_FIXED = "fixed"
-RANDOM_SEED_HASH_FIELD_NAME = "hash_fieldname"
 
 class DataGenerator:
     """ Main Class for test data set generation
@@ -508,7 +503,7 @@ class DataGenerator:
         else:
             return minValue, maxValue, step
 
-    def withColumnSpecs(self, patterns=None, fields=None, match_types=None, **kwargs):
+    def withColumnSpecs(self, patterns=None, fields=None, matchTypes=None, **kwargs):
         """Add column specs for columns matching
            a) list of field names,
            b) one or more regex patterns
@@ -518,7 +513,7 @@ class DataGenerator:
                          that match the column names. May be omitted.
         :param fields: a string specifying an explicit field to match , or a list of strings specifying
                        explicit fields to match. May be omitted.
-        :param match_types: a single Spark SQL datatype or list of Spark SQL data types to match. May be omitted.
+        :param matchTypes: a single Spark SQL datatype or list of Spark SQL data types to match. May be omitted.
         :returns: modified in-place instance of test data generator allowing for chaining of calls following
                   Builder pattern
 
@@ -528,8 +523,16 @@ class DataGenerator:
         """
         if fields is not None and type(fields) is str:
             fields = [fields]
-        if match_types is not None and type(match_types) is not list:
-            match_types = [match_types]
+
+        # add support for deprecated legacy names
+        if "match_types" in kwargs:
+            assert matchTypes is None, "Argument ``match_types`` is deprecated, use ``matchTypes`` instead"
+            matchTypes = kwargs["match_types"]
+            del kwargs["match_types"]  # remove the legacy option from keyword args as they will be used later
+
+        if matchTypes is not None and type(matchTypes) is not list:
+            matchTypes = [matchTypes]  # if only one match type, make a list of that match type
+
         if patterns is not None and type(patterns) is str:
             patterns = ["^" + patterns + "$"]
         elif type(patterns) is list:
@@ -542,8 +545,8 @@ class DataGenerator:
         if patterns is not None:
             effective_fields = [x for x in effective_fields for y in patterns if re.search(y, x) is not None]
 
-        if match_types is not None:
-            effective_fields = [x for x in effective_fields for y in match_types
+        if matchTypes is not None:
+            effective_fields = [x for x in effective_fields for y in matchTypes
                                 if self.getColumnType(x) == y]
 
         for f in effective_fields:

@@ -41,7 +41,7 @@ The data generator includes the following features:
 * Generate column data from [one or more seed columns](#generating-repeatable-data)  
 [values optionally with weighting](#create-a-data-set-without-pre-existing-schemas) of how frequently values occur
 * Use [template based text generation](#creating-data-set-with-pre-existing-schema) 
-and [formatting on string columns](TEXTDATA)
+and [formatting on string columns](textdata)
 * Use [SQL based expressions](#using-sql-in-data-generation) to control or augment column generation
 * Script Spark SQL table creation statement for dataset 
 * Specify a [statistical distribution for random values](DISTRIBUTIONS)
@@ -134,8 +134,10 @@ testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows
                    .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
                    .withColumn("code2", IntegerType(), minValue=0, maxValue=10, random=True)
                    .withColumn("code3", StringType(), values=['online', 'offline', 'unknown'])
-                   .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True, percentNulls=0.05)
-                   .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+                   .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True, 
+                               percentNulls=0.05)
+                   .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, 
+                                weights=[9, 1, 1])
                    )
 
 dfTestData = testDataSpec.build()
@@ -217,7 +219,8 @@ dataspec = (dg.DataGenerator(spark, rows=10000000, partitions=8)
 
 dataspec = (dataspec
                 .withColumnSpec("name", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w')                                       
-                .withColumnSpec("serial_number", minValue=1000000, maxValue=10000000, prefix="dr", random=True) 
+                .withColumnSpec("serial_number", minValue=1000000, maxValue=10000000, 
+                                 prefix="dr", random=True) 
                 .withColumnSpec("email", template=r'\\w.\\w@\\w.com')       
                 .withColumnSpec("license_plate", template=r'\\n-\\n')
            )
@@ -241,9 +244,9 @@ For example:
 
 ```python
     (dg
-       .withColumnSpecs(patterns=".*_ID", match_types=StringType(), format="%010d", 
+       .withColumnSpecs(patterns=".*_ID", matchTypes=StringType(), format="%010d", 
                                minValue=10, maxValue=123, step=1)
-       .withColumnSpecs(patterns=".*_IDS", match_types=StringType(), format="%010d", 
+       .withColumnSpecs(patterns=".*_IDS", matchTypes=StringType(), format="%010d", 
                                minValue=1, maxValue=100, step=1)
     )
 
@@ -256,10 +259,9 @@ Here we want to generate a random set of events but ensure that the device prope
 device from event to event.
 
 ```python
-import dbldatagen as dg
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType, DateType, LongType
-from dbldatagen import DateRange, NRange
 from pyspark.sql.types import LongType, IntegerType, StringType
+
+import dbldatagen as dg
 
 shuffle_partitions_requested = 8
 device_population = 100000
@@ -268,66 +270,77 @@ partitions_requested = 20
 
 spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
 
-country_codes=['CN', 'US', 'FR', 'CA', 'IN', 'JM', 'IE', 'PK','GB','IL',  'AU', 'SG', 'ES', 'GE', 'MX', 'ET', 'SA', 'LB', 'NL' ]
-country_weights=[1300, 365, 67, 38, 1300, 3, 7, 212,67,9,  25, 6, 47, 83, 126, 109, 58, 8, 17 ]
+country_codes = ['CN', 'US', 'FR', 'CA', 'IN', 'JM', 'IE', 'PK', 'GB', 'IL', 'AU', 'SG',
+                 'ES', 'GE', 'MX', 'ET', 'SA', 'LB', 'NL']
+country_weights = [1300, 365, 67, 38, 1300, 3, 7, 212, 67, 9, 25, 6, 47, 83, 126, 109, 58, 8,
+                   17]
 
-manufacturers = [ 'Delta corp', 'Xyzzy Inc.', 'Lakehouse Ltd', 'Acme Corp', 'Embanks Devices']
+manufacturers = ['Delta corp', 'Xyzzy Inc.', 'Lakehouse Ltd', 'Acme Corp', 'Embanks Devices']
 
-lines = [ 'delta', 'xyzzy', 'lakehouse', 'gadget', 'droid']
-
+lines = ['delta', 'xyzzy', 'lakehouse', 'gadget', 'droid']
 
 testDataSpec = (dg.DataGenerator(sparkSession=spark, name="device_data_set", rows=data_rows,
-                                             partitions=partitions_requested, seedMethod='hash_fieldname', 
-                                             verbose=True, debug=True)
-    .withIdOutput()
-    # we'll use hash of the base field to generate the ids to avoid a simple incrementing sequence
-    .withColumn("internal_device_id", LongType(), minValue=0x1000000000000, unique_values=device_population)
+                                 partitions=partitions_requested, seedMethod='hash_fieldname',
+                                 verbose=True, debug=True)
+                .withIdOutput()
+                # we'll use hash of the base field to generate the ids to 
+                # avoid a simple incrementing sequence
+                .withColumn("internal_device_id", LongType(), minValue=0x1000000000000,
+                            uniqueValues=device_population)
 
-    # note for format strings, we must use "%lx" not "%x" as the underlying value is a long
-    .withColumn("device_id", StringType(), format="0x%013x", baseColumn="internal_device_id")
-    #.withColumn("device_id_2", StringType(), format='0x%013x', baseColumn="internal_device_id")
+                # note for format strings, we must use "%lx" not "%x" as the 
+                # underlying value is a long
+                .withColumn("device_id", StringType(), format="0x%013x",
+                            baseColumn="internal_device_id")
 
-    # the device / user attributes will be the same for the same device id 
-    # so lets use the internal device id as the base column for these attribute
-    .withColumn("country", StringType(), values=country_codes, weights=country_weights,
-          baseColumn="internal_device_id", base_column_type="hash")
-    .withColumn("country2a", LongType(), expr="((hash(internal_device_id) % 3847) + 3847) % 3847", 
-          baseColumn="internal_device_id")
-    .withColumn("country2", IntegerType(), expr="floor(cast( (((internal_device_id % 3847) + 3847) % 3847) as double) )", 
-          baseColumn="internal_device_id")
-    .withColumn("country3", StringType(), values=country_codes, baseColumn="country2")
-    .withColumn("manufacturer", StringType(), values=manufacturers, baseColumn="internal_device_id")
+                # the device / user attributes will be the same for the same device id 
+                # so lets use the internal device id as the base column for these attribute
+                .withColumn("country", StringType(), values=country_codes,
+                            weights=country_weights,
+                            baseColumn="internal_device_id", baseColumnType="hash")
+                .withColumn("country2a", LongType(),
+                            expr="((hash(internal_device_id) % 3847) + 3847) % 3847",
+                            baseColumn="internal_device_id")
+                .withColumn("country2", IntegerType(),
+                            expr="""floor(cast( (((internal_device_id % 3847) + 3847) % 3847) 
+                                          as double) )""",
+                            baseColumn="internal_device_id")
+                .withColumn("country3", StringType(), values=country_codes,
+                            baseColumn="country2")
+                .withColumn("manufacturer", StringType(), values=manufacturers,
+                            baseColumn="internal_device_id")
 
-    # use omit = True if you don't want a column to appear in the final output 
-    # but just want to use it as part of generation of another column
-    .withColumn("line", StringType(), values=lines, baseColumn="manufacturer", 
-           base_column_type="hash", omit=True)
-    .withColumn("model_ser", IntegerType(), minValue=1, maxValue=11,  baseColumn="device_id", 
-           base_column_type="hash", omit=True)
+                # use omit = True if you don't want a column to appear in the final output 
+                # but just want to use it as part of generation of another column
+                .withColumn("line", StringType(), values=lines, baseColumn="manufacturer",
+                            baseColumnType="hash", omit=True)
+                .withColumn("model_ser", IntegerType(), minValue=1, maxValue=11,
+                            baseColumn="device_id",
+                            baseColumnType="hash", omit=True)
 
-    .withColumn("model_line", StringType(), expr="concat(line, '#', model_ser)", baseColumn=["line", "model_ser"])
-    .withColumn("event_type", StringType(), 
-           values=["activation", "deactivation", "plan change", "telecoms activity", "internet activity", "device error"],
-           random=True)
+                .withColumn("model_line", StringType(), expr="concat(line, '#', model_ser)",
+                            baseColumn=["line", "model_ser"])
+                .withColumn("event_type", StringType(),
+                            values=["activation", "deactivation", "plan change",
+                                    "telecoms activity", "internet activity", "device error"],
+                            random=True)
 
-    )
+                )
 
 dfTestData = testDataSpec.build()
-
-dfTestData.printSchema()
 
 display(dfTestData)
 ```
 
 - The `withColumn` method call for the `internalDeviceId` column uses the `uniqueValues` option to control the number 
 of unique values.
-- The `withColumn` method call for the `manufacture` column uses the `base_column` option to ensure we get the same 
+- The `withColumn` method call for the `manufacture` column uses the `baseColumn` option to ensure we get the same 
 manufacturer value for each `internalDeviceId`. This allows us to generate IOT style events at random, but still 
 constrain properties whenever the same `internalDeviceId` occurs.  
 of unique values.
 
 > A column may be based on one or more other columns. This means the value of that column will be used as a seed for 
->generating the new column. The `base_column_type` option determines if the actual value , or hash of the value is 
+>generating the new column. The `baseColumnType` option determines if the actual value , or hash of the value is 
 >used as the seed value. 
 
 - The `withColumn` method call for the `line` column introduces a temporary column for purposes of 
@@ -351,10 +364,9 @@ For example, using the same code as before, but with different rows and partitio
 rows of data and write it to a Delta table in under 2 minutes (with a 12 node x 8 core cluster)
 
 ```
-import dbldatagen as dg
-from pyspark.sql.types import IntegerType, StringType, FloatType, TimestampType, DateType, LongType
-from dbldatagen import DateRange, NRange
 from pyspark.sql.types import LongType, IntegerType, StringType
+
+import dbldatagen as dg
 
 shuffle_partitions_requested = 12 * 4
 partitions_requested = 96
@@ -363,53 +375,69 @@ data_rows = 1000 * 1000000
 
 spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
 
-country_codes=['CN', 'US', 'FR', 'CA', 'IN', 'JM', 'IE', 'PK','GB','IL',  'AU', 'SG', 'ES', 'GE', 'MX', 'ET', 'SA', 'LB', 'NL' ]
-country_weights=[1300, 365, 67, 38, 1300, 3, 7, 212,67,9,  25, 6, 47, 83, 126, 109, 58, 8, 17 ]
+country_codes = ['CN', 'US', 'FR', 'CA', 'IN', 'JM', 'IE', 'PK', 'GB', 'IL', 'AU', 'SG', 'ES',
+                 'GE', 'MX', 'ET', 'SA',
+                 'LB', 'NL']
+country_weights = [1300, 365, 67, 38, 1300, 3, 7, 212, 67, 9, 25, 6, 47, 83, 126, 109, 58, 8,
+                   17]
 
-manufacturers = [ 'Delta corp', 'Xyzzy Inc.', 'Lakehouse Ltd', 'Acme Corp', 'Embanks Devices']
+manufacturers = ['Delta corp', 'Xyzzy Inc.', 'Lakehouse Ltd', 'Acme Corp', 'Embanks Devices']
 
-lines = [ 'delta', 'xyzzy', 'lakehouse', 'gadget', 'droid']
-
+lines = ['delta', 'xyzzy', 'lakehouse', 'gadget', 'droid']
 
 testDataSpec = (dg.DataGenerator(sparkSession=spark, name="device_data_set", rows=data_rows,
-                                             partitions=partitions_requested, seed_method='hash_fieldname', 
-                                             verbose=True, debug=True)
-    .withIdOutput()
-    # we'll use hash of the base field to generate the ids to avoid a simple incrementing sequence
-    .withColumn("internal_device_id", LongType(), minValue=0x1000000000000, unique_values=device_population)
+                                 partitions=partitions_requested, seedMethod='hash_fieldname',
+                                 verbose=True, debug=True)
+                .withIdOutput()
+                # we'll use hash of the base field to generate the ids to avoid a 
+                # simple incrementing sequence
+                .withColumn("internal_device_id", LongType(), minValue=0x1000000000000,
+                            unique_values=device_population)
 
-    # note for format strings, we must use "%lx" not "%x" as the underlying value is a long
-    .withColumn("device_id", StringType(), format="0x%013x", base_column="internal_device_id")
-    #.withColumn("device_id_2", StringType(), format='0x%013x', base_column="internal_device_id")
+                # note for format strings, we must use "%lx" not "%x" as the underlying 
+                # value is a long
+                .withColumn("device_id", StringType(), format="0x%013x",
+                            baseColumn="internal_device_id")
 
-    # the device / user attributes will be the same for the same device id 
-    # so lets use the internal device id as the base column for these attribute
-    .withColumn("country", StringType(), values=country_codes, weights=country_weights,
-          base_column="internal_device_id", base_column_type="hash")
-    .withColumn("country2a", LongType(), expr="((hash(internal_device_id) % 3847) + 3847) % 3847", 
-          base_column="internal_device_id")
-    .withColumn("country2", IntegerType(), expr="floor(cast( (((internal_device_id % 3847) + 3847) % 3847) as double) )", 
-          base_column="internal_device_id")
-    .withColumn("country3", StringType(), values=country_codes, base_column="country2")
-    .withColumn("manufacturer", StringType(), values=manufacturers, base_column="internal_device_id")
+                # the device / user attributes will be the same for the same device id 
+                # so lets use the internal device id as the base column for these attribute
+                .withColumn("country", StringType(), values=country_codes,
+                            weights=country_weights,
+                            baseColumn="internal_device_id", baseColumnType="hash")
+                .withColumn("country2a", LongType(),
+                            expr="((hash(internal_device_id) % 3847) + 3847) % 3847",
+                            baseColumn="internal_device_id")
+                .withColumn("country2", IntegerType(),
+                            expr="""floor(cast( (((internal_device_id % 3847) + 3847) % 3847) 
+                                                 as double) )""",
+                            baseColumn="internal_device_id")
+                .withColumn("country3", StringType(), values=country_codes,
+                            baseColumn="country2")
+                .withColumn("manufacturer", StringType(), values=manufacturers,
+                            baseColumn="internal_device_id")
 
-    # use omit = True if you don't want a column to appear in the final output 
-    # but just want to use it as part of generation of another column
-    .withColumn("line", StringType(), values=lines, base_column="manufacturer", 
-           base_column_type="hash", omit=True)
-    .withColumn("model_ser", IntegerType(), minValue=1, maxValue=11,  base_column="device_id", 
-           base_column_type="hash", omit=True)
+                # use omit = True if you don't want a column to appear in the final output 
+                # but just want to use it as part of generation of another column
+                .withColumn("line", StringType(), values=lines, baseColumn="manufacturer",
+                            baseColumnType="hash", omit=True)
+                .withColumn("model_ser", IntegerType(), minValue=1, maxValue=11,
+                            baseColumn="device_id",
+                            baseColumnType="hash", omit=True)
 
-    .withColumn("model_line", StringType(), expr="concat(line, '#', model_ser)", base_column=["line", "model_ser"])
-    .withColumn("event_type", StringType(), 
-           values=["activation", "deactivation", "plan change", "telecoms activity", "internet activity", "device error"],
-           random=True)
+                .withColumn("model_line", StringType(), expr="concat(line, '#', model_ser)",
+                            baseColumn=["line", "model_ser"])
+                .withColumn("event_type", StringType(),
+                            values=["activation", "deactivation", "plan change",
+                                    "telecoms activity",
+                                    "internet activity", "device error"],
+                            random=True)
 
-    )
+                )
 
 dfTestData = testDataSpec.build()
 
-dfTestData.write.format("delta").mode("overwrite").save("/tmp/dbldatagen_examples/a_billion_row_table")
+dfTestData.write.format("delta").mode("overwrite").save(
+    "/tmp/dbldatagen_examples/a_billion_row_table")
 ```
 
 ## Using SQL in data generation
@@ -420,11 +448,12 @@ use of a SQL expression to compute MD5 hashes of synthetic credit card numbers:
 
 ```python
 import dbldatagen as dg
-from pyspark.sql.types import StructType, StructField,  StringType
 
 shuffle_partitions_requested = 8
 partitions_requested = 8
 data_rows = 10000000
+
+spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
 
 dataspec = (dg.DataGenerator(spark, rows=10000000, partitions=8)
                 .withColumn("name", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w') 
@@ -445,8 +474,8 @@ See the section on [text generation](TEXTDATA) for more details on these options
 ### Generating repeatable data
 
 By default, data is generated by a series of pre-determined transformations on an implicit `id` column in the data set.
-Specifying the `base_column` argument allows specifying a dependency on one or more other columns. Note that use of the 
-parameter `base_column_type` will allow determining how the base column is used - for example you can specify that the 
+Specifying the `baseColumn` argument allows specifying a dependency on one or more other columns. Note that use of the 
+parameter `baseColumnType` will allow determining how the base column is used - for example you can specify that the 
 actual value, the hash of the value or an array of the values will be used as the starting point.
 
 So generating data sets from the same data specification will result in the same data set every time unless random data 
@@ -463,21 +492,26 @@ The following example generates repeatable data across runs:
 
 ```python
 import dbldatagen as dg
-from pyspark.sql.types import StructType, StructField,  StringType
 
 shuffle_partitions_requested = 8
 partitions_requested = 8
 data_rows = 10000000
 
-dataspec = (dg.DataGenerator(spark, rows=10000000, partitions=8, seedMethod="hash_fieldname", seed=42)
-                .withColumn("name", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w') 
-                .withColumn("payment_instrument_type", values=['paypal', 'visa', 'mastercard', 'amex'], random=True)             
-                .withColumn("payment_instrument",  minValue=1000000, maxValue=10000000, template="dddd dddddd ddddd") 
-                .withColumn("email", template=r'\\w.\\w@\\w.com')       
-                .withColumn("md5_payment_instrument", 
-                            expr="md5(concat(payment_instrument_type, ':', payment_instrument))",
-                            baseColumn=['payment_instrument_type', 'payment_instrument']) 
-           )
+
+spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
+
+dataspec = (
+    dg.DataGenerator(spark, rows=10000000, partitions=8, seedMethod="hash_fieldname", seed=42)
+    .withColumn("name", percent_nulls=1.0, template=r'\\w \\w|\\w a. \\w')
+    .withColumn("payment_instrument_type", values=['paypal', 'visa', 'mastercard', 'amex'],
+                random=True)
+    .withColumn("payment_instrument", minValue=1000000, maxValue=10000000,
+                template="dddd dddddd ddddd")
+    .withColumn("email", template=r'\\w.\\w@\\w.com')
+    .withColumn("md5_payment_instrument",
+                expr="md5(concat(payment_instrument_type, ':', payment_instrument))",
+                baseColumn=['payment_instrument_type', 'payment_instrument'])
+    )
 df1 = dataspec.build()
 
 df1.display()

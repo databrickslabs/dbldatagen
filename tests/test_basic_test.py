@@ -16,7 +16,6 @@ class TestBasicOperation(unittest.TestCase):
     column_count = 50
 
     def setUp(self):
-        print("setting up")
         FORMAT = '%(asctime)-15s %(message)s'
         logging.basicConfig(format=FORMAT)
 
@@ -239,14 +238,12 @@ class TestBasicOperation(unittest.TestCase):
         """Test values"""
         values = self.dfTestData.select('code1').groupBy().agg(F.min('code1').alias('minValue'),
                                                                F.max('code1').alias('maxValue')).collect()[0]
-        print("minValue and maxValue", values)
         self.assertEqual({100, 200}, {values.minValue, values.maxValue})
 
     def test_values_code2(self):
         """Test values"""
         values = self.dfTestData.select('code2').groupBy().agg(F.min('code2').alias('minValue'),
                                                                F.max('code2').alias('maxValue')).collect()[0]
-        print("minValue and maxValue", values)
         self.assertEqual({0, 10}, {values.minValue, values.maxValue})
 
     def test_values_code3(self):
@@ -336,7 +333,6 @@ class TestBasicOperation(unittest.TestCase):
         count = df.count()
 
         partitions_created = df.rdd.getNumPartitions()
-        print("partitions created", partitions_created)
         self.assertEqual(id_partitions, partitions_created)
         self.assertEqual(count, rows_wanted)
 

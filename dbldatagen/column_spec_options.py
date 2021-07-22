@@ -113,7 +113,7 @@ s
         'base_column': 'baseColumn',
         'base_column_type': 'baseColumnType',
         'base_columns': 'baseColumns',
-        'percentNulls': 'percentNulls',
+        'percent_nulls': 'percentNulls',
         'unique_values': 'uniqueValues',
         'random_seed_method': 'randomSeedMethod',
         'random_seed': 'randomSeed',

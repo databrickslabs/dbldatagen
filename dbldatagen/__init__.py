@@ -23,8 +23,8 @@ the `DataGenerator` class.
 Most of the other classes are used for internal purposes only
 """
 
-from .data_generator import DataGenerator, DEFAULT_RANDOM_SEED, RANDOM_SEED_RANDOM, \
-    RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME
+from .data_generator import DataGenerator
+from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_RANDOM, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME
 from .utils import ensure, topologicalSort, mkBoundsList, coalesce_values, \
     deprecated, parse_time_interval, DataGenError
 from .column_generation_spec import ColumnGenerationSpec
@@ -41,7 +41,7 @@ from .text_generators import TemplateGenerator, ILText, TextGenerator
 
 __all__ = ["data_generator", "data_analyzer", "schema_parser", "daterange", "nrange",
            "column_generation_spec", "utils", "function_builder",
-           "spark_singleton", "text_generators", "datarange"
+           "spark_singleton", "text_generators", "datarange", "datagen_constants"
            ]
 
 

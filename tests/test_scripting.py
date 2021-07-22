@@ -11,9 +11,6 @@ class TestScripting(unittest.TestCase):
     row_count = 1000
     column_count = 10
 
-    def compareTableScriptWithDataset(self, script, name, df):
-        pass
-
     def checkGeneratedScript(self, script, name):
         self.assertIsNotNone(script, "script is None")
         self.assertTrue(len(script.strip()) > 0, "empty script")
@@ -58,6 +55,7 @@ class TestScripting(unittest.TestCase):
         df_result = spark.sql("select * from {}".format(tbl_name))
 
         dfTestData = testDataSpec.build().cache()
+        spark.sql("drop table if exists {}".format(tbl_name))
 
         schema1 = df_result.schema
         schema2 = dfTestData.schema

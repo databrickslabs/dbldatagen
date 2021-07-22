@@ -21,7 +21,7 @@ from .distributions import Normal, DataDistribution
 from .nrange import NRange
 from .text_generators import TemplateGenerator
 from .utils import ensure, coalesce_values
-from .data_generator import RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, RANDOM_SEED_RANDOM
+from .datagen_constants import RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, RANDOM_SEED_RANDOM
 
 HASH_COMPUTE_METHOD = "hash"
 VALUES_COMPUTE_METHOD = "values"
@@ -246,14 +246,14 @@ class ColumnGenerationSpec(object):
                 and (self.textGenerator is not None or self['format'] is not None
                      or self['prefix'] is not None or self['suffix'] is not None):
             if self.values is not None:
-                self.logger.warning("""Column [%s] has no `base_column_type` attribute and uses discrete values
+                self.logger.info("""Column [%s] has no `base_column_type` attribute and uses discrete values
                                        => Assuming `hash` for attribute `base_column_type`. 
                                        => Use explicit value for `base_column_type` if alternate interpretation needed
 
                                     """, self.name)
                 self._baseColumnComputeMethod = HASH_COMPUTE_METHOD
             else:
-                self.logger.warning("""Column [%s] has no `base_column_type` attribute specified for formatted text
+                self.logger.info("""Column [%s] has no `base_column_type` attribute specified for formatted text
                                        => Assuming `values` for attribute `base_column_type`. 
                                        => Use explicit value for `base_column_type` if alternate interpretation  needed
 
@@ -1018,7 +1018,7 @@ class ColumnGenerationSpec(object):
                 # elif self._baseColumnComputeMethod == HASH_COMPUTE_METHOD:
                 #    newDef = self._getSeedExpression(self.baseColumn)
                 else:
-                    self.logger.warning("Assuming a seeded base expression with minimum value for column %s", self.name)
+                    self.logger.info("Assuming a seeded base expression with minimum value for column %s", self.name)
                     self.executionHistory.append(f".. seeding with minimum `{self._dataRange.minValue}`")
                     new_def = ((self._getSeedExpression(self.baseColumn) + lit(self._dataRange.minValue))
                                .astype(self.datatype))
@@ -1114,7 +1114,7 @@ class ColumnGenerationSpec(object):
            :returns: new column definition with probability of nulls applied
         """
         assert self.nullable, "Column `{}` must be nullable for `percent_nulls` option".format(self.name)
-        self.execution_history.append(".. applying null generator - `when rnd > prob then value - else null`")
+        self.executionHistory.append(".. applying null generator - `when rnd > prob then value - else null`")
 
         assert probabilityNulls is not None, "option ``percent_nulls`` must not be null value or None"
         assert type(probabilityNulls) in [int, float], "option ``percent_nulls`` must be int or float"
