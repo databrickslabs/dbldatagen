@@ -12,23 +12,23 @@ import random
 import numpy as np
 import pandas as pd
 
-#: list of hex digits for template generation
+#: list of hex digits for _template generation
 _HEX_LOWER = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
 
-#: list of upper case hex digits for template generation
+#: list of upper case hex digits for _template generation
 _HEX_UPPER = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
 
-#: list of non-zero digits for template generation
+#: list of non-zero digits for _template generation
 _DIGITS_NON_ZERO = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
 
-#: list of digits for template generation
+#: list of digits for _template generation
 _DIGITS_ZERO = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
-#: list of uppercase letters for template generation
+#: list of uppercase letters for _template generation
 _LETTERS_UPPER = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
                   'Q', 'R', 'T', 'S', 'U', 'V', 'W', 'X', 'Y', 'Z']
 
-#: list of lowercase letters for template generation
+#: list of lowercase letters for _template generation
 _LETTERS_LOWER = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q',
                   'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 
@@ -162,17 +162,17 @@ class TextGenerator(object):
 
 
 class TemplateGenerator(TextGenerator):
-    """This class handles the generation of text from templates
+    """This class handles the generation of text from _templates
 
-    :param template: template string to use in text generation
-    :param escapeSpecialChars: By default special chars in the template have special meaning if unescaped
+    :param template: _template string to use in text generation
+    :param escapeSpecialChars: By default special chars in the _template have special meaning if unescaped
                                If set to true, then the special meaning requires escape char ``\\``
 
-    The template generator generates text from a template to allow for generation of synthetic credit card numbers,
+    The _template generator generates text from a _template to allow for generation of synthetic credit card numbers,
     VINs, IBANs and many other structured codes.
 
-    The base value is passed to the template generation and may be used in the generated text. The base value is the
-    value the column would have if the template generation had not been applied.
+    The base value is passed to the _template generation and may be used in the generated text. The base value is the
+    value the column would have if the _template generation had not been applied.
 
     It uses the following special chars:
 
@@ -209,27 +209,35 @@ class TemplateGenerator(TextGenerator):
 
     In all other cases, the char itself is used.
 
-    The setting of the `escapeSpecialChars` determines how templates generate data.
+    The setting of the `escapeSpecialChars` determines how _templates generate data.
 
-    If set to False, then the template ``r"\\dr_\\v"`` will generate the values ``"dr_0"`` ... ``"dr_999"`` when applied
+    If set to False, then the _template ``r"\\dr_\\v"`` will generate the values ``"dr_0"`` ... ``"dr_999"`` when applied
     to the values zero to 999. This conforms to earlier implementations for backwards compatibility.
 
-    If set to True, then the template ``r"dr_\\v"`` will generate the values ``"dr_0"`` ... ``"dr_999"``
+    If set to True, then the _template ``r"dr_\\v"`` will generate the values ``"dr_0"`` ... ``"dr_999"``
     when applied to the values zero to 999. This conforms to the preferred style going forward
 
     """
 
-    def __init__(self, template, escapeSpecialChars=False):
-        assert template is not None, "`template` must be specified"
+    def __init__(self, template, escapeSpecialChars=False, extendedWordList=None):
+        assert template is not None, "`_template` must be specified"
         super().__init__()
 
-        self.template = template
-        self.escapeSpecialMeaning = bool(escapeSpecialChars)
-        template_str0 = self.template
-        self.templates = [x.replace('$__sep__', '|') for x in template_str0.replace(r'\|', '$__sep__').split('|')]
+        self._template = template
+        self._escapeSpecialMeaning = bool(escapeSpecialChars)
+        template_str0 = self._template
+        self._templates = [x.replace('$__sep__', '|') for x in template_str0.replace(r'\|', '$__sep__').split('|')]
+        self._wordList = extendedWordList if extendedWordList is not None else _WORDS_LOWER
+        self._upperWordList = [x.upper() for x in extendedWordList] if extendedWordList is not None else _WORDS_UPPER
+        self._lenWords = len(self._wordList)
 
     def __repr__(self):
-        return f"TemplateGenerator(template='{self.template}')"
+        return f"TemplateGenerator(_template='{self._template}')"
+
+    @property
+    def templates(self):
+        """ Get effective templates for text generator"""
+        return self._templates
 
     def _getRandomInt(self, low, high=-1, rng=None):
         """ generate random integer between low and high inclusive
@@ -251,17 +259,17 @@ class TemplateGenerator(TextGenerator):
         return random.randint(low, high)
 
     def stringsFromSingleTemplate(self, baseValue, genTemplate, escapeSpecialMeaning=False, rndGenerator=None):
-        """ Generate text from a single template
+        """ Generate text from a single _template
 
         :param rndGenerator: random number generator instance
-        :param baseValue: underlying base value to seed template generation.
-          Ignored unless template outputs it
-        :param genTemplate: template string to control text generation
+        :param baseValue: underlying base value to seed _template generation.
+          Ignored unless _template outputs it
+        :param genTemplate: _template string to control text generation
         :param escapeSpecialMeaning: if True, requires escape on special meaning chars.
-        :returns: array of strings generated from template
+        :returns: array of strings generated from _template
 
-        `escapeSpecialMeaning` parameter allows for backwards compatibility with old style syntax while allowing
-        for preferred new style template syntax. Specify as True to force escapes for special meanings,.
+        `_escapeSpecialMeaning` parameter allows for backwards compatibility with old style syntax while allowing
+        for preferred new style _template syntax. Specify as True to force escapes for special meanings,.
 
         """
         retval = []
@@ -270,8 +278,8 @@ class TemplateGenerator(TextGenerator):
         use_value = False
         template_len = len(genTemplate)
 
-        # in the following code, the construct `(not escape) ^ self.escapeSpecialMeaning` means apply special meaning if
-        # either escape is not true or the option `self.escapeSpecialMeaning` is true.
+        # in the following code, the construct `(not escape) ^ self._escapeSpecialMeaning` means apply special meaning if
+        # either escape is not true or the option `self._escapeSpecialMeaning` is true.
         # This corresponds to the logical xor operation
         for i in range(0, template_len):
             char = genTemplate[i]
@@ -306,10 +314,10 @@ class TemplateGenerator(TextGenerator):
                 retval.append(str(self._getRandomInt(0, 65535, rndGenerator)))
                 escape = False
             elif char == 'W' and escape:
-                retval.append(_WORDS_UPPER[self._getRandomInt(0, len(_WORDS_UPPER), rndGenerator) - 1])
+                retval.append(self._upperWordList[self._getRandomInt(0, self._lenWords, rndGenerator) - 1])
                 escape = False
             elif char == 'w' and escape:
-                retval.append(_WORDS_LOWER[self._getRandomInt(0, len(_WORDS_LOWER), rndGenerator) - 1])
+                retval.append(self._wordList[self._getRandomInt(0, self._lenWords, rndGenerator) - 1])
                 escape = False
             elif char == 'v' and escape:
                 escape = False
@@ -330,16 +338,16 @@ class TemplateGenerator(TextGenerator):
         return retval
 
     def valueFromSingleTemplate(self, baseValue, genTemplate, escapeSpecialMeaning=False, rndGenerator=None):
-        """ Generate text from a single template
+        """ Generate text from a single _template
 
-        :param baseValue: underlying base value to seed template generation.
-          Ignored unless template outputs it
-        :param genTemplate: template string to control text generation
+        :param baseValue: underlying base value to seed _template generation.
+          Ignored unless _template outputs it
+        :param genTemplate: _template string to control text generation
         :param escapeSpecialMeaning: if True, requires escape on special meaning chars.
-        :returns: combined string from template
+        :returns: combined string from _template
 
-        `escapeSpecialMeaning` parameter allows for backwards compatibility with old style syntax while allowing
-        for preferred new style template syntax. Specify as True to force escapes for special meanings,.
+        `_escapeSpecialMeaning` parameter allows for backwards compatibility with old style syntax while allowing
+        for preferred new style _template syntax. Specify as True to force escapes for special meanings,.
 
         """
         retval = self.stringsFromSingleTemplate(baseValue, genTemplate, escapeSpecialMeaning, rndGenerator)
@@ -364,12 +372,12 @@ class TemplateGenerator(TextGenerator):
             return self.valueFromSingleTemplate(originalValue, template, escapeSpecialMeaning)
 
         rng = None  # use standard random
-        if len(self.templates) > 1:
+        if len(self._templates) > 1:
             results = v.apply(lambda v1, t, e, rndGenerator: valueFromRandomTemplate(v1, t, e, rndGenerator),
-                              args=(self.templates, self.escapeSpecialMeaning, rng))
+                              args=(self._templates, self._escapeSpecialMeaning, rng))
         else:
             results = v.apply(lambda v1, t, e, rndGenerator: self.valueFromSingleTemplate(v1, t, e, rndGenerator),
-                              args=(self.templates[0], self.escapeSpecialMeaning, rng))
+                              args=(self._templates[0], self._escapeSpecialMeaning, rng))
         return results
 
 

@@ -73,7 +73,7 @@ s
     :param dataRange: An instance of an `NRange` or `DateRange` object. This can be used in place of `minValue`,
                        `maxValue`, `step` or `begin`, `end`, `interval`.
 
-    :param template: template controlling how text should be generated
+    :param _template: _template controlling how text should be generated
 
     :param text_separator: string specifying separator to be used when constructing strings with prefix and suffix
 
@@ -96,7 +96,7 @@ s
 
     :param distribution: Distribution for random number. Ignored if column is not random.
 
-    :param escapeSpecialChars: if True, require escape for all special chars in template
+    :param escapeSpecialChars: if True, require escape for all special chars in _template
 
     .. note::
         If the `dataRange` parameter is specified as well as the `minValue`, `maxValue` or `step`,

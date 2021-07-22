@@ -53,15 +53,15 @@ class TestTextGeneration(unittest.TestCase):
                                          partitions=self.partitions_requested)
                         .withSchema(schema)
                         .withIdOutput()
-                        .withColumnSpec("date", percent_nulls=0.1)
-                        .withColumnSpec("nint", percent_nulls=0.1, minValue=1, maxValue=9, step=2)
-                        .withColumnSpec("nstr1", percent_nulls=0.1, minValue=1, maxValue=9, step=2)
-                        .withColumnSpec("nstr2", percent_nulls=0.1, minValue=1.5, maxValue=2.5, step=0.3,
+                        .withColumnSpec("date", percentNulls=0.1)
+                        .withColumnSpec("nint", percentNulls=0.1, minValue=1, maxValue=9, step=2)
+                        .withColumnSpec("nstr1", percentNulls=0.1, minValue=1, maxValue=9, step=2)
+                        .withColumnSpec("nstr2", percentNulls=0.1, minValue=1.5, maxValue=2.5, step=0.3,
                                         format="%04f")
                         .withColumnSpec("nstr3", minValue=1.0, maxValue=9.0, step=2.0)
-                        .withColumnSpec("nstr4", percent_nulls=0.1, minValue=1, maxValue=9, step=2, format="%04d")
-                        .withColumnSpec("nstr5", percent_nulls=0.1, minValue=1.5, maxValue=2.5, step=0.3, random=True)
-                        .withColumnSpec("nstr6", percent_nulls=0.1, minValue=1.5, maxValue=2.5, step=0.3, random=True,
+                        .withColumnSpec("nstr4", percentNulls=0.1, minValue=1, maxValue=9, step=2, format="%04d")
+                        .withColumnSpec("nstr5", percentNulls=0.1, minValue=1.5, maxValue=2.5, step=0.3, random=True)
+                        .withColumnSpec("nstr6", percentNulls=0.1, minValue=1.5, maxValue=2.5, step=0.3, random=True,
                                         format="%04f")
                         .withColumnSpec("email", template=r'\w.\w@\w.com|\w@\w.co.u\k')
                         .withColumnSpec("ip_addr", template=r'\n.\n.\n.\n')
@@ -120,15 +120,15 @@ class TestTextGeneration(unittest.TestCase):
                                          partitions=8)
                         .withSchema(schema)
                         .withIdOutput()
-                        .withColumnSpec("date", percent_nulls=10.0)
-                        .withColumnSpec("nint", percent_nulls=10.0, minValue=1, maxValue=9, step=2)
-                        .withColumnSpec("nstr1", percent_nulls=10.0, minValue=1, maxValue=9, step=2)
-                        .withColumnSpec("nstr2", percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3,
+                        .withColumnSpec("date", percentNulls=0.1)
+                        .withColumnSpec("nint", percentNulls=0.1, minValue=1, maxValue=9, step=2)
+                        .withColumnSpec("nstr1", percentNulls=0.1, minValue=1, maxValue=9, step=2)
+                        .withColumnSpec("nstr2", percentNulls=0.1, minValue=1.5, maxValue=2.5, step=0.3,
                                         format="%04f")
                         .withColumnSpec("nstr3", minValue=1.0, maxValue=9.0, step=2.0)
-                        .withColumnSpec("nstr4", percent_nulls=10.0, minValue=1, maxValue=9, step=2, format="%04d")
-                        .withColumnSpec("nstr5", percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3, random=True)
-                        .withColumnSpec("nstr6", percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3, random=True,
+                        .withColumnSpec("nstr4", percentNulls=0.1, minValue=1, maxValue=9, step=2, format="%04d")
+                        .withColumnSpec("nstr5", percentNulls=0.1, minValue=1.5, maxValue=2.5, step=0.3, random=True)
+                        .withColumnSpec("nstr6", percentNulls=0.1, minValue=1.5, maxValue=2.5, step=0.3, random=True,
                                         format="%04f")
                         .withColumn("paras", text=dg.ILText(paragraphs=(1, 4), sentences=(2, 6), words=(1, 8)))
 
@@ -147,15 +147,15 @@ class TestTextGeneration(unittest.TestCase):
                                          partitions=8)
                         .withSchema(schema)
                         .withIdOutput()
-                        .withColumnSpec("date", percent_nulls=10.0)
-                        .withColumnSpec("nint", percent_nulls=10.0, minValue=1, maxValue=9, step=2)
-                        .withColumnSpec("nstr1", percent_nulls=10.0, minValue=1, maxValue=9, step=2)
-                        .withColumnSpec("nstr2", percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3,
+                        .withColumnSpec("date", percentNulls=0.1)
+                        .withColumnSpec("nint", percentNulls=0.1, minValue=1, maxValue=9, step=2)
+                        .withColumnSpec("nstr1", percentNulls=0.1, minValue=1, maxValue=9, step=2)
+                        .withColumnSpec("nstr2", percentNulls=0.1, minValue=1.5, maxValue=2.5, step=0.3,
                                         format="%04f")
                         .withColumnSpec("nstr3", minValue=1.0, maxValue=9.0, step=2.0)
-                        .withColumnSpec("nstr4", percent_nulls=10.0, minValue=1, maxValue=9, step=2, format="%04d")
-                        .withColumnSpec("nstr5", percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3, random=True)
-                        .withColumnSpec("nstr6", percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3, random=True,
+                        .withColumnSpec("nstr4", percentNulls=0.1, minValue=1, maxValue=9, step=2, format="%04d")
+                        .withColumnSpec("nstr5", percentNulls=0.1, minValue=1.5, maxValue=2.5, step=0.3, random=True)
+                        .withColumnSpec("nstr6", percentNulls=0.1, minValue=1.5, maxValue=2.5, step=0.3, random=True,
                                         format="%04f")
                         .withColumn("paras", text=dg.ILText(paragraphs=(1, 4), sentences=(2, 6), words=(1, 8)))
 

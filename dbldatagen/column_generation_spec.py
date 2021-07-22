@@ -129,7 +129,7 @@ class ColumnGenerationSpec(object):
 
         self._csOptions.checkValidColumnProperties(supplied_options)
 
-        # only allow `template` or `test`
+        # only allow `template` or `text`
         self._csOptions.checkExclusiveOptions(["template", "text"])
 
         # only allow `weights` or `distribution`

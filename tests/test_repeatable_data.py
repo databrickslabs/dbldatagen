@@ -25,8 +25,8 @@ class TestRepeatableDataGeneration(unittest.TestCase):
                         .withIdOutput()
                         .withColumn("r", FloatType(), expr="floor(rand(42) * 350) * (86400 + 3600)",
                                     numColumns=cls.column_count)
-                        .withColumn("code1", IntegerType(), min=100, max=200, random=withRandom)
-                        .withColumn("code2", IntegerType(), min=0, max=1000000,
+                        .withColumn("code1", IntegerType(), minValue=100, maxValue=200, random=withRandom)
+                        .withColumn("code2", IntegerType(), minValue=0, maxValue=1000000,
                                     random=withRandom, distribution=dist)
                         .withColumn("code3", StringType(), values=['a', 'b', 'c'])
                         .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=withRandom)
@@ -136,8 +136,8 @@ class TestRepeatableDataGeneration(unittest.TestCase):
     def test_multiple_base_columns(self):
         """Test data generation with multiple base columns"""
         ds1 = (self.mkBasicDataspec(withRandom=True)
-               .withColumn("ac1", IntegerType(), base_column=['code1', 'code2'], minValue=100, maxValue=200)
-               .withColumn("ac2", IntegerType(), base_column=['code1', 'code2'],
+               .withColumn("ac1", IntegerType(), baseColumn=['code1', 'code2'], minValue=100, maxValue=200)
+               .withColumn("ac2", IntegerType(), baseColumn=['code1', 'code2'],
                            minValue=100, maxValue=200, random=True)
                )
         df1 = ds1.build()
@@ -169,7 +169,7 @@ class TestRepeatableDataGeneration(unittest.TestCase):
         self.checkTablesEqual(df1, df2)
 
     def test_template_column(self):
-        """Test data generation with template columns"""
+        """Test data generation with _template columns"""
         ds1 = (self.mkBasicDataspec(withRandom=True)
                .withColumn("txt1", "string", template=r"dr_\\v")
                )
@@ -180,7 +180,7 @@ class TestRepeatableDataGeneration(unittest.TestCase):
         self.checkTablesEqual(df1, df2)
 
     def test_template_column_random(self):
-        """Test data generation with template columns"""
+        """Test data generation with _template columns"""
         ds1 = (self.mkBasicDataspec(withRandom=True)
                .withColumn("txt1", "string", template=r"\dr_\v", random=True)
                )
@@ -191,7 +191,7 @@ class TestRepeatableDataGeneration(unittest.TestCase):
         self.checkTablesEqual(df1, df2)
 
     def test_template_column_random2(self):
-        """Test data generation with template columns
+        """Test data generation with _template columns
 
         """
         ds1 = (self.mkBasicDataspec(withRandom=True)
@@ -209,7 +209,7 @@ class TestRepeatableDataGeneration(unittest.TestCase):
         self.assertEqual(value0, "dr_0")
 
     def test_ILText_column_random2(self):
-        """Test data generation with template columns
+        """Test data generation with _template columns
 
         """
         ds1 = (self.mkBasicDataspec(withRandom=True)
