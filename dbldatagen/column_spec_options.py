@@ -48,7 +48,9 @@ class ColumnSpecOptions(object):
                     `withColumn("status", StringType(), values=['online', 'offline', 'unknown'], weights=[3,2,1])`
 
     :param percent_nulls: Specifies numeric percentage of generated values to be populated with SQL `null`.
-                          For example: `percent_nulls=12`
+                          Value is fraction representing percentage between 0.0 and 1.0
+                          For example: `percentNulls=0.12` will give approximately 12% nulls for this field in the
+                          output.
 
     :param unique_values: Number of unique values for column.
                           If the unique values are specified for a timestamp or date field, the values will be chosen

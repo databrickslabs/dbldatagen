@@ -340,6 +340,25 @@ class TestBasicOperation(unittest.TestCase):
         self.assertEqual(id_partitions, partitions_created)
         self.assertEqual(count, rows_wanted)
 
+    def test_percent_nulls(self):
+        id_partitions = 4
+        rows_wanted = 20000
+        testdata_defn = (
+            dg.DataGenerator(name="basic_dataset", rows=rows_wanted, partitions=id_partitions, verbose=True)
+                .withColumn("code1", IntegerType(), minValue=1, maxValue=20, step=1, percent_nulls=0.1)
+            )
+
+        df = testdata_defn.build()
+
+        count = df.count()
+
+        null_count = df.where("code1 is null").count()
+
+        percent_nulls_observed = (null_count / count) * 100.0
+        self.assertLessEqual( percent_nulls_observed, 15.0)
+        self.assertGreaterEqual( percent_nulls_observed, 5.0)
+
+
 
 # run the tests
 # if __name__ == '__main__':

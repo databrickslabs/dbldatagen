@@ -89,15 +89,15 @@ class TestTextGeneration(unittest.TestCase):
                                          partitions=24)
                         .withSchema(schema)
                         .withIdOutput()
-                        .withColumnSpec("date", percent_nulls=10.0)
-                        .withColumnSpec("nint", percent_nulls=10.0, minValue=1, maxValue=9, step=2)
-                        .withColumnSpec("nstr1", percent_nulls=10.0, minValue=1, maxValue=9, step=2)
-                        .withColumnSpec("nstr2", percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3,
+                        .withColumnSpec("date", percent_nulls=0.1)
+                        .withColumnSpec("nint", percent_nulls=0.1, minValue=1, maxValue=9, step=2)
+                        .withColumnSpec("nstr1", percent_nulls=0.1, minValue=1, maxValue=9, step=2)
+                        .withColumnSpec("nstr2", percent_nulls=0.1, minValue=1.5, maxValue=2.5, step=0.3,
                                         format="%04f")
                         .withColumnSpec("nstr3", minValue=1.0, maxValue=9.0, step=2.0)
-                        .withColumnSpec("nstr4", percent_nulls=10.0, minValue=1, maxValue=9, step=2, format="%04d")
-                        .withColumnSpec("nstr5", percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3, random=True)
-                        .withColumnSpec("nstr6", percent_nulls=10.0, minValue=1.5, maxValue=2.5, step=0.3, random=True,
+                        .withColumnSpec("nstr4", percent_nulls=0.1, minValue=1, maxValue=9, step=2, format="%04d")
+                        .withColumnSpec("nstr5", percent_nulls=0.1, minValue=1.5, maxValue=2.5, step=0.3, random=True)
+                        .withColumnSpec("nstr6", percent_nulls=0.1, minValue=1.5, maxValue=2.5, step=0.3, random=True,
                                         format="%04f")
                         .withColumnSpec("email", template=r'\w.\w@\w.com|\w@\w.co.u\k')
                         .withColumnSpec("ip_addr", template=r'\n.\n.\n.\n')
@@ -160,11 +160,11 @@ class TestTextGeneration(unittest.TestCase):
                                           partitions=self.partitions_requested)
                          .withSchema(schema)
                          .withIdOutput()
-                         .withColumnSpec("date", percent_nulls=10.0)
+                         .withColumnSpec("date", percent_nulls=0.1)
                          .withColumnSpecs(patterns="n.*", match_types=StringType(),
-                                          percent_nulls=10.0, minValue=1, maxValue=9, step=2)
+                                          percent_nulls=0.1, minValue=1, maxValue=9, step=2)
                          .withColumnSpecs(patterns="n.*", match_types=IntegerType(),
-                                          percent_nulls=10.0, minValue=1, maxValue=200, step=-2)
+                                          percent_nulls=0.1, minValue=1, maxValue=200, step=-2)
                          .withColumnSpec("email", template=r'\w.\w@\w.com|\w@\w.co.u\k')
                          .withColumnSpec("ip_addr", template=r'\n.\n.\n.\n')
                          .withColumnSpec("phone", template=r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd')
@@ -175,8 +175,8 @@ class TestTextGeneration(unittest.TestCase):
         testDataSpec3 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count,
                                           partitions=self.partitions_requested, verbose=True)
                          .withIdOutput()
-                         .withColumn("val1", IntegerType(), percent_nulls=10.0)
-                         .withColumn("val2", IntegerType(), percent_nulls=10.0)
+                         .withColumn("val1", IntegerType(), percent_nulls=0.1)
+                         .withColumn("val2", IntegerType(), percent_nulls=0.1)
                          .withColumn("val3", StringType(), base_column=["val1", "val2"], base_column_type="values",
                                      template=r"\v-1")
                          )
@@ -187,8 +187,8 @@ class TestTextGeneration(unittest.TestCase):
         testDataSpec4 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count,
                                           partitions=self.partitions_requested, verbose=True)
                          .withIdOutput()
-                         .withColumn("val1", IntegerType(), percent_nulls=10.0)
-                         .withColumn("val2", IntegerType(), percent_nulls=10.0)
+                         .withColumn("val1", IntegerType(), percent_nulls=0.1)
+                         .withColumn("val2", IntegerType(), percent_nulls=0.1)
                          .withColumn("val3", StringType(), base_column=["val1", "val2"], base_column_type="values",
                                      template=r"\v0-\v1")
                          )
@@ -199,8 +199,8 @@ class TestTextGeneration(unittest.TestCase):
         testDataSpec5 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count,
                                           partitions=self.partitions_requested, verbose=True)
                          .withIdOutput()
-                         .withColumn("val1", IntegerType(), percent_nulls=10.0)
-                         .withColumn("val2", IntegerType(), percent_nulls=10.0)
+                         .withColumn("val1", IntegerType(), percent_nulls=0.1)
+                         .withColumn("val2", IntegerType(), percent_nulls=0.1)
                          .withColumn("val3", StringType(), base_column=["val1", "val2"], base_column_type="values",
                                      template=r"\v\0-\v\1")
                          )
@@ -212,8 +212,8 @@ class TestTextGeneration(unittest.TestCase):
         testDataSpec6 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count,
                                           partitions=self.partitions_requested, verbose=True)
                          .withIdOutput()
-                         .withColumn("val1", IntegerType(), percent_nulls=10.0)
-                         .withColumn("val2", IntegerType(), percent_nulls=10.0)
+                         .withColumn("val1", IntegerType(), percent_nulls=0.1)
+                         .withColumn("val2", IntegerType(), percent_nulls=0.1)
                          .withColumn("val3", StringType(), base_column=["val1", "val2"], base_column_type="hash",
                                      template=r"\v0-\v1")
                          )
@@ -224,8 +224,8 @@ class TestTextGeneration(unittest.TestCase):
         testDataSpec7 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count,
                                           partitions=self.partitions_requested, verbose=True)
                          .withIdOutput()
-                         .withColumn("val1", IntegerType(), percent_nulls=10.0)
-                         .withColumn("val2", IntegerType(), percent_nulls=10.0)
+                         .withColumn("val1", IntegerType(), percent_nulls=0.1)
+                         .withColumn("val2", IntegerType(), percent_nulls=0.1)
                          .withColumn("val3", StringType(), base_column=["val1", "val2"], base_column_type="hash",
                                      format="%s")
                          )
@@ -236,8 +236,8 @@ class TestTextGeneration(unittest.TestCase):
         testDataSpec8 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count,
                                           partitions=self.partitions_requested, verbose=True)
                          .withIdOutput()
-                         .withColumn("val1", IntegerType(), percent_nulls=10.0)
-                         .withColumn("val2", IntegerType(), percent_nulls=10.0)
+                         .withColumn("val1", IntegerType(), percent_nulls=0.1)
+                         .withColumn("val2", IntegerType(), percent_nulls=0.1)
                          .withColumn("val3", StringType(), base_column=["val1", "val2"], base_column_type="values",
                                      format="%s")
                          )
@@ -248,8 +248,8 @@ class TestTextGeneration(unittest.TestCase):
         testDataSpec9 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count,
                                           partitions=self.partitions_requested, verbose=True)
                          .withIdOutput()
-                         .withColumn("val1", IntegerType(), percent_nulls=10.0)
-                         .withColumn("val2", IntegerType(), percent_nulls=10.0)
+                         .withColumn("val1", IntegerType(), percent_nulls=0.1)
+                         .withColumn("val2", IntegerType(), percent_nulls=0.1)
                          .withColumn("val3", StringType(), base_column=["val1", "val2"], format="%s")
                          )
         # here the values for val3 are undefined as the base value for the column is a hash of the base columns
