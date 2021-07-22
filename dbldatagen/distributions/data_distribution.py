@@ -38,7 +38,7 @@ class DataDistribution(object):
         :return:
         """
         assert random_seed is None or type(random_seed) in [ np.int32, np.int64],\
-               f"`random_seed` must be int or int-like not {type(random_seed)}"
+               f"`randomSeed` must be int or int-like not {type(random_seed)}"
         from numpy.random import default_rng
         if random_seed not in (-1, -1.0):
             rng = default_rng(random_seed)

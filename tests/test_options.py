@@ -1,4 +1,5 @@
 import unittest
+import re
 
 import dbldatagen as dg
 
@@ -12,7 +13,7 @@ class TestUseOfOptions(unittest.TestCase):
     def test_basic(self):
         # will have implied column `id` for ordinal of row
         testdata_generator = (
-            dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=100000, partitions=20)
+            dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=20000, partitions=4)
                 .withIdOutput()  # id column will be emitted in the output
                 .withColumn("code1", "integer", min=1, max=20, step=1)
                 .withColumn("code2", "integer", minValue=1, maxValue=20, step=1, random=True)
@@ -20,7 +21,7 @@ class TestUseOfOptions(unittest.TestCase):
                 .withColumn("code4", "integer", minValue=1, maxValue=20, step=1, random=True)
                 # base column specifies dependent column
 
-                .withColumn("site_cd", "string", prefix='site', base_column='code1')
+                .withColumn("site_cd", "string", prefix='site', baseColumn='code1')
                 .withColumn("device_status", "string", minValue=1, maxValue=200, step=1, prefix='status', random=True)
                 .withColumn("tech", "string", values=["GSM", "UMTS", "LTE", "UNKNOWN"], random=True)
                 .withColumn("test_cell_flg", "integer", values=[0, 1], random=True)
@@ -30,13 +31,13 @@ class TestUseOfOptions(unittest.TestCase):
 
         numRows = df.count()
 
-        self.assertEqual(numRows, 100000)
+        self.assertEqual(numRows, 20000)
 
         print("output columns", testdata_generator.getOutputColumnNames())
 
         df.show()
 
-        df2 = testdata_generator.option("starting_id", 200000).build()  # build our dataset
+        df2 = testdata_generator.option("startingId", 200000).build()  # build our dataset
 
         df2.count()
 
@@ -72,6 +73,84 @@ class TestUseOfOptions(unittest.TestCase):
         # check test cell values
         test_cell_values = [r[0] for r in df.select("test_cell_flg").distinct().collect()]
         self.assertSetEqual(set(test_cell_values), {0, 1})
+
+    def test_aliased_options(self):
+        # will have implied column `id` for ordinal of row
+        testdata_generator = (
+            dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=10000, partitions=4)
+                .withColumn("code1", "integer", min=1, max=20, step=1)
+                .withColumn("code2", "integer", minValue=1, maxValue=20, step=1, distribution="normal")
+                .withColumn("code3", "integer", min=1, max=20, step=1, base_column="code1")
+                .withColumn("code4", "integer", min=1, max=20, step=1, baseColumn="code1")
+
+                # implicit allows column definition to be overridden - used by system when initializing from schema
+                .withColumn("code5", "integer", min=1, max=20, step=1, baseColumn="code1", implicit=True)
+
+                .withColumn("code5", "integer", min=1, max=20, step=1, baseColumn="code4", random_seed=45)
+                .withColumn("code6", "integer", minValue=1, maxValue=20, step=1, omit=True)
+                .withColumn("code7", "integer", min=1, max=20, step=1, baseColumn="code6")
+                .withColumn("code2", "integer", minValue=1, maxValue=20, step=1, distribution="normal")
+                .withColumn("site_cd1", "string", prefix='site', baseColumn='code1', text_separator="")
+                .withColumn("site_cd2", "string", prefix='site', baseColumn='code1', textSeparator="-")
+
+        )
+
+        colSpec1 = testdata_generator.getColumnSpec("site_cd1")
+
+        print("options", colSpec1.specOptions)
+
+        val1 = colSpec1.getOrElse("textSeparator", "n/a")
+        self.assertEqual("", val1, "invalid `textSeparator` option value for ``site_cd1``")
+
+        val2 = colSpec1.getOrElse("text_separator", "n/a")
+        self.assertEqual("", val2, "invalid `text_separator` option value for ``site_cd1``")
+
+        colSpec2 = testdata_generator.getColumnSpec("site_cd2")
+        val3 = colSpec2.getOrElse("textSeparator", "n/a")
+        self.assertEqual("-", val3, "invalid `textSeparator` option value")
+
+        df = testdata_generator.build()  # build our dataset
+
+        match_pattern1 = re.compile(r"\s*site[0-9]+")
+        match_pattern2 = re.compile(r"\s*site-[0-9]+")
+
+        df.show()
+
+        output = df.limit(100).collect()
+
+        for row in output:
+            site_cd1 = row["site_cd1"]
+            print("site code", site_cd1)
+            self.assertIsNotNone(site_cd1)
+            self.assertTrue(match_pattern1.match(site_cd1))
+
+            site_cd2 = row["site_cd2"]
+            self.assertIsNotNone(site_cd2)
+            self.assertTrue(match_pattern2.match(site_cd2))
+
+    def test_aliased_options2(self):
+        # will have implied column `id` for ordinal of row
+        testdata_generator = (
+            dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=10000, partitions=4)
+                .withColumn("code1", "integer", min=1, max=20, step=1)
+                .withColumn("site_cd1", "string", prefix='site', baseColumn='code1',
+                            random_seed_method=dg.RANDOM_SEED_FIXED)
+                .withColumn("site_cd2", "string", prefix='site', baseColumn='code1',
+                            randomSeedMethod=dg.RANDOM_SEED_HASH_FIELD_NAME)
+
+        )
+
+        colSpec1 = testdata_generator.getColumnSpec("site_cd1")
+        assert "randomSeedMethod" in colSpec1.specOptions, "expecting option ``randomSeedMethod`` for `site_cd1`"
+
+        colSpec2 = testdata_generator.getColumnSpec("site_cd2")
+        assert "randomSeedMethod" in colSpec2.specOptions, "expecting option ``randomSeedMethod`` for `site_cd2`"
+
+
+
+
+
+
 
 # run the tests
 # if __name__ == '__main__':

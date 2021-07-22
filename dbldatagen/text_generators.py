@@ -7,14 +7,8 @@ This file defines various text generation classes and methods
 """
 
 import math
-from datetime import date, datetime, timedelta
-import sys
 import random
 
-from pyspark.sql.functions import col, lit, concat, rand, ceil, floor, array, expr, udf
-from pyspark.sql.functions import pandas_udf
-from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
-    StructType, StructField, TimestampType, DataType, DateType
 import numpy as np
 import numpy.random as rnd
 import pandas as pd
@@ -71,7 +65,9 @@ _WORDS_UPPER = ['LOREM', 'IPSUM', 'DOLOR', 'SIT', 'AMET', 'CONSECTETUR', 'ADIPIS
 
 
 class TextGenerator(object):
-    """ Base class for text generation classes"""
+    """ Base class for text generation classes
+
+    """
 
     def __init__(self):
         pass

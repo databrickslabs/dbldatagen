@@ -23,7 +23,7 @@ class TestBasicOperation(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
-                                             partitions=4, seed_method='hash_fieldname', verbose=True)
+                                             partitions=4, seedMethod='hash_fieldname', verbose=True)
                             .withIdOutput()
                             .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
                                         numColumns=cls.column_count)
@@ -93,8 +93,8 @@ class TestBasicOperation(unittest.TestCase):
         ds_copy1 = self.testDataSpec.clone()
 
         df_copy1 = (ds_copy1.withRowCount(1000)
-                    .withColumn("ac1", IntegerType(), base_column=['code1', 'code2'], minValue=100, maxValue=200)
-                    .withColumn("ac2", IntegerType(), base_column=['code1', 'code2'],
+                    .withColumn("ac1", IntegerType(), baseColumn=['code1', 'code2'], minValue=100, maxValue=200)
+                    .withColumn("ac2", IntegerType(), baseColumn=['code1', 'code2'],
                                 minValue=100, maxValue=200, random=True)
                     .build())
 
@@ -123,8 +123,8 @@ class TestBasicOperation(unittest.TestCase):
         ds_copy1 = self.testDataSpec.clone()
 
         df_copy1 = (ds_copy1.withRowCount(1000)
-                    .withColumn("ac1", IntegerType(), base_column=['code1', 'code2'], minValue=100, maxValue=200)
-                    .withColumn("ac2", IntegerType(), base_column=['code1', 'code2'],
+                    .withColumn("ac1", IntegerType(), baseColumn=['code1', 'code2'], minValue=100, maxValue=200)
+                    .withColumn("ac2", IntegerType(), baseColumn=['code1', 'code2'],
                                 minValue=100, maxValue=200, random=True)
                     .build())
 
@@ -144,7 +144,7 @@ class TestBasicOperation(unittest.TestCase):
     def test_multiple_hash_methods(self):
         """ Test different types of seeding for random values"""
         ds1 = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
-                                partitions=4, seed_method='hash_fieldname')
+                                partitions=4, seedMethod='hash_fieldname')
                .withIdOutput()
                .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
                .withColumn("code3", StringType(), values=['a', 'b', 'c'])
@@ -169,7 +169,7 @@ class TestBasicOperation(unittest.TestCase):
         self.assertEqual(df_count_values3.count(), 0)
 
         ds2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
-                                partitions=4, seed_method='fixed')
+                                partitions=4, seedMethod='fixed')
                .withIdOutput()
                .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
                .withColumn("code3", StringType(), values=['a', 'b', 'c'])
@@ -194,7 +194,7 @@ class TestBasicOperation(unittest.TestCase):
         self.assertEqual(df2_count_values3.count(), 0)
 
         ds3 = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
-                                partitions=4, seed_method=None)
+                                partitions=4, seedMethod=None)
                .withIdOutput()
                .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
                .withColumn("code3", StringType(), values=['a', 'b', 'c'])

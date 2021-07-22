@@ -134,7 +134,7 @@ testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows
                    .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
                    .withColumn("code2", IntegerType(), minValue=0, maxValue=10, random=True)
                    .withColumn("code3", StringType(), values=['online', 'offline', 'unknown'])
-                   .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True, percent_nulls=0.05)
+                   .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True, percentNulls=0.05)
                    .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
                    )
 
@@ -171,10 +171,10 @@ set of allowable values
 
 - The `withColumn` method call for the `code4` column specifies the generation of string values from 
 the allowable values `['a', 'b', or 'c']`
-inclusive. But the `percent_nulls` option gives a 5% chance of a null value being generated. 
+inclusive. But the `percentNulls` option gives a 5% chance of a null value being generated. 
 These will be computed via a uniformly distributed random value.
 
-> By default null values will not be generated for a field, unless the `percent_nulls` option is specified
+> By default null values will not be generated for a field, unless the `percentNulls` option is specified
 
 - The `withColumn` method call for the `code5` column specifies the generation of string values from 
 the allowable values `['a', 'b', or 'c']`
@@ -277,35 +277,35 @@ lines = [ 'delta', 'xyzzy', 'lakehouse', 'gadget', 'droid']
 
 
 testDataSpec = (dg.DataGenerator(sparkSession=spark, name="device_data_set", rows=data_rows,
-                                             partitions=partitions_requested, seed_method='hash_fieldname', 
+                                             partitions=partitions_requested, seedMethod='hash_fieldname', 
                                              verbose=True, debug=True)
     .withIdOutput()
     # we'll use hash of the base field to generate the ids to avoid a simple incrementing sequence
     .withColumn("internal_device_id", LongType(), minValue=0x1000000000000, unique_values=device_population)
 
     # note for format strings, we must use "%lx" not "%x" as the underlying value is a long
-    .withColumn("device_id", StringType(), format="0x%013x", base_column="internal_device_id")
-    #.withColumn("device_id_2", StringType(), format='0x%013x', base_column="internal_device_id")
+    .withColumn("device_id", StringType(), format="0x%013x", baseColumn="internal_device_id")
+    #.withColumn("device_id_2", StringType(), format='0x%013x', baseColumn="internal_device_id")
 
     # the device / user attributes will be the same for the same device id 
     # so lets use the internal device id as the base column for these attribute
     .withColumn("country", StringType(), values=country_codes, weights=country_weights,
-          base_column="internal_device_id", base_column_type="hash")
+          baseColumn="internal_device_id", base_column_type="hash")
     .withColumn("country2a", LongType(), expr="((hash(internal_device_id) % 3847) + 3847) % 3847", 
-          base_column="internal_device_id")
+          baseColumn="internal_device_id")
     .withColumn("country2", IntegerType(), expr="floor(cast( (((internal_device_id % 3847) + 3847) % 3847) as double) )", 
-          base_column="internal_device_id")
-    .withColumn("country3", StringType(), values=country_codes, base_column="country2")
-    .withColumn("manufacturer", StringType(), values=manufacturers, base_column="internal_device_id")
+          baseColumn="internal_device_id")
+    .withColumn("country3", StringType(), values=country_codes, baseColumn="country2")
+    .withColumn("manufacturer", StringType(), values=manufacturers, baseColumn="internal_device_id")
 
     # use omit = True if you don't want a column to appear in the final output 
     # but just want to use it as part of generation of another column
-    .withColumn("line", StringType(), values=lines, base_column="manufacturer", 
+    .withColumn("line", StringType(), values=lines, baseColumn="manufacturer", 
            base_column_type="hash", omit=True)
-    .withColumn("model_ser", IntegerType(), minValue=1, maxValue=11,  base_column="device_id", 
+    .withColumn("model_ser", IntegerType(), minValue=1, maxValue=11,  baseColumn="device_id", 
            base_column_type="hash", omit=True)
 
-    .withColumn("model_line", StringType(), expr="concat(line, '#', model_ser)", base_column=["line", "model_ser"])
+    .withColumn("model_line", StringType(), expr="concat(line, '#', model_ser)", baseColumn=["line", "model_ser"])
     .withColumn("event_type", StringType(), 
            values=["activation", "deactivation", "plan change", "telecoms activity", "internet activity", "device error"],
            random=True)
@@ -427,13 +427,13 @@ partitions_requested = 8
 data_rows = 10000000
 
 dataspec = (dg.DataGenerator(spark, rows=10000000, partitions=8)
-                .withColumn("name", percent_nulls=0.01, template=r'\\w \\w|\\w a. \\w') 
+                .withColumn("name", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w') 
                 .withColumn("payment_instrument_type", values=['paypal', 'visa', 'mastercard', 'amex'], random=True)             
                 .withColumn("payment_instrument",  minValue=1000000, maxValue=10000000, template="dddd dddddd ddddd") 
                 .withColumn("email", template=r'\\w.\\w@\\w.com')       
                 .withColumn("md5_payment_instrument", 
                             expr="md5(concat(payment_instrument_type, ':', payment_instrument))",
-                            base_column=['payment_instrument_type', 'payment_instrument']) 
+                            baseColumn=['payment_instrument_type', 'payment_instrument']) 
            )
 df1 = dataspec.build()
 
@@ -469,14 +469,14 @@ shuffle_partitions_requested = 8
 partitions_requested = 8
 data_rows = 10000000
 
-dataspec = (dg.DataGenerator(spark, rows=10000000, partitions=8, seed_method="hash_fieldname", seed=42)
-                .withColumn("name", percent_nulls=0.01, template=r'\\w \\w|\\w a. \\w') 
+dataspec = (dg.DataGenerator(spark, rows=10000000, partitions=8, seedMethod="hash_fieldname", seed=42)
+                .withColumn("name", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w') 
                 .withColumn("payment_instrument_type", values=['paypal', 'visa', 'mastercard', 'amex'], random=True)             
                 .withColumn("payment_instrument",  minValue=1000000, maxValue=10000000, template="dddd dddddd ddddd") 
                 .withColumn("email", template=r'\\w.\\w@\\w.com')       
                 .withColumn("md5_payment_instrument", 
                             expr="md5(concat(payment_instrument_type, ':', payment_instrument))",
-                            base_column=['payment_instrument_type', 'payment_instrument']) 
+                            baseColumn=['payment_instrument_type', 'payment_instrument']) 
            )
 df1 = dataspec.build()
 

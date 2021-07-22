@@ -167,7 +167,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
                       .withIdOutput()
                       .withColumn("last_sync_dt", "timestamp", begin=start, end=end, interval=interval, random=True)
                       .withColumn("last_sync_dt1", "timestamp",
-                                  data_range=DateRange(start, end, interval), random=True)
+                                  dataRange=DateRange(start, end, interval), random=True)
 
                       .build()
                       )
@@ -195,7 +195,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
                       .withColumn("last_sync_dt1", "timestamp",
-                                  data_range=DateRange("2017-10-01 00:00:00",
+                                  dataRange=DateRange("2017-10-01 00:00:00",
                                                        "2018-10-06 00:00:00",
                                                        "days=1,hours=1"), random=True)
 
@@ -221,7 +221,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
                       .withColumn("last_sync_date", "date",
-                                  data_range=DateRange("2017-10-01 00:00:00",
+                                  dataRange=DateRange("2017-10-01 00:00:00",
                                                        "2018-10-06 11:55:00",
                                                        "days=7"), random=True)
 
@@ -251,7 +251,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
                       .withColumn("last_sync_date", "date",
-                                  data_range=DateRange("2017-10-01 00:00:00",
+                                  dataRange=DateRange("2017-10-01 00:00:00",
                                                        "2018-10-06 00:00:00",
                                                        "days=7"))
 
@@ -275,10 +275,10 @@ class TestRangedValuesAndDates(unittest.TestCase):
         testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
                       .withColumn("last_sync_date", "date",
-                                  data_range=DateRange("2017-10-01",
+                                  dataRange=DateRange("2017-10-01",
                                                        "2018-10-06",
                                                        "days=7",
-                                                       datetime_format="%Y-%m-%d"), random=True)
+                                                      datetime_format="%Y-%m-%d"), random=True)
 
                       .build()
                       )
@@ -300,10 +300,10 @@ class TestRangedValuesAndDates(unittest.TestCase):
         testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
                       .withColumn("last_sync_date", "date",
-                                  data_range=DateRange("2017-10-01",
+                                  dataRange=DateRange("2017-10-01",
                                                        "2018-10-06",
                                                        "days=7",
-                                                       datetime_format="%Y-%m-%d"))
+                                                      datetime_format="%Y-%m-%d"))
 
                       .build()
                       )
@@ -326,7 +326,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
                       .withColumn("last_sync_date", "timestamp",
-                                  data_range=DateRange("2017-10-01 00:00:00",
+                                  dataRange=DateRange("2017-10-01 00:00:00",
                                                        "2018-10-06 00:00:00",
                                                        "days=7"), random=True)
 
@@ -350,7 +350,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
                       .withColumn("last_sync_date", "timestamp",
-                                  data_range=DateRange("2017-10-01 00:00:00",
+                                  dataRange=DateRange("2017-10-01 00:00:00",
                                                        "2018-10-06 00:00:00",
                                                        "days=7"))
 
@@ -374,10 +374,10 @@ class TestRangedValuesAndDates(unittest.TestCase):
         testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
                       .withColumn("last_sync_date", "timestamp",
-                                  data_range=DateRange("2017-10-01",
+                                  dataRange=DateRange("2017-10-01",
                                                        "2018-10-06",
                                                        "days=7",
-                                                       datetime_format="%Y-%m-%d"), random=True)
+                                                      datetime_format="%Y-%m-%d"), random=True)
 
                       .build()
                       )
@@ -399,10 +399,10 @@ class TestRangedValuesAndDates(unittest.TestCase):
         testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
                       .withIdOutput()
                       .withColumn("last_sync_date", "timestamp",
-                                  data_range=DateRange("2017-10-01",
+                                  dataRange=DateRange("2017-10-01",
                                                        "2018-10-06",
                                                        "days=7",
-                                                       datetime_format="%Y-%m-%d"))
+                                                      datetime_format="%Y-%m-%d"))
 
                       .build()
                       )
@@ -470,7 +470,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
             dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
                 .withIdOutput()
                 .withColumn("test_ts", "timestamp", unique_values=51, random=True,
-                            data_range=DateRange("2017-10-01 00:00:00",
+                            dataRange=DateRange("2017-10-01 00:00:00",
                                                  "2018-10-06 00:00:00",
                                                  "minutes=10"))
                 .build()

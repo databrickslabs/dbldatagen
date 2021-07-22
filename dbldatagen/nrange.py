@@ -22,7 +22,7 @@ class NRange(DataRange):
 
     A ranged object can be uses as an alternative to the `minValue`, `maxValue`, `step` parameters
     to the DataGenerator `withColumn` and `withColumn` objects.
-    Specify by passing an instance of `NRange` to the `data_range` parameter.
+    Specify by passing an instance of `NRange` to the `dataRange` parameter.
 
     :param minValue: Minimum value of range. May be integer / long / float
     :param maxValue: Maximum value of range. May be integer / long / float

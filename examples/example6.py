@@ -30,14 +30,14 @@ schema = dg.SchemaParser.parseCreateTable(spark, """
 x3 = (dg.DataGenerator(sparkSession=spark, name="association_oss_cell_info", rows=1000000, partitions=20)
       .withSchema(schema)
       # withColumnSpec adds specification for existing column
-      .withColumnSpec("site_id", data_range=range(1, 10))
+      .withColumnSpec("site_id", dataRange=range(1, 10))
       # base column specifies dependent column
       .withIdOutput()
-      .withColumnSpec("site_cd", prefix='site', base_column='site_id')
-      .withColumn("sector_status_desc", "string", data_range=range(1, 5), prefix='status', random=True)
+      .withColumnSpec("site_cd", prefix='site', baseColumn='site_id')
+      .withColumn("sector_status_desc", "string", dataRange=range(1, 5), prefix='status', random=True)
       # withColumn adds specification for new column
       .withColumn("rand", "float", expr="floor(rand() * 350) * (86400 + 3600)")
-      .withColumn("last_sync_dt", "timestamp", data_range=DateRange(start, end, timedelta(days=1, hours=1)),
+      .withColumn("last_sync_dt", "timestamp", dataRange=DateRange(start, end, timedelta(days=1, hours=1)),
                   random=True)
       .withColumnSpec("sector_technology_desc", values=["GSM", "UMTS", "LTE", "UNKNOWN"], random=True)
       .withColumn("test_cell_flg", "int", values=[0, 1], random=True)

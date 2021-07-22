@@ -89,7 +89,7 @@ class TestWeights(unittest.TestCase):
         dsAlpha = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4)
                    .withIdOutput()  # id column will be emitted in the output
                    .withColumn("pk1", "int", unique_values=100)
-                   .withColumn("alpha", "string", values=alpha_list, base_column="pk1",
+                   .withColumn("alpha", "string", values=alpha_list, baseColumn="pk1",
                                weights=alpha_desired_weights, random=True)
                    )
         dfAlpha = dsAlpha.build().cache()
@@ -190,7 +190,7 @@ class TestWeights(unittest.TestCase):
                    .withIdOutput()  # id column will be emitted in the output
                    .withColumn("pk1", "int", unique_values=500)
                    .withColumn("pk2", "int", unique_values=500)
-                   .withColumn("alpha", "string", values=alpha_list, base_column="pk1",
+                   .withColumn("alpha", "string", values=alpha_list, baseColumn="pk1",
                                weights=alpha_desired_weights)
                    )
         dfAlpha = dsAlpha.build().cache()
@@ -227,7 +227,7 @@ class TestWeights(unittest.TestCase):
                    .withIdOutput()  # id column will be emitted in the output
                    .withColumn("pk1", "int", unique_values=500)
                    .withColumn("pk2", "int", unique_values=500)
-                   .withColumn("alpha", "string", values=alpha_list, base_column="pk1",
+                   .withColumn("alpha", "string", values=alpha_list, baseColumn="pk1",
                                weights=alpha_desired_weights, random=True)
                    )
         dfAlpha = dsAlpha.build().cache()
@@ -250,7 +250,7 @@ class TestWeights(unittest.TestCase):
                    .withIdOutput()  # id column will be emitted in the output
                    .withColumn("pk1", "int", unique_values=500)
                    .withColumn("pk2", "int", unique_values=500)
-                   .withColumn("alpha", "string", values=alpha_list, base_column=["pk1", "pk2"],
+                   .withColumn("alpha", "string", values=alpha_list, baseColumn=["pk1", "pk2"],
                                weights=alpha_desired_weights, random=True)
                    )
         dfAlpha = dsAlpha.build().cache()
@@ -275,7 +275,7 @@ class TestWeights(unittest.TestCase):
                    .withIdOutput()  # id column will be emitted in the output
                    .withColumn("pk1", "int", unique_values=500)
                    .withColumn("pk2", "int", unique_values=500)
-                   .withColumn("alpha", "string", values=alpha_list, base_column=["pk1", "pk2"],
+                   .withColumn("alpha", "string", values=alpha_list, baseColumn=["pk1", "pk2"],
                                weights=alpha_desired_weights)
                    )
         dfAlpha = dsAlpha.build().cache()

@@ -91,7 +91,7 @@ def topologicalSort(sources, initial_columns=None, flatten=True):
 
     Used to compute the column test data generation order of the column generation dependencies.
 
-    The column generation dependencies are based on the value of the `base_column` attribute for `withColumn` or
+    The column generation dependencies are based on the value of the `baseColumn` attribute for `withColumn` or
     `withColumnSpec` statements in the data generator specification.
 
     :arg sources: list of ``(name, set(names of dependencies))`` pairs

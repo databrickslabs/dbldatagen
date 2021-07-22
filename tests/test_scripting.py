@@ -45,7 +45,7 @@ class TestScripting(unittest.TestCase):
 
                         )
 
-        creation_script = testDataSpec.scriptTable(name=tbl_name, table_format="parquet")
+        creation_script = testDataSpec.scriptTable(name=tbl_name, tableFormat="parquet")
 
         self.checkGeneratedScript(creation_script, name=tbl_name)
 
@@ -81,7 +81,7 @@ class TestScripting(unittest.TestCase):
 
                         )
 
-        creation_script = testDataSpec.scriptTable(name=tbl_name, table_format="parquet", location="/tmp/test")
+        creation_script = testDataSpec.scriptTable(name=tbl_name, tableFormat="parquet", location="/tmp/test")
 
         self.checkGeneratedScript(creation_script, name=tbl_name)
         self.assertTrue("location" in creation_script, "location is not in script")

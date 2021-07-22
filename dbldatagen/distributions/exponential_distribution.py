@@ -40,7 +40,7 @@ class Exponential(DataDistribution):
         """ Generate sample of exponential distribution using pandas / numpy
 
         :param scale_series: value for scale parameter as Pandas Series
-        :param random_seed: value for random_seed parameter as Pandas Series
+        :param random_seed: value for randomSeed parameter as Pandas Series
         :return: random samples from distribution scaled to values between 0 and 1
 
         """
