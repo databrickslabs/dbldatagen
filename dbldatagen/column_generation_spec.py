@@ -1073,20 +1073,20 @@ class ColumnGenerationSpec(object):
 
         return new_def
 
-    def _applyComputePercentNullsExpression(self, newDef, percentNulls):
+    def _applyComputePercentNullsExpression(self, newDef, probabilityNulls):
         """Compute percentage nulls for column being generated
 
            :param newDef: Column definition being created
-           :param percentNulls: Percentage of nulls to be generated
-           :returns: new column definition with percentage of nulls applied
+           :param probabilityNulls: Probability of nulls to be generated for particular column. Values can be 0.0 - 1.0
+           :returns: new column definition with probability of nulls applied
         """
-        assert self.nullable, "Column `{}` must be nullable for `percentNulls` option".format(self.name)
+        assert self.nullable, "Column `{}` must be nullable for `percent_nulls` option".format(self.name)
         self.execution_history.append(".. applying null generator - `when rnd > prob then value - else null`")
 
-        assert percentNulls is not None, "``percentNulls`` must not be null value or None"
-        assert type(percentNulls) in [int, float], "``percentNulls`` must be int or float"
-        assert 0.0 <= percentNulls <= 1.0, "``percentNulls`` must in the range [0.0 .. 1.0]"
-        prob_nulls = percentNulls * 1.0
+        assert probabilityNulls is not None, "option ``percent_nulls`` must not be null value or None"
+        assert type(probabilityNulls) in [int, float], "option ``percent_nulls`` must be int or float"
+        assert 0.0 <= probabilityNulls <= 1.0, "option ``percent_nulls`` must in the range [0.0 .. 1.0]"
+        prob_nulls = probabilityNulls * 1.0  # for edge case where int was passed
         random_generator = self._getUniformRandomExpression(self.name)
         newDef = when(random_generator > lit(prob_nulls), newDef).otherwise(lit(None))
         return newDef

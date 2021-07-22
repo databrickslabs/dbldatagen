@@ -4,7 +4,7 @@ The data generator uses data ranges to constrain the values for generated data.
 
 By default, the data is only constrained to the range of the fields data type. 
 
-Additionally, unless the `percentNulls` option is used, the value `null` will not be generated for a field value.
+Additionally, unless the `percent_nulls` option is used, the value `null` will not be generated for a field value.
 
 The range of values for the generated data may be controlled in the following ways:
 - Specifying the `unique_values` option to control the unique values for a column

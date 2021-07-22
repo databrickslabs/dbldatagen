@@ -134,7 +134,7 @@ testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows
                    .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
                    .withColumn("code2", IntegerType(), minValue=0, maxValue=10, random=True)
                    .withColumn("code3", StringType(), values=['online', 'offline', 'unknown'])
-                   .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True, percentNulls=0.05)
+                   .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True, percent_nulls=0.05)
                    .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
                    )
 
