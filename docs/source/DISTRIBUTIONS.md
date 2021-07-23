@@ -40,8 +40,8 @@ from pyspark.sql.types import IntegerType
 import dbldatagen as dg
 
 row_count = 1000 * 100
-testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=row_count,
-                                 partitions=4, seed_method='hash_fieldname',
+testDataSpec = (dg.DataGenerator(spark, name="test_data_set1", rows=row_count,
+                                 partitions=4, randomSeedMethod='hash_fieldname',
                                  verbose=True)
                 .withColumn("purchase_id", IntegerType(), minValue=1000000, maxValue=2000000)
                 .withColumn("product_code", IntegerType(), uniqueValues=10000, random=True)

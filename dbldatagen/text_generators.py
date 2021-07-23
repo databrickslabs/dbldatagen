@@ -12,23 +12,23 @@ import random
 import numpy as np
 import pandas as pd
 
-#: list of hex digits for _template generation
+#: list of hex digits for template generation
 _HEX_LOWER = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
 
-#: list of upper case hex digits for _template generation
+#: list of upper case hex digits for template generation
 _HEX_UPPER = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
 
-#: list of non-zero digits for _template generation
+#: list of non-zero digits for template generation
 _DIGITS_NON_ZERO = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
 
-#: list of digits for _template generation
+#: list of digits for template generation
 _DIGITS_ZERO = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
-#: list of uppercase letters for _template generation
+#: list of uppercase letters for template generation
 _LETTERS_UPPER = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
                   'Q', 'R', 'T', 'S', 'U', 'V', 'W', 'X', 'Y', 'Z']
 
-#: list of lowercase letters for _template generation
+#: list of lowercase letters for template generation
 _LETTERS_LOWER = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q',
                   'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 
@@ -115,7 +115,7 @@ class TextGenerator(object):
         return rng
 
     @staticmethod
-    def min_np_type_for_values(listValues):
+    def compactNumpyTypeForValues(listValues):
         """ determine smallest numpy type to represent values
 
         :param listValues: list or np.ndarray of values to get np.dtype for
@@ -162,17 +162,18 @@ class TextGenerator(object):
 
 
 class TemplateGenerator(TextGenerator):
-    """This class handles the generation of text from _templates
+    """This class handles the generation of text from templates
 
-    :param template: _template string to use in text generation
-    :param escapeSpecialChars: By default special chars in the _template have special meaning if unescaped
+    :param template: template string to use in text generation
+    :param escapeSpecialChars: By default special chars in the template have special meaning if unescaped
                                If set to true, then the special meaning requires escape char ``\\``
+    :param extendedWordList: if provided, use specified word list instead of default word list
 
-    The _template generator generates text from a _template to allow for generation of synthetic credit card numbers,
+    The template generator generates text from a template to allow for generation of synthetic account card numbers,
     VINs, IBANs and many other structured codes.
 
-    The base value is passed to the _template generation and may be used in the generated text. The base value is the
-    value the column would have if the _template generation had not been applied.
+    The base value is passed to the template generation and may be used in the generated text. The base value is the
+    value the column would have if the template generation had not been applied.
 
     It uses the following special chars:
 
@@ -209,18 +210,18 @@ class TemplateGenerator(TextGenerator):
 
     In all other cases, the char itself is used.
 
-    The setting of the `escapeSpecialChars` determines how _templates generate data.
+    The setting of the `escapeSpecialChars` determines how templates generate data.
 
-    If set to False, then the _template ``r"\\dr_\\v"`` will generate the values ``"dr_0"`` ... ``"dr_999"`` when applied
+    If set to False, then the template ``r"\\dr_\\v"`` will generate the values ``"dr_0"`` ... ``"dr_999"`` when applied
     to the values zero to 999. This conforms to earlier implementations for backwards compatibility.
 
-    If set to True, then the _template ``r"dr_\\v"`` will generate the values ``"dr_0"`` ... ``"dr_999"``
+    If set to True, then the template ``r"dr_\\v"`` will generate the values ``"dr_0"`` ... ``"dr_999"``
     when applied to the values zero to 999. This conforms to the preferred style going forward
 
     """
 
     def __init__(self, template, escapeSpecialChars=False, extendedWordList=None):
-        assert template is not None, "`_template` must be specified"
+        assert template is not None, "`template` must be specified"
         super().__init__()
 
         self._template = template
@@ -232,7 +233,7 @@ class TemplateGenerator(TextGenerator):
         self._lenWords = len(self._wordList)
 
     def __repr__(self):
-        return f"TemplateGenerator(_template='{self._template}')"
+        return f"TemplateGenerator(template='{self._template}')"
 
     @property
     def templates(self):
@@ -259,17 +260,17 @@ class TemplateGenerator(TextGenerator):
         return random.randint(low, high)
 
     def stringsFromSingleTemplate(self, baseValue, genTemplate, escapeSpecialMeaning=False, rndGenerator=None):
-        """ Generate text from a single _template
+        """ Generate text from a single template
 
         :param rndGenerator: random number generator instance
-        :param baseValue: underlying base value to seed _template generation.
-          Ignored unless _template outputs it
-        :param genTemplate: _template string to control text generation
+        :param baseValue: underlying base value to seed template generation.
+          Ignored unless template outputs it
+        :param genTemplate: template string to control text generation
         :param escapeSpecialMeaning: if True, requires escape on special meaning chars.
-        :returns: array of strings generated from _template
+        :returns: array of strings generated from template
 
         `_escapeSpecialMeaning` parameter allows for backwards compatibility with old style syntax while allowing
-        for preferred new style _template syntax. Specify as True to force escapes for special meanings,.
+        for preferred new style template syntax. Specify as True to force escapes for special meanings,.
 
         """
         retval = []
@@ -338,16 +339,16 @@ class TemplateGenerator(TextGenerator):
         return retval
 
     def valueFromSingleTemplate(self, baseValue, genTemplate, escapeSpecialMeaning=False, rndGenerator=None):
-        """ Generate text from a single _template
+        """ Generate text from a single template
 
-        :param baseValue: underlying base value to seed _template generation.
-          Ignored unless _template outputs it
-        :param genTemplate: _template string to control text generation
+        :param baseValue: underlying base value to seed template generation.
+          Ignored unless template outputs it
+        :param genTemplate: template string to control text generation
         :param escapeSpecialMeaning: if True, requires escape on special meaning chars.
-        :returns: combined string from _template
+        :returns: combined string from template
 
         `_escapeSpecialMeaning` parameter allows for backwards compatibility with old style syntax while allowing
-        for preferred new style _template syntax. Specify as True to force escapes for special meanings,.
+        for preferred new style template syntax. Specify as True to force escapes for special meanings,.
 
         """
         retval = self.stringsFromSingleTemplate(baseValue, genTemplate, escapeSpecialMeaning, rndGenerator)
@@ -416,7 +417,7 @@ class ILText(TextGenerator):
         """ Compute the stats needed for the text generation """
 
         vals = [self.paragraphs, self.sentences, self.words]
-        self._textGenerationValues = np.array(vals, dtype=self.min_np_type_for_values(vals))
+        self._textGenerationValues = np.array(vals, dtype=self.compactNumpyTypeForValues(vals))
         self._minValues = self._textGenerationValues[:, 0]
         self._maxValues = self._textGenerationValues[:, 1]
 
@@ -458,7 +459,7 @@ class ILText(TextGenerator):
         self._wordsAsPythonStrings = list([str(x) for x in all_words])
 
         # get smallest type that can represent word offset
-        self._wordOffsetType = self.min_np_type_for_values([all_words.size * 2 + 10])
+        self._wordOffsetType = self.compactNumpyTypeForValues([all_words.size * 2 + 10])
 
     def __repr__(self):
         paras, sentences, words = self.paragraphs, self.sentences, self.words

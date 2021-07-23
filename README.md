@@ -75,7 +75,7 @@ For example
 import dbldatagen as dg
 from pyspark.sql.types import IntegerType, FloatType, StringType
 
-df_spec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
+df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=cls.row_count,
                                                   partitions=4)
                             .withIdOutput()
                             .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",

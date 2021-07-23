@@ -528,11 +528,7 @@ class TestQuickTests(unittest.TestCase):
                         .withColumn("str3", StringType(), format="test %s", baseColumn=["val1", "val2"],
                                     base_column_type="hash")
                         .withColumn("str4", StringType(), format="test %s", baseColumn=["val1", "val2"],
-<<<<<<< HEAD
-                                    base_column_type="hash")
-=======
-                                    baseColumnTypef="hash")
->>>>>>> merged in master
+                                    baseColumnType="hash")
                         .withColumn("str5", StringType(), format="test %s", baseColumn=["val1", "val2"])
                         .withColumn("str5a", StringType(), format="test %s", baseColumn=["val1", "val2"])
                         .withColumn("action", StringType(), format="test %s", baseColumn=["val1", "val2"],
@@ -701,6 +697,7 @@ class TestQuickTests(unittest.TestCase):
 
         rowCount = nullRowsDF.count()
         self.assertEqual(rowCount, 0)
+
 
 
 # run the tests

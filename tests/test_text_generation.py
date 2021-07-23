@@ -6,8 +6,7 @@ from pyspark.sql.types import BooleanType, DateType
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, TimestampType
 
 import dbldatagen as dg
-from dbldatagen import TemplateGenerator, TextGenerator, ILText
-import pandas as pd
+from dbldatagen import TemplateGenerator
 
 schema = StructType([
     StructField("PK1", StringType(), True),
@@ -47,6 +46,9 @@ class TestTextGeneration(unittest.TestCase):
         print("setting up TestTextDataGenerationTests")
         print("schema", schema)
 
+    @classmethod
+    def setUpClass(cls):
+        print("setting up class ")
 
     def test_simple_data_template(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count,
@@ -114,7 +116,6 @@ class TestTextGeneration(unittest.TestCase):
         self.assertGreaterEqual(counts['ip_addr_count'], 100)
         self.assertGreaterEqual(counts['phone_count'], 100)
 
-
     def test_large_ILText_driven_data_generation(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000000,
                                          partitions=8)
@@ -172,14 +173,11 @@ class TestTextGeneration(unittest.TestCase):
         data = df_iltext_data.limit(1000).collect()
         match_pattern = re.compile(r"(\s?[A-Z]([a-z ]+)\.\s*)+")
 
-
         # check that paras only contains text
         for r in data:
             test_value = r['paras']
             self.assertIsNotNone(test_value)
             self.assertTrue(match_pattern.match(test_value))
-
-
 
     def test_raw_template_text_generation1(self):
         """ As the test coverage tools dont detect code only used in UDFs,

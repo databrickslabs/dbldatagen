@@ -21,7 +21,7 @@
 import dbldatagen as dg
 
 # will have implied column `id` for ordinal of row
-testdata_generator = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=100000, partitions=20)
+testdata_generator = (dg.DataGenerator(spark, name="test_dataset1", rows=100000, partitions=20)
                       .withIdOutput()  # id column will be emitted in the output
                       .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
                       .withColumn("code2", "integer", minValue=1, maxValue=20, step=1, random=True)
@@ -30,7 +30,8 @@ testdata_generator = (dg.DataGenerator(sparkSession=spark, name="test_dataset1",
                       # base column specifies dependent column
 
                       .withColumn("site_cd", "string", prefix='site', baseColumn='code1')
-                      .withColumn("sector_status_desc", "string", minValue=1, maxValue=200, step=1, prefix='status', random=True)
+                      .withColumn("sector_status_desc", "string", minValue=1, maxValue=200, step=1, prefix='status',
+                                  random=True)
                       .withColumn("tech", "string", values=["GSM", "UMTS", "LTE", "UNKNOWN"], random=True)
                       .withColumn("test_cell_flg", "integer", values=[0, 1], random=True)
                       )
@@ -70,7 +71,7 @@ display(df2)
 import dbldatagen as dg
 
 # will have implied column `id` for ordinal of row
-testdata_generator2 = (dg.DataGenerator(sparkSession=spark, name="test_dataset2", rows=100000, partitions=20)
+testdata_generator2 = (dg.DataGenerator(spark, name="test_dataset2", rows=100000, partitions=20)
                        .withIdOutput()  # id column will be emitted in the output
                        .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
                        .withColumn("code2", "integer", minValue=1, maxValue=20, step=1, random=True)
@@ -79,7 +80,8 @@ testdata_generator2 = (dg.DataGenerator(sparkSession=spark, name="test_dataset2"
                        # base column specifies dependent column
 
                        .withColumn("site_cd", "string", prefix='site', baseColumn='code1')
-                       .withColumn("sector_status_desc", "string", minValue=1, maxValue=200, step=1, prefix='status', random=True)
+                       .withColumn("sector_status_desc", "string", minValue=1, maxValue=200, step=1, prefix='status',
+                                   random=True)
                        .withColumn("tech", "string", values=["GSM", "UMTS", "LTE", "UNKNOWN"], weights=[5, 1, 1, 1],
                                    random=True)
                        .withColumn("test_cell_flg", "integer", values=[0, 1], random=True)
@@ -120,7 +122,7 @@ schema = StructType([
 
 
 # will have implied column `id` for ordinal of row
-x3 = (dg.DataGenerator(sparkSession=spark, name="association_oss_cell_info", rows=100000, partitions=20)
+x3 = (dg.DataGenerator(spark, name="association_oss_cell_info", rows=100000, partitions=20)
       .withSchema(schema)
       # withColumnSpec adds specification for existing column
       .withColumnSpec("site_id", minValue=1, maxValue=20, step=1)

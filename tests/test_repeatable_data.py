@@ -2,7 +2,7 @@ import logging
 import unittest
 
 from pyspark.sql import functions as F
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, DateType, TimestampType
+from pyspark.sql.types import IntegerType, StringType, FloatType, DateType, TimestampType
 
 import dbldatagen as dg
 
@@ -19,9 +19,16 @@ class TestRepeatableDataGeneration(unittest.TestCase):
         logging.basicConfig(format=FORMAT)
 
     @classmethod
-    def mkBasicDataspec(cls, withRandom=False, dist=None):
-        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
-                                         partitions=4, seed_method='hash_fieldname', verbose=False)
+    def mkBasicDataspec(cls, withRandom=False, dist=None, randomSeed=None):
+
+        if randomSeed is None:
+            dgSpec = dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
+                                      partitions=4)
+        else:
+            dgSpec = dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
+                                      partitions=4, randomSeed=randomSeed, randomSeedMethod='hash_fieldname')
+
+        testDataSpec = (dgSpec
                         .withIdOutput()
                         .withColumn("r", FloatType(), expr="floor(rand(42) * 350) * (86400 + 3600)",
                                     numColumns=cls.column_count)
@@ -111,7 +118,28 @@ class TestRepeatableDataGeneration(unittest.TestCase):
 
         self.checkTablesEqual(df1, df2)
 
+    def test_basic_repeatability_random_normal2(self):
+        """Test basic data repeatability"""
+
+        ds1 = self.mkBasicDataspec(withRandom=True, dist="normal", randomSeed=42)
+        df1 = ds1.build()
+
+        ds2 = self.mkBasicDataspec(withRandom=True, dist="normal", randomSeed=42)
+        df2 = ds2.build()
+
+        self.checkTablesEqual(df1, df2)
+
     def test_basic_clone(self):
+        """Test clone method"""
+        ds1 = self.mkBasicDataspec(withRandom=False, dist="normal")
+        df1 = ds1.build()
+
+        ds2 = ds1.clone()
+        df2 = ds2.build()
+
+        self.checkTablesEqual(df1, df2)
+
+    def test_basic_clone_with_random(self):
         """Test clone method"""
         ds1 = self.mkBasicDataspec(withRandom=True, dist="normal")
         df1 = ds1.build()
@@ -177,6 +205,9 @@ class TestRepeatableDataGeneration(unittest.TestCase):
         ds2 = ds1.clone()
         df2 = ds2.build()
 
+        txt1Spec = ds1.getColumnSpec("txt1")
+        self.assertEqual(txt1Spec.randomSeed, txt1Spec.textGenerator.randomSeed)
+
         self.checkTablesEqual(df1, df2)
 
     def test_template_column_random(self):
@@ -188,6 +219,9 @@ class TestRepeatableDataGeneration(unittest.TestCase):
         ds2 = ds1.clone()
         df2 = ds2.build()
 
+        txt1Spec = ds1.getColumnSpec("txt1")
+        self.assertEqual(txt1Spec.randomSeed, txt1Spec.textGenerator.randomSeed)
+
         self.checkTablesEqual(df1, df2)
 
     def test_template_column_random2(self):
@@ -196,10 +230,22 @@ class TestRepeatableDataGeneration(unittest.TestCase):
         """
         ds1 = (self.mkBasicDataspec(withRandom=True)
                .withColumn("txt1", "string", template=r"dr_\v", random=True, escapeSpecialChars=True)
+               .withColumn("nonRandom", "string", baseColumn="code1")
                )
         df1 = ds1.build()
         ds2 = ds1.clone()
         df2 = ds2.build()
+
+        txt1Spec = ds1.getColumnSpec("txt1")
+        txt2Spec = ds2.getColumnSpec("txt1")
+        self.assertEqual(txt1Spec.randomSeed, txt2Spec.randomSeed)
+        self.assertEqual(txt1Spec.randomSeed, txt1Spec.textGenerator.randomSeed)
+        self.assertEqual(txt2Spec.randomSeed, txt2Spec.textGenerator.randomSeed)
+
+        self.assertTrue(txt1Spec.isRandom)
+
+        nonRandomColSpec = ds1.getColumnSpec("nonRandom")
+        self.assertFalse(nonRandomColSpec.isRandom)
 
         self.checkTablesEqual(df1, df2)
 
@@ -221,6 +267,17 @@ class TestRepeatableDataGeneration(unittest.TestCase):
 
         self.checkTablesEqual(df1, df2)
 
+    def test_ILText_column_random3(self):
+        """Test data generation with _template columns
+
+        """
+        ds1 = (self.mkBasicDataspec(withRandom=True, randomSeed=41)
+               .withColumn("paras", text=dg.ILText(paragraphs=(1, 4), sentences=(2, 6)))
+               )
+        df1 = ds1.build()
+        ds2 = ds1.clone()
+        df2 = ds2.build()
+
     def test_random_seed_flow(self):
         partitions_requested = 4
         data_rows = 100 * 1000
@@ -229,7 +286,7 @@ class TestRepeatableDataGeneration(unittest.TestCase):
 
         pluginDataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
                           .withColumn("code1", minValue=0, maxValue=100)
-                          .withColumn("code2", minValue=0, maxValue=100, random_seed=2021)
+                          .withColumn("code2", minValue=0, maxValue=100, randomSeed=2021)
                           .withColumn("text", "string", template=r"dr_\\v")
                           .withColumn("text2", "string", template=r"dr_\\v", random=True)
                           .withColumn("paras", text=dg.ILText(paragraphs=(1, 4), sentences=(2, 6)))
@@ -259,7 +316,6 @@ class TestRepeatableDataGeneration(unittest.TestCase):
         self.assertEqual(textSpec2.randomSeed, textSpec2.textGenerator.randomSeed)
         self.assertEqual(ilTextSpec.randomSeed, ilTextSpec.textGenerator.randomSeed)
         self.assertEqual(ilTextSpec2.randomSeed, ilTextSpec2.textGenerator.randomSeed)
-
 
     def test_random_seed_flow2(self):
         partitions_requested = 4
@@ -293,7 +349,8 @@ class TestRepeatableDataGeneration(unittest.TestCase):
         self.assertEqual(textSpec.randomSeed, textSpec.textGenerator.randomSeed)
         self.assertEqual(text2Spec.randomSeed, text2Spec.textGenerator.randomSeed)
 
-    def test_random_seed_flow3(self):
+    def test_random_seed_flow_explicit_instance(self):
+        """ Check the explicit random seed is applied to all columns"""
         partitions_requested = 4
         data_rows = 100 * 1000
 
@@ -301,7 +358,7 @@ class TestRepeatableDataGeneration(unittest.TestCase):
 
         pluginDataspec = (dg.DataGenerator(spark, rows=data_rows,
                                            partitions=partitions_requested,
-                                           seed=effective_random_seed)
+                                           randomSeed=effective_random_seed)
                           .withColumn("code1", minValue=0, maxValue=100)
                           .withColumn("code2", minValue=0, maxValue=100, random=True)
                           .withColumn("text", "string", template=r"dr_\\v")
@@ -316,6 +373,8 @@ class TestRepeatableDataGeneration(unittest.TestCase):
         textSpec = pluginDataspec.getColumnSpec("text")
         code2Spec = pluginDataspec.getColumnSpec("code2")
         text2Spec = pluginDataspec.getColumnSpec("text2")
+        paras1Spec = pluginDataspec.getColumnSpec("paras")
+        paras2Spec = pluginDataspec.getColumnSpec("paras2")
 
         self.assertEqual(code1Spec.randomSeed, dg.DEFAULT_RANDOM_SEED, "code1")
 
@@ -325,8 +384,132 @@ class TestRepeatableDataGeneration(unittest.TestCase):
 
         self.assertEqual(text2Spec.randomSeed, effective_random_seed, "text2")
 
-        self.assertEqual(textSpec.randomSeed, textSpec.textGenerator.randomSeed)
-        self.assertEqual(text2Spec.randomSeed, text2Spec.textGenerator.randomSeed)
+        self.assertEqual(paras1Spec.randomSeed, dg.DEFAULT_RANDOM_SEED, "paras1")
+        self.assertEqual(paras2Spec.randomSeed, effective_random_seed, "paras2")
+
+        self.assertEqual(textSpec.randomSeed, textSpec.textGenerator.randomSeed, "textSpec with textGenerator")
+        self.assertEqual(text2Spec.randomSeed, text2Spec.textGenerator.randomSeed, "text2Spec with textGenerator")
+        self.assertEqual(paras1Spec.randomSeed, paras1Spec.textGenerator.randomSeed, "paras1Spec with textGenerator")
+        self.assertEqual(paras2Spec.randomSeed, paras2Spec.textGenerator.randomSeed, "paras2Spec with textGenerator")
+
+    def test_random_seed_flow_hash_fieldname(self):
+        """ Check the explicit random seed is applied to all columns"""
+        partitions_requested = 4
+        data_rows = 100 * 1000
+
+        effective_random_seed = 1017
+
+        pluginDataspec = (dg.DataGenerator(spark, rows=data_rows,
+                                           partitions=partitions_requested,
+                                           randomSeed=effective_random_seed,
+                                           randomSeedMethod=dg.RANDOM_SEED_HASH_FIELD_NAME)
+                          .withColumn("code1", minValue=0, maxValue=100)
+                          .withColumn("code2", minValue=0, maxValue=100, random=True)
+                          .withColumn("text", "string", template=r"dr_\\v")
+                          .withColumn("text2", "string", template=r"dr_\\v", random=True)
+                          .withColumn("paras", text=dg.ILText(paragraphs=(1, 4), sentences=(2, 6)))
+                          .withColumn("paras2", text=dg.ILText(paragraphs=(1, 4), sentences=(2, 6)), random=True)
+                          )
+
+        self.assertEqual(pluginDataspec.randomSeed, effective_random_seed, "dataspec")
+
+        code1Spec = pluginDataspec.getColumnSpec("code1")
+        textSpec = pluginDataspec.getColumnSpec("text")
+        code2Spec = pluginDataspec.getColumnSpec("code2")
+        text2Spec = pluginDataspec.getColumnSpec("text2")
+        paras1Spec = pluginDataspec.getColumnSpec("paras")
+        paras2Spec = pluginDataspec.getColumnSpec("paras2")
+
+        self.assertTrue(code1Spec.randomSeed is not None and code1Spec.randomSeed >= 0)
+        self.assertTrue(textSpec.randomSeed is not None and textSpec.randomSeed >= 0)
+        self.assertTrue(code2Spec.randomSeed is not None and code2Spec.randomSeed >= 0)
+        self.assertTrue(text2Spec.randomSeed is not None and text2Spec.randomSeed >= 0)
+        self.assertTrue(paras1Spec.randomSeed is not None and paras1Spec.randomSeed >= 0)
+        self.assertTrue(paras2Spec.randomSeed is not None and paras2Spec.randomSeed >= 0)
+
+        self.assertEqual(textSpec.randomSeed, textSpec.textGenerator.randomSeed, "textSpec with textGenerator")
+        self.assertEqual(text2Spec.randomSeed, text2Spec.textGenerator.randomSeed, "text2Spec with textGenerator")
+        self.assertEqual(paras1Spec.randomSeed, paras1Spec.textGenerator.randomSeed, "paras1Spec with textGenerator")
+        self.assertEqual(paras2Spec.randomSeed, paras2Spec.textGenerator.randomSeed, "paras2Spec with textGenerator")
+
+    def test_random_seed_flow3_true_random(self):
+        """ Check the explicit random seed (-1) is applied to all columns"""
+        partitions_requested = 4
+        data_rows = 100 * 1000
+
+        effective_random_seed = -1
+        explicitRandomSeed = 41
+
+        pluginDataspec = (dg.DataGenerator(spark, rows=data_rows,
+                                           partitions=partitions_requested,
+                                           randomSeed=effective_random_seed)
+                          .withColumn("code1", minValue=0, maxValue=100)
+                          .withColumn("code2", minValue=0, maxValue=100, random=True)
+                          .withColumn("text", "string", template=r"dr_\\v")
+                          .withColumn("text2", "string", template=r"dr_\\v", random=True, randomSeed=explicitRandomSeed)
+                          .withColumn("paras", text=dg.ILText(paragraphs=(1, 4), sentences=(2, 6)))
+                          .withColumn("paras2", text=dg.ILText(paragraphs=(1, 4), sentences=(2, 6)), random=True,
+                                      randomSeedMethod="fixed")
+                          )
+
+        self.assertEqual(pluginDataspec.randomSeed, effective_random_seed, "dataspec")
+
+        code1Spec = pluginDataspec.getColumnSpec("code1")
+        textSpec = pluginDataspec.getColumnSpec("text")
+        code2Spec = pluginDataspec.getColumnSpec("code2")
+        text2Spec = pluginDataspec.getColumnSpec("text2")
+        paras1Spec = pluginDataspec.getColumnSpec("paras")
+        paras2Spec = pluginDataspec.getColumnSpec("paras2")
+
+        self.assertEqual(code1Spec.randomSeed, dg.DEFAULT_RANDOM_SEED, "code1")
+
+        self.assertEqual(textSpec.randomSeed, dg.DEFAULT_RANDOM_SEED, "text")
+
+        self.assertEqual(code2Spec.randomSeed, effective_random_seed, "code2")
+
+        self.assertEqual(text2Spec.randomSeed, explicitRandomSeed, "text2")
+
+        self.assertEqual(paras1Spec.randomSeed, dg.DEFAULT_RANDOM_SEED, "paras1")
+        self.assertEqual(paras2Spec.randomSeed, effective_random_seed, "paras2")
+
+        self.assertEqual(textSpec.randomSeed, textSpec.textGenerator.randomSeed, "textSpec with textGenerator")
+        self.assertEqual(text2Spec.randomSeed, text2Spec.textGenerator.randomSeed, "text2Spec with textGenerator")
+        self.assertEqual(paras1Spec.randomSeed, paras1Spec.textGenerator.randomSeed, "paras1Spec with textGenerator")
+        self.assertEqual(paras2Spec.randomSeed, paras2Spec.textGenerator.randomSeed, "paras2Spec with textGenerator")
+
+    def test_random_seed_flow3a(self):
+        partitions_requested = 4
+        data_rows = 100 * 1000
+
+        effective_random_seed = 1017
+
+        pluginDataspec = (dg.DataGenerator(spark, rows=data_rows,
+                                           partitions=partitions_requested,
+                                           randomSeed=effective_random_seed,
+                                           randomSeedMethod=dg.RANDOM_SEED_FIXED)
+                          .withColumn("code1", minValue=0, maxValue=100)
+                          .withColumn("code2", minValue=0, maxValue=100, random=True)
+                          .withColumn("text", "string", template=r"dr_\\v")
+                          .withColumn("text2", "string", template=r"dr_\\v", random=True)
+                          .withColumn("paras", text=dg.ILText(paragraphs=(1, 4), sentences=(2, 6)))
+                          .withColumn("paras2", text=dg.ILText(paragraphs=(1, 4), sentences=(2, 6)), random=True)
+                          )
+
+        self.assertEqual(pluginDataspec.randomSeed, effective_random_seed, "dataspec")
+
+        code1Spec = pluginDataspec.getColumnSpec("code1")
+        textSpec = pluginDataspec.getColumnSpec("text")
+        code2Spec = pluginDataspec.getColumnSpec("code2")
+        text2Spec = pluginDataspec.getColumnSpec("text2")
+        paras1Spec = pluginDataspec.getColumnSpec("paras")
+        paras2Spec = pluginDataspec.getColumnSpec("paras2")
+
+        self.assertTrue(code1Spec.randomSeed is not None and code1Spec.randomSeed >= 0)
+        self.assertTrue(textSpec.randomSeed is not None and textSpec.randomSeed >= 0)
+        self.assertTrue(code2Spec.randomSeed is not None and code2Spec.randomSeed >= 0)
+        self.assertTrue(text2Spec.randomSeed is not None and text2Spec.randomSeed >= 0)
+        self.assertTrue(paras1Spec.randomSeed is not None and paras1Spec.randomSeed >= 0)
+        self.assertTrue(paras2Spec.randomSeed is not None and paras2Spec.randomSeed >= 0)
 
     def test_seed_flow4(self):
         partitions_requested = 4
@@ -336,7 +519,7 @@ class TestRepeatableDataGeneration(unittest.TestCase):
 
         pluginDataspec = (dg.DataGenerator(spark, rows=data_rows,
                                            partitions=partitions_requested,
-                                           seed=effective_random_seed)
+                                           randomSeed=effective_random_seed)
                           .withColumn("code1", minValue=0, maxValue=100)
                           .withColumn("code2", minValue=0, maxValue=100, random=True)
                           .withColumn("text", "string", template=r"dr_\\v")
@@ -359,7 +542,6 @@ class TestRepeatableDataGeneration(unittest.TestCase):
 
         self.assertEqual(textSpec.randomSeed, textSpec.textGenerator.randomSeed)
         self.assertEqual(text2Spec.randomSeed, text2Spec.textGenerator.randomSeed)
-
 
 
 # run the tests

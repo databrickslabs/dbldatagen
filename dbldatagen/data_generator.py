@@ -5,29 +5,22 @@
 """
 This file defines the `DataGenError` and `DataGenerator` classes
 """
-import math
-from datetime import date, datetime, timedelta
-import re
 import copy
 import logging
-from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_RANDOM, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME
+import re
 
-from pyspark.sql.functions import col, lit, concat, rand, ceil, floor, round as sql_round, array, expr
-from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
-    StructType, StructField, TimestampType
+from pyspark.sql.types import LongType, IntegerType, StringType, StructType, StructField
 
 from .column_generation_spec import ColumnGenerationSpec
-from .utils import ensure, topologicalSort, DataGenError, deprecated
-from .daterange import DateRange
+from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_RANDOM, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME
 from .spark_singleton import SparkSingleton
+from .utils import ensure, topologicalSort, DataGenError, deprecated
 
 _OLD_MIN_OPTION = 'min'
 _OLD_MAX_OPTION = 'max'
 
-# default random seed
-DEFAULT_RANDOM_SEED = 42
-RANDOM_SEED_RANDOM = -1
-RANDOM_SEED_RANDOM_FLOAT = -1.0
+NO_SEED_SUPPLIED = -2
+
 
 class DataGenerator:
     """ Main Class for test data set generation
@@ -36,14 +29,12 @@ class DataGenerator:
 
     :param sparkSession: spark Session object to use
     :param name: is name of data set
-    :param seedMethod: = seed method for random numbers - either None, 'fixed', 'hash_fieldname'
-    :param generateWithSelects: = if `True`, optimize datae generation with selects, otherwise use `withColumn`
+    :param randomSeedMethod: = seed method for random numbers - either None, 'fixed', 'hash_fieldname'
     :param rows: = amount of rows to generate
     :param startingId: = starting value for generated seed column
-    :param seed: = seed for random number generator
+    :param randomSeed: = seed for random number generator
     :param partitions: = number of partitions to generate
     :param verbose: = if `True`, generate verbose output
-    :param usePandas: = if `True`, use Pandas UDFs during test data generation
     :param batchSize: = UDF batch number of rows to pass via Apache Arrow to Pandas UDFs
     :param debug: = if set to True, output debug level of information
     """
@@ -61,24 +52,10 @@ class DataGenerator:
     logging.getLogger("py4j").setLevel(logging.WARNING)
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.NOTSET)
 
-    def __init__(self, sparkSession=None, name=None, seedMethod=None, generateWithSelects=True,
-                 rows=1000000, startingId=0, seed=None, partitions=None, verbose=False,
-                 usePandas=True, batchSize=None, debug=False, **kwargs):
+    def __init__(self, sparkSession=None, name=None, randomSeedMethod=None,
+                 rows=1000000, startingId=0, randomSeed=NO_SEED_SUPPLIED, partitions=None, verbose=False,
+                 batchSize=None, debug=False, **kwargs):
         """ Constructor for data generator object """
-
-        # check for old versions of args
-        if "starting_id" in kwargs:
-            logging.WARNING("starting_id is deprecated - use option ``startingId`` instead")
-            startingId = kwargs["starting_id"]
-
-        if "seedMethod" in kwargs:
-            logging.WARNING("seedMethod is deprecated - use option ``seedMethod`` instead")
-            seedMethod = kwargs["seedMethod"]
-
-        if "_batchSize" in kwargs:
-            logging.WARNING("_batchSize is deprecated - use option ``batchSize`` instead")
-            batchSize = kwargs["_batchSize"]
-
 
         # set up logging
         self.verbose = verbose
@@ -90,13 +67,41 @@ class DataGenerator:
         self._rowCount = rows
         self.starting_id = startingId
         self.__schema__ = None
+        self.partitions = partitions if partitions is not None else 10
 
-        self._seedMethod = seedMethod
-        self._instanceRandomSeed = seed if seed is not None else self._randomSeed
+        # check for old versions of args
+        if "starting_id" in kwargs:
+            self.logger.warning("starting_id is deprecated - use option 'startingId' instead")
+            startingId = kwargs["starting_id"]
+
+        if "seed" in kwargs:
+            self.logger.warning("seed is deprecated - use option 'randomSeed' instead")
+            randomSeed = kwargs["seed"]
+
+        if "seed_method" in kwargs:
+            self.logger.warning("seed_method is deprecated - use option 'seedMethod' instead")
+            seedMethod = kwargs["seed_method"]
+
+        if "batch_size" in kwargs:
+            self.logger.warning("batch_size is deprecated - use option 'batchSize' instead")
+            batchSize = kwargs["batch_size"]
+
+        if "use_pandas" in kwargs or "usePandas" in kwargs:
+            self.logger.warning("option 'usePandas' is deprecated - Pandas will always be used")
+
+        if "generateWithSelects" in kwargs or "generateWithSelects" in kwargs:
+            self.logger.warning("option 'generateWithSelects' switch is deprecated - selects will always be used")
+
+        self._seedMethod = randomSeedMethod
+        self._instanceRandomSeed = randomSeed if randomSeed != NO_SEED_SUPPLIED else self._randomSeed
 
         # if a valid random seed was supplied but no seed method was applied, make the seed method "fixed"
-        if (seed is not None and seed != RANDOM_SEED_RANDOM) and seedMethod is None:
+        if (randomSeed is not None and randomSeed != RANDOM_SEED_RANDOM) and randomSeedMethod is None:
             self._seedMethod = "fixed"
+
+        if self._seedMethod not in [None, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME]:
+            msg = f"""seedMethod should be None, '{RANDOM_SEED_FIXED}' or '{RANDOM_SEED_HASH_FIELD_NAME}' """
+            raise DataGenError(msg)
 
         self._columnSpecsByName = {}
         self._allColumnSpecs = []
@@ -105,11 +110,8 @@ class DataGenerator:
         self._options = {}
         self._buildOrder = []
         self._inferredSchemaFields = []
-        self.partitions = partitions if partitions is not None else 10
         self.buildPlanComputed = False
         self.withColumn(ColumnGenerationSpec.SEED_COLUMN, LongType(), nullable=False, implicit=True, omit=True)
-        self.generateWithSelects = generateWithSelects
-        self._usePandas = usePandas
         self._batchSize = batchSize
 
         if sparkSession is None:
@@ -126,31 +128,27 @@ class DataGenerator:
             i.e DataGenerator(sparkSession=spark, name="test", ...)
             """)
 
-        # set up use of pandas udfs if necessary
-        self._setupPandasIfNeeded(batchSize)
+        # set up use of pandas udfs
+        self._setupPandas(batchSize)
 
-        if seedMethod is not None and seedMethod != "fixed" and seedMethod != "hash_fieldname":
-            raise DataGenError("""seedMethod should be None, 'fixed' or 'hash_fieldname' """)
-
-    def _setupPandasIfNeeded(self, pandasBatchSize):
+    def _setupPandas(self, pandasBatchSize):
         """
-        Set up pandas if needed
+        Set up pandas
         :param pandasBatchSize: batch size for pandas, may be None
         :return: nothing
         """
         assert pandasBatchSize is None or type(pandasBatchSize) is int, \
             "If pandas_batch_size is specified, it must be an integer"
-        if self._usePandas:
-            self.logger.info("*** using pandas udf for custom functions ***")
-            self.logger.info("Spark version: %s", self.sparkSession.version)
-            if str(self.sparkSession.version).startswith("3"):
-                self.logger.info("Using spark 3.x")
-                self.sparkSession.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
-            else:
-                self.sparkSession.conf.set("spark.sql.execution.arrow.enabled", "true")
+        self.logger.info("*** using pandas udf for custom functions ***")
+        self.logger.info("Spark version: %s", self.sparkSession.version)
+        if str(self.sparkSession.version).startswith("3"):
+            self.logger.info("Using spark 3.x")
+            self.sparkSession.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
+        else:
+            self.sparkSession.conf.set("spark.sql.execution.arrow.enabled", "true")
 
-            if self._batchSize is not None:
-                self.sparkSession.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", self._batchSize)
+        if self._batchSize is not None:
+            self.sparkSession.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", self._batchSize)
 
     def _setupLogger(self):
         """Set up logging
@@ -377,10 +375,10 @@ class DataGenerator:
 
     def __repr__(self):
         """ return the repr string for the class"""
-        return "{}(name='{}', rows={}, partitions={})".format(__class__.__name__,
-                                                              self.name,
-                                                              self._rowCount,
-                                                              self.partitions)
+        name = getattr(self, "name", "None")
+        rows = getattr(self, "_rowCount", "None")
+        partitions = getattr(self, "partitions", "None")
+        return f"DataGenerator(name='{name}', rows={rows}, partitions={partitions})"
 
     def _checkFieldList(self):
         """Check field list for common errors
@@ -530,7 +528,7 @@ class DataGenerator:
 
         # add support for deprecated legacy names
         if "match_types" in kwargs:
-            assert matchTypes is None, "Argument ``match_types`` is deprecated, use ``matchTypes`` instead"
+            assert matchTypes is None, "Argument 'match_types' is deprecated, use 'matchTypes' instead"
             matchTypes = kwargs["match_types"]
             del kwargs["match_types"]  # remove the legacy option from keyword args as they will be used later
 
@@ -713,24 +711,6 @@ class DataGenerator:
             new_props.pop("randomSeedMethod")
         else:
             effective_random_seed_method = self._seedMethod
-
-
-
-        new_props = {}
-        new_props.update(kwargs)
-
-        # if the column  has the option `random` set to true
-        # then use the instance level random seed
-        # otherwise use the default random seed for the class
-        if "random_seed" in new_props:
-            effective_random_seed = new_props["random_seed"]
-            new_props.pop("random_seed")
-            new_props["random"] = True
-        elif "random" in new_props and new_props["random"]:
-            effective_random_seed = self._instanceRandomSeed
-        else:
-            effective_random_seed = self._randomSeed
-
 
         column_spec = ColumnGenerationSpec(colName, colType,
                                            baseColumn=baseColumn,
@@ -924,14 +904,10 @@ class DataGenerator:
 
         df1 = self._getBaseDataFrame(self.starting_id, streaming=withStreaming, options=options)
 
-        if self._usePandas:
-            self.executionHistory.append("Using Pandas Optimizations {}".format(self._usePandas))
+        self.executionHistory.append("Using Pandas Optimizations {True}")
 
         # build columns
-        if self.generateWithSelects:
-            df1 = self._buildColumnExpressionsWithSelects(df1)
-        else:
-            df1 = self._buildColumnExpressionsUsingWithColumn(df1)
+        df1 = self._buildColumnExpressionsWithSelects(df1)
 
         df1 = df1.select(*self.getOutputColumnNames())
         self.executionHistory.append("selecting columns: {}".format(self.getOutputColumnNames()))
@@ -950,31 +926,6 @@ class DataGenerator:
 
         return df1
 
-    def _buildColumnExpressionsUsingWithColumn(self, df1):
-        """
-        Build column expressions using withColumn
-        :param df1: dataframe for base data generator
-        :return: new dataframe
-        """
-        # build columns
-        self.executionHistory.append("Generating data with withColumn statements")
-        column_build_order = [item for sublist in self.build_order for item in sublist]
-        for colName in column_build_order:
-            col1 = self._columnSpecsByName[colName]
-            column_generators = col1.makeGenerationExpressions()
-            self.executionHistory.extend(col1.executionHistory)
-
-            if type(column_generators) is list and len(column_generators) == 1:
-                df1 = df1.withColumn(colName, column_generators[0])
-            elif type(column_generators) is list and len(column_generators) > 1:
-                i = 0
-                for cg in column_generators:
-                    df1 = df1.withColumn('{0}_{1}'.format(colName, i), cg)
-                    i += 1
-            else:
-                df1 = df1.withColumn(colName, column_generators)
-        return df1
-
     def _buildColumnExpressionsWithSelects(self, df1):
         """
         Build column generation expressions with selects
@@ -990,7 +941,7 @@ class DataGenerator:
             self.executionHistory.append("building stage for columns: {}".format(colNames))
             for colName in colNames:
                 col1 = self._columnSpecsByName[colName]
-                column_generators = col1.makeGenerationExpressions(self._usePandas)
+                column_generators = col1.makeGenerationExpressions()
                 self.executionHistory.extend(col1.executionHistory)
                 if type(column_generators) is list and len(column_generators) == 1:
                     build_round.append(column_generators[0].alias(colName))

@@ -169,7 +169,7 @@ def findMembers(sourceFile, fileMetadata, fileSubpackage):
 
 def includeTemplate(outputFile):
     """
-    Include _template in output
+    Include template in output
 
     :param outputFile:
     :return: nothing
