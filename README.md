@@ -34,6 +34,7 @@ used in other computations
 * Applying weights to the occurrence of values
 * Generating values to conform to a schema or independent of an existing schema
 * use of SQL expressions in test data generation
+* plugin mechanism to allow use of 3rd party libraries such as Faker
 
 Details of these features can be found in the [Developer Docs](docs/source/APIDOCS.md) and the online help
 (which contains the full documentation).
@@ -75,7 +76,7 @@ For example
 import dbldatagen as dg
 from pyspark.sql.types import IntegerType, FloatType, StringType
 
-df_spec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
+df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=cls.row_count,
                                                   partitions=4)
                             .withIdOutput()
                             .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
