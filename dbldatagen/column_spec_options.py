@@ -38,7 +38,7 @@ class ColumnSpecOptions(object):
     :param random: If True, will generate random values for column value. Defaults to `False`
 
     :param baseColumn: Either the string name of the base column, or a list of columns to use to
-                        control data generation.
+                        control data generation. The option ``baseColumns`` is an alias for ``baseColumn``.
 
     :param values: List of discrete values for the colummn. Discrete values for the column can be strings, numbers
                    or constants conforming to type of column
@@ -112,7 +112,8 @@ s
         'data_range': 'dataRange',
         'base_column': 'baseColumn',
         'base_column_type': 'baseColumnType',
-        'base_columns': 'baseColumns',
+        'base_columns': 'baseColumn',
+        'baseColumns': 'baseColumn',
         'percent_nulls': 'percentNulls',
         'unique_values': 'uniqueValues',
         'random_seed_method': 'randomSeedMethod',
@@ -123,7 +124,7 @@ s
     #: the set of attributes that are permitted for any call to data generator `withColumn` or `withColumnSpec`
     _ALLOWED_PROPERTIES = {'name', 'type', 'minValue', 'maxValue', 'minValue', 'maxValue', 'step',
                            'prefix', 'random', 'distribution',
-                           'range', 'baseColumn', 'baseColumnType', 'values', 'baseColumns',
+                           'range', 'baseColumn', 'baseColumnType', 'values',
                            'numColumns', 'numFeatures', 'structType',
                            'begin', 'end', 'interval', 'expr', 'omit',
                            'weights', 'description', 'continuous',
