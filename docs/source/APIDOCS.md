@@ -500,7 +500,8 @@ data_rows = 10000000
 spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
 
 dataspec = (
-    dg.DataGenerator(spark, rows=10000000, partitions=8, randomSeedMethod="hash_fieldname", randomSeed=42)
+    dg.DataGenerator(spark, rows=10000000, partitions=8, randomSeedMethod="hash_fieldname", 
+                     randomSeed=42)
     .withColumn("name", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w')
     .withColumn("payment_instrument_type", values=['paypal', 'visa', 'mastercard', 'amex'],
                 random=True)
