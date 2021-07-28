@@ -8,8 +8,9 @@
 This file defines the `ColumnSpecOptions` class
 """
 
-from .utils import ensure
 import copy
+
+from .utils import ensure
 
 
 class ColumnSpecOptions(object):
@@ -96,6 +97,8 @@ s
 
     :param distribution: Distribution for random number. Ignored if column is not random.
 
+    :param escapeSpecialChars: if True, require escape for all special chars in template
+
     .. note::
         If the `dataRange` parameter is specified as well as the `minValue`, `maxValue` or `step`,
         the results are undetermined.
@@ -132,9 +135,8 @@ s
                            'uniqueValues', 'dataRange', 'text',
                            'precision', 'scale',
                            'randomSeedMethod', 'randomSeed',
-                           'nullable', 'implicit',
+                           'nullable', 'implicit', 'escapeSpecialChars',
                            'suffix', 'textSeparator'
-
                            }
 
     #: the set of disallowed column attributes for any call to data generator `withColumn` or `withColumnSpec`
@@ -149,17 +151,19 @@ s
         'int': 4294967296
     }
 
-    def __init__(self, props):  # TODO: check if additional options are needed here as `**kwArgs`
+    def __init__(self, props, aliases=None):  # TODO: check if additional options are needed here as `**kwArgs`
         self._options = props
+
+        self._aliases = aliases if aliases is not None else self._PROPERTY_ALIASES
 
         # translate aliases
         # need to copy options dictionary as you cant directly change a
         # dictionary that you are iterating over
         updated_options = copy.copy(props)
         for k in props.keys():
-            if k in self._PROPERTY_ALIASES:
+            if k in self._aliases:
                 v = props[k]
-                alias_name = self._PROPERTY_ALIASES[k]
+                alias_name = self._aliases[k]
                 updated_options[alias_name] = v
                 del updated_options[k]
 
@@ -174,15 +178,14 @@ s
         """
         return self._options
 
-
     def getOrElse(self, key, default=None):
         """ Get val for key if it exists or else return default"""
         assert key is not None, "key must be valid key string"
 
         if key in self._options:
             return self._options.get(key, default)
-        if key in self._PROPERTY_ALIASES:
-            return self._options.get(self._PROPERTY_ALIASES[key], default)
+        if key in self._aliases:
+            return self._options.get(self._aliases[key], default)
         return default
 
     def __getitem__(self, key):
@@ -248,23 +251,23 @@ s
 
         for k in columnProps.keys():
             ensure(k in ColumnSpecOptions._ALLOWED_PROPERTIES or k in ColumnSpecOptions._PROPERTY_ALIASES,
-                   'invalid column option {0}'.format(k))
+                   f"invalid column option {k}")
 
         for arg in self._REQUIRED_PROPERTIES:
             ensure(arg in columnProps.keys() and columnProps[arg] is not None,
-                   'missing column option {0}'.format(arg))
+                   f"missing column option {arg}")
 
         for arg in self._FORBIDDEN_PROPERTIES:
             ensure(arg not in columnProps.keys(),
-                   'forbidden column option {0}'.format(arg))
+                   f"forbidden column option {arg}")
 
         # check weights and values
         if 'weights' in columnProps.keys():
             ensure('values' in columnProps.keys(),
-                   "weights are only allowed for columns with values - column '{}' ".format(columnProps['name']))
+                   "weights are only allowed for columns with values - column '{0}' ".format(columnProps['name']))
             ensure(columnProps['values'] is not None and len(columnProps['values']) > 0,
-                   "weights must be associated with non-empty list of values - column '{}' ".format(
+                   "weights must be associated with non-empty list of values - column '{0}' ".format(
                        columnProps['name']))
             ensure(len(columnProps['values']) == len(columnProps['weights']),
-                   "length of list of weights must be  equal to length of list of values - column '{}' ".format(
+                   "length of list of weights must be  equal to length of list of values - column '{0}' ".format(
                        columnProps['name']))

@@ -16,12 +16,12 @@ from pyspark.sql.types import FloatType, IntegerType, StringType, DoubleType, Bo
     TimestampType, DataType, DateType
 
 from .column_spec_options import ColumnSpecOptions
+from .datagen_constants import RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, RANDOM_SEED_RANDOM
 from .daterange import DateRange
 from .distributions import Normal, DataDistribution
 from .nrange import NRange
 from .text_generators import TemplateGenerator
 from .utils import ensure, coalesce_values
-from .datagen_constants import RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, RANDOM_SEED_RANDOM
 
 HASH_COMPUTE_METHOD = "hash"
 VALUES_COMPUTE_METHOD = "values"
@@ -128,7 +128,7 @@ class ColumnGenerationSpec(object):
 
         self._csOptions.checkValidColumnProperties(supplied_options)
 
-        # only allow `template` or `test`
+        # only allow `template` or `text`
         self._csOptions.checkExclusiveOptions(["template", "text"])
 
         # only allow `weights` or `distribution`
@@ -168,21 +168,21 @@ class ColumnGenerationSpec(object):
         # use of a random seed method will ensure that we have repeatability of data generation
         assert randomSeed is None or type(randomSeed) in [int, float], "seed should be None or numeric"
 
-        # should be "fixed" or "hash_fieldname"
-        if randomSeed is not None and randomSeedMethod is None:
-            randomSeedMethod = RANDOM_SEED_FIXED
-
         assert randomSeedMethod is None or randomSeedMethod in [RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME], \
             f"`randomSeedMethod` should be none or `{RANDOM_SEED_FIXED}` or `{RANDOM_SEED_HASH_FIELD_NAME}`"
 
         self._randomSeedMethod = self['randomSeedMethod']
         self.random = self['random']
 
-        if randomSeedMethod == RANDOM_SEED_HASH_FIELD_NAME:
+        if self._randomSeedMethod == RANDOM_SEED_HASH_FIELD_NAME:
             assert self.name is not None, "field name cannot be None"
             self._randomSeed = abs(hash(self.name))
         else:
             self._randomSeed = self["randomSeed"]
+
+        # random seed method should be "fixed" or "hash_fieldname"
+        if self._randomSeed is not None and self._randomSeedMethod is None:
+            self._randomSeedMethod = RANDOM_SEED_FIXED
 
         # compute dependencies
         self.dependencies = self._computeBasicDependencies()
@@ -197,11 +197,16 @@ class ColumnGenerationSpec(object):
         # handle text generation templates
         if self['template'] is not None:
             assert isinstance(self['template'], str), "template must be a string "
-            self._textGenerator = TemplateGenerator(self['template'])
+            escapeSpecialChars = self['escapeSpecialChars'] if self['escapeSpecialChars'] is not None else False
+            self._textGenerator = TemplateGenerator(self['template'], escapeSpecialChars)
         elif self['text'] is not None:
-            self._textGenerator = self['text']
+            self._textGenerator = copy.deepcopy(self['text'])
         else:
             self._textGenerator = None
+
+        # specify random seed for text generator if one is in effect
+        if self._textGenerator is not None and self._randomSeed is not None:
+            self._textGenerator = self._textGenerator.withRandomSeed(self._randomSeed)
 
         # compute required temporary values
         self.temporaryColumns = []
@@ -224,11 +229,7 @@ class ColumnGenerationSpec(object):
 
         # specify random seed for distribution if one is in effect
         if self.distribution is not None and self._randomSeed is not None:
-            if self._randomSeedMethod == RANDOM_SEED_HASH_FIELD_NAME:
-                assert self.name is not None, "field name cannot be None"
-                self.distribution = self.distribution.withRandomSeed(abs(hash(self.name)))
-            else:
-                self.distribution = self.distribution.withRandomSeed(self._randomSeed)
+            self.distribution = self.distribution.withRandomSeed(self._randomSeed)
 
         # force weights and values to list
         if self.weights is not None:
@@ -315,6 +316,11 @@ class ColumnGenerationSpec(object):
         return self._randomSeed
 
     @property
+    def isRandom(self):
+        """ returns True if column will be randomly generated"""
+        return self["random"]
+
+    @property
     def textGenerator(self):
         """ Get the text generator for the column spec"""
         return self._textGenerator
@@ -344,16 +350,16 @@ class ColumnGenerationSpec(object):
         else:
             return [self.SEED_COLUMN]
 
-    def setBaseColumnDatatypes(self, column_datatypes):
+    def setBaseColumnDatatypes(self, columnDatatypes):
         """ Set the data types for the base columns
 
         :param column_datatypes: = list of data types for the base columns
 
         """
-        assert type(column_datatypes) is list, " `column_datatypes` parameter must be list"
-        ensure(len(column_datatypes) == len(self.baseColumns),
+        assert type(columnDatatypes) is list, " `column_datatypes` parameter must be list"
+        ensure(len(columnDatatypes) == len(self.baseColumns),
                "number of base column datatypes must match number of  base columns")
-        self._baseColumnDatatypes = [].append(column_datatypes)
+        self._baseColumnDatatypes = [].append(columnDatatypes)
 
     def _setupTemporaryColumns(self):
         """ Set up any temporary columns needed for test data generation.
@@ -504,7 +510,7 @@ class ColumnGenerationSpec(object):
         The value returned will be a number between 0 and 1 inclusive
         """
         assert col_name is not None, "`col_name` must not be None"
-        if self._randomSeedMethod == RANDOM_SEED_FIXED:
+        if self._randomSeedMethod == RANDOM_SEED_FIXED and self._randomSeed != RANDOM_SEED_RANDOM:
             return expr("rand({})".format(self._randomSeed))
         elif self._randomSeedMethod == RANDOM_SEED_HASH_FIELD_NAME:
             assert self.name is not None, " `self.name` must not be none"
@@ -535,7 +541,7 @@ class ColumnGenerationSpec(object):
         :returns: expression as a SQL string
         """
         assert col_name is not None, " `col_name` must not be None"
-        if self._randomSeedMethod == RANDOM_SEED_FIXED:
+        if self._randomSeedMethod == RANDOM_SEED_FIXED and self._randomSeed != RANDOM_SEED_RANDOM:
             assert self._randomSeed is not None, "`randomSeed` must not be None"
             return "rand({})".format(self._randomSeed)
         elif self._randomSeedMethod == RANDOM_SEED_HASH_FIELD_NAME:
@@ -1116,9 +1122,9 @@ class ColumnGenerationSpec(object):
         assert self.nullable, "Column `{}` must be nullable for `percent_nulls` option".format(self.name)
         self.executionHistory.append(".. applying null generator - `when rnd > prob then value - else null`")
 
-        assert probabilityNulls is not None, "option ``percent_nulls`` must not be null value or None"
-        assert type(probabilityNulls) in [int, float], "option ``percent_nulls`` must be int or float"
-        assert 0.0 <= probabilityNulls <= 1.0, "option ``percent_nulls`` must in the range [0.0 .. 1.0]"
+        assert probabilityNulls is not None, "option 'percent_nulls' must not be null value or None"
+        assert type(probabilityNulls) in [int, float], "option 'percent_nulls' must be int or float"
+        assert 0.0 <= probabilityNulls <= 1.0, "option 'percent_nulls' must in the range [0.0 .. 1.0]"
         prob_nulls = probabilityNulls * 1.0  # for edge case where int was passed
         random_generator = self._getUniformRandomExpression(self.name)
         newDef = when(random_generator > lit(prob_nulls), newDef).otherwise(lit(None))
@@ -1136,7 +1142,7 @@ class ColumnGenerationSpec(object):
             self._dataRange = NRange(0, 1, 1)
         self.executionHistory.append(".. using adjusted effective range: {}".format(self._dataRange))
 
-    def makeGenerationExpressions(self, use_pandas):
+    def makeGenerationExpressions(self):
         """ Generate structured column if multiple columns or features are specified
 
         if there are multiple columns / features specified using a single definition, it will generate
@@ -1145,7 +1151,6 @@ class ColumnGenerationSpec(object):
         (depending on the structure combination instructions)
 
             :param self: is ColumnGenerationSpec for column
-            :param use_pandas: indicates that `pandas` framework should be used
             :returns: spark sql `column` or expression that can be used to generate a column
         """
         num_columns = self['numColumns']
@@ -1159,7 +1164,7 @@ class ColumnGenerationSpec(object):
             # record execution history for troubleshooting
             self.executionHistory.append(f"generating single column - `{self.name}` having type `{self.datatype}`")
 
-            retval = self._makeSingleGenerationExpression(use_pandas_optimizations=use_pandas)
+            retval = self._makeSingleGenerationExpression(use_pandas_optimizations=True)
 
             # record how column was generated
             exec_step_history = ".. computed from base values - "
