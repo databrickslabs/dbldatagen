@@ -277,6 +277,7 @@ class TestRepeatableDataGeneration(unittest.TestCase):
         df1 = ds1.build()
         ds2 = ds1.clone()
         df2 = ds2.build()
+        self.checkTablesEqual(df1, df2)
 
     def test_random_seed_flow(self):
         partitions_requested = 4
