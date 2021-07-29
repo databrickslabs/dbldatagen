@@ -8,7 +8,15 @@ Using streaming data
 
 You can make any data spec into a streaming data frame by passing additional options to the ``build`` method.
 
+If the ``withStreaming`` option is used when building the data set, it will use a streaming rate source to generate
+the data. You can control the streaming rate with the option ``rowsPerSecond``.
+
 In this case, the row count is ignored.
+
+In most cases, no further changes are needed to run the data generation as a streaming data
+generator.
+
+As the generated data frame is a normal spark streaming data frame, all the same caveats and features apply.
 
 Example 1: site code and technology
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -57,6 +65,9 @@ Example 1: site code and technology
 
 Example 2: IOT style data
 ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The following example shows how to control the length of time to run the streaming
+data generation for.
 
 .. code-block:: python
 
@@ -122,12 +133,54 @@ Example 2: IOT style data
 
    dfTestDataStreaming = testDataSpec.build(withStreaming=True, options={'rowsPerSecond': 500})
 
+   # ... do something with your streaming source here
    display(dfTestDataStreaming)
 
-   #start_time = time.time()
-   #time.sleep(time_to_run)
+In a separate notebook cell, you can execute the following code to
+terminate the streaming after a specified period of time.
+
+.. code-block:: python
+
+   time.sleep(time_to_run)
 
    # note stopping the stream may produce exceptions - these can be ignored
-   #recent_progress = []
-   #for x in spark.streams.active:
-   #    x.stop()
+   for x in spark.streams.active:
+       try:
+           x.stop()
+       except RuntimeError:
+           pass
+
+Using streaming data with Delta tables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you write the streaming data to a Delta table using a streaming
+writer, then the Delta table itself can be used as a streaming source
+for downstream consumption.
+
+.. code-block:: python
+
+   from datetime import timedelta, datetime
+   import dbldatagen as dg
+
+   interval = timedelta(days=1, hours=1)
+   start = datetime(2017, 10, 1, 0, 0, 0)
+   end = datetime(2018, 10, 1, 6, 0, 0)
+
+   # row count will be ignored
+   ds = (dg.DataGenerator(spark, name="association_oss_cell_info", rows=100000, partitions=20)
+         .withColumnSpec("site_id", minValue=1, maxValue=20, step=1)
+         .withColumnSpec("site_cd", prefix='site', baseColumn='site_id')
+         .withColumn("sector_status_desc", "string", minValue=1, maxValue=200, step=1, prefix='status', random=True)
+         .withColumn("rand", "float", expr="floor(rand() * 350) * (86400 + 3600)")
+         .withColumn("last_sync_dt", "timestamp", begin=start, end=end, interval=interval, random=True)
+         .withColumn("sector_technology_desc", values=["GSM", "UMTS", "LTE", "UNKNOWN"], random=True)
+         )
+
+   df = ds.build(withStreaming=True, options={'rowsPerSecond': 500})
+
+   df.writeStream
+       .format("delta")
+       .outputMode("append")
+       .option("checkpointLocation", "/tmp/dbldatagen/streamingDemo/checkpoint")
+       .start("/tmp/dbldatagen/streamingDemo/data")
+

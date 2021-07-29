@@ -19,7 +19,8 @@ minValue          Minimum value for range of generated value. As alternative use
 maxValue          Minimum value for range of generated value. As alternative use ``dataRange``.
 step              Step to use for range of generated value. As an alternative, you may use the `dataRange` parameter
 random            If True, will generate random values for column value. Defaults to `False`
-randomSeedMethod  If True, will generate random values for column value. Defaults to `False`
+randomSeedMethod  Determines how seed will be used. If 'fixed', will use fixed random seed. If set to 'hash_fieldname'
+                  will use a hash of the field name as the random seed for a specific column.
 baseColumn        Either the string name of the base column, or a list of columns to use to control data generation.
 values            List of discrete values for the column. Discrete values can numeric, dates timestamps, strings etc.
 weights           List of discrete weights for the column. Controls spread of values

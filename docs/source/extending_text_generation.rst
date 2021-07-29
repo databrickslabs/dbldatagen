@@ -72,7 +72,7 @@ For more information, see :data:`~dbldatagen.text_generator_plugins.PyfuncText`
 
 .. note::
 
-  The perform of text generation using external libraries or Python functions is substantially slower than the base
+  The performance of text generation using external libraries or Python functions may be substantially slower than the base
   text generation capabilities. However it should be sufficient for generation of tables of up to
   100 million rows on a medium sized cluster.
 
