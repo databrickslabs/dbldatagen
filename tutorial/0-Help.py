@@ -61,7 +61,8 @@
 
 # MAGIC %md
 # MAGIC ## Coding style ##
-# MAGIC We will follow the PySpark coding conventions rather than the standard PEP naming conventions
-# MAGIC * variables and functions will be named using camel case starting with lower case and uppercasing each word rather than the Python style guide recommendation of underscores to separate each word. I.e. `rowCount` not `row_count`
+# MAGIC We will follow the PySpark SQL coding conventions rather than the standard PEP naming conventions
+# MAGIC * Methods and method arguments will be named using camel case starting with lower case and uppercasing each word rather than the Python style
+# MAGIC * guide recommendation of underscores to separate each word. I.e. `rowCount` not `row_count`
 # MAGIC 
 # MAGIC * Classes and types will be named using camel case starting with upper case - i.e `FieldDefinition`

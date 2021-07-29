@@ -65,6 +65,8 @@ test: export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 
 dev-test: export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 
+dev-test-with-html-report: export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
+
 dev-test:
 	@echo "$(OK_COLOR)=> Running unit tests$(NO_COLOR)"
 	pytest tests/ --cov $(PACKAGE_NAME)
