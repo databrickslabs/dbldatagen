@@ -19,8 +19,6 @@ from .utils import ensure, topologicalSort, DataGenError, deprecated
 _OLD_MIN_OPTION = 'min'
 _OLD_MAX_OPTION = 'max'
 
-NO_SEED_SUPPLIED = -2
-
 
 class DataGenerator:
     """ Main Class for test data set generation
@@ -53,7 +51,7 @@ class DataGenerator:
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.NOTSET)
 
     def __init__(self, sparkSession=None, name=None, randomSeedMethod=None,
-                 rows=1000000, startingId=0, randomSeed=NO_SEED_SUPPLIED, partitions=None, verbose=False,
+                 rows=1000000, startingId=0, randomSeed=None, partitions=None, verbose=False,
                  batchSize=None, debug=False, **kwargs):
         """ Constructor for data generator object """
 
@@ -93,11 +91,20 @@ class DataGenerator:
             self.logger.warning("option 'generateWithSelects' switch is deprecated - selects will always be used")
 
         self._seedMethod = randomSeedMethod
-        self._instanceRandomSeed = randomSeed if randomSeed != NO_SEED_SUPPLIED else self._randomSeed
 
-        # if a valid random seed was supplied but no seed method was applied, make the seed method "fixed"
-        if (randomSeed is not None and randomSeed != RANDOM_SEED_RANDOM) and randomSeedMethod is None:
-            self._seedMethod = "fixed"
+        if randomSeed is None:
+            self._instanceRandomSeed =  self._randomSeed
+
+            if randomSeedMethod is None:
+                self._seedMethod = RANDOM_SEED_HASH_FIELD_NAME
+            else:
+                self._seedMethod = randomSeedMethod
+        else:
+            self._instanceRandomSeed = randomSeed
+
+            # if a valid random seed was supplied but no seed method was applied, make the seed method "fixed"
+            if randomSeedMethod is None:
+                self._seedMethod = "fixed"
 
         if self._seedMethod not in [None, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME]:
             msg = f"""seedMethod should be None, '{RANDOM_SEED_FIXED}' or '{RANDOM_SEED_HASH_FIELD_NAME}' """
@@ -700,6 +707,12 @@ class DataGenerator:
             effective_random_seed = new_props["randomSeed"]
             new_props.pop("randomSeed")
             new_props["random"] = True
+
+            # if random seed has override but randomSeedMethod does not
+            # set it to fixed
+            if "randomSeedMethod" not in new_props:
+                new_props["randomSeedMethod"] = RANDOM_SEED_FIXED
+
         elif "random" in new_props and new_props["random"]:
             effective_random_seed = self._instanceRandomSeed
         else:

@@ -23,7 +23,8 @@ column specification is marked as ``random``.
 If a random seed is provided, either as an argument to the DataGenerator instance specification,
 or as option on the column specification, the random seed will be applied to fields when random data generation is used.
 
-By default, a default random seed is used unless a specific random seed is provided.
+By default, a default random seed is used and the randomSeedMethod is set to 'hash_fieldname' unless a specific
+random seed is provided.
 
 
 Application to generation of Change Data Capture(CDC) data
