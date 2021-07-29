@@ -335,16 +335,16 @@ class TestRepeatableDataGeneration(unittest.TestCase):
         self.assertEqual(pluginDataspec.randomSeed, effective_random_seed)
 
         code1Spec = pluginDataspec.getColumnSpec("code1")
-        self.assertEqual(code1Spec.randomSeed, effective_random_seed, "code1")
+        self.assertIsNotNone(code1Spec.randomSeed, "code1")
 
         textSpec = pluginDataspec.getColumnSpec("text")
-        self.assertEqual(textSpec.randomSeed, effective_random_seed, "text")
+        self.assertIsNotNone(textSpec.randomSeed, "text")
 
         code2Spec = pluginDataspec.getColumnSpec("code2")
-        self.assertEqual(code1Spec.randomSeed, effective_random_seed, "code2")
+        self.assertIsNotNone(code1Spec.randomSeed, "code2")
 
         text2Spec = pluginDataspec.getColumnSpec("text2")
-        self.assertEqual(text2Spec.randomSeed, effective_random_seed, "text2")
+        self.assertIsNotNone(text2Spec.randomSeed, "text2")
 
         self.assertEqual(textSpec.randomSeed, textSpec.textGenerator.randomSeed)
         self.assertEqual(text2Spec.randomSeed, text2Spec.textGenerator.randomSeed)
