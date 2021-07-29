@@ -21,8 +21,8 @@ The following example illustrates generating data for specific ranges of values:
 .. code-block:: python
 
     import dbldatagen as dg
-    df_spec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
-                                                      partitions=4)
+    df_spec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
+                                                      partitions=4, randomSeedMethod="hash_fieldname")
                            .withIdOutput()
                            .withColumn("code3", StringType(), values=['online', 'offline', 'unknown'])
                            .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True, percent_nulls=0.05)
@@ -75,8 +75,8 @@ The following example illustrates its use:
 .. code-block:: python
 
     import dbldatagen as dg
-    df_spec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
-                                                      partitions=4)
+    df_spec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
+                                                      partitions=4, randomSeedMethod="hash_fieldname")
                                 .withIdOutput()
                                 .withColumnSpec("sample_text",
                                                 text=dg.ILText(paragraphs=(1, 4),
@@ -96,8 +96,8 @@ Here are some examples of its use to generate dummy email addresses, ip addresse
 .. code-block:: python
 
     import dbldatagen as dg
-    df_spec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
-                                                      partitions=4)
+    df_spec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
+                                                      partitions=4, randomSeedMethod="hash_fieldname")
                                 .withIdOutput()
                                 .withColumnSpec("email",
                                                 template=r'\w.\w@\w.com|\w@\w.co.u\k')

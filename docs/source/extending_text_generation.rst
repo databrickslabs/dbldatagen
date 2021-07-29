@@ -41,7 +41,8 @@ extended syntax.
    'sesame','Jelly','beans',
    'pie','bar','Ice','oat' ]
 
-   fakerDataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
+   fakerDataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested,
+                    randomSeedMethod="hash_fieldname")
                .withColumn("name", percentNulls=0.1, text=FakerText("name") )
                .withColumn("payment_instrument", text=FakerText("credit_card_number" ))
                .withColumn("email", text=FakerText("ascii_company_email") )
@@ -98,9 +99,10 @@ The following code shows use of a custom Python function to generate text:
    # the data generation function
    text_generator = (lambda context, value: context.prefix + str(value))
 
-   pluginDataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
-                   .withColumn("text", text=PyfuncText(text_generator, initFn=initPluginContext))
-                   )
+   pluginDataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested,
+                     randomSeedMethod="hash_fieldname")
+                     .withColumn("text", text=PyfuncText(text_generator, initFn=initPluginContext))
+                    )
    dfPlugin = pluginDataspec.build()
    dfPlugin.show()
 
@@ -164,7 +166,8 @@ IP addresses and credit card numbers.
    cc_generator = (lambda context, v : context.faker.credit_card_number())
    email_generator = (lambda context, v : context.faker.ascii_company_email())
 
-   fakerDataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
+   fakerDataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested,
+                    randomSeedMethod="hash_fieldname")
                .withColumn("name",
                            percentNulls=0.1,
                            text=PyfuncText(name_generator , initFn=initFaker))

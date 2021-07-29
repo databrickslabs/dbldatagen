@@ -363,7 +363,7 @@ or billions of rows.
 For example, using the same code as before, but with different rows and partitions settings, you can generate a billion
 rows of data and write it to a Delta table in under 2 minutes (with a 12 node x 8 core cluster)
 
-```
+```python
 from pyspark.sql.types import LongType, IntegerType, StringType
 
 import dbldatagen as dg
@@ -455,7 +455,7 @@ data_rows = 10000000
 
 spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
 
-dataspec = (dg.DataGenerator(spark, rows=10000000, partitions=8)
+dataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=8, randomSeedMethod="hash_fieldname")
                 .withColumn("name", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w') 
                 .withColumn("payment_instrument_type", values=['paypal', 'visa', 'mastercard', 'amex'], random=True)             
                 .withColumn("payment_instrument",  minValue=1000000, maxValue=10000000, template="dddd dddddd ddddd") 
@@ -500,7 +500,7 @@ data_rows = 10000000
 spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
 
 dataspec = (
-    dg.DataGenerator(spark, rows=10000000, partitions=8, randomSeedMethod="hash_fieldname", randomSeed=42)
+    dg.DataGenerator(spark, rows=data_rows, partitions=8, randomSeedMethod="hash_fieldname", randomSeed=42)
     .withColumn("name", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w')
     .withColumn("payment_instrument_type", values=['paypal', 'visa', 'mastercard', 'amex'],
                 random=True)

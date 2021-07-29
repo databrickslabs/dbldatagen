@@ -10,6 +10,9 @@ One of the basic principles of the data generator is that all data can be genera
 produce the same results unless a column is marked ``random`` and no random seed is being used. By default
 a predefined random seed will be used for all random columns - so by definition all data is repeatable.
 
+All columns will use the same random seed unless the seed method is specified to be 'hash_fieldname'. In this case, it
+will use a hash value of the field name so that each column has a different seed.
+
 To generate true random values, the random seed of -1 must be specified, either at the data spec level or at the
 individual column level. When specified at the individual column level, it only applies to that column.
 
