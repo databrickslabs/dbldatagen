@@ -5,7 +5,10 @@
 
 # MAGIC %md ### First Steps ###
 # MAGIC 
-# MAGIC You will need to import the data generator library to workspace in order to use it.
+# MAGIC You will need to import the data generator library to workspace in order to use it. You can find the latest releases in the [``dbldatagen``](https://github.com/databrickslabs/dbldatagen) github repository
+# MAGIC on the [releases pane](https://github.com/databrickslabs/dbldatagen/releases) 
+# MAGIC 
+# MAGIC Download the wheel for the latest release from there.
 # MAGIC 
 # MAGIC Steps:
 # MAGIC 1. In your Databricks environment, using the left hand pane to select your workspace, create a library entry
@@ -30,15 +33,17 @@
 # MAGIC You can use the data generator to
 # MAGIC 
 # MAGIC * Generate Pyspark data frames from individual column declarations and schema definitions
-# MAGIC * Augment the schema and column definitions with directive as to how data should be generated
+# MAGIC * Augment the schema and column definitions with directives as to how data should be generated
 # MAGIC     * specify weighting of values
 # MAGIC     * specify random or predictable data
 # MAGIC     * specify minValue, maxValue and incremental steps
 # MAGIC     * generate timestamps falling with specific date ranges
 # MAGIC     * specify data types
-# MAGIC     * support for arbitrary SQL expressions
-# MAGIC * Analyze an existing data source and generate data similar to the source data
+# MAGIC     * specify arbitrary SQL expressions
+# MAGIC     * customize generation of text, timestamps, date and other data
 # MAGIC * All of the above can be done within the Databricks notebook environment
+# MAGIC 
+# MAGIC See the help information in the [repository documentation files](https://github.com/databrickslabs/dbldatagen/blob/master/docs/source/APIDOCS.md) and in the [online help Github Pages](https://databrickslabs.github.io/dbldatagen/) for more details.
 # MAGIC 
 # MAGIC The resulting data frames can be saved, used as a source for other operations, converted to view for
 # MAGIC consumption from Scala and other languages / environments.
@@ -53,7 +58,6 @@
 # MAGIC lets look at several basic scenarios:
 # MAGIC * generating a test data set from manually specified columns
 # MAGIC * generating a test data set from a schema definition
-# MAGIC * generating a test data set to conform with an existing table
 
 # COMMAND ----------
 
@@ -65,7 +69,7 @@ import dbldatagen as dg
 from pyspark.sql.types import IntegerType, StringType, FloatType, TimestampType
 
 # will have implied column `id` for ordinal of row
-testdata_defn = (dg.DataGenerator(spark, name="basic_dataset", rows=100000000, partitions=20, verbose=True)
+testdata_defn = (dg.DataGenerator(spark, name="basic_dataset", rows=100000, partitions=20)
                  .withColumn("code1", IntegerType(), minValue=1, maxValue=20, step=1)
                  .withColumn("code2", IntegerType(), maxValue=1000, step=5)
                  .withColumn("code3", IntegerType(), minValue=100, maxValue=200, step=1, random=True)
@@ -80,10 +84,13 @@ display(df)
 
 # COMMAND ----------
 
+# MAGIC %md Lets generate a data set from a schema and augment it.
+
+# COMMAND ----------
+
 from datetime import timedelta, datetime
 import math
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
-#from dbldatagen.data_generator import DataGenerator,ensure
 import dbldatagen as dg
 
 
@@ -104,65 +111,57 @@ schema = StructType([
 
 
 # will have implied column `id` for ordinal of row
-x3 = (dg.DataGenerator(spark, name="association_oss_cell_info", rows=100000, partitions=20)
+# number of partitions will control how many Spark tasks the data generation is distributed over
+x3 = (dg.DataGenerator(spark, name="my_test_view", rows=1000000, partitions=8)
       .withSchema(schema)
       # withColumnSpec adds specification for existing column
-      .withColumnSpec("site_id", minValue=1, maxValue=20, step=1)
-      # base column specifies dependent column
-      .withIdOutput()
+      # here, we speciy data is distributed normally
+      .withColumnSpec("site_id", minValue=1, maxValue=20, step=1, distribution="normal", random=True)
+      
+      # base column specifies dependent column - here the value of site_cd is dependent on the value of site_id
       .withColumnSpec("site_cd", prefix='site', baseColumn='site_id')
+
+      # withColumn adds specification for new column - even if the basic data set was initialized from a schema
       .withColumn("sector_status_desc", "string", minValue=1, maxValue=200, step=1, prefix='status', random=True)
-      # withColumn adds specification for new column
+      
       .withColumn("rand", "float", expr="floor(rand() * 350) * (86400 + 3600)")
+      
+      # generate timestamps in over the specified time range
       .withColumn("last_sync_dt", "timestamp", begin=start, end=end, interval=interval, random=True)
-      .withColumnSpec("sector_technology_desc", values=["GSM", "UMTS", "LTE", "UNKNOWN"], random=True)
+      
+      # by default all values are populated, but use of percentNulls option introduces nulls randomly
+      .withColumnSpec("sector_technology_desc", values=["GSM", "UMTS", "LTE", "UNKNOWN"], percentNulls=0.05, 
+                      random=True)
       .withColumn("test_cell_flg", "integer", values=[0, 1], random=True)
       )
 
-x3_output = x3.build(withTempView=True)
+# when we specify ``withTempView`` option, the data is available as view in Scala and SQL code
+dfOutput = x3.build(withTempView=True)
 
-print(x3.schema)
-x3_output.printSchema()
-# display(x3_output)
-
-analyzer = dg.DataAnalyzer(x3_output)
-
-print("Summary;", analyzer.summarize())
-
-from pyspark.sql.functions import count, when, isnan, isnull, col, lit, countDistinct
-
-def extended_summary(df):
-    colnames = [c for c in df.columns]
-    colnames2 = [ "summary" ]
-    colnames2.extend(colnames)
-
-    summary_df= df.summary()
-    summary_colnames = [c for c in summary_df.columns if c != "summary"]
-    summary_colnames2 = ["summary"]
-    summary_colnames2.extend(summary_colnames)
-
-    print("colnames2", len(colnames2), colnames2)
-    print("summary_colnames", len(summary_colnames), summary_colnames)
-
-    summary_null_count = (df.select([count(when(col(c).isNull(), c)).alias(c) for c in summary_colnames])
-                          .withColumn("summary", lit('count_isnull'))
-                          .select(*summary_colnames2))
-
-    summary_nan_count = (df.select([count(when(isnan(c), c)).alias(c) for c in summary_colnames])
-                          .withColumn("summary", lit('count_isnan'))
-                          .select(*summary_colnames2))
-
-    summary_distinct_count = (df.select([countDistinct(col(c)).alias(c) for c in summary_colnames])
-                         .withColumn("summary", lit('count_distinct'))
-                         .select(*summary_colnames2))
-
-    summary_df = summary_df.union(summary_null_count).union(summary_nan_count).union(summary_distinct_count)
-    return summary_df
-
-summary_rows = extended_summary(x3_output).collect()
-for r in summary_rows:
-    print("Summary2", r )
+display(dfOutput)
 
 
 # COMMAND ----------
 
+# MAGIC %md Using the generated data from other languages
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC 
+# MAGIC -- we'll generate row counts by site_id
+# MAGIC SELECT site_id, count(*) as row_count_by_site from my_test_view 
+# MAGIC group by site_id
+# MAGIC order by site_id asc
+
+# COMMAND ----------
+
+# MAGIC %scala 
+# MAGIC 
+# MAGIC val df = spark.sql("""
+# MAGIC SELECT site_id, sector_technology_desc, count(*) as row_count_by_site from my_test_view 
+# MAGIC group by site_id, sector_technology_desc
+# MAGIC order by site_id,sector_technology_desc asc
+# MAGIC """)
+# MAGIC 
+# MAGIC display(df)
