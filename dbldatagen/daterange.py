@@ -105,7 +105,6 @@ class DateRange(DataRange):
             assert unique_values >= 1, "unique_values must be positive integer"
 
             effective_begin = effective_end - effective_interval * (unique_values - 1 )
-            print(effective_begin, effective_end, interval)
 
         result = DateRange(effective_begin, effective_end, effective_interval)
         return result
