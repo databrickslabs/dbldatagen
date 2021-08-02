@@ -22,22 +22,23 @@ Let's assume we have data as follows:
 
 - A set of customers
 - A set of customer device activity events
-  - text message
-  - local call
-  - international call
-  - long distance call
-  - internet activity
+   - Text message
+   - Local call
+   - International call
+   - Long distance call
+   - Internet activity
 
-- A set of pricing plans indicating
-  - cost per MB of internet activity
-  - cost per minute of call for each of the call categories
-  - cost per message
+- A set of pricing plans indicating;
+   - Cost per MB of internet activity
+   - Cost per minute of call for each of the call categories
+   - Cost per message
 
-Internet activity will be priced per MB transferred
+- Pricing
+   - Internet activity will be priced per MB transferred.
 
-Phone calls will be priced per minute or partial minute.
+   - Phone calls will be priced per minute or partial minute .
 
-Messages will be priced per actual counts
+   - Messages will be priced per actual counts.
 
 .. note::
    For simplicity, we'll ignore the free data, messages and calls threshold in most plans and the complexity of
