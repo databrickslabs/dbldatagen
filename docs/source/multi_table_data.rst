@@ -123,11 +123,11 @@ Lets model our customers
 ^^^^^^^^^^^^^^^^^^^^^^^^
 We'll use device id as the foreign key for device events here.
 
-we want to ensure that our device id is unique for each customer. We could use a simple sequence as
+We want to ensure that our device id is unique for each customer. We could use a simple sequence as
 with plans but for the purposes of illustration, we'll use a hash of the customer ids instead.
 
 There's still a small likelihood of hash collisions so we'll remove any duplicates from the generated data -
-but in practice, we do not see duplicates in most datasets when using hashing. As all data produced by
+but in practice, we do not see duplicates in most small datasets when using hashing. As all data produced by
 the framework is repeatable when not using random , or when using random with a seed,
 this will give us a predictable range of foreign keys.
 
@@ -135,12 +135,13 @@ Use of hashes and sequences is a very efficient way of generating unique predict
 while introducing some pseudo-randomness in the values.
 
 
-Note - for real telephony systems, theres a complex set of rules around device ids (IMEI and related device ids),
+Note - for real telephony systems, there's a complex set of rules around device ids (IMEI and related device ids),
 subscriber numbers and techniques for matching devices to subscribers. Again, our goal here is to illustrate
 generating predictable join keys not full modelling of a telephony system.
 
 We use decimal types for ids to avoid exceeding the range of ints and longs when working
-with a larger numbers of customers.
+with a larger numbers of customers. Even though our data set sizes are small,
+when using hashed values, the range of the hashes produced can be large.
 
 .. code-block:: python
 
@@ -201,7 +202,7 @@ with a larger numbers of customers.
 
    display(df_customers)
 
-Now lets model our device events
+Now let's model our device events
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Generating `master-detail` style data is one of the key challenges in data generation for join ready data.
 
