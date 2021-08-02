@@ -6,7 +6,7 @@
 Generating Change Data Capture data
 ===================================
 
-This section explores some of the features for generating CDC style data - that is exploring the abilitty to
+This section explores some of the features for generating CDC style data - that is exploring the ability to
 generate a base data set and then apply changes such as updates to existing rows and
 new rows that will be inserts to the existing data
 
