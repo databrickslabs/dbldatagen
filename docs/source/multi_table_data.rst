@@ -119,8 +119,8 @@ Here we use a simple sequence for our plan ids.
 
    display(df_plans)
 
-Lets model our customers
-^^^^^^^^^^^^^^^^^^^^^^^^
+Let's model our customers
+^^^^^^^^^^^^^^^^^^^^^^^^^
 We'll use device id as the foreign key for device events here.
 
 We want to ensure that our device id is unique for each customer. We could use a simple sequence as
@@ -203,7 +203,7 @@ when using hashed values, the range of the hashes produced can be large.
    display(df_customers)
 
 Now let's model our device events
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Generating `master-detail` style data is one of the key challenges in data generation for join ready data.
 
 What do we mean by `master-detail`?
