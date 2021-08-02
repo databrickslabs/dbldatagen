@@ -22,16 +22,16 @@ Let's assume we have data as follows:
 
 - A set of customers
 - A set of customer device activity events
-  - text message
-  - local call
-  - international call
-  - long distance call
-  - internet activity
+   - text message
+   - local call
+   - international call
+   - long distance call
+   - internet activity
 
 - A set of pricing plans indicating
-  - cost per MB of internet activity
-  - cost per minute of call for each of the call categories
-  - cost per message
+   - cost per MB of internet activity
+   - cost per minute of call for each of the call categories
+   - cost per message
 
 Internet activity will be priced per MB transferred
 
