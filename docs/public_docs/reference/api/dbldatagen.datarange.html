@@ -1,0 +1,324 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>dbldatagen.datarange module &mdash; Databricks Labs Data Generator 0.11.0-dev1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/tdg.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="dbldatagen.daterange module" href="dbldatagen.daterange.html" />
+    <link rel="prev" title="dbldatagen.datagen_constants module" href="dbldatagen.datagen_constants.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> Databricks Labs Data Generator
+          
+
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../repeatable_data_generation.html">Repeatable data generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">The dbldatagen package API</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="dbldatagen.html">dbldatagen package</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.html#subpackages">Subpackages</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="dbldatagen.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.column_generation_spec.html">dbldatagen.column_generation_spec module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.column_spec_options.html">dbldatagen.column_spec_options module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.data_analyzer.html">dbldatagen.data_analyzer module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.data_generator.html">dbldatagen.data_generator module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.datagen_constants.html">dbldatagen.datagen_constants module</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">dbldatagen.datarange module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.daterange.html">dbldatagen.daterange module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.function_builder.html">dbldatagen.function_builder module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.nrange.html">dbldatagen.nrange module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.schema_parser.html">dbldatagen.schema_parser module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.spark_singleton.html">dbldatagen.spark_singleton module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.text_generators.html">dbldatagen.text_generators module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.utils.html">dbldatagen.utils module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.html#module-dbldatagen">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Databricks Labs Data Generator</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="modules.html">dbldatagen</a> &raquo;</li>
+        
+          <li><a href="dbldatagen.html">dbldatagen package</a> &raquo;</li>
+        
+      <li>dbldatagen.datarange module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../../_sources/reference/api/dbldatagen.datarange.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-dbldatagen.datarange">
+<span id="dbldatagen-datarange-module"></span><h1>dbldatagen.datarange module<a class="headerlink" href="#module-dbldatagen.datarange" title="Permalink to this headline">¶</a></h1>
+<p>This module defines the DataRange abstract class</p>
+<p>its not used directly, but used as base type for explicit DateRange and NRange types to ensure correct tracking of
+changes to method names when refactoring</p>
+<dl class="py class">
+<dt id="dbldatagen.datarange.DataRange">
+<em class="property">class </em><code class="sig-name descname">DataRange</code><a class="reference internal" href="../../_modules/dbldatagen/datarange.html#DataRange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.datarange.DataRange" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Abstract class used as base class for NRange and DateRange</p>
+<dl class="py method">
+<dt id="dbldatagen.datarange.DataRange.adjustForColumnDatatype">
+<code class="sig-name descname">adjustForColumnDatatype</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ctype</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/datarange.html#DataRange.adjustForColumnDatatype"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.datarange.DataRange.adjustForColumnDatatype" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjust default values for column output type</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="dbldatagen.datarange.DataRange.getContinuousRange">
+<code class="sig-name descname">getContinuousRange</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/datarange.html#DataRange.getContinuousRange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.datarange.DataRange.getContinuousRange" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert range to continuous range</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="dbldatagen.datarange.DataRange.getDiscreteRange">
+<code class="sig-name descname">getDiscreteRange</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/datarange.html#DataRange.getDiscreteRange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.datarange.DataRange.getDiscreteRange" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert range to discrete range</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="dbldatagen.datarange.DataRange.getScale">
+<code class="sig-name descname">getScale</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/datarange.html#DataRange.getScale"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.datarange.DataRange.getScale" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get scale of range</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="dbldatagen.datarange.DataRange.isEmpty">
+<code class="sig-name descname">isEmpty</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/datarange.html#DataRange.isEmpty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.datarange.DataRange.isEmpty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if object is empty (i.e all instance vars of note are <cite>None</cite>)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="dbldatagen.datarange.DataRange.isFullyPopulated">
+<code class="sig-name descname">isFullyPopulated</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/datarange.html#DataRange.isFullyPopulated"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.datarange.DataRange.isFullyPopulated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check is all instance vars are populated</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="dbldatagen.datarange.DataRange.max">
+<em class="property">property </em><code class="sig-name descname">max</code><a class="headerlink" href="#dbldatagen.datarange.DataRange.max" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the <cite>max</cite> attribute</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="dbldatagen.datarange.DataRange.min">
+<em class="property">property </em><code class="sig-name descname">min</code><a class="headerlink" href="#dbldatagen.datarange.DataRange.min" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the <cite>min</cite> attribute</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="dbldatagen.daterange.html" class="btn btn-neutral float-right" title="dbldatagen.daterange module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="dbldatagen.datagen_constants.html" class="btn btn-neutral float-left" title="dbldatagen.datagen_constants module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Databricks Inc.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
