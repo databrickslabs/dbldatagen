@@ -35,6 +35,14 @@ times, you will produce the same data.
 In addition, two columns in two different tables produced with the same generation rules and random seed will produce
 the same values allowing for creation of multiple tables with referential integrity for use in joins.
 
+.. note::
+   The key exception to repeatability is where the data set contains the timestamp or date of when the
+   data is written. In these cases, runs from a later date will have different values.
+
+   This is why we stress generating date or timestamp ranges with a specific ``begin``, ``end`` and ``interval`` in the section
+   on repeatability, rather than simply using SQL ``now()`` , ``current_timestamp()`` etc.
+
+
 Generating random data
 ----------------------
 What if random data is desired to avoid data appearing in strict sequences?(although using ``hash`` as
