@@ -294,8 +294,7 @@ A simple approach is simply to multiply the
 
                )
 
-   df_events = (events_dataspec.build()
-                  )
+   df_events = events_dataspec.build()
 
    display(df_events)
 

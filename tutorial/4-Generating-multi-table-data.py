@@ -206,16 +206,17 @@ spark.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", 20000)
 
 
 # use random seed method of 'hash_fieldname' for better spread - default in later builds
-events_dataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested, randomSeed=42, randomSeedMethod="hash_fieldname")
+events_dataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested, randomSeed=42,
+                                    randomSeedMethod="hash_fieldname")
              # use same logic as per customers dataset to ensure matching keys - but make them random
-            .withColumn("device_id_base","decimal(10)", minValue=CUSTOMER_MIN_VALUE, uniqueValues=UNIQUE_CUSTOMERS, 
+            .withColumn("device_id_base", "decimal(10)", minValue=CUSTOMER_MIN_VALUE, uniqueValues=UNIQUE_CUSTOMERS,
                         random=True, omit=True)
-            .withColumn("device_id","decimal(10)",  minValue=DEVICE_MIN_VALUE, 
+            .withColumn("device_id", "decimal(10)",  minValue=DEVICE_MIN_VALUE,
                         baseColumn="device_id_base", baseColumnType="hash")
 
             # use specific random seed to get better spread of values
-            .withColumn("event_type","string",  values=[ "sms", "internet", "local call", "ld call", "intl call" ], 
-                                                weights=[50, 50, 20, 10, 5 ], random=True)
+            .withColumn("event_type", "string",  values=["sms", "internet", "local call", "ld call", "intl call"],
+                                                weights=[50, 50, 20, 10, 5], random=True)
 
             # use Gamma distribution for skew towards short calls
             .withColumn("base_minutes","decimal(7,2)",  minValue=1.0, maxValue=100.0, step=0.1,
@@ -226,13 +227,13 @@ events_dataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions
                         distribution=dg.distributions.Gamma(shape=0.75, scale=2.0), random=True, omit=True)
                    
             .withColumn("minutes", "decimal(7,2)", baseColumn=["event_type", "base_minutes"],
-                        expr= """
+                        expr="""
                               case when event_type in ("local call", "ld call", "intl call") then base_minutes
                               else 0
                               end
                                """)
             .withColumn("bytes_transferred", "decimal(12)", baseColumn=["event_type", "base_bytes_transferred"],
-                        expr= """
+                        expr="""
                               case when event_type = "internet" then base_bytes_transferred
                               else 0
                               end
