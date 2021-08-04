@@ -6,7 +6,7 @@
 Generating Change Data Capture data
 ===================================
 
-This section explores some of the features for generating CDC style data - that is exploring the abilitty to
+This section explores some of the features for generating CDC style data - that is exploring the ability to
 generate a base data set and then apply changes such as updates to existing rows and
 new rows that will be inserts to the existing data
 
@@ -123,14 +123,23 @@ We will also generate a set of updates by sampling from the existing data and ad
            .withColumn("customer_id", F.expr(f"customer_id + {start_of_new_ids}"))
                  )
 
-   df1_updates = (df1.sample(False, 0.1)
+   # read the written data - if we simply recompute, timestamps of original will be lost
+   df_original = spark.read.format("delta").load(customers1_location)
+
+   df1_updates = (df_original.sample(False, 0.1)
            .limit(50 * 1000)
            .withColumn("alias", F.lit('modified alias'))
-           .withColumn("modified_ts",F.expr('current_timestamp()'))
+           .withColumn("modified_ts",F.expr('now()'))
            .withColumn("memo", F.lit("update")))
 
-
    df_changes = df1_inserts.union(df1_updates)
+
+   # randomize ordering
+   df_changes = (df_changes.withColumn("order_rand", F.expr("rand()"))
+                 .orderBy("order_rand")
+                 .drop("order_rand")
+                 )
+
 
    display(df_changes)
 
