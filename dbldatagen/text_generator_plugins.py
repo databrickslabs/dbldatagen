@@ -6,16 +6,12 @@
 This file defines the text generator plugin class `PyfuncText`
 """
 
-from .text_generators import TextGenerator
-import math
-import random
 import importlib
 import logging
 
-import numpy as np
-import pandas as pd
-
+from .text_generators import TextGenerator
 from .utils import DataGenError
+
 
 class PyfuncText(TextGenerator):
     """ Text generator that supports generating text from arbitrary Python function
@@ -68,6 +64,7 @@ class PyfuncText(TextGenerator):
 
             :param txtGen: - reference to outer PyfnText object
         """
+
         def __init__(self, txtGen):
             self.textGenerator = txtGen
 
@@ -79,7 +76,7 @@ class PyfuncText(TextGenerator):
         # if root property is provided, root property will be passed to generate text function
         self._rootProperty = rootProperty
 
-        self._pyFn = fn     # generate text function
+        self._pyFn = fn  # generate text function
         self._initFn = init  # context initialization function
         self._context = None  # context used to hold library root object and other properties
 
@@ -184,6 +181,7 @@ class PyfuncTextFactory:
                                    name="FakerText"))
 
     """
+
     def __init__(self, name=None):
         """
 
@@ -266,6 +264,7 @@ class PyfuncTextFactory:
         # Note all syntax expansion is performed once only
         return PyfuncText(evalFn, init=self._initFn, name=self._name, rootProperty=self._rootProperty)
 
+
 class FakerTextFactory(PyfuncTextFactory):
     """ Factory object for Faker text generator flavored ``PyfuncText`` objects
 
@@ -305,7 +304,6 @@ class FakerTextFactory(PyfuncTextFactory):
             self._rootObjectClass = "Faker"
         else:
             self._rootObjectClass = rootClass
-
 
         # load the library
         fakerModule = self._loadLibrary(lib)
@@ -358,6 +356,3 @@ class FakerTextFactory(PyfuncTextFactory):
                     return fakerModule
         except RuntimeError as err:
             raise DataGenError("Could not load or initialize Faker library", err)
-
-
-
