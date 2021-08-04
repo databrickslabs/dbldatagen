@@ -1,5 +1,8 @@
 import unittest
 
+import pandas as pd
+import numpy as np
+
 import dbldatagen as dg
 from dbldatagen import PyfuncText, PyfuncTextFactory, FakerTextFactory
 
@@ -148,13 +151,40 @@ class TestTextGenerationPlugins(unittest.TestCase):
 
         self.assertTrue(new_count == data_rows)
 
-    @skip("wait for test integration")
-    def test_plugins_faker_integration(self):
-        spark.catalog.clearCache()
-
-        shuffle_partitions_requested = 4
+    def test_plugins_extended_syntax4(self):
+        """ Test syntax extensions """
         partitions_requested = 4
         data_rows = 100 * 1000
+
+        class TestTextGen:
+            def __init__(self):
+                self._prefix = "testing1"
+
+            def mkText(self, extra=None):
+                return self._prefix + extra
+
+        def initPluginContext(context):
+            context.root = TestTextGen()
+
+        CustomText = PyfuncTextFactory(name="CustomText").withInit(initPluginContext).withRootProperty("root")
+
+        textGen = CustomText("mkText", extra="again")
+
+        inputValues = list(range(5000))
+
+        inputSeries = pd.Series(inputValues)
+        output = list(textGen.pandasGenerateText(inputSeries))
+
+        for x in output:
+            self.assertEquals(x, "testing1again")
+
+    def test_plugins_faker_integration(self):
+        """ test faker integration with mock objects"""
+
+        import unittest.mock
+        shuffle_partitions_requested = 4
+        partitions_requested = 4
+        data_rows = 30 * 1000
 
         uniqueCustomers = 10 * 1000000
 
@@ -162,35 +192,19 @@ class TestTextGenerationPlugins(unittest.TestCase):
         spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
         spark.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", 20000)
 
-        from faker.providers import internet
-
-        FakerText = FakerTextFactory(providers=[internet])
+        FakerText = FakerTextFactory(lib="unittest.mock", rootClass="MagicMock")
 
         # partition parameters etc.
         spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
 
-        my_word_list = [
-            'danish', 'cheesecake', 'sugar',
-            'Lollipop', 'wafer', 'Gummies',
-            'sesame', 'Jelly', 'beans',
-            'pie', 'bar', 'Ice', 'oat']
-
         fakerDataspec2 = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
                           .withColumn("customer_id", "int", uniqueValues=uniqueCustomers)
-                          .withColumn("name", text=FakerText("name"))
-                          .withColumn("alias", percent_nulls=0.3, text=FakerText("name"))
-                          .withColumn("payment_instrument_type", text=FakerText("credit_card_provider"))
-                          .withColumn("payment_instrument", text=FakerText("credit_card_number"))
-                          .withColumn("email", text=FakerText("ascii_company_email"))
-                          .withColumn("email2", text=FakerText("ascii_company_email"))
-                          .withColumn("ip_address", text=FakerText("ipv4_private"))
-                          .withColumn("md5_payment_instrument",
-                                      expr="md5(concat(payment_instrument_type, ':', payment_instrument))",
-                                      base_column=['payment_instrument_type', 'payment_instrument'])
-                          .withColumn("customer_notes", text=FakerText("sentence", ext_word_list=my_word_list))
+                          .withColumn("name", text=FakerText("__str__"))  # use __str__ as it returns text
                           )
         dfFaker2 = fakerDataspec2.build()
-        dfFaker2.show()
+        output = dfFaker2.select("name").collect()
+        for x in output:
+            self.assertTrue(x["name"].startswith("<MagicMock"))
 
 
 

@@ -269,26 +269,43 @@ class PyfuncTextFactory:
 class FakerTextFactory(PyfuncTextFactory):
     """ Factory object for Faker text generator flavored ``PyfuncText`` objects
 
-    :param locales: list of locales. If empty, defaults to ``en-US``
+    :param locale: list of locales. If empty, defaults to ``en-US``
     :param providers: list of providers
     :param name: name of generated objects. Defaults to ``FakerText``
-    :param lib: library name of Faker library. If none passed, uses ``faker``
+    :param lib: library import name of Faker library. If none passed, uses ``faker``
+    :param rootClass: name of root object class If none passed, uses ``Faker``
+
+    ..note ::
+       Both the library name and root object class can be overridden - this is primarily for internal testing purposes.
     """
 
     _FAKER_LIB = "faker"
 
-    def __init__(self, locale=None, providers=None, name="FakerText", lib=None):
+    # set up logging
+
+    # restrict spurious messages from java gateway
+    logging.getLogger("py4j").setLevel(logging.WARNING)
+    logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.NOTSET)
+
+    def __init__(self, locale=None, providers=None, name="FakerText", lib=None,
+                 rootClass=None):
 
         super().__init__(name)
 
         # set up the logger
         self._logger = logging.getLogger("FakerTextFactory")
         self._logger.setLevel(logging.WARNING)
-        self._logger.warning("test")
 
         # setup Faker library to use
         if lib is None:
             lib = self._FAKER_LIB
+
+        # allow overriding the root object class for test purposes
+        if rootClass is None:
+            self._rootObjectClass = "Faker"
+        else:
+            self._rootObjectClass = rootClass
+
 
         # load the library
         fakerModule = self._loadLibrary(lib)
@@ -308,7 +325,7 @@ class FakerTextFactory(PyfuncTextFactory):
         """
         assert libModule is not None, "must have a valid loaded Faker library module"
 
-        fakerClass = getattr(libModule, "Faker")
+        fakerClass = getattr(libModule, self._rootObjectClass)
 
         # define the initialization function for Faker
         def fakerInitFn(ctx):

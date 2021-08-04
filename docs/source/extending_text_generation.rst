@@ -8,7 +8,7 @@ Extending text generation
 
 This feature should be considered ``Experimental``.
 
-The ``PyfuncText`` and ``PyfuncTextFactory`` classes provide a mechanism to expand text generation to include
+The ``PyfuncText``,  ``PyfuncTextFactory`` and ``FakerTextFactory`` classes provide a mechanism to expand text generation to include
 the use of arbitrary Python functions and 3rd party data generation libraries.
 
 The following example illustrates extension with the open source Faker library using the
@@ -17,8 +17,7 @@ extended syntax.
 .. code-block:: python
 
    import dbldatagen as dg
-   from dbldatagen import PyfuncText, PyFuncTextFactory
-   from faker import Faker
+   from dbldatagen import FakerTextFactory
    from faker.providers import internet
 
    shuffle_partitions_requested = 8
@@ -26,11 +25,7 @@ extended syntax.
    data_rows = 100000
 
    # setup use of Faker
-   def initFaker(ctx):
-     ctx.faker = Faker(locale="en_US")
-     ctx.faker.add_provider(internet)
-
-   FakerText = PyfuncTextFactory(name="FakerText").withInit(initFaker).withRootProperty("faker")
+   FakerText = FakerTextFactory(providers=[internet])
 
    # partition parameters etc.
    spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
@@ -237,4 +232,50 @@ you can use the syntax below (example is hypothetical and does not refer to any 
 
 
 For more information, see :data:`~dbldatagen.text_generator_plugins.PyfuncTextFactory`
+
+Faker specific library integration
+----------------------------------
+
+Finally, the ``FakerTextFactory`` provides a Faker specific version of the ``PyfuncTextFactory`` class
+that initializes the Faker library and allows specification of locales and providers.
+
+You will still need to install Faker as it is not included in the binaries.
+
+The following example will generate Italian localized text (where the underlying Faker provider supports it)
+
+.. code-block:: python
+
+   import dbldatagen as dg
+   from dbldatagen import FakerTextFactory
+   from faker.providers import internet
+
+   shuffle_partitions_requested = 8
+   partitions_requested = 8
+   data_rows = 100000
+
+   # setup use of Faker
+   FakerText = FakerTextFactory(locale=['it_IT'], providers=[internet])
+
+   # partition parameters etc.
+   spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
+
+   my_word_list = [
+   'danish','cheesecake','sugar',
+   'Lollipop','wafer','Gummies',
+   'sesame','Jelly','beans',
+   'pie','bar','Ice','oat' ]
+
+   fakerDataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
+               .withColumn("name", percentNulls=0.1, text=FakerText("name") )
+               .withColumn("address", text=FakerText("address" ))
+               .withColumn("email", text=FakerText("ascii_company_email") )
+               .withColumn("ip_address", text=FakerText("ipv4_private" ))
+               .withColumn("faker_text", text=FakerText("sentence") )
+               )
+   dfFakerOnly = fakerDataspec.build()
+
+   dfFakerOnly.write.format("delta").mode("overwrite").save("/tmp/test-output-IT")
+
+For more information, see :data:`~dbldatagen.text_generator_plugins.FakerTextFactory`
+
 
