@@ -280,6 +280,8 @@ class FakerTextFactory(PyfuncTextFactory):
 
     _FAKER_LIB = "faker"
 
+    _defaultFakerTextFactory = None
+
     # set up logging
 
     # restrict spurious messages from java gateway
@@ -313,6 +315,16 @@ class FakerTextFactory(PyfuncTextFactory):
 
         self.withInit(initFn)
         self.withRootProperty("faker")
+
+    @classmethod
+    def _getDefaultFactory(cls, lib=None, rootClass=None):
+        """Class method to get default faker text factory
+
+           Not intended for general use
+        """
+        if cls._defaultFakerTextFactory is None:
+            cls._defaultFakerTextFactory = FakerTextFactory(lib=lib, rootClass=rootClass)
+        return cls._defaultFakerTextFactory
 
     def _mkInitFn(self, libModule, locale, providers):
         """ Make Faker initialization function
@@ -356,3 +368,18 @@ class FakerTextFactory(PyfuncTextFactory):
                     return fakerModule
         except RuntimeError as err:
             raise DataGenError("Could not load or initialize Faker library", err)
+
+
+_defaultFakerTextFactory = None
+
+
+def fakerText(mname, *args, _lib=None, _rootClass=None, **kwargs):
+    """Generate faker text generator object using
+
+       :returns : instance of PyfuncText for use with Faker
+
+       ``fakerText("sentence")`` is same as ``FakerTextFactory()("sentence")``
+    """
+    defaultFactory = FakerTextFactory._getDefaultFactory(lib=_lib, rootClass=_rootClass)
+
+    return defaultFactory(mname, *args, **kwargs)
