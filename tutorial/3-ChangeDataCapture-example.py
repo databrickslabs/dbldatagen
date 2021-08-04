@@ -58,9 +58,9 @@ dataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_reques
             .withColumn("email", template=r'\\w.\\w@\\w.com|\\w-\\w@\\w')
             .withColumn("email2", template=r'\\w.\\w@\\w.com')
             .withColumn("ip_address", template=r'\\n.\\n.\\n.\\n')
-            .withColumn("md5_customer_info",
-                        expr="md5(concat(name, ':', email))",
-                        base_column=['name', 'email'])
+            .withColumn("md5_payment_instrument",
+                        expr="md5(concat(payment_instrument_type, ':', payment_instrument))",
+                        base_column=['payment_instrument_type', 'payment_instrument'])
             .withColumn("customer_notes", text=dg.ILText(words=(1,8)))
             .withColumn("created_ts", "timestamp", expr="now()")
             .withColumn("modified_ts", "timestamp", expr="now()")
