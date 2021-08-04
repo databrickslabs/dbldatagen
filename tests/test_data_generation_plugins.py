@@ -1,7 +1,7 @@
 import unittest
 
 import dbldatagen as dg
-from dbldatagen import PyfuncText, PyfuncTextFactory
+from dbldatagen import PyfuncText, PyfuncTextFactory, FakerTextFactory
 
 spark = dg.SparkSingleton.getLocalInstance("basic tests")
 
@@ -147,6 +147,51 @@ class TestTextGenerationPlugins(unittest.TestCase):
         new_count = dfCheck.count()
 
         self.assertTrue(new_count == data_rows)
+
+    @skip("wait for test integration")
+    def test_plugins_faker_integration(self):
+        spark.catalog.clearCache()
+
+        shuffle_partitions_requested = 4
+        partitions_requested = 4
+        data_rows = 100 * 1000
+
+        uniqueCustomers = 10 * 1000000
+
+        spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
+        spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
+        spark.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", 20000)
+
+        from faker.providers import internet
+
+        FakerText = FakerTextFactory(providers=[internet])
+
+        # partition parameters etc.
+        spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
+
+        my_word_list = [
+            'danish', 'cheesecake', 'sugar',
+            'Lollipop', 'wafer', 'Gummies',
+            'sesame', 'Jelly', 'beans',
+            'pie', 'bar', 'Ice', 'oat']
+
+        fakerDataspec2 = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
+                          .withColumn("customer_id", "int", uniqueValues=uniqueCustomers)
+                          .withColumn("name", text=FakerText("name"))
+                          .withColumn("alias", percent_nulls=0.3, text=FakerText("name"))
+                          .withColumn("payment_instrument_type", text=FakerText("credit_card_provider"))
+                          .withColumn("payment_instrument", text=FakerText("credit_card_number"))
+                          .withColumn("email", text=FakerText("ascii_company_email"))
+                          .withColumn("email2", text=FakerText("ascii_company_email"))
+                          .withColumn("ip_address", text=FakerText("ipv4_private"))
+                          .withColumn("md5_payment_instrument",
+                                      expr="md5(concat(payment_instrument_type, ':', payment_instrument))",
+                                      base_column=['payment_instrument_type', 'payment_instrument'])
+                          .withColumn("customer_notes", text=FakerText("sentence", ext_word_list=my_word_list))
+                          )
+        dfFaker2 = fakerDataspec2.build()
+        dfFaker2.show()
+
 
 
 

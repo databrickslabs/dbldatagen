@@ -37,7 +37,7 @@ from .nrange import NRange
 from .function_builder import ColumnGeneratorBuilder
 from .spark_singleton import SparkSingleton
 from .text_generators import TemplateGenerator, ILText, TextGenerator
-from .text_generator_plugins import PyfuncText, PyfuncTextFactory
+from .text_generator_plugins import PyfuncText, PyfuncTextFactory, FakerTextFactory
 
 __all__ = ["data_generator", "data_analyzer", "schema_parser", "daterange", "nrange",
            "column_generation_spec", "utils", "function_builder",

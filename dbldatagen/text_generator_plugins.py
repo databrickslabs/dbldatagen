@@ -9,10 +9,13 @@ This file defines the text generator plugin class `PyfuncText`
 from .text_generators import TextGenerator
 import math
 import random
+import importlib
+import logging
 
 import numpy as np
 import pandas as pd
 
+from .utils import DataGenError
 
 class PyfuncText(TextGenerator):
     """ Text generator that supports generating text from arbitrary Python function
@@ -144,6 +147,8 @@ class PyfuncText(TextGenerator):
 class PyfuncTextFactory:
     """PyfuncTextFactory applies syntactic wrapping around creation of PyfuncText objects
 
+    :param name: name of generated object (when converted to string via ``str``)
+
     It allows the use of the following constructs:
 
     .. code-block:: python
@@ -180,6 +185,10 @@ class PyfuncTextFactory:
 
     """
     def __init__(self, name=None):
+        """
+
+        :param name:
+        """
         self._initFn = None
         self._rootProperty = None
         self._name = "PyfuncText" if name is None else name
@@ -257,6 +266,81 @@ class PyfuncTextFactory:
         # Note all syntax expansion is performed once only
         return PyfuncText(evalFn, init=self._initFn, name=self._name, rootProperty=self._rootProperty)
 
+class FakerTextFactory(PyfuncTextFactory):
+    """ Factory object for Faker text generator flavored ``PyfuncText`` objects
+
+    :param locales: list of locales. If empty, defaults to ``en-US``
+    :param providers: list of providers
+    :param name: name of generated objects. Defaults to ``FakerText``
+    :param lib: library name of Faker library. If none passed, uses ``faker``
+    """
+
+    _FAKER_LIB = "faker"
+
+    def __init__(self, locale=None, providers=None, name="FakerText", lib=None):
+
+        super().__init__(name)
+
+        # set up the logger
+        self._logger = logging.getLogger("FakerTextFactory")
+        self._logger.setLevel(logging.WARNING)
+        self._logger.warning("test")
+
+        # setup Faker library to use
+        if lib is None:
+            lib = self._FAKER_LIB
+
+        # load the library
+        fakerModule = self._loadLibrary(lib)
+
+        # make the initialization function
+        initFn = self._mkInitFn(fakerModule, locale, providers)
+
+        self.withInit(initFn)
+        self.withRootProperty("faker")
+
+    def _mkInitFn(self, libModule, locale, providers):
+        """ Make Faker initialization function
+
+        :param locale: locale string or list of locale strings
+        :param providers: providers to load
+        :return:
+        """
+        assert libModule is not None, "must have a valid loaded Faker library module"
+
+        fakerClass = getattr(libModule, "Faker")
+
+        # define the initialization function for Faker
+        def fakerInitFn(ctx):
+            if locale is not None:
+                ctx.faker = fakerClass(locale=locale)
+            else:
+                ctx.faker = fakerClass()
+
+            if providers is not None:
+                for provider in providers:
+                    ctx.faker.add_provider(provider)
+
+        return fakerInitFn
+
+    def _loadLibrary(self, lib):
+        """ Load faker library if not already loaded
+
+        :param lib: library name of Faker library. If none passed, uses ``faker``
+        """
+        # load library
+        try:
+            if lib is not None:
+                assert type(lib) is str and len(lib.strip()), f"Library ``{lib}`` must be a valid library name"
+
+                if lib in globals():
+                    return globals()[lib]
+                else:
+                    fakerModule = importlib.import_module(lib)
+                    globals()[lib] = fakerModule
+                    return fakerModule
+        except RuntimeError as err:
+            raise DataGenError("Could not load or initialize Faker library", err)
 
 
 
