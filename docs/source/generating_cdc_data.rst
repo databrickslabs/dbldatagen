@@ -52,8 +52,10 @@ We'll add a timestamp for when the row was generated and a memo field to mark wh
                .withColumn("name", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w')
                .withColumn("alias", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w')
                .withColumn("payment_instrument_type", values=['paypal', 'Visa', 'Mastercard', 'American Express', 'discover', 'branded visa', 'branded mastercard'], random=True, distribution="normal")
-               .withColumn("int_payment_instrument", "long",  minValue=100000000000000, maxValue=999999999999999,  baseColumn="customer_id", baseColumnType="hash", omit=True)
-               .withColumn("payment_instrument", expr="format_number(int_payment_instrument, '#### ###### #####')", baseColumn="int_payment_instrument")
+               .withColumn("int_payment_instrument", "int",  minValue=0000, maxValue=9999,  baseColumn="customer_id",
+                           baseColumnType="hash", omit=True)
+               .withColumn("payment_instrument", expr="format_number(int_payment_instrument, '**** ****** *####')",
+                           baseColumn="int_payment_instrument")
                .withColumn("email", template=r'\\w.\\w@\\w.com|\\w-\\w@\\w')
                .withColumn("email2", template=r'\\w.\\w@\\w.com')
                .withColumn("ip_address", template=r'\\n.\\n.\\n.\\n')
