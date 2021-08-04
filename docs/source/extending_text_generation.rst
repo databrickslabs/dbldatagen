@@ -8,7 +8,7 @@ Extending text generation
 
 This feature should be considered ``Experimental``.
 
-The ``PyfuncText`` and ``PyfuncTextFactory`` classes provide a mechanism to expand text generation to include
+The ``PyfuncText``,  ``PyfuncTextFactory`` and ``FakerTextFactory`` classes provide a mechanism to expand text generation to include
 the use of arbitrary Python functions and 3rd party data generation libraries.
 
 The following example illustrates extension with the open source Faker library using the
@@ -16,21 +16,12 @@ extended syntax.
 
 .. code-block:: python
 
-   import dbldatagen as dg
-   from dbldatagen import PyfuncText, PyFuncTextFactory
-   from faker import Faker
+   from dbldatagen import DataGenerator, fakerText
    from faker.providers import internet
 
    shuffle_partitions_requested = 8
    partitions_requested = 8
    data_rows = 100000
-
-   # setup use of Faker
-   def initFaker(ctx):
-     ctx.faker = Faker(locale="en_US")
-     ctx.faker.add_provider(internet)
-
-   FakerText = PyfuncTextFactory(name="FakerText").withInit(initFaker).withRootProperty("faker")
 
    # partition parameters etc.
    spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
@@ -41,13 +32,12 @@ extended syntax.
    'sesame','Jelly','beans',
    'pie','bar','Ice','oat' ]
 
-   fakerDataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested,
-                    randomSeedMethod="hash_fieldname")
-               .withColumn("name", percentNulls=0.1, text=FakerText("name") )
-               .withColumn("address", text=FakerText("address" ))
-               .withColumn("email", text=FakerText("ascii_company_email") )
-               .withColumn("ip_address", text=FakerText("ipv4_private" ))
-               .withColumn("faker_text", text=FakerText("sentence", ext_word_list=my_word_list) )
+   fakerDataspec = (DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
+               .withColumn("name", percentNulls=0.1, text=fakerText("name") )
+               .withColumn("address", text=fakerText("address" ))
+               .withColumn("email", text=fakerText("ascii_company_email") )
+               .withColumn("ip_address", text=fakerText("ipv4_private" ))
+               .withColumn("faker_text", text=fakerText("sentence", ext_word_list=my_word_list) )
                )
    dfFakerOnly = fakerDataspec.build()
 
@@ -72,8 +62,8 @@ For more information, see :data:`~dbldatagen.text_generator_plugins.PyfuncText`
 
 .. note::
 
-  The performance of text generation using external libraries or Python functions may be substantially slower than the base
-  text generation capabilities. However it should be sufficient for generation of tables of up to
+  The performance of text generation using external libraries or Python functions may be substantially slower than
+  the base text generation capabilities. However it should be sufficient for generation of tables of up to
   100 million rows on a medium sized cluster.
 
   Note that we do not test compatibility with specific libraries and no expectations are made on the
@@ -87,8 +77,7 @@ The following code shows use of a custom Python function to generate text:
 
 .. code-block:: python
 
-   import dbldatagen as dg
-   from dbldatagen import PyfuncText, TextGenerator
+   from dbldatagen import DataGenerator, PyfuncText
    partitions_requested = 4
    data_rows = 100 * 1000
 
@@ -99,10 +88,11 @@ The following code shows use of a custom Python function to generate text:
    # the data generation function
    text_generator = (lambda context, value: context.prefix + str(value))
 
-   pluginDataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested,
+   pluginDataspec = (DataGenerator(spark, rows=data_rows, partitions=partitions_requested,
                      randomSeedMethod="hash_fieldname")
                      .withColumn("text", text=PyfuncText(text_generator, initFn=initPluginContext))
                     )
+
    dfPlugin = pluginDataspec.build()
    dfPlugin.show()
 
@@ -146,8 +136,7 @@ IP addresses and credit card numbers.
 
 .. code-block:: python
 
-   import dbldatagen as dg
-   from dbldatagen import PyfuncText, TextGenerator
+   from dbldatagen import DataGenerator, PyfuncText
    from faker import Faker
    from faker.providers import internet
 
@@ -166,8 +155,7 @@ IP addresses and credit card numbers.
    address_generator = (lambda context, v : context.faker.address())
    email_generator = (lambda context, v : context.faker.ascii_company_email())
 
-   fakerDataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested,
-                    randomSeedMethod="hash_fieldname")
+   fakerDataspec = (DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
                .withColumn("name",
                            percentNulls=0.1,
                            text=PyfuncText(name_generator , initFn=initFaker))
@@ -203,7 +191,7 @@ Use of the `PyfuncTextFactory` class allows the use of the following constructs:
              )
 
  # later use ...
- .withColumn("fake_name", text=FakerText("sentence", ext_word_list=my_word_list) )
+ .withColumn("fake_name", text=FakerText("name") )
  .withColumn("fake_sentence", text=FakerText("sentence", ext_word_list=my_word_list) )
 
  # translates to generation of lambda function with keyword arguments
@@ -238,4 +226,54 @@ you can use the syntax below (example is hypothetical and does not refer to any 
 
 
 For more information, see :data:`~dbldatagen.text_generator_plugins.PyfuncTextFactory`
+
+Faker specific library integration
+----------------------------------
+
+Finally, the ``FakerTextFactory`` provides a Faker specific version of the ``PyfuncTextFactory`` class
+that initializes the Faker library and allows specification of locales and providers.
+
+You will still need to install Faker as it is not included in the binaries.
+
+If you are not customizing the FakerTextFactory, you can use ``fakerText`` to get the default faker text factory.
+
+The following example will generate Italian localized text (where the underlying Faker provider supports it)
+interspersed with use of the default faker text factory.
+
+
+.. code-block:: python
+
+   from dbldatagen import FakerTextFactory, DataGenerator
+   from faker.providers import internet
+
+   shuffle_partitions_requested = 8
+   partitions_requested = 8
+   data_rows = 100000
+
+   # setup use of Faker
+   FakerText = FakerTextFactoryIT(locale=['it_IT'], providers=[internet])
+
+   # partition parameters etc.
+   spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
+
+   my_word_list = [
+   'danish','cheesecake','sugar',
+   'Lollipop','wafer','Gummies',
+   'sesame','Jelly','beans',
+   'pie','bar','Ice','oat' ]
+
+   fakerDataspec = (DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
+               .withColumn("italian_name", percentNulls=0.1, text=FakerTextIT("name") )
+               .withColumn("name", percentNulls=0.1, text=fakerText("name") )  # uses default
+               .withColumn("address", text=FakerTextIT("address" ))
+               .withColumn("email", text=FakerTextIT("ascii_company_email") )
+               .withColumn("ip_address", text=FakerTextIT("ipv4_private" ))
+               .withColumn("faker_text", text=FakerTextIT("sentence") )
+               )
+   dfFakerOnly = fakerDataspec.build()
+
+   dfFakerOnly.write.format("delta").mode("overwrite").save("/tmp/test-output-IT")
+
+For more information, see :data:`~dbldatagen.text_generator_plugins.FakerTextFactory`
+
 
