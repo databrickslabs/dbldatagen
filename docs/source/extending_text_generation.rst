@@ -44,7 +44,7 @@ extended syntax.
    fakerDataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested,
                     randomSeedMethod="hash_fieldname")
                .withColumn("name", percentNulls=0.1, text=FakerText("name") )
-               .withColumn("payment_instrument", text=FakerText("credit_card_number" ))
+               .withColumn("address", text=FakerText("address" ))
                .withColumn("email", text=FakerText("ascii_company_email") )
                .withColumn("ip_address", text=FakerText("ipv4_private" ))
                .withColumn("faker_text", text=FakerText("sentence", ext_word_list=my_word_list) )
@@ -163,7 +163,7 @@ IP addresses and credit card numbers.
 
    ip_address_generator = (lambda context, v : context.faker.ipv4_private())
    name_generator = (lambda context, v : context.faker.name())
-   cc_generator = (lambda context, v : context.faker.credit_card_number())
+   address_generator = (lambda context, v : context.faker.address())
    email_generator = (lambda context, v : context.faker.ascii_company_email())
 
    fakerDataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested,
@@ -171,8 +171,8 @@ IP addresses and credit card numbers.
                .withColumn("name",
                            percentNulls=0.1,
                            text=PyfuncText(name_generator , initFn=initFaker))
-               .withColumn("payment_instrument",
-                           text=PyfuncText(cc_generator, initFn=initFaker))
+               .withColumn("address",
+                           text=PyfuncText(address_generator, initFn=initFaker))
                .withColumn("email",
                            text=PyfuncText(email_generator, initFn=initFaker))
                .withColumn("ip_address",

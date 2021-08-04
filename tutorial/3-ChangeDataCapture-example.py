@@ -44,18 +44,23 @@ spark.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", 20000)
 uniqueCustomers = 10 * 1000000
 
 dataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
-            .withColumn("customer_id","long", uniqueValues=uniqueCustomers)
+            .withColumn("customer_id", "long", uniqueValues=uniqueCustomers)
             .withColumn("name", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w')
             .withColumn("alias", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w')
-            .withColumn("payment_instrument_type", values=['paypal', 'Visa', 'Mastercard', 'American Express', 'discover', 'branded visa', 'branded mastercard'], random=True, distribution="normal")
-            .withColumn("int_payment_instrument", "long",  minValue=100000000000000, maxValue=999999999999999,  baseColumn="customer_id", baseColumnType="hash", omit=True)
-            .withColumn("payment_instrument", expr="format_number(int_payment_instrument, '#### ###### #####')", baseColumn="int_payment_instrument")
+            .withColumn("payment_instrument_type", values=['paypal', 'Visa', 'Mastercard',
+                                                           'American Express', 'discover', 'branded visa',
+                                                           'branded mastercard'],
+                        random=True, distribution="normal")
+            .withColumn("int_payment_instrument", "int",  minValue=0000, maxValue=9999,  baseColumn="customer_id",
+                        baseColumnType="hash", omit=True)
+            .withColumn("payment_instrument", expr="format_number(int_payment_instrument, '**** ****** *####')",
+                        baseColumn="int_payment_instrument")
             .withColumn("email", template=r'\\w.\\w@\\w.com|\\w-\\w@\\w')
             .withColumn("email2", template=r'\\w.\\w@\\w.com')
             .withColumn("ip_address", template=r'\\n.\\n.\\n.\\n')
-            .withColumn("md5_payment_instrument",
-                        expr="md5(concat(payment_instrument_type, ':', payment_instrument))",
-                        base_column=['payment_instrument_type', 'payment_instrument'])
+            .withColumn("md5_customer_info",
+                        expr="md5(concat(name, ':', email))",
+                        base_column=['name', 'email'])
             .withColumn("customer_notes", text=dg.ILText(words=(1,8)))
             .withColumn("created_ts", "timestamp", expr="now()")
             .withColumn("modified_ts", "timestamp", expr="now()")

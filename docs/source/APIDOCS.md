@@ -426,8 +426,8 @@ dfTestData.write.format("delta").mode("overwrite").save(
 ## Using SQL in data generation
 Any column specification can use arbitrary SQL expressions during data generation via the `expr` parameter.
 
-The following example shows generation of synthetic names, email addresses, payment instruments and 
-use of a SQL expression to compute MD5 hashes of synthetic credit card numbers:
+The following example shows generation of synthetic names, email addresses and 
+use of a SQL expression to compute MD5 hashes of hypothetical synthetic credit card :
 
 ```python
 import dbldatagen as dg
@@ -440,8 +440,14 @@ spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
 
 dataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=8, randomSeedMethod="hash_fieldname")
                 .withColumn("name", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w') 
-                .withColumn("payment_instrument_type", values=['paypal', 'visa', 'mastercard', 'amex'], random=True)             
-                .withColumn("payment_instrument",  minValue=1000000, maxValue=10000000, template="dddd dddddd ddddd") 
+                .withColumn("payment_instrument_type", values=['paypal', 'visa', 'mastercard', 'amex'], 
+                            random=True)             
+                .withColumn("int_payment_instrument", "int",  minValue=0000, maxValue=9999,  
+                            baseColumn="name",
+                            baseColumnType="hash", omit=True)
+                .withColumn("payment_instrument", 
+                             expr="format_number(int_payment_instrument, '**** ****** *####')",
+                             baseColumn="int_payment_instrument")
                 .withColumn("email", template=r'\\w.\\w@\\w.com')       
                 .withColumn("md5_payment_instrument", 
                             expr="md5(concat(payment_instrument_type, ':', payment_instrument))",
@@ -483,12 +489,17 @@ data_rows = 10000000
 spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
 
 dataspec = (
-    dg.DataGenerator(spark, rows=data_rows, partitions=8, randomSeedMethod="hash_fieldname", randomSeed=42)
+    dg.DataGenerator(spark, rows=data_rows, partitions=8, randomSeedMethod="hash_fieldname", 
+                     randomSeed=42)
     .withColumn("name", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w')
     .withColumn("payment_instrument_type", values=['paypal', 'visa', 'mastercard', 'amex'],
                 random=True)
-    .withColumn("payment_instrument", minValue=1000000, maxValue=10000000,
-                template="dddd dddddd ddddd")
+    .withColumn("int_payment_instrument", "int",  minValue=0000, maxValue=9999,  
+                baseColumn="name",
+                baseColumnType="hash", omit=True)
+    .withColumn("payment_instrument", 
+                expr="format_number(int_payment_instrument, '**** ****** *####')",
+                baseColumn="int_payment_instrument")
     .withColumn("email", template=r'\\w.\\w@\\w.com')
     .withColumn("md5_payment_instrument",
                 expr="md5(concat(payment_instrument_type, ':', payment_instrument))",
