@@ -46,7 +46,7 @@ extended syntax.
                .withColumn("address", text=FakerText("address" ))
                .withColumn("email", text=FakerText("ascii_company_email") )
                .withColumn("ip_address", text=FakerText("ipv4_private" ))
-               .withColumn("notes", text=FakerText("sentence", ext_word_list=my_word_list) )
+               .withColumn("faker_text", text=FakerText("sentence", ext_word_list=my_word_list) )
                )
    dfFakerOnly = fakerDataspec.build()
 
@@ -71,8 +71,8 @@ For more information, see :data:`~dbldatagen.text_generator_plugins.PyfuncText`
 
 .. note::
 
-  The perform of text generation using external libraries or Python functions is substantially slower than the base
-  text generation capabilities. However it should be sufficient for generation of tables of up to
+  The performance of text generation using external libraries or Python functions may be substantially slower than
+  the base text generation capabilities. However it should be sufficient for generation of tables of up to
   100 million rows on a medium sized cluster.
 
   Note that we do not test compatibility with specific libraries and no expectations are made on the
@@ -98,9 +98,11 @@ The following code shows use of a custom Python function to generate text:
    # the data generation function
    text_generator = (lambda context, value: context.prefix + str(value))
 
-   pluginDataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
-                   .withColumn("text", text=PyfuncText(text_generator, initFn=initPluginContext))
-                   )
+   pluginDataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested,
+                     randomSeedMethod="hash_fieldname")
+                     .withColumn("text", text=PyfuncText(text_generator, initFn=initPluginContext))
+                    )
+
    dfPlugin = pluginDataspec.build()
    dfPlugin.show()
 

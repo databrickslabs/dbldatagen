@@ -125,8 +125,8 @@ import dbldatagen as dg
 from pyspark.sql.types import FloatType, IntegerType, StringType
 
 row_count=1000 * 100
-testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=row_count,
-                                  partitions=4, seed_method='hash_fieldname', 
+testDataSpec = (dg.DataGenerator(spark, name="test_data_set1", rows=row_count,
+                                  partitions=4, randomSeedMethod='hash_fieldname', 
                                   verbose=True)
                    .withIdOutput()
                    .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
@@ -214,8 +214,9 @@ table_schema = spark.table("test_vehicle_data").schema
 
 print(table_schema)
   
-dataspec = (dg.DataGenerator(spark, rows=10000000, partitions=8)
-                .withSchema(table_schema))
+dataspec = (dg.DataGenerator(spark, rows=10000000, partitions=8, 
+                  randomSeedMethod="hash_fieldname")
+            .withSchema(table_schema))
 
 dataspec = (dataspec
                 .withColumnSpec("name", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w')                                       
@@ -279,14 +280,14 @@ manufacturers = ['Delta corp', 'Xyzzy Inc.', 'Lakehouse Ltd', 'Acme Corp', 'Emba
 
 lines = ['delta', 'xyzzy', 'lakehouse', 'gadget', 'droid']
 
-testDataSpec = (dg.DataGenerator(sparkSession=spark, name="device_data_set", rows=data_rows,
-                                 partitions=partitions_requested, seedMethod='hash_fieldname',
-                                 verbose=True, debug=True)
+testDataSpec = (dg.DataGenerator(spark, name="device_data_set", rows=data_rows,
+                                 partitions=partitions_requested, 
+                                 randomSeedMethod='hash_fieldname')
                 .withIdOutput()
                 # we'll use hash of the base field to generate the ids to 
                 # avoid a simple incrementing sequence
                 .withColumn("internal_device_id", LongType(), minValue=0x1000000000000,
-                            uniqueValues=device_population)
+                            uniqueValues=device_population, omit=True, baseColumnType="hash")
 
                 # note for format strings, we must use "%lx" not "%x" as the 
                 # underlying value is a long
@@ -297,16 +298,7 @@ testDataSpec = (dg.DataGenerator(sparkSession=spark, name="device_data_set", row
                 # so lets use the internal device id as the base column for these attribute
                 .withColumn("country", StringType(), values=country_codes,
                             weights=country_weights,
-                            baseColumn="internal_device_id", baseColumnType="hash")
-                .withColumn("country2a", LongType(),
-                            expr="((hash(internal_device_id) % 3847) + 3847) % 3847",
                             baseColumn="internal_device_id")
-                .withColumn("country2", IntegerType(),
-                            expr="""floor(cast( (((internal_device_id % 3847) + 3847) % 3847) 
-                                          as double) )""",
-                            baseColumn="internal_device_id")
-                .withColumn("country3", StringType(), values=country_codes,
-                            baseColumn="country2")
                 .withColumn("manufacturer", StringType(), values=manufacturers,
                             baseColumn="internal_device_id")
 
@@ -324,6 +316,7 @@ testDataSpec = (dg.DataGenerator(sparkSession=spark, name="device_data_set", row
                             values=["activation", "deactivation", "plan change",
                                     "telecoms activity", "internet activity", "device error"],
                             random=True)
+                .withColumn("event_ts", "timestamp", begin="2020-01-01 01:00:00", end="2020-12-31 23:59:00", interval="1 minute", random=True)
 
                 )
 
@@ -363,7 +356,7 @@ or billions of rows.
 For example, using the same code as before, but with different rows and partitions settings, you can generate a billion
 rows of data and write it to a Delta table in under 2 minutes (with a 12 node x 8 core cluster)
 
-```
+```python
 from pyspark.sql.types import LongType, IntegerType, StringType
 
 import dbldatagen as dg
@@ -385,17 +378,16 @@ manufacturers = ['Delta corp', 'Xyzzy Inc.', 'Lakehouse Ltd', 'Acme Corp', 'Emba
 
 lines = ['delta', 'xyzzy', 'lakehouse', 'gadget', 'droid']
 
-testDataSpec = (dg.DataGenerator(sparkSession=spark, name="device_data_set", rows=data_rows,
-                                 partitions=partitions_requested, seedMethod='hash_fieldname',
-                                 verbose=True, debug=True)
+testDataSpec = (dg.DataGenerator(spark, name="device_data_set", rows=data_rows,
+                                 partitions=partitions_requested, randomSeedMethod='hash_fieldname')
                 .withIdOutput()
-                # we'll use hash of the base field to generate the ids to avoid a 
-                # simple incrementing sequence
+                # we'll use hash of the base field to generate the ids to 
+                # avoid a simple incrementing sequence
                 .withColumn("internal_device_id", LongType(), minValue=0x1000000000000,
-                            unique_values=device_population)
+                            uniqueValues=device_population, omit=True, baseColumnType="hash")
 
-                # note for format strings, we must use "%lx" not "%x" as the underlying 
-                # value is a long
+                # note for format strings, we must use "%lx" not "%x" as the 
+                # underlying value is a long
                 .withColumn("device_id", StringType(), format="0x%013x",
                             baseColumn="internal_device_id")
 
@@ -403,16 +395,7 @@ testDataSpec = (dg.DataGenerator(sparkSession=spark, name="device_data_set", row
                 # so lets use the internal device id as the base column for these attribute
                 .withColumn("country", StringType(), values=country_codes,
                             weights=country_weights,
-                            baseColumn="internal_device_id", baseColumnType="hash")
-                .withColumn("country2a", LongType(),
-                            expr="((hash(internal_device_id) % 3847) + 3847) % 3847",
                             baseColumn="internal_device_id")
-                .withColumn("country2", IntegerType(),
-                            expr="""floor(cast( (((internal_device_id % 3847) + 3847) % 3847) 
-                                                 as double) )""",
-                            baseColumn="internal_device_id")
-                .withColumn("country3", StringType(), values=country_codes,
-                            baseColumn="country2")
                 .withColumn("manufacturer", StringType(), values=manufacturers,
                             baseColumn="internal_device_id")
 
@@ -428,9 +411,9 @@ testDataSpec = (dg.DataGenerator(sparkSession=spark, name="device_data_set", row
                             baseColumn=["line", "model_ser"])
                 .withColumn("event_type", StringType(),
                             values=["activation", "deactivation", "plan change",
-                                    "telecoms activity",
-                                    "internet activity", "device error"],
+                                    "telecoms activity", "internet activity", "device error"],
                             random=True)
+                .withColumn("event_ts", "timestamp", begin="2020-01-01 01:00:00", end="2020-12-31 23:59:00", interval="1 minute", random=True)
 
                 )
 
@@ -455,7 +438,7 @@ data_rows = 10000000
 
 spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
 
-dataspec = (dg.DataGenerator(spark, rows=10000000, partitions=8)
+dataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=8, randomSeedMethod="hash_fieldname")
                 .withColumn("name", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w') 
                 .withColumn("payment_instrument_type", values=['paypal', 'visa', 'mastercard', 'amex'], random=True)             
                 .withColumn("payment_instrument",  minValue=1000000, maxValue=10000000, template="dddd dddddd ddddd") 
@@ -497,12 +480,11 @@ shuffle_partitions_requested = 8
 partitions_requested = 8
 data_rows = 10000000
 
-
 spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
 
 dataspec = (
-    dg.DataGenerator(spark, rows=10000000, partitions=8, seedMethod="hash_fieldname", seed=42)
-    .withColumn("name", percentNulls=0.1, template=r'\\w \\w|\\w a. \\w')
+    dg.DataGenerator(spark, rows=data_rows, partitions=8, randomSeedMethod="hash_fieldname", randomSeed=42)
+    .withColumn("name", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w')
     .withColumn("payment_instrument_type", values=['paypal', 'visa', 'mastercard', 'amex'],
                 random=True)
     .withColumn("payment_instrument", minValue=1000000, maxValue=10000000,

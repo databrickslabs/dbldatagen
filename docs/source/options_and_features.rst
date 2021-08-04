@@ -12,31 +12,33 @@ Options for column specification
 The following table lists some of the common options that can be applied with the ``withColumn`` and ``withColumnSpec``
 methods.
 
-=============  ==============================
-Parameter      Usage
-=============  ==============================
-minValue       Minimum value for range of generated value. As alternative use ``data_range``.
-maxValue       Minimum value for range of generated value. As alternative use ``data_range``.
-step           Step to use for range of generated value. As an alternative, you may use the `data_range` parameter
-random         If True, will generate random values for column value. Defaults to `False`
-baseColumn     Either the string name of the base column, or a list of columns to use to control data generation.
-values         List of discrete values for the column. Discrete values can numeric, dates timestamps, strings etc.
-weights        List of discrete weights for the column. Controls spread of values
-percentNulls   Percentage of nulls to generate for column. Fraction representing percentage between 0.0 and 1.0
-uniqueValues   Number of distinct unqique values for the column. Use as alternative to data range.
-begin          Beginning of range for date and timestamp fields.
-end            End of range for date and timestamp fields.
-interval       Interval of range for date and timestamp fields.
-dataRange      An instance of an `NRange` or `DateRange` object. This can be used in place of ``minValue``, etc.
-template       Template controlling text generation
-omit           If True, omit column from final output. Use when column is only needed to compute other columns.
-expr           SQL expression to control data generation
-=============  ==============================
+================  ==============================
+Parameter         Usage
+================  ==============================
+minValue          Minimum value for range of generated value. As alternative use ``dataRange``.
+maxValue          Minimum value for range of generated value. As alternative use ``dataRange``.
+step              Step to use for range of generated value. As an alternative, you may use the `dataRange` parameter
+random            If True, will generate random values for column value. Defaults to `False`
+randomSeedMethod  Determines how seed will be used. If 'fixed', will use fixed random seed. If set to 'hash_fieldname'
+                  will use a hash of the field name as the random seed for a specific column.
+baseColumn        Either the string name of the base column, or a list of columns to use to control data generation.
+values            List of discrete values for the column. Discrete values can numeric, dates timestamps, strings etc.
+weights           List of discrete weights for the column. Controls spread of values
+percentNulls      Percentage of nulls to generate for column. Fraction representing percentage between 0.0 and 1.0
+uniqueValues      Number of distinct unqique values for the column. Use as alternative to data range.
+begin             Beginning of range for date and timestamp fields.
+end               End of range for date and timestamp fields.
+interval          Interval of range for date and timestamp fields.
+dataRange         An instance of an `NRange` or `DateRange` object. This can be used in place of ``minValue``, etc.
+template          Template controlling text generation
+omit              If True, omit column from final output. Use when column is only needed to compute other columns.
+expr              SQL expression to control data generation
+================  ==============================
 
 
 .. note::
 
-     If the `data_range` parameter is specified as well as the `minValue`, `maxValue` or `step`,
+     If the `dataRange` parameter is specified as well as the `minValue`, `maxValue` or `step`,
      the results are undetermined.
 
      For more information, see :data:`~dbldatagen.daterange.DateRange`
@@ -86,7 +88,7 @@ The following code sample illustrates generating a streaming data frame:
 
    # build our data spec
    dataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count,
-                                    partitions=4, seed_method='hash_fieldname')
+                                    partitions=4, randomSeedMethod='hash_fieldname')
                    .withIdOutput()
                    .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
                    .withColumn("code2", IntegerType(), minValue=0, maxValue=10)

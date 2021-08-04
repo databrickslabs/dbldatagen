@@ -26,6 +26,10 @@ to Scala or R based Spark applications also.
    Generating text data <textdata>
    Using data distributions <DISTRIBUTIONS>
    Options for column specification <options_and_features>
+   Generating repeatable data  <repeatable_data_generation>
+   Using streaming data <using_streaming_data>
+   Generating Change Data Capture (CDC) data<generating_cdc_data>
+   Using multiple tables <multi_table_data>
    Extending text generation  <extending_text_generation>
    Troubleshooting data generation <troubleshooting>
 

@@ -1,5 +1,5 @@
-import unittest
 import re
+import unittest
 
 import dbldatagen as dg
 
@@ -146,11 +146,16 @@ class TestUseOfOptions(unittest.TestCase):
         colSpec2 = testdata_generator.getColumnSpec("site_cd2")
         assert "randomSeedMethod" in colSpec2.specOptions, "expecting option ``randomSeedMethod`` for `site_cd2`"
 
+    def test_prop_name_utils(self):
+        aliases = {"One": "one"}
 
+        props = {"one": 1, "two": 2, "three": 3}
 
+        options = dg.ColumnSpecOptions(props, aliases)
 
-
-
+        self.assertEqual(options.getOrElse("two", None), 2, "get two")
+        self.assertEqual(options.getOrElse("One", None), 1, "get One")
+        self.assertEqual(options.getOrElse("four", 4), 4, "get four with default")
 
 # run the tests
 # if __name__ == '__main__':

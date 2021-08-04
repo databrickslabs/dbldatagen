@@ -174,14 +174,12 @@ def parse_time_interval(spec):
         timespec_parts = re.findall(PATTERN_NAME_EQUALS_VALUE, ts)
         # findall returns list of tuples
         if timespec_parts is not None and len(timespec_parts) > 0:
-            print("name = value pattern", timespec_parts)
             num_parts = len(timespec_parts[0])
             assert num_parts >= 1, "must have numeric specification and time element such as `12 hours` or `hours=12`"
             time_value = int(timespec_parts[0][num_parts - 1])
             time_type = timespec_parts[0][0].lower()
         else:
             timespec_parts = re.findall(PATTERN_VALUE_SPACE_NAME, ts)
-            print("value space name pattern", timespec_parts)
             num_parts = len(timespec_parts[0])
             assert num_parts >= 1, "must have numeric specification and time element such as `12 hours` or `hours=12`"
             time_value = int(timespec_parts[0][0])
