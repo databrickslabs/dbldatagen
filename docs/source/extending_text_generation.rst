@@ -17,15 +17,12 @@ extended syntax.
 .. code-block:: python
 
    import dbldatagen as dg
-   from dbldatagen import FakerTextFactory
+   from dbldatagen import fakerText
    from faker.providers import internet
 
    shuffle_partitions_requested = 8
    partitions_requested = 8
    data_rows = 100000
-
-   # setup use of Faker
-   FakerText = FakerTextFactory(providers=[internet])
 
    # partition parameters etc.
    spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
@@ -37,11 +34,11 @@ extended syntax.
    'pie','bar','Ice','oat' ]
 
    fakerDataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
-               .withColumn("name", percentNulls=0.1, text=FakerText("name") )
-               .withColumn("address", text=FakerText("address" ))
-               .withColumn("email", text=FakerText("ascii_company_email") )
-               .withColumn("ip_address", text=FakerText("ipv4_private" ))
-               .withColumn("faker_text", text=FakerText("sentence", ext_word_list=my_word_list) )
+               .withColumn("name", percentNulls=0.1, text=fakerText("name") )
+               .withColumn("address", text=fakerText("address" ))
+               .withColumn("email", text=fakerText("ascii_company_email") )
+               .withColumn("ip_address", text=fakerText("ipv4_private" ))
+               .withColumn("faker_text", text=fakerText("sentence", ext_word_list=my_word_list) )
                )
    dfFakerOnly = fakerDataspec.build()
 
@@ -241,7 +238,11 @@ that initializes the Faker library and allows specification of locales and provi
 
 You will still need to install Faker as it is not included in the binaries.
 
+If you are not customizing the FakerTextFactory, you can use ``fakerText`` to get the default faker text factory.
+
 The following example will generate Italian localized text (where the underlying Faker provider supports it)
+interspersed with use of the default faker text factory.
+
 
 .. code-block:: python
 
@@ -254,7 +255,7 @@ The following example will generate Italian localized text (where the underlying
    data_rows = 100000
 
    # setup use of Faker
-   FakerText = FakerTextFactory(locale=['it_IT'], providers=[internet])
+   FakerText = FakerTextFactoryIT(locale=['it_IT'], providers=[internet])
 
    # partition parameters etc.
    spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
@@ -266,11 +267,12 @@ The following example will generate Italian localized text (where the underlying
    'pie','bar','Ice','oat' ]
 
    fakerDataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
-               .withColumn("name", percentNulls=0.1, text=FakerText("name") )
-               .withColumn("address", text=FakerText("address" ))
-               .withColumn("email", text=FakerText("ascii_company_email") )
-               .withColumn("ip_address", text=FakerText("ipv4_private" ))
-               .withColumn("faker_text", text=FakerText("sentence") )
+               .withColumn("italian_name", percentNulls=0.1, text=FakerTextIT("name") )
+               .withColumn("name", percentNulls=0.1, text=fakerText("name") )  # uses default 
+               .withColumn("address", text=FakerTextIT("address" ))
+               .withColumn("email", text=FakerTextIT("ascii_company_email") )
+               .withColumn("ip_address", text=FakerTextIT("ipv4_private" ))
+               .withColumn("faker_text", text=FakerTextIT("sentence") )
                )
    dfFakerOnly = fakerDataspec.build()
 
