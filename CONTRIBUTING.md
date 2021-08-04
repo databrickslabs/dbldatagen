@@ -1,5 +1,5 @@
 # Contributing to the Databricks Labs Data Generator
-We happily welcome contributions to *data-generator*. 
+We happily welcome contributions to *dbldatagen*. 
 
 We use GitHub Issues to track community reported issues and GitHub Pull Requests for accepting changes.
 
