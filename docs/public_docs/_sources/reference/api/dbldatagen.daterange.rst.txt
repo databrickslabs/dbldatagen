@@ -1,0 +1,7 @@
+dbldatagen.daterange module
+===========================
+
+.. automodule:: dbldatagen.daterange
+   :members:
+   :undoc-members:
+   :show-inheritance:
