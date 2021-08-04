@@ -282,12 +282,6 @@ class FakerTextFactory(PyfuncTextFactory):
 
     _defaultFakerTextFactory = None
 
-    # set up logging
-
-    # restrict spurious messages from java gateway
-    logging.getLogger("py4j").setLevel(logging.WARNING)
-    logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.NOTSET)
-
     def __init__(self, locale=None, providers=None, name="FakerText", lib=None,
                  rootClass=None):
 
@@ -370,11 +364,12 @@ class FakerTextFactory(PyfuncTextFactory):
             raise DataGenError("Could not load or initialize Faker library", err)
 
 
-_defaultFakerTextFactory = None
+
 
 
 def fakerText(mname, *args, _lib=None, _rootClass=None, **kwargs):
-    """Generate faker text generator object using
+    """Generate faker text generator object using default FakerTextFactory
+       instance
 
        :returns : instance of PyfuncText for use with Faker
 

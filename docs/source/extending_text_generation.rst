@@ -16,8 +16,7 @@ extended syntax.
 
 .. code-block:: python
 
-   import dbldatagen as dg
-   from dbldatagen import fakerText
+   from dbldatagen import DataGenerator, fakerText
    from faker.providers import internet
 
    shuffle_partitions_requested = 8
@@ -33,7 +32,7 @@ extended syntax.
    'sesame','Jelly','beans',
    'pie','bar','Ice','oat' ]
 
-   fakerDataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
+   fakerDataspec = (DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
                .withColumn("name", percentNulls=0.1, text=fakerText("name") )
                .withColumn("address", text=fakerText("address" ))
                .withColumn("email", text=fakerText("ascii_company_email") )
@@ -78,8 +77,7 @@ The following code shows use of a custom Python function to generate text:
 
 .. code-block:: python
 
-   import dbldatagen as dg
-   from dbldatagen import PyfuncText, TextGenerator
+   from dbldatagen import DataGenerator, PyfuncText
    partitions_requested = 4
    data_rows = 100 * 1000
 
@@ -90,7 +88,7 @@ The following code shows use of a custom Python function to generate text:
    # the data generation function
    text_generator = (lambda context, value: context.prefix + str(value))
 
-   pluginDataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested,
+   pluginDataspec = (DataGenerator(spark, rows=data_rows, partitions=partitions_requested,
                      randomSeedMethod="hash_fieldname")
                      .withColumn("text", text=PyfuncText(text_generator, initFn=initPluginContext))
                     )
@@ -138,8 +136,7 @@ IP addresses and credit card numbers.
 
 .. code-block:: python
 
-   import dbldatagen as dg
-   from dbldatagen import PyfuncText, TextGenerator
+   from dbldatagen import DataGenerator, PyfuncText
    from faker import Faker
    from faker.providers import internet
 
@@ -158,7 +155,7 @@ IP addresses and credit card numbers.
    address_generator = (lambda context, v : context.faker.address())
    email_generator = (lambda context, v : context.faker.ascii_company_email())
 
-   fakerDataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
+   fakerDataspec = (DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
                .withColumn("name",
                            percentNulls=0.1,
                            text=PyfuncText(name_generator , initFn=initFaker))
@@ -246,8 +243,7 @@ interspersed with use of the default faker text factory.
 
 .. code-block:: python
 
-   import dbldatagen as dg
-   from dbldatagen import FakerTextFactory
+   from dbldatagen import FakerTextFactory, DataGenerator
    from faker.providers import internet
 
    shuffle_partitions_requested = 8
@@ -266,9 +262,9 @@ interspersed with use of the default faker text factory.
    'sesame','Jelly','beans',
    'pie','bar','Ice','oat' ]
 
-   fakerDataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
+   fakerDataspec = (DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
                .withColumn("italian_name", percentNulls=0.1, text=FakerTextIT("name") )
-               .withColumn("name", percentNulls=0.1, text=fakerText("name") )  # uses default 
+               .withColumn("name", percentNulls=0.1, text=fakerText("name") )  # uses default
                .withColumn("address", text=FakerTextIT("address" ))
                .withColumn("email", text=FakerTextIT("ascii_company_email") )
                .withColumn("ip_address", text=FakerTextIT("ipv4_private" ))
