@@ -29,7 +29,7 @@ to Scala or R based Spark applications also.
    Generating repeatable data  <repeatable_data_generation>
    Using streaming data <using_streaming_data>
    Generating Change Data Capture (CDC) data<generating_cdc_data>
-   Multi table data <multi_table_data>
+   Using multiple tables <multi_table_data>
    Extending text generation  <extending_text_generation>
    Troubleshooting data generation <troubleshooting>
 
