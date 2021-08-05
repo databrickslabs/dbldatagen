@@ -404,7 +404,7 @@ interspersed with use of the default faker text factory.</p>
 <span class="n">data_rows</span> <span class="o">=</span> <span class="mi">100000</span>
 
 <span class="c1"># setup use of Faker</span>
-<span class="n">FakerText</span> <span class="o">=</span> <span class="n">FakerTextFactoryIT</span><span class="p">(</span><span class="n">locale</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;it_IT&#39;</span><span class="p">],</span> <span class="n">providers</span><span class="o">=</span><span class="p">[</span><span class="n">internet</span><span class="p">])</span>
+<span class="n">FakerTextIT</span> <span class="o">=</span> <span class="n">FakerTextFactoryIT</span><span class="p">(</span><span class="n">locale</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;it_IT&#39;</span><span class="p">],</span> <span class="n">providers</span><span class="o">=</span><span class="p">[</span><span class="n">internet</span><span class="p">])</span>
 
 <span class="c1"># partition parameters etc.</span>
 <span class="n">spark</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;spark.sql.shuffle.partitions&quot;</span><span class="p">,</span> <span class="n">shuffle_partitions_requested</span><span class="p">)</span>
