@@ -251,7 +251,7 @@ interspersed with use of the default faker text factory.
    data_rows = 100000
 
    # setup use of Faker
-   FakerText = FakerTextFactoryIT(locale=['it_IT'], providers=[internet])
+   FakerTextIT = FakerTextFactory(locale=['it_IT'], providers=[internet])
 
    # partition parameters etc.
    spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
