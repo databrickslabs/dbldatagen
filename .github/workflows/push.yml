@@ -8,7 +8,6 @@ on:
 
 jobs:
   tests:
-    # Ubuntu 20.04 has Python 3.8
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
