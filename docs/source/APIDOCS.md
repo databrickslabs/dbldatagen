@@ -125,12 +125,12 @@ import dbldatagen as dg
 from pyspark.sql.types import FloatType, IntegerType, StringType
 
 row_count=1000 * 100
+column_count = 10
 testDataSpec = (dg.DataGenerator(spark, name="test_data_set1", rows=row_count,
-                                  partitions=4, randomSeedMethod='hash_fieldname', 
-                                  verbose=True)
+                                  partitions=4, randomSeedMethod='hash_fieldname')
                    .withIdOutput()
                    .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
-                                    numColumns=cls.column_count)
+                                    numColumns=column_count)
                    .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
                    .withColumn("code2", IntegerType(), minValue=0, maxValue=10, random=True)
                    .withColumn("code3", StringType(), values=['online', 'offline', 'unknown'])
