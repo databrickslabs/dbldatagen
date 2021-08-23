@@ -34,5 +34,5 @@ jobs:
       - name: Run tests
         run: make test
 
-      - name: Publish test coverage
+      - name: Publish test coverage to coverage site 
         uses: codecov/codecov-action@v1
