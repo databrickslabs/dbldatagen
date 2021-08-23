@@ -1,10 +1,8 @@
 from datetime import timedelta, datetime
-import math
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
-from dbldatagen import DateRange
-import dbldatagen as dg
-from pyspark.conf import SparkConf
+
 from pyspark.sql import SparkSession
+
+import dbldatagen as dg
 
 interval = timedelta(days=1, hours=1)
 start = datetime(2017, 10, 1, 0, 0, 0)
@@ -37,7 +35,7 @@ x3 = (dg.DataGenerator(sparkSession=spark, name="association_oss_cell_info", row
       .withColumn("sector_status_desc", "string", dataRange=range(1, 5), prefix='status', random=True)
       # withColumn adds specification for new column
       .withColumn("rand", "float", expr="floor(rand() * 350) * (86400 + 3600)")
-      .withColumn("last_sync_dt", "timestamp", dataRange=DateRange(start, end, timedelta(days=1, hours=1)),
+      .withColumn("last_sync_dt", "timestamp", dataRange=dg.DateRange(start, end, timedelta(days=1, hours=1)),
                   random=True)
       .withColumnSpec("sector_technology_desc", values=["GSM", "UMTS", "LTE", "UNKNOWN"], random=True)
       .withColumn("test_cell_flg", "int", values=[0, 1], random=True)
