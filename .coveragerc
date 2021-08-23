@@ -1,6 +1,6 @@
 [run]
 branch = True
-source = databrickslabs_testdatagenerator
+source = dbldatagen
 
 [report]
 exclude_lines =
