@@ -1,9 +1,10 @@
 from datetime import timedelta, datetime
-import math
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
-import dbldatagen as dg
+
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import count, when, isnan, isnull, col, lit, countDistinct
+from pyspark.sql.functions import count, when, isnan, col, lit, countDistinct
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType
+
+import dbldatagen as dg
 
 interval = timedelta(days=1, hours=1)
 start = datetime(2017, 10, 1, 0, 0, 0)
@@ -53,7 +54,6 @@ x3_output.printSchema()
 analyzer = dg.DataAnalyzer(x3_output)
 
 print("Summary;", analyzer.summarize())
-
 
 
 def extended_summary(df):

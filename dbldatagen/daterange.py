@@ -1,11 +1,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from datetime import date, datetime, timedelta, timezone
 import math
-
-from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
-    StructType, StructField, TimestampType, DataType, DateType, ByteType
+from datetime import datetime, timedelta
 
 from .datarange import DataRange
 from .utils import parse_time_interval
@@ -104,7 +101,7 @@ class DateRange(DataRange):
             assert type(unique_values) is int, "unique_values must be integer"
             assert unique_values >= 1, "unique_values must be positive integer"
 
-            effective_begin = effective_end - effective_interval * (unique_values - 1 )
+            effective_begin = effective_end - effective_interval * (unique_values - 1)
 
         result = DateRange(effective_begin, effective_end, effective_interval)
         return result

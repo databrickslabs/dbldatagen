@@ -12,7 +12,7 @@ import re
 from pyspark.sql.types import LongType, IntegerType, StringType, StructType, StructField
 
 from .column_generation_spec import ColumnGenerationSpec
-from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_RANDOM, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME
+from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME
 from .spark_singleton import SparkSingleton
 from .utils import ensure, topologicalSort, DataGenError, deprecated
 
