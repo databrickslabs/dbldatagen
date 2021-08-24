@@ -58,7 +58,7 @@ class TestPandasIntegration(unittest.TestCase):
         print("numpy version ", np.version)
 
         # Enable Arrow-based columnar data transfers
-        spark.conf.set("spark.sql.execution.arrow.enabled", "true")
+        spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
 
         # Generate a Pandas DataFrame
         pdf = pd.DataFrame(np.random.rand(100, 3))

@@ -24,7 +24,7 @@ def deprecated(message=""):
     def deprecated_decorator(func):
         @functools.wraps(func)
         def deprecated_func(*args, **kwargs):
-            warnings.warn("`{}` is a deprecated function or method. \n{}".format(func.__name__, message),
+            warnings.warn(f"`{func.__name__}` is a deprecated function or method. \n{message}",
                           category=DeprecationWarning, stacklevel=1)
             warnings.simplefilter('default', DeprecationWarning)
             return func(*args, **kwargs)

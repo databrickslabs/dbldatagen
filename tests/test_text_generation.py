@@ -33,7 +33,7 @@ schema = StructType([
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
 spark.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", "500")
-spark.conf.set("spark.sql.execution.arrow.enabled", "true")
+spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
 
 
 # Test manipulation and generation of test data for a large schema

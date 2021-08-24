@@ -32,8 +32,7 @@ class Exponential(DataDistribution):
 
     def __str__(self):
         """ Return string representation"""
-        return ("{}(rate={}, randomSeed={})"
-                .format("ExponentialDistribution", self.rate, self.randomSeed))
+        return (f"ExponentialDistribution(rate={self.rate}, randomSeed={self.randomSeed})")
 
     @staticmethod
     def exponential_func(scale_series: pd.Series, random_seed: pd.Series) -> pd.Series:

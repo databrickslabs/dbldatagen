@@ -105,12 +105,12 @@ class SchemaParser(object):
         else:
             raise ValueError("Table name could not be found")
 
-        sparkSession.sql("create temporary table {}{}using csv".format(table_name, table_body))
+        sparkSession.sql(f"create temporary table {table_name}{table_body}using csv")
 
-        result = sparkSession.sql("select * from {}".format(table_name))
+        result = sparkSession.sql(f"select * from {table_name}")
         result.printSchema()
         result_schema = result.schema
 
-        sparkSession.sql("drop table {}".format(table_name))
+        sparkSession.sql(f"drop table {table_name}")
 
         return result_schema
