@@ -12,7 +12,7 @@ import re
 from pyspark.sql.types import LongType, IntegerType, StringType, StructType, StructField
 
 from .column_generation_spec import ColumnGenerationSpec
-from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_RANDOM, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME
+from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME
 from .spark_singleton import SparkSingleton
 from .utils import ensure, topologicalSort, DataGenError, deprecated
 
@@ -107,7 +107,7 @@ class DataGenerator:
                 self._seedMethod = "fixed"
 
         if self._seedMethod not in [None, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME]:
-            msg = f"""seedMethod should be None, '{RANDOM_SEED_FIXED}' or '{RANDOM_SEED_HASH_FIELD_NAME}' """
+            msg = f"seedMethod should be None, '{RANDOM_SEED_FIXED}' or '{RANDOM_SEED_HASH_FIELD_NAME}' "
             raise DataGenError(msg)
 
         self._columnSpecsByName = {}
@@ -256,9 +256,8 @@ class DataGenerator:
             self.computeBuildPlan()
 
         output = ["", "Data generation plan", "====================",
-                  """spec=DateGenerator(name={}, rows={}, startingId={}, partitions={})"""
-                      .format(self.name, self._rowCount, self.starting_id, self.partitions), ")", "",
-                  "column build order: {}".format(self._buildOrder), "", "build plan:"]
+                  f"spec=DateGenerator(name={self.name}, rows={self._rowCount}, startingId={self.starting_id}, partitions={self.partitions})"
+                  , ")", "", f"column build order: {self._buildOrder}", "", "build plan:"]
 
         for plan_action in self._buildPlan:
             output.append(" ==> " + plan_action)
@@ -576,10 +575,10 @@ class DataGenerator:
         if type(columns) is list:
             for column in columns:
                 ensure(column in inferred_columns,
-                       " column `{0}` must refer to defined column".format(column))
+                       f" column `{column}` must refer to defined column")
         else:
             ensure(columns in inferred_columns,
-                   " column `{0}` must refer to defined column".format(columns))
+                   f" column `{columns}` must refer to defined column")
         return True
 
     def withColumnSpec(self, colName, minValue=None, maxValue=None, step=1, prefix=None,
@@ -595,19 +594,19 @@ class DataGenerator:
 
         """
         ensure(colName is not None, "Must specify column name for column")
-        ensure(colName in self.getInferredColumnNames(), " column `{0}` must refer to defined column".format(colName))
+        ensure(colName in self.getInferredColumnNames(), f" column `{colName}` must refer to defined column")
         if baseColumn is not None:
             self._checkColumnOrColumnList(baseColumn)
-        ensure(not self.isFieldExplicitlyDefined(colName), "duplicate column spec for column `{0}`".format(colName))
+        ensure(not self.isFieldExplicitlyDefined(colName), f"duplicate column spec for column `{colName}`")
 
         # handle migration of old `min` and `max` options
-        if _OLD_MIN_OPTION in kwargs.keys():
+        if _OLD_MIN_OPTION in kwargs:
             assert minValue is None, \
                 "Only one of `minValue` and `minValue` can be specified. Use of `minValue` is preferred"
             minValue = kwargs[_OLD_MIN_OPTION]
             kwargs.pop(_OLD_MIN_OPTION, None)
 
-        if _OLD_MAX_OPTION in kwargs.keys():
+        if _OLD_MAX_OPTION in kwargs:
             assert maxValue is None, \
                 "Only one of `maxValue` and `maxValue` can be specified. Use of `maxValue` is preferred"
             maxValue = kwargs[_OLD_MAX_OPTION]
@@ -632,7 +631,7 @@ class DataGenerator:
         :param colName: name of column to check for
         :returns: True if column has spec, False otherwise
         """
-        return colName in self._columnSpecsByName.keys()
+        return colName in self._columnSpecsByName
 
     def withColumn(self, colName, colType=StringType(), minValue=None, maxValue=None, step=1,
                    dataRange=None, prefix=None, random=False, distribution=None,
@@ -649,18 +648,18 @@ class DataGenerator:
 
         """
         ensure(colName is not None, "Must specify column name for column")
-        ensure(colType is not None, "Must specify column type for column `{0}`".format(colName))
+        ensure(colType is not None, f"Must specify column type for column `{colName}`")
         if baseColumn is not None:
             self._checkColumnOrColumnList(baseColumn, allowId=True)
 
         # handle migration of old `min` and `max` options
-        if _OLD_MIN_OPTION in kwargs.keys():
+        if _OLD_MIN_OPTION in kwargs:
             assert minValue is None, \
                 "Only one of `minValue` and `minValue` can be specified. Use of `minValue` is preferred"
             minValue = kwargs[_OLD_MIN_OPTION]
             kwargs.pop(_OLD_MIN_OPTION, None)
 
-        if _OLD_MAX_OPTION in kwargs.keys():
+        if _OLD_MAX_OPTION in kwargs:
             assert maxValue is None, \
                 "Only one of `maxValue` and `maxValue` can be specified. Use of `maxValue` is preferred"
             maxValue = kwargs[_OLD_MAX_OPTION]
@@ -765,8 +764,7 @@ class DataGenerator:
         id_partitions = self.partitions if self.partitions is not None else 4
 
         if not streaming:
-            status = ("Generating data frame with ids from {} to {} with {} partitions"
-                      .format(startId, end_id, id_partitions))
+            status = (f"Generating data frame with ids from {startId} to {end_id} with {id_partitions} partitions")
             self.logger.info(status)
             self.executionHistory.append(status)
             df1 = self.sparkSession.range(start=startId,
@@ -777,8 +775,7 @@ class DataGenerator:
                 df1 = df1.withColumnRenamed("id", ColumnGenerationSpec.SEED_COLUMN)
 
         else:
-            status = ("Generating streaming data frame with ids from {} to {} with {} partitions"
-                      .format(startId, end_id, id_partitions))
+            status = (f"Generating streaming data frame with ids from {startId} to {end_id} with {id_partitions} partitions")
             self.logger.info(status)
             self.executionHistory.append(status)
 
@@ -858,7 +855,7 @@ class DataGenerator:
         self._buildPlan = []
         self.executionHistory = []
         self._processOptions()
-        self._buildPlan.append("Build Spark data frame with seed column: {}".format(ColumnGenerationSpec.SEED_COLUMN))
+        self._buildPlan.append(f"Build Spark data frame with seed column: {ColumnGenerationSpec.SEED_COLUMN}")
 
         # add temporary columns
         for cs in self._allColumnSpecs:
@@ -869,7 +866,7 @@ class DataGenerator:
             for tmp_col in cs.temporaryColumns:
                 # create column spec for temporary column if its not already present
                 if not self.hasColumnSpec(tmp_col[0]):
-                    self._buildPlan.append("materializing temporary column {}".format(tmp_col[0]))
+                    self._buildPlan.append(f"materializing temporary column {tmp_col[0]}")
                     self.withColumn(tmp_col[0], tmp_col[1], **tmp_col[2])
 
         # TODO: set up the base column data type information
@@ -923,7 +920,7 @@ class DataGenerator:
         df1 = self._buildColumnExpressionsWithSelects(df1)
 
         df1 = df1.select(*self.getOutputColumnNames())
-        self.executionHistory.append("selecting columns: {}".format(self.getOutputColumnNames()))
+        self.executionHistory.append(f"selecting columns: {self.getOutputColumnNames()}")
 
         # register temporary or global views if necessary
         if withView:
@@ -951,7 +948,7 @@ class DataGenerator:
         for colNames in self.build_order:
             build_round = ["*"]
             inx_col = 0
-            self.executionHistory.append("building stage for columns: {}".format(colNames))
+            self.executionHistory.append(f"building stage for columns: {colNames}")
             for colName in colNames:
                 col1 = self._columnSpecsByName[colName]
                 column_generators = col1.makeGenerationExpressions()
@@ -961,7 +958,7 @@ class DataGenerator:
                 elif type(column_generators) is list and len(column_generators) > 1:
                     i = 0
                     for cg in column_generators:
-                        build_round.append(cg.alias('{0}_{1}'.format(colName, i)))
+                        build_round.append(cg.alias(f'{colName}_{i}'))
                         i += 1
                 else:
                     build_round.append(column_generators.alias(colName))
@@ -982,16 +979,16 @@ class DataGenerator:
         results = []
         subs = {}
         for x in columns:
-            subs[x] = "{}.{}".format(srcAlias, x)
+            subs[x] = f"{srcAlias}.{x}"
         for x in substitutions:
             subs[x[0]] = x[1]
 
         for substitution_col in columns:
             new_val = subs[substitution_col]
             if isUpdate:
-                results.append("{}={}".format(substitution_col, new_val))
+                results.append(f"{substitution_col}={new_val}")
             else:
-                results.append("{}".format(new_val))
+                results.append(f"{new_val}")
 
         return ", ".join(results)
 
@@ -1010,7 +1007,7 @@ class DataGenerator:
 
         output_columns = self.getOutputColumnNamesAndTypes()
 
-        results = ["CREATE TABLE IF NOT EXISTS {} (".format(name)]
+        results = [f"CREATE TABLE IF NOT EXISTS {name} ("]
         ensure(output_columns is not None and len(output_columns) > 0,
                """
                 | You must specify at least one column for output
@@ -1019,13 +1016,13 @@ class DataGenerator:
 
         col_expressions = []
         for col_to_output in output_columns:
-            col_expressions.append("    {} {}".format(col_to_output[0], self._sqlTypeFromSparkType(col_to_output[1])))
+            col_expressions.append(f"    {col_to_output[0]} {self._sqlTypeFromSparkType(col_to_output[1])}")
         results.append(",\n".join(col_expressions))
         results.append(")")
-        results.append("using {}".format(tableFormat))
+        results.append(f"using {tableFormat}")
 
         if location is not None:
-            results.append("location '{}'".format(location))
+            results.append(f"location '{location}'")
 
         return "\n".join(results)
 
@@ -1086,23 +1083,23 @@ class DataGenerator:
             updateColumns = output_columns
 
         # build merge statement
-        results = ["MERGE INTO `{}` as {}".format(tgtName, tgtAlias)]
+        results = [f"MERGE INTO `{tgtName}` as {tgtAlias}"]
 
         # use time expression if supplied
         if timeExpr is None:
-            results.append("USING `{}` as {}".format(srcName, srcAlias))
+            results.append(f"USING `{srcName}` as {srcAlias}")
         else:
-            results.append("USING `{}` {} as {}".format(srcName, timeExpr, srcAlias))
+            results.append(f"USING `{srcName}` {timeExpr} as {srcAlias}")
 
         # add join condition
-        results.append("ON {}".format(joinExpr))
+        results.append(f"ON {joinExpr}")
 
         # generate update clause
         update_clause = None
         if updateExpr is not None:
-            update_clause = """WHEN MATCHED and {} THEN UPDATE """.format(updateExpr)
+            update_clause = f"WHEN MATCHED and {updateExpr} THEN UPDATE "
         else:
-            update_clause = """WHEN MATCHED THEN UPDATE """
+            update_clause = "WHEN MATCHED THEN UPDATE "
 
         if not useExplicitNames:
             update_clause = update_clause + " SET *"
@@ -1116,22 +1113,21 @@ class DataGenerator:
 
         # generate delete clause
         if delExpr is not None:
-            results.append("WHEN MATCHED and {} THEN DELETE".format(delExpr))
+            results.append(f"WHEN MATCHED and {delExpr} THEN DELETE")
 
         if insertExpr is not None:
-            ins_clause = "WHEN NOT MATCHED and {} THEN INSERT ".format(insertExpr)
+            ins_clause = f"WHEN NOT MATCHED and {insertExpr} THEN INSERT "
         else:
             ins_clause = "WHEN NOT MATCHED THEN INSERT "
 
         if not useExplicitNames:
             ins_clause = ins_clause + " *"
         else:
-            ins_clause = (ins_clause
-                          + "({})".format(",".join(insertColumns))
-                          + " VALUES ({})".format(self._mkInsertOrUpdateStatement(columns=insertColumns,
-                                                                                  srcAlias=srcAlias,
-                                                                                  substitutions=insertColumnExprs,
-                                                                                  isUpdate=False))
+            ins_clause = (ins_clause + "(" + ",".join(insertColumns)
+                          + ") VALUES (" +
+                          self._mkInsertOrUpdateStatement(columns=insertColumns, srcAlias=srcAlias,
+                                                          substitutions=insertColumnExprs, isUpdate=False)
+                          + ")"
                           )
 
         results.append(ins_clause)

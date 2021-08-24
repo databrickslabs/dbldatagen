@@ -36,8 +36,7 @@ class Gamma(DataDistribution):
 
     def __str__(self):
         """ Return string representation of object """
-        return ("GammaDistribution(shape(`k`)={}, scale(`theta`)={}, randomSeed={})"
-                .format(self._shape, self._scale, self.randomSeed))
+        return (f"GammaDistribution(shape(`k`)={self._shape}, scale(`theta`)={self._scale}, randomSeed={self.randomSeed})")
 
     @staticmethod
     def gamma_func(shape_series: pd.Series, scale_series: pd.Series, random_seed: pd.Series) -> pd.Series:

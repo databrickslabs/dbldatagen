@@ -104,9 +104,7 @@ display(df3)
 # COMMAND ----------
 
 from datetime import timedelta, datetime
-import math
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
-# from dbldatagen.data_generator import DataGenerator,ensure
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType
 import dbldatagen as dg
 
 interval = timedelta(days=1, hours=1)

@@ -1,10 +1,8 @@
 from datetime import timedelta, datetime
-import math
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
+
+from pyspark.sql import SparkSession
 
 import dbldatagen as dg
-from pyspark.conf import SparkConf
-from pyspark.sql import SparkSession
 
 interval = timedelta(days=1, hours=1)
 start = datetime(2017, 10, 1, 0, 0, 0)

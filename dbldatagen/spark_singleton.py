@@ -38,7 +38,7 @@ class SparkSingleton:
         logging.info("cpu count: %d", cpu_count)
 
         return SparkSession.builder \
-            .master("local[{}]".format(cpu_count)) \
+            .master(f"local[{cpu_count}]") \
             .appName(appName) \
             .config("spark.sql.warehouse.dir", "/tmp/spark-warehouse") \
             .getOrCreate()
