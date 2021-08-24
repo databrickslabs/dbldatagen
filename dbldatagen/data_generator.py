@@ -93,7 +93,7 @@ class DataGenerator:
         self._seedMethod = randomSeedMethod
 
         if randomSeed is None:
-            self._instanceRandomSeed =  self._randomSeed
+            self._instanceRandomSeed = self._randomSeed
 
             if randomSeedMethod is None:
                 self._seedMethod = RANDOM_SEED_HASH_FIELD_NAME
@@ -359,7 +359,7 @@ class DataGenerator:
         for key, value in self._options.items():
             if key == "startingId":
                 self.starting_id = value
-            elif key == "rowCount" or key == "row_count":
+            elif key in ["rowCount", "row_count"]:
                 self._rowCount = value
         return self
 

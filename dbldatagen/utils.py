@@ -44,6 +44,7 @@ class DataGenError(Exception):
     def __init__(self, msg, baseException=None):
         """ constructor
         """
+        super().__init__(msg)
         self._underlyingException = baseException
         self._msg = msg
 
