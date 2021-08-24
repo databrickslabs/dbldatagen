@@ -122,8 +122,7 @@ class DateRange(DataRange):
 
     def __str__(self):
         """ create string representation of date range"""
-        return "DateRange({},{},{} == {}, {}, {})".format(self.begin, self.end, self.interval,
-                                                          self.minValue, self.maxValue, self.step)
+        return f"DateRange({self.begin},{self.end},{self.interval} == {self.minValue}, {self.maxValue}, {self.step})"
 
     def computeTimestampIntervals(self, start, end, interval):
         """ Compute number of intervals between start and end date """

@@ -57,7 +57,7 @@ class DataAnalyzer:
     def _summarizeField(self, field):
         """Generate summary for individual field"""
         if isinstance(field, StructField):
-            return "{} {}".format(field.name, self._lookupFieldType(str(field.dataType)))
+            return f"{field.name} {self._lookupFieldType(str(field.dataType))}"
         else:
             return str(field)
 
@@ -86,7 +86,7 @@ class DataAnalyzer:
         results = []
         row_key_pairs = row.asDict()
         for x in row_key_pairs:
-            results.append("{}: {}".format(str(x), str(row[x])))
+            results.append(f"{x}: {row[x]}")
 
         return ", ".join(results)
 

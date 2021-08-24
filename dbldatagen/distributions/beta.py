@@ -37,8 +37,7 @@ class Beta(DataDistribution):
 
     def __str__(self):
         """ Return string representation of object"""
-        return ("BetaDistribution(alpha={}, beta={}, randomSeed={})"
-                .format(self._alpha, self._beta, self.randomSeed))
+        return (f"BetaDistribution(alpha={self._alpha}, beta={self._beta}, randomSeed={self.randomSeed})")
 
     @staticmethod
     def beta_func(alpha_series: pd.Series, beta_series: pd.Series, random_seed: pd.Series) -> pd.Series:

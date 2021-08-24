@@ -95,12 +95,14 @@ class ColumnGeneratorBuilder:
         conditions = zip(values, cdf_probs)
 
         for v, cdf in conditions:
+            # TODO(alex): single quotes needs to be escaped
             if isinstance(datatype, (StringType, DateType, TimestampType)):
-                output.append(" when {} <= {} then '{}' ".format(seed_column, cdf, v))
+                output.append(f" when {seed_column} <= {cdf} then '{v}' ")
             else:
-                output.append(" when {} <= {} then {} ".format(seed_column, cdf, v))
+                output.append(f" when {seed_column} <= {cdf} then {v} ")
 
-        output.append("else '{}'".format(values[-1]))
+        # TODO(alex): single quotes needs to be escaped
+        output.append("else '{values[-1]}'")
         output.append("end")
 
         retval = "\n".join(output)
