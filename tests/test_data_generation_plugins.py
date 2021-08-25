@@ -13,7 +13,6 @@ class TestTextGenerationPlugins(unittest.TestCase):
     row_count = 15000
     column_count = 10
 
-
     def test_plugins(self):
         partitions_requested = 4
         data_rows = 100 * 1000
@@ -176,7 +175,7 @@ class TestTextGenerationPlugins(unittest.TestCase):
         output = list(textGen.pandasGenerateText(inputSeries))
 
         for x in output:
-            self.assertEquals(x, "testing1again")
+            self.assertEqual(x, "testing1again")
 
     def test_plugins_faker_integration(self):
         """ test faker integration with mock objects"""
@@ -233,13 +232,6 @@ class TestTextGenerationPlugins(unittest.TestCase):
         output = dfFaker2.select("name").collect()
         for x in output:
             self.assertTrue(x["name"].startswith("<MagicMock"))
-
-
-
-
-
-
-
 
 
 # run the tests

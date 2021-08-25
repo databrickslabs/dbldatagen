@@ -279,8 +279,8 @@ class TemplateGenerator(TextGenerator):
         use_value = False
         template_len = len(genTemplate)
 
-        # in the following code, the construct `(not escape) ^ self._escapeSpecialMeaning` means apply special meaning if
-        # either escape is not true or the option `self._escapeSpecialMeaning` is true.
+        # in the following code, the construct `(not escape) ^ self._escapeSpecialMeaning` means apply
+        # special meaning if either escape is not true or the option `self._escapeSpecialMeaning` is true.
         # This corresponds to the logical xor operation
         for i in range(0, template_len):
             char = genTemplate[i]
