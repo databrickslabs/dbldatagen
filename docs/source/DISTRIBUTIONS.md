@@ -38,11 +38,12 @@ make returns more frequent in the period immediately following the purchase.
 from pyspark.sql.types import IntegerType
 
 import dbldatagen as dg
+import dbldatagen.distributions as dist
+
 
 row_count = 1000 * 100
 testDataSpec = (dg.DataGenerator(spark, name="test_data_set1", rows=row_count,
-                                 partitions=4, randomSeedMethod='hash_fieldname',
-                                 verbose=True)
+                                 partitions=4, randomSeedMethod='hash_fieldname')
                 .withColumn("purchase_id", IntegerType(), minValue=1000000, maxValue=2000000)
                 .withColumn("product_code", IntegerType(), uniqueValues=10000, random=True)
                 .withColumn("purchase_date", "date",
@@ -50,8 +51,11 @@ testDataSpec = (dg.DataGenerator(spark, name="test_data_set1", rows=row_count,
                                                     "2018-10-06 11:55:00",
                                                     "days=3"),
                             random=True)
-                .withColumn("return_date", "date",
-                    expr="date_add('purchase_date', cast(floor(rand() * 100 + 1) as int))")
+                # create return delay , favoring short delay times
+                .withColumn("return_delay", "int", minValue=1, maxValue=100, random=True, 
+                            distribution=dist.Gamma(1.0,2.0), omit=True)
+                .withColumn("return_date", "date", expr="date_add(purchase_date, return_delay)", 
+                            baseColumn=["purchase_date", "return_delay"])
 
                 )
 
@@ -60,3 +64,18 @@ dfTestData = testDataSpec.build()
 
 Here we use a computed column, `return_delay`, for effect only. By specifying `omit=True`, 
 it is omitted from the final data set.
+
+You can view the distribution of the return delays using the following code sample in the Databricks 
+environment.
+
+```python 
+import pyspark.sql.functions as F
+dfDelays = dfTestData.withColumn("delay", F.expr("datediff(return_date, purchase_date)"))
+
+display(dfDelays)
+```
+
+Use the plot options to plot the delay as a bar chart.
+
+Specify the key as `delay`, the values as `delay` and the aggregation as `COUNT` to see the data 
+distribution.
