@@ -1,0 +1,1406 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>dbldatagen.column_generation_spec &mdash; Databricks Labs Data Generator 0.2.0-rc0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/tdg.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> Databricks Labs Data Generator
+          
+
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../repeatable_data_generation.html">Repeatable data generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference/api/modules.html">The dbldatagen package API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Databricks Labs Data Generator</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>dbldatagen.column_generation_spec</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for dbldatagen.column_generation_spec</h1><div class="highlight"><pre>
+<span></span><span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="c1">#</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This file defines the `ColumnGenerationSpec` class</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">from</span> <span class="nn">pyspark.sql.functions</span> <span class="kn">import</span> <span class="n">col</span><span class="p">,</span> <span class="n">pandas_udf</span>
+<span class="kn">from</span> <span class="nn">pyspark.sql.functions</span> <span class="kn">import</span> <span class="n">lit</span><span class="p">,</span> <span class="n">concat</span><span class="p">,</span> <span class="n">rand</span><span class="p">,</span> <span class="nb">round</span> <span class="k">as</span> <span class="n">sql_round</span><span class="p">,</span> <span class="n">array</span><span class="p">,</span> <span class="n">expr</span><span class="p">,</span> <span class="n">when</span><span class="p">,</span> <span class="n">udf</span><span class="p">,</span> \
+    <span class="n">format_string</span>
+<span class="kn">from</span> <span class="nn">pyspark.sql.types</span> <span class="kn">import</span> <span class="n">FloatType</span><span class="p">,</span> <span class="n">IntegerType</span><span class="p">,</span> <span class="n">StringType</span><span class="p">,</span> <span class="n">DoubleType</span><span class="p">,</span> <span class="n">BooleanType</span><span class="p">,</span> \
+    <span class="n">TimestampType</span><span class="p">,</span> <span class="n">DataType</span><span class="p">,</span> <span class="n">DateType</span>
+
+<span class="kn">from</span> <span class="nn">.column_spec_options</span> <span class="kn">import</span> <span class="n">ColumnSpecOptions</span>
+<span class="kn">from</span> <span class="nn">.datagen_constants</span> <span class="kn">import</span> <span class="n">RANDOM_SEED_FIXED</span><span class="p">,</span> <span class="n">RANDOM_SEED_HASH_FIELD_NAME</span><span class="p">,</span> <span class="n">RANDOM_SEED_RANDOM</span>
+<span class="kn">from</span> <span class="nn">.daterange</span> <span class="kn">import</span> <span class="n">DateRange</span>
+<span class="kn">from</span> <span class="nn">.distributions</span> <span class="kn">import</span> <span class="n">Normal</span><span class="p">,</span> <span class="n">DataDistribution</span>
+<span class="kn">from</span> <span class="nn">.nrange</span> <span class="kn">import</span> <span class="n">NRange</span>
+<span class="kn">from</span> <span class="nn">.text_generators</span> <span class="kn">import</span> <span class="n">TemplateGenerator</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">ensure</span><span class="p">,</span> <span class="n">coalesce_values</span>
+
+<span class="n">HASH_COMPUTE_METHOD</span> <span class="o">=</span> <span class="s2">&quot;hash&quot;</span>
+<span class="n">VALUES_COMPUTE_METHOD</span> <span class="o">=</span> <span class="s2">&quot;values&quot;</span>
+<span class="n">RAW_VALUES_COMPUTE_METHOD</span> <span class="o">=</span> <span class="s2">&quot;raw_values&quot;</span>
+<span class="n">AUTO_COMPUTE_METHOD</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span>
+<span class="n">COMPUTE_METHOD_VALID_VALUES</span> <span class="o">=</span> <span class="p">[</span><span class="n">HASH_COMPUTE_METHOD</span><span class="p">,</span>
+                               <span class="n">AUTO_COMPUTE_METHOD</span><span class="p">,</span>
+                               <span class="n">VALUES_COMPUTE_METHOD</span><span class="p">,</span>
+                               <span class="n">RAW_VALUES_COMPUTE_METHOD</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="ColumnGenerationSpec"><a class="viewcode-back" href="../../reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec">[docs]</a><span class="k">class</span> <span class="nc">ColumnGenerationSpec</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Column generation spec object - specifies how column is to be generated</span>
+
+<span class="sd">    Each column to be output will have a corresponding ColumnGenerationSpec object.</span>
+<span class="sd">    This is added explicitly using the DataGenerators `withColumnSpec` or `withColumn` methods</span>
+
+<span class="sd">    If none is explicitly added, a default one will be generated.</span>
+
+<span class="sd">    The full set of arguments to the class is more than the explicitly called out parameters as any</span>
+<span class="sd">    arguments that are not explicitly called out can still be passed due to the `**kwargs` expression.</span>
+
+<span class="sd">    This class is meant for internal use only.</span>
+
+<span class="sd">    :param name: Name of column (string).</span>
+<span class="sd">    :param colType: Spark SQL datatype instance, representing the type of the column.</span>
+<span class="sd">    :param min: minimum value of column</span>
+<span class="sd">    :param max: maximum value of the column</span>
+<span class="sd">    :param step: numeric step used in column data generation</span>
+<span class="sd">    :param prefix: string used as prefix to the column underlying value to produce a string value</span>
+<span class="sd">    :param random: Boolean, if True, will generate random values</span>
+<span class="sd">    :param distribution: Instance of distribution, that will control the distribution of the generated values</span>
+<span class="sd">    :param baseColumn: String or list of strings representing columns used as basis for generating the column data</span>
+<span class="sd">    :param randomSeed: random seed value used to generate the random value, if column data is random</span>
+<span class="sd">    :param randomSeedMethod: method for computing random values from the random seed</span>
+
+<span class="sd">    :param implicit: If True, the specification for the column can be replaced by a later definition.</span>
+<span class="sd">           If not, a later attempt to replace the definition will flag an error.</span>
+<span class="sd">           Typically used when generating definitions automatically from a schema, or when using wildcards</span>
+<span class="sd">           in the specification</span>
+
+<span class="sd">    :param omit: if True, omit from the final output.</span>
+<span class="sd">    :param nullable: If True, column may be null - defaults to True.</span>
+<span class="sd">    :param debug: If True, output debugging log statements. Defaults to False.</span>
+<span class="sd">    :param verbose: If True, output logging statements at the info level. If False (the default),</span>
+<span class="sd">                    only output warning and error logging statements.</span>
+
+<span class="sd">    For full list of options, see :doc:`/reference/api/dbldatagen.column_spec_options`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1">#: row seed field for data set</span>
+    <span class="n">SEED_COLUMN</span> <span class="o">=</span> <span class="s2">&quot;id&quot;</span>
+
+    <span class="c1">#: maxValue values for each column type, only if where value is intentionally restricted</span>
+    <span class="n">_max_type_range</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;byte&#39;</span><span class="p">:</span> <span class="mi">256</span><span class="p">,</span>
+        <span class="s1">&#39;short&#39;</span><span class="p">:</span> <span class="mi">65536</span>
+    <span class="p">}</span>
+
+    <span class="c1"># set up logging</span>
+
+    <span class="c1"># restrict spurious messages from java gateway</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;py4j&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(levelname)s</span><span class="s1">: </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">NOTSET</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">colType</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">distribution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">baseColumn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">randomSeed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">randomSeedMethod</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">implicit</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">omit</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="c1"># set up logging</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">debug</span> <span class="o">=</span> <span class="n">debug</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_setup_logger</span><span class="p">()</span>
+
+        <span class="c1"># set up default range and type for column</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dataRange</span> <span class="o">=</span> <span class="n">NRange</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>  <span class="c1"># by default range of values for  column is unconstrained</span>
+
+        <span class="k">if</span> <span class="n">colType</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># default to integer field if none specified</span>
+            <span class="n">colType</span> <span class="o">=</span> <span class="n">IntegerType</span><span class="p">()</span>
+
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">colType</span><span class="p">,</span> <span class="n">DataType</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;colType `</span><span class="si">{</span><span class="n">colType</span><span class="si">}</span><span class="s2">` is not instance of DataType&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialBuildPlan</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># the build plan for the column - descriptive only</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">executionHistory</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># the execution history for the column</span>
+
+        <span class="c1"># If no base column is specified, assume its dependent on the seed column</span>
+        <span class="k">if</span> <span class="n">baseColumn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">baseColumn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">SEED_COLUMN</span>
+
+        <span class="c1"># to allow for open ended extension of many column attributes, we use a few specific</span>
+        <span class="c1"># parameters and pass the rest as keyword arguments</span>
+        <span class="n">supplied_options</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s1">&#39;minValue&#39;</span><span class="p">:</span> <span class="n">minValue</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="n">colType</span><span class="p">,</span>
+                            <span class="s1">&#39;maxValue&#39;</span><span class="p">:</span> <span class="n">maxValue</span><span class="p">,</span> <span class="s1">&#39;step&#39;</span><span class="p">:</span> <span class="n">step</span><span class="p">,</span>
+                            <span class="s1">&#39;prefix&#39;</span><span class="p">:</span> <span class="n">prefix</span><span class="p">,</span> <span class="s1">&#39;baseColumn&#39;</span><span class="p">:</span> <span class="n">baseColumn</span><span class="p">,</span>
+                            <span class="s1">&#39;random&#39;</span><span class="p">:</span> <span class="n">random</span><span class="p">,</span> <span class="s1">&#39;distribution&#39;</span><span class="p">:</span> <span class="n">distribution</span><span class="p">,</span>
+                            <span class="s1">&#39;randomSeedMethod&#39;</span><span class="p">:</span> <span class="n">randomSeedMethod</span><span class="p">,</span> <span class="s1">&#39;randomSeed&#39;</span><span class="p">:</span> <span class="n">randomSeed</span><span class="p">,</span>
+                            <span class="s1">&#39;omit&#39;</span><span class="p">:</span> <span class="n">omit</span><span class="p">,</span> <span class="s1">&#39;nullable&#39;</span><span class="p">:</span> <span class="n">nullable</span><span class="p">,</span> <span class="s1">&#39;implicit&#39;</span><span class="p">:</span> <span class="n">implicit</span>
+                            <span class="p">}</span>
+
+        <span class="n">supplied_options</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_csOptions</span> <span class="o">=</span> <span class="n">ColumnSpecOptions</span><span class="p">(</span><span class="n">supplied_options</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_csOptions</span><span class="o">.</span><span class="n">checkValidColumnProperties</span><span class="p">(</span><span class="n">supplied_options</span><span class="p">)</span>
+
+        <span class="c1"># only allow `template` or `text`</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_csOptions</span><span class="o">.</span><span class="n">checkExclusiveOptions</span><span class="p">([</span><span class="s2">&quot;template&quot;</span><span class="p">,</span> <span class="s2">&quot;text&quot;</span><span class="p">])</span>
+
+        <span class="c1"># only allow `weights` or `distribution`</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_csOptions</span><span class="o">.</span><span class="n">checkExclusiveOptions</span><span class="p">([</span><span class="s2">&quot;distribution&quot;</span><span class="p">,</span> <span class="s2">&quot;weights&quot;</span><span class="p">])</span>
+
+        <span class="c1"># check for alternative forms of specifying range</span>
+        <span class="c1"># column_spec_options._checkExclusiveOptions([&quot;minValue&quot;, &quot;minValue&quot;, &quot;begin&quot;, &quot;dataRange&quot;])</span>
+        <span class="c1"># column_spec_options._checkExclusiveOptions([&quot;maxValue&quot;, &quot;maxValue&quot;, &quot;end&quot;, &quot;dataRange&quot;])</span>
+        <span class="c1"># column_spec_options._checkExclusiveOptions([&quot;step&quot;, &quot;interval&quot;, &quot;dataRange&quot;])</span>
+
+        <span class="c1"># we want to assign each of the properties to the appropriate instance variables</span>
+        <span class="c1"># but compute sensible defaults in the process as needed</span>
+        <span class="c1"># in particular, we want to ensure that things like values and weights match</span>
+        <span class="c1"># and that minValue and maxValue are not inconsistent with distributions, ranges etc</span>
+
+        <span class="c1"># if a column spec is implicit, it can be overwritten</span>
+        <span class="c1"># by default column specs added by wild cards or inferred from schemas are implicit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_csOptions</span><span class="o">.</span><span class="n">checkBoolOption</span><span class="p">(</span><span class="n">implicit</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;implicit&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">implicit</span> <span class="o">=</span> <span class="n">implicit</span>
+
+        <span class="c1"># if true, omit the column from the final output</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_csOptions</span><span class="o">.</span><span class="n">checkBoolOption</span><span class="p">(</span><span class="n">omit</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;omit&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">omit</span> <span class="o">=</span> <span class="n">omit</span>
+
+        <span class="c1"># the column name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+
+        <span class="c1"># the base column data types</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_baseColumnDatatypes</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># not used for much other than to validate against option to generate nulls</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_csOptions</span><span class="o">.</span><span class="n">checkBoolOption</span><span class="p">(</span><span class="n">nullable</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;nullable&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nullable</span> <span class="o">=</span> <span class="n">nullable</span>
+
+        <span class="c1"># should be either a literal or None</span>
+        <span class="c1"># use of a random seed method will ensure that we have repeatability of data generation</span>
+        <span class="k">assert</span> <span class="n">randomSeed</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">randomSeed</span><span class="p">)</span> <span class="ow">in</span> <span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="s2">&quot;seed should be None or numeric&quot;</span>
+
+        <span class="k">assert</span> <span class="n">randomSeedMethod</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">randomSeedMethod</span> <span class="ow">in</span> <span class="p">[</span><span class="n">RANDOM_SEED_FIXED</span><span class="p">,</span> <span class="n">RANDOM_SEED_HASH_FIELD_NAME</span><span class="p">],</span> \
+            <span class="sa">f</span><span class="s2">&quot;`randomSeedMethod` should be none or `</span><span class="si">{</span><span class="n">RANDOM_SEED_FIXED</span><span class="si">}</span><span class="s2">` or `</span><span class="si">{</span><span class="n">RANDOM_SEED_HASH_FIELD_NAME</span><span class="si">}</span><span class="s2">`&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_randomSeedMethod</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;randomSeedMethod&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">random</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;random&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_randomSeedMethod</span> <span class="o">==</span> <span class="n">RANDOM_SEED_HASH_FIELD_NAME</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;field name cannot be None&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_randomSeed</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_randomSeed</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;randomSeed&quot;</span><span class="p">]</span>
+
+        <span class="c1"># random seed method should be &quot;fixed&quot; or &quot;hash_fieldname&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_randomSeed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_randomSeedMethod</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_randomSeedMethod</span> <span class="o">=</span> <span class="n">RANDOM_SEED_FIXED</span>
+
+        <span class="c1"># compute dependencies</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dependencies</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_computeBasicDependencies</span><span class="p">()</span>
+
+        <span class="c1"># value of `base_column_type` must be `None`,&quot;values&quot;, &quot;raw_values&quot;, &quot;auto&quot;,  or &quot;hash&quot;</span>
+        <span class="c1"># this is the method of computing current column value from base column, not the data type of the base column</span>
+        <span class="n">allowed_compute_methods</span> <span class="o">=</span> <span class="p">[</span><span class="n">AUTO_COMPUTE_METHOD</span><span class="p">,</span> <span class="n">VALUES_COMPUTE_METHOD</span><span class="p">,</span> <span class="n">HASH_COMPUTE_METHOD</span><span class="p">,</span>
+                                   <span class="n">RAW_VALUES_COMPUTE_METHOD</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_csOptions</span><span class="o">.</span><span class="n">checkOptionValues</span><span class="p">(</span><span class="s2">&quot;baseColumnType&quot;</span><span class="p">,</span> <span class="n">allowed_compute_methods</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_baseColumnComputeMethod</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;baseColumnType&#39;</span><span class="p">]</span>
+
+        <span class="c1"># handle text generation templates</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;template&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;template&#39;</span><span class="p">],</span> <span class="nb">str</span><span class="p">),</span> <span class="s2">&quot;template must be a string &quot;</span>
+            <span class="n">escapeSpecialChars</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;escapeSpecialChars&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;escapeSpecialChars&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_textGenerator</span> <span class="o">=</span> <span class="n">TemplateGenerator</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;template&#39;</span><span class="p">],</span> <span class="n">escapeSpecialChars</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;text&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_textGenerator</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;text&#39;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_textGenerator</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># specify random seed for text generator if one is in effect</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_textGenerator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_randomSeed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_textGenerator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_textGenerator</span><span class="o">.</span><span class="n">withRandomSeed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_randomSeed</span><span class="p">)</span>
+
+        <span class="c1"># compute required temporary values</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">temporaryColumns</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">data_range</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;dataRange&quot;</span><span class="p">]</span>
+
+        <span class="n">unique_values</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;uniqueValues&quot;</span><span class="p">]</span>
+
+        <span class="n">c_min</span><span class="p">,</span> <span class="n">c_max</span><span class="p">,</span> <span class="n">c_step</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s2">&quot;minValue&quot;</span><span class="p">],</span> <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;maxValue&quot;</span><span class="p">],</span> <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;step&quot;</span><span class="p">])</span>
+        <span class="n">c_begin</span><span class="p">,</span> <span class="n">c_end</span><span class="p">,</span> <span class="n">c_interval</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;begin&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;end&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;interval&#39;</span><span class="p">]</span>
+
+        <span class="c1"># handle weights / values and distributions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s2">&quot;weights&quot;</span><span class="p">],</span> <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;values&quot;</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;distribution&quot;</span><span class="p">]</span>
+
+        <span class="c1"># if distribution is just specified as `normal` use standard normal distribution</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span> <span class="o">==</span> <span class="s2">&quot;normal&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span> <span class="o">=</span> <span class="n">Normal</span><span class="o">.</span><span class="n">standardNormal</span><span class="p">()</span>
+
+        <span class="c1"># specify random seed for distribution if one is in effect</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_randomSeed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="o">.</span><span class="n">withRandomSeed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_randomSeed</span><span class="p">)</span>
+
+        <span class="c1"># force weights and values to list</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># coerce to list - this will allow for pandas series, numpy arrays and tuples to be used</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># coerce to list - this will allow for pandas series, numpy arrays and tuples to be used</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+
+        <span class="c1"># handle default method of computing the base column value</span>
+        <span class="c1"># if we have text manipulation, use &#39;values&#39; as default for format but &#39;hash&#39; as default if</span>
+        <span class="c1"># its a column with multiple values</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_baseColumnComputeMethod</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">AUTO_COMPUTE_METHOD</span><span class="p">]</span> \
+                <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">textGenerator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;format&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                     <span class="ow">or</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;prefix&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;suffix&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;Column [</span><span class="si">%s</span><span class="s2">] has no `base_column_type` attribute and uses discrete values</span>
+<span class="s2">                                       =&gt; Assuming `hash` for attribute `base_column_type`. </span>
+<span class="s2">                                       =&gt; Use explicit value for `base_column_type` if alternate interpretation needed</span>
+
+<span class="s2">                                    &quot;&quot;&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_baseColumnComputeMethod</span> <span class="o">=</span> <span class="n">HASH_COMPUTE_METHOD</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;Column [</span><span class="si">%s</span><span class="s2">] has no `base_column_type` attribute specified for formatted text</span>
+<span class="s2">                                       =&gt; Assuming `values` for attribute `base_column_type`. </span>
+<span class="s2">                                       =&gt; Use explicit value for `base_column_type` if alternate interpretation  needed</span>
+
+<span class="s2">                                    &quot;&quot;&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_baseColumnComputeMethod</span> <span class="o">=</span> <span class="n">VALUES_COMPUTE_METHOD</span>
+
+        <span class="c1"># adjust the range by merging type and range information</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dataRange</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_computeAdjustedRangeForColumn</span><span class="p">(</span><span class="n">colType</span><span class="o">=</span><span class="n">colType</span><span class="p">,</span>
+                                                              <span class="n">c_min</span><span class="o">=</span><span class="n">c_min</span><span class="p">,</span> <span class="n">c_max</span><span class="o">=</span><span class="n">c_max</span><span class="p">,</span> <span class="n">c_step</span><span class="o">=</span><span class="n">c_step</span><span class="p">,</span>
+                                                              <span class="n">c_begin</span><span class="o">=</span><span class="n">c_begin</span><span class="p">,</span> <span class="n">c_end</span><span class="o">=</span><span class="n">c_end</span><span class="p">,</span>
+                                                              <span class="n">c_interval</span><span class="o">=</span><span class="n">c_interval</span><span class="p">,</span>
+                                                              <span class="n">c_unique</span><span class="o">=</span><span class="n">unique_values</span><span class="p">,</span> <span class="n">c_range</span><span class="o">=</span><span class="n">data_range</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ensure</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">_dataRange</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dataRange</span><span class="o">.</span><span class="n">isFullyPopulated</span><span class="p">())</span>
+                   <span class="ow">or</span>
+                   <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span>
+                   <span class="sd">&quot;&quot;&quot;When using an explicit distribution, provide a fully populated range or a set of values&quot;&quot;&quot;</span><span class="p">)</span>
+
+        <span class="c1"># set up the temporary columns needed for data generation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_setupTemporaryColumns</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">specOptions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; get column spec options for spec</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            This is intended for testing use only.</span>
+<span class="sd">            Option values set directly through the options dict are not supported.</span>
+
+<span class="sd">        :return: underlying options object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_csOptions</span><span class="o">.</span><span class="n">options</span>
+
+    <span class="k">def</span> <span class="nf">__deepcopy__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memo</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Custom deep copy method that resets the logger to avoid trying to copy the logger</span>
+
+<span class="sd">        :see https://docs.python.org/3/library/copy.html</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># pylint: disable=attribute-defined-outside-init</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">cls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+            <span class="n">memo</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">)]</span> <span class="o">=</span> <span class="n">result</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">memo</span><span class="p">))</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_setup_logger</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">_setup_logger</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">randomSeed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; get random seed for column spec&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_randomSeed</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">isRandom</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; returns True if column will be randomly generated&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;random&quot;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">textGenerator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get the text generator for the column spec&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_textGenerator</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">baseColumns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return base columns as list of strings&quot;&quot;&quot;</span>
+
+        <span class="c1"># if base column  is string and contains multiple columns, split them</span>
+        <span class="c1"># other build list of columns if needed</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">baseColumn</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span> <span class="ow">and</span> <span class="s2">&quot;,&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">baseColumn</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">baseColumn</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)]</span>
+        <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">baseColumn</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">baseColumn</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">baseColumn</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_computeBasicDependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; get set of basic column dependencies.</span>
+
+<span class="sd">        These are used to compute the order of field evaluation</span>
+
+<span class="sd">        :return: base columns as list with dependency on seed column added</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">baseColumn</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">SEED_COLUMN</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">baseColumns</span> <span class="o">+</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">SEED_COLUMN</span><span class="p">]))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">SEED_COLUMN</span><span class="p">]</span>
+
+<div class="viewcode-block" id="ColumnGenerationSpec.setBaseColumnDatatypes"><a class="viewcode-back" href="../../reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.setBaseColumnDatatypes">[docs]</a>    <span class="k">def</span> <span class="nf">setBaseColumnDatatypes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">columnDatatypes</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Set the data types for the base columns</span>
+
+<span class="sd">        :param column_datatypes: = list of data types for the base columns</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">columnDatatypes</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">,</span> <span class="s2">&quot; `column_datatypes` parameter must be list&quot;</span>
+        <span class="n">ensure</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">columnDatatypes</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">baseColumns</span><span class="p">),</span>
+               <span class="s2">&quot;number of base column datatypes must match number of  base columns&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_baseColumnDatatypes</span> <span class="o">=</span> <span class="p">[]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">columnDatatypes</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_setupTemporaryColumns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Set up any temporary columns needed for test data generation.</span>
+
+<span class="sd">        For some types of test data, intermediate columns are used in the data generation process</span>
+<span class="sd">        but dropped from the final output</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">isWeightedValuesColumn</span><span class="p">:</span>
+            <span class="c1"># if its a weighted values column, then create temporary for it</span>
+            <span class="c1"># not supported for feature / array columns for now</span>
+            <span class="n">ensure</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;numFeatures&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;numFeatures&#39;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span>
+                   <span class="s2">&quot;weighted columns not supported for multi-column or multi-feature values&quot;</span><span class="p">)</span>
+            <span class="n">ensure</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;numColumns&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;numColumns&#39;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span>
+                   <span class="s2">&quot;weighted columns not supported for multi-column or multi-feature values&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">random</span><span class="p">:</span>
+                <span class="n">temp_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;_rnd_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dependencies</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">temp_name</span><span class="p">)</span>
+                <span class="n">desc</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;adding temporary column </span><span class="si">{</span><span class="n">temp_name</span><span class="si">}</span><span class="s2"> required by </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_initialBuildPlan</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">desc</span><span class="p">)</span>
+                <span class="n">sql_random_generator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getUniformRandomSQLExpression</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">temporaryColumns</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">temp_name</span><span class="p">,</span> <span class="n">DoubleType</span><span class="p">(),</span> <span class="p">{</span><span class="s1">&#39;expr&#39;</span><span class="p">:</span> <span class="n">sql_random_generator</span><span class="p">,</span> <span class="s1">&#39;omit&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                                                                        <span class="s1">&#39;description&#39;</span><span class="p">:</span> <span class="n">desc</span><span class="p">}))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_weightedBaseColumn</span> <span class="o">=</span> <span class="n">temp_name</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># create temporary expression mapping values to range of weights</span>
+                <span class="n">temp_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;_scaled_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dependencies</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">temp_name</span><span class="p">)</span>
+                <span class="n">desc</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;adding temporary column </span><span class="si">{</span><span class="n">temp_name</span><span class="si">}</span><span class="s2"> required by </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_initialBuildPlan</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">desc</span><span class="p">)</span>
+
+                <span class="c1"># use a base expression based on mapping base column to size of data</span>
+                <span class="n">sql_scaled_generator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getScaledIntSQLExpression</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                                                                       <span class="n">scale</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">),</span>
+                                                                       <span class="n">base_columns</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">baseColumns</span><span class="p">,</span>
+                                                                       <span class="n">base_datatypes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_baseColumnDatatypes</span><span class="p">,</span>
+                                                                       <span class="n">compute_method</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_baseColumnComputeMethod</span><span class="p">,</span>
+                                                                       <span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;building scaled sql expression : &#39;</span><span class="si">%s</span><span class="s2">&#39; </span>
+<span class="s2">                                      with base column: </span><span class="si">%s</span><span class="s2">, dependencies: </span><span class="si">%s</span><span class="s2">&quot;&quot;&quot;</span><span class="p">,</span>
+                                  <span class="n">sql_scaled_generator</span><span class="p">,</span>
+                                  <span class="bp">self</span><span class="o">.</span><span class="n">baseColumn</span><span class="p">,</span>
+                                  <span class="bp">self</span><span class="o">.</span><span class="n">dependencies</span><span class="p">)</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">temporaryColumns</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">temp_name</span><span class="p">,</span> <span class="n">DoubleType</span><span class="p">(),</span> <span class="p">{</span><span class="s1">&#39;expr&#39;</span><span class="p">:</span> <span class="n">sql_scaled_generator</span><span class="p">,</span> <span class="s1">&#39;omit&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                                                                        <span class="s1">&#39;baseColumn&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">baseColumn</span><span class="p">,</span>
+                                                                        <span class="s1">&#39;description&#39;</span><span class="p">:</span> <span class="n">desc</span><span class="p">}))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_weightedBaseColumn</span> <span class="o">=</span> <span class="n">temp_name</span>
+
+    <span class="k">def</span> <span class="nf">_setup_logger</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set up logging</span>
+
+<span class="sd">        This will set the logger at warning, info or debug levels depending on the instance construction parameters</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;DataGenerator&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_computeAdjustedRangeForColumn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">colType</span><span class="p">,</span> <span class="n">c_min</span><span class="p">,</span> <span class="n">c_max</span><span class="p">,</span> <span class="n">c_step</span><span class="p">,</span> <span class="n">c_begin</span><span class="p">,</span> <span class="n">c_end</span><span class="p">,</span> <span class="n">c_interval</span><span class="p">,</span> <span class="n">c_range</span><span class="p">,</span>
+                                       <span class="n">c_unique</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Determine adjusted range for data column</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">colType</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;`colType` must be non-None instance&quot;</span>
+
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">colType</span><span class="p">)</span> <span class="ow">is</span> <span class="n">DateType</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">colType</span><span class="p">)</span> <span class="ow">is</span> <span class="n">TimestampType</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_computeAdjustedDateTimeRangeForColumn</span><span class="p">(</span><span class="n">colType</span><span class="p">,</span> <span class="n">c_begin</span><span class="p">,</span> <span class="n">c_end</span><span class="p">,</span> <span class="n">c_interval</span><span class="p">,</span> <span class="n">c_range</span><span class="p">,</span> <span class="n">c_unique</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_computeAdjustedNumericRangeForColumn</span><span class="p">(</span><span class="n">colType</span><span class="p">,</span> <span class="n">c_min</span><span class="p">,</span> <span class="n">c_max</span><span class="p">,</span> <span class="n">c_step</span><span class="p">,</span> <span class="n">c_range</span><span class="p">,</span> <span class="n">c_unique</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_computeAdjustedNumericRangeForColumn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">colType</span><span class="p">,</span> <span class="n">c_min</span><span class="p">,</span> <span class="n">c_max</span><span class="p">,</span> <span class="n">c_step</span><span class="p">,</span> <span class="n">c_range</span><span class="p">,</span> <span class="n">c_unique</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Determine adjusted range for data column</span>
+
+<span class="sd">        Rules:</span>
+<span class="sd">        - if a datarange is specified , use that range</span>
+<span class="sd">        - if begin and end are specified or minValue and maxValue are specified, use that</span>
+<span class="sd">        - if unique values is specified, compute minValue and maxValue depending on type</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">c_unique</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">c_unique</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span><span class="p">,</span> <span class="s2">&quot;unique_values must be integer&quot;</span>
+            <span class="k">assert</span> <span class="n">c_unique</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;if supplied, unique values must be &gt; 0&quot;</span>
+            <span class="c1"># TODO: set maxValue to unique_values + minValue &amp; add unit test</span>
+            <span class="n">effective_min</span><span class="p">,</span> <span class="n">effective_max</span><span class="p">,</span> <span class="n">effective_step</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">c_range</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">c_range</span><span class="p">)</span> <span class="ow">is</span> <span class="n">NRange</span><span class="p">:</span>
+                <span class="n">effective_min</span> <span class="o">=</span> <span class="n">c_range</span><span class="o">.</span><span class="n">minValue</span>
+                <span class="n">effective_step</span> <span class="o">=</span> <span class="n">c_range</span><span class="o">.</span><span class="n">step</span>
+                <span class="n">effective_max</span> <span class="o">=</span> <span class="n">c_range</span><span class="o">.</span><span class="n">maxValue</span>
+            <span class="n">effective_min</span> <span class="o">=</span> <span class="n">coalesce_values</span><span class="p">(</span><span class="n">effective_min</span><span class="p">,</span> <span class="n">c_min</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">effective_step</span> <span class="o">=</span> <span class="n">coalesce_values</span><span class="p">(</span><span class="n">effective_step</span><span class="p">,</span> <span class="n">c_step</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">effective_max</span> <span class="o">=</span> <span class="n">coalesce_values</span><span class="p">(</span><span class="n">effective_max</span><span class="p">,</span> <span class="n">c_max</span><span class="p">)</span>
+
+            <span class="c1"># due to floating point errors in some Python floating point calculations, we need to apply rounding</span>
+            <span class="c1"># if any of the components are float</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">effective_min</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">float</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">effective_step</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">float</span><span class="p">:</span>
+                <span class="n">unique_max</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">c_unique</span> <span class="o">*</span> <span class="n">effective_step</span> <span class="o">+</span> <span class="n">effective_min</span> <span class="o">-</span> <span class="n">effective_step</span><span class="p">,</span> <span class="mi">9</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">unique_max</span> <span class="o">=</span> <span class="n">c_unique</span> <span class="o">*</span> <span class="n">effective_step</span> <span class="o">+</span> <span class="n">effective_min</span> <span class="o">-</span> <span class="n">effective_step</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">NRange</span><span class="p">(</span><span class="n">effective_min</span><span class="p">,</span> <span class="n">unique_max</span><span class="p">,</span> <span class="n">effective_step</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">maxValue</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">effective_max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">result</span><span class="o">.</span><span class="n">maxValue</span> <span class="o">&gt;</span> <span class="n">effective_max</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Computed maxValue for column [</span><span class="si">%s</span><span class="s2">] of </span><span class="si">%s</span><span class="s2"> is greater than specified maxValue </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                                    <span class="n">result</span><span class="o">.</span><span class="n">maxValue</span><span class="p">,</span>
+                                    <span class="n">effective_max</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">c_range</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">c_range</span>
+        <span class="k">elif</span> <span class="n">c_range</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">effective_min</span><span class="p">,</span> <span class="n">effective_max</span><span class="p">,</span> <span class="n">effective_step</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+            <span class="n">effective_min</span> <span class="o">=</span> <span class="n">coalesce_values</span><span class="p">(</span><span class="n">c_min</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">effective_step</span> <span class="o">=</span> <span class="n">coalesce_values</span><span class="p">(</span><span class="n">c_step</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">NRange</span><span class="p">(</span><span class="n">effective_min</span><span class="p">,</span> <span class="n">c_max</span><span class="p">,</span> <span class="n">effective_step</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">NRange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="c1"># assume numeric range of 0 to x, if no range specified</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Computing adjusted range for column: </span><span class="si">%s</span><span class="s2"> - </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span> <span class="nf">_computeAdjustedDateTimeRangeForColumn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">colType</span><span class="p">,</span> <span class="n">c_begin</span><span class="p">,</span> <span class="n">c_end</span><span class="p">,</span> <span class="n">c_interval</span><span class="p">,</span> <span class="n">c_range</span><span class="p">,</span> <span class="n">c_unique</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Determine adjusted range for Date or Timestamp data column</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">effective_begin</span><span class="p">,</span> <span class="n">effective_end</span><span class="p">,</span> <span class="n">effective_interval</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">c_range</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">c_range</span><span class="p">)</span> <span class="ow">is</span> <span class="n">DateRange</span><span class="p">:</span>
+            <span class="n">effective_begin</span> <span class="o">=</span> <span class="n">c_range</span><span class="o">.</span><span class="n">begin</span>
+            <span class="n">effective_end</span> <span class="o">=</span> <span class="n">c_range</span><span class="o">.</span><span class="n">end</span>
+            <span class="n">effective_interval</span> <span class="o">=</span> <span class="n">c_range</span><span class="o">.</span><span class="n">interval</span>
+        <span class="n">effective_interval</span> <span class="o">=</span> <span class="n">coalesce_values</span><span class="p">(</span><span class="n">effective_interval</span><span class="p">,</span> <span class="n">c_interval</span><span class="p">)</span>
+        <span class="n">effective_end</span> <span class="o">=</span> <span class="n">coalesce_values</span><span class="p">(</span><span class="n">effective_end</span><span class="p">,</span> <span class="n">c_end</span><span class="p">)</span>
+        <span class="n">effective_begin</span> <span class="o">=</span> <span class="n">coalesce_values</span><span class="p">(</span><span class="n">effective_begin</span><span class="p">,</span> <span class="n">c_begin</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">colType</span><span class="p">)</span> <span class="ow">is</span> <span class="n">DateType</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">DateRange</span><span class="o">.</span><span class="n">computeDateRange</span><span class="p">(</span><span class="n">effective_begin</span><span class="p">,</span> <span class="n">effective_end</span><span class="p">,</span> <span class="n">effective_interval</span><span class="p">,</span> <span class="n">c_unique</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">DateRange</span><span class="o">.</span><span class="n">computeTimestampRange</span><span class="p">(</span><span class="n">effective_begin</span><span class="p">,</span> <span class="n">effective_end</span><span class="p">,</span> <span class="n">effective_interval</span><span class="p">,</span> <span class="n">c_unique</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Computing adjusted range for column: </span><span class="si">%s</span><span class="s2"> - </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span> <span class="nf">_getUniformRandomExpression</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">col_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get random expression accounting for seed method</span>
+
+<span class="sd">        :returns: expression of ColDef form - i.e `lit`, `expr` etc</span>
+
+<span class="sd">        The value returned will be a number between 0 and 1 inclusive</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">col_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;`col_name` must not be None&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_randomSeedMethod</span> <span class="o">==</span> <span class="n">RANDOM_SEED_FIXED</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_randomSeed</span> <span class="o">!=</span> <span class="n">RANDOM_SEED_RANDOM</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">expr</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;rand(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_randomSeed</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_randomSeedMethod</span> <span class="o">==</span> <span class="n">RANDOM_SEED_HASH_FIELD_NAME</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot; `self.name` must not be none&quot;</span>
+            <span class="k">return</span> <span class="n">expr</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;rand(hash(&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;))&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">rand</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_getRandomExpressionForDistribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">col_name</span><span class="p">,</span> <span class="n">col_distribution</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get random expression accounting for seed method</span>
+
+<span class="sd">        :returns: expression of ColDef form - i.e `lit`, `expr` etc</span>
+
+<span class="sd">        The value returned will be a number between 0 and 1 inclusive</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">col_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">col_name</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;`col_name` must not be None and non empty&quot;</span>
+        <span class="k">assert</span> <span class="n">col_distribution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;`col_distribution` must not be None&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">col_distribution</span><span class="p">,</span> <span class="n">DataDistribution</span><span class="p">),</span> \
+            <span class="s2">&quot;`distribution` object must be an instance of data distribution&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">executionHistory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;.. random number generation via distribution `</span><span class="si">{</span><span class="n">col_distribution</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">col_distribution</span><span class="o">.</span><span class="n">generateNormalizedDistributionSample</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_getUniformRandomSQLExpression</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">col_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get random SQL expression accounting for seed method</span>
+
+<span class="sd">        :returns: expression as a SQL string</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">col_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot; `col_name` must not be None&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_randomSeedMethod</span> <span class="o">==</span> <span class="n">RANDOM_SEED_FIXED</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_randomSeed</span> <span class="o">!=</span> <span class="n">RANDOM_SEED_RANDOM</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_randomSeed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;`randomSeed` must not be None&quot;</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;rand(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_randomSeed</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_randomSeedMethod</span> <span class="o">==</span> <span class="n">RANDOM_SEED_HASH_FIELD_NAME</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;`self.name` must not be none&quot;</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;rand(hash(&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;))&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;rand()&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_getScaledIntSQLExpression</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">col_name</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">base_columns</span><span class="p">,</span> <span class="n">base_datatypes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">compute_method</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                                   <span class="n">normalize</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get scaled numeric expression</span>
+
+<span class="sd">        This will produce a scaled SQL expression from the base columns</span>
+
+
+
+<span class="sd">        :param col_name: = Column name used for error messages and debugging</span>
+<span class="sd">        :param normalize: = If True, will normalize to the range 0 .. 1 inclusive</span>
+<span class="sd">        :param scale: = Numeric value indicating scaling factor - will scale via modulo arithmetic</span>
+<span class="sd">        :param base_columns: = list of base_columns</span>
+<span class="sd">        :param base_datatypes: = list of Spark SQL datatypes for columns</span>
+<span class="sd">        :param compute_method: = indicates how the value is be derived from base columns - i.e &#39;hash&#39; or &#39;values&#39;</span>
+<span class="sd">                               - treated as hint only</span>
+<span class="sd">        :returns: scaled expression as a SQL string</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">col_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;`col_name` must not be None&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;`self.name` must not be None&quot;</span>
+        <span class="k">assert</span> <span class="n">scale</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;`scale` must not be None&quot;</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="n">compute_method</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span>
+                <span class="n">compute_method</span> <span class="ow">in</span> <span class="n">COMPUTE_METHOD_VALID_VALUES</span><span class="p">),</span> <span class="s2">&quot;`compute_method` must be valid value &quot;</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="n">base_columns</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span>
+                <span class="nb">type</span><span class="p">(</span><span class="n">base_columns</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span>
+                <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">base_columns</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">),</span> <span class="s2">&quot;Base columns must be a non-empty list&quot;</span>
+
+        <span class="n">effective_compute_method</span> <span class="o">=</span> <span class="n">compute_method</span>
+
+        <span class="c1"># if we have multiple columns, effective compute method is always the hash of the base values</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">base_columns</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">compute_method</span> <span class="o">==</span> <span class="n">VALUES_COMPUTE_METHOD</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;For column generation with values and multiple base columns,  data will  be computed with `hash`&quot;</span><span class="p">)</span>
+            <span class="n">effective_compute_method</span> <span class="o">=</span> <span class="n">HASH_COMPUTE_METHOD</span>
+
+        <span class="k">if</span> <span class="n">effective_compute_method</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">effective_compute_method</span> <span class="ow">is</span> <span class="n">AUTO_COMPUTE_METHOD</span><span class="p">:</span>
+            <span class="n">effective_compute_method</span> <span class="o">=</span> <span class="n">VALUES_COMPUTE_METHOD</span>
+
+        <span class="n">column_set</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base_columns</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">effective_compute_method</span> <span class="o">==</span> <span class="n">HASH_COMPUTE_METHOD</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;cast( floor((hash(</span><span class="si">{</span><span class="n">column_set</span><span class="si">}</span><span class="s2">) % </span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">) + </span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">) % </span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2"> as double)&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;cast( ( floor((</span><span class="si">{</span><span class="n">column_set</span><span class="si">}</span><span class="s2"> % </span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">) + </span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">) % </span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">) as double) &quot;</span>
+
+        <span class="k">if</span> <span class="n">normalize</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="p">(</span><span class="n">scale</span> <span class="o">*</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">-</span> <span class="mf">1.0</span><span class="si">}</span><span class="s2">)&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;computing scaled field [</span><span class="si">%s</span><span class="s2">] as expression [</span><span class="si">%s</span><span class="s2">]&quot;</span><span class="p">,</span> <span class="n">col_name</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">isWeightedValuesColumn</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; check if column is a weighed values column &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;weights&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="ColumnGenerationSpec.getNames"><a class="viewcode-back" href="../../reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.getNames">[docs]</a>    <span class="k">def</span> <span class="nf">getNames</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; get column names as list of strings&quot;&quot;&quot;</span>
+        <span class="n">num_columns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_csOptions</span><span class="o">.</span><span class="n">getOrElse</span><span class="p">(</span><span class="s1">&#39;numColumns&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">struct_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_csOptions</span><span class="o">.</span><span class="n">getOrElse</span><span class="p">(</span><span class="s1">&#39;structType&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">num_columns</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">struct_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_columns</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="ColumnGenerationSpec.getNamesAndTypes"><a class="viewcode-back" href="../../reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.getNamesAndTypes">[docs]</a>    <span class="k">def</span> <span class="nf">getNamesAndTypes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; get column names as list of tuples `(name, datatype)`&quot;&quot;&quot;</span>
+        <span class="n">num_columns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_csOptions</span><span class="o">.</span><span class="n">getOrElse</span><span class="p">(</span><span class="s1">&#39;numColumns&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">struct_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_csOptions</span><span class="o">.</span><span class="n">getOrElse</span><span class="p">(</span><span class="s1">&#39;structType&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">num_columns</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">struct_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">datatype</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_columns</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">datatype</span><span class="p">)]</span></div>
+
+<div class="viewcode-block" id="ColumnGenerationSpec.keys"><a class="viewcode-back" href="../../reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.keys">[docs]</a>    <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get the keys as list of strings &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_csOptions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;self._csOptions should be non-empty&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_csOptions</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; implement the built in dereference by key behavior &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;key should be non-empty&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_csOptions</span><span class="o">.</span><span class="n">getOrElse</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">isFieldOmitted</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; check if this field should be omitted from the output</span>
+
+<span class="sd">        If the field is omitted from the output, the field is available for use in expressions etc.</span>
+<span class="sd">        but dropped from the final set of fields</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">omit</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">baseColumn</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;get the base column used to generate values for this column&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;baseColumn&#39;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">datatype</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;get the Spark SQL data type used to generate values for this column&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">prefix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;get the string prefix used to generate values for this column</span>
+
+<span class="sd">        When a string field is generated from this spec, the prefix is prepended to the generated string</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;prefix&#39;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">suffix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;get the string suffix used to generate values for this column</span>
+
+<span class="sd">        When a string field is generated from this spec, the suffix is appended to the generated string</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;suffix&#39;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">min</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;get the column generation `minValue` value used to generate values for this column&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dataRange</span><span class="o">.</span><span class="n">minValue</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">max</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;get the column generation `maxValue` value used to generate values for this column&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;maxValue&#39;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;get the column generation `step` value used to generate values for this column&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;step&#39;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">exprs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;get the column generation `exprs` attribute used to generate values for this column.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;exprs&#39;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">expr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;get the `expr` attributed used to generate values for this column&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;expr&#39;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">text_separator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;get the `expr` attributed used to generate values for this column&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;text_separator&#39;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">begin</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;get the `begin` attribute used to generate values for this column</span>
+
+<span class="sd">        For numeric columns, the range (minValue, maxValue, step) is used to control data generation.</span>
+<span class="sd">        For date and time columns, the range (begin, end, interval) are used to control data generation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;begin&#39;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;get the `end` attribute used to generate values for this column</span>
+
+<span class="sd">        For numeric columns, the range (minValue, maxValue, step) is used to control data generation.</span>
+<span class="sd">        For date and time columns, the range (begin, end, interval) are used to control data generation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;end&#39;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">interval</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;get the `interval` attribute used to generate values for this column</span>
+
+<span class="sd">        For numeric columns, the range (minValue, maxValue, step) is used to control data generation.</span>
+<span class="sd">        For date and time columns, the range (begin, end, interval) are used to control data generation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;interval&#39;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">numColumns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;get the `numColumns` attribute used to generate values for this column</span>
+
+<span class="sd">        if a column is specified with the `numColumns` attribute, this is used to create multiple</span>
+<span class="sd">        copies of the column, named `colName1` .. `colNameN`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;numColumns&#39;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">numFeatures</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;get the `numFeatures` attribute used to generate values for this column</span>
+
+<span class="sd">        if a column is specified with the `numFeatures` attribute, this is used to create multiple</span>
+<span class="sd">        copies of the column, combined into an array or feature vector</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;numFeatures&#39;</span><span class="p">]</span>
+
+<div class="viewcode-block" id="ColumnGenerationSpec.structType"><a class="viewcode-back" href="../../reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.structType">[docs]</a>    <span class="k">def</span> <span class="nf">structType</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;get the `structType` attribute used to generate values for this column</span>
+
+<span class="sd">        When a column spec is specified to generate multiple copies of the column, this controls whether</span>
+<span class="sd">        these are combined into an array etc</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;structType&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="ColumnGenerationSpec.getOrElse"><a class="viewcode-back" href="../../reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.getOrElse">[docs]</a>    <span class="k">def</span> <span class="nf">getOrElse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get value for option key if it exists or else return default</span>
+
+<span class="sd">        :param key: key name for option</span>
+<span class="sd">        :param default: default value if option was not provided</span>
+<span class="sd">        :return: option value or default</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_csOptions</span><span class="o">.</span><span class="n">getOrElse</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_checkProps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column_props</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            check that column definition properties are recognized</span>
+<span class="sd">            and that the column definition has required properties</span>
+
+<span class="sd">        :raises: assertion or exception of checks fail</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">column_props</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Column definition properties should be non-empty&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">datatype</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Column datatype must be specified&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">datatype</span><span class="o">.</span><span class="n">typeName</span><span class="p">()</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_type_range</span><span class="p">:</span>
+            <span class="n">minValue</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;minValue&#39;</span><span class="p">]</span>
+            <span class="n">maxValue</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;maxValue&#39;</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">minValue</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">maxValue</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">effective_range</span> <span class="o">=</span> <span class="n">maxValue</span> <span class="o">-</span> <span class="n">minValue</span>
+                <span class="k">if</span> <span class="n">effective_range</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_type_range</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">datatype</span><span class="o">.</span><span class="n">typeName</span><span class="p">()]:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Effective range greater than range of type&quot;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">column_props</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">ensure</span><span class="p">(</span><span class="n">k</span> <span class="ow">in</span> <span class="n">ColumnSpecOptions</span><span class="o">.</span><span class="n">_ALLOWED_PROPERTIES</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;invalid column option </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">ColumnSpecOptions</span><span class="o">.</span><span class="n">_REQUIRED_PROPERTIES</span><span class="p">:</span>
+            <span class="n">ensure</span><span class="p">(</span><span class="n">column_props</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;missing column option </span><span class="si">{</span><span class="n">arg</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">ColumnSpecOptions</span><span class="o">.</span><span class="n">_FORBIDDEN_PROPERTIES</span><span class="p">:</span>
+            <span class="n">ensure</span><span class="p">(</span><span class="n">arg</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">column_props</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;forbidden column option </span><span class="si">{</span><span class="n">arg</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="c1"># check weights and values</span>
+        <span class="k">if</span> <span class="s1">&#39;weights&#39;</span> <span class="ow">in</span> <span class="n">column_props</span><span class="p">:</span>
+            <span class="n">ensure</span><span class="p">(</span><span class="s1">&#39;values&#39;</span> <span class="ow">in</span> <span class="n">column_props</span><span class="p">,</span>
+                   <span class="sa">f</span><span class="s2">&quot;weights are only allowed for columns with values - column &#39;</span><span class="si">{</span><span class="n">column_props</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39; &quot;</span><span class="p">)</span>
+            <span class="n">ensure</span><span class="p">(</span><span class="n">column_props</span><span class="p">[</span><span class="s1">&#39;values&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">column_props</span><span class="p">[</span><span class="s1">&#39;values&#39;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
+                   <span class="sa">f</span><span class="s2">&quot;weights must be associated with non-empty list of values - column &#39;</span><span class="si">{</span><span class="n">column_props</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39; &quot;</span><span class="p">)</span>
+            <span class="n">ensure</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">column_props</span><span class="p">[</span><span class="s1">&#39;values&#39;</span><span class="p">])</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">column_props</span><span class="p">[</span><span class="s1">&#39;weights&#39;</span><span class="p">]),</span>
+                   <span class="sa">f</span><span class="s2">&quot;length of list of weights must be  equal to length of list of values - column &#39;</span><span class="si">{</span><span class="n">column_props</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39; &quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ColumnGenerationSpec.getPlanEntry"><a class="viewcode-back" href="../../reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.getPlanEntry">[docs]</a>    <span class="k">def</span> <span class="nf">getPlanEntry</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get execution plan entry for object</span>
+
+<span class="sd">        :returns: String representation of plan entry</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">desc</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;description&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">desc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot; |-- &quot;</span> <span class="o">+</span> <span class="n">desc</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot; |-- building column generator for column </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+    <span class="k">def</span> <span class="nf">_makeWeightedColumnValuesExpression</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">seed_column_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;make SQL expression to compute the weighted values expression</span>
+
+<span class="sd">        :returns: Spark SQL expr</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">.function_builder</span> <span class="kn">import</span> <span class="n">ColumnGeneratorBuilder</span>
+        <span class="k">assert</span> <span class="n">values</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;`values` expression must be supplied as list of values&quot;</span>
+        <span class="k">assert</span> <span class="n">weights</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;`weights` expression must be list of weights&quot;</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">weights</span><span class="p">),</span> <span class="s2">&quot;`weights` and `values` lists must be of equal length&quot;</span>
+        <span class="k">assert</span> <span class="n">seed_column_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;`seed_column_name` must be explicit column name&quot;</span>
+        <span class="n">expr_str</span> <span class="o">=</span> <span class="n">ColumnGeneratorBuilder</span><span class="o">.</span><span class="n">mkExprChoicesFn</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">seed_column_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">datatype</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">expr</span><span class="p">(</span><span class="n">expr_str</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datatype</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_isRealValuedColumn</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; determine if column is real valued</span>
+
+<span class="sd">        :returns: Boolean - True if condition is true</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">col_type_name</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">typeName</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">col_type_name</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;double&#39;</span><span class="p">,</span> <span class="s1">&#39;float&#39;</span><span class="p">,</span> <span class="s1">&#39;decimal&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_isDecimalColumn</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; determine if column is decimal column</span>
+
+<span class="sd">        :returns: Boolean - True if condition is true</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">col_type_name</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">typeName</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">col_type_name</span> <span class="o">==</span> <span class="s1">&#39;decimal&#39;</span>
+
+    <span class="k">def</span> <span class="nf">_isContinuousValuedColumn</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; determine if column generates continuous values</span>
+
+<span class="sd">        :returns: Boolean - True if condition is true</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">is_continuous</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;continuous&#39;</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">is_continuous</span>
+
+    <span class="k">def</span> <span class="nf">_getSeedExpression</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_column</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get seed expression for column generation</span>
+
+<span class="sd">        This is used to generate the base value for every column</span>
+<span class="sd">        if using a single base column, then simply use that, otherwise use either</span>
+<span class="sd">        a SQL hash of multiple columns, or an array of the base column values converted to strings</span>
+
+<span class="sd">        :returns: Spark SQL `col` or `expr` object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">base_column</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">base_column</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;`baseColumn` must be list of column names&quot;</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">base_column</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_baseColumnComputeMethod</span> <span class="o">==</span> <span class="n">HASH_COMPUTE_METHOD</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">expr</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hash(</span><span class="si">{</span><span class="n">base_column</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">col</span><span class="p">(</span><span class="n">base_column</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_baseColumnComputeMethod</span> <span class="o">==</span> <span class="n">VALUES_COMPUTE_METHOD</span><span class="p">:</span>
+                <span class="n">base_values</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;string(ifnull(`</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">`, &#39;null&#39;))&quot;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">base_column</span><span class="p">]</span>
+                <span class="k">return</span> <span class="n">expr</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;array(</span><span class="si">{</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base_values</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">expr</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hash(</span><span class="si">{</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base_column</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_baseColumnComputeMethod</span> <span class="o">==</span> <span class="n">HASH_COMPUTE_METHOD</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">expr</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hash(</span><span class="si">{</span><span class="n">base_column</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">col</span><span class="p">(</span><span class="n">base_column</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_isStringField</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datatype</span><span class="p">)</span> <span class="ow">is</span> <span class="n">StringType</span>
+
+    <span class="k">def</span> <span class="nf">_computeRangedColumn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datarange</span><span class="p">,</span> <span class="n">base_column</span><span class="p">,</span> <span class="n">is_random</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; compute a ranged column</span>
+
+<span class="sd">        maxValue is maxValue actual value</span>
+
+<span class="sd">        :returns: spark sql `column` or expression that can be used to generate a column</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">base_column</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;`baseColumn` must be specified&quot;</span>
+        <span class="k">assert</span> <span class="n">datarange</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;`datarange` must be specified&quot;</span>
+        <span class="k">assert</span> <span class="n">datarange</span><span class="o">.</span><span class="n">isFullyPopulated</span><span class="p">(),</span> <span class="s2">&quot;`datarange` must be fully populated (minValue, maxValue, step)&quot;</span>
+
+        <span class="k">if</span> <span class="n">is_random</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">random_generator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getRandomExpressionForDistribution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">random_generator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getUniformRandomExpression</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">random_generator</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_isContinuousValuedColumn</span><span class="p">()</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_isRealValuedColumn</span><span class="p">()</span> <span class="ow">and</span> <span class="n">is_random</span><span class="p">:</span>
+            <span class="n">crange</span> <span class="o">=</span> <span class="n">datarange</span><span class="o">.</span><span class="n">getContinuousRange</span><span class="p">()</span>
+            <span class="n">baseval</span> <span class="o">=</span> <span class="n">random_generator</span> <span class="o">*</span> <span class="n">lit</span><span class="p">(</span><span class="n">crange</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">crange</span> <span class="o">=</span> <span class="n">datarange</span><span class="o">.</span><span class="n">getDiscreteRange</span><span class="p">()</span>
+            <span class="n">modulo_factor</span> <span class="o">=</span> <span class="n">lit</span><span class="p">(</span><span class="n">crange</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="c1"># following expression is needed as spark sql modulo of negative number is negative</span>
+            <span class="n">modulo_exp</span> <span class="o">=</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">_getSeedExpression</span><span class="p">(</span><span class="n">base_column</span><span class="p">)</span> <span class="o">%</span> <span class="n">modulo_factor</span><span class="p">)</span> <span class="o">+</span> <span class="n">modulo_factor</span><span class="p">)</span> <span class="o">%</span> <span class="n">modulo_factor</span>
+            <span class="n">baseval</span> <span class="o">=</span> <span class="p">(</span><span class="n">modulo_exp</span> <span class="o">*</span> <span class="n">lit</span><span class="p">(</span><span class="n">datarange</span><span class="o">.</span><span class="n">step</span><span class="p">))</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">is_random</span> <span class="k">else</span> <span class="p">(</span>
+                    <span class="n">sql_round</span><span class="p">(</span><span class="n">random_generator</span> <span class="o">*</span> <span class="n">lit</span><span class="p">(</span><span class="n">crange</span><span class="p">))</span> <span class="o">*</span> <span class="n">lit</span><span class="p">(</span><span class="n">datarange</span><span class="o">.</span><span class="n">step</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_baseColumnComputeMethod</span> <span class="o">==</span> <span class="n">VALUES_COMPUTE_METHOD</span><span class="p">:</span>
+            <span class="n">new_def</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_adjustForMinValue</span><span class="p">(</span><span class="n">baseval</span><span class="p">,</span> <span class="n">datarange</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_baseColumnComputeMethod</span> <span class="o">==</span> <span class="n">RAW_VALUES_COMPUTE_METHOD</span><span class="p">:</span>
+            <span class="n">new_def</span> <span class="o">=</span> <span class="n">baseval</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">new_def</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_adjustForMinValue</span><span class="p">(</span><span class="n">baseval</span><span class="p">,</span> <span class="n">datarange</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># for ranged values in strings, use type of minValue, maxValue and step as output type</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datatype</span><span class="p">)</span> <span class="ow">is</span> <span class="n">StringType</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">datarange</span><span class="o">.</span><span class="n">min</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">float</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">datarange</span><span class="o">.</span><span class="n">max</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">float</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">datarange</span><span class="o">.</span><span class="n">step</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">float</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">datarange</span><span class="o">.</span><span class="n">getScale</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">new_def</span> <span class="o">=</span> <span class="n">sql_round</span><span class="p">(</span><span class="n">new_def</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">FloatType</span><span class="p">()),</span> <span class="n">datarange</span><span class="o">.</span><span class="n">getScale</span><span class="p">())</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">new_def</span> <span class="o">=</span> <span class="n">new_def</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">DoubleType</span><span class="p">())</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_def</span> <span class="o">=</span> <span class="n">new_def</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">IntegerType</span><span class="p">())</span>
+
+        <span class="k">return</span> <span class="n">new_def</span>
+
+    <span class="k">def</span> <span class="nf">_adjustForMinValue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">baseval</span><span class="p">,</span> <span class="n">datarange</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Adjust for minimum value of data range</span>
+<span class="sd">        :param baseval: base expression</span>
+<span class="sd">        :param datarange: data range to conform to</span>
+<span class="sd">        :param force: always adjust (possibly for implicit cast reasons)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">force</span> <span class="ow">and</span> <span class="n">datarange</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">new_def</span> <span class="o">=</span> <span class="p">(</span><span class="n">baseval</span> <span class="o">+</span> <span class="n">lit</span><span class="p">(</span><span class="n">datarange</span><span class="o">.</span><span class="n">minValue</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">datarange</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">datarange</span><span class="o">.</span><span class="n">minValue</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">datarange</span><span class="o">.</span><span class="n">minValue</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">):</span>
+            <span class="n">new_def</span> <span class="o">=</span> <span class="p">(</span><span class="n">baseval</span> <span class="o">+</span> <span class="n">lit</span><span class="p">(</span><span class="n">datarange</span><span class="o">.</span><span class="n">minValue</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">new_def</span> <span class="o">=</span> <span class="n">baseval</span>
+        <span class="k">return</span> <span class="n">new_def</span>
+
+    <span class="k">def</span> <span class="nf">_makeSingleGenerationExpression</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_pandas_optimizations</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; generate column data for a single column value via Spark SQL expression</span>
+
+<span class="sd">            :returns: spark sql `column` or expression that can be used to generate a column</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;building column : </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="c1"># get key column specification properties</span>
+        <span class="n">col_is_rand</span><span class="p">,</span> <span class="n">cdistribution</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;random&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;distribution&#39;</span><span class="p">]</span>
+        <span class="n">base_col</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">baseColumn</span>
+        <span class="n">c_begin</span><span class="p">,</span> <span class="n">c_end</span><span class="p">,</span> <span class="n">c_interval</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;begin&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;end&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;interval&#39;</span><span class="p">]</span>
+        <span class="n">percent_nulls</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;percentNulls&#39;</span><span class="p">]</span>
+        <span class="n">sformat</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;format&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dataRange</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dataRange</span><span class="o">.</span><span class="n">adjustForColumnDatatype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datatype</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">executionHistory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;.. using effective range: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_dataRange</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">new_def</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># generate expression</span>
+
+        <span class="c1"># handle weighted values for weighted value columns</span>
+        <span class="c1"># a weighted values column will use a base value denoted by `self._weightedBaseColumn`</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">isWeightedValuesColumn</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">executionHistory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;.. building weighted volumn values expression&quot;</span><span class="p">)</span>
+            <span class="n">new_def</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_makeWeightedColumnValuesExpression</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_weightedBaseColumn</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datatype</span><span class="p">)</span> <span class="ow">is</span> <span class="n">StringType</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">textGenerator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Template generation / text generation not supported for weighted columns&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">executionHistory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;.. WARNING: Template &amp; text generation not supported for weights&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datatype</span><span class="p">)</span> <span class="ow">is</span> <span class="n">StringType</span> <span class="ow">and</span> <span class="n">sformat</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Formatting not supported for weighted columns&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">executionHistory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;.. WARNING: Formatting not supported for weighted columns&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># rs: initialize the begin, end and interval if not initialized for date computations</span>
+            <span class="c1"># defaults are start of day, now, and 1 minute respectively</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_computeImpliedRangeIfNeeded</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datatype</span><span class="p">)</span>
+
+            <span class="c1"># TODO: add full support for date value generation</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">expr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># note use of SQL expression ignores range specifications</span>
+                <span class="n">new_def</span> <span class="o">=</span> <span class="n">expr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datatype</span><span class="p">)</span>
+
+                <span class="c1"># record execution history</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">executionHistory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;.. using SQL expression `</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="si">}</span><span class="s2">` as base&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">executionHistory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;.. casting to  `</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">datatype</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dataRange</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dataRange</span><span class="o">.</span><span class="n">isFullyPopulated</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">executionHistory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;.. computing ranged value: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_dataRange</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">new_def</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_computeRangedColumn</span><span class="p">(</span><span class="n">base_column</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">baseColumn</span><span class="p">,</span> <span class="n">datarange</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_dataRange</span><span class="p">,</span>
+                                                    <span class="n">is_random</span><span class="o">=</span><span class="n">col_is_rand</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datatype</span><span class="p">)</span> <span class="ow">is</span> <span class="n">DateType</span><span class="p">:</span>
+                <span class="c1"># TODO: fixup for date generation</span>
+
+                <span class="c1"># record execution history</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">executionHistory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;.. using random date expression&quot;</span><span class="p">)</span>
+                <span class="n">sql_random_generator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getUniformRandomSQLExpression</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="n">new_def</span> <span class="o">=</span> <span class="n">expr</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;date_sub(current_date, rounding(</span><span class="si">{</span><span class="n">sql_random_generator</span><span class="si">}</span><span class="s2">*1024))&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">datatype</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_baseColumnComputeMethod</span> <span class="o">==</span> <span class="n">VALUES_COMPUTE_METHOD</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">executionHistory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;.. using values compute expression for seed&quot;</span><span class="p">)</span>
+                    <span class="n">new_def</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getSeedExpression</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">baseColumn</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_baseColumnComputeMethod</span> <span class="o">==</span> <span class="n">RAW_VALUES_COMPUTE_METHOD</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">executionHistory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;.. using raw values compute expression for seed&quot;</span><span class="p">)</span>
+                    <span class="n">new_def</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getSeedExpression</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">baseColumn</span><span class="p">)</span>
+                <span class="c1"># TODO: resolve issues with hash when using templates</span>
+                <span class="c1"># elif self._baseColumnComputeMethod == HASH_COMPUTE_METHOD:</span>
+                <span class="c1">#    newDef = self._getSeedExpression(self.baseColumn)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Assuming a seeded base expression with minimum value for column </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">executionHistory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;.. seeding with minimum `</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_dataRange</span><span class="o">.</span><span class="n">minValue</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">)</span>
+                    <span class="n">new_def</span> <span class="o">=</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">_getSeedExpression</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">baseColumn</span><span class="p">)</span> <span class="o">+</span> <span class="n">lit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dataRange</span><span class="o">.</span><span class="n">minValue</span><span class="p">))</span>
+                               <span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datatype</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">new_def</span> <span class="o">=</span> <span class="n">array</span><span class="p">([</span><span class="n">lit</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">])[</span><span class="n">new_def</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">IntegerType</span><span class="p">())]</span>
+            <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datatype</span><span class="p">)</span> <span class="ow">is</span> <span class="n">StringType</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">expr</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">new_def</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_applyPrefixSuffixExpressions</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span><span class="p">,</span> <span class="n">new_def</span><span class="p">)</span>
+
+            <span class="c1"># use string generation template if available passing in what was generated to date</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datatype</span><span class="p">)</span> <span class="ow">is</span> <span class="n">StringType</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">textGenerator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">new_def</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_applyTextGenerationExpression</span><span class="p">(</span><span class="n">new_def</span><span class="p">,</span> <span class="n">use_pandas_optimizations</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datatype</span><span class="p">)</span> <span class="ow">is</span> <span class="n">StringType</span> <span class="ow">and</span> <span class="n">sformat</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">new_def</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_applyTextFormatExpression</span><span class="p">(</span><span class="n">new_def</span><span class="p">,</span> <span class="n">sformat</span><span class="p">)</span>
+
+        <span class="n">new_def</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_applyFinalCastExpression</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datatype</span><span class="p">,</span> <span class="n">new_def</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">percent_nulls</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">new_def</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_applyComputePercentNullsExpression</span><span class="p">(</span><span class="n">new_def</span><span class="p">,</span> <span class="n">percent_nulls</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_def</span>
+
+    <span class="k">def</span> <span class="nf">_applyTextFormatExpression</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_def</span><span class="p">,</span> <span class="n">sformat</span><span class="p">):</span>
+        <span class="c1"># note :</span>
+        <span class="c1"># while it seems like this could use a shared instance, this does not work if initialized</span>
+        <span class="c1"># in a class method</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">executionHistory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;.. applying column format  `</span><span class="si">{</span><span class="n">sformat</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">)</span>
+        <span class="n">new_def</span> <span class="o">=</span> <span class="n">format_string</span><span class="p">(</span><span class="n">sformat</span><span class="p">,</span> <span class="n">new_def</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_def</span>
+
+    <span class="k">def</span> <span class="nf">_applyPrefixSuffixExpressions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cprefix</span><span class="p">,</span> <span class="n">csuffix</span><span class="p">,</span> <span class="n">new_def</span><span class="p">):</span>
+        <span class="c1"># string value generation is simply handled by combining with a suffix or prefix</span>
+        <span class="c1"># TODO: prefix and suffix only apply to base columns that are numeric types</span>
+        <span class="n">text_separator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">text_separator</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">text_separator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s1">&#39;_&#39;</span>
+        <span class="k">if</span> <span class="n">cprefix</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">csuffix</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">executionHistory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;.. applying column prefix and suffix&quot;</span><span class="p">)</span>
+            <span class="n">new_def</span> <span class="o">=</span> <span class="n">concat</span><span class="p">(</span><span class="n">lit</span><span class="p">(</span><span class="n">cprefix</span><span class="p">),</span> <span class="n">lit</span><span class="p">(</span><span class="n">text_separator</span><span class="p">),</span> <span class="n">new_def</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">IntegerType</span><span class="p">()),</span> <span class="n">lit</span><span class="p">(</span><span class="n">text_separator</span><span class="p">),</span>
+                             <span class="n">lit</span><span class="p">(</span><span class="n">csuffix</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">cprefix</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">executionHistory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;.. applying column prefix&quot;</span><span class="p">)</span>
+            <span class="n">new_def</span> <span class="o">=</span> <span class="n">concat</span><span class="p">(</span><span class="n">lit</span><span class="p">(</span><span class="n">cprefix</span><span class="p">),</span> <span class="n">lit</span><span class="p">(</span><span class="n">text_separator</span><span class="p">),</span> <span class="n">new_def</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">IntegerType</span><span class="p">()))</span>
+        <span class="k">elif</span> <span class="n">csuffix</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">executionHistory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;.. applying column suffix&quot;</span><span class="p">)</span>
+            <span class="n">new_def</span> <span class="o">=</span> <span class="n">concat</span><span class="p">(</span><span class="n">new_def</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">IntegerType</span><span class="p">()),</span> <span class="n">lit</span><span class="p">(</span><span class="n">text_separator</span><span class="p">),</span> <span class="n">lit</span><span class="p">(</span><span class="n">csuffix</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">new_def</span>
+
+    <span class="k">def</span> <span class="nf">_applyTextGenerationExpression</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_def</span><span class="p">,</span> <span class="n">use_pandas_optimizations</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Apply text generation expression to column expression</span>
+
+<span class="sd">        :param new_def : column definition being created</span>
+<span class="sd">        :param use_pandas_optimizations: Whether Pandas optimizations should be applied</span>
+<span class="sd">        :returns: new column definition</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># note :</span>
+        <span class="c1"># while it seems like this could use a shared instance, this does not work if initialized</span>
+        <span class="c1"># in a class method</span>
+        <span class="n">tg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">textGenerator</span>
+        <span class="k">if</span> <span class="n">use_pandas_optimizations</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">executionHistory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;.. text generation via pandas scalar udf `</span><span class="si">{</span><span class="n">tg</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">)</span>
+            <span class="n">u_value_from_generator</span> <span class="o">=</span> <span class="n">pandas_udf</span><span class="p">(</span><span class="n">tg</span><span class="o">.</span><span class="n">pandasGenerateText</span><span class="p">,</span>
+                                                <span class="n">returnType</span><span class="o">=</span><span class="n">StringType</span><span class="p">())</span><span class="o">.</span><span class="n">asNondeterministic</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">executionHistory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;.. text generation via udf `</span><span class="si">{</span><span class="n">tg</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">)</span>
+            <span class="n">u_value_from_generator</span> <span class="o">=</span> <span class="n">udf</span><span class="p">(</span><span class="n">tg</span><span class="o">.</span><span class="n">classicGenerateText</span><span class="p">,</span>
+                                         <span class="n">StringType</span><span class="p">())</span><span class="o">.</span><span class="n">asNondeterministic</span><span class="p">()</span>
+        <span class="n">new_def</span> <span class="o">=</span> <span class="n">u_value_from_generator</span><span class="p">(</span><span class="n">new_def</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_def</span>
+
+    <span class="k">def</span> <span class="nf">_applyFinalCastExpression</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">col_type</span><span class="p">,</span> <span class="n">new_def</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Apply final cast expression for column data</span>
+
+<span class="sd">        :param col_type: final column type</span>
+<span class="sd">        :param new_def:  column definition being created</span>
+<span class="sd">        :returns: new column definition</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">executionHistory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;.. casting column [</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">] to  `</span><span class="si">{</span><span class="n">col_type</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">)</span>
+
+        <span class="c1"># cast the result to the appropriate type. For dates, cast first to timestamp, then to date</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">col_type</span><span class="p">)</span> <span class="ow">is</span> <span class="n">DateType</span><span class="p">:</span>
+            <span class="n">new_def</span> <span class="o">=</span> <span class="n">new_def</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">TimestampType</span><span class="p">())</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">col_type</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">new_def</span> <span class="o">=</span> <span class="n">new_def</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">col_type</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">new_def</span>
+
+    <span class="k">def</span> <span class="nf">_applyComputePercentNullsExpression</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">newDef</span><span class="p">,</span> <span class="n">probabilityNulls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Compute percentage nulls for column being generated</span>
+
+<span class="sd">           :param newDef: Column definition being created</span>
+<span class="sd">           :param probabilityNulls: Probability of nulls to be generated for particular column. Values can be 0.0 - 1.0</span>
+<span class="sd">           :returns: new column definition with probability of nulls applied</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">nullable</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Column `</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">` must be nullable for `percent_nulls` option&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">executionHistory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;.. applying null generator - `when rnd &gt; prob then value - else null`&quot;</span><span class="p">)</span>
+
+        <span class="k">assert</span> <span class="n">probabilityNulls</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;option &#39;percent_nulls&#39; must not be null value or None&quot;</span>
+        <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">probabilityNulls</span><span class="p">)</span> <span class="ow">in</span> <span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="s2">&quot;option &#39;percent_nulls&#39; must be int or float&quot;</span>
+        <span class="k">assert</span> <span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="n">probabilityNulls</span> <span class="o">&lt;=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;option &#39;percent_nulls&#39; must in the range [0.0 .. 1.0]&quot;</span>
+        <span class="n">prob_nulls</span> <span class="o">=</span> <span class="n">probabilityNulls</span> <span class="o">*</span> <span class="mf">1.0</span>  <span class="c1"># for edge case where int was passed</span>
+        <span class="n">random_generator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getUniformRandomExpression</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">newDef</span> <span class="o">=</span> <span class="n">when</span><span class="p">(</span><span class="n">random_generator</span> <span class="o">&gt;</span> <span class="n">lit</span><span class="p">(</span><span class="n">prob_nulls</span><span class="p">),</span> <span class="n">newDef</span><span class="p">)</span><span class="o">.</span><span class="n">otherwise</span><span class="p">(</span><span class="n">lit</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">newDef</span>
+
+    <span class="k">def</span> <span class="nf">_computeImpliedRangeIfNeeded</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">col_type</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Compute implied range if necessary</span>
+<span class="sd">            :param col_type&quot; Column type</span>
+<span class="sd">            :returns: nothing</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># check for implied ranges</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dataRange</span> <span class="o">=</span> <span class="n">NRange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">col_type</span><span class="p">)</span> <span class="ow">is</span> <span class="n">BooleanType</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dataRange</span> <span class="o">=</span> <span class="n">NRange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">executionHistory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;.. using adjusted effective range: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_dataRange</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ColumnGenerationSpec.makeGenerationExpressions"><a class="viewcode-back" href="../../reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.makeGenerationExpressions">[docs]</a>    <span class="k">def</span> <span class="nf">makeGenerationExpressions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Generate structured column if multiple columns or features are specified</span>
+
+<span class="sd">        if there are multiple columns / features specified using a single definition, it will generate</span>
+<span class="sd">        a set of columns conforming to the same definition,</span>
+<span class="sd">        renaming them as appropriate and combine them into a array if necessary</span>
+<span class="sd">        (depending on the structure combination instructions)</span>
+
+<span class="sd">            :param self: is ColumnGenerationSpec for column</span>
+<span class="sd">            :returns: spark sql `column` or expression that can be used to generate a column</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">num_columns</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;numColumns&#39;</span><span class="p">]</span>
+        <span class="n">struct_type</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;structType&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">executionHistory</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="n">num_columns</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">num_columns</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;numFeatures&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">num_columns</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">num_columns</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># record execution history for troubleshooting</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">executionHistory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;generating single column - `</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">` having type `</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">datatype</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">)</span>
+
+            <span class="n">retval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_makeSingleGenerationExpression</span><span class="p">(</span><span class="n">use_pandas_optimizations</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="c1"># record how column was generated</span>
+            <span class="n">exec_step_history</span> <span class="o">=</span> <span class="s2">&quot;.. computed from base values - &quot;</span>
+            <span class="n">exec_step_history</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">baseColumn</span><span class="si">}</span><span class="s2">`, method: `</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_baseColumnComputeMethod</span><span class="si">}</span><span class="s2">`&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">executionHistory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">exec_step_history</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">executionHistory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;generating multiple columns </span><span class="si">{</span><span class="n">num_columns</span><span class="si">}</span><span class="s2"> - `</span><span class="si">{</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">)</span>
+            <span class="n">retval</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_makeSingleGenerationExpression</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_columns</span><span class="p">)]</span>
+
+            <span class="k">if</span> <span class="n">struct_type</span> <span class="o">==</span> <span class="s1">&#39;array&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">executionHistory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;.. converting multiple columns to array&quot;</span><span class="p">)</span>
+                <span class="n">retval</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="n">retval</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># TODO : update the output columns</span>
+                <span class="k">pass</span>
+
+        <span class="k">return</span> <span class="n">retval</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Databricks Inc.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

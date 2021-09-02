@@ -1,0 +1,7 @@
+dbldatagen.distributions.normal\_distribution module
+====================================================
+
+.. automodule:: dbldatagen.distributions.normal_distribution
+   :members:
+   :undoc-members:
+   :show-inheritance:
