@@ -13,7 +13,7 @@ package_long_description = """###Databricks Labs Spark Data Generator###
 
 setuptools.setup(
     name="dbldatagen",
-    version="0.2.0-rc0",
+    version="0.2.0-rc1",
     author="Ronan Stokes, Databricks",
     author_email="ronan.stokes@databricks.com",
     description="Databricks Labs -  PySpark Synthetic Data Generator",
