@@ -4,7 +4,7 @@
 
 See the contents of the file `python/require.txt` to see the Python package dependencies
 
-### Version 0.2.0-rc0
+### Version 0.2.0-rc1
 
 #### Features
 * Uses pipenv for main build process
