@@ -364,13 +364,14 @@ class FakerTextFactory(PyfuncTextFactory):
             raise DataGenError("Could not load or initialize Faker library", err)
 
 
-
-
-
 def fakerText(mname, *args, _lib=None, _rootClass=None, **kwargs):
     """Generate faker text generator object using default FakerTextFactory
        instance
 
+       :param mname: method name to invoke
+       :param args: positional args to be passed to underlying Faker instance
+       :param _lib: internal only param - library to load
+       :param _rootClass: internal only param - root class to create
        :returns : instance of PyfuncText for use with Faker
 
        ``fakerText("sentence")`` is same as ``FakerTextFactory()("sentence")``

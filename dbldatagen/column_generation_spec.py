@@ -103,7 +103,7 @@ class ColumnGenerationSpec(object):
         if colType is None:  # default to integer field if none specified
             colType = IntegerType()
 
-        assert isinstance(colType, DataType), "colType `{}` is not instance of DataType".format(colType)
+        assert isinstance(colType, DataType), f"colType `{colType}` is not instance of DataType"
 
         self._initialBuildPlan = []  # the build plan for the column - descriptive only
         self.executionHistory = []  # the execution history for the column
@@ -375,9 +375,9 @@ class ColumnGenerationSpec(object):
             ensure(self['numColumns'] is None or self['numColumns'] <= 1,
                    "weighted columns not supported for multi-column or multi-feature values")
             if self.random:
-                temp_name = "_rnd_{}".format(self.name)
+                temp_name = f"_rnd_{self.name}"
                 self.dependencies.append(temp_name)
-                desc = "adding temporary column {} required by {}".format(temp_name, self.name)
+                desc = f"adding temporary column {temp_name} required by {self.name}"
                 self._initialBuildPlan.append(desc)
                 sql_random_generator = self._getUniformRandomSQLExpression(self.name)
                 self.temporaryColumns.append((temp_name, DoubleType(), {'expr': sql_random_generator, 'omit': True,
@@ -385,9 +385,9 @@ class ColumnGenerationSpec(object):
                 self._weightedBaseColumn = temp_name
             else:
                 # create temporary expression mapping values to range of weights
-                temp_name = "_scaled_{}".format(self.name)
+                temp_name = f"_scaled_{self.name}"
                 self.dependencies.append(temp_name)
-                desc = "adding temporary column {} required by {}".format(temp_name, self.name)
+                desc = f"adding temporary column {temp_name} required by {self.name}"
                 self._initialBuildPlan.append(desc)
 
                 # use a base expression based on mapping base column to size of data
@@ -511,10 +511,10 @@ class ColumnGenerationSpec(object):
         """
         assert col_name is not None, "`col_name` must not be None"
         if self._randomSeedMethod == RANDOM_SEED_FIXED and self._randomSeed != RANDOM_SEED_RANDOM:
-            return expr("rand({})".format(self._randomSeed))
+            return expr(f"rand({self._randomSeed})")
         elif self._randomSeedMethod == RANDOM_SEED_HASH_FIELD_NAME:
             assert self.name is not None, " `self.name` must not be none"
-            return expr("rand(hash('{}'))".format(self.name))
+            return expr(f"rand(hash('{self.name}'))")
         else:
             return rand()
 
@@ -530,8 +530,7 @@ class ColumnGenerationSpec(object):
         assert isinstance(col_distribution, DataDistribution), \
             "`distribution` object must be an instance of data distribution"
 
-        self.executionHistory.append(".. random number generation via distribution `{}`"
-                                     .format(str(col_distribution)))
+        self.executionHistory.append(f".. random number generation via distribution `{col_distribution}`")
 
         return col_distribution.generateNormalizedDistributionSample()
 
@@ -543,10 +542,10 @@ class ColumnGenerationSpec(object):
         assert col_name is not None, " `col_name` must not be None"
         if self._randomSeedMethod == RANDOM_SEED_FIXED and self._randomSeed != RANDOM_SEED_RANDOM:
             assert self._randomSeed is not None, "`randomSeed` must not be None"
-            return "rand({})".format(self._randomSeed)
+            return f"rand({self._randomSeed})"
         elif self._randomSeedMethod == RANDOM_SEED_HASH_FIELD_NAME:
             assert self.name is not None, "`self.name` must not be none"
-            return "rand(hash('{}'))".format(self.name)
+            return f"rand(hash('{self.name}'))"
         else:
             return "rand()"
 
@@ -597,7 +596,7 @@ class ColumnGenerationSpec(object):
             result = f"cast( ( floor(({column_set} % {scale}) + {scale}) % {scale}) as double) "
 
         if normalize:
-            result = "({} / {})".format(result, (scale * 1.0) - 1.0)
+            result = f"({result} / {(scale * 1.0) - 1.0})"
 
         self.logger.debug("computing scaled field [%s] as expression [%s]", col_name, result)
         return result
@@ -613,7 +612,7 @@ class ColumnGenerationSpec(object):
         struct_type = self._csOptions.getOrElse('structType', None)
 
         if num_columns > 1 and struct_type is None:
-            return ["{0}_{1}".format(self.name, x) for x in range(0, num_columns)]
+            return [f"{self.name}_{x}" for x in range(0, num_columns)]
         else:
             return [self.name]
 
@@ -623,7 +622,7 @@ class ColumnGenerationSpec(object):
         struct_type = self._csOptions.getOrElse('structType', None)
 
         if num_columns > 1 and struct_type is None:
-            return [("{0}_{1}".format(self.name, x), self.datatype) for x in range(0, num_columns)]
+            return [(f"{self.name}_{x}", self.datatype) for x in range(0, num_columns)]
         else:
             return [(self.name, self.datatype)]
 
@@ -786,26 +785,22 @@ class ColumnGenerationSpec(object):
                     raise ValueError("Effective range greater than range of type")
 
         for k in column_props.keys():
-            ensure(k in ColumnSpecOptions._ALLOWED_PROPERTIES, 'invalid column option {0}'.format(k))
+            ensure(k in ColumnSpecOptions._ALLOWED_PROPERTIES, f'invalid column option {k}')
 
         for arg in ColumnSpecOptions._REQUIRED_PROPERTIES:
-            ensure(arg in column_props.keys() and column_props[arg] is not None,
-                   'missing column option {0}'.format(arg))
+            ensure(column_props.get(arg) is not None, f'missing column option {arg}')
 
         for arg in ColumnSpecOptions._FORBIDDEN_PROPERTIES:
-            ensure(arg not in column_props.keys(),
-                   'forbidden column option {0}'.format(arg))
+            ensure(arg not in column_props, f'forbidden column option {arg}')
 
         # check weights and values
-        if 'weights' in column_props.keys():
-            ensure('values' in column_props.keys(),
-                   "weights are only allowed for columns with values - column '{}' ".format(column_props['name']))
+        if 'weights' in column_props:
+            ensure('values' in column_props,
+                   f"weights are only allowed for columns with values - column '{column_props['name']}' ")
             ensure(column_props['values'] is not None and len(column_props['values']) > 0,
-                   "weights must be associated with non-empty list of values - column '{}' ".format(
-                       column_props['name']))
+                   f"weights must be associated with non-empty list of values - column '{column_props['name']}' ")
             ensure(len(column_props['values']) == len(column_props['weights']),
-                   "length of list of weights must be  equal to length of list of values - column '{}' ".format(
-                       column_props['name']))
+                   f"length of list of weights must be  equal to length of list of values - column '{column_props['name']}' ")
 
     def getPlanEntry(self):
         """ Get execution plan entry for object
@@ -816,7 +811,7 @@ class ColumnGenerationSpec(object):
         if desc is not None:
             return " |-- " + desc
         else:
-            return " |-- building column generator for column {}".format(self.name)
+            return f" |-- building column generator for column {self.name}"
 
     def _makeWeightedColumnValuesExpression(self, values, weights, seed_column_name):
         """make SQL expression to compute the weighted values expression
@@ -872,17 +867,17 @@ class ColumnGenerationSpec(object):
             assert len(base_column) > 0, "`baseColumn` must be list of column names"
             if len(base_column) == 1:
                 if self._baseColumnComputeMethod == HASH_COMPUTE_METHOD:
-                    return expr("hash({})".format(base_column[0]))
+                    return expr(f"hash({base_column[0]})")
                 else:
                     return col(base_column[0])
             elif self._baseColumnComputeMethod == VALUES_COMPUTE_METHOD:
-                base_values = ["string(ifnull(`{}`, 'null'))".format(x) for x in base_column]
-                return expr("array({})".format(",".join(base_values)))
+                base_values = [f"string(ifnull(`{x}`, 'null'))" for x in base_column]
+                return expr(f"array({','.join(base_values)})")
             else:
-                return expr("hash({})".format(",".join(base_column)))
+                return expr(f"hash({','.join(base_column)})")
         else:
             if self._baseColumnComputeMethod == HASH_COMPUTE_METHOD:
-                return expr("hash({})".format(base_column))
+                return expr(f"hash({base_column})")
             else:
                 return col(base_column)
 
@@ -1002,7 +997,7 @@ class ColumnGenerationSpec(object):
                 self.executionHistory.append(f".. using SQL expression `{self.expr}` as base")
                 self.executionHistory.append(f".. casting to  `{self.datatype}`")
             elif self._dataRange is not None and self._dataRange.isFullyPopulated():
-                self.executionHistory.append(".. computing ranged value: {}".format(self._dataRange))
+                self.executionHistory.append(f".. computing ranged value: {self._dataRange}")
                 new_def = self._computeRangedColumn(base_column=self.baseColumn, datarange=self._dataRange,
                                                     is_random=col_is_rand)
             elif type(self.datatype) is DateType:
@@ -1011,7 +1006,7 @@ class ColumnGenerationSpec(object):
                 # record execution history
                 self.executionHistory.append(".. using random date expression")
                 sql_random_generator = self._getUniformRandomSQLExpression(self.name)
-                new_def = expr("date_sub(current_date, rounding({}*1024))".format(sql_random_generator)).astype(
+                new_def = expr(f"date_sub(current_date, rounding({sql_random_generator}*1024))").astype(
                     self.datatype)
             else:
                 if self._baseColumnComputeMethod == VALUES_COMPUTE_METHOD:
@@ -1051,7 +1046,7 @@ class ColumnGenerationSpec(object):
         # note :
         # while it seems like this could use a shared instance, this does not work if initialized
         # in a class method
-        self.executionHistory.append(".. applying column format  `{}`".format(sformat))
+        self.executionHistory.append(f".. applying column format  `{sformat}`")
         new_def = format_string(sformat, new_def)
         return new_def
 
@@ -1083,13 +1078,11 @@ class ColumnGenerationSpec(object):
         # in a class method
         tg = self.textGenerator
         if use_pandas_optimizations:
-            self.executionHistory.append(".. text generation via pandas scalar udf `{}`"
-                                         .format(str(tg)))
+            self.executionHistory.append(f".. text generation via pandas scalar udf `{tg}`")
             u_value_from_generator = pandas_udf(tg.pandasGenerateText,
                                                 returnType=StringType()).asNondeterministic()
         else:
-            self.executionHistory.append(".. text generation via udf `{}`"
-                                         .format(str(tg)))
+            self.executionHistory.append(f".. text generation via udf `{tg}`")
             u_value_from_generator = udf(tg.classicGenerateText,
                                          StringType()).asNondeterministic()
         new_def = u_value_from_generator(new_def)
@@ -1102,7 +1095,7 @@ class ColumnGenerationSpec(object):
         :param new_def:  column definition being created
         :returns: new column definition
         """
-        self.executionHistory.append(".. casting column [{}] to  `{}`".format(self.name, col_type))
+        self.executionHistory.append(f".. casting column [{self.name}] to  `{col_type}`")
 
         # cast the result to the appropriate type. For dates, cast first to timestamp, then to date
         if type(col_type) is DateType:
@@ -1119,7 +1112,7 @@ class ColumnGenerationSpec(object):
            :param probabilityNulls: Probability of nulls to be generated for particular column. Values can be 0.0 - 1.0
            :returns: new column definition with probability of nulls applied
         """
-        assert self.nullable, "Column `{}` must be nullable for `percent_nulls` option".format(self.name)
+        assert self.nullable, f"Column `{self.name}` must be nullable for `percent_nulls` option"
         self.executionHistory.append(".. applying null generator - `when rnd > prob then value - else null`")
 
         assert probabilityNulls is not None, "option 'percent_nulls' must not be null value or None"
@@ -1140,7 +1133,7 @@ class ColumnGenerationSpec(object):
             self._dataRange = NRange(0, len(self.values) - 1, 1)
         elif type(col_type) is BooleanType:
             self._dataRange = NRange(0, 1, 1)
-        self.executionHistory.append(".. using adjusted effective range: {}".format(self._dataRange))
+        self.executionHistory.append(f".. using adjusted effective range: {self._dataRange}")
 
     def makeGenerationExpressions(self):
         """ Generate structured column if multiple columns or features are specified
@@ -1171,7 +1164,7 @@ class ColumnGenerationSpec(object):
             exec_step_history += f"`{self.baseColumn}`, method: `{self._baseColumnComputeMethod}`"
             self.executionHistory.append(exec_step_history)
         else:
-            self.executionHistory.append("generating multiple columns {0} - `{1}`".format(num_columns, self['name']))
+            self.executionHistory.append(f"generating multiple columns {num_columns} - `{self['name']}`")
             retval = [self._makeSingleGenerationExpression(x) for x in range(num_columns)]
 
             if struct_type == 'array':

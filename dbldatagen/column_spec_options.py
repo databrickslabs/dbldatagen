@@ -204,10 +204,10 @@ s
         assert name is not None, "`name` must be specified"
         if optional:
             ensure(v is None or type(v) is bool,
-                   "Option `{}` must be boolean if specified - value: {}, type: {}".format(name, v, type(v)))
+                   f"Option `{name}` must be boolean if specified - value: {v}, type: {type(v)}")
         else:
             ensure(type(v) is bool,
-                   "Option `{}` must be boolean  - value: {}, type: {}".format(name, v, type(v)))
+                   f"Option `{name}` must be boolean  - value: {v}, type: {type(v)}")
 
     def checkExclusiveOptions(self, options):
         """check if the options are exclusive - i.e only one is not None
@@ -227,8 +227,7 @@ s
         """
         assert option is not None and len(option.strip()) > 0, "option must be non empty"
         assert type(option_values) is list, "`option_values` must be list"
-        assert self[option] in option_values, "option: `{}` must have one of the values {}".format(option,
-                                                                                                   option_values)
+        assert self[option] in option_values, f"option: `{option}` must have one of the values {option_values}"
 
     def checkValidColumnProperties(self, columnProps):
         """
@@ -254,20 +253,16 @@ s
                    f"invalid column option {k}")
 
         for arg in self._REQUIRED_PROPERTIES:
-            ensure(arg in columnProps.keys() and columnProps[arg] is not None,
-                   f"missing column option {arg}")
+            ensure(columnProps.get(arg) is not None, f"missing column option {arg}")
 
         for arg in self._FORBIDDEN_PROPERTIES:
-            ensure(arg not in columnProps.keys(),
-                   f"forbidden column option {arg}")
+            ensure(arg not in columnProps, f"forbidden column option {arg}")
 
         # check weights and values
-        if 'weights' in columnProps.keys():
-            ensure('values' in columnProps.keys(),
-                   "weights are only allowed for columns with values - column '{0}' ".format(columnProps['name']))
+        if 'weights' in columnProps:
+            ensure('values' in columnProps,
+                   f"weights are only allowed for columns with values - column '{columnProps['name']}' ")
             ensure(columnProps['values'] is not None and len(columnProps['values']) > 0,
-                   "weights must be associated with non-empty list of values - column '{0}' ".format(
-                       columnProps['name']))
+                   f"weights must be associated with non-empty list of values - column '{columnProps['name']}' ")
             ensure(len(columnProps['values']) == len(columnProps['weights']),
-                   "length of list of weights must be  equal to length of list of values - column '{0}' ".format(
-                       columnProps['name']))
+                   f"length of list of weights must be  equal to length of list of values - column '{columnProps['name']}' ")

@@ -36,7 +36,7 @@ class NRange(DataRange):
 
     def __init__(self, minValue=None, maxValue=None, step=None, until=None, **kwArgs):
         # check if older form of `minValue` and `maxValue` are used, and if so
-        if _OLD_MIN_OPTION in kwArgs.keys():
+        if _OLD_MIN_OPTION in kwArgs:
             assert minValue is None, \
                 "Only one of `minValue` and `minValue` can be specified. Use of `minValue` is preferred"
             self.minValue = kwArgs[_OLD_MIN_OPTION]
@@ -44,7 +44,7 @@ class NRange(DataRange):
         else:
             self.minValue = minValue
 
-        if _OLD_MAX_OPTION in kwArgs.keys():
+        if _OLD_MAX_OPTION in kwArgs:
             assert maxValue is None, \
                 "Only one of `maxValue` and `maxValue` can be specified. Use of `maxValue` is preferred"
             self.maxValue = kwArgs[_OLD_MAX_OPTION]
@@ -61,7 +61,7 @@ class NRange(DataRange):
         self.step = step
 
     def __str__(self):
-        return "NRange({}, {}, {})".format(self.minValue, self.maxValue, self.step)
+        return f"NRange({self.minValue}, {self.maxValue}, {self.step})"
 
     def isEmpty(self):
         """Check if object is empty (i.e all instance vars of note are `None`

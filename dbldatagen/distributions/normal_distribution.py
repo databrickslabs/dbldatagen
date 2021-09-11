@@ -72,8 +72,7 @@ class Normal(DataDistribution):
 
     def __str__(self):
         """ Return string representation of object """
-        return ("NormalDistribution( mean={}, stddev={}, randomSeed={})"
-                .format( self.mean, self.stddev, self.randomSeed))
+        return (f"NormalDistribution( mean={self.mean}, stddev={self.stddev}, randomSeed={self.randomSeed})")
 
     @classmethod
     def standardNormal(cls):

@@ -355,7 +355,6 @@ class TestBasicOperation(unittest.TestCase):
         self.assertGreaterEqual( percent_nulls_observed, 5.0)
 
 
-
 # run the tests
 # if __name__ == '__main__':
 #  print("Trying to run tests")

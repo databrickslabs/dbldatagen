@@ -24,7 +24,7 @@ def deprecated(message=""):
     def deprecated_decorator(func):
         @functools.wraps(func)
         def deprecated_func(*args, **kwargs):
-            warnings.warn("`{}` is a deprecated function or method. \n{}".format(func.__name__, message),
+            warnings.warn(f"`{func.__name__}` is a deprecated function or method. \n{message}",
                           category=DeprecationWarning, stacklevel=1)
             warnings.simplefilter('default', DeprecationWarning)
             return func(*args, **kwargs)
@@ -44,6 +44,7 @@ class DataGenError(Exception):
     def __init__(self, msg, baseException=None):
         """ constructor
         """
+        super().__init__(msg)
         self._underlyingException = baseException
         self._msg = msg
 
@@ -130,7 +131,6 @@ def topologicalSort(sources, initial_columns=None, flatten=True):
             if deps:
                 next_pending.append((name, set(deps)))
             elif name in provided:
-                pass
                 value_emitted |= True
             else:
                 gen.append(name)
@@ -151,6 +151,7 @@ def topologicalSort(sources, initial_columns=None, flatten=True):
 
 PATTERN_NAME_EQUALS_VALUE = re.compile(r"(\w+)\s*\=\s*([0-9]+)")
 PATTERN_VALUE_SPACE_NAME = re.compile(r"([0-9]+)\s+(\w+)")
+_WEEKS_PER_YEAR = 52
 
 
 def parse_time_interval(spec):
@@ -202,14 +203,14 @@ def parse_time_interval(spec):
         elif time_type in ["milliseconds", "millisecond"]:
             milliseconds = time_value
 
-    td = delta = timedelta(
+    delta = timedelta(
         days=days,
         seconds=seconds,
         microseconds=microseconds,
         milliseconds=milliseconds,
         minutes=minutes,
         hours=hours,
-        weeks=weeks
+        weeks=weeks + (years * _WEEKS_PER_YEAR)
     )
 
-    return td
+    return delta
