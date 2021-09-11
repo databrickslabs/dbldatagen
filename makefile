@@ -68,8 +68,8 @@ dev-test: export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 dev-test-with-html-report: export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 
 dev-test:
-	@echo "$(OK_COLOR)=> Running unit tests$(NO_COLOR)"
-	pytest tests/ --cov $(PACKAGE_NAME)
+	@echo "$(OK_COLOR)=> Running unit tests in directory $(PWD) $(NO_COLOR)"
+	pytest tests/ --cov $(PACKAGE_NAME) --cov-report=xml
 
 dev-test-with-html-report:
 	@echo "$(OK_COLOR)=> Running unit tests with HTML test coverage report$(NO_COLOR)"
@@ -79,7 +79,7 @@ dev-test-with-html-report:
 
 test: buildenv
 	@echo "$(OK_COLOR)=> Running unit tests$(NO_COLOR)"
-	pipenv run pytest tests --cov $(PACKAGE_NAME)
+	pipenv run pytest tests/ --cov $(PACKAGE_NAME)  --cov-report=xml
 
 test-with-html-report: buildenv
 	@echo "$(OK_COLOR)=> Running unit tests with HTML test coverage report$(NO_COLOR)"
