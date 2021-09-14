@@ -66,7 +66,7 @@
 # COMMAND ----------
 
 import dbldatagen as dg
-from pyspark.sql.types import IntegerType, StringType, FloatType, TimestampType
+from pyspark.sql.types import IntegerType, StringType, FloatType
 
 # will have implied column `id` for ordinal of row
 testdata_defn = (dg.DataGenerator(spark, name="basic_dataset", rows=100000, partitions=20)
@@ -89,8 +89,7 @@ display(df)
 # COMMAND ----------
 
 from datetime import timedelta, datetime
-import math
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType
 import dbldatagen as dg
 
 
@@ -107,7 +106,7 @@ schema = StructType([
 
 ])
 
-#build spark session
+# build spark session
 
 
 # will have implied column `id` for ordinal of row

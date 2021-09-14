@@ -13,7 +13,7 @@ from .text_generators import TextGenerator
 from .utils import DataGenError
 
 
-class PyfuncText(TextGenerator):
+class PyfuncText(TextGenerator):  # lgtm [py/missing-equals]
     """ Text generator that supports generating text from arbitrary Python function
 
     :param fn: function to call to generate text.

@@ -1,0 +1,23 @@
+##########################################################################################
+# Use the `path_classifiers` block to define changes to the default classification of    #
+# files.                                                                                 #
+##########################################################################################
+
+path_classifiers:
+  # Define tutorials category
+  tutorials:
+    # Classify all files in the tutorials directory
+    - tutorial
+
+#########################################################################################
+# Use the `queries` block to change the default display of query results.               #
+#########################################################################################
+
+queries:
+  - exclude:
+      tags:
+        - "tutorials"
+      id:
+        - "py/repeated-import"
+        - "py/multiple-definition"
+        - "py/repeated-import"

@@ -152,7 +152,6 @@ df.printSchema()
 # COMMAND ----------
 
 import dbldatagen as dg
-from pyspark.sql.types import StructType, StructField,  StringType
 
 shuffle_partitions_requested = 8
 partitions_requested = 8
@@ -330,13 +329,12 @@ dfTestDataStreaming = testDataSpec.build(withStreaming=True, options={'rowsPerSe
 
 display(dfTestDataStreaming)
 
-#start_time = time.time()
-#time.sleep(time_to_run)
+start_time = time.time()
+time.sleep(time_to_run)
 
 # note stopping the stream may produce exceptions - these can be ignored
-#recent_progress = []
-#for x in spark.streams.active:
-#    x.stop()
+for x in spark.streams.active:
+    x.stop()
 
 
 # COMMAND ----------
@@ -346,9 +344,7 @@ display(dfTestDataStreaming)
 # COMMAND ----------
 
 from datetime import timedelta, datetime
-import math
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, TimestampType
-# from dbldatagen.data_generator import DataGenerator,ensure
 import dbldatagen as dg
 
 interval = timedelta(days=1, hours=1)
