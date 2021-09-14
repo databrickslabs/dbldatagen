@@ -161,7 +161,7 @@ class TextGenerator(object):
         return defaultValue
 
 
-class TemplateGenerator(TextGenerator):
+class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
     """This class handles the generation of text from templates
 
     :param template: template string to use in text generation
@@ -382,7 +382,7 @@ class TemplateGenerator(TextGenerator):
         return results
 
 
-class ILText(TextGenerator):
+class ILText(TextGenerator):  # lgtm [py/missing-equals]
     """ Class to generate Ipsum Lorem text paragraphs, words and sentences
 
     :param paragraphs: Number of paragraphs to generate. If tuple will generate random number in range

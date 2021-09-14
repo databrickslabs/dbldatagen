@@ -29,7 +29,7 @@ customers1_location = BASE_PATH + "customers1"
 
 # COMMAND ----------
 
-import dbldatagen as dg
+import dbldatagen as dg  # lgtm [py/repeated-import]
 import pyspark.sql.functions as F
 
 spark.catalog.clearCache()
@@ -98,7 +98,6 @@ spark.sql(tableDefn)
 
 # COMMAND ----------
 
-import dbldatagen as dg
 import pyspark.sql.functions as F
 
 start_of_new_ids = df1.select(F.max('customer_id')+1).collect()[0][0]

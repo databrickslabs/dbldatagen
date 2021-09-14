@@ -53,9 +53,9 @@ def stripMargin(s):
 # COMMAND ----------
 
 import dbldatagen as dg
-import pyspark.sql.functions as F
 
-spark.catalog.clearCache()  # clear cache so that if we run multiple times to check performance, we're not relying on cache
+# clear cache so that if we run multiple times to check performance, we're not relying on cache
+spark.catalog.clearCache()
 
 UNIQUE_PLANS = 20
 PLAN_MIN_VALUE = 100
@@ -188,7 +188,6 @@ display(df_customers)
 # COMMAND ----------
 
 import dbldatagen as dg
-import pyspark.sql.functions as F
 
 AVG_EVENTS_PER_CUSTOMER = 50
 
@@ -261,10 +260,6 @@ display(df_events)
 
 # COMMAND ----------
 
-import dbldatagen as dg
-import pyspark.sql.functions as F
-import pyspark.sql.types as T
-
 df_customer_pricing = df_customers.join(df_plans, df_plans.plan_id == df_customers.plan)
 
 display(df_customer_pricing)
@@ -276,9 +271,7 @@ display(df_customer_pricing)
 
 # COMMAND ----------
 
-import dbldatagen as dg
 import pyspark.sql.functions as F
-import pyspark.sql.types as T
 
 
 # lets compute the summary minutes messages and bytes transferred

@@ -35,3 +35,4 @@ docs/source/reference/api/*.rst
 # code coverage related
 .coverage
 htmlcov/
+.coverage.xml
