@@ -17,7 +17,9 @@ queries:
   - exclude:
       tags:
         - "tutorials"
-      id:
-        - "py/repeated-import"
-        - "py/multiple-definition"
-        - "py/repeated-import"
+      id: "py/repeated-import"
+
+  - exclude:
+      tags:
+        - "tutorials"
+      id: "py/multiple-definition"
