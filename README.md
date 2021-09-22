@@ -80,13 +80,13 @@ For example
 ```buildoutcfg
 import dbldatagen as dg
 from pyspark.sql.types import IntegerType, FloatType, StringType
-
-data_rows=1000 * 1000
+column_count = 10
+data_rows = 1000 * 1000
 df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows,
                                                   partitions=4)
                             .withIdOutput()
                             .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
-                                        numColumns=cls.column_count)
+                                        numColumns=column_count)
                             .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
                             .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
                             .withColumn("code3", StringType(), values=['a', 'b', 'c'])
