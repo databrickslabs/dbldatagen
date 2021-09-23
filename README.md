@@ -12,10 +12,12 @@
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/databrickslabs/dbldatagen.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/databrickslabs/dbldatagen/context:python)
 
 ## Project Description
-The `dbldatgen` Databricks Labs project is a Python library for generating synthetic test data within the Databricks 
-environment using Spark. It operates by defining a test data generation specification in code for 
-how the test data is to be generated.
+The `dbldatgen` Databricks Labs project is a Python library for generating synthetic data within the Databricks 
+environment using Spark. The generated data may be used for testing, benchmarking, demos and many 
+other uses.
 
+It operates by defining a data generation specification in code that controls 
+how the synthetic data is to be generated.
 The specification may incorporate use of existing schemas, or create data in an adhoc fashion.
 
 It has no dependencies on any libraries that are not already incuded in the Databricks 
