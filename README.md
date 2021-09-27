@@ -1,6 +1,6 @@
 # Databricks Labs Data Generator (`dbldatagen`)
 [Release Notes](CHANGELOG.md) |
-[Python Wheel](https://github.com/databrickslabs/data-generator/releases/tag/v1-0.11.0-dev1) |
+[Python Wheel](https://github.com/databrickslabs/dbldatagen/releases/tag/v.0.2.0-rc1-master) |
 [Developer Docs](docs/USING_THE_APIS.md) |
 [Examples](examples) |
 [Tutorial](tutorial) 
@@ -12,10 +12,12 @@
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/databrickslabs/dbldatagen.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/databrickslabs/dbldatagen/context:python)
 
 ## Project Description
-The `dbldatgen` Databricks Labs project is a Python library for generating synthetic test data within the Databricks 
-environment using Spark. It operates by defining a test data generation specification in code for 
-how the test data is to be generated.
+The `dbldatgen` Databricks Labs project is a Python library for generating synthetic data within the Databricks 
+environment using Spark. The generated data may be used for testing, benchmarking, demos and many 
+other uses.
 
+It operates by defining a data generation specification in code that controls 
+how the synthetic data is to be generated.
 The specification may incorporate use of existing schemas, or create data in an adhoc fashion.
 
 It has no dependencies on any libraries that are not already incuded in the Databricks 
@@ -80,13 +82,13 @@ For example
 ```buildoutcfg
 import dbldatagen as dg
 from pyspark.sql.types import IntegerType, FloatType, StringType
-
-data_rows=1000 * 1000
+column_count = 10
+data_rows = 1000 * 1000
 df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows,
                                                   partitions=4)
                             .withIdOutput()
                             .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
-                                        numColumns=cls.column_count)
+                                        numColumns=column_count)
                             .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
                             .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
                             .withColumn("code3", StringType(), values=['a', 'b', 'c'])

@@ -11,6 +11,8 @@ _Put an `x` in the boxes that apply_
 - [ ] Bug fix (non-breaking change which fixes an issue)
 - [ ] New feature (non-breaking change which adds functionality)
 - [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [ ] Change to tutorials, tests or examples
+- [ ] Non code change (readme, images or other non-code assets)
 - [ ] Documentation Update (if none of the other choices apply)
 
 ## Checklist

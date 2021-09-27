@@ -457,7 +457,6 @@ class TestTextGeneration(unittest.TestCase):
                 .withColumn("code3", "integer", minValue=1, maxValue=20, step=1)
                 .withColumn("code4", "integer", minValue=1, maxValue=20, step=1)
                 # base column specifies dependent column
-
                 .withColumn("site_cd", "string", suffix='site', baseColumn='code1', prefix="test")
                 .withColumn("device_status", "string", minValue=1, maxValue=200, step=1, suffix='status', prefix="test")
 

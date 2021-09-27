@@ -243,7 +243,7 @@ interspersed with use of the default faker text factory.
 
 .. code-block:: python
 
-   from dbldatagen import FakerTextFactory, DataGenerator
+   from dbldatagen import FakerTextFactory, DataGenerator, fakerText
    from faker.providers import internet
 
    shuffle_partitions_requested = 8
