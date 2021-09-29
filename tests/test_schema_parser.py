@@ -54,6 +54,46 @@ class TestSchemaParser(unittest.TestCase):
 
         self.assertIsInstance(x_bool2, BooleanType().__class__)
 
+    def test_table_definition_parser(self):
+        table1 = """CREATE TABLE student (id INT, name STRING, age INT)"""
+
+        table2 = """CREATE TABLE student (
+                       id INT, 
+                       name STRING, 
+                       age INT)
+                  """
+
+        table3 = """create table student (
+                       id int, 
+                       name string, 
+                       age int)
+                  """
+
+        print("schema1")
+        schema1 = SchemaParser.parseCreateTable(spark, table1)
+        self.assertTrue(schema1 is not None)
+
+        self.assertIn("id", schema1.fieldNames())
+        self.assertIn("name", schema1.fieldNames())
+        self.assertIn("age", schema1.fieldNames())
+
+        print("schema2")
+        schema2 = SchemaParser.parseCreateTable(spark, table2)
+        self.assertTrue(schema2 is not None)
+
+        self.assertIn("id", schema2.fieldNames())
+        self.assertIn("name", schema2.fieldNames())
+        self.assertIn("age", schema2.fieldNames())
+
+        print("schema3")
+        schema3 = SchemaParser.parseCreateTable(spark, table3)
+        self.assertTrue(schema3 is not None)
+
+        self.assertIn("id", schema3.fieldNames())
+        self.assertIn("name", schema3.fieldNames())
+        self.assertIn("age", schema3.fieldNames())
+
+
 # run the tests
 # if __name__ == '__main__':
 #  print("Trying to run tests")

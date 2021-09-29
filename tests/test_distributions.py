@@ -2,6 +2,9 @@ import datetime
 import unittest
 
 import pyspark.sql.functions as F
+import pyspark.sql as psql
+import pandas as pd
+import numpy as np
 
 import dbldatagen as dg
 import dbldatagen.distributions as dist
@@ -15,7 +18,6 @@ class TestDistributions(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        print("setting up")
         cls.rows = 10000
 
         # will have implied column `id` for ordinal of row
@@ -78,6 +80,34 @@ class TestDistributions(unittest.TestCase):
     def no_basic_distribution(self):
         base_dist = dist.DataDistribution()
         self.assertTrue(base_dist is not None)
+
+    def test_basic_np_rng(self):
+        base_dist = dist.DataDistribution()
+
+        # check for random number generator
+        rng_random = base_dist.get_np_random_generator(-1)
+        self.assertIsNotNone(rng_random)
+        random_val = rng_random.random()
+        self.assertIsNotNone(random_val)
+        self.assertIsInstance(random_val, float)
+
+        rng_fixed = base_dist.get_np_random_generator(42)
+        self.assertIsNotNone(rng_random)
+        random_val2 = rng_fixed.random()
+        self.assertIsNotNone(random_val2)
+        self.assertIsInstance(random_val2, float)
+
+    def test_basic_np_basic_normal(self):
+        base_dist = dist.DataDistribution()
+
+        # check for random number generator
+        rnd_expr = base_dist.generateNormalizedDistributionSample()
+        self.assertIsNotNone(rnd_expr)
+        self.assertIsInstance(rnd_expr, psql.Column)
+
+        rnd_expr2 = base_dist.withRandomSeed(42).generateNormalizedDistributionSample()
+        self.assertIsNotNone(rnd_expr2)
+        self.assertIsInstance(rnd_expr2, psql.Column)
 
     def test_basic_normal_distribution(self):
         normal_dist = dist.Normal(mean=0.0, stddev=1.0)
@@ -200,6 +230,36 @@ class TestDistributions(unittest.TestCase):
         self.assertEqual(summary_data['min_c4'], 1)
         self.assertEqual(summary_data['max_c4'], 40)
 
+    def test_normal_generation_func(self):
+        dist_instance = dist.Normal(20.0, 1.0)  # instance of normal distribution
+
+        data_size = 10000
+        # check the normal function
+        means = pd.Series(np.full(data_size, 100.0))
+        std_deviations = pd.Series(np.full(data_size, 20.0))
+        seeds = pd.Series(np.full(data_size, 42, dtype=np.int32))
+        results = dist_instance.normal_func(means, std_deviations, seeds)
+
+        self.assertTrue(len(results) == len(means))
+
+        # get normalized mean and stddev
+        s1 = np.std(results)
+        m1 = np.mean(results)
+        print(m1, s1)
+
+        self.assertAlmostEqual(s1, 0.2, delta=0.1)
+        self.assertAlmostEqual(m1, 0.5, delta=0.1)
+
+        seeds2 = pd.Series(np.full(data_size, -1, dtype=np.int32))
+        results2 = dist_instance.normal_func(means, std_deviations, seeds2)
+        s2 = np.std(results2)
+        m2 = np.mean(results2)
+
+        self.assertAlmostEqual(s2, 0.2, delta=0.1)
+        self.assertAlmostEqual(m2, 0.5, delta=0.1)
+
+
+
     def test_gamma_distribution(self):
         # will have implied column `id` for ordinal of row
         gamma_data_generator = (
@@ -226,6 +286,34 @@ class TestDistributions(unittest.TestCase):
 
         self.assertEqual(summary_data['min_c4'], 1)
         self.assertEqual(summary_data['max_c4'], 40)
+
+    def test_gamma_generation_func(self):
+        dist_instance = dist.Gamma(0.5, 0.5)  # instance of exponential distribution with sc
+
+        data_size = 10000
+        # check the normal function
+        shapes = pd.Series(np.full(data_size, dist_instance.shape))
+        scales = pd.Series(np.full(data_size, dist_instance.scale))
+        seeds = pd.Series(np.full(data_size, 42, dtype=np.int32))
+        results = dist_instance.gamma_func(shapes, scales, seeds)
+
+        self.assertTrue(len(results) == len(scales))
+
+        # get normalized mean and stddev
+        s1 = np.std(results)
+        m1 = np.mean(results)
+        print(m1, s1)
+
+        self.assertAlmostEqual(s1, 0.075, delta=0.05)
+        self.assertAlmostEqual(m1, 0.055, delta=0.05)
+
+        seeds2 = pd.Series(np.full(data_size, -1, dtype=np.int32))
+        results2 = dist_instance.gamma_func(shapes, scales, seeds2)
+        s2 = np.std(results2)
+        m2 = np.mean(results2)
+
+        self.assertAlmostEqual(s2, 0.075, delta=0.05)
+        self.assertAlmostEqual(m2, 0.055, delta=0.05)
 
     def test_beta_distribution(self):
         # will have implied column `id` for ordinal of row
@@ -254,6 +342,34 @@ class TestDistributions(unittest.TestCase):
         self.assertEqual(summary_data['min_c4'], 1)
         self.assertEqual(summary_data['max_c4'], 40)
 
+    def test_beta_generation_func(self):
+        dist_instance = dist.Beta(0.5, 0.5)  # instance of beta distribution
+
+        data_size = 10000
+        # check the normal function
+        alphas = pd.Series(np.full(data_size, dist_instance.alpha))
+        betas = pd.Series(np.full(data_size, dist_instance.beta))
+        seeds = pd.Series(np.full(data_size, 42, dtype=np.int32))
+        results = dist_instance.beta_func(alphas, betas, seeds)
+
+        self.assertTrue(len(results) == len(alphas))
+
+        # get normalized mean and stddev
+        s1 = np.std(results)
+        m1 = np.mean(results)
+
+        self.assertAlmostEqual(s1, 0.35, delta=0.1)
+        self.assertAlmostEqual(m1, 0.5, delta=0.1)
+
+        seeds2 = pd.Series(np.full(data_size, -1, dtype=np.int32))
+        results2 = dist_instance.beta_func(alphas, betas, seeds2)
+        s2 = np.std(results2)
+        m2 = np.mean(results2)
+
+        self.assertAlmostEqual(s2, 0.35, delta=0.1)
+        self.assertAlmostEqual(m2, 0.5, delta=0.1)
+
+
     def test_exponential_distribution(self):
         # will have implied column `id` for ordinal of row
         exponential_data_generator = (
@@ -280,6 +396,33 @@ class TestDistributions(unittest.TestCase):
 
         self.assertEqual(summary_data['min_c4'], 1)
         self.assertEqual(summary_data['max_c4'], 40)
+
+    def test_exponential_generation_func(self):
+        dist_instance = dist.Exponential(0.5)  # instance of exponential distribution with sc
+
+        data_size = 10000
+        # check the normal function
+        scales = pd.Series(np.full(data_size, dist_instance.scale))
+        seeds = pd.Series(np.full(data_size, 42, dtype=np.int32))
+        results = dist_instance.exponential_func(scales, seeds)
+
+        self.assertTrue(len(results) == len(scales))
+
+        # get normalized mean and stddev
+        s1 = np.std(results)
+        m1 = np.mean(results)
+
+        self.assertAlmostEqual(s1, 0.10, delta=0.05)
+        self.assertAlmostEqual(m1, 0.10, delta=0.05)
+
+        seeds2 = pd.Series(np.full(data_size, -1, dtype=np.int32))
+        results2 = dist_instance.exponential_func(scales, seeds2)
+        s2 = np.std(results2)
+        m2 = np.mean(results2)
+
+        self.assertAlmostEqual(s2, 0.10, delta=0.05)
+        self.assertAlmostEqual(m2, 0.10, delta=0.05)
+
 
 # run the tests
 # if __name__ == '__main__':

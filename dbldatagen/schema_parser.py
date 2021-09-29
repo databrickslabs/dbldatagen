@@ -97,7 +97,8 @@ class SchemaParser(object):
         table_defn = " ".join(lines)
 
         # get table name from s
-        table_name_match = re.search(r"^\screate\s*(temporary\s*)?table\s*([a-zA-Z0-9_]*)\s*(\(.*)$", table_defn)
+        table_name_match = re.search(r"^\s*create\s*(temporary\s*)?table\s*([a-zA-Z0-9_]*)\s*(\(.*)$", table_defn,
+                                     flags=re.IGNORECASE)
 
         if table_name_match:
             table_name = table_name_match.group(2)
