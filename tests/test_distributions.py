@@ -18,7 +18,6 @@ class TestDistributions(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        print("setting up")
         cls.rows = 10000
 
         # will have implied column `id` for ordinal of row
@@ -288,6 +287,34 @@ class TestDistributions(unittest.TestCase):
         self.assertEqual(summary_data['min_c4'], 1)
         self.assertEqual(summary_data['max_c4'], 40)
 
+    def test_gamma_generation_func(self):
+        dist_instance = dist.Gamma(0.5, 0.5)  # instance of exponential distribution with sc
+
+        data_size = 10000
+        # check the normal function
+        shapes = pd.Series(np.full(data_size, 0.5))
+        scales = pd.Series(np.full(data_size, 0.5))
+        seeds = pd.Series(np.full(data_size, 42, dtype=np.int32))
+        results = dist_instance.gamma_func(shapes, scales, seeds)
+
+        self.assertTrue(len(results) == len(scales))
+
+        # get normalized mean and stddev
+        s1 = np.std(results)
+        m1 = np.mean(results)
+        print(m1, s1)
+
+        self.assertAlmostEqual(s1, 0.075, delta=0.05)
+        self.assertAlmostEqual(m1, 0.055, delta=0.05)
+
+        seeds2 = pd.Series(np.full(data_size, -1, dtype=np.int32))
+        results2 = dist_instance.gamma_func(shapes, scales, seeds2)
+        s2 = np.std(results2)
+        m2 = np.mean(results2)
+
+        self.assertAlmostEqual(s2, 0.075, delta=0.05)
+        self.assertAlmostEqual(m2, 0.055, delta=0.05)
+
     def test_beta_distribution(self):
         # will have implied column `id` for ordinal of row
         beta_data_generator = (
@@ -315,6 +342,34 @@ class TestDistributions(unittest.TestCase):
         self.assertEqual(summary_data['min_c4'], 1)
         self.assertEqual(summary_data['max_c4'], 40)
 
+    def test_beta_generation_func(self):
+        dist_instance = dist.Beta(0.5, 0.5)  # instance of beta distribution
+
+        data_size = 10000
+        # check the normal function
+        alphas = pd.Series(np.full(data_size, 0.5))
+        betas = pd.Series(np.full(data_size, 0.5))
+        seeds = pd.Series(np.full(data_size, 42, dtype=np.int32))
+        results = dist_instance.beta_func(alphas, betas, seeds)
+
+        self.assertTrue(len(results) == len(alphas))
+
+        # get normalized mean and stddev
+        s1 = np.std(results)
+        m1 = np.mean(results)
+
+        self.assertAlmostEqual(s1, 0.35, delta=0.1)
+        self.assertAlmostEqual(m1, 0.5, delta=0.1)
+
+        seeds2 = pd.Series(np.full(data_size, -1, dtype=np.int32))
+        results2 = dist_instance.beta_func(alphas, betas, seeds2)
+        s2 = np.std(results2)
+        m2 = np.mean(results2)
+
+        self.assertAlmostEqual(s2, 0.35, delta=0.1)
+        self.assertAlmostEqual(m2, 0.5, delta=0.1)
+
+
     def test_exponential_distribution(self):
         # will have implied column `id` for ordinal of row
         exponential_data_generator = (
@@ -341,6 +396,33 @@ class TestDistributions(unittest.TestCase):
 
         self.assertEqual(summary_data['min_c4'], 1)
         self.assertEqual(summary_data['max_c4'], 40)
+
+    def test_exponential_generation_func(self):
+        dist_instance = dist.Exponential(0.5)  # instance of exponential distribution with sc
+
+        data_size = 10000
+        # check the normal function
+        scales = pd.Series(np.full(data_size, 1.0 / dist_instance.rate))
+        seeds = pd.Series(np.full(data_size, 42, dtype=np.int32))
+        results = dist_instance.exponential_func(scales, seeds)
+
+        self.assertTrue(len(results) == len(scales))
+
+        # get normalized mean and stddev
+        s1 = np.std(results)
+        m1 = np.mean(results)
+
+        self.assertAlmostEqual(s1, 0.10, delta=0.05)
+        self.assertAlmostEqual(m1, 0.10, delta=0.05)
+
+        seeds2 = pd.Series(np.full(data_size, -1, dtype=np.int32))
+        results2 = dist_instance.exponential_func(scales, seeds2)
+        s2 = np.std(results2)
+        m2 = np.mean(results2)
+
+        self.assertAlmostEqual(s2, 0.10, delta=0.05)
+        self.assertAlmostEqual(m2, 0.10, delta=0.05)
+
 
 # run the tests
 # if __name__ == '__main__':
