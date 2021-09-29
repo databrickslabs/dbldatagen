@@ -35,9 +35,19 @@ class Beta(DataDistribution):
         self._alpha = alpha
         self._beta = beta
 
+    @property
+    def alpha(self):
+        """ Return alpha parameter."""
+        return self._alpha
+
+    @property
+    def beta(self):
+        """ Return beta parameter."""
+        return self._beta
+
     def __str__(self):
         """ Return string representation of object"""
-        return (f"BetaDistribution(alpha={self._alpha}, beta={self._beta}, randomSeed={self.randomSeed})")
+        return f"BetaDistribution(alpha={self._alpha}, beta={self._beta}, randomSeed={self.randomSeed})"
 
     @staticmethod
     def beta_func(alpha_series: pd.Series, beta_series: pd.Series, random_seed: pd.Series) -> pd.Series:

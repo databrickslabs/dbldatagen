@@ -292,8 +292,8 @@ class TestDistributions(unittest.TestCase):
 
         data_size = 10000
         # check the normal function
-        shapes = pd.Series(np.full(data_size, 0.5))
-        scales = pd.Series(np.full(data_size, 0.5))
+        shapes = pd.Series(np.full(data_size, dist_instance.shape))
+        scales = pd.Series(np.full(data_size, dist_instance.scale))
         seeds = pd.Series(np.full(data_size, 42, dtype=np.int32))
         results = dist_instance.gamma_func(shapes, scales, seeds)
 
@@ -347,8 +347,8 @@ class TestDistributions(unittest.TestCase):
 
         data_size = 10000
         # check the normal function
-        alphas = pd.Series(np.full(data_size, 0.5))
-        betas = pd.Series(np.full(data_size, 0.5))
+        alphas = pd.Series(np.full(data_size, dist_instance.alpha))
+        betas = pd.Series(np.full(data_size, dist_instance.beta))
         seeds = pd.Series(np.full(data_size, 42, dtype=np.int32))
         results = dist_instance.beta_func(alphas, betas, seeds)
 
@@ -402,7 +402,7 @@ class TestDistributions(unittest.TestCase):
 
         data_size = 10000
         # check the normal function
-        scales = pd.Series(np.full(data_size, 1.0 / dist_instance.rate))
+        scales = pd.Series(np.full(data_size, dist_instance.scale))
         seeds = pd.Series(np.full(data_size, 42, dtype=np.int32))
         results = dist_instance.exponential_func(scales, seeds)
 
