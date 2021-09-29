@@ -37,12 +37,12 @@ class Gamma(DataDistribution):
     @property
     def shape(self):
         """ Return shape parameter."""
-        return self.shape
+        return self._shape
 
     @property
     def scale(self):
         """ Return scale parameter."""
-        return self.scale
+        return self._scale
 
     def __str__(self):
         """ Return string representation of object """
