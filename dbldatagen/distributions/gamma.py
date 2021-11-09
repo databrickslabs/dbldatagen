@@ -34,9 +34,19 @@ class Gamma(DataDistribution):
         self._shape = shape
         self._scale = scale
 
+    @property
+    def shape(self):
+        """ Return shape parameter."""
+        return self._shape
+
+    @property
+    def scale(self):
+        """ Return scale parameter."""
+        return self._scale
+
     def __str__(self):
         """ Return string representation of object """
-        return (f"GammaDistribution(shape(`k`)={self._shape}, scale(`theta`)={self._scale}, randomSeed={self.randomSeed})")
+        return f"GammaDistribution(shape(`k`)={self._shape}, scale(`theta`)={self._scale}, seed={self.randomSeed})"
 
     @staticmethod
     def gamma_func(shape_series: pd.Series, scale_series: pd.Series, random_seed: pd.Series) -> pd.Series:

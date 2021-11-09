@@ -67,6 +67,12 @@ class Exponential(DataDistribution):
         """ Return rate parameter"""
         return self._rate
 
+    @property
+    def scale(self):
+        """ Return scale implicit parameter. Scale is 1/rate"""
+        return 1.0 / self._rate
+
+
     def generateNormalizedDistributionSample(self):
         """ Generate sample of data for distribution
 
