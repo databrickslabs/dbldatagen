@@ -24,6 +24,7 @@ Here is an example illustrating use of some of the range constraints
 
 ```python 
 import dbldatagen as dg
+from pyspark.sql.types import IntegerType, StringType
 
 row_count=1000 * 100
 testDataSpec = (dg.DataGenerator(spark, name="test_data_set1", rows=row_count,
@@ -124,7 +125,8 @@ testDataSpec = (dg.DataGenerator(spark, name="test_data_set1", rows=row_count,
                                                                              "days=3"), 
                                                                                    random=True)
                    .withColumn("return_date", "date", 
-                        expr="date_add('purchase_date', cast(floor(rand() * 100 + 1) as int))")
+                        expr="date_add(purchase_date, cast(floor(rand() * 100 + 1) as int))", 
+                              baseColumn="purchase_date")
 
                    )
 
