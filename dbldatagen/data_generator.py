@@ -9,7 +9,7 @@ import copy
 import logging
 import re
 
-from pyspark.sql.types import LongType, IntegerType, StringType, StructType, StructField
+from pyspark.sql.types import LongType, IntegerType, StringType, StructType, StructField, DataType
 
 from .column_generation_spec import ColumnGenerationSpec
 from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME
@@ -598,6 +598,11 @@ class DataGenerator:
         if baseColumn is not None:
             self._checkColumnOrColumnList(baseColumn)
         ensure(not self.isFieldExplicitlyDefined(colName), f"duplicate column spec for column `{colName}`")
+
+        ensure(not isinstance(minValue, DataType),
+               f"""unnecessary `datatype` argument specified for `withColumnSpec` for column `{colName}` -
+                    Datatype parameter is only needed for `withColumn` and not permitted for `withColumnSpec`
+               """)
 
         # handle migration of old `min` and `max` options
         if _OLD_MIN_OPTION in kwargs:
