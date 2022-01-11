@@ -36,7 +36,7 @@ The data generator includes the following features:
 
 * Specify [number of rows to generate](#create-a-data-set-without-pre-existing-schemas)
 * Specify [number of Spark partitions to distribute data generation across](#scaling-it-up)
-* Specify [numeric, time and date ranges for columns](./DATARANGES)
+* Specify [numeric, time and date ranges for columns](./DATARANGES.md)
 * Generate column data at [random or from repeatable seed values](#generating-repeatable-data)
 * Generate column data from [one or more seed columns](#generating-repeatable-data)  
 [values optionally with weighting](#create-a-data-set-without-pre-existing-schemas) of how frequently values occur
@@ -44,7 +44,7 @@ The data generator includes the following features:
 and [formatting on string columns](textdata)
 * Use [SQL based expressions](#using-sql-in-data-generation) to control or augment column generation
 * Script Spark SQL table creation statement for dataset 
-* Specify a [statistical distribution for random values](./DISTRIBUTIONS)
+* Specify a [statistical distribution for random values](./DISTRIBUTIONS.md)
 
 
 ## Tutorials and examples
