@@ -25,7 +25,7 @@ baseColumn        Either the string name of the base column, or a list of column
 values            List of discrete values for the column. Discrete values can numeric, dates timestamps, strings etc.
 weights           List of discrete weights for the column. Controls spread of values
 percentNulls      Percentage of nulls to generate for column. Fraction representing percentage between 0.0 and 1.0
-uniqueValues      Number of distinct unqique values for the column. Use as alternative to data range.
+uniqueValues      Number of distinct unique values for the column. Use as alternative to data range.
 begin             Beginning of range for date and timestamp fields.
 end               End of range for date and timestamp fields.
 interval          Interval of range for date and timestamp fields.
