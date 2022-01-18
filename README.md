@@ -44,7 +44,9 @@ used in other computations
 * plugin mechanism to allow use of 3rd party libraries such as Faker
 
 Details of these features can be found in the [Developer Docs](docs/source/APIDOCS.md) and the online help
-(which contains the full documentation).
+(which contains the full documentation including the HTML version of the Developer Docs) -
+ [Online Help](https://databrickslabs.github.io/dbldatagen/public_docs/index.html). 
+
 
 
 ## Project Support
@@ -70,7 +72,16 @@ The release binaries can be accessed at:
 To use download a wheel file and install using the Databricks install mechanism to install a wheel based
 library into your workspace.
 
-Latest pre-release is code complete and fully functional. 
+Alternatively, you can install the library as a notebook scoped library when working within the Databricks 
+notebook environment through the use of a `%pip` cell in your notebook.
+
+To install as a notebook-scoped library, create and execute a notebook cell with the following text:
+
+> `%pip install git+https://github.com/databrickslabs/dbldatagen`
+
+The `%pip install` method will work in the Databricks Community Environment also.
+
+The latest pre-release is code complete and fully functional. 
 
 ## Using the Project
 To use the project, the generated wheel should be installed in your Python notebook as a wheel based library
