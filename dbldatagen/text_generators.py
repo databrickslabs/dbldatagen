@@ -372,7 +372,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
             template = altTemplates[self._getRandomInt(0, numAlternatives - 1, rndGenerator)]
             return self.valueFromSingleTemplate(originalValue, template, escapeSpecialMeaning)
 
-        rng = None  # use standard random for performance reasons
+        rng = None  # use standard random
         if len(self._templates) > 1:
             results = v.apply(lambda v1, t, e, rndGenerator: valueFromRandomTemplate(v1, t, e, rndGenerator),
                               args=(self._templates, self._escapeSpecialMeaning, rng))

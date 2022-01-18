@@ -221,46 +221,6 @@ class TestTextGeneration(unittest.TestCase):
             self.assertIsNotNone(test_value)
             self.assertTrue(match_pattern.match(test_value))
 
-    def test_examples_text_generation1_repeatable(self):
-        import dbldatagen as dg
-
-        partitions_requested = 2
-        data_rows = 1000
-
-        dataspec = (
-            dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested, randomSeedMethod="hash_fieldname",
-                             randomSeed=42)
-                .withIdOutput()
-                .withColumn("name", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w')
-                .withColumn("payment_instrument_type", values=['paypal', 'visa', 'mastercard', 'amex'],
-                            random=True)
-                .withColumn("int_payment_instrument", "int", minValue=0000, maxValue=9999,
-                            baseColumn="name",
-                            baseColumnType="hash", omit=True)
-                .withColumn("payment_instrument",
-                            expr="format_number(int_payment_instrument, '**** ****** *####')",
-                            baseColumn="int_payment_instrument")
-                .withColumn("email", template=r'\\w.\\w@\\w.com')
-                .withColumn("md5_payment_instrument",
-                            expr="md5(concat(payment_instrument_type, ':', payment_instrument))",
-                            baseColumn=['payment_instrument_type', 'payment_instrument'])
-        )
-        df1 = dataspec.build()
-
-        dataspec2 = dataspec.clone()
-        df2 = dataspec2.build()
-
-        data1 = df1.collect()
-        data2 = df2.collect()
-
-        for i in range(len(data1)):
-            self.assertEqual(data1[i]['id'], data2[i]['id'])
-            #self.assertEqual(data1[i]['payment_instrument_type'], data2[i]['payment_instrument_type'])
-            #self.assertEqual(data1[i]['name'], data2[i]['name'])
-
-
-
-
     def test_raw_template_text_generation3(self):
         """ As the test coverage tools don't detect code only used in UDFs,
             lets add some explicit tests for the underlying code"""

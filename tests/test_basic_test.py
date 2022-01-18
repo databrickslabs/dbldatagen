@@ -2,7 +2,7 @@ import logging
 import unittest
 
 from pyspark.sql import functions as F
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, BooleanType, DoubleType
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType
 
 import dbldatagen as dg
 
@@ -353,47 +353,6 @@ class TestBasicOperation(unittest.TestCase):
         percent_nulls_observed = (null_count / count) * 100.0
         self.assertLessEqual( percent_nulls_observed, 15.0)
         self.assertGreaterEqual( percent_nulls_observed, 5.0)
-
-    @unittest.expectedFailure
-    def test_basic_with_schema2(self):
-        """Test use of schema"""
-        schema = StructType([
-            StructField("csId", StringType(), True),
-            StructField("senior", BooleanType(), True),
-            StructField("partner", BooleanType(), True),
-            StructField("tenure", IntegerType(), True),
-            StructField("internetService", StringType(), True),
-            StructField("onlineBackup", StringType(), True),
-            StructField("monthlyCharges", DoubleType(), True),
-            StructField("totalCharges", DoubleType(), True),
-        ])
-
-        partitions_requested = 4
-        data_rows = 10000
-        dataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested,
-                                     randomSeedMethod="hash_fieldname")
-                    .withSchema(schema))
-
-        dataspec = (dataspec
-                    .withColumnSpec("csId", StringType(), expr="concat(cast(rand()*6 as INT), '-', strId)")
-                    .withColumnSpec("senior", BooleanType(), values=[True, False], random=True)
-                    .withColumnSpec("partner", BooleanType(), values=[True, False], random=True)
-                    .withColumnSpec("dependents", BooleanType(), values=[True, False], random=True)
-                    .withColumnSpec("tenure", IntegerType(), minValue=0, maxValue=100)
-                    .withColumnSpec("internetService", StringType(), values=["No", "DSL", "Fiber optic"], random=True)
-                    .withColumnSpec("onlineBackup", StringType(), values=["No", "Yes", "No internet service"],
-                                    baseColumn="internetService")
-                    .withColumnSpec("monthlyCharges", DoubleType(), minValue=18.25, maxValue=118.75,
-                                    baseColumn=['PhoneService', 'MultipleLines', 'InternetService', 'OnlineSecurity',
-                                                'DeviceProtection', 'TechSupport', 'StreamingTV', 'StreamingMovies'])
-                    .withColumnSpec("totalCharges", DoubleType(), minValue=18.80, maxValue=8685.00,
-                                    baseColumn='MonthlyCharges')
-                    )
-
-        testDataDf = dataspec.build()
-        testDataDf = testDataSpec3.build()i'd'
-
-        self.assertEqual(testDataDf.count(), data_rows)
 
 
 # run the tests
