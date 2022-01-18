@@ -114,7 +114,21 @@ data
 
 ## Creating simple test data sets
 
-You can use the data generator with, or without the use of a pre-existing schema.
+You can use the data generator with, or without the use of a pre-existing schema. 
+The basic mechanism is as follows:
+
+* Define a `DataGenerator` instance
+* Optionally add a schema
+* If using a schema, add specifications for how the columns are to be generated with the
+`withColumnSpec` method. This does not add new columns, but specifies how columns imported from the 
+schema should be generated
+* Add new columns with the `withColumn` method
+
+> **_NOTE:_** Column names are case insensitive in Spark SQL. 
+> Hence adding a new column that has the same column name but differs in case from an existing column
+> name will succeed but potentially cause errors later.
+>
+> When adding a column spec for an existing column, it is not necessary to define the type.
 
 ### Create a data set without pre-existing schemas
 
