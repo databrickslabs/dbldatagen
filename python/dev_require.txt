@@ -25,7 +25,7 @@ sphinx_rtd_theme
 nbsphinx
 numpydoc==0.8
 pypandoc
-ipython==7.4.0
+ipython==7.16.3
 recommonmark
 sphinx-markdown-builder
 rst2pdf==0.98
