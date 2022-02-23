@@ -35,7 +35,7 @@ So until the ``build`` command is invoked, the data generation specification is 
 Once ``build`` has been invoked, the data generation instance holds state about the data set generated.
 While ``build`` can be invoked a subsequent time, making further modifications to the definition post build before
 calling ``build`` again is not recommended. We recommend the use of the ``clone`` method to make a new data set similar
-to an existing one if furthter modifications are needed.
+to an existing one if further modifications are needed.
 
 See :data:`~dbldatagen.data_generator.DataGenerator.clone` for further information.
 
