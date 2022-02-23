@@ -354,6 +354,14 @@ class TestBasicOperation(unittest.TestCase):
         self.assertLessEqual( percent_nulls_observed, 15.0)
         self.assertGreaterEqual( percent_nulls_observed, 5.0)
 
+    def test_library_version(self):
+        lib_version = dg.__version__
+
+        self.assertIsNotNone(lib_version)
+        self.assertTrue(type(lib_version) == str, "__version__ is expected to be a string")
+        self.assertTrue(len(lib_version.strip()) > 0, "__version__ is expected to be non-empty")
+
+
 
 # run the tests
 # if __name__ == '__main__':
