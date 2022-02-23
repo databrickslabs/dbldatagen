@@ -86,7 +86,7 @@ The data set is generated when the ``build`` method is invoked on the data gener
 
 This performs the following actions:
 
-- A psuedo build plan will be computed for debugging purposes
+- A pseudo build plan will be computed for debugging purposes
 - The set of columns is reordered to control the order in which column data is generated. The ordering is based on the
   ``baseColumn`` attribute of individual column generation spec.
 - Cumulative density functions will be computed for columns where weighted values are specified
