@@ -58,7 +58,7 @@ See :data:`~dbldatagen.data_generator.DataGenerator.withColumnSpec`.
 
 Use ``withColumnSpecs`` to define how multiple columns imported from a schema should be generated.
 As the pattern matching may inadvertently match an unintended column, it is permitted to override the specification
-added through this method by a subsequent call to ``withColumnSpec`` to change the definition of how a speific column
+added through this method by a subsequent call to ``withColumnSpec`` to change the definition of how a specific column
 should be generated
 See :data:`~dbldatagen.data_generator.DataGenerator.withColumnSpecs`.
 
