@@ -7,10 +7,39 @@ Installation notes
 ==================
 
 The data generator framework can be installed into your Databricks environment by
-either
+one of the following methods:
 
-* installing the Python wheel file into your environment
+* Installing and building directly from the Databricks Labs Github repository
+* Installing the Python wheel file into your environment
 * In a future update, installing the package from a public repository such as PyPi
+
+Installing and building directly from Databricks Labs repository
+----------------------------------------------------------------
+
+When developing with the Databricks notebook environment, you can use the notebook scoped library install
+features to install directly from the Databricks Labs Github repository.
+
+To do this add and execute the following cell at the start of your notebook:
+
+.. code-block::
+
+   %pip install git+https://github.com/databrickslabs/dbldatagen
+
+By default, this will install a fresh build from the ``master`` branch. You can install from a
+specific branch by appending the branch identifier to the github URL.
+
+.. code-block::
+
+   %pip install git+https://github.com/databrickslabs/dbldatagen#error-report-improvements
+
+.. seealso::
+   See the following links for more details:
+
+   * `Azure documentation on notebook scoped libraries <https://docs.microsoft.com/en-us/azure/databricks/libraries/notebooks-python-libraries#install-a-library-from-a-version-control-system-with-pip/>`_
+
+   * `AWS documentation on notebook scoped libraries <https://docs.databricks.com/libraries/notebooks-python-libraries.html#id5>`_
+
+   * `VCS support in pip <https://pip.pypa.io/en/stable/cli/pip_install/>`_
 
 Installing from pre-built release wheel
 ---------------------------------------
