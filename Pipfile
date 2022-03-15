@@ -7,7 +7,7 @@ verify_ssl = true
 pytest = "*"
 pytest-cov = "*"
 
-numpy = "1.19.2"
+numpy = "1.21.0"
 pyspark = "3.0.1"
 pyarrow = "1.0.1"
 pandas = "1.1.3"
