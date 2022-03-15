@@ -1,6 +1,6 @@
 # The following packages are used in building the test data generator framework.
 # All packages used are already installed in the Databricks runtime environment for version 6.5 or later
-numpy==1.18.1
+numpy==1.21.0
 pandas==1.0.1
 pickleshare==0.7.5
 py4j==0.10.9
