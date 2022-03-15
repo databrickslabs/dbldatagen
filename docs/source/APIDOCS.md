@@ -17,12 +17,14 @@ For example, at the time of writing, a billion row version of the IOT data set e
 can be generated and written to a Delta table in 
 [under 2 minutes using a 12 node x 8 core cluster (using DBR 8.3)](#scaling-it-up)
 
-> NOTE: This document does not cover all of the classes and methods in the codebase.
+> NOTE: The markup version of this document does not cover all of the classes and methods in the codebase.
 >  For further information on classes and methods contained in  these modules, and 
 > to explore the python documentation for these modules, build the HTML documentation from 
 > the main project directory using `make docs`. Use your browser to explore the documentation by 
 > starting with the html file  `./docs/build/html/index.html`
->
+> 
+> If you are viewing the online help version of this document, the classes and methods are already included.
+ 
 
 ## General Overview
 
@@ -93,6 +95,15 @@ There is also support for applying arbitrary SQL expressions, and generation of 
 Before you can use the data generator, you need to install the package in your environment and import it in your code.
 You can install the package from the Github releases as a library on your cluster. 
 
+> NOTE: When running in a Databricks notebook environment, you can install directly using 
+> the `%pip` command in a notebook cell
+>  
+> To install as a notebook scoped library, add a cell with the following text and execute it:
+>
+> `%pip install git+https://github.com/databrickslabs/dbldatagen`
+ 
+The `%pip install` method will work in the Databricks Community Environment also.
+
 The releases are located at 
 [Databricks Labs Data Generator releases](https://github.com/databrickslabs/dbldatagen/releases)
 
@@ -114,7 +125,21 @@ data
 
 ## Creating simple test data sets
 
-You can use the data generator with, or without the use of a pre-existing schema.
+You can use the data generator with, or without the use of a pre-existing schema. 
+The basic mechanism is as follows:
+
+* Define a `DataGenerator` instance
+* Optionally add a schema
+* If using a schema, add specifications for how the columns are to be generated with the
+`withColumnSpec` method. This does not add new columns, but specifies how columns imported from the 
+schema should be generated
+* Add new columns with the `withColumn` method
+
+> **_NOTE:_** Column names are case insensitive in Spark SQL. 
+> Hence adding a new column that has the same column name but differs in case from an existing column
+> name will succeed but potentially cause errors later.
+>
+> When adding a column spec for an existing column, it is not necessary to define the type.
 
 ### Create a data set without pre-existing schemas
 

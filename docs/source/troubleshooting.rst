@@ -19,8 +19,12 @@ See:
 You may also configure the data generator to produce more verbose output when building the
 dataspec and the resulting data set.
 
-To do this, set the ``verbose`` option to ``True`` when creating the dataspec. For example:
+To do this, set the ``verbose`` option to ``True`` when creating the dataspec.
 
+Additionally, setting the ``debug`` option to ``True`` will produce additional debug level output.
+These correspond to the ``info`` and ``debug`` log levels of the internal messages.
+
+For example:
 
 .. code-block:: python
 
