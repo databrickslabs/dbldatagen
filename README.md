@@ -74,7 +74,7 @@ notebook environment through the use of a `%pip install` cell in your notebook.
 
 To install as a notebook-scoped library, create and execute a notebook cell with the following text:
 
-> `%pip install git+https://github.com/databrickslabs/dbldatagen`
+> `%pip install git+https://github.com/databrickslabs/dbldatagen@current`
 
 The `%pip install` method will work in Delta Live Tables pipelines and in the Databricks Community 
 Environment also.
