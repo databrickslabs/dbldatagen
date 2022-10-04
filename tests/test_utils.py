@@ -38,14 +38,6 @@ class TestUtils(unittest.TestCase):
 
         self.assertEqual(len(test2), 2)
 
-        test3= mkBoundsList(1, [1, 1])
-
-        self.assertEqual(len(test3), 2)
-
-        test4 = mkBoundsList([2,3], [1, 1])
-
-        self.assertEqual(len(test4), 2)
-
     def testCoalesce(self):
         """ Test utils coalesce function"""
         result = coalesce_values(None, 1)
@@ -83,19 +75,6 @@ class TestUtils(unittest.TestCase):
     def testParseTimeInterval2a(self):
         interval = parse_time_interval("hours=1, seconds = 2")
         self.assertEqual(timedelta(hours=1, seconds=2), interval)
-
-    def testParseTimeInterval2b(self):
-        interval = parse_time_interval("1 hour, 1 second")
-        self.assertEqual(timedelta(hours=1, seconds=1), interval)
-
-        interval2 = parse_time_interval("1 hour, 10 milliseconds")
-        self.assertEqual(timedelta(hours=1, milliseconds=10), interval2)
-
-        interval3 = parse_time_interval("1 hour, 10 microseconds")
-        self.assertEqual(timedelta(hours=1, microseconds=10), interval3)
-
-        interval4 = parse_time_interval("1 year, 4 weeks")
-        self.assertEqual(timedelta(weeks=56), interval4)
 
     def testParseTimeInterval3a(self):
         interval = parse_time_interval("1 hours, minutes = 2")

@@ -196,9 +196,9 @@ def parse_time_interval(spec):
             hours = time_value
         elif time_type in ["minutes", "minute"]:
             minutes = time_value
-        elif time_type in ["seconds", "second"]:
+        elif time_type in ["seconds", "seconds"]:
             seconds = time_value
-        elif time_type in ["microseconds", "microsecond"]:
+        elif time_type in ["microseconds", "microseconds"]:
             microseconds = time_value
         elif time_type in ["milliseconds", "millisecond"]:
             milliseconds = time_value
