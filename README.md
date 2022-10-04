@@ -41,7 +41,7 @@ used in other computations
 * Generating values to conform to a schema or independent of an existing schema
 * use of SQL expressions in test data generation
 * plugin mechanism to allow use of 3rd party libraries such as Faker
-* Use of data generator to generate sources in Databricks Delta Live Tables
+* Use of data generator to generate data sources in Databricks Delta Live Tables
 
 Details of these features can be found in the [Developer Docs](docs/source/APIDOCS.md) and the online help
 (which contains the full documentation including the HTML version of the Developer Docs) -
