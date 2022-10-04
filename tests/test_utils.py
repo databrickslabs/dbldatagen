@@ -38,14 +38,6 @@ class TestUtils(unittest.TestCase):
 
         self.assertEqual(len(test2), 2)
 
-        test3= mkBoundsList(1, [1, 1])
-
-        self.assertEqual(len(test3), 2)
-
-        test4 = mkBoundsList([2,3], [1, 1])
-
-        self.assertEqual(len(test4), 2)
-
     def testCoalesce(self):
         """ Test utils coalesce function"""
         result = coalesce_values(None, 1)
