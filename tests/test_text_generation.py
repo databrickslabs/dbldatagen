@@ -195,6 +195,34 @@ class TestTextGeneration(unittest.TestCase):
             self.assertIsNotNone(test_value)
             self.assertTrue(match_pattern.match(test_value))
 
+    def test_raw_iltext_text_generation(self):
+        """ As the test coverage tools dont detect code only used in UDFs,
+            lets add some explicit tests for the underlying code"""
+        import numpy as np
+        # test the IL Text generator
+        tg1 = dg.ILText(paragraphs=(1, 4), sentences=(2, 6), words=(1, 8))
+
+        # test the repr
+        desc = repr(tg1)
+        self.assertTrue(desc is not None and len(desc.strip()) > 0)
+
+        # now test generation of text
+        base_rows = np.arange(1000)
+
+        test_values = tg1.generateText(base_rows, base_rows.size)
+
+        data = test_values.tolist()
+        match_pattern = re.compile(r"(\s?[A-Z]([a-z ]+)\.\s*)+")
+
+        # check that paras only contains text
+        for test_value in data:
+            self.assertIsNotNone(test_value)
+            self.assertTrue(match_pattern.match(test_value))
+
+
+
+
+
     def test_raw_template_text_generation1(self):
         """ As the test coverage tools dont detect code only used in UDFs,
             lets add some explicit tests for the underlying code"""
