@@ -112,6 +112,14 @@ df = df_spec.build()
 num_rows=df.count()                          
 ```
 
+# Getting the Databricks data generator version
+You can run the following on the command line to get the library version when building the code
+
+```commandline
+python -c "import dbldatagen as dg; print(dg.__version__)"
+```
+
+Inside a notebook, you can use the following to get the version:
 
 # Building the code
 
