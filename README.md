@@ -7,7 +7,6 @@
 
 [![build](https://github.com/databrickslabs/dbldatagen/workflows/build/badge.svg?branch=master)](https://github.com/databrickslabs/dbldatagen/actions?query=workflow%3Abuild+branch%3Amaster)
 [![codecov](https://codecov.io/gh/databrickslabs/dbldatagen/branch/master/graph/badge.svg)](https://codecov.io/gh/databrickslabs/dbldatagen)
-![lines](https://img.shields.io/tokei/lines/github/databrickslabs/dbldatagen) 
 [![downloads](https://img.shields.io/github/downloads/databrickslabs/dbldatagen/total.svg)](https://hanadigital.github.io/grev/?user=databrickslabs&repo=dbldatagen)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/databrickslabs/dbldatagen.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/databrickslabs/dbldatagen/context:python)
 
@@ -42,6 +41,7 @@ used in other computations
 * Generating values to conform to a schema or independent of an existing schema
 * use of SQL expressions in test data generation
 * plugin mechanism to allow use of 3rd party libraries such as Faker
+* Use of data generator to generate sources in Databricks Delta Live Tables
 
 Details of these features can be found in the [Developer Docs](docs/source/APIDOCS.md) and the online help
 (which contains the full documentation including the HTML version of the Developer Docs) -
@@ -69,24 +69,24 @@ release notes for library compatibility
 The release binaries can be accessed at:
 - Databricks Labs Github Data Generator releases - https://github.com/databrickslabs/dbldatagen/releases
 
-To use download a wheel file and install using the Databricks install mechanism to install a wheel based
-library into your workspace.
-
-Alternatively, you can install the library as a notebook scoped library when working within the Databricks 
-notebook environment through the use of a `%pip` cell in your notebook.
+You can install the library as a notebook scoped library when working within the Databricks 
+notebook environment through the use of a `%pip install` cell in your notebook.
 
 To install as a notebook-scoped library, create and execute a notebook cell with the following text:
 
 > `%pip install git+https://github.com/databrickslabs/dbldatagen`
 
-The `%pip install` method will work in the Databricks Community Environment also.
+The `%pip install` method will work in Delta Live Tables pipelines and in the Databricks Community 
+Environment also.
 
-The latest pre-release is code complete and fully functional. 
+Alternatively, you can download a wheel file and install using the Databricks install mechanism to install a wheel based
+library into your workspace.
 
-## Using the Project
-To use the project, the generated wheel should be installed in your Python notebook as a wheel based library
+## Using the Data Generator
+To use the data generator, install the library using the `%pip install` method or install the Python wheel directly 
+in your environment.
 
-Once the library has been installed, you can use it to generate a test data frame.
+Once the library has been installed, you can use it to generate a data frame composed of synthetic data.
 
 For example
 
