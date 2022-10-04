@@ -4,7 +4,7 @@
 
 See the contents of the file `python/require.txt` to see the Python package dependencies
 
-### Version 0.2.0-rc1
+### Version 0.2.1-rc0
 
 #### Features
 * Uses pipenv for main build process
@@ -24,3 +24,6 @@ See the contents of the file `python/require.txt` to see the Python package depe
 * moved Github repo to https://github.com/databrickslabs/dbldatagen/releases
 * code tidy up and rename of options
 * added text generation plugin support for python functions and 3rd party libraries
+
+
+### version 0.2.1-rc0-rc1 tag 
