@@ -23,14 +23,20 @@ To do this add and execute the following cell at the start of your notebook:
 
 .. code-block::
 
-   %pip install git+https://github.com/databrickslabs/dbldatagen
+   %pip install git+https://github.com/databrickslabs/dbldatagen@current
 
-By default, this will install a fresh build from the ``master`` branch. You can install from a
-specific branch by appending the branch identifier to the github URL.
+By default, this will install a fresh build from latest release based on the ``master`` branch.
+You can install from a specific branch by appending the branch identifier or tag to the github URL.
 
 .. code-block::
 
-   %pip install git+https://github.com/databrickslabs/dbldatagen#error-report-improvements
+   %pip install git+https://github.com/databrickslabs/dbldatagen@dbr_7_3_LTS_compat
+
+The following tags will be used to pick up specific versions:
+
+* `current` - latest build from master + doc changes and critical bug fixes
+* `stable` - latest release from master (with changes for version marking and documentation only)
+* `preview` - preview build of forthcoming features
 
 .. seealso::
    See the following links for more details:
