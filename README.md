@@ -41,7 +41,6 @@ Details of these features can be found in the [Developer Docs](docs/source/APIDO
 
 > Note: This version is an archival version for compatibility with Databricks runtime 7.3 LTS
 
-
 ## Project Support
 Please note that all projects in the `databrickslabs` github space are provided for your exploration only, and are not formally supported by Databricks with Service Level Agreements (SLAs).  They are provided AS-IS and we do not make any guarantees of any kind.  Please do not submit a support ticket relating to any issues arising from the use of these projects.
 
@@ -66,6 +65,13 @@ To use download a wheel file and install using the Databricks install mechanism 
 library into your workspace.
 
 Latest pre-release is code complete and fully functional. 
+
+To use the specific build that retains compatibility with Databricks 7.3 LTS, use the following command
+in a notebook cell to install the runtime:
+
+```commandline
+%pip install git+https://github.com/databrickslabs/dbldatagen@archival_dbr_7_3_LTS
+```
 
 ## Using the Project
 To use the project, the generated wheel should be installed in your Python notebook as a wheel based library
