@@ -49,8 +49,8 @@ __all__ = ["data_generator", "data_analyzer", "schema_parser", "daterange", "nra
 
 def python_version_check():
     import sys
-    if not sys.version_info >= (3, 6):
-        raise RuntimeError("Minimum version of Python supported is 3.6")
+    if not sys.version_info >= (3,8):
+        raise RuntimeError("Minimum version of Python supported is 3.8")
 
 
 # lets check for a correct python version or raise an exception

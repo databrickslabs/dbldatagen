@@ -55,9 +55,10 @@ Please note that all projects in the `databrickslabs` github space are provided 
 Any issues discovered through the use of this project should be filed as GitHub Issues on the Repo.  They will be reviewed as time permits, but there are no formal SLAs for support.
 
 ## Compatibility 
-The Databricks Labs data generator framework can be used with Pyspark 3.x and Python 3.6 or later
+The Databricks Labs data generator framework can be used with Pyspark 3.1.2 and Python 3.8 or later. These are 
+compatible with the Databricks runtime 9.1 LTS and later releases.
 
-However prebuilt releases are tested against Pyspark 3.0.1 (compatible with the Databricks runtime 7.3 LTS 
+Older prebuilt releases are tested against Pyspark 3.0.1 (compatible with the Databricks runtime 7.3 LTS 
 or later) and built with Python 3.7.5
 
 For full library compatibility for a specific Databricks Spark release, see the Databricks 
@@ -81,7 +82,13 @@ To install as a notebook-scoped library, create and execute a notebook cell with
 
 The `%pip install` method will work in the Databricks Community Environment also.
 
-The latest pre-release is code complete and fully functional. 
+To install as a notebook-scoped library targetting earlier runtimes, use the following:
+
+> `%pip install git+https://github.com/databrickslabs/dbldatagen@dbr_7_3_LTS_compat`
+
+This will install the DBR 7.3 compatible archival version. 
+
+However for the latest features, use the latest version.
 
 ## Using the Project
 To use the project, the generated wheel should be installed in your Python notebook as a wheel based library
