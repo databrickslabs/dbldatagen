@@ -37,10 +37,10 @@ While the data generator framework does not require all libraries used by the ru
 the Databricks runtime is used, it will use the version found in the Databricks runtime for 9.1 LTS or later.
 You can use older versions of the Databricks Labs Data Generator by referring to that explicit version.
 
-To use an older version in your notebook, you can use the following code in your notebook:
+To use an older DB runtime version in your notebook, you can use the following code in your notebook:
 
 ```commandline
-
+%pip install git+https://github.com/databrickslabs/dbldatagen@dbr_7_3_LTS_compat
 ```
 
 See the Databricks runtime release notes for the full list of dependencies.

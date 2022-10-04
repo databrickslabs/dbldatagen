@@ -41,6 +41,7 @@ used in other computations
 * Generating values to conform to a schema or independent of an existing schema
 * use of SQL expressions in test data generation
 * plugin mechanism to allow use of 3rd party libraries such as Faker
+* Use within a Databricks Delta Live Tables pipeline as a synthetic data generation source
 
 Details of these features can be found in the [Developer Docs](docs/source/APIDOCS.md) and the online help
 (which contains the full documentation including the HTML version of the Developer Docs) -
@@ -79,7 +80,7 @@ To install as a notebook-scoped library, create and execute a notebook cell with
 
 > `%pip install git+https://github.com/databrickslabs/dbldatagen`
 
-The `%pip install` method will work in the Databricks Community Environment also.
+The `%pip install` method will work in the Databricks Community Environment and in Delta Live Tables also.
 
 To install as a notebook-scoped library targetting earlier runtimes, use the following:
 
