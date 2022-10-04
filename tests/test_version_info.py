@@ -7,7 +7,8 @@ class TestVersionInfo(unittest.TestCase):
 
     def test_version_info(self):
         vi = get_version(__version__)
-        print(vi)
+        print("version info", vi)
+
         self.assertIsNotNone(vi.build)
         self.assertIsNotNone(vi.major)
         self.assertIsNotNone(vi.minor)

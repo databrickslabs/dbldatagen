@@ -15,7 +15,10 @@ warrant that you have the legal authority to do so.
 
 ## Python compatibility
 
-The code has been tested with Python 3.7.5 and 3.8
+The code has been tested with Python 3.8.10 and later.
+
+Older releases were tested with Python 3.7.5 but as of this release, it requires the Databricks runtime 9.1 LTS or later
+which relies on Python 3.8.10
 
 ## Checking your code for common issues
 
@@ -95,9 +98,20 @@ To run the tests using a `pipenv` environment:
   - Run `make test-with-html-report` to generate test coverage report in `htmlcov/inxdex.html`
 
 # Using the Databricks Labs data generator
-To use the project, the generated wheel should be installed in your Python notebook as a wheel based library
+The release binaries can be accessed at:
+- Databricks Labs Github Data Generator releases - https://github.com/databrickslabs/dbldatagen/releases
 
-Once the library has been installed, you can use it to generate a test data frame.
+To use download a wheel file and install using the Databricks install mechanism to install a wheel based
+library into your workspace.
+
+Alternatively, you can install the library as a notebook scoped library when working within the Databricks 
+notebook environment through the use of a `%pip` cell in your notebook.
+
+To install as a notebook-scoped library, create and execute a notebook cell with the following text:
+
+> `%pip install git+https://github.com/databrickslabs/dbldatagen`
+
+The `%pip install` method will work in the Databricks Community Environment also.
 
 # Coding Style 
 
