@@ -121,6 +121,18 @@ class DataGenerator:
         self.withColumn(ColumnGenerationSpec.SEED_COLUMN, LongType(), nullable=False, implicit=True, omit=True)
         self._batchSize = batchSize
 
+        # set up spark session
+        self._setupSparkSession(sparkSession)
+
+        # set up use of pandas udfs
+        self._setupPandas(batchSize)
+
+    def _setupSparkSession(self, sparkSession):
+        """
+        Set up spark session
+        :param sparkSession: spark session to use
+        :return: nothing
+        """
         if sparkSession is None:
             sparkSession = SparkSingleton.getInstance()
 
@@ -135,8 +147,6 @@ class DataGenerator:
             i.e DataGenerator(sparkSession=spark, name="test", ...)
             """)
 
-        # set up use of pandas udfs
-        self._setupPandas(batchSize)
 
     def _setupPandas(self, pandasBatchSize):
         """

@@ -1,6 +1,7 @@
 import unittest
 
 from dbldatagen._version import get_version, __version__
+from dbldatagen import python_version_check
 
 
 class TestVersionInfo(unittest.TestCase):
@@ -13,6 +14,19 @@ class TestVersionInfo(unittest.TestCase):
         self.assertIsNotNone(vi.major)
         self.assertIsNotNone(vi.minor)
         self.assertIsNotNone(vi.release)
+
+    def test_python_version1(self):
+        PYTHON_VERSION = (3,0)
+        python_version_check(PYTHON_VERSION)
+
+    def test_python_version2(self):
+        PYTHON_VERSION = (3,6)
+        python_version_check(PYTHON_VERSION)
+
+    @unittest.expectedFailure
+    def test_python_version_bad(self):
+        PYTHON_VERSION = (10,1)
+        python_version_check(PYTHON_VERSION)
 
 
 # run the tests

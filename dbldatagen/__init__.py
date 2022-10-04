@@ -46,12 +46,13 @@ __all__ = ["data_generator", "data_analyzer", "schema_parser", "daterange", "nra
            "text_generator_plugins"
            ]
 
+MIN_PYTHON_VERSION = (3, 8)
 
-def python_version_check():
+def python_version_check(python_version_expected):
     import sys
-    if not sys.version_info >= (3, 8):
-        raise RuntimeError("Minimum version of Python supported is 3.8")
+    if not sys.version_info >= python_version_expected:
+        raise RuntimeError(f"Minimum version of Python supported is {MIN_PYTHON_VERSION[0]}.{MIN_PYTHON_VERSION[1]}")
 
 
 # lets check for a correct python version or raise an exception
-python_version_check()
+python_version_check(MIN_PYTHON_VERSION)
