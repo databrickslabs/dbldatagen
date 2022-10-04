@@ -4,7 +4,7 @@
 
 See the contents of the file `python/require.txt` to see the Python package dependencies
 
-### Version 0.2.0-rc1
+### Version 0.2.1
 
 #### Features
 * Uses pipenv for main build process
@@ -21,6 +21,8 @@ See the contents of the file `python/require.txt` to see the Python package depe
 * moved docs to docs folder
 * added support for specific distributions
 * renamed packaging to `dbldatagen`
-* moved Github repo to https://github.com/databrickslabs/dbldatagen/releases
+* Releases now available at https://github.com/databrickslabs/dbldatagen/releases
 * code tidy up and rename of options
-* added text generation plugin support for python functions and 3rd party libraries
+* added text generation plugin support for python functions and 3rd party libraries such as Faker
+* Use of data generator to generate static and streaming data sources in Databricks Delta Live Tables
+* added support for install from PyPi

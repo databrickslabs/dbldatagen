@@ -145,6 +145,12 @@ new_artifact: buildenv
 	-git rm --cached `pwd`/dist/"*.whl"
 	git add -f `pwd`/dist/*.whl
 
+dev-test-pkg: dev-dist
+	@echo "Building test package for Test Pypi..."
+	rm dist/*.txt
+	python3 -m twine upload --repository testpypi dist/*
+
+
 
 dist/dist_flag.txt: dist
 

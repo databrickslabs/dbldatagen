@@ -5,7 +5,7 @@ If it fixes a bug or resolves a feature request, please provide a link to that i
 
 ## Types of changes
 
-What types of changes does your code introduce to dbx?
+What types of changes does your code introduce to dbldatagen?
 _Put an `x` in the boxes that apply_
 
 - [ ] Bug fix (non-breaking change which fixes an issue)

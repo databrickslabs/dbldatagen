@@ -77,6 +77,11 @@ Run  `make clean dist` from the main project directory.
 
 # Testing 
 
+## Creating tests
+Preferred style is to use pytest rather than unittest but some unittest based code is used in compatibility mode.
+
+Any new tests should be written as pytest compatible test classes.
+
 ## Running unit / integration tests
 
 If using an environment with multiple Python versions, make sure to use virtual env or 

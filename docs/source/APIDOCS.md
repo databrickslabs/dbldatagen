@@ -2,9 +2,11 @@
 
 The Databricks Labs data generator (aka `dbldatagen`) is a Spark based solution for generating 
 realistic synthetic data. It uses the features of Spark dataframes and Spark SQL 
-to generate synthetic data. As the output of the process is a Spark dataframe populated 
-with the generated data , it may be saved to storage in a variety of formats, saved to tables 
-or generally manipulated using the existing Spark Dataframe APIs.
+to generate synthetic data. As the process produces a Spark dataframe populated 
+with generated data, it may be saved to storage in a variety of formats, saved to tables 
+or generally manipulated using the existing Spark Dataframe APIs. 
+
+It can also be used as a source in a Delta Live Tables pipeline supporting both streamimg and batch operation.
 
 It has no dependencies on any libraries that are not already included in the Databricks 
 runtime, and you can use it from Scala, R or other languages by defining
@@ -47,33 +49,38 @@ and [formatting on string columns](textdata)
 * Use [SQL based expressions](#using-sql-in-data-generation) to control or augment column generation
 * Script Spark SQL table creation statement for dataset 
 * Specify a [statistical distribution for random values](./DISTRIBUTIONS.md)
+* Support for use within Databricks Delta Live Tables pipelines
 
 
 ## Tutorials and examples
 
-In the root directory of the project, there are a number of examples and tutorials.
+In the [root directory](https://github.com/databrickslabs/dbldatagen) of the project, there are a number of 
+examples and tutorials.
 
-The Python examples in the `examples` folder can be run directly or imported into the Databricks runtime environment as Python files.
+The Python examples in the `examples` folder can be run directly or imported into the Databricks runtime environment 
+as Python files.
 
-The examples in the `tutorials` folder are in notebook export format and are intended to be imported into the Databricks runtime environment.
+The examples in the `tutorials` folder are in Databricks notebook export format and are intended to be imported 
+into the Databricks workspace environment.
  
 ## Basic concepts
 
-The Databricks Labs Data Generator is a Python framework that uses Spark to generate a dataframe of test data. 
+The Databricks Labs Data Generator is a Python framework that uses Spark to generate a dataframe of synthetic data. 
 
-Once the data frame is generated, it can be used with any Spark dataframee compatible API to save or persist data, 
-to analyze data, to write it to an external database or stream, or generally used in the same manner as a regular dataframe.
+Once the data frame is generated, it can be used with any Spark dataframe compatible API to save or persist data, 
+to analyze data, to write it to an external database or stream, or used in the same manner as a regular 
+PySpark dataframe.
 
 To consume it from Scala, R, SQL or other languages, create a view over the resulting test dataframe and you can use
 it from any Databricks Spark runtime compatible language. By use of the appropriate parameters, 
 you can instruct the data generator to automatically register a view as part of generating the test data.
 
 ### Generating the test data
-The test data generation process is controlled by a test data generation spec which can build a schema implicitly, 
+The data generation process is controlled by a data generation spec which can build a schema implicitly, 
 or a schema can be added from an existing table or Spark SQL schema object.
 
-Each column to be generated derives its test data from a set of one or more seed values. 
-By default, this is the id field of the base data frame 
+Each column to be generated derives its generated data from a set of one or more seed values. 
+By default, this is the `id` field of the base data frame 
 (generated with `spark.range` for batch data frames, or using a `Rate` source for streaming data frames).
 
 Each column  can be specified as based on the `id` field or other columns in the test data generation spec. 
@@ -92,7 +99,7 @@ There is also support for applying arbitrary SQL expressions, and generation of 
 
 ### Getting started
 
-Before you can use the data generator, you need to install the package in your environment and import it in your code.
+Before using the data generator, you need to install the package in your environment and import it in your code.
 You can install the package from the Github releases as a library on your cluster. 
 
 > NOTE: When running in a Databricks notebook environment, you can install directly using 
@@ -100,9 +107,11 @@ You can install the package from the Github releases as a library on your cluste
 >  
 > To install as a notebook scoped library, add a cell with the following text and execute it:
 >
-> `%pip install git+https://github.com/databrickslabs/dbldatagen`
+> `%pip install git+https://github.com/databrickslabs/dbldatagen@current`
  
-The `%pip install` method will work in the Databricks Community Environment also.
+The `%pip install` method will work in the Databricks Community Environment and in Delta Live Tables pipelines also.
+
+You can also manually download a wheel file from the releases and install it in your environment.
 
 The releases are located at 
 [Databricks Labs Data Generator releases](https://github.com/databrickslabs/dbldatagen/releases)
@@ -208,6 +217,9 @@ These will be computed via a uniformly distributed random value.
 the allowable values `['a', 'b', or 'c']`
 inclusive. These will be computed via a uniformly distributed random value but with weighting applied so that
 the value `a` occurs 9 times as frequently as the values `b` or `c`
+
+> NOTE: As the seed field named `id` is currently reserved for system use, manually adding a column named `id` can 
+> interfere with the data generation. This will be fixed in a forthcoming release
 
 ### Creating data set with pre-existing schema
 What if we want to generate data conforming to a pre-existing schema? you can specify a schema for your data by either 
@@ -342,7 +354,8 @@ testDataSpec = (dg.DataGenerator(spark, name="device_data_set", rows=data_rows,
                             values=["activation", "deactivation", "plan change",
                                     "telecoms activity", "internet activity", "device error"],
                             random=True)
-                .withColumn("event_ts", "timestamp", begin="2020-01-01 01:00:00", end="2020-12-31 23:59:00", interval="1 minute", random=True)
+                .withColumn("event_ts", "timestamp", begin="2020-01-01 01:00:00", end="2020-12-31 23:59:00", 
+                            interval="1 minute", random=True)
 
                 )
 
@@ -439,7 +452,8 @@ testDataSpec = (dg.DataGenerator(spark, name="device_data_set", rows=data_rows,
                             values=["activation", "deactivation", "plan change",
                                     "telecoms activity", "internet activity", "device error"],
                             random=True)
-                .withColumn("event_ts", "timestamp", begin="2020-01-01 01:00:00", end="2020-12-31 23:59:00", interval="1 minute", random=True)
+                .withColumn("event_ts", "timestamp", begin="2020-01-01 01:00:00", end="2020-12-31 23:59:00",
+                            interval="1 minute", random=True)
 
                 )
 
