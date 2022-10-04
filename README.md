@@ -39,6 +39,8 @@ used in other computations
 Details of these features can be found in the [Developer Docs](docs/source/APIDOCS.md) and the online help
 (which contains the full documentation).
 
+> Note: This version is an archival version for compatibility with Databricks runtime 7.3 LTS
+
 
 ## Project Support
 Please note that all projects in the `databrickslabs` github space are provided for your exploration only, and are not formally supported by Databricks with Service Level Agreements (SLAs).  They are provided AS-IS and we do not make any guarantees of any kind.  Please do not submit a support ticket relating to any issues arising from the use of these projects.
