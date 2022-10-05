@@ -25,7 +25,7 @@ Some of these are required at runtime, while a number of packages are used for b
 * prospector
 
  The following packages are only required for building documentation and are not required at runtime
-* sphinx>=2.0.0,<3.1.0
+* sphinx==5.0.0
 * sphinx_rtd_theme
 * nbsphinx
 * numpydoc==0.8
@@ -34,3 +34,4 @@ Some of these are required at runtime, while a number of packages are used for b
 * recommonmark
 * sphinx-markdown-builder
 * rst2pdf==0.98
+* Jinja2 < 3.1

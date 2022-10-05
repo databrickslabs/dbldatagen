@@ -58,13 +58,6 @@ As it is installable via `%pip install`, it can also be incorporated in environm
 
    license
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Indices and tables
-
-   * :ref:`genindex`
-   * :ref:`modindex`
-
 Indices and tables
 ------------------
 

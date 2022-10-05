@@ -84,3 +84,6 @@ u.bd-sidebar .nav>li>ul>.active:hover>a,.bd-sidebar .nav>li>ul>.active>a {
     border-left: 2px solid #1B5162!important;
 }
 
+.wy-nav-content {
+    max-width: 900px !important;
+}
