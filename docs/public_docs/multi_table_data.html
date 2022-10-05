@@ -4,17 +4,19 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Generating and using data with multiple tables &mdash; Databricks Labs Data Generator 0.2.1 documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <title>Generating and using data with multiple tables &mdash; Databricks Labs Data Generator 0.2.1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/tdg.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -37,7 +39,7 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p><span class="caption-text">Getting Started</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="APIDOCS.html">Get Started Here</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation_notes.html">Installation instructions</a></li>
@@ -64,12 +66,12 @@
 <li class="toctree-l1"><a class="reference internal" href="extending_text_generation.html">Extending text generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting data generation</a></li>
 </ul>
-<p><span class="caption-text">API</span></p>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/quickindex.html">Quick API index</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference/api/modules.html">The dbldatagen package API</a></li>
 </ul>
-<p><span class="caption-text">Development</span></p>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
@@ -79,7 +81,7 @@
 <li class="toctree-l1"><a class="reference internal" href="relnotes/CHANGELOG.html">Change log</a></li>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/requirements.html">Build requirements</a></li>
 </ul>
-<p><span class="caption-text">License</span></p>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
 </ul>
@@ -109,14 +111,14 @@
            <div itemprop="articleBody">
              
   <section id="generating-and-using-data-with-multiple-tables">
-<h1>Generating and using data with multiple tables<a class="headerlink" href="#generating-and-using-data-with-multiple-tables" title="Permalink to this headline"></a></h1>
+<h1>Generating and using data with multiple tables<a class="headerlink" href="#generating-and-using-data-with-multiple-tables" title="Permalink to this heading"></a></h1>
 <p>See the section repeatable data generation for the concepts that underpin the data generation.</p>
 <p>One common scenario is the need to be able to generate multiple tables
 with consistent primary and foreign keys to model join or merge scenarios.</p>
 <p>By generating tables with repeatable data, we can generate multiple versions of the same data for different tables and
 ensure that we have referential integrity across the tables.</p>
 <section id="telephony-billing-example">
-<h2>Telephony billing example<a class="headerlink" href="#telephony-billing-example" title="Permalink to this headline"></a></h2>
+<h2>Telephony billing example<a class="headerlink" href="#telephony-billing-example" title="Permalink to this heading"></a></h2>
 <p>To illustrate multi-table data generation and use, we’ll use a simplified version of telecoms billing processes.</p>
 <p>Let’s assume we have data as follows:</p>
 <ul class="simple">
@@ -159,7 +161,7 @@ rather than full modelling of phone usage invoicing.</p>
 <p>Nothing in the example is meant to represent real world phone, internet or SMS pricing.</p>
 </div>
 <section id="some-utility-functions">
-<h3>Some utility functions<a class="headerlink" href="#some-utility-functions" title="Permalink to this headline"></a></h3>
+<h3>Some utility functions<a class="headerlink" href="#some-utility-functions" title="Permalink to this heading"></a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">re</span>
 
 <span class="n">MARGIN_PATTERN</span><span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\s*\|&quot;</span><span class="p">)</span>  <span class="c1"># margin detection pattern for stripMargin</span>
@@ -170,7 +172,7 @@ rather than full modelling of phone usage invoicing.</p>
 </div>
 </section>
 <section id="let-s-model-our-calling-plans">
-<h3>Let’s model our calling plans<a class="headerlink" href="#let-s-model-our-calling-plans" title="Permalink to this headline"></a></h3>
+<h3>Let’s model our calling plans<a class="headerlink" href="#let-s-model-our-calling-plans" title="Permalink to this heading"></a></h3>
 <p>Note, we use two columns, <code class="docutils literal notranslate"><span class="pre">ld_multipler</span></code> and <code class="docutils literal notranslate"><span class="pre">intl_multiplier</span></code> just as intermediate results used
 in later calculations and omit them from the output.</p>
 <p>We use <code class="docutils literal notranslate"><span class="pre">decimal</span></code> types for prices to avoid rounding issues.</p>
@@ -228,7 +230,7 @@ in later calculations and omit them from the output.</p>
 </div>
 </section>
 <section id="let-s-model-our-customers">
-<h3>Let’s model our customers<a class="headerlink" href="#let-s-model-our-customers" title="Permalink to this headline"></a></h3>
+<h3>Let’s model our customers<a class="headerlink" href="#let-s-model-our-customers" title="Permalink to this heading"></a></h3>
 <p>We’ll use device id as the foreign key for device events here.</p>
 <p>We want to ensure that our device id is unique for each customer. We could use a simple sequence as
 with plans but for the purposes of illustration, we’ll use a hash of the customer ids instead.</p>
@@ -304,7 +306,7 @@ when using hashed values, the range of the hashes produced can be large.</p>
 </div>
 </section>
 <section id="now-let-s-model-our-device-events">
-<h3>Now let’s model our device events<a class="headerlink" href="#now-let-s-model-our-device-events" title="Permalink to this headline"></a></h3>
+<h3>Now let’s model our device events<a class="headerlink" href="#now-let-s-model-our-device-events" title="Permalink to this heading"></a></h3>
 <p>Generating <cite>master-detail</cite> style data is one of the key challenges in data generation for join ready data.</p>
 <p>What do we mean by <cite>master-detail</cite>?</p>
 <p>This is where the goal is to model data that consists of large grained entities, that are in turn
@@ -393,7 +395,7 @@ that text and internet browsing is more frequent than phone calls.</p>
 </section>
 </section>
 <section id="now-let-s-compute-the-invoices">
-<h2>Now let’s compute the invoices<a class="headerlink" href="#now-let-s-compute-the-invoices" title="Permalink to this headline"></a></h2>
+<h2>Now let’s compute the invoices<a class="headerlink" href="#now-let-s-compute-the-invoices" title="Permalink to this heading"></a></h2>
 <p>Let’s compute the customers and associated plans</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
 <span class="kn">import</span> <span class="nn">pyspark.sql.functions</span> <span class="k">as</span> <span class="nn">F</span>
@@ -502,7 +504,7 @@ that text and internet browsing is more frequent than phone calls.</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2020, Databricks Inc.</p>
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

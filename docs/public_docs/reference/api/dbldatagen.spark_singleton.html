@@ -4,17 +4,19 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>dbldatagen.spark_singleton module &mdash; Databricks Labs Data Generator 0.2.1 documentation</title><link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <title>dbldatagen.spark_singleton module &mdash; Databricks Labs Data Generator 0.2.1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/tdg.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
         <script src="../../_static/jquery.js"></script>
         <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/language_data.js"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -37,7 +39,7 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p><span class="caption-text">Getting Started</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../APIDOCS.html">Get Started Here</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../installation_notes.html">Installation instructions</a></li>
@@ -54,7 +56,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../extending_text_generation.html">Extending text generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting data generation</a></li>
 </ul>
-<p><span class="caption-text">API</span></p>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/quickindex.html">Quick API index</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">The dbldatagen package API</a><ul class="current">
@@ -83,7 +85,7 @@
 </ul>
 </li>
 </ul>
-<p><span class="caption-text">Development</span></p>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
@@ -93,7 +95,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/CHANGELOG.html">Change log</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/requirements.html">Build requirements</a></li>
 </ul>
-<p><span class="caption-text">License</span></p>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
 </ul>
@@ -125,18 +127,18 @@
            <div itemprop="articleBody">
              
   <section id="module-dbldatagen.spark_singleton">
-<span id="dbldatagen-spark-singleton-module"></span><h1>dbldatagen.spark_singleton module<a class="headerlink" href="#module-dbldatagen.spark_singleton" title="Permalink to this headline"></a></h1>
+<span id="dbldatagen-spark-singleton-module"></span><h1>dbldatagen.spark_singleton module<a class="headerlink" href="#module-dbldatagen.spark_singleton" title="Permalink to this heading"></a></h1>
 <p>This file defines the <cite>SparkSingleton</cite> class</p>
 <p>This is primarily meant for situations where the test data generator is run on a standalone environment
 for use cases like unit testing rather than in a Databricks workspace environment</p>
 <dl class="py class">
-<dt id="dbldatagen.spark_singleton.SparkSingleton">
-<em class="property">class </em><code class="sig-name descname">SparkSingleton</code><a class="reference internal" href="../../_modules/dbldatagen/spark_singleton.html#SparkSingleton"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.spark_singleton.SparkSingleton" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.spark_singleton.SparkSingleton">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SparkSingleton</span></span><a class="reference internal" href="../../_modules/dbldatagen/spark_singleton.html#SparkSingleton"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.spark_singleton.SparkSingleton" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A singleton class which returns one Spark session instance</p>
 <dl class="py method">
-<dt id="dbldatagen.spark_singleton.SparkSingleton.getInstance">
-<em class="property">classmethod </em><code class="sig-name descname">getInstance</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/spark_singleton.html#SparkSingleton.getInstance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.spark_singleton.SparkSingleton.getInstance" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.spark_singleton.SparkSingleton.getInstance">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">getInstance</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/spark_singleton.html#SparkSingleton.getInstance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.spark_singleton.SparkSingleton.getInstance" title="Permalink to this definition"></a></dt>
 <dd><p>Create a Spark instance for Datalib.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -146,8 +148,8 @@ for use cases like unit testing rather than in a Databricks workspace environmen
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.spark_singleton.SparkSingleton.getLocalInstance">
-<em class="property">classmethod </em><code class="sig-name descname">getLocalInstance</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">appName</span><span class="o">=</span><span class="default_value">'new Spark session'</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/spark_singleton.html#SparkSingleton.getLocalInstance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.spark_singleton.SparkSingleton.getLocalInstance" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.spark_singleton.SparkSingleton.getLocalInstance">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">getLocalInstance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">appName</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'new</span> <span class="pre">Spark</span> <span class="pre">session'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/spark_singleton.html#SparkSingleton.getLocalInstance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.spark_singleton.SparkSingleton.getLocalInstance" title="Permalink to this definition"></a></dt>
 <dd><p>Create a machine local Spark instance for Datalib.
 It uses 3/4 of the available cores for the spark session.</p>
 <dl class="field-list simple">
@@ -172,7 +174,7 @@ It uses 3/4 of the available cores for the spark session.</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2020, Databricks Inc.</p>
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

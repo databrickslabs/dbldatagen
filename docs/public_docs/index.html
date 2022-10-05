@@ -4,17 +4,19 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Databricks Labs Data Generator documentation &mdash; Databricks Labs Data Generator 0.2.1 documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <title>Databricks Labs Data Generator documentation &mdash; Databricks Labs Data Generator 0.2.1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/tdg.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -36,7 +38,7 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p><span class="caption-text">Getting Started</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="APIDOCS.html">Get Started Here</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation_notes.html">Installation instructions</a></li>
@@ -53,12 +55,12 @@
 <li class="toctree-l1"><a class="reference internal" href="extending_text_generation.html">Extending text generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting data generation</a></li>
 </ul>
-<p><span class="caption-text">API</span></p>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/quickindex.html">Quick API index</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference/api/modules.html">The dbldatagen package API</a></li>
 </ul>
-<p><span class="caption-text">Development</span></p>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
@@ -68,7 +70,7 @@
 <li class="toctree-l1"><a class="reference internal" href="relnotes/CHANGELOG.html">Change log</a></li>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/requirements.html">Build requirements</a></li>
 </ul>
-<p><span class="caption-text">License</span></p>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
 </ul>
@@ -98,7 +100,7 @@
            <div itemprop="articleBody">
              
   <section id="databricks-labs-data-generator-documentation">
-<h1>Databricks Labs Data Generator documentation<a class="headerlink" href="#databricks-labs-data-generator-documentation" title="Permalink to this headline"></a></h1>
+<h1>Databricks Labs Data Generator documentation<a class="headerlink" href="#databricks-labs-data-generator-documentation" title="Permalink to this heading"></a></h1>
 <p>The Databricks Labs Data Generator project provides a convenient way to
 generate large volumes of synthetic test data from within a Databricks notebook
 (or regular Spark application).</p>
@@ -107,9 +109,9 @@ or through creating a schema on the fly, you can control how synthetic data is g
 <p>As the data generator generates a PySpark data frame, it is simple to create a view over it to expose it
 to Scala or R based Spark applications also.</p>
 <p>As it is installable via <cite>%pip install</cite>, it can also be incorporated in environments such as
-[Delta Live Tables](<a class="reference external" href="https://www.databricks.com/product/delta-live-tables">https://www.databricks.com/product/delta-live-tables</a>) also.</p>
+<a class="reference external" href="https://www.databricks.com/product/delta-live-tables">Delta Live Tables</a> also.</p>
 <div class="toctree-wrapper compound">
-<p><span class="caption-text">Getting Started</span></p>
+<p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="APIDOCS.html">Get Started Here</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation_notes.html">Installation instructions</a></li>
@@ -128,14 +130,14 @@ to Scala or R based Spark applications also.</p>
 </ul>
 </div>
 <div class="toctree-wrapper compound">
-<p><span class="caption-text">API</span></p>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/quickindex.html">Quick API index</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference/api/modules.html">The dbldatagen package API</a></li>
 </ul>
 </div>
 <div class="toctree-wrapper compound">
-<p><span class="caption-text">Development</span></p>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
@@ -147,18 +149,20 @@ to Scala or R based Spark applications also.</p>
 </ul>
 </div>
 <div class="toctree-wrapper compound">
-<p><span class="caption-text">License</span></p>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
 </ul>
 </div>
-</section>
+<div class="toctree-wrapper compound">
+</div>
 <section id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline"></a></h1>
+<h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this heading"></a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
 <li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
 </ul>
+</section>
 </section>
 
 
@@ -171,7 +175,7 @@ to Scala or R based Spark applications also.</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2020, Databricks Inc.</p>
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

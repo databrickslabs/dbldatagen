@@ -4,17 +4,19 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>dbldatagen.nrange module &mdash; Databricks Labs Data Generator 0.2.1 documentation</title><link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <title>dbldatagen.nrange module &mdash; Databricks Labs Data Generator 0.2.1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/tdg.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
         <script src="../../_static/jquery.js"></script>
         <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/language_data.js"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -37,7 +39,7 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p><span class="caption-text">Getting Started</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../APIDOCS.html">Get Started Here</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../installation_notes.html">Installation instructions</a></li>
@@ -54,7 +56,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../extending_text_generation.html">Extending text generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting data generation</a></li>
 </ul>
-<p><span class="caption-text">API</span></p>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/quickindex.html">Quick API index</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">The dbldatagen package API</a><ul class="current">
@@ -83,7 +85,7 @@
 </ul>
 </li>
 </ul>
-<p><span class="caption-text">Development</span></p>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
@@ -93,7 +95,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/CHANGELOG.html">Change log</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/requirements.html">Build requirements</a></li>
 </ul>
-<p><span class="caption-text">License</span></p>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
 </ul>
@@ -125,12 +127,12 @@
            <div itemprop="articleBody">
              
   <section id="module-dbldatagen.nrange">
-<span id="dbldatagen-nrange-module"></span><h1>dbldatagen.nrange module<a class="headerlink" href="#module-dbldatagen.nrange" title="Permalink to this headline"></a></h1>
+<span id="dbldatagen-nrange-module"></span><h1>dbldatagen.nrange module<a class="headerlink" href="#module-dbldatagen.nrange" title="Permalink to this heading"></a></h1>
 <p>This module defines the <cite>NRange</cite> class used to specify data ranges</p>
 <dl class="py class">
-<dt id="dbldatagen.nrange.NRange">
-<em class="property">class </em><code class="sig-name descname">NRange</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">minValue</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">maxValue</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">step</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">until</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwArgs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/nrange.html#NRange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.nrange.NRange" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="dbldatagen.datarange.html#dbldatagen.datarange.DataRange" title="dbldatagen.datarange.DataRange"><code class="xref py py-class docutils literal notranslate"><span class="pre">dbldatagen.datarange.DataRange</span></code></a></p>
+<dt class="sig sig-object py" id="dbldatagen.nrange.NRange">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">NRange</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">minValue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxValue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">until</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwArgs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/nrange.html#NRange"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.nrange.NRange" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="dbldatagen.datarange.html#dbldatagen.datarange.DataRange" title="dbldatagen.datarange.DataRange"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataRange</span></code></a></p>
 <p>Ranged numeric interval representing the interval minValue .. maxValue inclusive</p>
 <p>A ranged object can be uses as an alternative to the <cite>minValue</cite>, <cite>maxValue</cite>, <cite>step</cite> parameters
 to the DataGenerator <cite>withColumn</cite> and <cite>withColumn</cite> objects.
@@ -148,8 +150,8 @@ Specify by passing an instance of <cite>NRange</cite> to the <cite>dataRange</ci
 <p>You may only specify a <cite>maxValue</cite> or <cite>until</cite> value not both.</p>
 <p>For a decreasing sequence, use a negative step value.</p>
 <dl class="py method">
-<dt id="dbldatagen.nrange.NRange.adjustForColumnDatatype">
-<code class="sig-name descname">adjustForColumnDatatype</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ctype</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/nrange.html#NRange.adjustForColumnDatatype"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.nrange.NRange.adjustForColumnDatatype" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.nrange.NRange.adjustForColumnDatatype">
+<span class="sig-name descname"><span class="pre">adjustForColumnDatatype</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctype</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/nrange.html#NRange.adjustForColumnDatatype"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.nrange.NRange.adjustForColumnDatatype" title="Permalink to this definition"></a></dt>
 <dd><p>Adjust default values for column output type</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -162,8 +164,8 @@ Specify by passing an instance of <cite>NRange</cite> to the <cite>dataRange</ci
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.nrange.NRange.getContinuousRange">
-<code class="sig-name descname">getContinuousRange</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/nrange.html#NRange.getContinuousRange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.nrange.NRange.getContinuousRange" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.nrange.NRange.getContinuousRange">
+<span class="sig-name descname"><span class="pre">getContinuousRange</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/nrange.html#NRange.getContinuousRange"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.nrange.NRange.getContinuousRange" title="Permalink to this definition"></a></dt>
 <dd><p>Convert range to continuous range</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -173,8 +175,8 @@ Specify by passing an instance of <cite>NRange</cite> to the <cite>dataRange</ci
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.nrange.NRange.getDiscreteRange">
-<code class="sig-name descname">getDiscreteRange</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/nrange.html#NRange.getDiscreteRange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.nrange.NRange.getDiscreteRange" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.nrange.NRange.getDiscreteRange">
+<span class="sig-name descname"><span class="pre">getDiscreteRange</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/nrange.html#NRange.getDiscreteRange"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.nrange.NRange.getDiscreteRange" title="Permalink to this definition"></a></dt>
 <dd><p>Convert range to discrete range</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -189,14 +191,14 @@ Specify by passing an instance of <cite>NRange</cite> to the <cite>dataRange</ci
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.nrange.NRange.getScale">
-<code class="sig-name descname">getScale</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/nrange.html#NRange.getScale"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.nrange.NRange.getScale" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.nrange.NRange.getScale">
+<span class="sig-name descname"><span class="pre">getScale</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/nrange.html#NRange.getScale"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.nrange.NRange.getScale" title="Permalink to this definition"></a></dt>
 <dd><p>Get scale of range</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.nrange.NRange.isEmpty">
-<code class="sig-name descname">isEmpty</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/nrange.html#NRange.isEmpty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.nrange.NRange.isEmpty" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.nrange.NRange.isEmpty">
+<span class="sig-name descname"><span class="pre">isEmpty</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/nrange.html#NRange.isEmpty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.nrange.NRange.isEmpty" title="Permalink to this definition"></a></dt>
 <dd><p>Check if object is empty (i.e all instance vars of note are <cite>None</cite></p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -206,8 +208,8 @@ Specify by passing an instance of <cite>NRange</cite> to the <cite>dataRange</ci
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.nrange.NRange.isFullyPopulated">
-<code class="sig-name descname">isFullyPopulated</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/nrange.html#NRange.isFullyPopulated"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.nrange.NRange.isFullyPopulated" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.nrange.NRange.isFullyPopulated">
+<span class="sig-name descname"><span class="pre">isFullyPopulated</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/nrange.html#NRange.isFullyPopulated"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.nrange.NRange.isFullyPopulated" title="Permalink to this definition"></a></dt>
 <dd><p>Check is all instance vars are populated</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -231,7 +233,7 @@ Specify by passing an instance of <cite>NRange</cite> to the <cite>dataRange</ci
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2020, Databricks Inc.</p>
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

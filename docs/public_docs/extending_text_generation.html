@@ -4,17 +4,19 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Extending text generation &mdash; Databricks Labs Data Generator 0.2.1 documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <title>Extending text generation &mdash; Databricks Labs Data Generator 0.2.1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/tdg.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -37,7 +39,7 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p><span class="caption-text">Getting Started</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="APIDOCS.html">Get Started Here</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation_notes.html">Installation instructions</a></li>
@@ -66,12 +68,12 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting data generation</a></li>
 </ul>
-<p><span class="caption-text">API</span></p>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/quickindex.html">Quick API index</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference/api/modules.html">The dbldatagen package API</a></li>
 </ul>
-<p><span class="caption-text">Development</span></p>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
@@ -81,7 +83,7 @@
 <li class="toctree-l1"><a class="reference internal" href="relnotes/CHANGELOG.html">Change log</a></li>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/requirements.html">Build requirements</a></li>
 </ul>
-<p><span class="caption-text">License</span></p>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
 </ul>
@@ -111,7 +113,7 @@
            <div itemprop="articleBody">
              
   <section id="extending-text-generation">
-<h1>Extending text generation<a class="headerlink" href="#extending-text-generation" title="Permalink to this headline"></a></h1>
+<h1>Extending text generation<a class="headerlink" href="#extending-text-generation" title="Permalink to this heading"></a></h1>
 <p>This feature should be considered <code class="docutils literal notranslate"><span class="pre">Experimental</span></code>.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">PyfuncText</span></code>,  <code class="docutils literal notranslate"><span class="pre">PyfuncTextFactory</span></code> and <code class="docutils literal notranslate"><span class="pre">FakerTextFactory</span></code> classes provide a mechanism to expand text
 generation to include
@@ -148,7 +150,7 @@ extended syntax.</p>
 </div>
 <p>Lets look at the various features provided to do this.</p>
 <section id="extended-text-generation-with-python-functions">
-<h2>Extended text generation with Python functions<a class="headerlink" href="#extended-text-generation-with-python-functions" title="Permalink to this headline"></a></h2>
+<h2>Extended text generation with Python functions<a class="headerlink" href="#extended-text-generation-with-python-functions" title="Permalink to this heading"></a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">PyfuncText</span></code> object supports extending text generation with Python functions.</p>
 <p>It allows specification of two functions</p>
 <ul class="simple">
@@ -167,7 +169,7 @@ the base text generation capabilities. However it should be sufficient for gener
 repeatability of data when generated using external functions or libraries.</p>
 </div>
 <section id="example-1-using-a-custom-python-function">
-<h3>Example 1: Using a custom Python function<a class="headerlink" href="#example-1-using-a-custom-python-function" title="Permalink to this headline"></a></h3>
+<h3>Example 1: Using a custom Python function<a class="headerlink" href="#example-1-using-a-custom-python-function" title="Permalink to this heading"></a></h3>
 <p>The following code shows use of a custom Python function to generate text:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">dbldatagen</span> <span class="kn">import</span> <span class="n">DataGenerator</span><span class="p">,</span> <span class="n">PyfuncText</span>
 <span class="n">partitions_requested</span> <span class="o">=</span> <span class="mi">4</span>
@@ -192,7 +194,7 @@ repeatability of data when generated using external functions or libraries.</p>
 </section>
 </section>
 <section id="extended-text-generation-with-3rd-party-libraries">
-<h2>Extended text generation with 3rd party libraries<a class="headerlink" href="#extended-text-generation-with-3rd-party-libraries" title="Permalink to this headline"></a></h2>
+<h2>Extended text generation with 3rd party libraries<a class="headerlink" href="#extended-text-generation-with-3rd-party-libraries" title="Permalink to this heading"></a></h2>
 <p>The same mechanism can be used to make use of the capabilities of 3rd party libraries.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">context</span></code> object can be initialized with any arbitrary properties that may be referenced
 during the execution of the text generation function.</p>
@@ -203,7 +205,7 @@ the object does not have to be pickled or serialized across process boundaries.<
 If the context properties cannot be shared across multiple calls, you can specify that the context is recreated for
 each Pandas UDF call.</p>
 <section id="example-2-using-an-external-text-data-generation-library">
-<h3>Example 2: Using an external text data generation library<a class="headerlink" href="#example-2-using-an-external-text-data-generation-library" title="Permalink to this headline"></a></h3>
+<h3>Example 2: Using an external text data generation library<a class="headerlink" href="#example-2-using-an-external-text-data-generation-library" title="Permalink to this heading"></a></h3>
 <p>The following code shows use of an external text generation library  to generate text.</p>
 <p>In this case, the example is using the <code class="docutils literal notranslate"><span class="pre">Faker</span></code> library.</p>
 <div class="admonition note">
@@ -257,7 +259,7 @@ IP addresses and credit card numbers.</p>
 </section>
 </section>
 <section id="supporting-extended-syntax-for-3rd-party-library-integration">
-<h2>Supporting extended syntax for 3rd party library integration<a class="headerlink" href="#supporting-extended-syntax-for-3rd-party-library-integration" title="Permalink to this headline"></a></h2>
+<h2>Supporting extended syntax for 3rd party library integration<a class="headerlink" href="#supporting-extended-syntax-for-3rd-party-library-integration" title="Permalink to this heading"></a></h2>
 <p>Use of the <cite>PyfuncTextFactory</cite> class allows the use of the following constructs:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># initialization (for Faker for example)</span>
 
@@ -304,7 +306,7 @@ you can use the syntax below (example is hypothetical and does not refer to any 
 <p>For more information, see <a class="reference internal" href="reference/api/dbldatagen.text_generator_plugins.html#dbldatagen.text_generator_plugins.PyfuncTextFactory" title="dbldatagen.text_generator_plugins.PyfuncTextFactory"><code class="xref py py-data docutils literal notranslate"><span class="pre">PyfuncTextFactory</span></code></a></p>
 </section>
 <section id="faker-specific-library-integration">
-<h2>Faker specific library integration<a class="headerlink" href="#faker-specific-library-integration" title="Permalink to this headline"></a></h2>
+<h2>Faker specific library integration<a class="headerlink" href="#faker-specific-library-integration" title="Permalink to this heading"></a></h2>
 <p>Finally, the <code class="docutils literal notranslate"><span class="pre">FakerTextFactory</span></code> provides a Faker specific version of the <code class="docutils literal notranslate"><span class="pre">PyfuncTextFactory</span></code> class
 that initializes the Faker library and allows specification of locales and providers.</p>
 <p>You will still need to install Faker as it is not included in the binaries.</p>
@@ -358,7 +360,7 @@ interspersed with use of the default faker text factory.</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2020, Databricks Inc.</p>
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

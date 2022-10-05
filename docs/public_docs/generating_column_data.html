@@ -4,17 +4,19 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Generating column data &mdash; Databricks Labs Data Generator 0.2.1 documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <title>Generating column data &mdash; Databricks Labs Data Generator 0.2.1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/tdg.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -37,7 +39,7 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p><span class="caption-text">Getting Started</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="APIDOCS.html">Get Started Here</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation_notes.html">Installation instructions</a></li>
@@ -59,12 +61,12 @@
 <li class="toctree-l1"><a class="reference internal" href="extending_text_generation.html">Extending text generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting data generation</a></li>
 </ul>
-<p><span class="caption-text">API</span></p>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/quickindex.html">Quick API index</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference/api/modules.html">The dbldatagen package API</a></li>
 </ul>
-<p><span class="caption-text">Development</span></p>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
@@ -74,7 +76,7 @@
 <li class="toctree-l1"><a class="reference internal" href="relnotes/CHANGELOG.html">Change log</a></li>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/requirements.html">Build requirements</a></li>
 </ul>
-<p><span class="caption-text">License</span></p>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
 </ul>
@@ -104,7 +106,7 @@
            <div itemprop="articleBody">
              
   <section id="generating-column-data">
-<h1>Generating column data<a class="headerlink" href="#generating-column-data" title="Permalink to this headline"></a></h1>
+<h1>Generating column data<a class="headerlink" href="#generating-column-data" title="Permalink to this heading"></a></h1>
 <p>The data generation specification object controls how the data is to be generated.
 This includes:</p>
 <ul class="simple">
@@ -131,7 +133,7 @@ This includes:</p>
 <p>Column data is generated for all columns whether imported from a schema or explicitly added
 to a data specification.</p>
 <section id="initializing-a-data-generation-spec">
-<h2>Initializing a data generation spec<a class="headerlink" href="#initializing-a-data-generation-spec" title="Permalink to this headline"></a></h2>
+<h2>Initializing a data generation spec<a class="headerlink" href="#initializing-a-data-generation-spec" title="Permalink to this heading"></a></h2>
 <p>The DataGenerator object instance defines how data is to be generated. It consists of a set of implicit column
 generation specifications in addition to various instance level attributes. These control the data generation process.</p>
 <p>The data generation process itself is deferred until the data generation instance <code class="docutils literal notranslate"><span class="pre">build</span></code> method is executed.</p>
@@ -143,7 +145,7 @@ to an existing one if further modifications are needed.</p>
 <p>See <a class="reference internal" href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.clone" title="dbldatagen.data_generator.DataGenerator.clone"><code class="xref py py-data docutils literal notranslate"><span class="pre">clone</span></code></a> for further information.</p>
 </section>
 <section id="adding-columns-to-a-data-generation-spec">
-<h2>Adding columns to a data generation spec<a class="headerlink" href="#adding-columns-to-a-data-generation-spec" title="Permalink to this headline"></a></h2>
+<h2>Adding columns to a data generation spec<a class="headerlink" href="#adding-columns-to-a-data-generation-spec" title="Permalink to this heading"></a></h2>
 <p>During creation of the data generator object instance (i.e before <code class="docutils literal notranslate"><span class="pre">build</span></code> is called)
 each invocation of <code class="docutils literal notranslate"><span class="pre">withColumnSpec</span></code>, <code class="docutils literal notranslate"><span class="pre">withColumnSpecs</span></code> or <code class="docutils literal notranslate"><span class="pre">withColumn</span></code> adds or modifies a column generation
 specification.</p>
@@ -177,7 +179,7 @@ So a column name that differs only in case to an existing column may cause issue
 </div>
 </section>
 <section id="the-mechanics-of-column-data-generation">
-<h2>The mechanics of column data generation<a class="headerlink" href="#the-mechanics-of-column-data-generation" title="Permalink to this headline"></a></h2>
+<h2>The mechanics of column data generation<a class="headerlink" href="#the-mechanics-of-column-data-generation" title="Permalink to this heading"></a></h2>
 <p>The data set is generated when the <code class="docutils literal notranslate"><span class="pre">build</span></code> method is invoked on the data generation instance.</p>
 <p>This performs the following actions:</p>
 <ul class="simple">
@@ -214,7 +216,7 @@ may not produce the expected range of values</p></li>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2020, Databricks Inc.</p>
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

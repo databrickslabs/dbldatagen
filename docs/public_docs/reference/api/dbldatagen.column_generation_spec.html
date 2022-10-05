@@ -4,17 +4,19 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>dbldatagen.column_generation_spec module &mdash; Databricks Labs Data Generator 0.2.1 documentation</title><link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <title>dbldatagen.column_generation_spec module &mdash; Databricks Labs Data Generator 0.2.1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/tdg.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
         <script src="../../_static/jquery.js"></script>
         <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/language_data.js"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -37,7 +39,7 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p><span class="caption-text">Getting Started</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../APIDOCS.html">Get Started Here</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../installation_notes.html">Installation instructions</a></li>
@@ -54,7 +56,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../extending_text_generation.html">Extending text generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting data generation</a></li>
 </ul>
-<p><span class="caption-text">API</span></p>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/quickindex.html">Quick API index</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">The dbldatagen package API</a><ul class="current">
@@ -83,7 +85,7 @@
 </ul>
 </li>
 </ul>
-<p><span class="caption-text">Development</span></p>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
@@ -93,7 +95,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/CHANGELOG.html">Change log</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/requirements.html">Build requirements</a></li>
 </ul>
-<p><span class="caption-text">License</span></p>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
 </ul>
@@ -125,11 +127,11 @@
            <div itemprop="articleBody">
              
   <section id="module-dbldatagen.column_generation_spec">
-<span id="dbldatagen-column-generation-spec-module"></span><h1>dbldatagen.column_generation_spec module<a class="headerlink" href="#module-dbldatagen.column_generation_spec" title="Permalink to this headline"></a></h1>
+<span id="dbldatagen-column-generation-spec-module"></span><h1>dbldatagen.column_generation_spec module<a class="headerlink" href="#module-dbldatagen.column_generation_spec" title="Permalink to this heading"></a></h1>
 <p>This file defines the <cite>ColumnGenerationSpec</cite> class</p>
 <dl class="py class">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec">
-<em class="property">class </em><code class="sig-name descname">ColumnGenerationSpec</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">colType</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">minValue</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">maxValue</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">step</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">prefix</span><span class="o">=</span><span class="default_value">''</span></em>, <em class="sig-param"><span class="n">random</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">distribution</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">baseColumn</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">randomSeed</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">randomSeedMethod</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">implicit</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">omit</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">nullable</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">debug</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/column_generation_spec.html#ColumnGenerationSpec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ColumnGenerationSpec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colType</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minValue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxValue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distribution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseColumn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">randomSeed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">randomSeedMethod</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">implicit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">omit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nullable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/column_generation_spec.html#ColumnGenerationSpec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Column generation spec object - specifies how column is to be generated</p>
 <p>Each column to be output will have a corresponding ColumnGenerationSpec object.
@@ -166,72 +168,72 @@ only output warning and error logging statements.</p></li>
 </dl>
 <p>For full list of options, see <a class="reference internal" href="dbldatagen.column_spec_options.html"><span class="doc">dbldatagen.column_spec_options module</span></a>.</p>
 <dl class="py attribute">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.SEED_COLUMN">
-<code class="sig-name descname">SEED_COLUMN</code><em class="property"> = 'id'</em><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.SEED_COLUMN" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.SEED_COLUMN">
+<span class="sig-name descname"><span class="pre">SEED_COLUMN</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'id'</span></em><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.SEED_COLUMN" title="Permalink to this definition"></a></dt>
 <dd><p>row seed field for data set</p>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.baseColumn">
-<em class="property">property </em><code class="sig-name descname">baseColumn</code><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.baseColumn" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.baseColumn">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">baseColumn</span></span><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.baseColumn" title="Permalink to this definition"></a></dt>
 <dd><p>get the base column used to generate values for this column</p>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.baseColumns">
-<em class="property">property </em><code class="sig-name descname">baseColumns</code><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.baseColumns" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.baseColumns">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">baseColumns</span></span><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.baseColumns" title="Permalink to this definition"></a></dt>
 <dd><p>Return base columns as list of strings</p>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.begin">
-<em class="property">property </em><code class="sig-name descname">begin</code><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.begin" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.begin">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">begin</span></span><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.begin" title="Permalink to this definition"></a></dt>
 <dd><p>get the <cite>begin</cite> attribute used to generate values for this column</p>
 <p>For numeric columns, the range (minValue, maxValue, step) is used to control data generation.
 For date and time columns, the range (begin, end, interval) are used to control data generation</p>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.datatype">
-<em class="property">property </em><code class="sig-name descname">datatype</code><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.datatype" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.datatype">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">datatype</span></span><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.datatype" title="Permalink to this definition"></a></dt>
 <dd><p>get the Spark SQL data type used to generate values for this column</p>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.end">
-<em class="property">property </em><code class="sig-name descname">end</code><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.end" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.end">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">end</span></span><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.end" title="Permalink to this definition"></a></dt>
 <dd><p>get the <cite>end</cite> attribute used to generate values for this column</p>
 <p>For numeric columns, the range (minValue, maxValue, step) is used to control data generation.
 For date and time columns, the range (begin, end, interval) are used to control data generation</p>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.expr">
-<em class="property">property </em><code class="sig-name descname">expr</code><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.expr" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.expr">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">expr</span></span><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.expr" title="Permalink to this definition"></a></dt>
 <dd><p>get the <cite>expr</cite> attributed used to generate values for this column</p>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.exprs">
-<em class="property">property </em><code class="sig-name descname">exprs</code><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.exprs" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.exprs">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">exprs</span></span><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.exprs" title="Permalink to this definition"></a></dt>
 <dd><p>get the column generation <cite>exprs</cite> attribute used to generate values for this column.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.getNames">
-<code class="sig-name descname">getNames</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/column_generation_spec.html#ColumnGenerationSpec.getNames"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.getNames" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.getNames">
+<span class="sig-name descname"><span class="pre">getNames</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/column_generation_spec.html#ColumnGenerationSpec.getNames"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.getNames" title="Permalink to this definition"></a></dt>
 <dd><p>get column names as list of strings</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.getNamesAndTypes">
-<code class="sig-name descname">getNamesAndTypes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/column_generation_spec.html#ColumnGenerationSpec.getNamesAndTypes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.getNamesAndTypes" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.getNamesAndTypes">
+<span class="sig-name descname"><span class="pre">getNamesAndTypes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/column_generation_spec.html#ColumnGenerationSpec.getNamesAndTypes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.getNamesAndTypes" title="Permalink to this definition"></a></dt>
 <dd><p>get column names as list of tuples <cite>(name, datatype)</cite></p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.getOrElse">
-<code class="sig-name descname">getOrElse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">default</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/column_generation_spec.html#ColumnGenerationSpec.getOrElse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.getOrElse" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.getOrElse">
+<span class="sig-name descname"><span class="pre">getOrElse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/column_generation_spec.html#ColumnGenerationSpec.getOrElse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.getOrElse" title="Permalink to this definition"></a></dt>
 <dd><p>Get value for option key if it exists or else return default</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -247,8 +249,8 @@ For date and time columns, the range (begin, end, interval) are used to control 
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.getPlanEntry">
-<code class="sig-name descname">getPlanEntry</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/column_generation_spec.html#ColumnGenerationSpec.getPlanEntry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.getPlanEntry" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.getPlanEntry">
+<span class="sig-name descname"><span class="pre">getPlanEntry</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/column_generation_spec.html#ColumnGenerationSpec.getPlanEntry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.getPlanEntry" title="Permalink to this definition"></a></dt>
 <dd><p>Get execution plan entry for object</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -257,43 +259,43 @@ For date and time columns, the range (begin, end, interval) are used to control 
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.interval">
-<em class="property">property </em><code class="sig-name descname">interval</code><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.interval" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.interval">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">interval</span></span><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.interval" title="Permalink to this definition"></a></dt>
 <dd><p>get the <cite>interval</cite> attribute used to generate values for this column</p>
 <p>For numeric columns, the range (minValue, maxValue, step) is used to control data generation.
 For date and time columns, the range (begin, end, interval) are used to control data generation</p>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.isFieldOmitted">
-<em class="property">property </em><code class="sig-name descname">isFieldOmitted</code><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.isFieldOmitted" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.isFieldOmitted">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">isFieldOmitted</span></span><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.isFieldOmitted" title="Permalink to this definition"></a></dt>
 <dd><p>check if this field should be omitted from the output</p>
 <p>If the field is omitted from the output, the field is available for use in expressions etc.
 but dropped from the final set of fields</p>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.isRandom">
-<em class="property">property </em><code class="sig-name descname">isRandom</code><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.isRandom" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.isRandom">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">isRandom</span></span><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.isRandom" title="Permalink to this definition"></a></dt>
 <dd><p>returns True if column will be randomly generated</p>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.isWeightedValuesColumn">
-<em class="property">property </em><code class="sig-name descname">isWeightedValuesColumn</code><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.isWeightedValuesColumn" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.isWeightedValuesColumn">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">isWeightedValuesColumn</span></span><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.isWeightedValuesColumn" title="Permalink to this definition"></a></dt>
 <dd><p>check if column is a weighed values column</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.keys">
-<code class="sig-name descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/column_generation_spec.html#ColumnGenerationSpec.keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.keys" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.keys">
+<span class="sig-name descname"><span class="pre">keys</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/column_generation_spec.html#ColumnGenerationSpec.keys"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.keys" title="Permalink to this definition"></a></dt>
 <dd><p>Get the keys as list of strings</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.makeGenerationExpressions">
-<code class="sig-name descname">makeGenerationExpressions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/column_generation_spec.html#ColumnGenerationSpec.makeGenerationExpressions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.makeGenerationExpressions" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.makeGenerationExpressions">
+<span class="sig-name descname"><span class="pre">makeGenerationExpressions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/column_generation_spec.html#ColumnGenerationSpec.makeGenerationExpressions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.makeGenerationExpressions" title="Permalink to this definition"></a></dt>
 <dd><p>Generate structured column if multiple columns or features are specified</p>
 <p>if there are multiple columns / features specified using a single definition, it will generate
 a set of columns conforming to the same definition,
@@ -311,50 +313,50 @@ renaming them as appropriate and combine them into a array if necessary
 </div></blockquote>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.max">
-<em class="property">property </em><code class="sig-name descname">max</code><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.max" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.max">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">max</span></span><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.max" title="Permalink to this definition"></a></dt>
 <dd><p>get the column generation <cite>maxValue</cite> value used to generate values for this column</p>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.min">
-<em class="property">property </em><code class="sig-name descname">min</code><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.min" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.min">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">min</span></span><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.min" title="Permalink to this definition"></a></dt>
 <dd><p>get the column generation <cite>minValue</cite> value used to generate values for this column</p>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.numColumns">
-<em class="property">property </em><code class="sig-name descname">numColumns</code><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.numColumns" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.numColumns">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">numColumns</span></span><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.numColumns" title="Permalink to this definition"></a></dt>
 <dd><p>get the <cite>numColumns</cite> attribute used to generate values for this column</p>
 <p>if a column is specified with the <cite>numColumns</cite> attribute, this is used to create multiple
 copies of the column, named <cite>colName1</cite> .. <cite>colNameN</cite></p>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.numFeatures">
-<em class="property">property </em><code class="sig-name descname">numFeatures</code><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.numFeatures" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.numFeatures">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">numFeatures</span></span><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.numFeatures" title="Permalink to this definition"></a></dt>
 <dd><p>get the <cite>numFeatures</cite> attribute used to generate values for this column</p>
 <p>if a column is specified with the <cite>numFeatures</cite> attribute, this is used to create multiple
 copies of the column, combined into an array or feature vector</p>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.prefix">
-<em class="property">property </em><code class="sig-name descname">prefix</code><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.prefix" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.prefix">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">prefix</span></span><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.prefix" title="Permalink to this definition"></a></dt>
 <dd><p>get the string prefix used to generate values for this column</p>
 <p>When a string field is generated from this spec, the prefix is prepended to the generated string</p>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.randomSeed">
-<em class="property">property </em><code class="sig-name descname">randomSeed</code><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.randomSeed" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.randomSeed">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">randomSeed</span></span><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.randomSeed" title="Permalink to this definition"></a></dt>
 <dd><p>get random seed for column spec</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.setBaseColumnDatatypes">
-<code class="sig-name descname">setBaseColumnDatatypes</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">columnDatatypes</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/column_generation_spec.html#ColumnGenerationSpec.setBaseColumnDatatypes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.setBaseColumnDatatypes" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.setBaseColumnDatatypes">
+<span class="sig-name descname"><span class="pre">setBaseColumnDatatypes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">columnDatatypes</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/column_generation_spec.html#ColumnGenerationSpec.setBaseColumnDatatypes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.setBaseColumnDatatypes" title="Permalink to this definition"></a></dt>
 <dd><p>Set the data types for the base columns</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -363,9 +365,9 @@ copies of the column, combined into an array or feature vector</p>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.specOptions">
-<em class="property">property </em><code class="sig-name descname">specOptions</code><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.specOptions" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.specOptions">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">specOptions</span></span><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.specOptions" title="Permalink to this definition"></a></dt>
 <dd><p>get column spec options for spec</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -379,36 +381,36 @@ Option values set directly through the options dict are not supported.</p>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.step">
-<em class="property">property </em><code class="sig-name descname">step</code><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.step" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.step">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">step</span></span><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.step" title="Permalink to this definition"></a></dt>
 <dd><p>get the column generation <cite>step</cite> value used to generate values for this column</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.structType">
-<code class="sig-name descname">structType</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/column_generation_spec.html#ColumnGenerationSpec.structType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.structType" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.structType">
+<span class="sig-name descname"><span class="pre">structType</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/column_generation_spec.html#ColumnGenerationSpec.structType"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.structType" title="Permalink to this definition"></a></dt>
 <dd><p>get the <cite>structType</cite> attribute used to generate values for this column</p>
 <p>When a column spec is specified to generate multiple copies of the column, this controls whether
 these are combined into an array etc</p>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.suffix">
-<em class="property">property </em><code class="sig-name descname">suffix</code><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.suffix" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.suffix">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">suffix</span></span><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.suffix" title="Permalink to this definition"></a></dt>
 <dd><p>get the string suffix used to generate values for this column</p>
 <p>When a string field is generated from this spec, the suffix is appended to the generated string</p>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.textGenerator">
-<em class="property">property </em><code class="sig-name descname">textGenerator</code><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.textGenerator" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.textGenerator">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">textGenerator</span></span><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.textGenerator" title="Permalink to this definition"></a></dt>
 <dd><p>Get the text generator for the column spec</p>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.column_generation_spec.ColumnGenerationSpec.text_separator">
-<em class="property">property </em><code class="sig-name descname">text_separator</code><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.text_separator" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.column_generation_spec.ColumnGenerationSpec.text_separator">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">text_separator</span></span><a class="headerlink" href="#dbldatagen.column_generation_spec.ColumnGenerationSpec.text_separator" title="Permalink to this definition"></a></dt>
 <dd><p>get the <cite>expr</cite> attributed used to generate values for this column</p>
 </dd></dl>
 
@@ -427,7 +429,7 @@ these are combined into an array etc</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2020, Databricks Inc.</p>
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

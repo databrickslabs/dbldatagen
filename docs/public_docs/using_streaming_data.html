@@ -4,17 +4,19 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Using streaming data &mdash; Databricks Labs Data Generator 0.2.1 documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <title>Using streaming data &mdash; Databricks Labs Data Generator 0.2.1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/tdg.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -37,7 +39,7 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p><span class="caption-text">Getting Started</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="APIDOCS.html">Get Started Here</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation_notes.html">Installation instructions</a></li>
@@ -59,12 +61,12 @@
 <li class="toctree-l1"><a class="reference internal" href="extending_text_generation.html">Extending text generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting data generation</a></li>
 </ul>
-<p><span class="caption-text">API</span></p>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/quickindex.html">Quick API index</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference/api/modules.html">The dbldatagen package API</a></li>
 </ul>
-<p><span class="caption-text">Development</span></p>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
@@ -74,7 +76,7 @@
 <li class="toctree-l1"><a class="reference internal" href="relnotes/CHANGELOG.html">Change log</a></li>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/requirements.html">Build requirements</a></li>
 </ul>
-<p><span class="caption-text">License</span></p>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
 </ul>
@@ -104,7 +106,7 @@
            <div itemprop="articleBody">
              
   <section id="using-streaming-data">
-<h1>Using streaming data<a class="headerlink" href="#using-streaming-data" title="Permalink to this headline"></a></h1>
+<h1>Using streaming data<a class="headerlink" href="#using-streaming-data" title="Permalink to this heading"></a></h1>
 <p>You can make any data spec into a streaming data frame by passing additional options to the <code class="docutils literal notranslate"><span class="pre">build</span></code> method.</p>
 <p>If the <code class="docutils literal notranslate"><span class="pre">withStreaming</span></code> option is used when building the data set, it will use a streaming rate source to generate
 the data. You can control the streaming rate with the option <code class="docutils literal notranslate"><span class="pre">rowsPerSecond</span></code>.</p>
@@ -113,7 +115,7 @@ the data. You can control the streaming rate with the option <code class="docuti
 generator.</p>
 <p>As the generated data frame is a normal spark streaming data frame, all the same caveats and features apply.</p>
 <section id="example-1-site-code-and-technology">
-<h2>Example 1: site code and technology<a class="headerlink" href="#example-1-site-code-and-technology" title="Permalink to this headline"></a></h2>
+<h2>Example 1: site code and technology<a class="headerlink" href="#example-1-site-code-and-technology" title="Permalink to this heading"></a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">timedelta</span><span class="p">,</span> <span class="n">datetime</span>
 <span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">from</span> <span class="nn">pyspark.sql.types</span> <span class="kn">import</span> <span class="n">StructType</span><span class="p">,</span> <span class="n">StructField</span><span class="p">,</span> <span class="n">IntegerType</span><span class="p">,</span> <span class="n">StringType</span><span class="p">,</span> <span class="n">FloatType</span><span class="p">,</span> <span class="n">TimestampType</span>
@@ -155,7 +157,7 @@ generator.</p>
 </div>
 </section>
 <section id="example-2-iot-style-data">
-<h2>Example 2: IOT style data<a class="headerlink" href="#example-2-iot-style-data" title="Permalink to this headline"></a></h2>
+<h2>Example 2: IOT style data<a class="headerlink" href="#example-2-iot-style-data" title="Permalink to this heading"></a></h2>
 <p>The following example shows how to control the length of time to run the streaming
 data generation for.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">time</span>
@@ -238,7 +240,7 @@ terminate the streaming after a specified period of time.</p>
 </div>
 </section>
 <section id="using-streaming-data-with-delta-tables">
-<h2>Using streaming data with Delta tables<a class="headerlink" href="#using-streaming-data-with-delta-tables" title="Permalink to this headline"></a></h2>
+<h2>Using streaming data with Delta tables<a class="headerlink" href="#using-streaming-data-with-delta-tables" title="Permalink to this heading"></a></h2>
 <p>If you write the streaming data to a Delta table using a streaming
 writer, then the Delta table itself can be used as a streaming source
 for downstream consumption.</p>
@@ -282,7 +284,7 @@ for downstream consumption.</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2020, Databricks Inc.</p>
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

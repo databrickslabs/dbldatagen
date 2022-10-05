@@ -4,17 +4,19 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Generating Change Data Capture data &mdash; Databricks Labs Data Generator 0.2.1 documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <title>Generating Change Data Capture data &mdash; Databricks Labs Data Generator 0.2.1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/tdg.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -37,7 +39,7 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p><span class="caption-text">Getting Started</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="APIDOCS.html">Get Started Here</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation_notes.html">Installation instructions</a></li>
@@ -62,12 +64,12 @@
 <li class="toctree-l1"><a class="reference internal" href="extending_text_generation.html">Extending text generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting data generation</a></li>
 </ul>
-<p><span class="caption-text">API</span></p>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/quickindex.html">Quick API index</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference/api/modules.html">The dbldatagen package API</a></li>
 </ul>
-<p><span class="caption-text">Development</span></p>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
@@ -77,7 +79,7 @@
 <li class="toctree-l1"><a class="reference internal" href="relnotes/CHANGELOG.html">Change log</a></li>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/requirements.html">Build requirements</a></li>
 </ul>
-<p><span class="caption-text">License</span></p>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
 </ul>
@@ -107,13 +109,13 @@
            <div itemprop="articleBody">
              
   <section id="generating-change-data-capture-data">
-<h1>Generating Change Data Capture data<a class="headerlink" href="#generating-change-data-capture-data" title="Permalink to this headline"></a></h1>
+<h1>Generating Change Data Capture data<a class="headerlink" href="#generating-change-data-capture-data" title="Permalink to this heading"></a></h1>
 <p>This section explores some of the features for generating CDC style data - that is exploring the ability to
 generate a base data set and then apply changes such as updates to existing rows and
 new rows that will be inserts to the existing data</p>
 <p>See the section on repeatable data generation for the concepts that underpin the data generation.</p>
 <section id="overview">
-<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline"></a></h2>
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
 <p>We’ll generate a customer table, and write out the data.</p>
 <p>Then we generate changes for the table and show merging them in.</p>
 <p>To start, we’ll specify some locations for our data:</p>
@@ -169,7 +171,7 @@ new rows that will be inserts to the existing data</p>
 </pre></div>
 </div>
 <section id="creating-a-table-definition">
-<h3>Creating a table definition<a class="headerlink" href="#creating-a-table-definition" title="Permalink to this headline"></a></h3>
+<h3>Creating a table definition<a class="headerlink" href="#creating-a-table-definition" title="Permalink to this heading"></a></h3>
 <p>We can use the features of the data generator to script SQL definitions for table creation and merge
 statements.</p>
 <p>Lets create a table definition around our data. As we generate a SQL statement with an explicit location,
@@ -189,7 +191,7 @@ the table is implicitly <code class="docutils literal notranslate"><span class="
 </div>
 </section>
 <section id="creating-changes">
-<h3>Creating Changes<a class="headerlink" href="#creating-changes" title="Permalink to this headline"></a></h3>
+<h3>Creating Changes<a class="headerlink" href="#creating-changes" title="Permalink to this heading"></a></h3>
 <p>Lets generate some changes.</p>
 <p>Here we want to generate a set of new rows, which we guarantee to be new by using customer ids greater than the maximum
 existing customer id.</p>
@@ -232,7 +234,7 @@ existing customer id.</p>
 </div>
 </section>
 <section id="merging-in-the-changes">
-<h3>Merging in the changes<a class="headerlink" href="#merging-in-the-changes" title="Permalink to this headline"></a></h3>
+<h3>Merging in the changes<a class="headerlink" href="#merging-in-the-changes" title="Permalink to this heading"></a></h3>
 <p>We can script the merge statement in the data generator.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">updateColumns</span></code> argument, specifies which columns should be updated.
 The corresponding <code class="docutils literal notranslate"><span class="pre">updateColumnExprs</span></code> argument provides SQL expressions as overrides for the
@@ -268,7 +270,7 @@ Note that these merge script statements can be used as part of a streaming merge
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2020, Databricks Inc.</p>
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

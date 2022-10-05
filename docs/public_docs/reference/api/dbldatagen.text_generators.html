@@ -4,17 +4,19 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>dbldatagen.text_generators module &mdash; Databricks Labs Data Generator 0.2.1 documentation</title><link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <title>dbldatagen.text_generators module &mdash; Databricks Labs Data Generator 0.2.1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/tdg.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
         <script src="../../_static/jquery.js"></script>
         <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/language_data.js"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -37,7 +39,7 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p><span class="caption-text">Getting Started</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../APIDOCS.html">Get Started Here</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../installation_notes.html">Installation instructions</a></li>
@@ -54,7 +56,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../extending_text_generation.html">Extending text generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting data generation</a></li>
 </ul>
-<p><span class="caption-text">API</span></p>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/quickindex.html">Quick API index</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">The dbldatagen package API</a><ul class="current">
@@ -83,7 +85,7 @@
 </ul>
 </li>
 </ul>
-<p><span class="caption-text">Development</span></p>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
@@ -93,7 +95,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/CHANGELOG.html">Change log</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/requirements.html">Build requirements</a></li>
 </ul>
-<p><span class="caption-text">License</span></p>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
 </ul>
@@ -125,12 +127,12 @@
            <div itemprop="articleBody">
              
   <section id="module-dbldatagen.text_generators">
-<span id="dbldatagen-text-generators-module"></span><h1>dbldatagen.text_generators module<a class="headerlink" href="#module-dbldatagen.text_generators" title="Permalink to this headline"></a></h1>
+<span id="dbldatagen-text-generators-module"></span><h1>dbldatagen.text_generators module<a class="headerlink" href="#module-dbldatagen.text_generators" title="Permalink to this heading"></a></h1>
 <p>This file defines various text generation classes and methods</p>
 <dl class="py class">
-<dt id="dbldatagen.text_generators.ILText">
-<em class="property">class </em><code class="sig-name descname">ILText</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">paragraphs</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">sentences</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">words</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">extendedWordList</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#ILText"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.text_generators.ILText" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#dbldatagen.text_generators.TextGenerator" title="dbldatagen.text_generators.TextGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">dbldatagen.text_generators.TextGenerator</span></code></a></p>
+<dt class="sig sig-object py" id="dbldatagen.text_generators.ILText">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ILText</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">paragraphs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sentences</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">words</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extendedWordList</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#ILText"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generators.ILText" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dbldatagen.text_generators.TextGenerator" title="dbldatagen.text_generators.TextGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">TextGenerator</span></code></a></p>
 <p>Class to generate Ipsum Lorem text paragraphs, words and sentences</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -142,8 +144,8 @@
 </dd>
 </dl>
 <dl class="py method">
-<dt id="dbldatagen.text_generators.ILText.classicGenerateText">
-<code class="sig-name descname">classicGenerateText</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">v</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#ILText.classicGenerateText"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.text_generators.ILText.classicGenerateText" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.text_generators.ILText.classicGenerateText">
+<span class="sig-name descname"><span class="pre">classicGenerateText</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#ILText.classicGenerateText"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generators.ILText.classicGenerateText" title="Permalink to this definition"></a></dt>
 <dd><p>classic udf entry point for text generation</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -153,8 +155,8 @@
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.text_generators.ILText.generateText">
-<code class="sig-name descname">generateText</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">baseValues</span></em>, <em class="sig-param"><span class="n">rowCount</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#ILText.generateText"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.text_generators.ILText.generateText" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.text_generators.ILText.generateText">
+<span class="sig-name descname"><span class="pre">generateText</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">baseValues</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rowCount</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#ILText.generateText"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generators.ILText.generateText" title="Permalink to this definition"></a></dt>
 <dd><p>generate text for seed based on configuration parameters.</p>
 <p>As it uses numpy, repeatability is restricted depending on version of the runtime</p>
 <dl class="field-list simple">
@@ -171,8 +173,8 @@
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.text_generators.ILText.pandasGenerateText">
-<code class="sig-name descname">pandasGenerateText</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">v</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#ILText.pandasGenerateText"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.text_generators.ILText.pandasGenerateText" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.text_generators.ILText.pandasGenerateText">
+<span class="sig-name descname"><span class="pre">pandasGenerateText</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#ILText.pandasGenerateText"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generators.ILText.pandasGenerateText" title="Permalink to this definition"></a></dt>
 <dd><p>pandas udf entry point for text generation</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -187,9 +189,9 @@
 </dd></dl>
 
 <dl class="py class">
-<dt id="dbldatagen.text_generators.TemplateGenerator">
-<em class="property">class </em><code class="sig-name descname">TemplateGenerator</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">template</span></em>, <em class="sig-param"><span class="n">escapeSpecialChars</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">extendedWordList</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#TemplateGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.text_generators.TemplateGenerator" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#dbldatagen.text_generators.TextGenerator" title="dbldatagen.text_generators.TextGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">dbldatagen.text_generators.TextGenerator</span></code></a></p>
+<dt class="sig sig-object py" id="dbldatagen.text_generators.TemplateGenerator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">TemplateGenerator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">template</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">escapeSpecialChars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extendedWordList</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#TemplateGenerator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generators.TemplateGenerator" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dbldatagen.text_generators.TextGenerator" title="dbldatagen.text_generators.TextGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">TextGenerator</span></code></a></p>
 <p>This class handles the generation of text from templates</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -278,20 +280,20 @@ to the values zero to 999. This conforms to earlier implementations for backward
 <p>If set to True, then the template <code class="docutils literal notranslate"><span class="pre">r&quot;dr_\v&quot;</span></code> will generate the values <code class="docutils literal notranslate"><span class="pre">&quot;dr_0&quot;</span></code> … <code class="docutils literal notranslate"><span class="pre">&quot;dr_999&quot;</span></code>
 when applied to the values zero to 999. This conforms to the preferred style going forward</p>
 <dl class="py method">
-<dt id="dbldatagen.text_generators.TemplateGenerator.classicGenerateText">
-<code class="sig-name descname">classicGenerateText</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">v</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#TemplateGenerator.classicGenerateText"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.text_generators.TemplateGenerator.classicGenerateText" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.text_generators.TemplateGenerator.classicGenerateText">
+<span class="sig-name descname"><span class="pre">classicGenerateText</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#TemplateGenerator.classicGenerateText"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generators.TemplateGenerator.classicGenerateText" title="Permalink to this definition"></a></dt>
 <dd><p>entry point to use for classic udfs</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.text_generators.TemplateGenerator.pandasGenerateText">
-<code class="sig-name descname">pandasGenerateText</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">v</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#TemplateGenerator.pandasGenerateText"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.text_generators.TemplateGenerator.pandasGenerateText" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.text_generators.TemplateGenerator.pandasGenerateText">
+<span class="sig-name descname"><span class="pre">pandasGenerateText</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#TemplateGenerator.pandasGenerateText"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generators.TemplateGenerator.pandasGenerateText" title="Permalink to this definition"></a></dt>
 <dd><p>entry point to use for pandas udfs</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.text_generators.TemplateGenerator.stringsFromSingleTemplate">
-<code class="sig-name descname">stringsFromSingleTemplate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">baseValue</span></em>, <em class="sig-param"><span class="n">genTemplate</span></em>, <em class="sig-param"><span class="n">escapeSpecialMeaning</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">rndGenerator</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#TemplateGenerator.stringsFromSingleTemplate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.text_generators.TemplateGenerator.stringsFromSingleTemplate" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.text_generators.TemplateGenerator.stringsFromSingleTemplate">
+<span class="sig-name descname"><span class="pre">stringsFromSingleTemplate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">baseValue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genTemplate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">escapeSpecialMeaning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rndGenerator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#TemplateGenerator.stringsFromSingleTemplate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generators.TemplateGenerator.stringsFromSingleTemplate" title="Permalink to this definition"></a></dt>
 <dd><p>Generate text from a single template</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -311,15 +313,15 @@ Ignored unless template outputs it</p></li>
 for preferred new style template syntax. Specify as True to force escapes for special meanings,.</p>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.text_generators.TemplateGenerator.templates">
-<em class="property">property </em><code class="sig-name descname">templates</code><a class="headerlink" href="#dbldatagen.text_generators.TemplateGenerator.templates" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.text_generators.TemplateGenerator.templates">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">templates</span></span><a class="headerlink" href="#dbldatagen.text_generators.TemplateGenerator.templates" title="Permalink to this definition"></a></dt>
 <dd><p>Get effective templates for text generator</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.text_generators.TemplateGenerator.valueFromSingleTemplate">
-<code class="sig-name descname">valueFromSingleTemplate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">baseValue</span></em>, <em class="sig-param"><span class="n">genTemplate</span></em>, <em class="sig-param"><span class="n">escapeSpecialMeaning</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">rndGenerator</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#TemplateGenerator.valueFromSingleTemplate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.text_generators.TemplateGenerator.valueFromSingleTemplate" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.text_generators.TemplateGenerator.valueFromSingleTemplate">
+<span class="sig-name descname"><span class="pre">valueFromSingleTemplate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">baseValue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genTemplate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">escapeSpecialMeaning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rndGenerator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#TemplateGenerator.valueFromSingleTemplate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generators.TemplateGenerator.valueFromSingleTemplate" title="Permalink to this definition"></a></dt>
 <dd><p>Generate text from a single template</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -341,13 +343,13 @@ for preferred new style template syntax. Specify as True to force escapes for sp
 </dd></dl>
 
 <dl class="py class">
-<dt id="dbldatagen.text_generators.TextGenerator">
-<em class="property">class </em><code class="sig-name descname">TextGenerator</code><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#TextGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.text_generators.TextGenerator" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.text_generators.TextGenerator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">TextGenerator</span></span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#TextGenerator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generators.TextGenerator" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Base class for text generation classes</p>
 <dl class="py method">
-<dt id="dbldatagen.text_generators.TextGenerator.compactNumpyTypeForValues">
-<em class="property">static </em><code class="sig-name descname">compactNumpyTypeForValues</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">listValues</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#TextGenerator.compactNumpyTypeForValues"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.text_generators.TextGenerator.compactNumpyTypeForValues" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.text_generators.TextGenerator.compactNumpyTypeForValues">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">compactNumpyTypeForValues</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">listValues</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#TextGenerator.compactNumpyTypeForValues"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generators.TextGenerator.compactNumpyTypeForValues" title="Permalink to this definition"></a></dt>
 <dd><p>determine smallest numpy type to represent values</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -360,8 +362,8 @@ for preferred new style template syntax. Specify as True to force escapes for sp
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.text_generators.TextGenerator.getAsTupleOrElse">
-<em class="property">static </em><code class="sig-name descname">getAsTupleOrElse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">v</span></em>, <em class="sig-param"><span class="n">defaultValue</span></em>, <em class="sig-param"><span class="n">valueName</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#TextGenerator.getAsTupleOrElse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.text_generators.TextGenerator.getAsTupleOrElse" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.text_generators.TextGenerator.getAsTupleOrElse">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">getAsTupleOrElse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defaultValue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valueName</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#TextGenerator.getAsTupleOrElse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generators.TextGenerator.getAsTupleOrElse" title="Permalink to this definition"></a></dt>
 <dd><p>get value v as tuple or return default value</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -379,8 +381,8 @@ value, returns the tuple (<cite>v</cite>, <cite>v</cite>)</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.text_generators.TextGenerator.getNPRandomGenerator">
-<code class="sig-name descname">getNPRandomGenerator</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">forceNewInstance</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#TextGenerator.getNPRandomGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.text_generators.TextGenerator.getNPRandomGenerator" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.text_generators.TextGenerator.getNPRandomGenerator">
+<span class="sig-name descname"><span class="pre">getNPRandomGenerator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">forceNewInstance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#TextGenerator.getNPRandomGenerator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generators.TextGenerator.getNPRandomGenerator" title="Permalink to this definition"></a></dt>
 <dd><p>Get numpy random number generator</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -389,15 +391,15 @@ value, returns the tuple (<cite>v</cite>, <cite>v</cite>)</p>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.text_generators.TextGenerator.randomSeed">
-<em class="property">property </em><code class="sig-name descname">randomSeed</code><a class="headerlink" href="#dbldatagen.text_generators.TextGenerator.randomSeed" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.text_generators.TextGenerator.randomSeed">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">randomSeed</span></span><a class="headerlink" href="#dbldatagen.text_generators.TextGenerator.randomSeed" title="Permalink to this definition"></a></dt>
 <dd><p>Get random seed for text generator</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.text_generators.TextGenerator.withRandomSeed">
-<code class="sig-name descname">withRandomSeed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">seed</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#TextGenerator.withRandomSeed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.text_generators.TextGenerator.withRandomSeed" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.text_generators.TextGenerator.withRandomSeed">
+<span class="sig-name descname"><span class="pre">withRandomSeed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seed</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#TextGenerator.withRandomSeed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generators.TextGenerator.withRandomSeed" title="Permalink to this definition"></a></dt>
 <dd><p>Set the random seed for the text generator</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -424,7 +426,7 @@ value, returns the tuple (<cite>v</cite>, <cite>v</cite>)</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2020, Databricks Inc.</p>
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

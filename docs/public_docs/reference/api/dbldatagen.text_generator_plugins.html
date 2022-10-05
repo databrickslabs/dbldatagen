@@ -4,17 +4,19 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>dbldatagen.text_generator_plugins module &mdash; Databricks Labs Data Generator 0.2.1 documentation</title><link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <title>dbldatagen.text_generator_plugins module &mdash; Databricks Labs Data Generator 0.2.1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/tdg.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
         <script src="../../_static/jquery.js"></script>
         <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/language_data.js"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -37,7 +39,7 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p><span class="caption-text">Getting Started</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../APIDOCS.html">Get Started Here</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../installation_notes.html">Installation instructions</a></li>
@@ -54,7 +56,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../extending_text_generation.html">Extending text generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting data generation</a></li>
 </ul>
-<p><span class="caption-text">API</span></p>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/quickindex.html">Quick API index</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">The dbldatagen package API</a><ul class="current">
@@ -83,7 +85,7 @@
 </ul>
 </li>
 </ul>
-<p><span class="caption-text">Development</span></p>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
@@ -93,7 +95,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/CHANGELOG.html">Change log</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/requirements.html">Build requirements</a></li>
 </ul>
-<p><span class="caption-text">License</span></p>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
 </ul>
@@ -125,12 +127,12 @@
            <div itemprop="articleBody">
              
   <section id="module-dbldatagen.text_generator_plugins">
-<span id="dbldatagen-text-generator-plugins-module"></span><h1>dbldatagen.text_generator_plugins module<a class="headerlink" href="#module-dbldatagen.text_generator_plugins" title="Permalink to this headline"></a></h1>
+<span id="dbldatagen-text-generator-plugins-module"></span><h1>dbldatagen.text_generator_plugins module<a class="headerlink" href="#module-dbldatagen.text_generator_plugins" title="Permalink to this heading"></a></h1>
 <p>This file defines the text generator plugin class <cite>PyfuncText</cite></p>
 <dl class="py class">
-<dt id="dbldatagen.text_generator_plugins.FakerTextFactory">
-<em class="property">class </em><code class="sig-name descname">FakerTextFactory</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">locale</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">providers</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">'FakerText'</span></em>, <em class="sig-param"><span class="n">lib</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">rootClass</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generator_plugins.html#FakerTextFactory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.text_generator_plugins.FakerTextFactory" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#dbldatagen.text_generator_plugins.PyfuncTextFactory" title="dbldatagen.text_generator_plugins.PyfuncTextFactory"><code class="xref py py-class docutils literal notranslate"><span class="pre">dbldatagen.text_generator_plugins.PyfuncTextFactory</span></code></a></p>
+<dt class="sig sig-object py" id="dbldatagen.text_generator_plugins.FakerTextFactory">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">FakerTextFactory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">locale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">providers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'FakerText'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lib</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rootClass</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generator_plugins.html#FakerTextFactory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generator_plugins.FakerTextFactory" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dbldatagen.text_generator_plugins.PyfuncTextFactory" title="dbldatagen.text_generator_plugins.PyfuncTextFactory"><code class="xref py py-class docutils literal notranslate"><span class="pre">PyfuncTextFactory</span></code></a></p>
 <p>Factory object for Faker text generator flavored <code class="docutils literal notranslate"><span class="pre">PyfuncText</span></code> objects</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -150,9 +152,9 @@
 </dd></dl>
 
 <dl class="py class">
-<dt id="dbldatagen.text_generator_plugins.PyfuncText">
-<em class="property">class </em><code class="sig-name descname">PyfuncText</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fn</span></em>, <em class="sig-param"><span class="n">init</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">initPerBatch</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">rootProperty</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generator_plugins.html#PyfuncText"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.text_generator_plugins.PyfuncText" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="dbldatagen.text_generators.html#dbldatagen.text_generators.TextGenerator" title="dbldatagen.text_generators.TextGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">dbldatagen.text_generators.TextGenerator</span></code></a></p>
+<dt class="sig sig-object py" id="dbldatagen.text_generator_plugins.PyfuncText">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PyfuncText</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initPerBatch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rootProperty</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generator_plugins.html#PyfuncText"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generator_plugins.PyfuncText" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="dbldatagen.text_generators.html#dbldatagen.text_generators.TextGenerator" title="dbldatagen.text_generators.TextGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">TextGenerator</span></code></a></p>
 <p>Text generator that supports generating text from arbitrary Python function</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -190,8 +192,8 @@ use a random seed.</p>
 generator is needed, you may call the base class method with the argument <cite>forceNewInstance</cite> set to True.</p>
 </div>
 <dl class="py method">
-<dt id="dbldatagen.text_generator_plugins.PyfuncText.pandasGenerateText">
-<code class="sig-name descname">pandasGenerateText</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">v</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generator_plugins.html#PyfuncText.pandasGenerateText"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.text_generator_plugins.PyfuncText.pandasGenerateText" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.text_generator_plugins.PyfuncText.pandasGenerateText">
+<span class="sig-name descname"><span class="pre">pandasGenerateText</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generator_plugins.html#PyfuncText.pandasGenerateText"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generator_plugins.PyfuncText.pandasGenerateText" title="Permalink to this definition"></a></dt>
 <dd><p>Called to generate text via Pandas UDF mechanism</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -203,8 +205,8 @@ generator is needed, you may call the base class method with the argument <cite>
 </dd></dl>
 
 <dl class="py class">
-<dt id="dbldatagen.text_generator_plugins.PyfuncTextFactory">
-<em class="property">class </em><code class="sig-name descname">PyfuncTextFactory</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generator_plugins.html#PyfuncTextFactory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.text_generator_plugins.PyfuncTextFactory" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.text_generator_plugins.PyfuncTextFactory">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PyfuncTextFactory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generator_plugins.html#PyfuncTextFactory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generator_plugins.PyfuncTextFactory" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>PyfuncTextFactory applies syntactic wrapping around creation of PyfuncText objects</p>
 <dl class="field-list simple">
@@ -245,8 +247,8 @@ generator is needed, you may call the base class method with the argument <cite>
 </pre></div>
 </div>
 <dl class="py method">
-<dt id="dbldatagen.text_generator_plugins.PyfuncTextFactory.withInit">
-<code class="sig-name descname">withInit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fn</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generator_plugins.html#PyfuncTextFactory.withInit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.text_generator_plugins.PyfuncTextFactory.withInit" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.text_generator_plugins.PyfuncTextFactory.withInit">
+<span class="sig-name descname"><span class="pre">withInit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generator_plugins.html#PyfuncTextFactory.withInit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generator_plugins.PyfuncTextFactory.withInit" title="Permalink to this definition"></a></dt>
 <dd><p>Specifies context initialization function</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -262,8 +264,8 @@ instance.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.text_generator_plugins.PyfuncTextFactory.withInitPerBatch">
-<code class="sig-name descname">withInitPerBatch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fn</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generator_plugins.html#PyfuncTextFactory.withInitPerBatch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.text_generator_plugins.PyfuncTextFactory.withInitPerBatch" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.text_generator_plugins.PyfuncTextFactory.withInitPerBatch">
+<span class="sig-name descname"><span class="pre">withInitPerBatch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generator_plugins.html#PyfuncTextFactory.withInitPerBatch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generator_plugins.PyfuncTextFactory.withInitPerBatch" title="Permalink to this definition"></a></dt>
 <dd><p>Specifies context initialization function</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -281,8 +283,8 @@ batch size.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.text_generator_plugins.PyfuncTextFactory.withRootProperty">
-<code class="sig-name descname">withRootProperty</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prop</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generator_plugins.html#PyfuncTextFactory.withRootProperty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.text_generator_plugins.PyfuncTextFactory.withRootProperty" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.text_generator_plugins.PyfuncTextFactory.withRootProperty">
+<span class="sig-name descname"><span class="pre">withRootProperty</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prop</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generator_plugins.html#PyfuncTextFactory.withRootProperty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generator_plugins.PyfuncTextFactory.withRootProperty" title="Permalink to this definition"></a></dt>
 <dd><p>If called, specifies the property of the context to be passed to the text generation function.
 If not called, the context object itself will be passed to the text generation function.</p>
 </dd></dl>
@@ -290,8 +292,8 @@ If not called, the context object itself will be passed to the text generation f
 </dd></dl>
 
 <dl class="py function">
-<dt id="dbldatagen.text_generator_plugins.fakerText">
-<code class="sig-name descname">fakerText</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mname</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">_lib</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">_rootClass</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generator_plugins.html#fakerText"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.text_generator_plugins.fakerText" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.text_generator_plugins.fakerText">
+<span class="sig-name descname"><span class="pre">fakerText</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mname</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_lib</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_rootClass</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generator_plugins.html#fakerText"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generator_plugins.fakerText" title="Permalink to this definition"></a></dt>
 <dd><p>Generate faker text generator object using default FakerTextFactory
 instance</p>
 <dl class="field-list simple">
@@ -321,7 +323,7 @@ instance</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2020, Databricks Inc.</p>
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

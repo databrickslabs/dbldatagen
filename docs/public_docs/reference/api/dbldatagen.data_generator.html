@@ -4,17 +4,19 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>dbldatagen.data_generator module &mdash; Databricks Labs Data Generator 0.2.1 documentation</title><link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <title>dbldatagen.data_generator module &mdash; Databricks Labs Data Generator 0.2.1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/tdg.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
         <script src="../../_static/jquery.js"></script>
         <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/language_data.js"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -37,7 +39,7 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p><span class="caption-text">Getting Started</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../APIDOCS.html">Get Started Here</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../installation_notes.html">Installation instructions</a></li>
@@ -54,7 +56,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../extending_text_generation.html">Extending text generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting data generation</a></li>
 </ul>
-<p><span class="caption-text">API</span></p>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/quickindex.html">Quick API index</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">The dbldatagen package API</a><ul class="current">
@@ -83,7 +85,7 @@
 </ul>
 </li>
 </ul>
-<p><span class="caption-text">Development</span></p>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
@@ -93,7 +95,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/CHANGELOG.html">Change log</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/requirements.html">Build requirements</a></li>
 </ul>
-<p><span class="caption-text">License</span></p>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
 </ul>
@@ -125,11 +127,11 @@
            <div itemprop="articleBody">
              
   <section id="module-dbldatagen.data_generator">
-<span id="dbldatagen-data-generator-module"></span><h1>dbldatagen.data_generator module<a class="headerlink" href="#module-dbldatagen.data_generator" title="Permalink to this headline"></a></h1>
+<span id="dbldatagen-data-generator-module"></span><h1>dbldatagen.data_generator module<a class="headerlink" href="#module-dbldatagen.data_generator" title="Permalink to this heading"></a></h1>
 <p>This file defines the <cite>DataGenError</cite> and <cite>DataGenerator</cite> classes</p>
 <dl class="py class">
-<dt id="dbldatagen.data_generator.DataGenerator">
-<em class="property">class </em><code class="sig-name descname">DataGenerator</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sparkSession</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">randomSeedMethod</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">rows</span><span class="o">=</span><span class="default_value">1000000</span></em>, <em class="sig-param"><span class="n">startingId</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">randomSeed</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">partitions</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">batchSize</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">debug</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DataGenerator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sparkSession</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">randomSeedMethod</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rows</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">startingId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">randomSeed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partitions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batchSize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Main Class for test data set generation</p>
 <p>This class acts as the entry point to all test data generation activities.</p>
@@ -150,8 +152,8 @@
 </dd>
 </dl>
 <dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.build">
-<code class="sig-name descname">build</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">withTempView</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">withView</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">withStreaming</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">options</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.build"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.build" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.build">
+<span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">withTempView</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">withView</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">withStreaming</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.build"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.build" title="Permalink to this definition"></a></dt>
 <dd><p>build the test data set from the column definitions and return a dataframe for it</p>
 <p>if <cite>withStreaming</cite> is True, generates a streaming data set.
 Use options to control the rate of generation of test data if streaming is used.</p>
@@ -173,16 +175,16 @@ for writing with <cite>writeStream</cite></p></li>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.build_order">
-<em class="property">property </em><code class="sig-name descname">build_order</code><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.build_order" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.build_order">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">build_order</span></span><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.build_order" title="Permalink to this definition"></a></dt>
 <dd><p>return the build order minus the seed column (which defaults to <cite>id</cite>)</p>
 <p>The build order will be a list of lists - each list specifying columns that can be built at the same time</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.clone">
-<code class="sig-name descname">clone</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.clone"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.clone" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.clone">
+<span class="sig-name descname"><span class="pre">clone</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.clone"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.clone" title="Permalink to this definition"></a></dt>
 <dd><p>Make a clone of the data spec via deep copy preserving same spark session</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -192,8 +194,8 @@ for writing with <cite>writeStream</cite></p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.computeBuildPlan">
-<code class="sig-name descname">computeBuildPlan</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.computeBuildPlan"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.computeBuildPlan" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.computeBuildPlan">
+<span class="sig-name descname"><span class="pre">computeBuildPlan</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.computeBuildPlan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.computeBuildPlan" title="Permalink to this definition"></a></dt>
 <dd><p>prepare for building by computing a pseudo build plan</p>
 <p>The build plan is not a true build plan - it is only used for debugging purposes, but does not actually
 drive the column generation order.</p>
@@ -206,8 +208,8 @@ following Builder pattern</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.describe">
-<code class="sig-name descname">describe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.describe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.describe" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.describe">
+<span class="sig-name descname"><span class="pre">describe</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.describe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.describe" title="Permalink to this definition"></a></dt>
 <dd><p>return description of the dataset generation spec</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -217,8 +219,8 @@ following Builder pattern</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.explain">
-<code class="sig-name descname">explain</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">suppressOutput</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.explain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.explain" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.explain">
+<span class="sig-name descname"><span class="pre">explain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suppressOutput</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.explain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.explain" title="Permalink to this definition"></a></dt>
 <dd><p>Explain the test data generation process</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -231,8 +233,8 @@ following Builder pattern</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.flatten">
-<em class="property">static </em><code class="sig-name descname">flatten</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">lst</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.flatten"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.flatten" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.flatten">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">flatten</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lst</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.flatten"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.flatten" title="Permalink to this definition"></a></dt>
 <dd><p>flatten list</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -242,8 +244,8 @@ following Builder pattern</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.generateName">
-<em class="property">classmethod </em><code class="sig-name descname">generateName</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.generateName"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.generateName" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.generateName">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">generateName</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.generateName"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.generateName" title="Permalink to this definition"></a></dt>
 <dd><p>get a name for the data set</p>
 <p>Uses the untitled name prefix and nextNameIndex to generate a dummy dataset name</p>
 <dl class="field-list simple">
@@ -254,8 +256,8 @@ following Builder pattern</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.getColumnSpec">
-<code class="sig-name descname">getColumnSpec</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.getColumnSpec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.getColumnSpec" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.getColumnSpec">
+<span class="sig-name descname"><span class="pre">getColumnSpec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.getColumnSpec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.getColumnSpec" title="Permalink to this definition"></a></dt>
 <dd><p>get column spec for column having name supplied</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -268,8 +270,8 @@ following Builder pattern</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.getColumnType">
-<code class="sig-name descname">getColumnType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">colName</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.getColumnType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.getColumnType" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.getColumnType">
+<span class="sig-name descname"><span class="pre">getColumnType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">colName</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.getColumnType"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.getColumnType" title="Permalink to this definition"></a></dt>
 <dd><p>Get column Spark SQL datatype for specified column</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -282,14 +284,14 @@ following Builder pattern</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.getInferredColumnNames">
-<code class="sig-name descname">getInferredColumnNames</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.getInferredColumnNames"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.getInferredColumnNames" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.getInferredColumnNames">
+<span class="sig-name descname"><span class="pre">getInferredColumnNames</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.getInferredColumnNames"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.getInferredColumnNames" title="Permalink to this definition"></a></dt>
 <dd><p>get list of output columns</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.getOutputColumnNames">
-<code class="sig-name descname">getOutputColumnNames</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.getOutputColumnNames"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.getOutputColumnNames" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.getOutputColumnNames">
+<span class="sig-name descname"><span class="pre">getOutputColumnNames</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.getOutputColumnNames"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.getOutputColumnNames" title="Permalink to this definition"></a></dt>
 <dd><p>get list of output columns by flattening list of lists of column names
 normal columns will have a single column name but column definitions that result in
 multiple columns will produce a list of multiple names</p>
@@ -301,16 +303,16 @@ multiple columns will produce a list of multiple names</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.getOutputColumnNamesAndTypes">
-<code class="sig-name descname">getOutputColumnNamesAndTypes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.getOutputColumnNamesAndTypes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.getOutputColumnNamesAndTypes" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.getOutputColumnNamesAndTypes">
+<span class="sig-name descname"><span class="pre">getOutputColumnNamesAndTypes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.getOutputColumnNamesAndTypes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.getOutputColumnNamesAndTypes" title="Permalink to this definition"></a></dt>
 <dd><p>get list of output columns by flattening list of lists of column names and types
 normal columns will have a single column name but column definitions that result in
 multiple columns will produce a list of multiple names</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.hasColumnSpec">
-<code class="sig-name descname">hasColumnSpec</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">colName</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.hasColumnSpec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.hasColumnSpec" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.hasColumnSpec">
+<span class="sig-name descname"><span class="pre">hasColumnSpec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">colName</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.hasColumnSpec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.hasColumnSpec" title="Permalink to this definition"></a></dt>
 <dd><p>returns true if there is a column spec for the column</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -322,15 +324,15 @@ multiple columns will produce a list of multiple names</p>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.inferredSchema">
-<em class="property">property </em><code class="sig-name descname">inferredSchema</code><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.inferredSchema" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.inferredSchema">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">inferredSchema</span></span><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.inferredSchema" title="Permalink to this definition"></a></dt>
 <dd><p>infer spark interim schema definition from the field specifications</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.isFieldExplicitlyDefined">
-<code class="sig-name descname">isFieldExplicitlyDefined</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">colName</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.isFieldExplicitlyDefined"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.isFieldExplicitlyDefined" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.isFieldExplicitlyDefined">
+<span class="sig-name descname"><span class="pre">isFieldExplicitlyDefined</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">colName</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.isFieldExplicitlyDefined"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.isFieldExplicitlyDefined" title="Permalink to this definition"></a></dt>
 <dd><p>return True if column generation spec has been explicitly defined for column, else false</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -340,8 +342,8 @@ with a wildcard statement. This impacts whether the column can be redefined.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.option">
-<code class="sig-name descname">option</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">optionKey</span></em>, <em class="sig-param"><span class="n">optionValue</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.option"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.option" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.option">
+<span class="sig-name descname"><span class="pre">option</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optionKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optionValue</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.option"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.option" title="Permalink to this definition"></a></dt>
 <dd><p>set option to option value for later processing</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -358,8 +360,8 @@ following Builder pattern</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.options">
-<code class="sig-name descname">options</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.options"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.options" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.options">
+<span class="sig-name descname"><span class="pre">options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.options"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.options" title="Permalink to this definition"></a></dt>
 <dd><p>set options in bulk</p>
 <p>Allows for multiple options with option=optionValue style of option passing</p>
 <dl class="field-list simple">
@@ -370,29 +372,29 @@ following Builder pattern</p>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.randomSeed">
-<em class="property">property </em><code class="sig-name descname">randomSeed</code><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.randomSeed" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.randomSeed">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">randomSeed</span></span><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.randomSeed" title="Permalink to this definition"></a></dt>
 <dd><p>return the data generation spec random seed</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.reset">
-<em class="property">classmethod </em><code class="sig-name descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.reset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.reset" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.reset">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.reset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.reset" title="Permalink to this definition"></a></dt>
 <dd><p>reset any state associated with the data</p>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.rowCount">
-<em class="property">property </em><code class="sig-name descname">rowCount</code><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.rowCount" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.rowCount">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">rowCount</span></span><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.rowCount" title="Permalink to this definition"></a></dt>
 <dd><p>Return the row count</p>
 <p>This may differ from the original specified row counts, if counts need to be adjusted for purposes of
 keeping the ratio of rows to unique keys correct or other heuristics</p>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.schema">
-<em class="property">property </em><code class="sig-name descname">schema</code><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.schema" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.schema">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">schema</span></span><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.schema" title="Permalink to this definition"></a></dt>
 <dd><p>infer spark output schema definition from the field specifications</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -401,9 +403,9 @@ keeping the ratio of rows to unique keys correct or other heuristics</p>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.schemaFields">
-<em class="property">property </em><code class="sig-name descname">schemaFields</code><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.schemaFields" title="Permalink to this definition"></a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.schemaFields">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">schemaFields</span></span><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.schemaFields" title="Permalink to this definition"></a></dt>
 <dd><p>get list of schema fields for final output schema</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -413,8 +415,8 @@ keeping the ratio of rows to unique keys correct or other heuristics</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.scriptMerge">
-<code class="sig-name descname">scriptMerge</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tgtName</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">srcName</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">updateExpr</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">delExpr</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">joinExpr</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">timeExpr</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">insertExpr</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">useExplicitNames</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">updateColumns</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">updateColumnExprs</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">insertColumns</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">insertColumnExprs</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">srcAlias</span><span class="o">=</span><span class="default_value">'src'</span></em>, <em class="sig-param"><span class="n">tgtAlias</span><span class="o">=</span><span class="default_value">'tgt'</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.scriptMerge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.scriptMerge" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.scriptMerge">
+<span class="sig-name descname"><span class="pre">scriptMerge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tgtName</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">srcName</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">updateExpr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delExpr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">joinExpr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeExpr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">insertExpr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">useExplicitNames</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">updateColumns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">updateColumnExprs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">insertColumns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">insertColumnExprs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">srcAlias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'src'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tgtAlias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'tgt'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.scriptMerge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.scriptMerge" title="Permalink to this definition"></a></dt>
 <dd><p>generate merge table script suitable for format of test data set</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -452,8 +454,8 @@ target table. This should have the form [ (“update_column_name”, “update c
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.scriptTable">
-<code class="sig-name descname">scriptTable</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">location</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">tableFormat</span><span class="o">=</span><span class="default_value">'delta'</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.scriptTable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.scriptTable" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.scriptTable">
+<span class="sig-name descname"><span class="pre">scriptTable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tableFormat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'delta'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.scriptTable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.scriptTable" title="Permalink to this definition"></a></dt>
 <dd><p>generate create table script suitable for format of test data set</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -471,8 +473,8 @@ an external table definition.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.setRowCount">
-<code class="sig-name descname">setRowCount</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rc</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.setRowCount"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.setRowCount" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.setRowCount">
+<span class="sig-name descname"><span class="pre">setRowCount</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rc</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.setRowCount"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.setRowCount" title="Permalink to this definition"></a></dt>
 <dd><p>Modify the row count - useful when starting a new spec from a clone</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
@@ -490,16 +492,16 @@ Builder pattern</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.useSeed">
-<em class="property">classmethod </em><code class="sig-name descname">useSeed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">seedVal</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.useSeed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.useSeed" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.useSeed">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">useSeed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seedVal</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.useSeed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.useSeed" title="Permalink to this definition"></a></dt>
 <dd><p>set seed for random number generation</p>
 <p>Arguments:
 :param seedVal: - new value for the random number seed</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.use_seed">
-<code class="sig-name descname">use_seed</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.use_seed" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.use_seed">
+<span class="sig-name descname"><span class="pre">use_seed</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.use_seed" title="Permalink to this definition"></a></dt>
 <dd><p>classmethod(function) -&gt; method</p>
 <p>Convert a function to be a class method.</p>
 <p>A class method receives the class as implicit first argument,
@@ -524,8 +526,8 @@ If you want those, see the staticmethod builtin.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.withColumn">
-<code class="sig-name descname">withColumn</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">colName</span></em>, <em class="sig-param"><span class="n">colType</span><span class="o">=</span><span class="default_value">StringType</span></em>, <em class="sig-param"><span class="n">minValue</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">maxValue</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">step</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">dataRange</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">prefix</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">random</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">distribution</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">baseColumn</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">nullable</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">omit</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">implicit</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.withColumn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.withColumn" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.withColumn">
+<span class="sig-name descname"><span class="pre">withColumn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">colName</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colType</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">StringType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minValue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxValue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataRange</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distribution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseColumn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nullable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">omit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">implicit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.withColumn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.withColumn" title="Permalink to this definition"></a></dt>
 <dd><p>add a new column for specification</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -538,8 +540,8 @@ For full list of options, see <a class="reference internal" href="dbldatagen.col
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.withColumnSpec">
-<code class="sig-name descname">withColumnSpec</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">colName</span></em>, <em class="sig-param"><span class="n">minValue</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">maxValue</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">step</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">prefix</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">random</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">distribution</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">implicit</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">dataRange</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">omit</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">baseColumn</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.withColumnSpec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.withColumnSpec" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.withColumnSpec">
+<span class="sig-name descname"><span class="pre">withColumnSpec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">colName</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minValue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxValue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distribution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">implicit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataRange</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">omit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseColumn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.withColumnSpec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.withColumnSpec" title="Permalink to this definition"></a></dt>
 <dd><p>add a column specification for an existing column</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -552,8 +554,8 @@ For full list of options, see <a class="reference internal" href="dbldatagen.col
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.withColumnSpecs">
-<code class="sig-name descname">withColumnSpecs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">patterns</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">fields</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">matchTypes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.withColumnSpecs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.withColumnSpecs" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.withColumnSpecs">
+<span class="sig-name descname"><span class="pre">withColumnSpecs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">patterns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">matchTypes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.withColumnSpecs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.withColumnSpecs" title="Permalink to this definition"></a></dt>
 <dd><dl class="simple">
 <dt>Add column specs for columns matching</dt><dd><ol class="loweralpha simple">
 <li><p>list of field names,</p></li>
@@ -582,8 +584,8 @@ For full list of options, see <a class="reference internal" href="dbldatagen.col
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.withIdOutput">
-<code class="sig-name descname">withIdOutput</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.withIdOutput"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.withIdOutput" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.withIdOutput">
+<span class="sig-name descname"><span class="pre">withIdOutput</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.withIdOutput"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.withIdOutput" title="Permalink to this definition"></a></dt>
 <dd><p>output seed column field (defaults to <cite>id</cite>) as a column in the test data set if specified</p>
 <p>If this is not called, the seed column field is omitted from the final test data set</p>
 <dl class="field-list simple">
@@ -595,8 +597,8 @@ following Builder pattern</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.withRowCount">
-<code class="sig-name descname">withRowCount</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rc</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.withRowCount"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.withRowCount" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.withRowCount">
+<span class="sig-name descname"><span class="pre">withRowCount</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rc</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.withRowCount"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.withRowCount" title="Permalink to this definition"></a></dt>
 <dd><p>Modify the row count - useful when starting a new spec from a clone</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -610,8 +612,8 @@ Builder pattern</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="dbldatagen.data_generator.DataGenerator.withSchema">
-<code class="sig-name descname">withSchema</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sch</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.withSchema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.withSchema" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.data_generator.DataGenerator.withSchema">
+<span class="sig-name descname"><span class="pre">withSchema</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sch</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/data_generator.html#DataGenerator.withSchema"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.data_generator.DataGenerator.withSchema" title="Permalink to this definition"></a></dt>
 <dd><p>populate column definitions and specifications for each of the columns in the schema</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -639,7 +641,7 @@ following Builder pattern</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2020, Databricks Inc.</p>
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

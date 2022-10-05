@@ -4,17 +4,19 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>dbldatagen.utils module &mdash; Databricks Labs Data Generator 0.2.1 documentation</title><link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <title>dbldatagen.utils module &mdash; Databricks Labs Data Generator 0.2.1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/tdg.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
         <script src="../../_static/jquery.js"></script>
         <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/language_data.js"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -37,7 +39,7 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p><span class="caption-text">Getting Started</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../APIDOCS.html">Get Started Here</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../installation_notes.html">Installation instructions</a></li>
@@ -54,7 +56,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../extending_text_generation.html">Extending text generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting data generation</a></li>
 </ul>
-<p><span class="caption-text">API</span></p>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/quickindex.html">Quick API index</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">The dbldatagen package API</a><ul class="current">
@@ -83,7 +85,7 @@
 </ul>
 </li>
 </ul>
-<p><span class="caption-text">Development</span></p>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
@@ -93,7 +95,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/CHANGELOG.html">Change log</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/requirements.html">Build requirements</a></li>
 </ul>
-<p><span class="caption-text">License</span></p>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
 </ul>
@@ -125,12 +127,12 @@
            <div itemprop="articleBody">
              
   <section id="module-dbldatagen.utils">
-<span id="dbldatagen-utils-module"></span><h1>dbldatagen.utils module<a class="headerlink" href="#module-dbldatagen.utils" title="Permalink to this headline"></a></h1>
+<span id="dbldatagen-utils-module"></span><h1>dbldatagen.utils module<a class="headerlink" href="#module-dbldatagen.utils" title="Permalink to this heading"></a></h1>
 <p>This file defines the <cite>DataGenError</cite> classes and utility functions</p>
 <p>These are meant for internal use only</p>
 <dl class="py exception">
-<dt id="dbldatagen.utils.DataGenError">
-<em class="property">exception </em><code class="sig-name descname">DataGenError</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">msg</span></em>, <em class="sig-param"><span class="n">baseException</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/utils.html#DataGenError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.utils.DataGenError" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.utils.DataGenError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DataGenError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseException</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/utils.html#DataGenError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.utils.DataGenError" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
 <p>Exception class to represent data generation errors</p>
 <dl class="field-list simple">
@@ -144,8 +146,8 @@
 </dd></dl>
 
 <dl class="py function">
-<dt id="dbldatagen.utils.coalesce_values">
-<code class="sig-name descname">coalesce_values</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/utils.html#coalesce_values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.utils.coalesce_values" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.utils.coalesce_values">
+<span class="sig-name descname"><span class="pre">coalesce_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/utils.html#coalesce_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.utils.coalesce_values" title="Permalink to this definition"></a></dt>
 <dd><p>For a supplied list of arguments, returns the first argument that does not have the value <cite>None</cite></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -158,16 +160,16 @@
 </dd></dl>
 
 <dl class="py function">
-<dt id="dbldatagen.utils.deprecated">
-<code class="sig-name descname">deprecated</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">message</span><span class="o">=</span><span class="default_value">''</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/utils.html#deprecated"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.utils.deprecated" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.utils.deprecated">
+<span class="sig-name descname"><span class="pre">deprecated</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/utils.html#deprecated"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.utils.deprecated" title="Permalink to this definition"></a></dt>
 <dd><p>Define a deprecated decorator without dependencies on 3rd party libraries</p>
 <p>Note there is a 3rd party library called <cite>deprecated</cite> that provides this feature but goal is to only have
 dependencies on packages already used in the Databricks runtime</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="dbldatagen.utils.ensure">
-<code class="sig-name descname">ensure</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cond</span></em>, <em class="sig-param"><span class="n">msg</span><span class="o">=</span><span class="default_value">'condition does not hold true'</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/utils.html#ensure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.utils.ensure" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.utils.ensure">
+<span class="sig-name descname"><span class="pre">ensure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cond</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">msg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'condition</span> <span class="pre">does</span> <span class="pre">not</span> <span class="pre">hold</span> <span class="pre">true'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/utils.html#ensure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.utils.ensure" title="Permalink to this definition"></a></dt>
 <dd><p>ensure(cond, s) =&gt; throws Exception(s) if c is not true</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -186,8 +188,8 @@ dependencies on packages already used in the Databricks runtime</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="dbldatagen.utils.mkBoundsList">
-<code class="sig-name descname">mkBoundsList</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">default</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/utils.html#mkBoundsList"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.utils.mkBoundsList" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.utils.mkBoundsList">
+<span class="sig-name descname"><span class="pre">mkBoundsList</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/utils.html#mkBoundsList"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.utils.mkBoundsList" title="Permalink to this definition"></a></dt>
 <dd><p>make a bounds list from supplied parameter - otherwise use default</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -203,14 +205,14 @@ dependencies on packages already used in the Databricks runtime</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="dbldatagen.utils.parse_time_interval">
-<code class="sig-name descname">parse_time_interval</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">spec</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/utils.html#parse_time_interval"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.utils.parse_time_interval" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.utils.parse_time_interval">
+<span class="sig-name descname"><span class="pre">parse_time_interval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spec</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/utils.html#parse_time_interval"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.utils.parse_time_interval" title="Permalink to this definition"></a></dt>
 <dd><p>parse time interval from string</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="dbldatagen.utils.topologicalSort">
-<code class="sig-name descname">topologicalSort</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sources</span></em>, <em class="sig-param"><span class="n">initial_columns</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">flatten</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/utils.html#topologicalSort"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dbldatagen.utils.topologicalSort" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="dbldatagen.utils.topologicalSort">
+<span class="sig-name descname"><span class="pre">topologicalSort</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sources</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_columns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flatten</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/utils.html#topologicalSort"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.utils.topologicalSort" title="Permalink to this definition"></a></dt>
 <dd><p>Perform a topological sort over sources</p>
 <p>Used to compute the column test data generation order of the column generation dependencies.</p>
 <p>The column generation dependencies are based on the value of the <cite>baseColumn</cite> attribute for <cite>withColumn</cite> or
@@ -242,7 +244,7 @@ dependencies on packages already used in the Databricks runtime</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2020, Databricks Inc.</p>
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

@@ -3,17 +3,19 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>dbldatagen.utils &mdash; Databricks Labs Data Generator 0.2.1 documentation</title><link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <title>dbldatagen.utils &mdash; Databricks Labs Data Generator 0.2.1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/tdg.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
         <script src="../../_static/jquery.js"></script>
         <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/language_data.js"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
@@ -34,7 +36,7 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p><span class="caption-text">Getting Started</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../APIDOCS.html">Get Started Here</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../installation_notes.html">Installation instructions</a></li>
@@ -51,12 +53,12 @@
 <li class="toctree-l1"><a class="reference internal" href="../../extending_text_generation.html">Extending text generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting data generation</a></li>
 </ul>
-<p><span class="caption-text">API</span></p>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/quickindex.html">Quick API index</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../reference/api/modules.html">The dbldatagen package API</a></li>
 </ul>
-<p><span class="caption-text">Development</span></p>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
@@ -66,7 +68,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/CHANGELOG.html">Change log</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../relnotes/requirements.html">Build requirements</a></li>
 </ul>
-<p><span class="caption-text">License</span></p>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
 </ul>
@@ -112,7 +114,7 @@
 <span class="kn">import</span> <span class="nn">re</span>
 
 
-<div class="viewcode-block" id="deprecated"><a class="viewcode-back" href="../../reference/api/dbldatagen.utils.html#dbldatagen.data_generator.deprecated">[docs]</a><span class="k">def</span> <span class="nf">deprecated</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="deprecated"><a class="viewcode-back" href="../../reference/api/dbldatagen.utils.html#dbldatagen.utils.deprecated">[docs]</a><span class="k">def</span> <span class="nf">deprecated</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39; Define a deprecated decorator without dependencies on 3rd party libraries</span>
 
 <span class="sd">    Note there is a 3rd party library called `deprecated` that provides this feature but goal is to only have</span>
@@ -132,7 +134,7 @@
     <span class="k">return</span> <span class="n">deprecated_decorator</span></div>
 
 
-<div class="viewcode-block" id="DataGenError"><a class="viewcode-back" href="../../reference/api/dbldatagen.utils.html#dbldatagen.data_generator.DataGenError">[docs]</a><span class="k">class</span> <span class="nc">DataGenError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<div class="viewcode-block" id="DataGenError"><a class="viewcode-back" href="../../reference/api/dbldatagen.utils.html#dbldatagen.utils.DataGenError">[docs]</a><span class="k">class</span> <span class="nc">DataGenError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Exception class to represent data generation errors</span>
 
 <span class="sd">        :param msg: message related to error</span>
@@ -153,7 +155,7 @@
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;DataGenError(msg=&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_msg</span><span class="si">}</span><span class="s2">&#39;, baseException=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_underlyingException</span><span class="si">}</span><span class="s2">)&quot;</span></div>
 
 
-<div class="viewcode-block" id="coalesce_values"><a class="viewcode-back" href="../../reference/api/dbldatagen.utils.html#dbldatagen.data_generator.coalesce_values">[docs]</a><span class="k">def</span> <span class="nf">coalesce_values</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<div class="viewcode-block" id="coalesce_values"><a class="viewcode-back" href="../../reference/api/dbldatagen.utils.html#dbldatagen.utils.coalesce_values">[docs]</a><span class="k">def</span> <span class="nf">coalesce_values</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;For a supplied list of arguments, returns the first argument that does not have the value `None`</span>
 
 <span class="sd">    :param args: variable list of arguments which are evaluated</span>
@@ -165,7 +167,7 @@
     <span class="k">return</span> <span class="kc">None</span></div>
 
 
-<div class="viewcode-block" id="ensure"><a class="viewcode-back" href="../../reference/api/dbldatagen.utils.html#dbldatagen.data_generator.ensure">[docs]</a><span class="k">def</span> <span class="nf">ensure</span><span class="p">(</span><span class="n">cond</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s2">&quot;condition does not hold true&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="ensure"><a class="viewcode-back" href="../../reference/api/dbldatagen.utils.html#dbldatagen.utils.ensure">[docs]</a><span class="k">def</span> <span class="nf">ensure</span><span class="p">(</span><span class="n">cond</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s2">&quot;condition does not hold true&quot;</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;ensure(cond, s) =&gt; throws Exception(s) if c is not true</span>
 
 <span class="sd">    :param cond: condition to test</span>
@@ -180,7 +182,7 @@
         <span class="k">raise</span> <span class="n">DataGenError</span><span class="p">(</span><span class="n">strip_margin</span><span class="p">(</span><span class="n">msg</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="mkBoundsList"><a class="viewcode-back" href="../../reference/api/dbldatagen.utils.html#dbldatagen.data_generator.mkBoundsList">[docs]</a><span class="k">def</span> <span class="nf">mkBoundsList</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">default</span><span class="p">):</span>
+<div class="viewcode-block" id="mkBoundsList"><a class="viewcode-back" href="../../reference/api/dbldatagen.utils.html#dbldatagen.utils.mkBoundsList">[docs]</a><span class="k">def</span> <span class="nf">mkBoundsList</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">default</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; make a bounds list from supplied parameter - otherwise use default</span>
 
 <span class="sd">        :param x: integer or list of 2 values that define bounds list</span>
@@ -200,7 +202,7 @@
         <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="n">bounds_list</span></div>
 
 
-<div class="viewcode-block" id="topologicalSort"><a class="viewcode-back" href="../../reference/api/dbldatagen.utils.html#dbldatagen.data_generator.topologicalSort">[docs]</a><span class="k">def</span> <span class="nf">topologicalSort</span><span class="p">(</span><span class="n">sources</span><span class="p">,</span> <span class="n">initial_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">flatten</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="topologicalSort"><a class="viewcode-back" href="../../reference/api/dbldatagen.utils.html#dbldatagen.utils.topologicalSort">[docs]</a><span class="k">def</span> <span class="nf">topologicalSort</span><span class="p">(</span><span class="n">sources</span><span class="p">,</span> <span class="n">initial_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">flatten</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Perform a topological sort over sources</span>
 
 <span class="sd">    Used to compute the column test data generation order of the column generation dependencies.</span>
@@ -252,7 +254,7 @@
 <span class="n">_WEEKS_PER_YEAR</span> <span class="o">=</span> <span class="mi">52</span>
 
 
-<div class="viewcode-block" id="parse_time_interval"><a class="viewcode-back" href="../../reference/api/dbldatagen.utils.html#dbldatagen.data_generator.parse_time_interval">[docs]</a><span class="k">def</span> <span class="nf">parse_time_interval</span><span class="p">(</span><span class="n">spec</span><span class="p">):</span>
+<div class="viewcode-block" id="parse_time_interval"><a class="viewcode-back" href="../../reference/api/dbldatagen.utils.html#dbldatagen.utils.parse_time_interval">[docs]</a><span class="k">def</span> <span class="nf">parse_time_interval</span><span class="p">(</span><span class="n">spec</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;parse time interval from string&#39;&#39;&#39;</span>
     <span class="n">hours</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">minutes</span> <span class="o">=</span> <span class="mi">0</span>
@@ -321,7 +323,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2020, Databricks Inc.</p>
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

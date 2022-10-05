@@ -4,17 +4,19 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Understanding and using data ranges &mdash; Databricks Labs Data Generator 0.2.1 documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <title>Understanding and using data ranges &mdash; Databricks Labs Data Generator 0.2.1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/tdg.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -37,7 +39,7 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p><span class="caption-text">Getting Started</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="APIDOCS.html">Get Started Here</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation_notes.html">Installation instructions</a></li>
@@ -64,12 +66,12 @@
 <li class="toctree-l1"><a class="reference internal" href="extending_text_generation.html">Extending text generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting data generation</a></li>
 </ul>
-<p><span class="caption-text">API</span></p>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/quickindex.html">Quick API index</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference/api/modules.html">The dbldatagen package API</a></li>
 </ul>
-<p><span class="caption-text">Development</span></p>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
@@ -79,7 +81,7 @@
 <li class="toctree-l1"><a class="reference internal" href="relnotes/CHANGELOG.html">Change log</a></li>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/requirements.html">Build requirements</a></li>
 </ul>
-<p><span class="caption-text">License</span></p>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
 </ul>
@@ -109,7 +111,7 @@
            <div itemprop="articleBody">
              
   <section id="understanding-and-using-data-ranges">
-<h1>Understanding and using data ranges<a class="headerlink" href="#understanding-and-using-data-ranges" title="Permalink to this headline"></a></h1>
+<h1>Understanding and using data ranges<a class="headerlink" href="#understanding-and-using-data-ranges" title="Permalink to this heading"></a></h1>
 <p>The data generator uses data ranges to constrain the values for generated data.</p>
 <p>By default, the data is only constrained to the range of the fields data type.</p>
 <p>Additionally, unless the <code class="docutils literal notranslate"><span class="pre">percentNulls</span></code> option is used, the value <code class="docutils literal notranslate"><span class="pre">null</span></code> will not be generated for a field value.</p>
@@ -146,7 +148,7 @@ and random value generation is not used, then there will only be two values gene
 </pre></div>
 </div>
 <section id="precedence-rules-for-constraining-the-range-of-values">
-<h2>Precedence rules for constraining the range of values<a class="headerlink" href="#precedence-rules-for-constraining-the-range-of-values" title="Permalink to this headline"></a></h2>
+<h2>Precedence rules for constraining the range of values<a class="headerlink" href="#precedence-rules-for-constraining-the-range-of-values" title="Permalink to this heading"></a></h2>
 <p>Some of the options can lead to conflicting information about the range of possible values.</p>
 <p>Our general philosophy is to try and generate data where possible - so if conflicting range constraints are specified,
 we may reduce the range</p>
@@ -166,7 +168,7 @@ a Boolean field with the range 1 .. 9 will be rescaled to the range 0 .. 1 and s
 values</p></li>
 </ul>
 <section id="handling-of-dates-and-timestamps">
-<h3>Handling of dates and timestamps<a class="headerlink" href="#handling-of-dates-and-timestamps" title="Permalink to this headline"></a></h3>
+<h3>Handling of dates and timestamps<a class="headerlink" href="#handling-of-dates-and-timestamps" title="Permalink to this heading"></a></h3>
 <p>For dates and timestamps, if a number of unique values is specified, these will be generated starting from the start
 date time and incremented according to the interval. So if a date ranges is specified for a year with an interval of 7
 days but only 10 unique values, the max value will be the starting date or time + 10 weeks</p>
@@ -182,7 +184,7 @@ At the time of writing, this will be 2020/12/31</p>
 <p>if starting and ending dates are specified, we will not produce dates or timestamps outside of these, but the number of
 unique values may be reduced, if there are insufficient values in the range.</p>
 <section id="examples">
-<h4>Examples<a class="headerlink" href="#examples" title="Permalink to this headline"></a></h4>
+<h4>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h4>
 <p>Here is an example illustrating use of simple date range constraints. In this case, we are only specifying that
 we will have 300 unique dates. Note that we are not making <code class="docutils literal notranslate"><span class="pre">purchase_id</span></code> random to ensure unique values for every row</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
@@ -230,7 +232,7 @@ we will have 300 unique dates. Note that we are not making <code class="docutils
 </section>
 </section>
 <section id="recommendations">
-<h3>Recommendations<a class="headerlink" href="#recommendations" title="Permalink to this headline"></a></h3>
+<h3>Recommendations<a class="headerlink" href="#recommendations" title="Permalink to this heading"></a></h3>
 <p>While we will try to generate data where possible, for dates and times, we recommend explicitly specifying a
 start and end date time.</p>
 </section>
@@ -248,7 +250,7 @@ start and end date time.</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2020, Databricks Inc.</p>
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

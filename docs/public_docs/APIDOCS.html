@@ -4,17 +4,19 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Getting started with the Databricks Labs Data Generator &mdash; Databricks Labs Data Generator 0.2.1 documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <title>Getting started with the Databricks Labs Data Generator &mdash; Databricks Labs Data Generator 0.2.1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/tdg.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -37,7 +39,7 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p><span class="caption-text">Getting Started</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Get Started Here</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#general-overview">General Overview</a></li>
@@ -80,12 +82,12 @@
 <li class="toctree-l1"><a class="reference internal" href="extending_text_generation.html">Extending text generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting data generation</a></li>
 </ul>
-<p><span class="caption-text">API</span></p>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/quickindex.html">Quick API index</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference/api/modules.html">The dbldatagen package API</a></li>
 </ul>
-<p><span class="caption-text">Development</span></p>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
@@ -95,7 +97,7 @@
 <li class="toctree-l1"><a class="reference internal" href="relnotes/CHANGELOG.html">Change log</a></li>
 <li class="toctree-l1"><a class="reference internal" href="relnotes/requirements.html">Build requirements</a></li>
 </ul>
-<p><span class="caption-text">License</span></p>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
 </ul>
@@ -125,7 +127,7 @@
            <div itemprop="articleBody">
              
   <section id="getting-started-with-the-databricks-labs-data-generator">
-<h1>Getting started with the Databricks Labs Data Generator<a class="headerlink" href="#getting-started-with-the-databricks-labs-data-generator" title="Permalink to this headline"></a></h1>
+<h1>Getting started with the Databricks Labs Data Generator<a class="headerlink" href="#getting-started-with-the-databricks-labs-data-generator" title="Permalink to this heading"></a></h1>
 <p>The Databricks Labs data generator (aka <code class="docutils literal notranslate"><span class="pre">dbldatagen</span></code>) is a Spark based solution for generating
 realistic synthetic data. It uses the features of Spark dataframes and Spark SQL
 to generate synthetic data. As the process produces a Spark dataframe populated
@@ -149,7 +151,7 @@ starting with the html file  <code class="docutils literal notranslate"><span cl
 <p>If you are viewing the online help version of this document, the classes and methods are already included.</p>
 </div></blockquote>
 <section id="general-overview">
-<h2>General Overview<a class="headerlink" href="#general-overview" title="Permalink to this headline"></a></h2>
+<h2>General Overview<a class="headerlink" href="#general-overview" title="Permalink to this heading"></a></h2>
 <p>The Databricks Labs Data Generator is a Python Library that can be used in several different ways:</p>
 <ol class="simple">
 <li><p>Generate a synthetic data set <a class="reference external" href="#create-a-data-set-without-pre-existing-schemas">without defining a schema in advance</a></p></li>
@@ -173,7 +175,7 @@ and <a class="reference internal" href="textdata.html"><span class="doc">formatt
 </ul>
 </section>
 <section id="tutorials-and-examples">
-<h2>Tutorials and examples<a class="headerlink" href="#tutorials-and-examples" title="Permalink to this headline"></a></h2>
+<h2>Tutorials and examples<a class="headerlink" href="#tutorials-and-examples" title="Permalink to this heading"></a></h2>
 <p>In the root directory of the project, there are a number of examples and tutorials.</p>
 <p>The Python examples in the <code class="docutils literal notranslate"><span class="pre">examples</span></code> folder can be run directly or imported into the Databricks runtime environment
 as Python files.</p>
@@ -181,7 +183,7 @@ as Python files.</p>
 runtime environment.</p>
 </section>
 <section id="basic-concepts">
-<h2>Basic concepts<a class="headerlink" href="#basic-concepts" title="Permalink to this headline"></a></h2>
+<h2>Basic concepts<a class="headerlink" href="#basic-concepts" title="Permalink to this heading"></a></h2>
 <p>The Databricks Labs Data Generator is a Python framework that uses Spark to generate a dataframe of synthetic data.</p>
 <p>Once the data frame is generated, it can be used with any Spark dataframe compatible API to save or persist data,
 to analyze data, to write it to an external database or stream, or used in the same manner as a regular
@@ -190,7 +192,7 @@ PySpark dataframe.</p>
 it from any Databricks Spark runtime compatible language. By use of the appropriate parameters,
 you can instruct the data generator to automatically register a view as part of generating the test data.</p>
 <section id="generating-the-test-data">
-<h3>Generating the test data<a class="headerlink" href="#generating-the-test-data" title="Permalink to this headline"></a></h3>
+<h3>Generating the test data<a class="headerlink" href="#generating-the-test-data" title="Permalink to this heading"></a></h3>
 <p>The data generation process is controlled by a data generation spec which can build a schema implicitly,
 or a schema can be added from an existing table or Spark SQL schema object.</p>
 <p>Each column to be generated derives its generated data from a set of one or more seed values.
@@ -209,7 +211,7 @@ typically one of :</p>
 <p>There is also support for applying arbitrary SQL expressions, and generation of common data from templates</p>
 </section>
 <section id="getting-started">
-<h3>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this headline"></a></h3>
+<h3>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this heading"></a></h3>
 <p>Before using the data generator, you need to install the package in your environment and import it in your code.
 You can install the package from the Github releases as a library on your cluster.</p>
 <blockquote>
@@ -235,7 +237,7 @@ data</p>
 </section>
 </section>
 <section id="creating-simple-test-data-sets">
-<h2>Creating simple test data sets<a class="headerlink" href="#creating-simple-test-data-sets" title="Permalink to this headline"></a></h2>
+<h2>Creating simple test data sets<a class="headerlink" href="#creating-simple-test-data-sets" title="Permalink to this heading"></a></h2>
 <p>You can use the data generator with, or without the use of a pre-existing schema.
 The basic mechanism is as follows:</p>
 <ul class="simple">
@@ -253,7 +255,7 @@ name will succeed but potentially cause errors later.</p>
 <p>When adding a column spec for an existing column, it is not necessary to define the type.</p>
 </div></blockquote>
 <section id="create-a-data-set-without-pre-existing-schemas">
-<h3>Create a data set without pre-existing schemas<a class="headerlink" href="#create-a-data-set-without-pre-existing-schemas" title="Permalink to this headline"></a></h3>
+<h3>Create a data set without pre-existing schemas<a class="headerlink" href="#create-a-data-set-without-pre-existing-schemas" title="Permalink to this heading"></a></h3>
 <p>Here is an example of creating a simple test data set without use of a schema.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
 <span class="kn">from</span> <span class="nn">pyspark.sql.types</span> <span class="kn">import</span> <span class="n">FloatType</span><span class="p">,</span> <span class="n">IntegerType</span><span class="p">,</span> <span class="n">StringType</span>
@@ -327,7 +329,7 @@ interfere with the data generation. This will be fixed in a forthcoming release<
 </div></blockquote>
 </section>
 <section id="creating-data-set-with-pre-existing-schema">
-<h3>Creating data set with pre-existing schema<a class="headerlink" href="#creating-data-set-with-pre-existing-schema" title="Permalink to this headline"></a></h3>
+<h3>Creating data set with pre-existing schema<a class="headerlink" href="#creating-data-set-with-pre-existing-schema" title="Permalink to this heading"></a></h3>
 <p>What if we want to generate data conforming to a pre-existing schema? you can specify a schema for your data by either
 taking a schema from an existing table, or computing an explicit schema.</p>
 <p>In this case you would use the <code class="docutils literal notranslate"><span class="pre">withColumnSpec</span></code> method instead of the <code class="docutils literal notranslate"><span class="pre">withColumn</span></code> method.</p>
@@ -371,7 +373,7 @@ The schema can also be a schema from a view or a manually created schema</p>
 </div>
 <p>Note the <code class="docutils literal notranslate"><span class="pre">template</span></code> parameter allows the generation of arbitrary text such as email addresses, VINs etc.</p>
 <section id="adding-dataspecs-to-match-multiple-columns">
-<h4>Adding dataspecs to match multiple columns<a class="headerlink" href="#adding-dataspecs-to-match-multiple-columns" title="Permalink to this headline"></a></h4>
+<h4>Adding dataspecs to match multiple columns<a class="headerlink" href="#adding-dataspecs-to-match-multiple-columns" title="Permalink to this heading"></a></h4>
 <p>For large schemas, it can be unwieldy to specify column generation specs for every column in a schema.</p>
 <p>To alleviate this , the framework provides mechanisms to add rules in bulk for multiple columns.</p>
 <ul class="simple">
@@ -392,7 +394,7 @@ the <code class="docutils literal notranslate"><span class="pre">withColumnSpec<
 </section>
 </section>
 <section id="a-more-complex-example-building-device-iot-test-data">
-<h2>A more complex example - building Device IOT Test Data<a class="headerlink" href="#a-more-complex-example-building-device-iot-test-data" title="Permalink to this headline"></a></h2>
+<h2>A more complex example - building Device IOT Test Data<a class="headerlink" href="#a-more-complex-example-building-device-iot-test-data" title="Permalink to this heading"></a></h2>
 <p>This example shows generation of IOT device style data consisting of events from devices.</p>
 <p>Here we want to generate a random set of events but ensure that the device properties remain the same for the
 device from event to event.</p>
@@ -479,7 +481,7 @@ used as the seed value.</p>
 generating other columns, but through the use of the <code class="docutils literal notranslate"><span class="pre">omit</span></code> option, omits it from the final data set.</p></li>
 </ul>
 <section id="scaling-it-up">
-<h3>Scaling it up<a class="headerlink" href="#scaling-it-up" title="Permalink to this headline"></a></h3>
+<h3>Scaling it up<a class="headerlink" href="#scaling-it-up" title="Permalink to this heading"></a></h3>
 <p>When generating data, the number of rows to be generated is controlled by the <code class="docutils literal notranslate"><span class="pre">rows</span></code> parameter supplied to the
 creation of the data generator instance.</p>
 <p>The number of Spark tasks to be used is controlled by the <code class="docutils literal notranslate"><span class="pre">partitions</span></code> parameter supplied to the
@@ -560,7 +562,7 @@ rows of data and write it to a Delta table in under 2 minutes (with a 12 node x 
 </section>
 </section>
 <section id="using-sql-in-data-generation">
-<h2>Using SQL in data generation<a class="headerlink" href="#using-sql-in-data-generation" title="Permalink to this headline"></a></h2>
+<h2>Using SQL in data generation<a class="headerlink" href="#using-sql-in-data-generation" title="Permalink to this heading"></a></h2>
 <p>Any column specification can use arbitrary SQL expressions during data generation via the <code class="docutils literal notranslate"><span class="pre">expr</span></code> parameter.</p>
 <p>The following example shows generation of synthetic names, email addresses and
 use of a SQL expression to compute MD5 hashes of hypothetical synthetic credit card :</p>
@@ -594,7 +596,7 @@ use of a SQL expression to compute MD5 hashes of hypothetical synthetic credit c
 </div>
 <p>See the section on <a class="reference internal" href="textdata.html"><span class="doc">text generation</span></a> for more details on these options.</p>
 <section id="generating-repeatable-data">
-<h3>Generating repeatable data<a class="headerlink" href="#generating-repeatable-data" title="Permalink to this headline"></a></h3>
+<h3>Generating repeatable data<a class="headerlink" href="#generating-repeatable-data" title="Permalink to this heading"></a></h3>
 <p>By default, data is generated by a series of pre-determined transformations on an implicit <code class="docutils literal notranslate"><span class="pre">id</span></code> column in the data set.
 Specifying the <code class="docutils literal notranslate"><span class="pre">baseColumn</span></code> argument allows specifying a dependency on one or more other columns. Note that use of the
 parameter <code class="docutils literal notranslate"><span class="pre">baseColumnType</span></code> will allow determining how the base column is used - for example you can specify that the
@@ -642,7 +644,7 @@ integrity across primary and foreign keys.</p>
 </section>
 </section>
 <section id="using-generated-data-from-sql">
-<h2>Using generated data from SQL<a class="headerlink" href="#using-generated-data-from-sql" title="Permalink to this headline"></a></h2>
+<h2>Using generated data from SQL<a class="headerlink" href="#using-generated-data-from-sql" title="Permalink to this heading"></a></h2>
 <p>By defining a view over the generated data, you can use the generated data from SQL.</p>
 <p>To simply this process, you can use options to the <code class="docutils literal notranslate"><span class="pre">build</span></code> method to generate temporary or global views over the data.</p>
 <p>At the time of writing, the specification for generation of data needs to be authored in Python.</p>
@@ -660,7 +662,7 @@ integrity across primary and foreign keys.</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2020, Databricks Inc.</p>
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
