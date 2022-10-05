@@ -16,6 +16,9 @@ or through creating a schema on the fly, you can control how synthetic data is g
 As the data generator generates a PySpark data frame, it is simple to create a view over it to expose it
 to Scala or R based Spark applications also.
 
+As it is installable via `%pip install`, it can also be incorporated in environments such as
+[Delta Live Tables](https://www.databricks.com/product/delta-live-tables) also.
+
 .. toctree::
    :maxdepth: 1
    :caption: Getting Started

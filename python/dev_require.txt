@@ -29,4 +29,5 @@ ipython==7.16.3
 recommonmark
 sphinx-markdown-builder
 rst2pdf==0.98
+Jinja2 < 3.1
 
