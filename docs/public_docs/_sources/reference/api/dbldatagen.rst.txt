@@ -1,0 +1,39 @@
+dbldatagen package
+==================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   dbldatagen.distributions
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   dbldatagen.column_generation_spec
+   dbldatagen.column_spec_options
+   dbldatagen.data_analyzer
+   dbldatagen.data_generator
+   dbldatagen.datagen_constants
+   dbldatagen.datarange
+   dbldatagen.daterange
+   dbldatagen.function_builder
+   dbldatagen.nrange
+   dbldatagen.schema_parser
+   dbldatagen.spark_singleton
+   dbldatagen.text_generator_plugins
+   dbldatagen.text_generators
+   dbldatagen.utils
+
+Module contents
+---------------
+
+.. automodule:: dbldatagen
+   :members:
+   :undoc-members:
+   :show-inheritance:
