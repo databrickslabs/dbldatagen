@@ -1,7 +1,0 @@
-dbldatagen.schema\_parser module
-================================
-
-.. automodule:: dbldatagen.schema_parser
-   :members:
-   :undoc-members:
-   :show-inheritance:
