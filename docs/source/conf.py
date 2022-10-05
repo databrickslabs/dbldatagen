@@ -24,7 +24,7 @@ sys.path.insert(0, os.path.abspath(f"{PACKAGE_DIR}/distributions"))
 # -- Project information -----------------------------------------------------
 
 project = 'Databricks Labs Data Generator'
-copyright = '2020, Databricks Inc'
+copyright = '2022, Databricks Inc'
 author = 'Databricks Inc'
 
 # The full version, including alpha/beta/rc tags
@@ -37,13 +37,14 @@ release = "0.2.1"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpversion
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx_rtd_theme',
+    'sphinx.ext.intersphinx',
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',  # enable sphinx to parse NumPy and Google style doc strings
     #'sphinx.ext.autosummary',
     'sphinx.ext.viewcode',  # add links to source code
     #'numpydoc',  # handle NumPy documentation formatted docstrings. Needs to install
-    'recommonmark'  # allow including Commonmark markdown in sources
+    'recommonmark',  # allow including Commonmark markdown in sources
+    'sphinx_rtd_theme'
 ]
 
 source_suffix = {
@@ -86,6 +87,12 @@ add_module_names = False
 # a list of builtin themes.
 #
 import sphinx_rtd_theme
+
+intersphinx_mapping = {
+    'rtd': ('https://docs.readthedocs.io/en/stable/', None),
+    'sphinx': ('https://www.sphinx-doc.org/en/master/', None),
+}
+
 html_theme = "sphinx_rtd_theme"
 
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
@@ -100,7 +107,7 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 html_static_path = ['_static']
 
 html_css_files = [
-    'css/tdg.css',
+    'css/tdg.css'
 ]
 
 #html_sidebars={
@@ -118,3 +125,4 @@ numpydoc_show_class_members=True
 numpydoc_show_inherited_class_members=False
 numpydoc_class_members_toctree=False
 numpydoc_attributes_as_param_list=True
+
