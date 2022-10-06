@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "create or update tag"
-        uses: actions/github-script@v5
+        uses: actions/github-script@v2
         # continue-on-error: true
         with:
           script: |
