@@ -1,6 +1,7 @@
 import logging
 import unittest
 from datetime import timedelta
+import pytest
 
 from dbldatagen import ensure, mkBoundsList, coalesce_values, deprecated, SparkSingleton, \
     parse_time_interval, DataGenError
@@ -77,17 +78,16 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(timedelta(hours=1, seconds=2), interval)
 
     def testParseTimeInterval2b(self):
-        interval = parse_time_interval("1 hour, 1 second")
-        self.assertEqual(timedelta(hours=1, seconds=1), interval)
+        input_and_expected = [
+             ("1 hour, 1 second", timedelta(hours=1, seconds=1)),
+             ("1 hour, 10 milliseconds", timedelta(hours=1, milliseconds=10)),
+             ("1 hour, 10 microseconds", timedelta(hours=1, microseconds=10)),
+             ("1 year, 4 weeks", timedelta(weeks=56))
+             ]
 
-        interval2 = parse_time_interval("1 hour, 10 milliseconds")
-        self.assertEqual(timedelta(hours=1, milliseconds=10), interval2)
-
-        interval3 = parse_time_interval("1 hour, 10 microseconds")
-        self.assertEqual(timedelta(hours=1, microseconds=10), interval3)
-
-        interval4 = parse_time_interval("1 year, 4 weeks")
-        self.assertEqual(timedelta(weeks=56), interval4)
+        for (test_input, expected) in input_and_expected:
+            interval = parse_time_interval(test_input)
+            self.assertEqual(expected, interval)
 
     def testParseTimeInterval3a(self):
         interval = parse_time_interval("1 hours, minutes = 2")
