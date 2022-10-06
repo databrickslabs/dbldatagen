@@ -18,7 +18,7 @@ jobs:
             let tag_ref = 'refs/tags/latest2'
             try {
               console.log("Trying to update reference", tag_ref)
-              await github.rest.git.updateRef({
+              await github.git.updateRef({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   ref: tag_ref,
@@ -28,7 +28,7 @@ jobs:
             }
             catch {
               console.log("Trying to create reference", tag_ref)
-              await github.rest.git.createRef({
+              await github.git.createRef({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   ref: tag_ref,
