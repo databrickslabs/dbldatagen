@@ -26,7 +26,8 @@ jobs:
                   force: true
                 })
             }
-            catch {
+            catch(err) {
+              console.log("error:",err)
               console.log("Trying to create reference", tag_ref)
               await github.git.createRef({
                   owner: context.repo.owner,
