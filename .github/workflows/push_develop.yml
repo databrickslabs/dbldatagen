@@ -10,17 +10,29 @@ jobs:
     # Ubuntu 20.04 has Python 3.8
     runs-on: ubuntu-latest
     steps:
-      - name: update tag
+      - name: "create or update tag"
         uses: actions/github-script@v5
         # continue-on-error: true
         with:
           script: |
-            console.log("Trying to create reference")
-            await github.rest.git.updateRef({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                ref: 'refs/tags/latest2',
-                sha: context.sha, 
-                force: true
-              })
+            let tag_ref = 'refs/tags/latest2'
+            try {
+              console.log("Trying to update reference", tag_ref)
+              await github.rest.git.updateRef({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: tag_ref,
+                  sha: context.sha, 
+                  force: true
+                })
+            }
+            catch {
+              console.log("Trying to create reference", tag_ref)
+              await github.rest.git.createRef({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: tag_ref,
+                  sha: context.sha
+                })
+            }
 
