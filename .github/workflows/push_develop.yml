@@ -10,24 +10,13 @@ jobs:
     # Ubuntu 20.04 has Python 3.8
     runs-on: ubuntu-latest
     steps:
-      - name: delete old tag
+      - name: update tag
         uses: actions/github-script@v5
-        continue-on-error: true
+        # continue-on-error: true
         with:
           script: |
             console.log("Trying to create reference")
-            await github.rest.git.deleteRef({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                ref: 'refs/tags/latest2',
-                sha: context.sha
-              })
-      - name: create tag
-        uses: actions/github-script@v5
-        with:
-          script: |
-             console.log("Trying to update reference")
-             await github.rest.git.createRef({
+            await github.rest.git.updateRef({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 ref: 'refs/tags/latest2',
