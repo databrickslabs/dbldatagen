@@ -1,0 +1,36 @@
+# update tags for develop branch
+name: update latest tag
+
+on:
+  push:
+    branches: [develop]
+
+jobs:
+  update_latest_tag:
+    # Ubuntu 20.04 has Python 3.8
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create tag
+        uses: actions/github-script@v5
+        continue-on-error: true
+        with:
+          script: |
+            console.log("Trying to create reference")
+            github.rest.git.createRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: 'refs/tags/latest2',
+                sha: context.sha
+              })
+      - name: Update tag
+        uses: actions/github-script@v5
+        with:
+          script: |
+             console.log("Trying to update reference")
+             github.rest.git.updateRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: 'refs/tags/latest2',
+                sha: context.sha,
+                force: true
+              })
