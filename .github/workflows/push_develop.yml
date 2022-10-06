@@ -15,24 +15,25 @@ jobs:
         # continue-on-error: true
         with:
           script: |
-            let tag_ref = 'refs/tags/latest2'
+            let update_tag_ref = 'tags/latest2'
             try {
-              console.log("Trying to update reference", tag_ref)
+              console.log("Trying to update reference", update_tag_ref)
               await github.git.updateRef({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  ref: tag_ref,
+                  ref: update_tag_ref,
                   sha: context.sha, 
                   force: true
                 })
             }
             catch(err) {
               console.log("error:",err)
-              console.log("Trying to create reference", tag_ref)
+              let create_tag_ref = 'refs/tags/latest2'
+              console.log("Trying to create reference", create_tag_ref)
               await github.git.createRef({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  ref: tag_ref,
+                  ref: create_tag_ref,
                   sha: context.sha
                 })
             }
