@@ -16,7 +16,7 @@ jobs:
         with:
           script: |
             console.log("Trying to create reference")
-            github.rest.git.deleteRef({
+            await github.rest.git.deleteRef({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 ref: 'refs/tags/latest2',
@@ -27,7 +27,7 @@ jobs:
         with:
           script: |
              console.log("Trying to update reference")
-             github.rest.git.createRef({
+             await github.rest.git.createRef({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 ref: 'refs/tags/latest2',
