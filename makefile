@@ -167,11 +167,10 @@ release:
 	git add -f `pwd`/dist/*.whl
 	git add -f ./dist/html_help.tgz
 	git commit -m "Latest release: $(CURRENT_VERSION)"
-	#git tag -a v$(CURRENT_VERSION) -m "Latest release: $(CURRENT_VERSION)"
+	git tag -a v$(CURRENT_VERSION) -m "Latest release: $(CURRENT_VERSION)"
 
 install: buildenv dist/dist_flag.txt
 	@echo "$(OK_COLOR)=> Installing $(PACKAGE_NAME) $(NO_COLOR)"
-	#@cp README.md python/
 	@pip3 install --upgrade .
 	@touch `pwd`/dist/install_flag.txt
 
