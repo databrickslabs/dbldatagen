@@ -42,6 +42,7 @@ and this project follows the guidelines of [Semantic Versioning](https://semver.
 - Added DataGenerator method `withSeedColumnOutput`
 - Deprecated DataGenerator method `withIdOutput`
 - changed layout of `CHANGELOG.md`
+- 
 
 ----
 > Unreleased changes must be tracked above this line.
