@@ -36,7 +36,7 @@ and this project follows the guidelines of [Semantic Versioning](https://semver.
 
 ### Fixed
 
-- Added ability to override column name used for `id` column
+- Added ability to override column name used for `id` column 
 
 ### Changed
 - Added DataGenerator method `withSeedColumnOutput`
