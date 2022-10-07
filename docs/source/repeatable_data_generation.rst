@@ -39,7 +39,8 @@ the same values allowing for creation of multiple tables with referential integr
    The key exception to repeatability is where the data set contains the timestamp or date of when the
    data is written. In these cases, runs from a later date will have different values.
 
-   This is why we stress generating date or timestamp ranges with a specific ``begin``, ``end`` and ``interval`` in the section
+   This is why we stress generating date or timestamp ranges with a specific ``begin``, ``end`` and ``interval``
+   in the section
    on repeatability, rather than simply using SQL ``now()`` , ``current_timestamp()`` etc.
 
 
@@ -54,8 +55,8 @@ or Numpy random number generators depending on context).
 By default
 a predefined random seed will be used for all random columns - so by definition all data is repeatable.
 
-All columns will use the same random seed unless the random seed method is specified to be 'hash_fieldname' or the seed is
-overridden at the column level. In the case of the use of the 'hash_fieldname' generation method,
+All columns will use the same random seed unless the random seed method is specified to be 'hash_fieldname' or
+the seed is overridden at the column level. In the case of the use of the 'hash_fieldname' generation method,
 it will use a hash value of the field name so that each column has a different seed.
 
 True random Data
@@ -207,7 +208,8 @@ device from event to event.
                                values=["activation", "deactivation", "plan change",
                                        "telecoms activity", "internet activity", "device error"],
                                random=True)
-                   .withColumn("event_ts", "timestamp", begin="2020-01-01 01:00:00", end="2020-12-31 23:59:00", interval="1 minute", random=True)
+                   .withColumn("event_ts", "timestamp", begin="2020-01-01 01:00:00", end="2020-12-31 23:59:00",
+                               interval="1 minute", random=True)
 
                    )
 

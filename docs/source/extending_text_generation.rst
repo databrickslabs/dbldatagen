@@ -8,7 +8,8 @@ Extending text generation
 
 This feature should be considered ``Experimental``.
 
-The ``PyfuncText``,  ``PyfuncTextFactory`` and ``FakerTextFactory`` classes provide a mechanism to expand text generation to include
+The ``PyfuncText``,  ``PyfuncTextFactory`` and ``FakerTextFactory`` classes provide a mechanism to expand text
+generation to include
 the use of arbitrary Python functions and 3rd party data generation libraries.
 
 The following example illustrates extension with the open source Faker library using the

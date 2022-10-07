@@ -51,7 +51,9 @@ We'll add a timestamp for when the row was generated and a memo field to mark wh
                .withColumn("customer_id","long", uniqueValues=uniqueCustomers)
                .withColumn("name", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w')
                .withColumn("alias", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w')
-               .withColumn("payment_instrument_type", values=['paypal', 'Visa', 'Mastercard', 'American Express', 'discover', 'branded visa', 'branded mastercard'], random=True, distribution="normal")
+               .withColumn("payment_instrument_type", values=['paypal', 'Visa', 'Mastercard',
+                           'American Express', 'discover', 'branded visa', 'branded mastercard'],
+                           random=True, distribution="normal")
                .withColumn("int_payment_instrument", "int",  minValue=0000, maxValue=9999,  baseColumn="customer_id",
                            baseColumnType="hash", omit=True)
                .withColumn("payment_instrument", expr="format_number(int_payment_instrument, '**** ****** *####')",
