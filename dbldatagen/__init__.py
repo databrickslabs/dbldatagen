@@ -51,11 +51,15 @@ def python_version_check(python_version_expected):
     """Check against Python version
 
        Allows minimum version to be passed in to facilitate unit testing
-    """
+
+       :param python_version_expected: = minimum version of python to support as tuple e.g (3,6)
+       :return: True if passed
+
+        """
     import sys
-    if not sys.version_info >= python_version_expected:
-        raise RuntimeError(f"Minimum version of Python supported is {MIN_PYTHON_VERSION[0]}.{MIN_PYTHON_VERSION[1]}")
+    return sys.version_info >= python_version_expected
 
 
 # lets check for a correct python version or raise an exception
-python_version_check(MIN_PYTHON_VERSION)
+if not python_version_check(MIN_PYTHON_VERSION):
+    raise RuntimeError(f"Minimum version of Python supported is {MIN_PYTHON_VERSION[0]}.{MIN_PYTHON_VERSION[1]}")
