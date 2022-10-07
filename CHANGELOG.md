@@ -37,12 +37,14 @@ and this project follows the guidelines of [Semantic Versioning](https://semver.
 ### Fixed
 
 - Added ability to override column name used for `id` column 
+- Fixes for parsing time strings with seconds, milliseconds 
+
 
 ### Changed
 - Added DataGenerator method `withSeedColumnOutput`
 - Deprecated DataGenerator method `withIdOutput`
 - changed layout of `CHANGELOG.md`
-- 
+- Updated tests for `utils` class to pytest style instead of unittest style
 
 ----
 > Unreleased changes must be tracked above this line.
