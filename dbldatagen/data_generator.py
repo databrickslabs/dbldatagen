@@ -12,15 +12,12 @@ import re
 from pyspark.sql.types import LongType, IntegerType, StringType, StructType, StructField, DataType
 
 from .column_generation_spec import ColumnGenerationSpec
-from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, \
-                               DEFAULT_SEED_COLUMN, SPARK_RANGE_COLUMN
+from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME
 from .spark_singleton import SparkSingleton
 from .utils import ensure, topologicalSort, DataGenError, deprecated
 
 _OLD_MIN_OPTION = 'min'
 _OLD_MAX_OPTION = 'max'
-
-_STREAMING_TIMESTAMP_COLUMN = "_source_timestamp"
 
 
 class DataGenerator:
@@ -38,7 +35,6 @@ class DataGenerator:
     :param verbose: = if `True`, generate verbose output
     :param batchSize: = UDF batch number of rows to pass via Apache Arrow to Pandas UDFs
     :param debug: = if set to True, output debug level of information
-    :param seedColumn: = if set, this should be the name of the seed column. By default this is `id`
     """
 
     # class vars
@@ -56,8 +52,7 @@ class DataGenerator:
 
     def __init__(self, sparkSession=None, name=None, randomSeedMethod=None,
                  rows=1000000, startingId=0, randomSeed=None, partitions=None, verbose=False,
-                 batchSize=None, debug=False, seedColumn=DEFAULT_SEED_COLUMN,
-                 **kwargs):
+                 batchSize=None, debug=False, **kwargs):
         """ Constructor for data generator object """
 
         # set up logging
@@ -65,11 +60,6 @@ class DataGenerator:
         self.debug = debug
 
         self._setupLogger()
-        self._seedColumn = seedColumn
-        self._outputStreamingFields = False
-
-        if seedColumn != DEFAULT_SEED_COLUMN:
-            self.logger.info(f"Using '{self._seedColumn}' for seed column in place of '{DEFAULT_SEED_COLUMN}")
 
         self.name = name if name is not None else self.generateName()
         self._rowCount = rows
@@ -128,9 +118,7 @@ class DataGenerator:
         self._buildOrder = []
         self._inferredSchemaFields = []
         self.buildPlanComputed = False
-
-        # lets add the seed column
-        self.withColumn(self._seedColumn, LongType(), nullable=False, implicit=True, omit=True, noWarn=True)
+        self.withColumn(ColumnGenerationSpec.SEED_COLUMN, LongType(), nullable=False, implicit=True, omit=True)
         self._batchSize = batchSize
 
         if sparkSession is None:
@@ -149,11 +137,6 @@ class DataGenerator:
 
         # set up use of pandas udfs
         self._setupPandas(batchSize)
-
-    @property
-    def seedColumn(self):
-        """ return the data generation seed column"""
-        return self._seedColumn
 
     def _setupPandas(self, pandasBatchSize):
         """
@@ -274,8 +257,7 @@ class DataGenerator:
 
         output = ["", "Data generation plan", "====================",
                   f"spec=DateGenerator(name={self.name}, rows={self._rowCount}, startingId={self.starting_id}, partitions={self.partitions})"
-                  , ")", "", f"seed column: {self._seedColumn}", "",
-                  f"column build order: {self._buildOrder}", "", "build plan:"]
+                  , ")", "", f"column build order: {self._buildOrder}", "", "build plan:"]
 
         for plan_action in self._buildPlan:
             output.append(" ==> " + plan_action)
@@ -326,7 +308,6 @@ class DataGenerator:
         """
         return self._rowCount
 
-    @deprecated('Use `withSeedColumnOutput` instead')
     def withIdOutput(self):
         """ output seed column field (defaults to `id`) as a column in the test data set if specified
 
@@ -335,23 +316,8 @@ class DataGenerator:
         :returns: modified in-place instance of test data generator allowing for chaining of calls
                   following Builder pattern
         """
-        self._columnSpecsByName[self._seedColumn].omit = False
+        self._columnSpecsByName[ColumnGenerationSpec.SEED_COLUMN].omit = False
         self._markForPlanRegen()
-
-        return self
-
-    def withSeedColumnOutput(self, outputStreamingColumns=False):
-        """ output seed column field (defaults to `id`) as a column in the test data set if specified
-
-        If this is not called, the seed column field is omitted from the final test data set
-
-        :param outputStreamingFields: If True, output streaming seed fields also. Defaults to False
-        :returns: modified in-place instance of test data generator allowing for chaining of calls
-                  following Builder pattern
-        """
-        self._columnSpecsByName[self._seedColumn].omit = False
-        self._markForPlanRegen()
-        self._outputStreamingFields = outputStreamingColumns
 
         return self
 
@@ -582,7 +548,7 @@ class DataGenerator:
 
         all_fields = self.getInferredColumnNames()
         effective_fields = [x for x in all_fields if
-                            (fields is None or x in fields) and x != self._seedColumn]
+                            (fields is None or x in fields) and x != ColumnGenerationSpec.SEED_COLUMN]
 
         if patterns is not None:
             effective_fields = [x for x in effective_fields for y in patterns if re.search(y, x) is not None]
@@ -603,7 +569,7 @@ class DataGenerator:
         :returns: True if test passes
         """
         inferred_columns = self.getInferredColumnNames()
-        if allowId and columns == self._seedColumn:
+        if allowId and columns == ColumnGenerationSpec.SEED_COLUMN:
             return True
 
         if type(columns) is list:
@@ -675,7 +641,7 @@ class DataGenerator:
     def withColumn(self, colName, colType=StringType(), minValue=None, maxValue=None, step=1,
                    dataRange=None, prefix=None, random=False, distribution=None,
                    baseColumn=None, nullable=True,
-                   omit=False, implicit=False, noWarn=False,
+                   omit=False, implicit=False,
                    **kwargs):
         """ add a new column for specification
 
@@ -690,10 +656,6 @@ class DataGenerator:
         ensure(colType is not None, f"Must specify column type for column `{colName}`")
         if baseColumn is not None:
             self._checkColumnOrColumnList(baseColumn, allowId=True)
-
-        if not noWarn and colName == DEFAULT_SEED_COLUMN and self._seedColumn == DEFAULT_SEED_COLUMN:
-            self.logger.warning(f"Adding a column named '{colName}' overriding seed column '{self._seedColumn}'")
-            self.logger.warning(f"Use `seedColumn` option on DataGenerator construction for different seed column")
 
         # handle migration of old `min` and `max` options
         if _OLD_MIN_OPTION in kwargs:
@@ -776,7 +738,6 @@ class DataGenerator:
                                            nullable=nullable,
                                            verbose=self.verbose,
                                            debug=self.debug,
-                                           seedColumn=self._seedColumn,
                                            **new_props)
 
         self._columnSpecsByName[colName] = column_spec
@@ -815,9 +776,8 @@ class DataGenerator:
                                           end=end_id,
                                           numPartitions=id_partitions)
 
-            # spark.range generates a dataframe with the column `id` so rename it if its not our seed column
-            if SPARK_RANGE_COLUMN != self._seedColumn:
-                df1 = df1.withColumnRenamed(SPARK_RANGE_COLUMN, self._seedColumn)
+            if ColumnGenerationSpec.SEED_COLUMN != "id":
+                df1 = df1.withColumnRenamed("id", ColumnGenerationSpec.SEED_COLUMN)
 
         else:
             status = (f"Generating streaming data frame with ids from {startId} to {end_id} with {id_partitions} partitions")
@@ -834,15 +794,12 @@ class DataGenerator:
 
                 for k, v in options.items():
                     df1 = df1.option(k, v)
-                df1 = (df1.load()
-                       .withColumnRenamed("value", self._seedColumn)
-                       )
-
+                df1 = df1.load().withColumnRenamed("value", ColumnGenerationSpec.SEED_COLUMN)
             else:
                 df1 = (df1.option("rowsPerSecond", 1)
                        .option("numPartitions", id_partitions)
                        .load()
-                       .withColumnRenamed("value", self._seedColumn)
+                       .withColumnRenamed("value", ColumnGenerationSpec.SEED_COLUMN)
                        )
 
         return df1
@@ -860,8 +817,8 @@ class DataGenerator:
 
         :returns: the build ordering
         """
-        dependency_ordering = [(x.name, set(x.dependencies)) if x.name != self._seedColumn else (
-            self._seedColumn, set())
+        dependency_ordering = [(x.name, set(x.dependencies)) if x.name != ColumnGenerationSpec.SEED_COLUMN else (
+            ColumnGenerationSpec.SEED_COLUMN, set())
                                for x in self._allColumnSpecs]
 
         # self.pp_list(dependency_ordering, msg="dependencies")
@@ -869,7 +826,7 @@ class DataGenerator:
         self.logger.info("dependency list: %s", str(dependency_ordering))
 
         self._buildOrder = list(
-            topologicalSort(dependency_ordering, flatten=False, initial_columns=[self._seedColumn]))
+            topologicalSort(dependency_ordering, flatten=False, initial_columns=[ColumnGenerationSpec.SEED_COLUMN]))
 
         self.logger.info("columnBuildOrder: %s", str(self._buildOrder))
 
@@ -882,7 +839,7 @@ class DataGenerator:
 
         The build order will be a list of lists - each list specifying columns that can be built at the same time
         """
-        return [x for x in self._buildOrder if x != [self._seedColumn]]
+        return [x for x in self._buildOrder if x != [ColumnGenerationSpec.SEED_COLUMN]]
 
     def _getColumnDataTypes(self, columns):
         """ Get data types for columns
@@ -891,7 +848,7 @@ class DataGenerator:
         """
         return [self._columnSpecsByName[colspec].datatype for colspec in columns]
 
-    def computeBuildPlan(self, streaming=False):
+    def computeBuildPlan(self):
         """ prepare for building by computing a pseudo build plan
 
         The build plan is not a true build plan - it is only used for debugging purposes, but does not actually
@@ -903,17 +860,7 @@ class DataGenerator:
         self._buildPlan = []
         self.executionHistory = []
         self._processOptions()
-        self._buildPlan.append(f"Build Spark data frame with seed column: '{self._seedColumn}'")
-
-        # add streaming columns
-        if streaming and self._outputStreamingFields:
-            if not self.hasColumnSpec(_STREAMING_TIMESTAMP_COLUMN):
-                self._buildPlan.append(f"materializing streaming column {_STREAMING_TIMESTAMP_COLUMN}")
-
-                # output the streaming seed columns - timestamp etc
-                self.withColumn(_STREAMING_TIMESTAMP_COLUMN, "timestamp", implicit=True,
-                                expr=f"timestamp as {_STREAMING_TIMESTAMP_COLUMN}",
-                                baseColumn=self._seedColumn)
+        self._buildPlan.append(f"Build Spark data frame with seed column: {ColumnGenerationSpec.SEED_COLUMN}")
 
         # add temporary columns
         for cs in self._allColumnSpecs:
@@ -961,7 +908,7 @@ class DataGenerator:
         """
         self.logger.debug("starting build ... withStreaming [%s]", withStreaming)
         self.executionHistory = []
-        self.computeBuildPlan(streaming=withStreaming)
+        self.computeBuildPlan()
 
         output_columns = self.getOutputColumnNames()
         ensure(output_columns is not None and len(output_columns) > 0,

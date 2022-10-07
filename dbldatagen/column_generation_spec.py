@@ -16,7 +16,7 @@ from pyspark.sql.types import FloatType, IntegerType, StringType, DoubleType, Bo
     TimestampType, DataType, DateType
 
 from .column_spec_options import ColumnSpecOptions
-from .datagen_constants import RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, RANDOM_SEED_RANDOM, DEFAULT_SEED_COLUMN
+from .datagen_constants import RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, RANDOM_SEED_RANDOM
 from .daterange import DateRange
 from .distributions import Normal, DataDistribution
 from .nrange import NRange
@@ -68,10 +68,12 @@ class ColumnGenerationSpec(object):
     :param debug: If True, output debugging log statements. Defaults to False.
     :param verbose: If True, output logging statements at the info level. If False (the default),
                     only output warning and error logging statements.
-    :param seedColumn: if supplied, specifies seed column name
 
     For full list of options, see :doc:`/reference/api/dbldatagen.column_spec_options`.
     """
+
+    #: row seed field for data set
+    SEED_COLUMN = "id"
 
     #: maxValue values for each column type, only if where value is intentionally restricted
     _max_type_range = {
@@ -87,9 +89,7 @@ class ColumnGenerationSpec(object):
 
     def __init__(self, name, colType=None, minValue=0, maxValue=None, step=1, prefix='', random=False,
                  distribution=None, baseColumn=None, randomSeed=None, randomSeedMethod=None,
-                 implicit=False, omit=False, nullable=True, debug=False, verbose=False,
-                 seedColumn=DEFAULT_SEED_COLUMN,
-                 **kwargs):
+                 implicit=False, omit=False, nullable=True, debug=False, verbose=False, **kwargs):
 
         # set up logging
         self.verbose = verbose
@@ -108,11 +108,9 @@ class ColumnGenerationSpec(object):
         self._initialBuildPlan = []  # the build plan for the column - descriptive only
         self.executionHistory = []  # the execution history for the column
 
-        self._seedColumn = seedColumn
-
         # If no base column is specified, assume its dependent on the seed column
         if baseColumn is None:
-            baseColumn = self._seedColumn
+            baseColumn = self.SEED_COLUMN
 
         # to allow for open ended extension of many column attributes, we use a few specific
         # parameters and pass the rest as keyword arguments
@@ -347,10 +345,10 @@ class ColumnGenerationSpec(object):
 
         :return: base columns as list with dependency on seed column added
         """
-        if self.baseColumn != self._seedColumn:
-            return list(set(self.baseColumns + [self._seedColumn]))
+        if self.baseColumn != self.SEED_COLUMN:
+            return list(set(self.baseColumns + [self.SEED_COLUMN]))
         else:
-            return [self._seedColumn]
+            return [self.SEED_COLUMN]
 
     def setBaseColumnDatatypes(self, columnDatatypes):
         """ Set the data types for the base columns
