@@ -43,7 +43,8 @@ To use an older DB runtime version in your notebook, you can use the following c
 %pip install git+https://github.com/databrickslabs/dbldatagen@dbr_7_3_LTS_compat
 ```
 
-See the Databricks runtime release notes for the full list of dependencies.
+See the [Databricks runtime release notes](https://docs.databricks.com/release-notes/runtime/releases.html) 
+ for the full list of dependencies.
 
 This can be found at : https://docs.databricks.com/release-notes/runtime/releases.html
 

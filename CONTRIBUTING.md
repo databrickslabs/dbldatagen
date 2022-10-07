@@ -80,6 +80,22 @@ Run  `make clean dist` from the main project directory.
 
 # Testing 
 
+## Developing new tests
+New tests should be created using PyTest with classes combining multiple `Pytest` tests.
+
+Existing test code contains tests based on Python's `unittest` framework but these are 
+run on `pytest` rather than `unitest`. 
+
+To get a  `spark` instance for test purposes, use the following code:
+
+```python
+import dbldatagen as dg
+
+spark = dg.SparkSingleton.getLocalInstance("<name to flag spark instance>")
+```
+
+The name used to flag the spark instance should be the test module or test class name. 
+
 ## Running unit / integration tests
 
 If using an environment with multiple Python versions, make sure to use virtual env or 
@@ -101,17 +117,22 @@ To run the tests using a `pipenv` environment:
 The release binaries can be accessed at:
 - Databricks Labs Github Data Generator releases - https://github.com/databrickslabs/dbldatagen/releases
 
-To use download a wheel file and install using the Databricks install mechanism to install a wheel based
-library into your workspace.
-
-Alternatively, you can install the library as a notebook scoped library when working within the Databricks 
+You can install the library as a notebook scoped library when working within the Databricks 
 notebook environment through the use of a `%pip` cell in your notebook.
 
 To install as a notebook-scoped library, create and execute a notebook cell with the following text:
 
 > `%pip install git+https://github.com/databrickslabs/dbldatagen`
 
-The `%pip install` method will work in the Databricks Community Environment also.
+The `%pip install` method also works on the Databricks Community Edition.
+
+Alternatively, you use download a wheel file and install using the Databricks install mechanism to install a wheel based
+library into your workspace.
+
+The `%pip install` method can also down load a specific binary release.
+For example, the following code downloads the release V0.2.1
+
+> '%pip install https://github.com/databrickslabs/dbldatagen/releases/download/v021/dbldatagen-0.2.1-py3-none-any.whl'
 
 # Coding Style 
 
