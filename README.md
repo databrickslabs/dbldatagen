@@ -55,6 +55,9 @@ Details of these features can be found in the online documentation  -
 Please refer to the [online documentation](https://databrickslabs.github.io/dbldatagen/public_docs/index.html) for 
 details of use and many examples.
 
+Release notes and details of the latest changes for this specific release
+can be found in the Github repository [here](https://github.com/databrickslabs/dbldatagen/releases/tag/v0.2.2)
+
 # Installation
 
 Use `pip install dbldatagen` to install the PyPi package
@@ -117,8 +120,6 @@ Refer to the [online documentation](https://databrickslabs.github.io/dbldatagen/
 examples. 
 
 The Github repository also contains further examples in the examples directory
-
-
 
 ## Project Support
 Please note that all projects released under [`Databricks Labs`](https://www.databricks.com/learn/labs)

@@ -33,5 +33,5 @@ def get_version(version):
     return version_info
 
 
-__version__ = "0.3.0-a8"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpversion
+__version__ = "0.2.2"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpversion
 __version_info__ = get_version(__version__)
