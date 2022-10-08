@@ -1,8 +1,12 @@
-# Databricks Labs Data Generator (`dbldatagen`)
+# Databricks Labs Data Generator (`dbldatagen`) 
+
+<!-- Top bar will be removed from PyPi packaged versions -->
+<!-- Dont remove: exclude package -->
+[Documentation](https://databrickslabs.github.io/dbldatagen/public_docs/index.html) |
 [Release Notes](CHANGELOG.md) |
-[Developer Docs](docs/USING_THE_APIS.md) |
 [Examples](examples) |
 [Tutorial](tutorial) 
+<!-- Dont remove: end exclude package -->
 
 [![build](https://github.com/databrickslabs/dbldatagen/workflows/build/badge.svg?branch=master)](https://github.com/databrickslabs/dbldatagen/actions?query=workflow%3Abuild+branch%3Amaster)
 [![codecov](https://codecov.io/gh/databrickslabs/dbldatagen/branch/master/graph/badge.svg)](https://codecov.io/gh/databrickslabs/dbldatagen)
@@ -66,7 +70,6 @@ community edition.
 The documentation [installation notes](https://databrickslabs.github.io/dbldatagen/public_docs/installation_notes.html) 
 contains details of installation using alternative mechanisms.
 
-
 ## Compatibility 
 The Databricks Labs data generator framework can be used with Pyspark 3.x and Python 3.6 or later
 
@@ -77,23 +80,6 @@ For full library compatibility for a specific Databricks Spark release, see the 
 release notes for library compatibility
 
 - https://docs.databricks.com/release-notes/runtime/releases.html
-
-## Installation
-The release binaries can be accessed at:
-- Databricks Labs Github Data Generator releases - https://github.com/databrickslabs/dbldatagen/releases
-
-You can install the library as a notebook scoped library when working within the Databricks 
-notebook environment through the use of a `%pip install` cell in your notebook.
-
-To install as a notebook-scoped library, create and execute a notebook cell with the following text:
-
-> `%pip install git+https://github.com/databrickslabs/dbldatagen@current`
-
-The `%pip install` method will work in Delta Live Tables pipelines and in the Databricks Community 
-Environment also.
-
-Alternatively, you can download a wheel file and install using the Databricks install mechanism to install a 
-wheel based library into your workspace.
 
 ## Using the Data Generator
 To use the data generator, install the library using the `%pip install` method or install the Python wheel directly 
@@ -111,13 +97,16 @@ data_rows = 1000 * 1000
 df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows,
                                                   partitions=4)
                             .withIdOutput()
-                            .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
-                                        numColumns=column_count)
+                            .withColumn("r", FloatType(), 
+                                             expr="floor(rand() * 350) * (86400 + 3600)",
+                                             numColumns=column_count)
                             .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
                             .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
                             .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-                            .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
-                            .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+                            .withColumn("code4", StringType(), values=['a', 'b', 'c'], 
+                                           random=True)
+                            .withColumn("code5", StringType(), values=['a', 'b', 'c'], 
+                                           random=True, weights=[9, 1, 1])
 
                             )
                             
@@ -132,7 +121,7 @@ The Github repository also contains further examples in the examples directory
 
 
 ## Project Support
-Please note that all projects released [`Databricks Labs`](https://www.databricks.com/learn/labs)
+Please note that all projects released under [`Databricks Labs`](https://www.databricks.com/learn/labs)
  are provided for your exploration only, and are not formally supported by Databricks with Service Level Agreements 
 (SLAs).  They are provided AS-IS and we do not make any guarantees of any kind.  Please do not submit a support ticket 
 relating to any issues arising from the use of these projects.
