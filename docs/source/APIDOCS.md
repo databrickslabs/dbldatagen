@@ -54,13 +54,14 @@ and [formatting on string columns](textdata)
 
 ## Tutorials and examples
 
-In the root directory of the project, there are a number of examples and tutorials.
+In the [root directory](https://github.com/databrickslabs/dbldatagen) of the project, there are a number of 
+examples and tutorials.
 
 The Python examples in the `examples` folder can be run directly or imported into the Databricks runtime environment 
 as Python files.
 
-The examples in the `tutorials` folder are in notebook export format and are intended to be imported into the Databricks
-runtime environment.
+The examples in the `tutorials` folder are in Databricks notebook export format and are intended to be imported 
+into the Databricks workspace environment.
  
 ## Basic concepts
 

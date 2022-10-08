@@ -22,6 +22,7 @@ It has no dependencies on any libraries that are not already incuded in the Data
 runtime, and you can use it from Scala, R or other languages by defining
 a view over the generated data.
 
+### Feature Summary
 It supports:
 * Generating synthetic data at scale up to billions of rows within minutes using appropriately sized clusters 
 * Generating repeatable, predictable data supporting the needs for producing multiple tables, Change Data Capture, 
@@ -42,22 +43,29 @@ used in other computations
 * plugin mechanism to allow use of 3rd party libraries such as Faker
 * Use of data generator to generate data sources in Databricks Delta Live Tables
 
-Details of these features can be found in the [Developer Docs](docs/source/APIDOCS.md) and the online help
-(which contains the full documentation including the HTML version of the Developer Docs) -
- [Online Help](https://databrickslabs.github.io/dbldatagen/public_docs/index.html). 
+Details of these features can be found in the online documentation  -
+ [online documentation](https://databrickslabs.github.io/dbldatagen/public_docs/index.html). 
 
 ## Documentation
 
-Please refer to the [online documentation](https://databrickslabs.github.io/dbldatagen/public_docs/index.html)
+Please refer to the [online documentation](https://databrickslabs.github.io/dbldatagen/public_docs/index.html) for 
+details of use and many examples.
 
-## Project Support
-Please note that all projects released [`Databricks Labs`](https://www.databricks.com/learn/labs)
- are provided for your exploration only, and are not formally supported by Databricks with Service Level Agreements 
-(SLAs).  They are provided AS-IS and we do not make any guarantees of any kind.  Please do not submit a support ticket 
-relating to any issues arising from the use of these projects.
+# Installation
 
-Any issues discovered through the use of this project should be filed as issues on the Github Repo.  
-They will be reviewed as time permits, but there are no formal SLAs for support.
+Use `pip install dbldatagen` to install the PyPi package
+
+Within a Databricks notebook, invoke the following in a notebook cell
+```commandline
+%pip install dbdatagen
+```
+
+This can be invoked within a Databricks notebook, a Delta Live Tables pipeline and even works on the Databricks 
+community edition.
+
+The documentation [installation notes](https://databrickslabs.github.io/dbldatagen/public_docs/installation_notes.html) 
+contains details of installation using alternative mechanisms.
+
 
 ## Compatibility 
 The Databricks Labs data generator framework can be used with Pyspark 3.x and Python 3.6 or later
@@ -70,7 +78,7 @@ release notes for library compatibility
 
 - https://docs.databricks.com/release-notes/runtime/releases.html
 
-## Using a pre-built release
+## Installation
 The release binaries can be accessed at:
 - Databricks Labs Github Data Generator releases - https://github.com/databrickslabs/dbldatagen/releases
 
@@ -116,35 +124,22 @@ df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows,
 df = df_spec.build()
 num_rows=df.count()                          
 ```
+Refer to the [online documentation](https://databrickslabs.github.io/dbldatagen/public_docs/index.html) for further 
+examples. 
+
+The Github repository also contains further examples in the examples directory
 
 
-# Building the code
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed build and testing instructions, including use of alternative 
-build environments such as conda.
+## Project Support
+Please note that all projects released [`Databricks Labs`](https://www.databricks.com/learn/labs)
+ are provided for your exploration only, and are not formally supported by Databricks with Service Level Agreements 
+(SLAs).  They are provided AS-IS and we do not make any guarantees of any kind.  Please do not submit a support ticket 
+relating to any issues arising from the use of these projects.
 
-Dependencies are maintained by [Pipenv](https://pipenv.pypa.io/). In order to start with depelopment, 
-you should install `pipenv` and `pyenv`.
+Any issues discovered through the use of this project should be filed as issues on the Github Repo.  
+They will be reviewed as time permits, but there are no formal SLAs for support.
 
-Use `make test-with-html-report` to build and run the tests with a coverage report. 
-
-Use `make dist` to make the distributable. The resulting wheel file will be placed in the `dist` subdirectory.
-  
-## Creating the HTML documentation
-
-Run `make docs` from the main project directory.
-
-The main html document will be in the file (relative to the root of the build directory) 
-`./python/docs/docs/build/html/index.html`
-
-## Running unit tests
-
-If using an environment with multiple Python versions, make sure to use virtual env or similar 
-to pick up correct python versions.
-
-If necessary, set `PYSPARK_PYTHON` and `PYSPARK_DRIVER_PYTHON` to point to correct versions of Python.
-
-Run  `make test` from the main project directory to run the unit tests.
 
 ## Feedback
 
