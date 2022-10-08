@@ -17,7 +17,7 @@ As the data generator generates a PySpark data frame, it is simple to create a v
 to Scala or R based Spark applications also.
 
 As it is installable via `%pip install`, it can also be incorporated in environments such as
-[Delta Live Tables](https://www.databricks.com/product/delta-live-tables) also.
+`Delta Live Tables <https://www.databricks.com/product/delta-live-tables>`_ also.
 
 .. toctree::
    :maxdepth: 1
@@ -59,7 +59,7 @@ As it is installable via `%pip install`, it can also be incorporated in environm
    license
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`

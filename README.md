@@ -1,6 +1,5 @@
 # Databricks Labs Data Generator (`dbldatagen`)
 [Release Notes](CHANGELOG.md) |
-[Python Wheel](https://github.com/databrickslabs/dbldatagen/releases/tag/v.0.2.0-rc1-master) |
 [Developer Docs](docs/USING_THE_APIS.md) |
 [Examples](examples) |
 [Tutorial](tutorial) 
@@ -47,12 +46,18 @@ Details of these features can be found in the [Developer Docs](docs/source/APIDO
 (which contains the full documentation including the HTML version of the Developer Docs) -
  [Online Help](https://databrickslabs.github.io/dbldatagen/public_docs/index.html). 
 
+## Documentation
 
+Please refer to the [online documentation](https://databrickslabs.github.io/dbldatagen/public_docs/index.html)
 
 ## Project Support
-Please note that all projects in the `databrickslabs` github space are provided for your exploration only, and are not formally supported by Databricks with Service Level Agreements (SLAs).  They are provided AS-IS and we do not make any guarantees of any kind.  Please do not submit a support ticket relating to any issues arising from the use of these projects.
+Please note that all projects released [`Databricks Labs`](https://www.databricks.com/learn/labs)
+ are provided for your exploration only, and are not formally supported by Databricks with Service Level Agreements 
+(SLAs).  They are provided AS-IS and we do not make any guarantees of any kind.  Please do not submit a support ticket 
+relating to any issues arising from the use of these projects.
 
-Any issues discovered through the use of this project should be filed as GitHub Issues on the Repo.  They will be reviewed as time permits, but there are no formal SLAs for support.
+Any issues discovered through the use of this project should be filed as issues on the Github Repo.  
+They will be reviewed as time permits, but there are no formal SLAs for support.
 
 ## Compatibility 
 The Databricks Labs data generator framework can be used with Pyspark 3.x and Python 3.6 or later
@@ -79,8 +84,8 @@ To install as a notebook-scoped library, create and execute a notebook cell with
 The `%pip install` method will work in Delta Live Tables pipelines and in the Databricks Community 
 Environment also.
 
-Alternatively, you can download a wheel file and install using the Databricks install mechanism to install a wheel based
-library into your workspace.
+Alternatively, you can download a wheel file and install using the Databricks install mechanism to install a 
+wheel based library into your workspace.
 
 ## Using the Data Generator
 To use the data generator, install the library using the `%pip install` method or install the Python wheel directly 
@@ -129,11 +134,13 @@ Use `make dist` to make the distributable. The resulting wheel file will be plac
 
 Run `make docs` from the main project directory.
 
-The main html document will be in the file (relative to the root of the build directory) `./python/docs/docs/build/html/index.html`
+The main html document will be in the file (relative to the root of the build directory) 
+`./python/docs/docs/build/html/index.html`
 
 ## Running unit tests
 
-If using an environment with multiple Python versions, make sure to use virtual env or similar to pick up correct python versions.
+If using an environment with multiple Python versions, make sure to use virtual env or similar 
+to pick up correct python versions.
 
 If necessary, set `PYSPARK_PYTHON` and `PYSPARK_DRIVER_PYTHON` to point to correct versions of Python.
 
@@ -142,14 +149,5 @@ Run  `make test` from the main project directory to run the unit tests.
 ## Feedback
 
 Issues with the application?  Found a bug?  Have a great idea for an addition?
-Feel free to file an issue.
+Feel free to file an [issue](https://github.com/databrickslabs/dbldatagen/issues/new).
 
-## Project Support
-
-Please note that all projects in the /databrickslabs github account are provided for your exploration only, and are 
-not formally supported by Databricks with Service Level Agreements (SLAs). They are provided AS-IS and we do not 
-make any guarantees of any kind. Please do not submit a support ticket relating to any issues arising from the use 
-of these projects.
-
-Any issues discovered through the use of this project should be filed as GitHub Issues on the Repo. They will 
-be reviewed as time permits, but there are no formal SLAs for support.
