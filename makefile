@@ -60,6 +60,14 @@ dev-docs: dev-install
 	@echo "$(OK_COLOR)=> Creating docs ...$(NO_COLOR)"
 	@cd docs && make docs
 
+prep-doc-release:
+	@echo "$(OK_COLOR)=> Preparing docs for release ...$(NO_COLOR)"
+	cp -r docs/build/html docs/public_docs/
+	touch docs/.nojekyll
+	touch docs/public_docs/.nojekyll
+
+
+
 # Tests
 test: export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 
