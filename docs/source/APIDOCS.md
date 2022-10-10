@@ -19,14 +19,8 @@ For example, at the time of writing, a billion row version of the IOT data set e
 can be generated and written to a Delta table in 
 [under 2 minutes using a 12 node x 8 core cluster (using DBR 8.3)](#scaling-it-up)
 
-> NOTE: The markup version of this document does not cover all of the classes and methods in the codebase.
->  For further information on classes and methods contained in  these modules, and  
-> to explore the python documentation for these modules, build the HTML documentation from 
-> the main project directory using `make docs`. Use your browser to explore the documentation by 
-> starting with the html file  `./docs/build/html/index.html`
-> 
-> If you are viewing the online help version of this document, the classes and methods are already included.
- 
+> NOTE: The markup version of this document does not cover all of the classes and methods in the codebase and some links
+> may not work. To see the documentation for the latest release, see the online documentation. 
 
 ## General Overview
 
@@ -54,8 +48,9 @@ and [formatting on string columns](textdata)
 
 ## Tutorials and examples
 
-In the [root directory](https://github.com/databrickslabs/dbldatagen) of the project, there are a number of 
-examples and tutorials.
+In the 
+[Github project directory](https://github.com/databrickslabs/dbldatagen/tree/release/v0.2.1) , 
+there are a number of examples and tutorials.
 
 The Python examples in the `examples` folder can be run directly or imported into the Databricks runtime environment 
 as Python files.
@@ -100,23 +95,21 @@ There is also support for applying arbitrary SQL expressions, and generation of 
 ### Getting started
 
 Before using the data generator, you need to install the package in your environment and import it in your code.
-You can install the package from the Github releases as a library on your cluster. 
+You can install the package from PyPi as a library on your cluster. 
 
 > NOTE: When running in a Databricks notebook environment, you can install directly using 
 > the `%pip` command in a notebook cell
 >  
 > To install as a notebook scoped library, add a cell with the following text and execute it:
 >
-> `%pip install git+https://github.com/databrickslabs/dbldatagen@current`
+> `%pip install dbldatagen`
  
 The `%pip install` method will work in the Databricks Community Environment and in Delta Live Tables pipelines also.
 
-You can also manually download a wheel file from the releases and install it in your environment.
+You can find more details and alternative installation methods at [Installation notes](installation_notes)
 
-The releases are located at 
+The Github based releases are located at 
 [Databricks Labs Data Generator releases](https://github.com/databrickslabs/dbldatagen/releases)
-
-You can find more details at [Installation notes](installation_notes)
 
 Once installed, import the framework in your Python code to use it.
 
