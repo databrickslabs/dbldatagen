@@ -75,10 +75,10 @@ The documentation [installation notes](https://databrickslabs.github.io/dbldatag
 contains details of installation using alternative mechanisms.
 
 ## Compatibility 
-The Databricks Labs data generator framework can be used with Pyspark 3.x and Python 3.6 or later
+The Databricks Labs data generator framework can be used with Pyspark 3.x and Python 3.8 or later
 
 However prebuilt releases are tested against Pyspark 3.0.1 (compatible with the Databricks runtime 7.3 LTS 
-or later) and built with Python 3.7.5
+or later) and built with Python 3.8
 
 For full library compatibility for a specific Databricks Spark release, see the Databricks 
 release notes for library compatibility
