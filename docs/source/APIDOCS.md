@@ -55,7 +55,7 @@ and [formatting on string columns](textdata)
 ## Tutorials and examples
 
 In the 
-[Github project directory related to this release](https://github.com/databrickslabs/dbldatagen/tree/release/v0.2.1) , 
+[Github project directory](https://github.com/databrickslabs/dbldatagen/tree/release/v0.2.1) , 
 there are a number of examples and tutorials.
 
 The Python examples in the `examples` folder can be run directly or imported into the Databricks runtime environment 
