@@ -143,12 +143,8 @@ in minutes with reasonable sized clusters.</p>
 can be generated and written to a Delta table in
 <a class="reference external" href="#scaling-it-up">under 2 minutes using a 12 node x 8 core cluster (using DBR 8.3)</a></p>
 <blockquote>
-<div><p>NOTE: The markup version of this document does not cover all of the classes and methods in the codebase.
-For further information on classes and methods contained in  these modules, and
-to explore the python documentation for these modules, build the HTML documentation from
-the main project directory using <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">docs</span></code>. Use your browser to explore the documentation by
-starting with the html file  <code class="docutils literal notranslate"><span class="pre">./docs/build/html/index.html</span></code></p>
-<p>If you are viewing the online help version of this document, the classes and methods are already included.</p>
+<div><p>NOTE: The markup version of this document does not cover all of the classes and methods in the codebase and some links
+may not work. To see the documentation for the latest release, see the online documentation.</p>
 </div></blockquote>
 <section id="general-overview">
 <h2>General Overview<a class="headerlink" href="#general-overview" title="Permalink to this heading"></a></h2>
@@ -176,8 +172,9 @@ and <a class="reference internal" href="textdata.html"><span class="doc">formatt
 </section>
 <section id="tutorials-and-examples">
 <h2>Tutorials and examples<a class="headerlink" href="#tutorials-and-examples" title="Permalink to this heading"></a></h2>
-<p>In the <a class="reference external" href="https://github.com/databrickslabs/dbldatagen">root directory</a> of the project, there are a number of
-examples and tutorials.</p>
+<p>In the
+<a class="reference external" href="https://github.com/databrickslabs/dbldatagen/tree/release/v0.2.1">Github project directory</a> ,
+there are a number of examples and tutorials.</p>
 <p>The Python examples in the <code class="docutils literal notranslate"><span class="pre">examples</span></code> folder can be run directly or imported into the Databricks runtime environment
 as Python files.</p>
 <p>The examples in the <code class="docutils literal notranslate"><span class="pre">tutorials</span></code> folder are in Databricks notebook export format and are intended to be imported
@@ -214,18 +211,17 @@ typically one of :</p>
 <section id="getting-started">
 <h3>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this heading"></a></h3>
 <p>Before using the data generator, you need to install the package in your environment and import it in your code.
-You can install the package from the Github releases as a library on your cluster.</p>
+You can install the package from PyPi as a library on your cluster.</p>
 <blockquote>
 <div><p>NOTE: When running in a Databricks notebook environment, you can install directly using
 the <code class="docutils literal notranslate"><span class="pre">%pip</span></code> command in a notebook cell</p>
 <p>To install as a notebook scoped library, add a cell with the following text and execute it:</p>
-<p><code class="docutils literal notranslate"><span class="pre">%pip</span> <span class="pre">install</span> <span class="pre">git+https://github.com/databrickslabs/dbldatagen&#64;current</span></code></p>
+<p><code class="docutils literal notranslate"><span class="pre">%pip</span> <span class="pre">install</span> <span class="pre">dbldatagen</span></code></p>
 </div></blockquote>
 <p>The <code class="docutils literal notranslate"><span class="pre">%pip</span> <span class="pre">install</span></code> method will work in the Databricks Community Environment and in Delta Live Tables pipelines also.</p>
-<p>You can also manually download a wheel file from the releases and install it in your environment.</p>
-<p>The releases are located at
+<p>You can find more details and alternative installation methods at <a class="reference internal" href="installation_notes.html"><span class="doc">Installation notes</span></a></p>
+<p>The Github based releases are located at
 <a class="reference external" href="https://github.com/databrickslabs/dbldatagen/releases">Databricks Labs Data Generator releases</a></p>
-<p>You can find more details at <a class="reference internal" href="installation_notes.html"><span class="doc">Installation notes</span></a></p>
 <p>Once installed, import the framework in your Python code to use it.</p>
 <p>For example:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>

@@ -66,12 +66,12 @@ The following tags will be used to pick up specific versions:
 
    * `VCS support in pip <https://pip.pypa.io/en/stable/cli/pip_install/>`_
 
-Installing from pre-built release wheel
----------------------------------------
+Installing from Github releases
+-------------------------------
 
 In some cases, you may wish to down the Python wheel directly from the Github releases.
 
-These can be accessed `here <https://github.com/databrickslabs/dbldatagen/releases>`_
+These can be accessed `here <https://github.com/databrickslabs/dbldatagen/releases>`_.
 
 You can install a specific wheel using either `%pip install` or the manual method
 
