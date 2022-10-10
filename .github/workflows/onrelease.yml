@@ -1,0 +1,41 @@
+name: release
+
+on:
+  release:
+    types:
+      [published]
+    tags:
+      - 'release/v*' # only release a versioned tag, such as v.X.Y.Z
+
+jobs:
+  release:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      max-parallel: 1
+      matrix:
+        python-version: [ 3.8 ]
+        os: [ ubuntu-latest ]
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip' # caching pip dependencies
+          cache-dependency-path: setup.py
+
+      - name: Install pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install dependencies
+        run: pip install -U -e ".[dev]"
+
+      - name: Build dist
+        run: pip wheel -w dist . --no-deps
+
+      - name: Run tests
+        run: make test
+
+
