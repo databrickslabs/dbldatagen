@@ -3,7 +3,7 @@ name: release
 on:
   release:
     types:
-      [published]
+      [published, edited]
     tags:
       - 'release/v*' # only release a versioned tag, such as v.X.Y.Z
 
