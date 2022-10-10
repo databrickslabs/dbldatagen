@@ -27,7 +27,7 @@ prepare: clean
 
 create-dev-env:
 	@echo "$(OK_COLOR)=> making conda dev environment$(NO_COLOR)"
-	conda create -n $(ENV_NAME) python=3.7.5
+	conda create -n $(ENV_NAME) python=3.8
 
 create-github-build-env:
 	@echo "$(OK_COLOR)=> making conda dev environment$(NO_COLOR)"
