@@ -56,7 +56,7 @@ Please refer to the [online documentation](https://databrickslabs.github.io/dbld
 details of use and many examples.
 
 Release notes and details of the latest changes for this specific release
-can be found in the Github repository [here](https://github.com/databrickslabs/dbldatagen/releases/tag/v0.2.2)
+can be found in the Github repository [here](https://github.com/databrickslabs/dbldatagen/releases/tag/v0.2.1)
 
 # Installation
 
