@@ -19,6 +19,12 @@ class SparkSingleton:
     """A singleton class which returns one Spark session instance"""
 
     @classmethod
+    def getRecommendedSparkTaskCount(cls):
+        cpu_count = max(os.cpu_count() - 1, 4)
+        logging.info(f"recommended task count {cpu_count}")
+        return cpu_count
+
+    @classmethod
     def getInstance(cls):
         """Create a Spark instance for Datalib.
 
@@ -34,8 +40,8 @@ class SparkSingleton:
 
         :returns: A Spark instance
         """
-        cpu_count = int(math.floor(os.cpu_count() * 0.75))
-        logging.info("cpu count: %d", cpu_count)
+        cpu_count = os.cpu_count() - 1
+        logging.info("Spark core count: %d", cpu_count)
 
         return SparkSession.builder \
             .master(f"local[{cpu_count}]") \
