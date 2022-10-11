@@ -161,7 +161,7 @@ class TestBuildPlanning(unittest.TestCase):
         sale_weights = [1, 5, 5, 1]
 
         cls.testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
-                                             partitions=4)
+                                             partitions=spark.sparkContext.defaultParallelism)
                             .withSchema(schema)
                             .withIdOutput()
                             .withColumnSpecs(patterns=".*_ID", match_types=StringType(), format="%010d",

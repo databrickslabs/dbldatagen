@@ -28,7 +28,7 @@ class TestBasicOperation:
     @pytest.fixture( scope="class")
     def testDataSpec(self, setupLogging):
         retval = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.SMALL_ROW_COUNT,
-                                   partitions=dg.SparkSingleton.getRecommendedSparkTaskCount(),
+                                   partitions=spark.sparkContext.defaultParallelism,
                                    seedMethod='hash_fieldname')
                             .withIdOutput()
                             .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
@@ -42,17 +42,6 @@ class TestBasicOperation:
 
         print("set up dataspec")
         return retval
-
-    def test_recommended_core_count(self):
-        recommended_tasks = dg.SparkSingleton.getRecommendedSparkTaskCount(useAllCores=True,
-                                                                           limitToAvailableCores=True)
-        cpu_count = os.cpu_count()
-        assert recommended_tasks == cpu_count
-
-    def test_recommended_core_count(self):
-        recommended_tasks = dg.SparkSingleton.getRecommendedSparkTaskCount(useAllCores=True, minTasks=32)
-        cpu_count = os.cpu_count()
-        assert recommended_tasks == max(cpu_count, 32)
 
     @pytest.fixture(scope="class")
     def testData(self, testDataSpec):
@@ -160,7 +149,8 @@ class TestBasicOperation:
     def test_multiple_hash_methods(self):
         """ Test different types of seeding for random values"""
         ds1 = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
-                                partitions=4, seedMethod='hash_fieldname')
+                                partitions=spark.sparkContext.defaultParallelism,
+                                seedMethod='hash_fieldname')
                .withIdOutput()
                .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
                .withColumn("code3", StringType(), values=['a', 'b', 'c'])
@@ -180,7 +170,8 @@ class TestBasicOperation:
         df_count_values3 = df.where("code5 not in ('a', 'b', 'c')")
         assert df_count_values3.count() ==  0
         ds2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
-                                partitions=4, seedMethod='fixed')
+                                partitions=spark.sparkContext.defaultParallelism,
+                                seedMethod='fixed')
                .withIdOutput()
                .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
                .withColumn("code3", StringType(), values=['a', 'b', 'c'])
@@ -200,7 +191,8 @@ class TestBasicOperation:
         df2_count_values3 = df2.where("code5 not in ('a', 'b', 'c')")
         assert df2_count_values3.count() ==  0
         ds3 = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
-                                partitions=4, seedMethod=None)
+                                partitions=spark.sparkContext.defaultParallelism,
+                                seedMethod=None)
                .withIdOutput()
                .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
                .withColumn("code3", StringType(), values=['a', 'b', 'c'])
@@ -318,7 +310,7 @@ class TestBasicOperation:
 
     def test_partitions(self):
         """Test partitioning"""
-        id_partitions = 11
+        id_partitions = spark.sparkContext.defaultParallelism
         rows_wanted = 100000000
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=rows_wanted, partitions=id_partitions, verbose=True)
@@ -338,7 +330,7 @@ class TestBasicOperation:
         assert count ==  rows_wanted
 
     def test_percent_nulls(self):
-        id_partitions = 4
+        id_partitions = spark.sparkContext.defaultParallelism
         rows_wanted = 20000
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=rows_wanted, partitions=id_partitions, verbose=True)
@@ -361,21 +353,3 @@ class TestBasicOperation:
         assert lib_version is not None
         assert type(lib_version) == str, "__version__ is expected to be a string"
         assert len(lib_version.strip()) > 0, "__version__ is expected to be non-empty"
-# run the tests
-# if __name__ == '__main__':
-#  print("Trying to run tests")
-#  unittest.main(argv=['first-arg-is-ignored'],verbosity=2,exit=False)
-
-# def runTests(suites):
-#    suite = unittest.TestSuite()
-#    result = unittest.TestResult()
-#    for testSuite in suites:
-#        suite.addTest(unittest.makeSuite(testSuite))
-#    runner = unittest.TextTestRunner()
-#    print(runner.run(suite))
-
-
-# runTests([TestBasicOperation])
-
-if __name__ == '__main__':
-    unittest.main()

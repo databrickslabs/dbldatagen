@@ -323,7 +323,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
     # @unittest.skip("not yet finalized")
     def test_timestamp_range3(self):
-        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
+                                       partitions=spark.sparkContext.defaultParallelism)
                       .withIdOutput()
                       .withColumn("last_sync_date", "timestamp",
                                   dataRange=DateRange("2017-10-01 00:00:00",
@@ -347,7 +348,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertEqual(df_outside2.count(), 0)
 
     def test_timestamp_range3a(self):
-        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
+                                       partitions=spark.sparkContext.defaultParallelism)
                       .withIdOutput()
                       .withColumn("last_sync_date", "timestamp",
                                   dataRange=DateRange("2017-10-01 00:00:00",
@@ -371,7 +373,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertEqual(df_outside2.count(), 0)
 
     def test_timestamp_range4(self):
-        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
+                                       partitions=spark.sparkContext.defaultParallelism)
                       .withIdOutput()
                       .withColumn("last_sync_date", "timestamp",
                                   dataRange=DateRange("2017-10-01",

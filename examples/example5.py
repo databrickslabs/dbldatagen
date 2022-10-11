@@ -9,11 +9,7 @@ start = datetime(2017, 10, 1, 0, 0, 0)
 end = datetime(2018, 10, 1, 6, 0, 0)
 
 # build spark session
-spark = SparkSession.builder \
-    .master("local[4]") \
-    .appName("Word Count") \
-    .config("spark.some.config.option", "some-value") \
-    .getOrCreate()
+spark = dg.SparkSingleton.getLocalInstance("examples", useAllCores=True)
 
 schema = dg.SchemaParser.parseCreateTable(spark, """
     create table Test1 (
@@ -25,7 +21,10 @@ schema = dg.SchemaParser.parseCreateTable(spark, """
 """)
 
 # will have implied column `id` for ordinal of row
-x3 = (dg.DataGenerator(sparkSession=spark, name="association_oss_cell_info", rows=1000000, partitions=20)
+x3 = (dg.DataGenerator(sparkSession=spark,
+                       name="association_oss_cell_info",
+                       rows=1000000,
+                       partitions=spark.sparkContext.defaultParallelism)
       .withSchema(schema)
       # withColumnSpec adds specification for existing column
       .withColumnSpec("site_id", minValue=1, maxValue=20, step=1)

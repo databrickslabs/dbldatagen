@@ -38,7 +38,7 @@ spark.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", "500")
 class TestILTextGeneration(unittest.TestCase):
     testDataSpec = None
     row_count = 1000000
-    partitions_requested = 24
+    partitions_requested = 24  # for these tests, need to partition higher due to memory consumption
 
     def setUp(self):
         print("setting up TestTextDataGenerationTests")

@@ -73,7 +73,4 @@ class SparkSingleton:
             .config("spark.sql.warehouse.dir", "/tmp/spark-warehouse") \
             .getOrCreate()
 
-        print(sparkSession.sparkContext.defaultParallelism)
-        print(sparkSession.sparkContext.defaultMinPartitions)
-
         return sparkSession
