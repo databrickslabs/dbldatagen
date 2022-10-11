@@ -5,7 +5,7 @@ from pyspark.sql.functions import col
 
 import dbldatagen as dg
 
-spark = dg.SparkSingleton.getLocalInstance("unit tests")
+spark = dg.SparkSingleton.getLocalInstance("unit tests", useAllCores=True)
 
 desired_weights = [9, 1, 1, 1]
 

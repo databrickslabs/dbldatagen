@@ -3,7 +3,7 @@ import unittest
 
 import dbldatagen as dg
 
-spark = dg.SparkSingleton.getLocalInstance("unit tests")
+spark = dg.SparkSingleton.getLocalInstance("unit tests", useAllCores=True)
 
 
 class TestUseOfOptions(unittest.TestCase):

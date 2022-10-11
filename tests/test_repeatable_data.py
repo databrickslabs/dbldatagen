@@ -6,7 +6,7 @@ from pyspark.sql.types import IntegerType, StringType, FloatType, DateType, Time
 
 import dbldatagen as dg
 
-spark = dg.SparkSingleton.getLocalInstance("basic tests")
+spark = dg.SparkSingleton.getLocalInstance("unit tests", useAllCores=True)
 
 
 class TestRepeatableDataGeneration(unittest.TestCase):

@@ -1,13 +1,14 @@
 import logging
 import unittest
 import pytest
+import os
 
 from pyspark.sql import functions as F
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType
 
 import dbldatagen as dg
 
-spark = dg.SparkSingleton.getLocalInstance("basic tests")
+spark = dg.SparkSingleton.getLocalInstance("unit tests", useAllCores=True)
 
 
 @pytest.fixture(scope="class")
@@ -27,8 +28,8 @@ class TestBasicOperation:
     @pytest.fixture( scope="class")
     def testDataSpec(self, setupLogging):
         retval = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.SMALL_ROW_COUNT,
-                                             partitions=dg.SparkSingleton.getRecommendedSparkTaskCount(),
-                                             seedMethod='hash_fieldname')
+                                   partitions=dg.SparkSingleton.getRecommendedSparkTaskCount(),
+                                   seedMethod='hash_fieldname')
                             .withIdOutput()
                             .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
                                         numColumns=self.column_count)
@@ -37,13 +38,21 @@ class TestBasicOperation:
                             .withColumn("code3", StringType(), values=['a', 'b', 'c'])
                             .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
                             .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
-
                             )
 
         print("set up dataspec")
         return retval
 
+    def test_recommended_core_count(self):
+        recommended_tasks = dg.SparkSingleton.getRecommendedSparkTaskCount(useAllCores=True,
+                                                                           limitToAvailableCores=True)
+        cpu_count = os.cpu_count()
+        assert recommended_tasks == cpu_count
 
+    def test_recommended_core_count(self):
+        recommended_tasks = dg.SparkSingleton.getRecommendedSparkTaskCount(useAllCores=True, minTasks=32)
+        cpu_count = os.cpu_count()
+        assert recommended_tasks == max(cpu_count, 32)
 
     @pytest.fixture(scope="class")
     def testData(self, testDataSpec):

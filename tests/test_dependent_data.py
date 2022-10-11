@@ -10,7 +10,7 @@ from dbldatagen import NRange
 
 # global spark
 
-spark = dg.SparkSingleton.getLocalInstance("unit tests")
+spark = dg.SparkSingleton.getLocalInstance("unit tests", useAllCores=True)
 
 
 class TestDependentData(unittest.TestCase):

@@ -6,7 +6,7 @@ import numpy as np
 import dbldatagen as dg
 from dbldatagen import PyfuncText, PyfuncTextFactory, FakerTextFactory
 
-spark = dg.SparkSingleton.getLocalInstance("basic tests")
+spark = dg.SparkSingleton.getLocalInstance("unit tests", useAllCores=True)
 
 
 class TestTextGenerationPlugins(unittest.TestCase):

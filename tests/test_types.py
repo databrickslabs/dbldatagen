@@ -6,7 +6,7 @@ import pyspark.sql.functions as F
 
 import dbldatagen as dg
 
-spark = dg.SparkSingleton.getLocalInstance("unit tests")
+spark = dg.SparkSingleton.getLocalInstance("unit tests", useAllCores=True)
 
 
 class TestTypes(unittest.TestCase):

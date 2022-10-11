@@ -143,7 +143,7 @@ schema = StructType([
 
 print("schema", schema)
 
-spark = dg.SparkSingleton.getLocalInstance("unit tests")
+spark = dg.SparkSingleton.getLocalInstance("unit tests", useAllCores=True)
 
 
 # Test manipulation and generation of test data for a large schema

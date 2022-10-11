@@ -35,7 +35,7 @@ schema = StructType([
 ])
 
 # build spark session
-spark = dg.SparkSingleton.getLocalInstance("quick tests")
+spark = dg.SparkSingleton.getLocalInstance("unit tests", useAllCores=True)
 
 
 class TestQuickTests(unittest.TestCase):

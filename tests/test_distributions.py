@@ -9,7 +9,7 @@ import numpy as np
 import dbldatagen as dg
 import dbldatagen.distributions as dist
 
-spark = dg.SparkSingleton.getLocalInstance("unit tests")
+spark = dg.SparkSingleton.getLocalInstance("unit tests", useAllCores=True)
 
 desired_weights = [9, 1, 1, 1]
 

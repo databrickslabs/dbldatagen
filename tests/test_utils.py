@@ -3,10 +3,8 @@ import sys
 from datetime import timedelta
 import pytest
 
-from dbldatagen import ensure, mkBoundsList, coalesce_values, deprecated, SparkSingleton, \
+from dbldatagen import ensure, mkBoundsList, coalesce_values, deprecated,  \
     parse_time_interval, DataGenError
-
-spark = SparkSingleton.getLocalInstance("unit tests")
 
 
 class TestUtils:

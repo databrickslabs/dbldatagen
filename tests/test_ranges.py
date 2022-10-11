@@ -3,7 +3,7 @@ import unittest
 
 import dbldatagen as dg
 
-spark = dg.SparkSingleton.getLocalInstance("basic tests")
+spark = dg.SparkSingleton.getLocalInstance("unit tests", useAllCores=True)
 
 
 class TestRanges(unittest.TestCase):
