@@ -43,12 +43,16 @@ class TestQuickTests(unittest.TestCase):
 
     The goal for these tests is that they should run fast so focus is on quick execution
     """
+    partitionsRequested = dg.SparkSingleton.getRecommendedSparkTaskCount(limitToAvailableCores=True)
 
     def setUp(self):
         print("setting up")
 
     def test_analyzer(self):
-        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark,
+                                       name="test_data_set1",
+                                       rows=1000,
+                                       partitions=self.partitionsRequested)
                       .withIdOutput()
                       .build()
                       )
@@ -69,7 +73,7 @@ class TestQuickTests(unittest.TestCase):
 
     def test_complex_datagen(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
-                                         partitions=4)
+                                         partitions=self.partitionsRequested)
                         .withIdOutput()
                         .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)")
                         .withColumn("code1a", IntegerType(), unique_values=100)
@@ -119,7 +123,9 @@ class TestQuickTests(unittest.TestCase):
         self.assertNotEqual(n1, n2, "Names should be different")
 
     def test_column_specifications(self):
-        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
+
+        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000,
+                              partitions=self.partitionsRequested)
                 .withSchema(schema)
                 .withColumn("sector_status_desc", StringType(), minValue=1, maxValue=200, step=1,
                             prefix='status', random=True)
@@ -131,7 +137,8 @@ class TestQuickTests(unittest.TestCase):
         self.assertEqual(expectedColumns, set(([x.name for x in tgen._allColumnSpecs])))
 
     def test_inferred_columns(self):
-        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
+        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000,
+                              partitions=self.partitionsRequested)
                 .withSchema(schema)
                 .withColumn("sector_status_desc", StringType(), minValue=1, maxValue=200, step=1,
                             prefix='status', random=True)
@@ -144,7 +151,8 @@ class TestQuickTests(unittest.TestCase):
         self.assertEqual(expectedColumns, set((tgen.getInferredColumnNames())))
 
     def test_output_columns(self):
-        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
+        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000,
+                              partitions=self.partitionsRequested)
                 .withSchema(schema)
                 .withColumn("sector_status_desc", StringType(), minValue=1, maxValue=200, step=1,
                             prefix='status', random=True)
@@ -158,7 +166,8 @@ class TestQuickTests(unittest.TestCase):
 
     @unittest.expectedFailure
     def test_with_column_spec_for_missing_column(self):
-        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
+        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000,
+                              partitions=self.partitionsRequested)
                 .withSchema(schema)
                 .withColumn("sector_status_desc", StringType(), minValue=1, maxValue=200, step=1,
                             prefix='status', random=True)
@@ -172,7 +181,8 @@ class TestQuickTests(unittest.TestCase):
 
     @unittest.expectedFailure
     def test_with_column_spec_for_duplicate_column(self):
-        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
+        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000,
+                              partitions=self.partitionsRequested)
                 .withSchema(schema)
                 .withColumn("sector_status_desc", StringType(), minValue=1, maxValue=200, step=1,
                             prefix='status', random=True)
@@ -187,7 +197,8 @@ class TestQuickTests(unittest.TestCase):
 
     # @unittest.expectedFailure
     def test_with_column_spec_for_duplicate_column2(self):
-        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
+        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000,
+                              partitions=self.partitionsRequested)
                 .withSchema(schema)
                 .withColumn("sector_status_desc", StringType(), minValue=1, maxValue=200, step=1,
                             prefix='status', random=True)
@@ -199,7 +210,8 @@ class TestQuickTests(unittest.TestCase):
         assert t2 is not None, "expecting t2 to be a new generator spec"
 
     def test_with_column_spec_for_id_column(self):
-        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000, partitions=8)
+        tgen = (DataGenerator(sparkSession=spark, name="test_data_set", rows=1000000,
+                              partitions=self.partitionsRequested)
                 .withSchema(schema)
                 .withColumn("sector_status_desc", StringType(), minValue=1, maxValue=200, step=1,
                             prefix='status', random=True)
@@ -215,7 +227,7 @@ class TestQuickTests(unittest.TestCase):
 
     def test_basic_ranges_with_view(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="ranged_data", rows=100000,
-                                         partitions=4)
+                                         partitions=self.partitionsRequested)
                         .withIdOutput()
                         .withColumn("code1a", IntegerType(), unique_values=100)
                         .withColumn("code1b", IntegerType(), minValue=1, maxValue=100)
@@ -241,7 +253,7 @@ class TestQuickTests(unittest.TestCase):
 
     def test_basic_formatting1(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
-                                         partitions=4)
+                                         partitions=self.partitionsRequested)
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), unique_values=100)
                         .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
@@ -257,7 +269,7 @@ class TestQuickTests(unittest.TestCase):
 
     def test_basic_formatting2(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
-                                         partitions=4)
+                                         partitions=self.partitionsRequested)
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), unique_values=100)
                         .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
@@ -273,7 +285,7 @@ class TestQuickTests(unittest.TestCase):
 
     def test_basic_formatting_discrete_values(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
-                                         partitions=4)
+                                         partitions=self.partitionsRequested)
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), unique_values=100)
                         .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
@@ -288,7 +300,7 @@ class TestQuickTests(unittest.TestCase):
 
     def test_basic_formatting3(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
-                                         partitions=4)
+                                         partitions=self.partitionsRequested)
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), unique_values=100)
                         .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
@@ -306,7 +318,7 @@ class TestQuickTests(unittest.TestCase):
 
     def test_basic_formatting3a(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
-                                         partitions=4)
+                                         partitions=self.partitionsRequested)
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), unique_values=100)
                         .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
@@ -325,7 +337,7 @@ class TestQuickTests(unittest.TestCase):
     @unittest.skip("not yet implemented for multiple base columns")
     def test_basic_formatting4(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
-                                         partitions=4)
+                                         partitions=self.partitionsRequested)
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), unique_values=100)
                         .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
@@ -344,7 +356,7 @@ class TestQuickTests(unittest.TestCase):
 
     def test_basic_formatting5(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
-                                         partitions=4)
+                                         partitions=self.partitionsRequested)
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), unique_values=100)
                         .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
@@ -369,7 +381,7 @@ class TestQuickTests(unittest.TestCase):
 
     def test_basic_formatting(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
-                                         partitions=4)
+                                         partitions=self.partitionsRequested)
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), unique_values=100)
                         .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
@@ -396,7 +408,7 @@ class TestQuickTests(unittest.TestCase):
 
     def test_basic_prefix(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=1000,
-                                         partitions=4)
+                                         partitions=self.partitionsRequested)
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), unique_values=100)
                         .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
@@ -411,7 +423,7 @@ class TestQuickTests(unittest.TestCase):
 
     def test_reversed_ranges(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="ranged_data", rows=100000,
-                                         partitions=4)
+                                         partitions=self.partitionsRequested)
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), minValue=100, maxValue=1, step=-1)
                         .withColumn("val2", IntegerType(), minValue=100, maxValue=1, step=-3, unique_values=5)
@@ -435,7 +447,7 @@ class TestQuickTests(unittest.TestCase):
 
     def test_date_time_ranges(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="ranged_data", rows=100000,
-                                         partitions=4)
+                                         partitions=self.partitionsRequested)
                         .withIdOutput()
                         .withColumn("last_sync_ts", "timestamp",
                                     dataRange=DateRange("2017-10-01 00:00:00",
@@ -479,7 +491,7 @@ class TestQuickTests(unittest.TestCase):
 
     def test_script_table(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
-                                         partitions=4)
+                                         partitions=self.partitionsRequested)
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), unique_values=100)
                         .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
@@ -517,7 +529,7 @@ class TestQuickTests(unittest.TestCase):
 
     def test_script_merge1(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
-                                         partitions=4)
+                                         partitions=self.partitionsRequested)
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), unique_values=100)
                         .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
@@ -556,7 +568,7 @@ class TestQuickTests(unittest.TestCase):
 
     def test_script_merge_min(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="formattedDF", rows=100000,
-                                         partitions=4)
+                                         partitions=self.partitionsRequested)
                         .withIdOutput()
                         .withColumn("val1", IntegerType(), unique_values=100)
                         .withColumn("val2", IntegerType(), minValue=1, maxValue=100)
@@ -597,7 +609,7 @@ class TestQuickTests(unittest.TestCase):
     def test_strings_from_numeric_string_field1(self):
         """ Check that order_id always generates a non null value when using random values"""
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="stringsFromNumbers", rows=100000,
-                                         partitions=4)
+                                         partitions=self.partitionsRequested)
                         .withIdOutput()
                         .withColumn("order_num",  minValue=1, maxValue=100000000, random=True)
                         .withColumn("order_id", prefix="order", baseColumn="order_num")
@@ -617,7 +629,7 @@ class TestQuickTests(unittest.TestCase):
     def test_strings_from_numeric_string_field2(self):
         """ Check that order_id always generates a non null value when using non-random values"""
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="stringsFromNumbers", rows=100000,
-                                         partitions=4)
+                                         partitions=self.partitionsRequested)
                         .withIdOutput()
                         # use step of -1 to ensure descending from max value
                         .withColumn("order_num",  minValue=1, maxValue=100000000, step=-1)
@@ -638,7 +650,7 @@ class TestQuickTests(unittest.TestCase):
     def test_strings_from_numeric_string_field2a(self):
         """ Check that order_id always generates a non null value when using non-random values"""
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="stringsFromNumbers", rows=100000,
-                                         partitions=4)
+                                         partitions=self.partitionsRequested)
                         .withIdOutput()
                         # use step of -1 to ensure descending from max value
                         .withColumn("order_num",  minValue=1, maxValue=100000000, step=-1)
@@ -662,7 +674,7 @@ class TestQuickTests(unittest.TestCase):
 
     def test_strings_from_numeric_string_field3(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="stringsFromNumbers", rows=100000,
-                                         partitions=4)
+                                         partitions=self.partitionsRequested)
                         .withIdOutput()
                         # default column type is string
                         .withColumn("order_num",  minValue=1, maxValue=100000000, random=True)
@@ -682,7 +694,7 @@ class TestQuickTests(unittest.TestCase):
 
     def test_strings_from_numeric_string_field4(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="stringsFromNumbers", rows=100000,
-                                         partitions=4)
+                                         partitions=self.partitionsRequested)
                         .withIdOutput()
                         # default column type is string
                         .withColumn("order_num",  minValue=1, maxValue=100000000, step=-1)

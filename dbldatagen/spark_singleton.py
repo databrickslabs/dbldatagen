@@ -67,8 +67,13 @@ class SparkSingleton:
 
         logging.info("Spark core count: %d", spark_core_count)
 
-        return SparkSession.builder \
+        sparkSession = SparkSession.builder \
             .master(f"local[{spark_core_count}]") \
             .appName(appName) \
             .config("spark.sql.warehouse.dir", "/tmp/spark-warehouse") \
             .getOrCreate()
+
+        print(sparkSession.sparkContext.defaultParallelism)
+        print(sparkSession.sparkContext.defaultMinPartitions)
+
+        return sparkSession
