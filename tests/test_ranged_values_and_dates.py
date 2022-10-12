@@ -61,7 +61,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
         start = datetime(2017, 10, 1, 0, 0, 0)
         end = datetime(2018, 10, 1, 6, 0, 0)
 
-        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
+                                       partitions=spark.sparkContext.defaultParallelism)
                       .withIdOutput()
                       .withColumn("last_sync_dt", "timestamp", begin=start, end=end, interval=interval, random=True)
                       .build()
@@ -88,7 +89,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
         start = datetime(2017, 10, 1, 0, 0, 0)
         end = datetime(2018, 10, 1, 6, 0, 0)
 
-        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
+                                       partitions=spark.sparkContext.defaultParallelism)
                       .withIdOutput()
                       .withColumn("last_sync_dt", "timestamp", begin=start, end=end, interval=interval)
                       .build()
@@ -111,7 +113,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
     def test_basic_dates_minimal(self):
         '''test dates with just unique values'''
-        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=10000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=10000,
+                                       partitions=spark.sparkContext.defaultParallelism)
                       .withIdOutput()
                       .withColumn("last_sync_dt", "date", unique_values=100, random=True)
                       .withColumn("last_sync_dt2", "date", unique_values=100, base_column_type="values")
@@ -163,7 +166,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
         start = datetime(2017, 10, 1, 0, 0, 0)
         end = datetime(2018, 10, 1, 6, 0, 0)
 
-        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
+                                       partitions=spark.sparkContext.defaultParallelism)
                       .withIdOutput()
                       .withColumn("last_sync_dt", "timestamp", begin=start, end=end, interval=interval, random=True)
                       .withColumn("last_sync_dt1", "timestamp",
@@ -192,7 +196,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
         start = datetime(2017, 10, 1, 0, 0, 0)
         end = datetime(2018, 10, 6, 0, 0, 0)
 
-        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
+                                       partitions=spark.sparkContext.defaultParallelism)
                       .withIdOutput()
                       .withColumn("last_sync_dt1", "timestamp",
                                   dataRange=DateRange("2017-10-01 00:00:00",
@@ -218,7 +223,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
         start = date(2017, 10, 1)
         end = date(2018, 10, 6)
 
-        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
+                                       partitions=spark.sparkContext.defaultParallelism)
                       .withIdOutput()
                       .withColumn("last_sync_date", "date",
                                   dataRange=DateRange("2017-10-01 00:00:00",
@@ -248,7 +254,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertEqual(df_outside2.count(), 0)
 
     def test_date_range3a(self):
-        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
+                                       partitions=spark.sparkContext.defaultParallelism)
                       .withIdOutput()
                       .withColumn("last_sync_date", "date",
                                   dataRange=DateRange("2017-10-01 00:00:00",
@@ -272,7 +279,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertEqual(df_outside2.count(), 0)
 
     def test_date_range4(self):
-        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
+                                       partitions=spark.sparkContext.defaultParallelism)
                       .withIdOutput()
                       .withColumn("last_sync_date", "date",
                                   dataRange=DateRange("2017-10-01",
@@ -297,7 +305,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertEqual(df_outside2.count(), 0)
 
     def test_date_range4a(self):
-        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
+                                       partitions=spark.sparkContext.defaultParallelism)
                       .withIdOutput()
                       .withColumn("last_sync_date", "date",
                                   dataRange=DateRange("2017-10-01",
@@ -399,7 +408,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertEqual(df_outside2.count(), 0)
 
     def test_timestamp_range4a(self):
-        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
+                                       partitions=spark.sparkContext.defaultParallelism)
                       .withIdOutput()
                       .withColumn("last_sync_date", "timestamp",
                                   dataRange=DateRange("2017-10-01",
@@ -424,7 +434,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertEqual(df_outside2.count(), 0)
 
     def test_unique_values1(self):
-        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, partitions=4)
+        testDataDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
+                                       partitions=spark.sparkContext.defaultParallelism)
                       .withIdOutput()
                       .withColumn("code1", "int", unique_values=7)
                       .withColumn("code2", "int", unique_values=7, minValue=20)
@@ -443,7 +454,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertEqual(summary[3], 26)
 
     def test_unique_values_ts(self):
-        testDataUniqueDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+        testDataUniqueDF = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
+                                             partitions=spark.sparkContext.defaultParallelism)
                             .withIdOutput()
                             .withColumn("test_ts", "timestamp", unique_values=51, random=True)
                             .build()
@@ -456,7 +468,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertEqual(summary[0], 51)
 
     def test_unique_values_ts2(self):
-        df_unique_ts2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+        df_unique_ts2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
+                                          partitions=spark.sparkContext.defaultParallelism)
                          .withIdOutput()
                          .withColumn("test_ts", "timestamp", unique_values=51)
                          .build()
@@ -470,7 +483,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
     def test_unique_values_ts3(self):
         testDataUniqueTSDF = (
-            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
+                             partitions=spark.sparkContext.defaultParallelism)
                 .withIdOutput()
                 .withColumn("test_ts", "timestamp", unique_values=51, random=True,
                             dataRange=DateRange("2017-10-01 00:00:00",
@@ -488,7 +502,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
     def test_unique_values_ts4(self):
 
         df_unique_ts4 = (
-            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
+                             partitions=spark.sparkContext.defaultParallelism)
                 .withIdOutput()
                 .withColumn("test_ts", "timestamp", unique_values=51, random=True,
                             begin="2017-10-01 00:00:00", end="2018-10-06 23:59:59", interval="minutes=10")
@@ -503,7 +518,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
     def test_unique_values_date(self):
         testDataUniqueDF3spec = (
-            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
+                             partitions=spark.sparkContext.defaultParallelism)
                 .withIdOutput()
                 .withColumn("test_ts", "date", unique_values=51, interval="1 days")
         )
@@ -519,7 +535,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
     def test_unique_values_date2(self):
         ''' Check for unique dates'''
-        df_unique_date2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+        df_unique_date2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
+                                            partitions=spark.sparkContext.defaultParallelism)
                            .withIdOutput()
                            .withColumn("test_ts", "date", unique_values=51, random=True)
                            .build()
@@ -534,7 +551,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
     def test_unique_values_date3(self):
         ''' Check for unique dates when begin, end and interval are specified'''
         df_unique_date3 = (
-            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
+                             partitions=spark.sparkContext.defaultParallelism)
                 .withIdOutput()
                 .withColumn("test_ts", "date", unique_values=51, random=True, begin="2017-10-01", end="2018-10-06",
                             interval="days=2")
@@ -550,7 +568,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
     def test_unique_values_date3a(self):
         ''' Check for unique dates when begin, end and interval are specified'''
         df_unique_date3 = (
-            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
+                             partitions=spark.sparkContext.defaultParallelism)
                 .withIdOutput()
                 .withColumn("test_ts", "date", unique_values=51, random=True, begin="2017-10-01", end="2018-10-06",
                             interval="days=1")
@@ -565,7 +584,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
     def test_unique_values_integers(self):
         testDataUniqueIntegersDF = (
-            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
+                             partitions=spark.sparkContext.defaultParallelism)
                 .withIdOutput()
                 .withColumn("val1", "int", unique_values=51, random=True)
                 .withColumn("val2", "int", unique_values=57)
@@ -602,7 +622,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
     def test_unique_values_decimal(self):
         testDataUniqueDecimalsDF = (
-            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
+                             partitions=spark.sparkContext.defaultParallelism)
                 .withIdOutput()
                 .withColumn("val1", "decimal(15,5)", unique_values=51, random=True)
                 .withColumn("val2", "decimal(15,5)", unique_values=57)
@@ -629,7 +650,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
     def test_unique_values_float(self):
         testDataUniqueFloatssDF = (
-            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4)
+            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
+                             partitions=spark.sparkContext.defaultParallelism)
                 .withIdOutput()
                 .withColumn("val1", "float", unique_values=51, random=True)
                 .withColumn("val2", "float", unique_values=57)
@@ -656,7 +678,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
     def test_unique_values_float2(self):
         df_unique_float2 = (
-            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000, partitions=4, verbose=True,
+            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
+                             partitions=spark.sparkContext.defaultParallelism, verbose=True,
                              debug=True)
                 .withIdOutput()
                 .withColumn("val1", "float", unique_values=51, random=True, minValue=1.0)

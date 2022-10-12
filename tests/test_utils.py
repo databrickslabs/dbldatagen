@@ -30,7 +30,7 @@ class TestUtils:
 
         test2 = mkBoundsList(None, [1, 1])
 
-        assert len(test2) ==  2
+        assert len(test2) == 2
 
     @pytest.mark.parametrize("test_input,expected",
                              [
@@ -73,20 +73,3 @@ class TestUtils:
         assert type(str(testException)) is str
         self.logger.info(str(testException))
 
-
-
-# run the tests
-# if __name__ == '__main__':
-#  print("Trying to run tests")
-#  unittest.main(argv=['first-arg-is-ignored'],verbosity=2,exit=False)
-
-# def runTests(suites):
-#    suite = unittest.TestSuite()
-#    result = unittest.TestResult()
-#    for testSuite in suites:
-#        suite.addTest(unittest.makeSuite(testSuite))
-#    runner = unittest.TextTestRunner()
-#    print(runner.run(suite))
-
-
-# runTests([TestBasicOperation])

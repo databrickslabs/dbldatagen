@@ -1,15 +1,12 @@
 import re
-import unittest
+import pytest
 
 import dbldatagen as dg
 
 spark = dg.SparkSingleton.getLocalInstance("unit tests", useAllCores=True)
 
 
-class TestUseOfOptions(unittest.TestCase):
-    def setUp(self):
-        print("setting up")
-
+class TestUseOfOptions:
     def test_basic(self):
         # will have implied column `id` for ordinal of row
         testdata_generator = (
@@ -31,7 +28,7 @@ class TestUseOfOptions(unittest.TestCase):
 
         numRows = df.count()
 
-        self.assertEqual(numRows, 20000)
+        assert numRows == 20000
 
         print("output columns", testdata_generator.getOutputColumnNames())
 
@@ -47,32 +44,32 @@ class TestUseOfOptions(unittest.TestCase):
 
         # check `code` values
         code1_values = [r[0] for r in df.select("code1").distinct().collect()]
-        self.assertSetEqual(set(code1_values), set(range(1, 21)))
+        assert set(code1_values) == set(range(1, 21))
 
         code2_values = [r[0] for r in df.select("code2").distinct().collect()]
-        self.assertSetEqual(set(code2_values), set(range(1, 21)))
+        assert set(code2_values) == set(range(1, 21))
 
         code3_values = [r[0] for r in df.select("code3").distinct().collect()]
-        self.assertSetEqual(set(code3_values), set(range(1, 21)))
+        assert set(code3_values) == set(range(1, 21))
 
         code4_values = [r[0] for r in df.select("code3").distinct().collect()]
-        self.assertSetEqual(set(code4_values), set(range(1, 21)))
+        assert set(code4_values) == set(range(1, 21))
 
         site_codes = [f"site_{x}" for x in range(1, 21)]
         site_code_values = [r[0] for r in df.select("site_cd").distinct().collect()]
-        self.assertSetEqual(set(site_code_values), set(site_codes))
+        assert set(site_code_values) == set(site_codes)
 
         status_codes = [f"status_{x}" for x in range(1, 201)]
         status_code_values = [r[0] for r in df.select("device_status").distinct().collect()]
-        self.assertSetEqual(set(status_code_values), set(status_codes))
+        assert set(status_code_values) == set(status_codes)
 
         # check `tech` values
         tech_values = [r[0] for r in df.select("tech").distinct().collect()]
-        self.assertSetEqual(set(tech_values), set(["GSM", "UMTS", "LTE", "UNKNOWN"]))
+        assert set(tech_values) == set(["GSM", "UMTS", "LTE", "UNKNOWN"])
 
         # check test cell values
         test_cell_values = [r[0] for r in df.select("test_cell_flg").distinct().collect()]
-        self.assertSetEqual(set(test_cell_values), {0, 1})
+        assert set(test_cell_values) == {0, 1}
 
     def test_aliased_options(self):
         # will have implied column `id` for ordinal of row
@@ -100,14 +97,14 @@ class TestUseOfOptions(unittest.TestCase):
         print("options", colSpec1.specOptions)
 
         val1 = colSpec1.getOrElse("textSeparator", "n/a")
-        self.assertEqual("", val1, "invalid `textSeparator` option value for ``site_cd1``")
+        assert "" == val1, "invalid `textSeparator` option value for ``site_cd1``"
 
         val2 = colSpec1.getOrElse("text_separator", "n/a")
-        self.assertEqual("", val2, "invalid `text_separator` option value for ``site_cd1``")
+        assert "" ==  val2, "invalid `text_separator` option value for ``site_cd1``"
 
         colSpec2 = testdata_generator.getColumnSpec("site_cd2")
         val3 = colSpec2.getOrElse("textSeparator", "n/a")
-        self.assertEqual("-", val3, "invalid `textSeparator` option value")
+        assert "-" == val3, "invalid `textSeparator` option value"
 
         df = testdata_generator.build()  # build our dataset
 
@@ -121,12 +118,12 @@ class TestUseOfOptions(unittest.TestCase):
         for row in output:
             site_cd1 = row["site_cd1"]
             print("site code", site_cd1)
-            self.assertIsNotNone(site_cd1)
-            self.assertTrue(match_pattern1.match(site_cd1))
+            assert site_cd1 is not None
+            assert match_pattern1.match(site_cd1)
 
             site_cd2 = row["site_cd2"]
-            self.assertIsNotNone(site_cd2)
-            self.assertTrue(match_pattern2.match(site_cd2))
+            assert site_cd2 is not None
+            assert match_pattern2.match(site_cd2)
 
     def test_aliased_options2(self):
         # will have implied column `id` for ordinal of row
@@ -153,9 +150,9 @@ class TestUseOfOptions(unittest.TestCase):
 
         options = dg.ColumnSpecOptions(props, aliases)
 
-        self.assertEqual(options.getOrElse("two", None), 2, "get two")
-        self.assertEqual(options.getOrElse("One", None), 1, "get One")
-        self.assertEqual(options.getOrElse("four", 4), 4, "get four with default")
+        assert options.getOrElse("two", None) == 2,  "get two"
+        assert options.getOrElse("One", None) == 1, "get One"
+        assert options.getOrElse("four", 4) == 4, "get four with default"
 
 # run the tests
 # if __name__ == '__main__':

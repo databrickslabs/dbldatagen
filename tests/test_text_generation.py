@@ -117,8 +117,7 @@ class TestTextGeneration(unittest.TestCase):
         self.assertGreaterEqual(counts['phone_count'], 100)
 
     def test_large_ILText_driven_data_generation(self):
-        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000000,
-                                         partitions=spark.sparkContext.defaultParallelism)
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000000)
                         .withSchema(schema)
                         .withIdOutput()
                         .withColumnSpec("date", percentNulls=0.1)
@@ -248,8 +247,7 @@ class TestTextGeneration(unittest.TestCase):
             self.assertTrue(match_pattern.match(test_value))
 
     def test_simple_data2(self):
-        testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
-                                          partitions=self.partitions_requested)
+        testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count)
                          .withSchema(schema)
                          .withIdOutput()
                          .withColumnSpec("date", percent_nulls=0.1)
@@ -264,8 +262,7 @@ class TestTextGeneration(unittest.TestCase):
         testDataSpec2.build().show()
 
     def test_multi_columns(self):
-        testDataSpec3 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count,
-                                          partitions=self.partitions_requested, verbose=True)
+        testDataSpec3 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count, verbose=True)
                          .withIdOutput()
                          .withColumn("val1", IntegerType(), percentNulls=0.1)
                          .withColumn("val2", IntegerType(), percentNulls=0.1)
@@ -276,8 +273,7 @@ class TestTextGeneration(unittest.TestCase):
         testDataSpec3.build().show()
 
     def test_multi_columns2(self):
-        testDataSpec4 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count,
-                                          partitions=self.partitions_requested)
+        testDataSpec4 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count)
                          .withIdOutput()
                          .withColumn("val1", IntegerType(), percentNulls=0.1)
                          .withColumn("val2", IntegerType(), percentNulls=0.1)
@@ -288,8 +284,7 @@ class TestTextGeneration(unittest.TestCase):
         testDataSpec4.build().show()
 
     def test_multi_columns3(self):
-        testDataSpec5 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count,
-                                          partitions=self.partitions_requested)
+        testDataSpec5 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count)
                          .withIdOutput()
                          .withColumn("val1", IntegerType(), percentNulls=0.1)
                          .withColumn("val2", IntegerType(), percentNulls=0.1)
@@ -301,8 +296,7 @@ class TestTextGeneration(unittest.TestCase):
         testDataSpec5.build().show()
 
     def test_multi_columns4(self):
-        testDataSpec6 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count,
-                                          partitions=self.partitions_requested)
+        testDataSpec6 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count)
                          .withIdOutput()
                          .withColumn("val1", IntegerType(), percentNulls=0.1)
                          .withColumn("val2", IntegerType(), percentNulls=0.1)
@@ -313,8 +307,7 @@ class TestTextGeneration(unittest.TestCase):
         testDataSpec6.build().show()
 
     def test_multi_columns5(self):
-        testDataSpec7 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count,
-                                          partitions=self.partitions_requested)
+        testDataSpec7 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count)
                          .withIdOutput()
                          .withColumn("val1", IntegerType(), percentNulls=0.1)
                          .withColumn("val2", IntegerType(), percentNulls=0.1)
@@ -325,8 +318,7 @@ class TestTextGeneration(unittest.TestCase):
         testDataSpec7.build().show()
 
     def test_multi_columns6(self):
-        testDataSpec8 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count,
-                                          partitions=self.partitions_requested)
+        testDataSpec8 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count)
                          .withIdOutput()
                          .withColumn("val1", IntegerType(), percentNulls=0.1)
                          .withColumn("val2", IntegerType(), percentNulls=0.1)
@@ -337,8 +329,7 @@ class TestTextGeneration(unittest.TestCase):
         testDataSpec8.build().show()
 
     def test_multi_columns7(self):
-        testDataSpec9 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count,
-                                          partitions=self.partitions_requested)
+        testDataSpec9 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count)
                          .withIdOutput()
                          .withColumn("val1", IntegerType(), percentNulls=0.1)
                          .withColumn("val2", IntegerType(), percentNulls=0.1)
@@ -350,8 +341,7 @@ class TestTextGeneration(unittest.TestCase):
     def test_prefix(self):
         # will have implied column `id` for ordinal of row
         testdata_generator = (
-            dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=100000,
-                             partitions=spark.sparkContext.defaultParallelism)
+            dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=100000)
                 .withIdOutput()  # id column will be emitted in the output
                 .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
                 .withColumn("code2", "integer", minValue=1, maxValue=20, step=1)
@@ -410,8 +400,7 @@ class TestTextGeneration(unittest.TestCase):
     def test_suffix(self):
         # will have implied column `id` for ordinal of row
         testdata_generator = (
-            dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=100000,
-                             partitions=spark.sparkContext.defaultParallelism)
+            dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=100000)
                 .withIdOutput()  # id column will be emitted in the output
                 .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
                 .withColumn("code2", "integer", minValue=1, maxValue=20, step=1)
@@ -452,8 +441,7 @@ class TestTextGeneration(unittest.TestCase):
     def test_prefix_and_suffix(self):
         # will have implied column `id` for ordinal of row
         testdata_generator = (
-            dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=100000,
-                             partitions=spark.sparkContext.defaultParallelism)
+            dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=100000)
                 .withIdOutput()  # id column will be emitted in the output
                 .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
                 .withColumn("code2", "integer", minValue=1, maxValue=20, step=1)

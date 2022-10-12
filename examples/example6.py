@@ -1,7 +1,4 @@
 from datetime import timedelta, datetime
-
-from pyspark.sql import SparkSession
-
 import dbldatagen as dg
 
 interval = timedelta(days=1, hours=1)

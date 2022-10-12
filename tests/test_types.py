@@ -21,7 +21,7 @@ class TestTypes(unittest.TestCase):
         print("setting up class")
 
     def test_basic_types(self):
-        id_partitions = 4
+        id_partitions = spark.sparkContext.defaultParallelism
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=100000, partitions=id_partitions, verbose=True)
                 .withColumn("code1", IntegerType(), minValue=1, maxValue=20, step=1)
@@ -47,7 +47,7 @@ class TestTypes(unittest.TestCase):
 
     def test_reduced_range_types(self):
         num_rows = 1000000
-        id_partitions = 4
+        id_partitions = spark.sparkContext.defaultParallelism
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=num_rows, partitions=id_partitions, verbose=True)
                 .withColumn("basic_byte", ByteType())
@@ -81,7 +81,7 @@ class TestTypes(unittest.TestCase):
 
     @unittest.expectedFailure
     def test_out_of_range_types(self):
-        id_partitions = 4
+        id_partitions = spark.sparkContext.defaultParallelism
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("basic_byte", ByteType())
@@ -92,7 +92,7 @@ class TestTypes(unittest.TestCase):
         spark.sql("select * from testdata order by basic_short desc, basic_byte desc").show()
 
     def test_for_reverse_range(self):
-        id_partitions = 4
+        id_partitions = spark.sparkContext.defaultParallelism
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("basic_byte", ByteType())
@@ -108,7 +108,7 @@ class TestTypes(unittest.TestCase):
         self.assertEqual(data_row1[127]["code1"], 127, "row128")
 
     def test_for_reverse_range2(self):
-        id_partitions = 4
+        id_partitions = spark.sparkContext.defaultParallelism
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("basic_byte", ByteType())
@@ -149,7 +149,7 @@ class TestTypes(unittest.TestCase):
         self.assertEqual(set(unique_codes), set(code_values))
 
     def test_for_values_with_single_column_dependencies(self):
-        id_partitions = 4
+        id_partitions = spark.sparkContext.defaultParallelism
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("basic_byte", ByteType())
@@ -162,7 +162,7 @@ class TestTypes(unittest.TestCase):
         self.assertEqual(df.count(), 0)
 
     def test_for_values_with_single_column_dependencies2(self):
-        id_partitions = 4
+        id_partitions = spark.sparkContext.defaultParallelism
         rows_wanted = 1000000
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=rows_wanted, partitions=id_partitions, verbose=True)
@@ -179,7 +179,7 @@ class TestTypes(unittest.TestCase):
         self.assertEqual(df.count(), rows_wanted)
 
     def test_for_values_with_default_column_dependencies(self):
-        id_partitions = 4
+        id_partitions = spark.sparkContext.defaultParallelism
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("basic_byte", ByteType())
@@ -192,7 +192,7 @@ class TestTypes(unittest.TestCase):
         testdata_defn.explain()
 
     def test_for_weighted_values_with_default_column_dependencies(self):
-        id_partitions = 4
+        id_partitions = spark.sparkContext.defaultParallelism
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("basic_byte", ByteType())
@@ -205,7 +205,7 @@ class TestTypes(unittest.TestCase):
         self.assertEqual(df.count(), 0)
 
     def test_for_weighted_values_with_default_column_dependencies2(self):
-        id_partitions = 4
+        id_partitions = spark.sparkContext.defaultParallelism
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withIdOutput()
@@ -220,7 +220,7 @@ class TestTypes(unittest.TestCase):
 
     @unittest.expectedFailure
     def test_out_of_range_types2(self):
-        id_partitions = 4
+        id_partitions = spark.sparkContext.defaultParallelism
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("basic_byte", ByteType())
@@ -232,7 +232,7 @@ class TestTypes(unittest.TestCase):
         spark.sql("select * from testdata order by basic_short desc, basic_byte desc").show()
 
     def test_short_types1(self):
-        id_partitions = 4
+        id_partitions = spark.sparkContext.defaultParallelism
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("bb", ByteType(), unique_values=100)
@@ -246,7 +246,7 @@ class TestTypes(unittest.TestCase):
         self.assertEqual(data_row[0]["max_bb"], 100, "row1")
 
     def test_short_types1a(self):
-        id_partitions = 4
+        id_partitions = spark.sparkContext.defaultParallelism
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("bb", ByteType(), minValue=35, maxValue=72)
@@ -260,7 +260,7 @@ class TestTypes(unittest.TestCase):
         self.assertEqual(data_row[0]["max_bb"], 72, "row1")
 
     def test_short_types1b(self):
-        id_partitions = 4
+        id_partitions = spark.sparkContext.defaultParallelism
 
         # result should be the same whether using `minValue` or `min` as options
         testdata_defn = (
@@ -275,7 +275,7 @@ class TestTypes(unittest.TestCase):
         self.assertEqual(data_row[0]["max_bb"], 72, "row1")
 
     def test_short_types2(self):
-        id_partitions = 4
+        id_partitions = spark.sparkContext.defaultParallelism
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withColumn("bb", ByteType(), unique_values=100)
@@ -286,7 +286,7 @@ class TestTypes(unittest.TestCase):
         testdata_defn.build().show()
 
     def test_decimal(self):
-        id_partitions = 4
+        id_partitions = spark.sparkContext.defaultParallelism
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withIdOutput()
@@ -300,7 +300,7 @@ class TestTypes(unittest.TestCase):
         df.show()
 
     def test_decimal2(self):
-        id_partitions = 4
+        id_partitions = spark.sparkContext.defaultParallelism
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
                 .withIdOutput()
@@ -313,7 +313,7 @@ class TestTypes(unittest.TestCase):
         testdata_defn.build().createOrReplaceTempView("testdata")
 
     def test_decimal_min_and_max_values(self):
-        id_partitions = 4
+        id_partitions = spark.sparkContext.defaultParallelism
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
 
@@ -359,18 +359,3 @@ class TestTypes(unittest.TestCase):
         self.assertLessEqual(max4, 99999.99999)
         self.assertLessEqual(max5, 2000.0)
 
-# run the tests
-# if __name__ == '__main__':
-#  print("Trying to run tests")
-#  unittest.main(argv=['first-arg-is-ignored'],verbosity=2,exit=False)
-
-# def runTests(suites):
-#    suite = unittest.TestSuite()
-#    result = unittest.TestResult()
-#    for testSuite in suites:
-#        suite.addTest(unittest.makeSuite(testSuite))
-#    runner = unittest.TextTestRunner()
-#    print(runner.run(suite))
-
-
-# runTests([TestBasicOperation])

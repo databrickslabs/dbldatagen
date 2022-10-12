@@ -28,7 +28,6 @@ class TestBasicOperation:
     @pytest.fixture( scope="class")
     def testDataSpec(self, setupLogging):
         retval = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.SMALL_ROW_COUNT,
-                                   partitions=spark.sparkContext.defaultParallelism,
                                    seedMethod='hash_fieldname')
                             .withIdOutput()
                             .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
@@ -54,6 +53,11 @@ class TestBasicOperation:
         rc = testDataSpec.rowCount
 
         assert rc == self.row_count
+
+    def test_default_partition_assignment(self, testDataSpec):
+        # testDataSpec was created with default number of partitions
+        # check that was same as default parallelism
+        assert testDataSpec.partitions == spark.sparkContext.defaultParallelism
 
     def test_basic_data_generation(self, testData):
         """Test basic data generation of distinct values"""

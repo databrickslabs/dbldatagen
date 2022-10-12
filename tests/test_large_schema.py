@@ -158,8 +158,7 @@ class TestLargeSchemaOperation(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
-                                             partitions=4)
+        cls.testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count)
                             .withSchema(schema)
                             .withIdOutput()
                             )

@@ -19,7 +19,8 @@ class TestWeights(unittest.TestCase):
 
         # will have implied column `id` for ordinal of row
         cls.testdata_generator = (
-            dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=cls.rows, partitions=4)
+            dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=cls.rows,
+                             partitions=spark.sparkContext.defaultParallelism)
                 .withIdOutput()  # id column will be emitted in the output
                 .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
                 .withColumn("code4", "integer", minValue=1, maxValue=40, step=1, random=True)
@@ -86,7 +87,8 @@ class TestWeights(unittest.TestCase):
                                  9, 4, 1, 10, 5, 9
                                  ]
         alpha_list = list("abcdefghijklmnopqrstuvwxyz")
-        dsAlpha = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4)
+        dsAlpha = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000,
+                                    partitions=spark.sparkContext.defaultParallelism)
                    .withIdOutput()  # id column will be emitted in the output
                    .withColumn("pk1", "int", unique_values=100)
                    .withColumn("alpha", "string", values=alpha_list, baseColumn="pk1",
@@ -137,7 +139,8 @@ class TestWeights(unittest.TestCase):
                                  9, 4, 1, 10, 5, 9
                                  ]
         alpha_list = list("abcdefghijklmnopqrstuvwxyz")
-        dsAlpha = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4)
+        dsAlpha = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000,
+                                    partitions=spark.sparkContext.defaultParallelism)
                    .withIdOutput()  # id column will be emitted in the output
                    .withColumn("alpha", "string", values=alpha_list,
                                weights=alpha_desired_weights,
@@ -162,7 +165,8 @@ class TestWeights(unittest.TestCase):
         alpha_list = list("abcdefghijklmnopqrstuvwxyz")
 
         # dont use seed value as non random fields should be repeatable
-        dsAlpha = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4)
+        dsAlpha = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000,
+                                    partitions=spark.sparkContext.defaultParallelism)
                    .withIdOutput()  # id column will be emitted in the output
                    .withColumn("alpha", "string", values=alpha_list,
                                weights=alpha_desired_weights)
@@ -186,7 +190,8 @@ class TestWeights(unittest.TestCase):
         alpha_list = list("abcdefghijklmnopqrstuvwxyz")
 
         # dont use seed value as non random fields should be repeatable
-        dsAlpha = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4)
+        dsAlpha = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000,
+                                    partitions=spark.sparkContext.defaultParallelism)
                    .withIdOutput()  # id column will be emitted in the output
                    .withColumn("pk1", "int", unique_values=500)
                    .withColumn("pk2", "int", unique_values=500)
@@ -223,7 +228,8 @@ class TestWeights(unittest.TestCase):
                                  9, 4, 1, 10, 5, 9
                                  ]
         alpha_list = list("abcdefghijklmnopqrstuvwxyz")
-        dsAlpha = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4)
+        dsAlpha = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000,
+                                    partitions=spark.sparkContext.defaultParallelism)
                    .withIdOutput()  # id column will be emitted in the output
                    .withColumn("pk1", "int", unique_values=500)
                    .withColumn("pk2", "int", unique_values=500)
@@ -246,7 +252,8 @@ class TestWeights(unittest.TestCase):
                                  9, 4, 1, 10, 5, 9
                                  ]
         alpha_list = list("abcdefghijklmnopqrstuvwxyz")
-        dsAlpha = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4)
+        dsAlpha = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000,
+                                    partitions=spark.sparkContext.defaultParallelism)
                    .withIdOutput()  # id column will be emitted in the output
                    .withColumn("pk1", "int", unique_values=500)
                    .withColumn("pk2", "int", unique_values=500)
@@ -271,7 +278,8 @@ class TestWeights(unittest.TestCase):
         alpha_list = list("abcdefghijklmnopqrstuvwxyz")
 
         # dont use seed value as non random fields should be repeatable
-        dsAlpha = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4, debug=True)
+        dsAlpha = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000,
+                                    partitions=spark.sparkContext.defaultParallelism)
                    .withIdOutput()  # id column will be emitted in the output
                    .withColumn("pk1", "int", unique_values=500)
                    .withColumn("pk2", "int", unique_values=500)
@@ -305,7 +313,8 @@ class TestWeights(unittest.TestCase):
     def test_weighted_distribution_int(self):
         num_desired_weights = [9, 4, 1, 10, 5]
         num_list = [1, 2, 3, 4, 5]
-        dsInt1 = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4)
+        dsInt1 = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000,
+                                   partitions=spark.sparkContext.defaultParallelism)
                   .withIdOutput()  # id column will be emitted in the output
                   .withColumn("code", "integer", values=num_list,
                               weights=num_desired_weights,
@@ -326,7 +335,8 @@ class TestWeights(unittest.TestCase):
         num_list = [1, 2, 3, 4, 5]
 
         # dont use seed value as non random fields should be repeatable
-        dsInt1 = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000, partitions=4, debug=True)
+        dsInt1 = (dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=26 * 10000,
+                                   partitions=spark.sparkContext.defaultParallelism)
                   .withIdOutput()  # id column will be emitted in the output
                   .withColumn("code", "integer", values=num_list,
                               weights=num_desired_weights, base_column_type="hash")
@@ -354,7 +364,7 @@ class TestWeights(unittest.TestCase):
         dsAlpha = (dg.DataGenerator(sparkSession=spark,
                                     name="test_dataset1",
                                     rows=26 * 1000,
-                                    partitions=4)
+                                    partitions=spark.sparkContext.defaultParallelism)
                    .withIdOutput()  # id column will be emitted in the output
                    .withColumn("alpha", "string", values=alpha_list,
                                weights=alpha_desired_weights)
@@ -382,7 +392,7 @@ class TestWeights(unittest.TestCase):
         dsAlpha = (dg.DataGenerator(sparkSession=spark,
                                     name="test_dataset1",
                                     rows=26 * 1000,
-                                    partitions=4,
+                                    partitions=spark.sparkContext.defaultParallelism,
                                     seed=43)
                    .withIdOutput()  # id column will be emitted in the output
                    .withColumn("alpha", "string", values=alpha_list,
@@ -397,19 +407,3 @@ class TestWeights(unittest.TestCase):
         values2 = dfAlpha2.collect()
 
         self.assertEqual(values1, values2)
-
-# run the tests
-# if __name__ == '__main__':
-#  print("Trying to run tests")
-#  unittest.main(argv=['first-arg-is-ignored'],verbosity=2,exit=False)
-
-# def runTests(suites):
-#     suite = unittest.TestSuite()
-#     result = unittest.TestResult()
-#     for testSuite in suites:
-#         suite.addTest(unittest.makeSuite(testSuite))
-#     runner = unittest.TextTestRunner()
-#     print(runner.run(suite))
-#
-#
-# runTests([TestWeights])

@@ -31,7 +31,7 @@ class DataGenerator:
     :param rows: = amount of rows to generate
     :param startingId: = starting value for generated seed column
     :param randomSeed: = seed for random number generator
-    :param partitions: = number of partitions to generate
+    :param partitions: = number of partitions to generate, if not provided, uses `spark.sparkContext.defaultParallelism`
     :param verbose: = if `True`, generate verbose output
     :param batchSize: = UDF batch number of rows to pass via Apache Arrow to Pandas UDFs
     :param debug: = if set to True, output debug level of information
@@ -65,7 +65,11 @@ class DataGenerator:
         self._rowCount = rows
         self.starting_id = startingId
         self.__schema__ = None
-        self.partitions = partitions if partitions is not None else 10
+
+        if sparkSession is None:
+            sparkSession = SparkSingleton.getInstance()
+
+        self.partitions = partitions if partitions is not None else sparkSession.sparkContext.defaultParallelism
 
         # check for old versions of args
         if "starting_id" in kwargs:
@@ -120,9 +124,6 @@ class DataGenerator:
         self.buildPlanComputed = False
         self.withColumn(ColumnGenerationSpec.SEED_COLUMN, LongType(), nullable=False, implicit=True, omit=True)
         self._batchSize = batchSize
-
-        if sparkSession is None:
-            sparkSession = SparkSingleton.getInstance()
 
         assert sparkSession is not None, "The spark session attribute must be initialized"
 

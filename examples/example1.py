@@ -1,6 +1,5 @@
 from datetime import timedelta, datetime
 
-from pyspark.sql import SparkSession
 from pyspark.sql.functions import count, when, isnan, col, lit, countDistinct
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType
 

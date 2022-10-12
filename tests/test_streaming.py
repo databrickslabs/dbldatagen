@@ -30,7 +30,8 @@ class TestStreaming(unittest.TestCase):
             os.makedirs(checkpoint_dir)
 
             testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count,
-                                             partitions=4, seedMethod='hash_fieldname')
+                                             partitions=spark.sparkContext.defaultParallelism,
+                                             seedMethod='hash_fieldname')
                             .withIdOutput()
                             .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
                                         numColumns=self.column_count)
