@@ -34,7 +34,14 @@ class ColumnSpecOptions(object):
     :param maxValue: Maximum value for range of generated value. \
                      As an alternative, you may use the `dataRange` parameter
 
+    :param numColumns: generate `n` columns numbered from 1 .. n-1 with same definition
+
+    :param numFeatures: generate `n` columns numbered from 0 .. n-1 with same definition. Alias for `numColumns`
+
     :param step: Step to use for range of generated value. As an alternative, you may use the `dataRange` parameter
+
+    :param structType:
+
 
     :param random: If True, will generate random values for column value. Defaults to `False`
 
@@ -54,7 +61,7 @@ class ColumnSpecOptions(object):
                           For example: `percentNulls=0.12` will give approximately 12% nulls for this field in the
                           output.
 s
-    :param unique_values: Number of unique values for column.
+    :param uniqueValues: Number of unique values for column.
                           If the unique values are specified for a timestamp or date field, the values will be chosen
                           working back from the end of the previous month,
                           unless `begin`, `end` and `interval` parameters are specified
@@ -76,7 +83,7 @@ s
 
     :param template: template controlling how text should be generated
 
-    :param text_separator: string specifying separator to be used when constructing strings with prefix and suffix
+    :param textSeparator: string specifying separator to be used when constructing strings with prefix and suffix
 
     :param prefix: string specifying prefix text to construct field from prefix and numeric value. Both `prefix` and
                    `suffix` can be used together

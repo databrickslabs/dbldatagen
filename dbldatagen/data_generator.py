@@ -740,6 +740,9 @@ class DataGenerator:
                                            debug=self.debug,
                                            **new_props)
 
+        print(f"expr in new_props[{colName}]", "expr" in new_props)
+        print(f"colType[{colName}] - {colType}")
+
         self._columnSpecsByName[colName] = column_spec
 
         # if column spec for column already exists - remove it

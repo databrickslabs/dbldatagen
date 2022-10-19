@@ -9,11 +9,11 @@ This file defines the `ColumnGenerationSpec` class
 import copy
 import logging
 
-from pyspark.sql.functions import col, pandas_udf
+from pyspark.sql.functions import col, pandas_udf, array
 from pyspark.sql.functions import lit, concat, rand, round as sql_round, array, expr, when, udf, \
     format_string
 from pyspark.sql.types import FloatType, IntegerType, StringType, DoubleType, BooleanType, \
-    TimestampType, DataType, DateType
+    TimestampType, DataType, DateType, ArrayType
 
 from .column_spec_options import ColumnSpecOptions
 from .datagen_constants import RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, RANDOM_SEED_RANDOM
@@ -1089,13 +1089,13 @@ class ColumnGenerationSpec(object):
         return new_def
 
     def _applyFinalCastExpression(self, col_type, new_def):
-        """ Apply final cast expression for column data
+        """ Apply final cast expression for column data for primitive types
 
         :param col_type: final column type
         :param new_def:  column definition being created
         :returns: new column definition
         """
-        self.executionHistory.append(f".. casting column [{self.name}] to  `{col_type}`")
+        self.executionHistory.append(f".. casting column type [{self.name}] to  `{col_type}`")
 
         # cast the result to the appropriate type. For dates, cast first to timestamp, then to date
         if type(col_type) is DateType:
@@ -1170,8 +1170,7 @@ class ColumnGenerationSpec(object):
             if struct_type == 'array':
                 self.executionHistory.append(".. converting multiple columns to array")
                 retval = array(retval)
-            else:
-                # TODO : update the output columns
-                pass
+            else: # TODO: add support for other struct types
+                self.logger.warning("Only supports `structType` value of `array` at present")
 
         return retval
