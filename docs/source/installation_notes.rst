@@ -9,15 +9,34 @@ Installation notes
 The data generator framework can be installed into your Databricks environment by
 one of the following methods:
 
+* Installation from PyPi package
 * Installing and building directly from the Databricks Labs Github repository
 * Installing the Python wheel file into your environment
-* In a future update, installing the package from a public repository such as PyPi
 
-Installing and building directly from Databricks Labs repository
-----------------------------------------------------------------
+Installing from PyPi
+--------------------
+
+To install the `dbldatagen` package from PyPi, add a cell to your notebook with the following code:
+
+.. code-block::
+
+   %pip install dbldatagen
+
+This will install the PyPi package and works in regular notebooks, Delta Live Tables pipeline notebooks and works on
+the community edition.
+
+If working using the command line, you can issue the following command to install within your environment.
+
+.. code-block::
+
+   pip install dbldatagen
+
+
+Installing from Databricks Labs repository source
+-------------------------------------------------
 
 When developing with the Databricks notebook environment, you can use the notebook scoped library install
-features to install directly from the Databricks Labs Github repository.
+ to install and build from the source in the Databricks Labs Github repository.
 
 To do this add and execute the following cell at the start of your notebook:
 
@@ -36,7 +55,7 @@ The following tags will be used to pick up specific versions:
 
 * `current` - latest build from master + doc changes and critical bug fixes
 * `stable` - latest release from master (with changes for version marking and documentation only)
-* `preview` - preview build of forthcoming features
+* `preview` - preview build of forthcoming features (from `develop` branch)
 
 .. seealso::
    See the following links for more details:
@@ -47,41 +66,38 @@ The following tags will be used to pick up specific versions:
 
    * `VCS support in pip <https://pip.pypa.io/en/stable/cli/pip_install/>`_
 
-Installing from pre-built release wheel
----------------------------------------
+Installing from Github releases
+-------------------------------
+
+In some cases, you may wish to down the Python wheel directly from the Github releases.
+
+These can be accessed `here <https://github.com/databrickslabs/dbldatagen/releases>`_.
+
+You can install a specific wheel using either `%pip install` or the manual method
+
+To install a Python wheel with `pip` use the following syntax:
+
+.. code-block::
+
+   %pip install https://github.com/databrickslabs/dbldatagen/releases/download/v021/dbldatagen-0.2.1-py3-none-any.whl
+
+Replace the reference to the `v021` wheel with the reference to the appropriate wheel as needed
+
+Manual installation
+^^^^^^^^^^^^^^^^^^^
 
 * **locate the wheel file in the Databricks Labs data generator releases**
-
-.. image:: _static/images/locating_releases.png
-   :width: 300
-   :alt: Screenshot of releases in Databricks Labs data generator project
-   :align: center
 
 * **download the wheel artifact from the releases**
    * select the desired release
    * Select the wheel artifact from the release assets
    * download it
 
-.. image:: _static/images/downloading_release.png
-   :width: 300
-   :alt: Downloading the release artifact
-   :align: center
-
 * **Create library entry in workspace**
    * create workspace library
    * upload previously downloaded wheel
 
-.. image:: _static/images/creating_library.png
-   :width: 300
-   :alt: Creating a library in your workspace
-   :align: center
-
 * **Attach library to cluster**
-
-.. image:: _static/images/attaching_library.png
-   :width: 300
-   :alt: Attaching library to cluster
-   :align: center
 
 Additional information
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -93,8 +109,3 @@ Additional information
 
    * `AWS documentation on libraries <https://docs.databricks.com/libraries/index.html>`_
 
-
-Installing package from public repository
------------------------------------------
-
-To be added
