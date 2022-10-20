@@ -267,7 +267,7 @@ class DataGenerator:
 
         output = ["", "Data generation plan", "====================",
                   f"spec=DateGenerator(name={self.name}, rows={self._rowCount}, startingId={self.starting_id}, partitions={self.partitions})"
-                  , ")", "", f"column build order: {self._buildOrder}", "", "build plan:"]
+            , ")", "", f"column build order: {self._buildOrder}", "", "build plan:"]
 
         for plan_action in self._buildPlan:
             output.append(" ==> " + plan_action)
@@ -793,7 +793,7 @@ class DataGenerator:
 
         return df1
 
-    def _getStreamingSource(self, options=None):
+    def _getStreamingSource(self, options=None, spark_version=None):
         """ get streaming source from options
 
         :param options: dictionary of options
@@ -803,17 +803,22 @@ class DataGenerator:
 
         if using spark version 3.2.1 or later - `rate-micro-batch` is used as source, otherwise `rate` is used as source
         """
+        streaming_source = None
         if options is not None:
             if STREAMING_SOURCE_OPTION in options:
-                streaming_source = options.pop(STREAMING_SOURCE_OPTION)
+                streaming_source = options[STREAMING_SOURCE_OPTION]
                 assert streaming_source in [RATE_SOURCE, RATE_PER_MICRO_BATCH_SOURCE], \
                     f"Invalid streaming source - only ['{RATE_SOURCE}', ['{RATE_PER_MICRO_BATCH_SOURCE}'] supported"
 
-        # if using Spark 3.2.1, then default should be RATE_PER_MICRO_BATCH_SOURCE
-        if self.sparkSession.version >= SPARK_RATE_MICROBATCH_VERSION:
-            streaming_source = RATE_PER_MICRO_BATCH_SOURCE
-        else:
-            streaming_source = RATE_SOURCE
+        if spark_version is None:
+            spark_version = self.sparkSession.version
+
+        if streaming_source is None:
+            # if using Spark 3.2.1, then default should be RATE_PER_MICRO_BATCH_SOURCE
+            if spark_version >= SPARK_RATE_MICROBATCH_VERSION:
+                streaming_source = RATE_PER_MICRO_BATCH_SOURCE
+            else:
+                streaming_source = RATE_SOURCE
 
         return streaming_source
 
@@ -823,60 +828,76 @@ class DataGenerator:
         :param asLong: if True, returns current spark timestamp as long, string otherwise
         """
         if asLong:
-            return (self.sparkSession.sql(f"select cast(now() as string) as start_timestamp")
-            .collect()[0]['start_timestamp'])
-        else:
             return (self.sparkSession.sql(f"select cast(now() as long) as start_timestamp")
-            .collect()[0]['start_timestamp'])
+                    .collect()[0]['start_timestamp'])
+        else:
+            return (self.sparkSession.sql(f"select cast(now() as string) as start_timestamp")
+                    .collect()[0]['start_timestamp'])
 
-    def _getStreamingBaseDataFrame(self, startId=0, options=None):
-        """Generate base streaming data frame"""
-        end_id = self._rowCount + startId
-        id_partitions = (self.partitions if self.partitions is not None
-                                         else self.sparkSession.sparkContext.defaultParallelism)
+    def _prepareStreamingOptions(self, options=None, spark_version=None):
+        default_streaming_partitions = (self.partitions if self.partitions is not None
+                                        else self.sparkSession.sparkContext.defaultParallelism)
 
-        # determine streaming source
-        streaming_source = self._getStreamingSource(options)
+        streaming_source = self._getStreamingSource(options, spark_version)
 
         if options is None:
-            if streaming_source == RATE_SOURCE:
-                options = {
-                    ROWS_PER_SECOND_OPTION: 1,
-                }
-            else:
-                options = {
-                    ROWS_PER_BATCH_OPTION: 1,
-                }
+            new_options = ({ROWS_PER_SECOND_OPTION: default_streaming_partitions} if streaming_source == RATE_SOURCE
+                           else {ROWS_PER_BATCH_OPTION: default_streaming_partitions})
+        else:
+            new_options = options.copy()
 
-        if NUM_PARTITIONS_OPTION not in options:
-            options[NUM_PARTITIONS_OPTION] = id_partitions
+        if NUM_PARTITIONS_OPTION in new_options:
+            streaming_partitions = new_options[NUM_PARTITIONS_OPTION]
+        else:
+            streaming_partitions = default_streaming_partitions
+            new_options[NUM_PARTITIONS_OPTION] = streaming_partitions
 
         if streaming_source == RATE_PER_MICRO_BATCH_SOURCE:
-            if START_TIMESTAMP_OPTION not in options:
-                options[ START_TIMESTAMP_OPTION] = self._getCurrentSparkTimestamp(asLong=True)
+            if START_TIMESTAMP_OPTION not in new_options:
+                new_options[START_TIMESTAMP_OPTION] = self._getCurrentSparkTimestamp(asLong=True)
 
-            if ROWS_PER_BATCH_OPTION not in options:
-                options[ ROWS_PER_BATCH_OPTION] = id_partitions
-            status = f"Generating streaming data from rate source with {id_partitions} partitions"
+            if ROWS_PER_BATCH_OPTION not in new_options:
+                # generate one row per partition
+                new_options[ROWS_PER_BATCH_OPTION] = streaming_partitions
 
         elif streaming_source == RATE_SOURCE:
-            if ROWS_PER_SECOND_OPTION not in options:
-                options[ ROWS_PER_SECOND_OPTION] = 1
-            status = f"Generating streaming data from rate-micro-batch source with {id_partitions} partitions"
+            if ROWS_PER_SECOND_OPTION not in new_options:
+                new_options[ROWS_PER_SECOND_OPTION] = streaming_partitions
         else:
             assert streaming_source in [RATE_SOURCE, RATE_PER_MICRO_BATCH_SOURCE], \
                 f"Invalid streaming source - only ['{RATE_SOURCE}', ['{RATE_PER_MICRO_BATCH_SOURCE}'] supported"
 
+        return streaming_source, new_options
+
+    def _getStreamingBaseDataFrame(self, startId=0, options=None):
+        """Generate base streaming data frame"""
+        end_id = self._rowCount + startId
+
+        # determine streaming source
+        streaming_source, options = self._prepareStreamingOptions(options)
+        partitions = options[NUM_PARTITIONS_OPTION]
+
+        if streaming_source == RATE_SOURCE:
+            status = f"Generating streaming data with rate source with {partitions} partitions"
+        else:
+            status = f"Generating streaming data with rate-micro-batch source with {partitions} partitions"
+
         self.logger.info(status)
         self.executionHistory.append(status)
 
-        df1 = (self.sparkSession.readStream.format(streaming_source))
-
         age_limit_interval = None
+
+        if STREAMING_SOURCE_OPTION in options:
+            options.pop(STREAMING_SOURCE_OPTION)
 
         if AGE_LIMIT_OPTION in options:
             age_limit_interval = options.pop("ageLimit")
             assert age_limit_interval is not None and float(age_limit_interval) > 0.0, "invalid age limit"
+
+        assert AGE_LIMIT_OPTION not in options
+        assert STREAMING_SOURCE_OPTION not in options
+
+        df1 = self.sparkSession.readStream.format(streaming_source)
 
         for k, v in options.items():
             df1 = df1.option(k, v)
