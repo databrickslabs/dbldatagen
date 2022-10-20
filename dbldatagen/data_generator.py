@@ -778,29 +778,46 @@ class DataGenerator:
 
             if ColumnGenerationSpec.SEED_COLUMN != "id":
                 df1 = df1.withColumnRenamed("id", ColumnGenerationSpec.SEED_COLUMN)
-
         else:
-            status = (f"Generating streaming data frame with ids from {startId} to {end_id} with {id_partitions} partitions")
-            self.logger.info(status)
-            self.executionHistory.append(status)
+            df1 = self._getStreamingBaseDataFrame(startId, options)
 
-            df1 = (self.sparkSession.readStream
-                   .format("rate"))
-            if options is not None:
-                if "rowsPerSecond" not in options:
-                    options['rowsPerSecond'] = 1
-                if "numPartitions" not in options:
-                    options['numPartitions'] = id_partitions
+        return df1
 
-                for k, v in options.items():
-                    df1 = df1.option(k, v)
-                df1 = df1.load().withColumnRenamed("value", ColumnGenerationSpec.SEED_COLUMN)
-            else:
-                df1 = (df1.option("rowsPerSecond", 1)
-                       .option("numPartitions", id_partitions)
-                       .load()
-                       .withColumnRenamed("value", ColumnGenerationSpec.SEED_COLUMN)
-                       )
+    def _getStreamingBaseDataFrame(self, startId=0, options=None):
+        end_id = self._rowCount + startId
+        id_partitions = (self.partitions if self.partitions is not None
+                                         else self.sparkSession.sparkContext.defaultParallelism)
+
+        status = f"Generating streaming data frame with ids from {startId} to {end_id} with {id_partitions} partitions"
+        self.logger.info(status)
+        self.executionHistory.append(status)
+
+        df1 = (self.sparkSession.readStream
+               .format("rate"))
+        if options is not None:
+            if "rowsPerSecond" not in options:
+                options['rowsPerSecond'] = 1
+            if "numPartitions" not in options:
+                options['numPartitions'] = id_partitions
+        else:
+            options = {
+                "rowsPerSecond": 1,
+                "numPartitions": id_partitions
+            }
+
+        age_limit_interval = None
+
+        if "ageLimit" in options:
+            age_limit_interval = options.pop("ageLimit")
+            assert age_limit_interval is not None and float(age_limit_interval) > 0.0, "invalid age limit"
+
+        for k, v in options.items():
+            df1 = df1.option(k, v)
+        df1 = df1.load().withColumnRenamed("value", ColumnGenerationSpec.SEED_COLUMN)
+
+        if age_limit_interval is not None:
+            df1 = df1.where(f"""abs(cast(now() as double) - cast(`timestamp` as double )) 
+                                  < cast({age_limit_interval} as double)""")
 
         return df1
 
