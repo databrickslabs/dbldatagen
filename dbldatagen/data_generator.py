@@ -16,8 +16,18 @@ from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_FIXED, RANDOM_SE
 from .spark_singleton import SparkSingleton
 from .utils import ensure, topologicalSort, DataGenError, deprecated
 
+START_TIMESTAMP_OPTION = "startTimestamp"
+ROWS_PER_SECOND_OPTION = "rowsPerSecond"
+AGE_LIMIT_OPTION = "ageLimit"
+NUM_PARTITIONS_OPTION = "numPartitions"
+ROWS_PER_BATCH_OPTION = "rowsPerBatch"
+STREAMING_SOURCE_OPTION = "streamingSource"
+
 _OLD_MIN_OPTION = 'min'
 _OLD_MAX_OPTION = 'max'
+RATE_SOURCE = "rate"
+RATE_PER_MICRO_BATCH_SOURCE = "rate-micro-batch"
+SPARK_RATE_MICROBATCH_VERSION = "3.2.1"
 
 
 class DataGenerator:
@@ -783,36 +793,94 @@ class DataGenerator:
 
         return df1
 
+    def _getStreamingSource(self, options=None):
+        """ get streaming source from options
+
+        :param options: dictionary of options
+        :returns: streaming source if present in options (popping option from options), or default if not present
+
+        Default streaming source is computed based on whether we are running on Spark version 3.2.1 or later
+
+        if using spark version 3.2.1 or later - `rate-micro-batch` is used as source, otherwise `rate` is used as source
+        """
+        if options is not None:
+            if STREAMING_SOURCE_OPTION in options:
+                streaming_source = options.pop(STREAMING_SOURCE_OPTION)
+                assert streaming_source in [RATE_SOURCE, RATE_PER_MICRO_BATCH_SOURCE], \
+                    f"Invalid streaming source - only ['{RATE_SOURCE}', ['{RATE_PER_MICRO_BATCH_SOURCE}'] supported"
+
+        # if using Spark 3.2.1, then default should be RATE_PER_MICRO_BATCH_SOURCE
+        if self.sparkSession.version >= SPARK_RATE_MICROBATCH_VERSION:
+            streaming_source = RATE_PER_MICRO_BATCH_SOURCE
+        else:
+            streaming_source = RATE_SOURCE
+
+        return streaming_source
+
+    def _getCurrentSparkTimestamp(self, asLong=False):
+        """ get current spark timestamp
+
+        :param asLong: if True, returns current spark timestamp as long, string otherwise
+        """
+        if asLong:
+            return (self.sparkSession.sql(f"select cast(now() as string) as start_timestamp")
+            .collect()[0]['start_timestamp'])
+        else:
+            return (self.sparkSession.sql(f"select cast(now() as long) as start_timestamp")
+            .collect()[0]['start_timestamp'])
+
     def _getStreamingBaseDataFrame(self, startId=0, options=None):
+        """Generate base streaming data frame"""
         end_id = self._rowCount + startId
         id_partitions = (self.partitions if self.partitions is not None
                                          else self.sparkSession.sparkContext.defaultParallelism)
 
-        status = f"Generating streaming data frame with ids from {startId} to {end_id} with {id_partitions} partitions"
+        # determine streaming source
+        streaming_source = self._getStreamingSource(options)
+
+        if options is None:
+            if streaming_source == RATE_SOURCE:
+                options = {
+                    ROWS_PER_SECOND_OPTION: 1,
+                }
+            else:
+                options = {
+                    ROWS_PER_BATCH_OPTION: 1,
+                }
+
+        if NUM_PARTITIONS_OPTION not in options:
+            options[NUM_PARTITIONS_OPTION] = id_partitions
+
+        if streaming_source == RATE_PER_MICRO_BATCH_SOURCE:
+            if START_TIMESTAMP_OPTION not in options:
+                options[ START_TIMESTAMP_OPTION] = self._getCurrentSparkTimestamp(asLong=True)
+
+            if ROWS_PER_BATCH_OPTION not in options:
+                options[ ROWS_PER_BATCH_OPTION] = id_partitions
+            status = f"Generating streaming data from rate source with {id_partitions} partitions"
+
+        elif streaming_source == RATE_SOURCE:
+            if ROWS_PER_SECOND_OPTION not in options:
+                options[ ROWS_PER_SECOND_OPTION] = 1
+            status = f"Generating streaming data from rate-micro-batch source with {id_partitions} partitions"
+        else:
+            assert streaming_source in [RATE_SOURCE, RATE_PER_MICRO_BATCH_SOURCE], \
+                f"Invalid streaming source - only ['{RATE_SOURCE}', ['{RATE_PER_MICRO_BATCH_SOURCE}'] supported"
+
         self.logger.info(status)
         self.executionHistory.append(status)
 
-        df1 = (self.sparkSession.readStream
-               .format("rate"))
-        if options is not None:
-            if "rowsPerSecond" not in options:
-                options['rowsPerSecond'] = 1
-            if "numPartitions" not in options:
-                options['numPartitions'] = id_partitions
-        else:
-            options = {
-                "rowsPerSecond": 1,
-                "numPartitions": id_partitions
-            }
+        df1 = (self.sparkSession.readStream.format(streaming_source))
 
         age_limit_interval = None
 
-        if "ageLimit" in options:
+        if AGE_LIMIT_OPTION in options:
             age_limit_interval = options.pop("ageLimit")
             assert age_limit_interval is not None and float(age_limit_interval) > 0.0, "invalid age limit"
 
         for k, v in options.items():
             df1 = df1.option(k, v)
+
         df1 = df1.load().withColumnRenamed("value", ColumnGenerationSpec.SEED_COLUMN)
 
         if age_limit_interval is not None:
