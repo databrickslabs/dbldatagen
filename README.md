@@ -1,9 +1,12 @@
-# Databricks Labs Data Generator (`dbldatagen`)
+# Databricks Labs Data Generator (`dbldatagen`) 
+
+<!-- Top bar will be removed from PyPi packaged versions -->
+<!-- Dont remove: exclude package -->
+[Documentation](https://databrickslabs.github.io/dbldatagen/public_docs/index.html) |
 [Release Notes](CHANGELOG.md) |
-[Python Wheel](https://github.com/databrickslabs/dbldatagen/releases/tag/v.0.2.0-rc1-master) |
-[Developer Docs](docs/USING_THE_APIS.md) |
 [Examples](examples) |
 [Tutorial](tutorial) 
+<!-- Dont remove: end exclude package -->
 
 [![build](https://github.com/databrickslabs/dbldatagen/workflows/build/badge.svg?branch=master)](https://github.com/databrickslabs/dbldatagen/actions?query=workflow%3Abuild+branch%3Amaster)
 [![codecov](https://codecov.io/gh/databrickslabs/dbldatagen/branch/master/graph/badge.svg)](https://codecov.io/gh/databrickslabs/dbldatagen)
@@ -23,6 +26,7 @@ It has no dependencies on any libraries that are not already incuded in the Data
 runtime, and you can use it from Scala, R or other languages by defining
 a view over the generated data.
 
+### Feature Summary
 It supports:
 * Generating synthetic data at scale up to billions of rows within minutes using appropriately sized clusters 
 * Generating repeatable, predictable data supporting the needs for producing multiple tables, Change Data Capture, 
@@ -43,16 +47,32 @@ used in other computations
 * plugin mechanism to allow use of 3rd party libraries such as Faker
 * Use of data generator to generate data sources in Databricks Delta Live Tables
 
-Details of these features can be found in the [Developer Docs](docs/source/APIDOCS.md) and the online help
-(which contains the full documentation including the HTML version of the Developer Docs) -
- [Online Help](https://databrickslabs.github.io/dbldatagen/public_docs/index.html). 
+Details of these features can be found in the online documentation  -
+ [online documentation](https://databrickslabs.github.io/dbldatagen/public_docs/index.html). 
 
+## Documentation
 
+Please refer to the [online documentation](https://databrickslabs.github.io/dbldatagen/public_docs/index.html) for 
+details of use and many examples.
 
-## Project Support
-Please note that all projects in the `databrickslabs` github space are provided for your exploration only, and are not formally supported by Databricks with Service Level Agreements (SLAs).  They are provided AS-IS and we do not make any guarantees of any kind.  Please do not submit a support ticket relating to any issues arising from the use of these projects.
+Release notes and details of the latest changes for this specific release
+can be found in the Github repository
+[here](https://github.com/databrickslabs/dbldatagen/blob/release/v0.2.1/CHANGELOG.md)
 
-Any issues discovered through the use of this project should be filed as GitHub Issues on the Repo.  They will be reviewed as time permits, but there are no formal SLAs for support.
+# Installation
+
+Use `pip install dbldatagen` to install the PyPi package
+
+Within a Databricks notebook, invoke the following in a notebook cell
+```commandline
+%pip install dbdatagen
+```
+
+This can be invoked within a Databricks notebook, a Delta Live Tables pipeline and even works on the Databricks 
+community edition.
+
+The documentation [installation notes](https://databrickslabs.github.io/dbldatagen/public_docs/installation_notes.html) 
+contains details of installation using alternative mechanisms.
 
 ## Compatibility 
 The Databricks Labs data generator framework can be used with Pyspark 3.x and Python 3.6 or later
@@ -64,23 +84,6 @@ For full library compatibility for a specific Databricks Spark release, see the 
 release notes for library compatibility
 
 - https://docs.databricks.com/release-notes/runtime/releases.html
-
-## Using a pre-built release
-The release binaries can be accessed at:
-- Databricks Labs Github Data Generator releases - https://github.com/databrickslabs/dbldatagen/releases
-
-You can install the library as a notebook scoped library when working within the Databricks 
-notebook environment through the use of a `%pip install` cell in your notebook.
-
-To install as a notebook-scoped library, create and execute a notebook cell with the following text:
-
-> `%pip install git+https://github.com/databrickslabs/dbldatagen@current`
-
-The `%pip install` method will work in Delta Live Tables pipelines and in the Databricks Community 
-Environment also.
-
-Alternatively, you can download a wheel file and install using the Databricks install mechanism to install a wheel based
-library into your workspace.
 
 ## Using the Data Generator
 To use the data generator, install the library using the `%pip install` method or install the Python wheel directly 
@@ -98,58 +101,39 @@ data_rows = 1000 * 1000
 df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows,
                                                   partitions=4)
                             .withIdOutput()
-                            .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
-                                        numColumns=column_count)
+                            .withColumn("r", FloatType(), 
+                                             expr="floor(rand() * 350) * (86400 + 3600)",
+                                             numColumns=column_count)
                             .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
                             .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
                             .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-                            .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
-                            .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+                            .withColumn("code4", StringType(), values=['a', 'b', 'c'], 
+                                           random=True)
+                            .withColumn("code5", StringType(), values=['a', 'b', 'c'], 
+                                           random=True, weights=[9, 1, 1])
 
                             )
                             
 df = df_spec.build()
 num_rows=df.count()                          
 ```
+Refer to the [online documentation](https://databrickslabs.github.io/dbldatagen/public_docs/index.html) for further 
+examples. 
 
+The Github repository also contains further examples in the examples directory
 
-# Building the code
+## Project Support
+Please note that all projects released under [`Databricks Labs`](https://www.databricks.com/learn/labs)
+ are provided for your exploration only, and are not formally supported by Databricks with Service Level Agreements 
+(SLAs).  They are provided AS-IS and we do not make any guarantees of any kind.  Please do not submit a support ticket 
+relating to any issues arising from the use of these projects.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed build and testing instructions, including use of alternative 
-build environments such as conda.
+Any issues discovered through the use of this project should be filed as issues on the Github Repo.  
+They will be reviewed as time permits, but there are no formal SLAs for support.
 
-Dependencies are maintained by [Pipenv](https://pipenv.pypa.io/). In order to start with depelopment, 
-you should install `pipenv` and `pyenv`.
-
-Use `make test-with-html-report` to build and run the tests with a coverage report. 
-
-Use `make dist` to make the distributable. The resulting wheel file will be placed in the `dist` subdirectory.
-  
-## Creating the HTML documentation
-
-Run `make docs` from the main project directory.
-
-The main html document will be in the file (relative to the root of the build directory) `./python/docs/docs/build/html/index.html`
-
-## Running unit tests
-
-If using an environment with multiple Python versions, make sure to use virtual env or similar to pick up correct python versions.
-
-If necessary, set `PYSPARK_PYTHON` and `PYSPARK_DRIVER_PYTHON` to point to correct versions of Python.
-
-Run  `make test` from the main project directory to run the unit tests.
 
 ## Feedback
 
 Issues with the application?  Found a bug?  Have a great idea for an addition?
-Feel free to file an issue.
+Feel free to file an [issue](https://github.com/databrickslabs/dbldatagen/issues/new).
 
-## Project Support
-
-Please note that all projects in the /databrickslabs github account are provided for your exploration only, and are 
-not formally supported by Databricks with Service Level Agreements (SLAs). They are provided AS-IS and we do not 
-make any guarantees of any kind. Please do not submit a support ticket relating to any issues arising from the use 
-of these projects.
-
-Any issues discovered through the use of this project should be filed as GitHub Issues on the Repo. They will 
-be reviewed as time permits, but there are no formal SLAs for support.
