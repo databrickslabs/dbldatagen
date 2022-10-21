@@ -1,6 +1,7 @@
 import logging
-import unittest
+import sys
 from datetime import timedelta
+import pytest
 
 from dbldatagen import ensure, mkBoundsList, coalesce_values, deprecated, SparkSingleton, \
     parse_time_interval, DataGenError
@@ -8,89 +9,73 @@ from dbldatagen import ensure, mkBoundsList, coalesce_values, deprecated, SparkS
 spark = SparkSingleton.getLocalInstance("unit tests")
 
 
-class TestUtils(unittest.TestCase):
+class TestUtils:
     x = 1
 
-    def setUp(self):
-        print("setting up")
-        FORMAT = '%(asctime)-15s %(message)s'
-        logging.basicConfig(format=FORMAT)
-
-    @classmethod
-    def setUpClass(cls):
-        pass
+    @pytest.fixture(autouse=True)
+    def setupLogger(self):
+        self.logger = logging.getLogger("TestUtils")
 
     @deprecated("testing deprecated")
     def testDeprecatedMethod(self):
         pass
 
-    @unittest.expectedFailure
     def test_ensure(self):
-        ensure(1 == 2, "Expected error")
+        with pytest.raises(Exception):
+            ensure(1 == 2, "Expected error")
 
-    def testMkBoundsList1(self):
+    def test_mkBoundsList1(self):
         """ Test utils mkBoundsList"""
         test = mkBoundsList(None, 1)
 
-        self.assertEqual(len(test), 2)
+        assert len(test) == 2
 
         test2 = mkBoundsList(None, [1, 1])
 
-        self.assertEqual(len(test2), 2)
+        assert len(test2) ==  2
 
-    def testCoalesce(self):
+    @pytest.mark.parametrize("test_input,expected",
+                             [
+                                 ([None, 1],  1),
+                                 ([2, 1],  2),
+                                 ([3, None, 1], 3),
+                                 ([None, None, None], None),
+                             ])
+    def test_coalesce(self, test_input, expected):
         """ Test utils coalesce function"""
-        result = coalesce_values(None, 1)
+        result = coalesce_values(*test_input)
+        assert result == expected
 
-        self.assertEqual(result, 1)
-
-        result2 = coalesce_values(3, None, 1)
-
-        self.assertEqual(result2, 3)
-
-        result3 = coalesce_values(None, None, None)
-
-        self.assertIsNone(result3)
-
-    def testParseTimeInterval1(self):
-        interval = parse_time_interval("1 hours")
-        self.assertEqual(timedelta(hours=1), interval)
-
-    def testParseTimeInterval2(self):
-        interval = parse_time_interval("1 hours, 2 seconds")
-        self.assertEqual(timedelta(hours=1, seconds=2), interval)
-
-    def testParseTimeInterval3(self):
-        interval = parse_time_interval("1 hours, 2 minutes")
-        self.assertEqual(timedelta(hours=1, minutes=2), interval)
-
-    def testParseTimeInterval4(self):
-        interval = parse_time_interval("4 days, 1 hours, 2 minutes")
-        self.assertEqual(timedelta(days=4, hours=1, minutes=2), interval)
-
-    def testParseTimeInterval1a(self):
-        interval = parse_time_interval("hours=1")
-        self.assertEqual(timedelta(hours=1), interval)
-
-    def testParseTimeInterval2a(self):
-        interval = parse_time_interval("hours=1, seconds = 2")
-        self.assertEqual(timedelta(hours=1, seconds=2), interval)
-
-    def testParseTimeInterval3a(self):
-        interval = parse_time_interval("1 hours, minutes = 2")
-        self.assertEqual(timedelta(hours=1, minutes=2), interval)
-
-    def testParseTimeInterval4a(self):
-        interval = parse_time_interval("days=4, hours=1, minutes=2")
-        self.assertEqual(timedelta(days=4, hours=1, minutes=2), interval)
+    @pytest.mark.parametrize("test_input,expected",
+                             [
+                                 ("1 hours, minutes = 2",  timedelta(hours=1, minutes=2)),
+                                 ("4 days, 1 hours, 2 minutes", timedelta(days=4, hours=1, minutes=2)),
+                                 ("days=4, hours=1, minutes=2", timedelta(days=4, hours=1, minutes=2)),
+                                 ("1 hours, 2 seconds", timedelta(hours=1, seconds=2)),
+                                 ("1 hours, 2 minutes", timedelta(hours=1, minutes=2)),
+                                 ("1 hours", timedelta(hours=1)),
+                                 ("1 hour", timedelta(hours=1)),
+                                 ("1 hour, 1 second", timedelta(hours=1, seconds=1)),
+                                 ("1 hour, 10 milliseconds", timedelta(hours=1, milliseconds=10)),
+                                 ("1 hour, 10 microseconds", timedelta(hours=1, microseconds=10)),
+                                 ("1 year, 4 weeks", timedelta(weeks=56))
+                             ])
+    def testParseTimeInterval2b(self, test_input, expected):
+        interval = parse_time_interval(test_input)
+        assert expected == interval
 
     def testDatagenExceptionObject(self):
         testException = DataGenError("testing")
 
-        self.assertIsNotNone(testException)
+        assert testException is not None
 
-        print("error has repr", repr(testException))
-        print("error has str", str(testException))
+        assert type(repr(testException)) is str
+        self.logger.info(repr(testException))
+
+        assert type(str(testException)) is str
+        self.logger.info(str(testException))
+
+
 
 # run the tests
 # if __name__ == '__main__':

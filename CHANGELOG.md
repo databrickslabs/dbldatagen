@@ -19,10 +19,11 @@ See the contents of the file `python/require.txt` to see the Python package depe
 * moved docs to docs folder
 * added support for specific distributions
 * renamed packaging to `dbldatagen`
-* moved Github repo to https://github.com/databrickslabs/dbldatagen/releases
+* Releases now available at https://github.com/databrickslabs/dbldatagen/releases
 * code tidy up and rename of options
 * added text generation plugin support for python functions and 3rd party libraries such as Faker
 * Use of data generator to generate static and streaming data sources in Databricks Delta Live Tables
+* added support for install from PyPi
 
 ## Changelog
 All notable changes to this project will be documented in this file.
@@ -60,5 +61,3 @@ and this project follows the guidelines of [Semantic Versioning](https://semver.
 ### Changed
 - package dependencies 
 - updated Html documentation to reflect Delta Live Tables compatibility
-
-
