@@ -68,7 +68,7 @@ The Data Generation framework provides a number of classes for general purpose t
 The Ipsum lorem text generator generates sequences of words, sentances, and paragraphs following the 
 Ipsum Lorem convention used in UI mockups. It originates from a technique used in type setting.
 
-See `Wikipedia article on `Lorem Ipsum<https://en.wikipedia.org/wiki/Lorem_ipsum>`_
+See ``Wikipedia article`` on `Lorem Ipsum <https://en.wikipedia.org/wiki/Lorem_ipsum>`_
 
 The following example illustrates its use:
 

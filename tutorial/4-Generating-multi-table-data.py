@@ -1,4 +1,9 @@
 # Databricks notebook source
+# DBTITLE 1,Install package from PyPi
+# MAGIC %pip install dbldatagen
+
+# COMMAND ----------
+
 # MAGIC %md ##Multi table data generation
 # MAGIC 
 # MAGIC To illustrate multi-table data generation and use, we'll use a simplified version of telecoms billing processes.
@@ -24,7 +29,9 @@
 # MAGIC 
 # MAGIC Messages will be priced per actual counts
 # MAGIC 
-# MAGIC For simplicitity, we'll ignore the free data, messages and calls threshold in most plans and the complexitity of matching devices to customers and telecoms operators - our goal here is to show generation of join ready data, rather than full modelling of phone usage invoicing.
+# MAGIC For simplicitity, we'll ignore the free data, messages and calls threshold in most plans and the complexity
+# MAGIC of matching devices to customers and telecoms operators - our goal here is to show generation of join
+# MAGIC ready data, rather than full modelling of phone usage invoicing.
 
 # COMMAND ----------
 

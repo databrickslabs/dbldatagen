@@ -1,9 +1,6 @@
 # Databricks notebook source
-# MAGIC %md ### Using the Databricks Labs Data Generator ###
-# MAGIC 
-# MAGIC #### Setup ####
-# MAGIC Import the Data Generator library wheel file into your environment and attach to cluster being used to
-# MAGIC run notebook
+# DBTITLE 1,Install package from PyPi
+# MAGIC %pip install dbldatagen
 
 # COMMAND ----------
 
