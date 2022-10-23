@@ -106,7 +106,8 @@ class TextGenerator(object):
 
         from numpy.random import default_rng
         if self._randomSeed is not None and self._randomSeed not in (-1, -1.0):
-            rng = default_rng(self._randomSeed)
+            print(f"using seed {self._randomSeed}")
+            rng = default_rng(seed=self._randomSeed)
         else:
             rng = default_rng()
 
