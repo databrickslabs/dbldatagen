@@ -6,7 +6,7 @@ from pyspark.sql.types import IntegerType, StringType, FloatType, DateType, Time
 
 import dbldatagen as dg
 
-spark = dg.SparkSingleton.getLocalInstance("unit tests", useAllCores=True)
+spark = dg.SparkSingleton.getLocalInstance("basic tests")
 
 
 class TestRepeatableDataGeneration(unittest.TestCase):
@@ -22,11 +22,9 @@ class TestRepeatableDataGeneration(unittest.TestCase):
     def mkBasicDataspec(cls, withRandom=False, dist=None, randomSeed=None):
 
         if randomSeed is None:
-            dgSpec = dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
-                                      partitions=spark.sparkContext.defaultParallelism)
+            dgSpec = dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count)
         else:
             dgSpec = dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
-                                      partitions=spark.sparkContext.defaultParallelism,
                                       randomSeed=randomSeed, randomSeedMethod='hash_fieldname')
 
         testDataSpec = (dgSpec
@@ -280,12 +278,11 @@ class TestRepeatableDataGeneration(unittest.TestCase):
         df2 = ds2.build()
 
     def test_random_seed_flow(self):
-        partitions_requested = spark.sparkContext.defaultParallelism
         data_rows = 100 * 1000
 
         default_random_seed = dg.DEFAULT_RANDOM_SEED
 
-        pluginDataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
+        pluginDataspec = (dg.DataGenerator(spark, rows=data_rows)
                           .withColumn("code1", minValue=0, maxValue=100)
                           .withColumn("code2", minValue=0, maxValue=100, randomSeed=2021)
                           .withColumn("text", "string", template=r"dr_\\v")
@@ -319,12 +316,11 @@ class TestRepeatableDataGeneration(unittest.TestCase):
         self.assertEqual(ilTextSpec2.randomSeed, ilTextSpec2.textGenerator.randomSeed)
 
     def test_random_seed_flow2(self):
-        partitions_requested = spark.sparkContext.defaultParallelism
         data_rows = 100 * 1000
 
         effective_random_seed = dg.DEFAULT_RANDOM_SEED
 
-        pluginDataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
+        pluginDataspec = (dg.DataGenerator(spark, rows=data_rows)
                           .withColumn("code1", minValue=0, maxValue=100)
                           .withColumn("code2", minValue=0, maxValue=100, random=True)
                           .withColumn("text", "string", template=r"dr_\\v")
@@ -352,14 +348,11 @@ class TestRepeatableDataGeneration(unittest.TestCase):
 
     def test_random_seed_flow_explicit_instance(self):
         """ Check the explicit random seed is applied to all columns"""
-        partitions_requested = spark.sparkContext.defaultParallelism
         data_rows = 100 * 1000
 
         effective_random_seed = 1017
 
-        pluginDataspec = (dg.DataGenerator(spark, rows=data_rows,
-                                           partitions=partitions_requested,
-                                           randomSeed=effective_random_seed)
+        pluginDataspec = (dg.DataGenerator(spark, rows=data_rows, randomSeed=effective_random_seed)
                           .withColumn("code1", minValue=0, maxValue=100)
                           .withColumn("code2", minValue=0, maxValue=100, random=True)
                           .withColumn("text", "string", template=r"dr_\\v")
@@ -395,13 +388,11 @@ class TestRepeatableDataGeneration(unittest.TestCase):
 
     def test_random_seed_flow_hash_fieldname(self):
         """ Check the explicit random seed is applied to all columns"""
-        partitions_requested =spark.sparkContext.defaultParallelism
         data_rows = 100 * 1000
 
         effective_random_seed = 1017
 
         pluginDataspec = (dg.DataGenerator(spark, rows=data_rows,
-                                           partitions=partitions_requested,
                                            randomSeed=effective_random_seed,
                                            randomSeedMethod=dg.RANDOM_SEED_HASH_FIELD_NAME)
                           .withColumn("code1", minValue=0, maxValue=100)
@@ -435,14 +426,12 @@ class TestRepeatableDataGeneration(unittest.TestCase):
 
     def test_random_seed_flow3_true_random(self):
         """ Check the explicit random seed (-1) is applied to all columns"""
-        partitions_requested = spark.sparkContext.defaultParallelism
         data_rows = 100 * 1000
 
         effective_random_seed = -1
         explicitRandomSeed = 41
 
         pluginDataspec = (dg.DataGenerator(spark, rows=data_rows,
-                                           partitions=partitions_requested,
                                            randomSeed=effective_random_seed)
                           .withColumn("code1", minValue=0, maxValue=100)
                           .withColumn("code2", minValue=0, maxValue=100, random=True)
@@ -479,13 +468,11 @@ class TestRepeatableDataGeneration(unittest.TestCase):
         self.assertEqual(paras2Spec.randomSeed, paras2Spec.textGenerator.randomSeed, "paras2Spec with textGenerator")
 
     def test_random_seed_flow3a(self):
-        partitions_requested = spark.sparkContext.defaultParallelism
         data_rows = 100 * 1000
 
         effective_random_seed = 1017
 
         pluginDataspec = (dg.DataGenerator(spark, rows=data_rows,
-                                           partitions=partitions_requested,
                                            randomSeed=effective_random_seed,
                                            randomSeedMethod=dg.RANDOM_SEED_FIXED)
                           .withColumn("code1", minValue=0, maxValue=100)
@@ -513,14 +500,11 @@ class TestRepeatableDataGeneration(unittest.TestCase):
         self.assertTrue(paras2Spec.randomSeed is not None and paras2Spec.randomSeed >= 0)
 
     def test_seed_flow4(self):
-        partitions_requested = spark.sparkContext.defaultParallelism
         data_rows = 100 * 1000
 
         effective_random_seed = dg.RANDOM_SEED_RANDOM
 
-        pluginDataspec = (dg.DataGenerator(spark, rows=data_rows,
-                                           partitions=partitions_requested,
-                                           randomSeed=effective_random_seed)
+        pluginDataspec = (dg.DataGenerator(spark, rows=data_rows, randomSeed=effective_random_seed)
                           .withColumn("code1", minValue=0, maxValue=100)
                           .withColumn("code2", minValue=0, maxValue=100, random=True)
                           .withColumn("text", "string", template=r"dr_\\v")
@@ -544,6 +528,22 @@ class TestRepeatableDataGeneration(unittest.TestCase):
         self.assertEqual(textSpec.randomSeed, textSpec.textGenerator.randomSeed)
         self.assertEqual(text2Spec.randomSeed, text2Spec.textGenerator.randomSeed)
 
+
+# run the tests
+# if __name__ == '__main__':
+#  print("Trying to run tests")
+#  unittest.main(argv=['first-arg-is-ignored'],verbosity=2,exit=False)
+
+# def runTests(suites):
+#    suite = unittest.TestSuite()
+#    result = unittest.TestResult()
+#    for testSuite in suites:
+#        suite.addTest(unittest.makeSuite(testSuite))
+#    runner = unittest.TextTestRunner()
+#    print(runner.run(suite))
+
+
+# runTests([TestBasicOperation])
 
 if __name__ == '__main__':
     unittest.main()
