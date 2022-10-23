@@ -23,3 +23,7 @@ class TestSparkSingleton:
     def test_local_spark_instance2(self, setupLogging):
         sparkSession = dg.SparkSingleton.getLocalInstance()
         assert sparkSession is not None
+
+    def test_local_spark_instance(self, setupLogging):
+        sparkSession = dg.SparkSingleton.getLocalInstance(useAllCores=False)
+        assert sparkSession is not None
