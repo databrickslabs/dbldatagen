@@ -8,7 +8,7 @@ from pyspark.sql.types import StructType, StructField, IntegerType, StringType, 
 
 import dbldatagen as dg
 
-spark = dg.SparkSingleton.getLocalInstance("unit tests")
+spark = dg.SparkSingleton.getLocalInstance("basic tests")
 
 
 @pytest.fixture(scope="class")
