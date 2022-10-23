@@ -7,7 +7,7 @@ from pyspark.sql.types import IntegerType, StringType, FloatType
 
 import dbldatagen as dg
 
-spark = dg.SparkSingleton.getLocalInstance("unit tests", useAllCores=True)
+spark = dg.SparkSingleton.getLocalInstance("streaming tests")
 
 
 class TestStreaming(unittest.TestCase):
@@ -30,8 +30,7 @@ class TestStreaming(unittest.TestCase):
             os.makedirs(checkpoint_dir)
 
             testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count,
-                                             partitions=spark.sparkContext.defaultParallelism,
-                                             seedMethod='hash_fieldname')
+                                             partitions=4, seedMethod='hash_fieldname')
                             .withIdOutput()
                             .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
                                         numColumns=self.column_count)

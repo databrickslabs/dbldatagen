@@ -143,7 +143,7 @@ schema = StructType([
 
 print("schema", schema)
 
-spark = dg.SparkSingleton.getLocalInstance("unit tests", useAllCores=True)
+spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
 
 # Test manipulation and generation of test data for a large schema
@@ -161,7 +161,7 @@ class TestBuildPlanning(unittest.TestCase):
         sale_weights = [1, 5, 5, 1]
 
         cls.testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
-                                             partitions=spark.sparkContext.defaultParallelism)
+                                             partitions=4)
                             .withSchema(schema)
                             .withIdOutput()
                             .withColumnSpecs(patterns=".*_ID", match_types=StringType(), format="%010d",

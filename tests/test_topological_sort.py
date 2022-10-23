@@ -1,8 +1,9 @@
-import pytest
+import unittest
+
 import dbldatagen as dg
 
 
-class TestTopologicalSort:
+class TestTopologicalSort(unittest.TestCase):
 
     def test_sort(self):
         src = [
@@ -18,7 +19,7 @@ class TestTopologicalSort:
         output = list(dg.topologicalSort(src))
         print("output1", output)
 
-        assert output == ['id', 'code3a', '_r_code1', '_r_code3', 'code1', 'code3', 'code2']
+        self.assertEqual(output, ['id', 'code3a', '_r_code1', '_r_code3', 'code1', 'code3', 'code2'])
 
     def test_sort2(self):
         src = [
@@ -35,18 +36,18 @@ class TestTopologicalSort:
 
         print("output1", output)
 
-        assert output == [['id'], ['code1', 'code3a', '_r_code1', '_r_code3'], ['code3', 'code2']]
+        self.assertEqual(output, [['id'], ['code1', 'code3a', '_r_code1', '_r_code3'], ['code3', 'code2']])
 
     def test_empty_list(self):
         src = []
         output = list(dg.topologicalSort(src))
         print("output", output)
 
-        assert output == []
+        self.assertEqual(output, [])
 
     def test_singleton_list(self):
         src = [('id', [])]
         output = list(dg.topologicalSort(src))
         print("output", output)
 
-        assert output ==  ['id']
+        self.assertEqual(output, ['id'])

@@ -6,7 +6,7 @@ from pyspark.sql.types import IntegerType, StringType, DecimalType
 import dbldatagen as dg
 from dbldatagen import SchemaParser
 
-spark = dg.SparkSingleton.getLocalInstance("unit tests", useAllCores=True)
+spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
 
 class TestSchemaParser(unittest.TestCase):

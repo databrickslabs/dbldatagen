@@ -144,7 +144,7 @@ schema = StructType([
 
 print("schema", schema)
 
-spark = dg.SparkSingleton.getLocalInstance("unit tests", useAllCores=True)
+spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
 
 # Test manipulation and generation of test data for a large schema
@@ -158,7 +158,8 @@ class TestLargeSchemaOperation(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count)
+        cls.testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
+                                             partitions=4)
                             .withSchema(schema)
                             .withIdOutput()
                             )

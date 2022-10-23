@@ -4,7 +4,7 @@ from pyspark.sql.types import IntegerType, StringType, FloatType
 
 import dbldatagen as dg
 
-spark = dg.SparkSingleton.getLocalInstance("unit tests", useAllCores=True)
+spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
 
 class TestScripting(unittest.TestCase):

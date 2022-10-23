@@ -9,7 +9,7 @@ import numpy as np
 import dbldatagen as dg
 import dbldatagen.distributions as dist
 
-spark = dg.SparkSingleton.getLocalInstance("unit tests", useAllCores=True)
+spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
 desired_weights = [9, 1, 1, 1]
 
@@ -22,8 +22,7 @@ class TestDistributions(unittest.TestCase):
 
         # will have implied column `id` for ordinal of row
         cls.testdata_generator = (
-            dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=cls.rows,
-                             partitions=spark.sparkContext.defaultParallelism)
+            dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=cls.rows, partitions=4)
                 .withIdOutput()  # id column will be emitted in the output
                 .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
                 .withColumn("code4", "integer", minValue=1, maxValue=40, step=1, random=True)
@@ -126,8 +125,7 @@ class TestDistributions(unittest.TestCase):
     def test_simple_normal_distribution(self):
         # will have implied column `id` for ordinal of row
         normal_data_generator = (
-            dg.DataGenerator(sparkSession=spark, rows=self.rows,
-                             partitions=spark.sparkContext.defaultParallelism)
+            dg.DataGenerator(sparkSession=spark, rows=self.rows, partitions=4)
                 .withIdOutput()  # id column will be emitted in the output
                 .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
                 .withColumn("code4", "integer", minValue=1, maxValue=40, step=1, random=True, distribution="normal")

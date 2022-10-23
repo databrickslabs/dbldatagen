@@ -10,7 +10,7 @@ from dbldatagen import NRange
 
 # global spark
 
-spark = dg.SparkSingleton.getLocalInstance("unit tests", useAllCores=True)
+spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
 
 class TestDependentData(unittest.TestCase):
@@ -31,8 +31,7 @@ class TestDependentData(unittest.TestCase):
         cls.devices = 30000
 
         cls.testDataSpec = (dg.DataGenerator(sparkSession=spark, name="device_data_set", rows=cls.rows,
-                                             partitions=spark.sparkContext.defaultParallelism,
-                                             seedMethod='hash_fieldname')
+                                             partitions=4, seedMethod='hash_fieldname', debug=True, verbose=False)
                             .withIdOutput()
                             # we'll use hash of the base field to generate the ids to avoid
                             # generating a simple incrementing sequence

@@ -27,7 +27,7 @@ class SparkSingleton:
         return SparkSession.builder.getOrCreate()
 
     @classmethod
-    def getLocalInstance(cls, appName="new Spark session", useAllCores=False):
+    def getLocalInstance(cls, appName="new Spark session", useAllCores=True):
         """Create a machine local Spark instance for Datalib.
         It uses 3/4 of the available cores for the spark session.
 
