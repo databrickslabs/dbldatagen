@@ -6,7 +6,7 @@ from pyspark.sql.types import IntegerType, StringType, FloatType, DateType, Time
 
 import dbldatagen as dg
 
-spark = dg.SparkSingleton.getLocalInstance("basic tests")
+spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
 
 class TestRepeatableDataGeneration(unittest.TestCase):
@@ -431,8 +431,7 @@ class TestRepeatableDataGeneration(unittest.TestCase):
         effective_random_seed = -1
         explicitRandomSeed = 41
 
-        pluginDataspec = (dg.DataGenerator(spark, rows=data_rows,
-                                           randomSeed=effective_random_seed)
+        pluginDataspec = (dg.DataGenerator(spark, rows=data_rows,  randomSeed=effective_random_seed)
                           .withColumn("code1", minValue=0, maxValue=100)
                           .withColumn("code2", minValue=0, maxValue=100, random=True)
                           .withColumn("text", "string", template=r"dr_\\v")
@@ -528,22 +527,6 @@ class TestRepeatableDataGeneration(unittest.TestCase):
         self.assertEqual(textSpec.randomSeed, textSpec.textGenerator.randomSeed)
         self.assertEqual(text2Spec.randomSeed, text2Spec.textGenerator.randomSeed)
 
-
-# run the tests
-# if __name__ == '__main__':
-#  print("Trying to run tests")
-#  unittest.main(argv=['first-arg-is-ignored'],verbosity=2,exit=False)
-
-# def runTests(suites):
-#    suite = unittest.TestSuite()
-#    result = unittest.TestResult()
-#    for testSuite in suites:
-#        suite.addTest(unittest.makeSuite(testSuite))
-#    runner = unittest.TextTestRunner()
-#    print(runner.run(suite))
-
-
-# runTests([TestBasicOperation])
 
 if __name__ == '__main__':
     unittest.main()
