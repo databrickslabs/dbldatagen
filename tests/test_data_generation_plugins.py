@@ -6,7 +6,7 @@ import numpy as np
 import dbldatagen as dg
 from dbldatagen import PyfuncText, PyfuncTextFactory, FakerTextFactory
 
-spark = dg.SparkSingleton.getLocalInstance("unit tests", useAllCores=True)
+spark = dg.SparkSingleton.getLocalInstance("basic tests")
 
 
 class TestTextGenerationPlugins(unittest.TestCase):
@@ -14,7 +14,7 @@ class TestTextGenerationPlugins(unittest.TestCase):
     column_count = 10
 
     def test_plugins(self):
-        partitions_requested = spark.sparkContext.defaultParallelism
+        partitions_requested = 4
         data_rows = 100 * 1000
 
         def initPluginContext(context):
@@ -35,7 +35,7 @@ class TestTextGenerationPlugins(unittest.TestCase):
         self.assertTrue(new_count == data_rows)
 
     def test_plugin_clone(self):
-        partitions_requested = spark.sparkContext.defaultParallelism
+        partitions_requested = 4
         data_rows = 100 * 1000
 
         def initPluginContext(context):
@@ -65,7 +65,7 @@ class TestTextGenerationPlugins(unittest.TestCase):
 
     def test_plugins_extended_syntax(self):
         """ test property syntax"""
-        partitions_requested = spark.sparkContext.defaultParallelism
+        partitions_requested = 4
         data_rows = 100 * 1000
 
         class TestTextGen:
@@ -94,7 +94,7 @@ class TestTextGenerationPlugins(unittest.TestCase):
 
     def test_plugins_extended_syntax2(self):
         """ test arg passing"""
-        partitions_requested = spark.sparkContext.defaultParallelism
+        partitions_requested = 4
         data_rows = 100 * 1000
 
         class TestTextGen:
@@ -123,7 +123,7 @@ class TestTextGenerationPlugins(unittest.TestCase):
         self.assertTrue(new_count == data_rows)
 
     def test_plugins_extended_syntax3(self):
-        partitions_requested = spark.sparkContext.defaultParallelism
+        partitions_requested = 4
         data_rows = 100 * 1000
 
         class TestTextGen:
@@ -152,7 +152,7 @@ class TestTextGenerationPlugins(unittest.TestCase):
 
     def test_plugins_extended_syntax4(self):
         """ Test syntax extensions """
-        partitions_requested = spark.sparkContext.defaultParallelism
+        partitions_requested = 4
         data_rows = 100 * 1000
 
         class TestTextGen:
@@ -181,8 +181,8 @@ class TestTextGenerationPlugins(unittest.TestCase):
         """ test faker integration with mock objects"""
 
         import unittest.mock
-        shuffle_partitions_requested = spark.sparkContext.defaultParallelism
-        partitions_requested = spark.sparkContext.defaultParallelism
+        shuffle_partitions_requested = 4
+        partitions_requested = 4
         data_rows = 30 * 1000
 
         uniqueCustomers = 10 * 1000000
@@ -209,8 +209,8 @@ class TestTextGenerationPlugins(unittest.TestCase):
         """ test faker integration with mock objects"""
 
         import unittest.mock
-        shuffle_partitions_requested = spark.sparkContext.defaultParallelism
-        partitions_requested = spark.sparkContext.defaultParallelism
+        shuffle_partitions_requested = 4
+        partitions_requested = 4
         data_rows = 30 * 1000
 
         uniqueCustomers = 10 * 1000000
