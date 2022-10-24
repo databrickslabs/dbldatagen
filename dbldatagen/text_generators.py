@@ -178,24 +178,24 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
 
     It uses the following special chars:
 
-    ========  ======================================
-    Chars     Meaning
-    ========  ======================================
+    ========   ======================================
+    Chars      Meaning
+    ========   ======================================
     ``\\``     Apply escape to next char.
-    0,1,..9   Use base value as an array of values and substitute the `nth` element ( 0 .. 9). Always escaped.
-    x         Insert a random lowercase hex digit
-    X         Insert an uppercase random hex digit
-    d         Insert a random lowercase decimal digit
-    D         Insert an uppercase random decimal digit
-    a         Insert a random lowercase alphabetical character
-    A         Insert a random uppercase alphabetical character
-    k         Insert a random lowercase alphanumeric character
-    K         Insert a random uppercase alphanumeric character
-    n         Insert a random number between 0 .. 255 inclusive. This option must always be escaped
-    N         Insert a random number between 0 .. 65535 inclusive. This option must always be escaped
-    w         Insert a random lowercase word from the ipsum lorem word set. Always escaped
-    W         Insert a random uppercase word from the ipsum lorem word set. Always escaped
-    ========  ======================================
+    v0,v1,..v9 Use base value as an array of values and substitute the `nth` element ( 0 .. 9). Always escaped.
+    x          Insert a random lowercase hex digit
+    X          Insert an uppercase random hex digit
+    d          Insert a random lowercase decimal digit
+    D          Insert an uppercase random decimal digit
+    a          Insert a random lowercase alphabetical character
+    A          Insert a random uppercase alphabetical character
+    k          Insert a random lowercase alphanumeric character
+    K          Insert a random uppercase alphanumeric character
+    n          Insert a random number between 0 .. 255 inclusive. This option must always be escaped
+    N          Insert a random number between 0 .. 65535 inclusive. This option must always be escaped
+    w          Insert a random lowercase word from the ipsum lorem word set. Always escaped
+    W          Insert a random uppercase word from the ipsum lorem word set. Always escaped
+    ========   ======================================
 
     .. note::
               If escape is used and`escapeSpecialChars` is False, then the following
@@ -260,7 +260,20 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
         # use standard random for now as it performs better when generating values one at a time
         return random.randint(low, high)
 
-    def stringsFromSingleTemplate(self, baseValue, genTemplate, escapeSpecialMeaning=False, rndGenerator=None):
+    def _getRandomWordOffset(self, size=None, rndGenerator=None):
+        """
+
+        :param wordList: Word list to generate offset for
+        :param size:     Size of expected wordlis
+        :return:
+        """
+
+        # note generates range of [0 .. size - 1]
+        retval = self._getRandomInt(0, size-1, rndGenerator)
+        return retval
+
+    def stringsFromSingleTemplate(self, baseValue, genTemplate, escapeSpecialMeaning=False, rndGenerator=None,
+                                  stage=""):
         """ Generate text from a single template
 
         :param rndGenerator: random number generator instance
@@ -316,10 +329,10 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
                 retval.append(str(self._getRandomInt(0, 65535, rndGenerator)))
                 escape = False
             elif char == 'W' and escape:
-                retval.append(self._upperWordList[self._getRandomInt(0, self._lenWords, rndGenerator) - 1])
+                retval.append(self._upperWordList[self._getRandomWordOffset(self._lenWords, rndGenerator=rndGenerator)])
                 escape = False
             elif char == 'w' and escape:
-                retval.append(self._wordList[self._getRandomInt(0, self._lenWords, rndGenerator) - 1])
+                retval.append(self._wordList[self._getRandomWordOffset(self._lenWords, rndGenerator=rndGenerator)])
                 escape = False
             elif char == 'v' and escape:
                 escape = False
@@ -336,6 +349,102 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
 
         if use_value:
             retval.append(str(baseValue))
+
+        return retval
+
+    def prepareStringsFromSingleTemplate(self,  genTemplate, escapeSpecialMeaning=False, rndGenerator=None):
+        """ Prepare list of random numbers needed to generate template in vectorized form
+
+        :param rndGenerator: random number generator instance
+        :param baseValue: underlying base value to seed template generation.
+          Ignored unless template outputs it
+        :param genTemplate: template string to control text generation
+        :param escapeSpecialMeaning: if True, requires escape on special meaning chars.
+        :returns: list of integer values which determine bounds for random number vector for template generation
+
+        Each element of the list will be used to generate a random number between 0 and the element inclusive,
+        which is then used to select words from wordlists etc for template expansion
+
+        `_escapeSpecialMeaning` parameter allows for backwards compatibility with old style syntax while allowing
+        for preferred new style template syntax. Specify as True to force escapes for special meanings,.
+
+        """
+        retval = []
+
+        escape = False
+        use_value = False
+        template_len = len(genTemplate)
+
+        # in the following code, the construct `(not escape) ^ self._escapeSpecialMeaning` means apply
+        # special meaning if either escape is not true or the option `self._escapeSpecialMeaning` is true.
+        # This corresponds to the logical xor operation
+        for i in range(0, template_len):
+            char = genTemplate[i]
+            following_char = genTemplate[i + 1] if i + 1 < template_len else None
+
+            if char == '\\':
+                escape = True
+            elif use_value and ('0' <= char <= '9'):
+                val_index = int(char)
+                # retval.append(str(baseValue[val_index]))
+                use_value = False
+            elif char == 'x' and (not escape) ^ escapeSpecialMeaning:
+                retval.append(15)
+                # used for retval.append(_HEX_LOWER[self._getRandomInt(0, 15, rndGenerator)])
+            elif char == 'X' and (not escape) ^ escapeSpecialMeaning:
+                retval.append(15)
+                # retval.append(_HEX_UPPER[self._getRandomInt(0, 15, rndGenerator)])
+            elif char == 'd' and (not escape) ^ escapeSpecialMeaning:
+                retval.append(9)
+                # retval.append(_DIGITS_ZERO[self._getRandomInt(0, 9, rndGenerator)])
+            elif char == 'D' and (not escape) ^ escapeSpecialMeaning:
+                retval.append(8)
+                #retval.append(_DIGITS_NON_ZERO[self._getRandomInt(0, 8, rndGenerator)])
+            elif char == 'a' and (not escape) ^ escapeSpecialMeaning:
+                retval.append(25)
+                #retval.append(_LETTERS_LOWER[self._getRandomInt(0, 25, rndGenerator)])
+            elif char == 'A' and (not escape) ^ escapeSpecialMeaning:
+                retval.append(25)
+                #retval.append(_LETTERS_UPPER[self._getRandomInt(0, 25, rndGenerator)])
+            elif char == 'k' and (not escape) ^ escapeSpecialMeaning:
+                retval.append(25)
+                # retval.append(_ALNUM_LOWER[self._getRandomInt(0, 35, rndGenerator)])
+            elif char == 'K' and (not escape) ^ escapeSpecialMeaning:
+                retval.append(35)
+                # retval.append(_ALNUM_UPPER[self._getRandomInt(0, 35, rndGenerator)])
+            elif char == 'n' and escape:
+                retval.append(255)
+                #retval.append(str(self._getRandomInt(0, 255, rndGenerator)))
+                escape = False
+            elif char == 'N' and escape:
+                retval.append(65535)
+                #retval.append(str(self._getRandomInt(0, 65535, rndGenerator)))
+                escape = False
+            elif char == 'W' and escape:
+                retval.append(self._lenWords - 1)
+                #retval.append(self._upperWordList[self._getRandomWordOffset(self._lenWords, rndGenerator=rndGenerator)])
+                escape = False
+            elif char == 'w' and escape:
+                retval.append(self._lenWords - 1)
+                #retval.append(self._wordList[self._getRandomWordOffset(self._lenWords, rndGenerator=rndGenerator)])
+                escape = False
+            elif char == 'v' and escape:
+                escape = False
+                if following_char is not None and ('0' <= following_char <= '9'):
+                    use_value = True
+                else:
+                    pass
+                    #retval.append(str(baseValue))
+            elif char == 'V' and escape:
+                #retval.append(str(baseValue))
+                escape = False
+            else:
+                #retval.append(char)
+                escape = False
+
+        if use_value:
+            #retval.append(str(baseValue))
+            pass
 
         return retval
 
@@ -514,7 +623,7 @@ class ILText(TextGenerator):  # lgtm [py/missing-equals]
         good_paragraphs = para_stats[:, :, :, 0]
         good_sentences = para_stats[:, :, :, 1]
 
-        # build masks in each dimension and or them together
+        # build masks in each dimension and `or` them together
         words_mask = (w.T >= good_words.T).T
         para_mask = (p.T >= good_paragraphs.T).T
         sentences_mask = (s.T >= good_sentences.T).T
