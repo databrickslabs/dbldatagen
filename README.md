@@ -65,7 +65,7 @@ Use `pip install dbldatagen` to install the PyPi package
 
 Within a Databricks notebook, invoke the following in a notebook cell
 ```commandline
-%pip install dbdatagen
+%pip install dbldatagen
 ```
 
 This can be invoked within a Databricks notebook, a Delta Live Tables pipeline and even works on the Databricks 
