@@ -407,7 +407,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
             if char == '\\':
                 escape = True
             elif use_value and ('0' <= char <= '9'):
-                val_index = int(char)
+                # val_index = int(char)
                 # retval.append(str(baseValue[val_index]))
                 num_placeholders += 1
                 use_value = False
@@ -486,24 +486,23 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
         return num_placeholders, retval
 
     def _applyTemplateStringsForTemplate(self, baseValue, genTemplate, placeholders, rnds, escapeSpecialMeaning=False):
-        """ Prepare list of random numbers needed to generate template in vectorized form
+        """ Vectorized implementation of template driven text substitution
 
-        :param baseValue: base value for applying template
+         Apply substitutions to placeholders using random numbers
+
+        :param baseValue: Pandas series of base value for applying template
         :param genTemplate: template string to control text generation
-        :param placeholders: nparray of type np.object_ pre-allocated to hold stringes emitted
-        :param rnds: nparray of of random numbers needed for vectorized generation
+        :param placeholders: masked nparray of type np.object_ pre-allocated to hold strings emitted
+        :param rnds: masked numpy 2d array of random numbers needed for vectorized generation
         :param escapeSpecialMeaning: if True, requires escape on special meaning chars.
-        :returns: Nothing
+        :returns: placeholders
 
-        The vectorized implementation populates the placeholder array with the substituted values.
-
+        The vectorized implementation populates the placeholder Numpy array with the substituted values.
 
         `_escapeSpecialMeaning` parameter allows for backwards compatibility with old style syntax while allowing
         for preferred new style template syntax. Specify as True to force escapes for special meanings,.
 
         """
-        retval = []
-
         assert baseValue.shape[0] == placeholders.shape[0]
         assert baseValue.shape[0] == rnds.shape[0]
 
@@ -524,10 +523,15 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
                 escape = True
             elif use_value and ('0' <= char <= '9'):
                 val_index = int(char)
+                pd_base_values = pd.Series(list(baseValue))
                 placeholders[:, num_placeholders] = baseValue[:, val_index]
+                print("sample entry", baseValue[1])
+                #placeholders[:, num_placeholders] = pd_base_values.apply(lambda x: str(x[val_index]))
                 num_placeholders += 1
                 use_value = False
             elif char == 'x' and (not escape) ^ escapeSpecialMeaning:
+                # note vectorized lookup - `rnds[:, rnd_offset]` will get vertical column of
+                # random numbers from `rnds` 2d array
                 placeholders[:, num_placeholders] = self._np_hex_lower[rnds[:, rnd_offset]]
                 num_placeholders += 1
                 rnd_offset = rnd_offset + 1
@@ -617,23 +621,6 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
 
         return placeholders
 
-    def valueFromSingleTemplate(self, baseValue, genTemplate, escapeSpecialMeaning=False, rndGenerator=None):
-        """ Generate text from a single template
-
-        :param baseValue: underlying base value to seed template generation.
-          Ignored unless template outputs it
-        :param genTemplate: template string to control text generation
-        :param escapeSpecialMeaning: if True, requires escape on special meaning chars.
-        :returns: combined string from template
-
-        `_escapeSpecialMeaning` parameter allows for backwards compatibility with old style syntax while allowing
-        for preferred new style template syntax. Specify as True to force escapes for special meanings,.
-
-        """
-        retval = self.stringsFromSingleTemplate(baseValue, genTemplate, escapeSpecialMeaning, rndGenerator)
-        output = "".join(retval)
-        return output
-
     def classicGenerateText(self, v):
         """entry point to use for classic udfs"""
 
@@ -642,6 +629,18 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
         return results[0]
 
     def _prepare_random_bounds(self, v):
+        """
+        Prepare the random bounds for processing of the template expansion
+
+        For each template, we will have a vector of random numbers to generate for expanding the template
+
+        If we have multiple templates, there will be a separate vector of random numbers for each template
+
+
+        :param v: Pandas series of values passed as base values
+        :return: vector of templates chosen, template random bounds (1 for each substitution) and selected
+                 random numbers for each row (as numpy array)
+        """
         placeholders = np.full( (v.size, self._max_placeholders), '', dtype=np.object_ )
 
         # choose templates
@@ -676,38 +675,63 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
 
         return templates_chosen, template_rnd_bounds, template_rnds
 
-
     def pandasGenerateText(self, v):
-        """ entry point to use for pandas udfs"""
-        placeholders = np.full( (v.size, self._max_placeholders), '', dtype=np.object_ )
+        """ entry point to use for pandas udfs
 
-        # choose templates
-        num_templates = len(self.templates)
-        template_bounds = np.full( v.size, num_templates )
+        Implementation uses vectorized implementation of process
 
-        rng = self.getNPRandomGenerator()
+        :param v: Pandas series of values passed as base values
+        :return: Pandas series of expanded templates
 
-        templates_chosen = rng.integers(template_bounds)
+        """
+        # placeholders is numpy array used to hold results
+        placeholders = np.full((v.shape[0], self._max_placeholders), '', dtype=np.object_)
 
-        # populate template random numbers
-        template_rnds = np.full( (v.size, self._max_rnds_needed), -1)
+        # prepare template selections, bounds, rnd values to drive application of algorithm
+        template_choices, template_rnd_bounds, template_rnds = self._prepare_random_bounds(v)
+        template_choices_t = template_choices.T
+
+        baseValues = v.to_numpy()
+
+        # create masked arrays, with all elements initially masked
+        # as we substitute template expansion, we'll mask and unmask rows corresponding to each template
+        # calling the method to substitute the values on the masked placeholders
+        masked_placeholders = np.ma.MaskedArray(placeholders, mask=False)
+        masked_rnds = np.ma.MaskedArray(template_rnds, mask=False)
+        masked_base_values = np.ma.MaskedArray(baseValues, mask=False)
+        masked_matrices = [masked_placeholders, masked_rnds, masked_base_values]
+
+        needsStringConversion = False
 
 
+        # test logic for template expansion
+        for x in range(len(self._templates)):
+            masked_placeholders[template_choices_t != x, :] = np.ma.masked
+            masked_rnds[template_choices_t != x, :] = np.ma.masked
+            masked_base_values[template_choices_t != x] = np.ma.masked
 
-        def valueFromRandomTemplate(originalValue, altTemplates, escapeSpecialMeaning, rndGenerator):
-            numAlternatives = len(altTemplates)
+            # harden mask, preventing modifications
+            for m in masked_matrices:
+                np.ma.harden_mask(m)
 
-            # choose alternative
-            template = altTemplates[self._getRandomInt(0, numAlternatives - 1, rndGenerator)]
-            return self.valueFromSingleTemplate(originalValue, template, escapeSpecialMeaning)
+            # expand values into placeholders
+            #self._applyTemplateStringsForTemplate(v.to_numpy(dtype=np.object_), #masked_base_values,
+            self._applyTemplateStringsForTemplate(baseValues,
+                                                    #masked_base_values,
+                                                    self._templates[x],
+                                                    masked_placeholders,
+                                                    masked_rnds
+                                                    )
 
-        rng = None  # use standard random for performance reasons
-        if len(self._templates) > 1:
-            results = v.apply(lambda v1, t, e, rndGenerator: valueFromRandomTemplate(v1, t, e, rndGenerator),
-                              args=(self._templates, self._escapeSpecialMeaning, rng))
-        else:
-            results = v.apply(lambda v1, t, e, rndGenerator: self.valueFromSingleTemplate(v1, t, e, rndGenerator),
-                              args=(self._templates[0], self._escapeSpecialMeaning, rng))
+            # soften and clear mask, allowing modifications
+            for m in masked_matrices:
+                np.ma.soften_mask(m)
+                m.mask = False
+
+        # join strings in placeholders
+        output = pd.Series(list(placeholders))
+        results = output.apply(lambda placeholder_items: "".join([str(elem) for elem in placeholder_items]))
+
         return results
 
 

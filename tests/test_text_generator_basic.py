@@ -98,7 +98,9 @@ class TestTextGeneratorBasic:
                                                                        r'\V.\V.\V.123', r"105\.105\.105\.123"),
                                                                       (np.arange(1000),
                                                                        r'\V.\W.\w.\W', r"105\.[A-Z]+\.[a-z]+\.[A-Z]+"),
-                                                                      ([(x, x + 1) for x in np.arange(1000)],
+                                                                      ([[x, x + 1] for x in np.arange(1000)],
+                                                                       r'\v0.\v1.\w.\W', r"105\.106\.[a-z]+\.[A-Z]+"),
+                                                                      ([(x, x + 1) for x in [1,2,3,4,5,6,7,9,9,10]],
                                                                        r'\v0.\v1.\w.\W', r"105\.106\.[a-z]+\.[A-Z]+"),
                                                                       ])
     def test_template_value_substitution(self, sourceData, template, expectedOutput):
@@ -112,7 +114,9 @@ class TestTextGeneratorBasic:
         text_gen1 = TemplateGenerator(template)
         text_gen1 = text_gen1.withRandomSeed(2112)
 
-        pd_data = pd.Series(sourceData, copy=False)
+        np_data = np.array(sourceData, dtype=np.object_)
+        pd_data = pd.Series(list(np_data), copy=False)
+
 
         results = text_gen1.pandasGenerateText(pd_data)
 
