@@ -98,7 +98,7 @@ class TestTextGeneratorBasic:
                                                                        r'\V.\V.\V.123', r"105\.105\.105\.123"),
                                                                       (np.arange(1000),
                                                                        r'\V.\W.\w.\W', r"105\.[A-Z]+\.[a-z]+\.[A-Z]+"),
-                                                                      ([(x, x+1) for x in np.arange(1000)],
+                                                                      ([(x, x + 1) for x in np.arange(1000)],
                                                                        r'\v0.\v1.\w.\W', r"105\.106\.[a-z]+\.[A-Z]+"),
                                                                       ])
     def test_template_value_substitution(self, sourceData, template, expectedOutput):
@@ -136,9 +136,112 @@ class TestTextGeneratorBasic:
                 expectedVectorSize = expectedRandomNumbers
             i = i + 1
 
-            vector_rnd = text_gen1.prepareStringsFromSingleTemplate(template)
+            placeholders, vector_rnd = text_gen1._prepareTemplateStrings(template)
 
             assert len(vector_rnd) == expectedVectorSize, f"template is '{template}'"
+            assert placeholders > len(vector_rnd)
+
+    @pytest.mark.parametrize("template, expectedRandomNumbers", [(r'53.123.ddd.ddd', 6),
+                                                                 (r'\w.\W.\w.\W', 4),
+                                                                 (r'\w.\W.\w.\W|\w \w|\W \w \W', [4, 2, 3]),
+                                                                 ])
+    def test_prepare_bounds(self, template, expectedRandomNumbers):
+        text_gen1 = TemplateGenerator(template)
+        text_gen1 = text_gen1.withRandomSeed(2112)
+
+        data = np.arange(30000)
+        pd_data = pd.Series(data)
+
+        template_choices, template_rnd_bounds, template_rnds = text_gen1._prepare_random_bounds(pd_data)
+
+        min_template, max_template = np.min(template_choices), np.max(template_choices)
+
+        assert min_template >= 0
+        assert max_template <= len(text_gen1.templates)
+
+        assert template_choices.shape[0] == template_rnd_bounds.shape[0]
+        assert template_choices.shape[0] == template_rnds.shape[0]
+        assert template_choices.shape[0] == data.shape[0]
+
+        # check that random values actually have random values
+        for x in pd.Series(list(template_rnds)):
+            distinct_values = set(x)
+            assert (len(x) == 1) or (len(distinct_values) > 0)
+
+        print(template_rnds)
+
+    @pytest.mark.parametrize("template, expectedOutput", [(r'53.123.ddd.ddd', r"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"),
+                                                          (r'\w.\W.\w.\W', r"[a-z]+\.[A-Z]+\.[a-z]+\.[A-Z]+"),
+                                                          (r'\w.\W.\w.\W|\w \w', r"[a-zA-Z\. ]+"),
+                                                          (r'Dddd', r"[1-9][0-9]+"),
+                                                          (r'\xxxxx \xXXX', r"x[0-9a-f]+ x[0-9A-F]+"),
+                                                          (r'Aaaa Kkkk \N \n', r"[a-zA-Z]+ [0-9A-Za-z]+ [0-9]+ [0-9]+"),
+                                                          (r'Aaaa \V \N \n', r"[A-Za-z]+ [0-9]+ [0-9]+ [0-9]+"),
+                                                          ])
+    def test_apply_template(self, template, expectedOutput):
+        """ This method tests the core logic of the template generator
+        """
+        text_gen1 = TemplateGenerator(template)
+        text_gen1 = text_gen1.withRandomSeed(2112)
+
+        # generate test data
+        data = np.arange(100000)
+        pd_data = pd.Series(data)
+
+        # prepare template selections, bounds, rnd values to drive application of algorithm
+        template_choices, template_rnd_bounds, template_rnds = text_gen1._prepare_random_bounds(pd_data)
+        template_choices_t = template_choices.T
+
+        # save copies to ensure lookup values not modified by process
+        template_rnds2 = template_rnds.copy()
+        template_choices2 = template_choices.copy()
+        data2 = data.copy()
+
+        # placeholders is numpy array used to hold results
+        placeholders = np.full((data.shape[0], text_gen1._max_placeholders), "", dtype=np.object_)
+
+        # create masked arrays, with all elements initially masked
+        # as we substitute template expansion, we'll mask and unmask rows corresponding to each template
+        # calling the method to substitute the values on the masked placeholders
+        masked_placeholders = np.ma.MaskedArray(placeholders, mask=False)
+        masked_rnds = np.ma.MaskedArray(template_rnds, mask=False)
+        masked_base_values = np.ma.MaskedArray(data, mask=False)
+        masked_matrices = [masked_placeholders, masked_rnds, masked_base_values]
+
+        # test logic for template expansion
+        for x in range(len(text_gen1._templates)):
+            masked_placeholders[template_choices_t != x, :] = np.ma.masked
+            masked_rnds[template_choices_t != x, :] = np.ma.masked
+            masked_base_values[template_choices_t != x] = np.ma.masked
+
+            # harden mask, preventing modifications
+            for m in masked_matrices:
+                np.ma.harden_mask(m)
+
+            # expand values into placeholders
+            text_gen1._applyTemplateStringsForTemplate(masked_base_values,
+                                                       text_gen1._templates[x],
+                                                       masked_placeholders,
+                                                       masked_rnds
+                                                       )
+
+            # soften mask, allowing modifications
+            for m in masked_matrices:
+                np.ma.soften_mask(m)
+                m.mask = False
+
+        # join strings in placeholders
+        output = pd.Series(list(placeholders))
+        results = output.apply(lambda placeholder_items: "".join([str(elem) for elem in placeholder_items]))
+
+        # check that process does not modify data
+        assert (template_rnds2 == template_rnds).all()
+        assert (template_choices2 == template_choices).all()
+        assert (data2 == data).all()
+
+        match_patt = re.compile(expectedOutput)
+        for r in results:
+            assert match_patt.match(r), f"expected '{r}' to match pattern '{expectedOutput}'"
 
     def test_word_offset_generation(self):
         _WORDS_LOWER = ['lorem', 'ipsum', 'dolor', 'sit', 'amet', 'consectetur', 'adipiscing', 'elit', 'sed', 'do',
