@@ -279,7 +279,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
         # use standard random for now as it performs better when generating values one at a time
         return random.randint(low, high)
 
-    def _getRandomWordOffset(self, size=None, rndGenerator=None):
+    def _getRandomWordOffset2(self, size=None, rndGenerator=None):
         """
 
         :param wordList: Word list to generate offset for
@@ -291,7 +291,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
         retval = self._getRandomInt(0, size - 1, rndGenerator)
         return retval
 
-    def stringsFromSingleTemplate(self, baseValue, genTemplate, escapeSpecialMeaning=False, rndGenerator=None,
+    def stringsFromSingleTemplate2(self, baseValue, genTemplate, escapeSpecialMeaning=False, rndGenerator=None,
                                   stage=""):
         """ Generate text from a single template
 
@@ -519,13 +519,13 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
             """Get element from base values as np array and cache it"""
             cache_key = f"v_{elem}"
             if cache_key not in _cached_values:
-                element_values = []
-                print("base value type", type(baseValue))
-                print("base value[0] type", type(baseValue[0]))
-                print("base value[0][0] type", type(baseValue[0][0]))
+                np_values = _get_values_as_np_array()
+                #element_values = []
+                element_values = np.ndarray( np_values.shape[0], dtype=np_values.dtype)
+
                 for x in range(baseValue.shape[0]):
-                    element_values.append(baseValue[x][elem])
-                #base_value_elements = baseValue.apply(lambda x: x[elem])
+                    #element_values.append(baseValue[x][elem])
+                    element_values[x] = baseValue[x][elem]
                 _cached_values[cache_key] = element_values
 
             return _cached_values[cache_key]
@@ -737,7 +737,8 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
                                                     #masked_base_values,
                                                     self._templates[x],
                                                     masked_placeholders,
-                                                    masked_rnds
+                                                    masked_rnds,
+                                                    escapeSpecialMeaning=self._escapeSpecialMeaning
                                                     )
 
             # soften and clear mask, allowing modifications
@@ -746,7 +747,6 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
                 m.mask = False
 
         # join strings in placeholders
-        print(placeholders[1:10,:])
         output = pd.Series(list(placeholders))
         results = output.apply(lambda placeholder_items: "".join([str(elem) for elem in placeholder_items]))
 

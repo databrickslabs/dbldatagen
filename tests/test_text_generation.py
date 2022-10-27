@@ -1,5 +1,7 @@
 import re
 import pytest
+import pandas as pd
+import numpy as np
 
 import pyspark.sql.functions as F
 from pyspark.sql.types import BooleanType, DateType
@@ -194,47 +196,30 @@ class TestTextGeneration:
             assert test_value is not None
             assert match_pattern.match(test_value)
 
-    def test_raw_template_text_generation1(self):
+    @pytest.mark.parametrize("template, expectedOutput, escapeSpecial",
+                             [(r'\n.\n.\n.\n', r"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+", False),
+                              (r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd',
+                                r"(\([0-9]+\)-[0-9]+-[0-9]+)|(1\([0-9]+\) [0-9]+-[0-9]+)|([0-9]+ [0-9]+)", False),
+                              (r'(\d\d\d)-\d\d\d-\d\d\d\d|1(\d\d\d) \d\d\d-\d\d\d\d|\d\d\d \d\d\d\d\d\d\d',
+                               r"(\([0-9]+\)-[0-9]+-[0-9]+)|(1\([0-9]+\) [0-9]+-[0-9]+)|([0-9]+ [0-9]+)", True),
+                              (r'\dr_\v', r"dr_[0-9]+", False),
+                              (r'\w.\w@\w.com|\w@\w.co.u\k', r"[a-z\.\@]+", False),
+                              ])
+    def test_raw_template_text_generation1(self, template, expectedOutput, escapeSpecial):
         """ As the test coverage tools dont detect code only used in UDFs,
             lets add some explicit tests for the underlying code"""
-        pattern = r'\n.\n.\n.\n'
-        match_pattern = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+")
-        test_template = TemplateGenerator(pattern)
+        match_pattern = re.compile(expectedOutput)
+        test_template = TemplateGenerator(template, escapeSpecialChars=escapeSpecial)
 
-        test_values = [test_template.valueFromSingleTemplate(x, test_template.templates[0]) for x in range(1, 1000)]
+        test_values = test_template.pandasGenerateText(pd.Series([x for x in range(1, 1000)]))
 
+        def check_pattern(x):
+            assert match_pattern.match(x), f"test pattern '{expectedOutput}' does not match result '{x}'"
+
+        test_values.apply(lambda x: check_pattern(x))
         for test_value in test_values:
             assert test_value is not None
-            assert match_pattern.match(test_value)
-
-    def test_raw_template_text_generation2(self):
-        """ As the test coverage tools dont detect code only used in UDFs,
-            lets add some explicit tests for the underlying code"""
-        pattern = r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd'
-        match_pattern = re.compile(r"(\([0-9]+\)-[0-9]+-[0-9]+)|(1\([0-9]+\) [0-9]+-[0-9]+)|([0-9]+ [0-9]+)")
-        test_template = TemplateGenerator(pattern)
-
-        test_values = [test_template.classicGenerateText(x) for x in range(1, 1000)]
-
-        for test_value in test_values:
-            assert test_value is not None
-            assert match_pattern.match(test_value)
-
-    def test_raw_template_text_generation2a(self):
-        """ As the test coverage tools dont detect code only used in UDFs,
-            lets add some explicit tests for the underlying code
-
-            This variant requires all special chars to be escaped
-        """
-        pattern = r'(\d\d\d)-\d\d\d-\d\d\d\d|1(\d\d\d) \d\d\d-\d\d\d\d|\d\d\d \d\d\d\d\d\d\d'
-        match_pattern = re.compile(r"(\([0-9]+\)-[0-9]+-[0-9]+)|(1\([0-9]+\) [0-9]+-[0-9]+)|([0-9]+ [0-9]+)")
-        test_template = TemplateGenerator(pattern, escapeSpecialChars=True)
-
-        test_values = [test_template.classicGenerateText(x) for x in range(1, 1000)]
-
-        for test_value in test_values:
-            assert test_value is not None
-            assert match_pattern.match(test_value)
+            assert match_pattern.match(test_value), f"test pattern '{expectedOutput}' does not match result '{x}'"
 
     def test_raw_template_text_generation3(self):
         """ As the test coverage tools don't detect code only used in UDFs,
@@ -244,19 +229,6 @@ class TestTextGeneration:
         test_template = TemplateGenerator(pattern)
 
         test_values = [test_template.classicGenerateText(x) for x in range(1, 1000)]
-
-        for test_value in test_values:
-            assert test_value is not None
-            assert match_pattern.match(test_value)
-
-    def test_raw_template_text_generation4(self):
-        """ As the test coverage tools dont detect code only used in UDFs,
-            lets add some explicit tests for the underlying code"""
-        pattern = r'\dr_\v'
-        match_pattern = re.compile(r"dr_[0-9]+")
-        test_template = TemplateGenerator(pattern)
-
-        test_values = [test_template.valueFromSingleTemplate(x, test_template.templates[0]) for x in range(1, 1000)]
 
         for test_value in test_values:
             assert test_value is not None

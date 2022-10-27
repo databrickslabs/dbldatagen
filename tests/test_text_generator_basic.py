@@ -92,15 +92,15 @@ class TestTextGeneratorBasic:
         for x in results[0:100]:
             assert patt.match(x), f"Expecting data '{x}'  to match pattern {patt}"
 
-    @pytest.mark.parametrize("sourceData, template, expectedOutput", [(np.arange(1000),
+    @pytest.mark.parametrize("sourceData, template, expectedOutput", [(np.arange(100000),
                                                                        r'53.123.\V.\V', r"53\.123\.105\.105"),
-                                                                      (np.arange(1000),
+                                                                      (np.arange(100000),
                                                                        r'\V.\V.\V.123', r"105\.105\.105\.123"),
                                                                       (np.arange(1000),
                                                                        r'\V.\W.\w.\W', r"105\.[A-Z]+\.[a-z]+\.[A-Z]+"),
-                                                                      ([[x, x + 1] for x in np.arange(1000)],
+                                                                      ([[x, x + 1] for x in np.arange(10000)],
                                                                        r'\v0.\v1.\w.\W', r"105\.106\.[a-z]+\.[A-Z]+"),
-                                                                      ([(x, x + 1) for x in [1,2,3,4,5,6,7,9,9,10]],
+                                                                      ([(x, x + 1) for x in range(10000)],
                                                                        r'\v0.\v1.\w.\W', r"105\.106\.[a-z]+\.[A-Z]+"),
                                                                       ])
     def test_template_value_substitution(self, sourceData, template, expectedOutput):
@@ -209,14 +209,12 @@ class TestTextGeneratorBasic:
         # calling the method to substitute the values on the masked placeholders
         masked_placeholders = np.ma.MaskedArray(placeholders, mask=False)
         masked_rnds = np.ma.MaskedArray(template_rnds, mask=False)
-        masked_base_values = np.ma.MaskedArray(data, mask=False)
-        masked_matrices = [masked_placeholders, masked_rnds, masked_base_values]
+        masked_matrices = [masked_placeholders, masked_rnds]
 
         # test logic for template expansion
         for x in range(len(text_gen1._templates)):
             masked_placeholders[template_choices_t != x, :] = np.ma.masked
             masked_rnds[template_choices_t != x, :] = np.ma.masked
-            masked_base_values[template_choices_t != x] = np.ma.masked
 
             # harden mask, preventing modifications
             for m in masked_matrices:
@@ -246,27 +244,3 @@ class TestTextGeneratorBasic:
         match_patt = re.compile(expectedOutput)
         for r in results:
             assert match_patt.match(r), f"expected '{r}' to match pattern '{expectedOutput}'"
-
-    def test_word_offset_generation(self):
-        _WORDS_LOWER = ['lorem', 'ipsum', 'dolor', 'sit', 'amet', 'consectetur', 'adipiscing', 'elit', 'sed', 'do',
-                        'eiusmod', 'tempor', 'incididunt', 'ut', 'labore', 'et', 'dolore', 'magna', 'aliqua', 'ut',
-                        'enim', 'ad', 'minim', 'veniam', 'quis', 'nostrud', 'exercitation', 'ullamco', 'laboris',
-                        'nisi', 'ut', 'aliquip', 'ex', 'ea', 'commodo', 'consequat', 'duis', 'aute', 'irure', 'dolor',
-                        'in', 'reprehenderit', 'in', 'voluptate', 'velit', 'esse', 'cillum', 'dolore', 'eu', 'fugiat',
-                        'nulla', 'pariatur', 'excepteur', 'sint', 'occaecat', 'cupidatat', 'non', 'proident', 'sunt',
-                        'in', 'culpa', 'qui', 'officia', 'deserunt', 'mollit', 'anim', 'id', 'est', 'laborum']
-
-        text_gen1 = TemplateGenerator(r"w.W.w.W")
-        text_gen1 = text_gen1.withRandomSeed(2112)
-
-        offsets = []
-
-        for x in range(100000):
-            offsets.append(text_gen1._getRandomWordOffset(len(_WORDS_LOWER)))
-
-        min_val = np.min(offsets)
-        max_val = np.max(offsets)
-        assert min_val == 0
-        assert max_val <= len(_WORDS_LOWER) - 1
-
-        print(min_val, max_val, len(_WORDS_LOWER))
