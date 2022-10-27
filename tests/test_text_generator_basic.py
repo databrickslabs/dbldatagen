@@ -223,7 +223,7 @@ class TestTextGeneratorBasic:
                 np.ma.harden_mask(m)
 
             # expand values into placeholders
-            text_gen1._applyTemplateStringsForTemplate(masked_base_values,
+            text_gen1._applyTemplateStringsForTemplate(pd_data,
                                                        text_gen1._templates[x],
                                                        masked_placeholders,
                                                        masked_rnds

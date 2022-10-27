@@ -490,7 +490,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
 
          Apply substitutions to placeholders using random numbers
 
-        :param baseValue: Pandas series of base value for applying template
+        :param baseValue: Pandas series or data frame of base value for applying template
         :param genTemplate: template string to control text generation
         :param placeholders: masked nparray of type np.object_ pre-allocated to hold strings emitted
         :param rnds: masked numpy 2d array of random numbers needed for vectorized generation
@@ -505,6 +505,30 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
         """
         assert baseValue.shape[0] == placeholders.shape[0]
         assert baseValue.shape[0] == rnds.shape[0]
+
+        _cached_values = {}
+
+        def _get_values_as_np_array():
+            """Get baseValue which is pd.Series or Dataframe as a numpy array and cache it"""
+            if "np_values" not in _cached_values:
+                _cached_values["np_values"] = baseValue.to_numpy()
+
+            return _cached_values["np_values"]
+
+        def _get_values_subelement(elem):
+            """Get element from base values as np array and cache it"""
+            cache_key = f"v_{elem}"
+            if cache_key not in _cached_values:
+                element_values = []
+                print("base value type", type(baseValue))
+                print("base value[0] type", type(baseValue[0]))
+                print("base value[0][0] type", type(baseValue[0][0]))
+                for x in range(baseValue.shape[0]):
+                    element_values.append(baseValue[x][elem])
+                #base_value_elements = baseValue.apply(lambda x: x[elem])
+                _cached_values[cache_key] = element_values
+
+            return _cached_values[cache_key]
 
         escape = False
         use_value = False
@@ -523,9 +547,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
                 escape = True
             elif use_value and ('0' <= char <= '9'):
                 val_index = int(char)
-                pd_base_values = pd.Series(list(baseValue))
-                placeholders[:, num_placeholders] = baseValue[:, val_index]
-                print("sample entry", baseValue[1])
+                placeholders[:, num_placeholders] = _get_values_subelement(val_index)
                 #placeholders[:, num_placeholders] = pd_base_values.apply(lambda x: str(x[val_index]))
                 num_placeholders += 1
                 use_value = False
@@ -600,11 +622,11 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
                 if following_char is not None and ('0' <= following_char <= '9'):
                     use_value = True
                 else:
-                    placeholders[:, num_placeholders] = baseValue
+                    placeholders[:, num_placeholders] = _get_values_as_np_array()
                     num_placeholders += 1
                     # retval.append(str(baseValue))
             elif char == 'V' and escape:
-                placeholders[:, num_placeholders] = baseValue
+                placeholders[:, num_placeholders] = _get_values_as_np_array()
                 # retval.append(str(baseValue))
                 num_placeholders += 1
                 escape = False
@@ -615,7 +637,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
                 escape = False
 
         if use_value:
-            placeholders[:, num_placeholders] = baseValue
+            placeholders[:, num_placeholders] = _get_values_as_np_array()
             # retval.append(str(baseValue))
             num_placeholders += 1
 
@@ -691,24 +713,19 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
         template_choices, template_rnd_bounds, template_rnds = self._prepare_random_bounds(v)
         template_choices_t = template_choices.T
 
-        baseValues = v.to_numpy()
-
         # create masked arrays, with all elements initially masked
         # as we substitute template expansion, we'll mask and unmask rows corresponding to each template
         # calling the method to substitute the values on the masked placeholders
         masked_placeholders = np.ma.MaskedArray(placeholders, mask=False)
         masked_rnds = np.ma.MaskedArray(template_rnds, mask=False)
-        masked_base_values = np.ma.MaskedArray(baseValues, mask=False)
-        masked_matrices = [masked_placeholders, masked_rnds, masked_base_values]
-
-        needsStringConversion = False
-
+        #masked_base_values = np.ma.MaskedArray(baseValues, mask=False)
+        masked_matrices = [masked_placeholders, masked_rnds]
 
         # test logic for template expansion
         for x in range(len(self._templates)):
             masked_placeholders[template_choices_t != x, :] = np.ma.masked
             masked_rnds[template_choices_t != x, :] = np.ma.masked
-            masked_base_values[template_choices_t != x] = np.ma.masked
+            #masked_base_values[template_choices_t != x] = np.ma.masked
 
             # harden mask, preventing modifications
             for m in masked_matrices:
@@ -716,7 +733,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
 
             # expand values into placeholders
             #self._applyTemplateStringsForTemplate(v.to_numpy(dtype=np.object_), #masked_base_values,
-            self._applyTemplateStringsForTemplate(baseValues,
+            self._applyTemplateStringsForTemplate(v,
                                                     #masked_base_values,
                                                     self._templates[x],
                                                     masked_placeholders,
@@ -729,6 +746,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
                 m.mask = False
 
         # join strings in placeholders
+        print(placeholders[1:10,:])
         output = pd.Series(list(placeholders))
         results = output.apply(lambda placeholder_items: "".join([str(elem) for elem in placeholder_items]))
 
