@@ -69,6 +69,16 @@ class DataGenerator:
         if sparkSession is None:
             sparkSession = SparkSession.getActiveSession()
 
+        self.sparkSession = sparkSession
+        if sparkSession is None:
+            raise DataGenError("""Spark session not initialized
+
+            The spark session attribute must be initialized in the DataGenerator initialization or there must be 
+            an active Spark session in effect.
+
+            i.e DataGenerator(sparkSession=spark, name="test", ...)
+            """)
+
         self.partitions = partitions if partitions is not None else sparkSession.sparkContext.defaultParallelism
 
         # check for old versions of args
@@ -124,18 +134,6 @@ class DataGenerator:
         self.buildPlanComputed = False
         self.withColumn(ColumnGenerationSpec.SEED_COLUMN, LongType(), nullable=False, implicit=True, omit=True)
         self._batchSize = batchSize
-
-        assert sparkSession is not None, "The spark session attribute must be initialized"
-
-        self.sparkSession = sparkSession
-        if sparkSession is None:
-            raise DataGenError("""Spark session not initialized
-
-            The spark session attribute must be initialized in the DataGenerator initialization or there must be 
-            an active Spark session in effect.
-
-            i.e DataGenerator(sparkSession=spark, name="test", ...)
-            """)
 
         # set up use of pandas udfs
         self._setupPandas(batchSize)
