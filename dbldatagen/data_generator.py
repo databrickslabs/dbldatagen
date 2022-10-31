@@ -10,10 +10,10 @@ import logging
 import re
 
 from pyspark.sql.types import LongType, IntegerType, StringType, StructType, StructField, DataType
+from pyspark.sql import SparkSession
 
 from .column_generation_spec import ColumnGenerationSpec
 from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME
-from .spark_singleton import SparkSingleton
 from .utils import ensure, topologicalSort, DataGenError, deprecated
 
 _OLD_MIN_OPTION = 'min'
@@ -67,7 +67,7 @@ class DataGenerator:
         self.__schema__ = None
 
         if sparkSession is None:
-            sparkSession = SparkSingleton.getInstance()
+            sparkSession = SparkSession.getActiveSession()
 
         self.partitions = partitions if partitions is not None else sparkSession.sparkContext.defaultParallelism
 
@@ -131,7 +131,8 @@ class DataGenerator:
         if sparkSession is None:
             raise DataGenError("""Spark session not initialized
 
-            The spark session attribute must be initialized in the DataGenerator initialization
+            The spark session attribute must be initialized in the DataGenerator initialization or there must be 
+            an active Spark session in effect.
 
             i.e DataGenerator(sparkSession=spark, name="test", ...)
             """)
