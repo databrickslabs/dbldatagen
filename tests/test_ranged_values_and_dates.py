@@ -12,7 +12,7 @@ from dbldatagen import DateRange
 
 # global spark
 
-spark = dg.SparkSingleton.getLocalInstance("ranged values")
+spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
 
 class TestRangedValuesAndDates(unittest.TestCase):
