@@ -10,8 +10,7 @@ import logging
 import re
 
 from pyspark.sql.types import LongType, IntegerType, StringType, StructType, StructField, DataType
-from pyspark.sql import SparkSession
-
+from .spark_singleton import SparkSingleton
 from .column_generation_spec import ColumnGenerationSpec
 from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME
 from .utils import ensure, topologicalSort, DataGenError, deprecated
@@ -67,7 +66,7 @@ class DataGenerator:
         self.__schema__ = None
 
         if sparkSession is None:
-            sparkSession = SparkSession.getActiveSession()
+            sparkSession = SparkSingleton.getInstance()
 
         self.sparkSession = sparkSession
         if sparkSession is None:
@@ -78,6 +77,8 @@ class DataGenerator:
 
             i.e DataGenerator(sparkSession=spark, name="test", ...)
             """)
+
+        assert sparkSession.sparkContext is not None, "Expecting active session to have valid sparkContext"
 
         self.partitions = partitions if partitions is not None else sparkSession.sparkContext.defaultParallelism
 
@@ -257,7 +258,7 @@ class DataGenerator:
 
         output = ["", "Data generation plan", "====================",
                   f"spec=DateGenerator(name={self.name}, rows={self._rowCount}, startingId={self.starting_id}, partitions={self.partitions})"
-                  , ")", "", f"column build order: {self._buildOrder}", "", "build plan:"]
+            , ")", "", f"column build order: {self._buildOrder}", "", "build plan:"]
 
         for plan_action in self._buildPlan:
             output.append(" ==> " + plan_action)
@@ -780,7 +781,8 @@ class DataGenerator:
                 df1 = df1.withColumnRenamed("id", ColumnGenerationSpec.SEED_COLUMN)
 
         else:
-            status = (f"Generating streaming data frame with ids from {startId} to {end_id} with {id_partitions} partitions")
+            status = (
+                f"Generating streaming data frame with ids from {startId} to {end_id} with {id_partitions} partitions")
             self.logger.info(status)
             self.executionHistory.append(status)
 
