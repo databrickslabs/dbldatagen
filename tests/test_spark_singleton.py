@@ -28,4 +28,5 @@ class TestSparkSingleton:
 
     def test_local_spark_instance3(self, setupLogging):
         sparkSession = dg.SparkSingleton.getLocalInstance(useAllCores=False)
+        sparkSession.stop()
         assert sparkSession is not None
