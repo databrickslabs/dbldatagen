@@ -66,19 +66,14 @@ class DataGenerator:
         self.__schema__ = None
 
         if sparkSession is None:
-            sparkSession = SparkSingleton.getInstance()
+            sparkSession = SparkSingleton.getLocalInstance()
 
         self.sparkSession = sparkSession
-        if sparkSession is None:
-            raise DataGenError("""Spark session not initialized
 
-            The spark session attribute must be initialized in the DataGenerator initialization or there must be 
-            an active Spark session in effect.
-
-            i.e DataGenerator(sparkSession=spark, name="test", ...)
-            """)
-
-        assert sparkSession.sparkContext is not None, "Expecting active session to have valid sparkContext"
+        # if the active Spark session is stopped, you may end up with a valid SparkSession object but the underlying
+        # SparkContext will be invalid
+        assert sparkSession is not None, "Spark session not initialized"
+        assert sparkSession.sparkContext is not None, "Expecting spark session to have valid sparkContext"
 
         self.partitions = partitions if partitions is not None else sparkSession.sparkContext.defaultParallelism
 
