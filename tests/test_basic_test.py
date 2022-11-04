@@ -1,6 +1,5 @@
 import logging
 import pytest
-import unittest
 
 from pyspark.sql import functions as F
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType
@@ -95,6 +94,7 @@ class TestBasicOperation:
 
         assert fieldsFromGenerator == fieldsFromSchema
 
+        assert "_id" == dgspec.seedColumnName
         assert "_id" in fieldsFromGenerator
         assert "id" not in fieldsFromGenerator
 
