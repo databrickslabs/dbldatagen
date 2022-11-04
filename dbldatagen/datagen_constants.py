@@ -30,5 +30,5 @@ RANDOM_SEED_HASH_FIELD_NAME = "hash_fieldname"
 DEFAULT_SEED_COLUMN = "id"
 
 # this is the column name produced by `spark.range`
-# dont change unless semantics of `spark,range` changes
+# dont change unless semantics of `spark.range` changes
 SPARK_RANGE_COLUMN = "id"

@@ -68,7 +68,7 @@ class ColumnGenerationSpec(object):
     :param debug: If True, output debugging log statements. Defaults to False.
     :param verbose: If True, output logging statements at the info level. If False (the default),
                     only output warning and error logging statements.
-    :param seedColumn: if supplied, specifies seed column name
+    :param seedColumnName: if supplied, specifies seed column name
 
     For full list of options, see :doc:`/reference/api/dbldatagen.column_spec_options`.
     """
@@ -88,7 +88,7 @@ class ColumnGenerationSpec(object):
     def __init__(self, name, colType=None, minValue=0, maxValue=None, step=1, prefix='', random=False,
                  distribution=None, baseColumn=None, randomSeed=None, randomSeedMethod=None,
                  implicit=False, omit=False, nullable=True, debug=False, verbose=False,
-                 seedColumn=DEFAULT_SEED_COLUMN,
+                 seedColumnName=DEFAULT_SEED_COLUMN,
                  **kwargs):
 
         # set up logging
@@ -108,11 +108,11 @@ class ColumnGenerationSpec(object):
         self._initialBuildPlan = []  # the build plan for the column - descriptive only
         self.executionHistory = []  # the execution history for the column
 
-        self._seedColumn = seedColumn
+        self._seedColumnName = seedColumnName
 
         # If no base column is specified, assume its dependent on the seed column
         if baseColumn is None:
-            baseColumn = self._seedColumn
+            baseColumn = self._seedColumnName
 
         # to allow for open ended extension of many column attributes, we use a few specific
         # parameters and pass the rest as keyword arguments
@@ -347,10 +347,10 @@ class ColumnGenerationSpec(object):
 
         :return: base columns as list with dependency on seed column added
         """
-        if self.baseColumn != self._seedColumn:
-            return list(set(self.baseColumns + [self._seedColumn]))
+        if self.baseColumn != self._seedColumnName:
+            return list(set(self.baseColumns + [self._seedColumnName]))
         else:
-            return [self._seedColumn]
+            return [self._seedColumnName]
 
     def setBaseColumnDatatypes(self, columnDatatypes):
         """ Set the data types for the base columns

@@ -75,7 +75,7 @@ class TestBasicOperation:
     def test_alt_seed_column(self):
         dgspec = (dg.DataGenerator(sparkSession=spark, name="alt_data_set", rows=10000,
                                              partitions=4, seedMethod='hash_fieldname', verbose=True,
-                                             seedColumn="_id")
+                                             seedColumnName="_id")
                             .withIdOutput()
                             .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
                                         numColumns=4)
@@ -107,7 +107,7 @@ class TestBasicOperation:
     def test_seed_column_collision1c(self):
         dgspec = (dg.DataGenerator(sparkSession=spark, name="alt_data_set", rows=10000,
                                    partitions=4, seedMethod='hash_fieldname', verbose=True,
-                                   seedColumn="_id")
+                                   seedColumnName="_id")
                             .withIdOutput()
                             .withColumn("id", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
                                         numColumns=4)
@@ -126,7 +126,7 @@ class TestBasicOperation:
     def test_seed_column_collision1d(self):
         dgspec = (dg.DataGenerator(sparkSession=spark, name="alt_data_set", rows=10000,
                                    partitions=4, seedMethod='hash_fieldname', verbose=True,
-                                   seedColumn="_id")
+                                   seedColumnName="_id")
                             .withColumn("id", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
                                         numColumns=4)
                             .withColumn("code1", IntegerType(), min=100, max=200)
@@ -144,7 +144,7 @@ class TestBasicOperation:
     def test_seed_column_collision1e(self):
         dgspec = (dg.DataGenerator(sparkSession=spark, name="alt_data_set", rows=10000,
                                    partitions=4, seedMethod='hash_fieldname', verbose=True,
-                                   seedColumn="_id")
+                                   seedColumnName="_id")
                             .withColumn("id", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
                                         numColumns=4)
                             .withColumn("code1", IntegerType(), min=100, max=200)
