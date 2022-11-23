@@ -114,15 +114,22 @@ To run the tests using a `pipenv` environment:
   - Run `make test-with-html-report` to generate test coverage report in `htmlcov/inxdex.html`
 
 # Using the Databricks Labs data generator
-The release binaries can be accessed at:
-- Databricks Labs Github Data Generator releases - https://github.com/databrickslabs/dbldatagen/releases
+The recommended method for installation is to install from the PyPi package
 
 You can install the library as a notebook scoped library when working within the Databricks 
 notebook environment through the use of a `%pip` cell in your notebook.
 
 To install as a notebook-scoped library, create and execute a notebook cell with the following text:
 
-> `%pip install git+https://github.com/databrickslabs/dbldatagen`
+> `%pip install dbldatagen`
+
+This installs from the PyPi package
+
+You can also install from release binaries or directly from the Github sources.
+
+The release binaries can be accessed at:
+- Databricks Labs Github Data Generator releases - https://github.com/databrickslabs/dbldatagen/releases
+
 
 The `%pip install` method also works on the Databricks Community Edition.
 
