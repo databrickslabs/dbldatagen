@@ -166,8 +166,6 @@ class DataGenerator:
         if sparkSession is None:
             sparkSession = SparkSingleton.getInstance()
 
-        assert sparkSession is not None, "The spark session attribute must be initialized"
-
         self.sparkSession = sparkSession
         if sparkSession is None:
             raise DataGenError("""Spark session not initialized
