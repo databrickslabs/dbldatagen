@@ -27,7 +27,7 @@ See the contents of the file `python/require.txt` to see the Python package depe
 * Use of data generator to generate static and streaming data sources in Databricks Delta Live Tables
 * added support for install from PyPi
 
-### version 0.3.0-rc1
+### version 0.3.0
 
 The code for the Databricks Data Generator has the following dependencies
 

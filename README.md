@@ -57,7 +57,7 @@ details of use and many examples.
 
 Release notes and details of the latest changes for this specific release
 can be found in the Github repository
-[here](https://github.com/databrickslabs/dbldatagen/blob/release/v0.2.1/CHANGELOG.md)
+[here](https://github.com/databrickslabs/dbldatagen/blob/release/v0.3.0/CHANGELOG.md)
 
 # Installation
 

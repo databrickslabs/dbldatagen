@@ -12,12 +12,7 @@ import re
 from pyspark.sql.types import LongType, IntegerType, StringType, StructType, StructField, DataType
 from .spark_singleton import SparkSingleton
 from .column_generation_spec import ColumnGenerationSpec
-<<<<<<< HEAD
 from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, MIN_SPARK_VERSION
-from .spark_singleton import SparkSingleton
-=======
-from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME
->>>>>>> origin/master
 from .utils import ensure, topologicalSort, DataGenError, deprecated
 from . _version import _get_spark_version
 
@@ -137,7 +132,6 @@ class DataGenerator:
         self.withColumn(ColumnGenerationSpec.SEED_COLUMN, LongType(), nullable=False, implicit=True, omit=True)
         self._batchSize = batchSize
 
-<<<<<<< HEAD
         # set up spark session
         self._setupSparkSession(sparkSession)
 
@@ -185,13 +179,7 @@ class DataGenerator:
 
         # check if the spark version meets the minimum requirements and warn if not
         sparkVersion = sparkSession.version
-
         self._checkSparkVersion(sparkVersion, MIN_SPARK_VERSION)
-
-=======
-        # set up use of pandas udfs
-        self._setupPandas(batchSize)
->>>>>>> origin/master
 
     def _setupPandas(self, pandasBatchSize):
         """
