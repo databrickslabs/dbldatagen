@@ -60,6 +60,14 @@ dev-docs: dev-install
 	@echo "$(OK_COLOR)=> Creating docs ...$(NO_COLOR)"
 	@cd docs && make docs
 
+prep-doc-release:
+	@echo "$(OK_COLOR)=> Preparing docs for release ...$(NO_COLOR)"
+	cp -r docs/build/html docs/public_docs/
+	touch docs/.nojekyll
+	touch docs/public_docs/.nojekyll
+
+
+
 # Tests
 test: export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 
@@ -144,6 +152,12 @@ new_artifact: buildenv
 	@echo "$(OK_COLOR)=> committing new artifact$(NO_COLOR)"
 	-git rm --cached `pwd`/dist/"*.whl"
 	git add -f `pwd`/dist/*.whl
+
+dev-test-pkg: dev-dist
+	@echo "Building test package for Test Pypi..."
+	rm dist/*.txt
+	python3 -m twine upload --repository testpypi dist/*
+
 
 
 dist/dist_flag.txt: dist

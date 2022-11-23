@@ -5,26 +5,21 @@
 
 # MAGIC %md ### First Steps ###
 # MAGIC 
-# MAGIC You will need to import the data generator library to workspace in order to use it. You can find the latest releases in the [``dbldatagen``](https://github.com/databrickslabs/dbldatagen) github repository
-# MAGIC on the [releases pane](https://github.com/databrickslabs/dbldatagen/releases) 
-# MAGIC 
-# MAGIC Download the wheel for the latest release from there.
-# MAGIC 
-# MAGIC Steps:
-# MAGIC 1. In your Databricks environment, using the left hand pane to select your workspace, create a library entry
-# MAGIC for the test data generator library
-# MAGIC     1. if there's an older library already installed:
-# MAGIC         1. uninstall it from existing clusters that it is installed on
-# MAGIC         9. restart the cluster(s) to have the uninstall take effect 
-# MAGIC         9. move the library to trash
-# MAGIC     9. use the create option for the workspace folder
-# MAGIC     9. select library 
-# MAGIC     9. select Python Wheel library type (by setting the library type option to `python whl`)
-# MAGIC 9. Once the library reference is created, you can install it on your clusters. You may need to restart them
-# MAGIC to take effect
-# MAGIC     
-# MAGIC 9. You can now refer to the library in your notebooks. Note the library is a Python 3 wheel library and
-# MAGIC must be run on a compatible cluster
+# MAGIC You will need to import the data generator library in order to use it.
+# MAGIC
+# MAGIC Within a notebook, you can install the package from PyPi using `pip install` to install the
+# MAGIC package with the folling command:
+# MAGIC
+# MAGIC ```
+# MAGIC %pip install dbldatagen
+# MAGIC ```
+# MAGIC
+# MAGIC The [Installation Notes](https://databrickslabs.github.io/dbldatagen/public_docs/installation_notes.html)
+# MAGIC provides details on other mechanisms for installation.
+
+# COMMAND ----------
+
+# MAGIC %pip install dbldatagen
 
 # COMMAND ----------
 
