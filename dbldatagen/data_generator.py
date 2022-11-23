@@ -10,10 +10,9 @@ import logging
 import re
 
 from pyspark.sql.types import LongType, IntegerType, StringType, StructType, StructField, DataType
-
+from .spark_singleton import SparkSingleton
 from .column_generation_spec import ColumnGenerationSpec
 from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME
-from .spark_singleton import SparkSingleton
 from .utils import ensure, topologicalSort, DataGenError, deprecated
 
 _OLD_MIN_OPTION = 'min'
@@ -31,7 +30,7 @@ class DataGenerator:
     :param rows: = amount of rows to generate
     :param startingId: = starting value for generated seed column
     :param randomSeed: = seed for random number generator
-    :param partitions: = number of partitions to generate
+    :param partitions: = number of partitions to generate, if not provided, uses `spark.sparkContext.defaultParallelism`
     :param verbose: = if `True`, generate verbose output
     :param batchSize: = UDF batch number of rows to pass via Apache Arrow to Pandas UDFs
     :param debug: = if set to True, output debug level of information
@@ -65,7 +64,18 @@ class DataGenerator:
         self._rowCount = rows
         self.starting_id = startingId
         self.__schema__ = None
-        self.partitions = partitions if partitions is not None else 10
+
+        if sparkSession is None:
+            sparkSession = SparkSingleton.getLocalInstance()
+
+        self.sparkSession = sparkSession
+
+        # if the active Spark session is stopped, you may end up with a valid SparkSession object but the underlying
+        # SparkContext will be invalid
+        assert sparkSession is not None, "Spark session not initialized"
+        assert sparkSession.sparkContext is not None, "Expecting spark session to have valid sparkContext"
+
+        self.partitions = partitions if partitions is not None else sparkSession.sparkContext.defaultParallelism
 
         # check for old versions of args
         if "starting_id" in kwargs:
@@ -120,20 +130,6 @@ class DataGenerator:
         self.buildPlanComputed = False
         self.withColumn(ColumnGenerationSpec.SEED_COLUMN, LongType(), nullable=False, implicit=True, omit=True)
         self._batchSize = batchSize
-
-        if sparkSession is None:
-            sparkSession = SparkSingleton.getInstance()
-
-        assert sparkSession is not None, "The spark session attribute must be initialized"
-
-        self.sparkSession = sparkSession
-        if sparkSession is None:
-            raise DataGenError("""Spark session not initialized
-
-            The spark session attribute must be initialized in the DataGenerator initialization
-
-            i.e DataGenerator(sparkSession=spark, name="test", ...)
-            """)
 
         # set up use of pandas udfs
         self._setupPandas(batchSize)
@@ -257,7 +253,7 @@ class DataGenerator:
 
         output = ["", "Data generation plan", "====================",
                   f"spec=DateGenerator(name={self.name}, rows={self._rowCount}, startingId={self.starting_id}, partitions={self.partitions})"
-                  , ")", "", f"column build order: {self._buildOrder}", "", "build plan:"]
+            , ")", "", f"column build order: {self._buildOrder}", "", "build plan:"]
 
         for plan_action in self._buildPlan:
             output.append(" ==> " + plan_action)
@@ -780,7 +776,8 @@ class DataGenerator:
                 df1 = df1.withColumnRenamed("id", ColumnGenerationSpec.SEED_COLUMN)
 
         else:
-            status = (f"Generating streaming data frame with ids from {startId} to {end_id} with {id_partitions} partitions")
+            status = (
+                f"Generating streaming data frame with ids from {startId} to {end_id} with {id_partitions} partitions")
             self.logger.info(status)
             self.executionHistory.append(status)
 
