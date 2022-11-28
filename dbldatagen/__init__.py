@@ -24,7 +24,8 @@ Most of the other classes are used for internal purposes only
 """
 
 from .data_generator import DataGenerator
-from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_RANDOM, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME
+from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_RANDOM, RANDOM_SEED_FIXED, \
+                               RANDOM_SEED_HASH_FIELD_NAME, MIN_PYTHON_VERSION, MIN_SPARK_VERSION
 from .utils import ensure, topologicalSort, mkBoundsList, coalesce_values, \
     deprecated, parse_time_interval, DataGenError
 from ._version import __version__
@@ -46,12 +47,19 @@ __all__ = ["data_generator", "data_analyzer", "schema_parser", "daterange", "nra
            "text_generator_plugins"
            ]
 
+def python_version_check(python_version_expected):
+    """Check against Python version
 
-def python_version_check():
+       Allows minimum version to be passed in to facilitate unit testing
+
+       :param python_version_expected: = minimum version of python to support as tuple e.g (3,6)
+       :return: True if passed
+
+        """
     import sys
-    if not sys.version_info >= (3, 6):
-        raise RuntimeError("Minimum version of Python supported is 3.6")
+    return sys.version_info >= python_version_expected
 
 
 # lets check for a correct python version or raise an exception
-python_version_check()
+if not python_version_check(MIN_PYTHON_VERSION):
+    raise RuntimeError(f"Minimum version of Python supported is {MIN_PYTHON_VERSION[0]}.{MIN_PYTHON_VERSION[1]}")

@@ -45,7 +45,7 @@ used in other computations
 * Generating values to conform to a schema or independent of an existing schema
 * use of SQL expressions in test data generation
 * plugin mechanism to allow use of 3rd party libraries such as Faker
-* Use of data generator to generate data sources in Databricks Delta Live Tables
+* Use within a Databricks Delta Live Tables pipeline as a synthetic data generation source
 
 Details of these features can be found in the online documentation  -
  [online documentation](https://databrickslabs.github.io/dbldatagen/public_docs/index.html). 
@@ -57,7 +57,7 @@ details of use and many examples.
 
 Release notes and details of the latest changes for this specific release
 can be found in the Github repository
-[here](https://github.com/databrickslabs/dbldatagen/blob/release/v0.2.1/CHANGELOG.md)
+[here](https://github.com/databrickslabs/dbldatagen/blob/release/v0.3.0/CHANGELOG.md)
 
 # Installation
 
@@ -75,9 +75,10 @@ The documentation [installation notes](https://databrickslabs.github.io/dbldatag
 contains details of installation using alternative mechanisms.
 
 ## Compatibility 
-The Databricks Labs data generator framework can be used with Pyspark 3.x and Python 3.6 or later
+The Databricks Labs data generator framework can be used with Pyspark 3.1.2 and Python 3.8 or later. These are 
+compatible with the Databricks runtime 9.1 LTS and later releases.
 
-However prebuilt releases are tested against Pyspark 3.0.1 (compatible with the Databricks runtime 7.3 LTS 
+Older prebuilt releases are tested against Pyspark 3.0.1 (compatible with the Databricks runtime 7.3 LTS 
 or later) and built with Python 3.7.5
 
 For full library compatibility for a specific Databricks Spark release, see the Databricks 
