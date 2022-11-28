@@ -27,7 +27,7 @@ prepare: clean
 
 create-dev-env:
 	@echo "$(OK_COLOR)=> making conda dev environment$(NO_COLOR)"
-	conda create -n $(ENV_NAME) python=3.8
+	conda create -n $(ENV_NAME) python=3.8.10
 
 create-dev-env-321:
 	@echo "$(OK_COLOR)=> making conda dev environment for Spark 3.2.1$(NO_COLOR)"
