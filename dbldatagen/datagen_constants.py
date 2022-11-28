@@ -32,3 +32,7 @@ DEFAULT_SEED_COLUMN = "id"
 # this is the column name produced by `spark.range`
 # dont change unless semantics of `spark.range` changes
 SPARK_RANGE_COLUMN = "id"
+
+# minimum versions for version checks
+MIN_PYTHON_VERSION = (3, 8)
+MIN_SPARK_VERSION = (3, 1, 2)

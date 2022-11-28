@@ -268,6 +268,36 @@ class TestBasicOperation:
 
         assert df_check.count() == 0
 
+    def test_default_spark_instance(self):
+        """ Test different types of seeding for random values"""
+        ds1 = (dg.DataGenerator( name="test_data_set1", rows=1000, seedMethod='hash_fieldname')
+               .withIdOutput()
+               .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
+               .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+               .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+               .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+
+               )
+
+        df = ds1.build()
+        assert df.count() == 1000
+
+    def test_default_spark_instance2(self):
+        """ Test different types of seeding for random values"""
+        ds1 = (dg.DataGenerator( name="test_data_set1", rows=1000, seedMethod='hash_fieldname')
+               .withIdOutput()
+               .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
+               .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+               .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+               .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+
+               )
+
+        ds1._setupSparkSession(None)
+
+        sparkSession = ds1.sparkSession
+        assert sparkSession is not None
+
     def test_multiple_hash_methods(self):
         """ Test different types of seeding for random values"""
         ds1 = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, seedMethod='hash_fieldname')
