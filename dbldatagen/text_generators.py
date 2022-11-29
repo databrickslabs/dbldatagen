@@ -624,7 +624,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
         # calling the method to substitute the values on the masked placeholders
         masked_placeholders = np.ma.MaskedArray(placeholders, mask=False)
         masked_rnds = np.ma.MaskedArray(template_rnds, mask=False)
-        #masked_base_values = np.ma.MaskedArray(baseValues, mask=False)
+        # masked_base_values = np.ma.MaskedArray(baseValues, mask=False)
         masked_matrices = [masked_placeholders, masked_rnds]
 
         # test logic for template expansion
