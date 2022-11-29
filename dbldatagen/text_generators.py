@@ -571,8 +571,6 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
         :return: vector of templates chosen, template random bounds (1 for each substitution) and selected
                  random numbers for each row (as numpy array)
         """
-        placeholders = np.full( (v.size, self._max_placeholders), '', dtype=np.object_ )
-
         # choose templates
         num_templates = len(self.templates)
         assert num_templates >= 1, "Expecting at least 1 template"

@@ -96,6 +96,26 @@ class TestTextGeneration:
 
             assert low <= random_value <= high
 
+    @pytest.mark.parametrize("template, escapeSpecial, expectedTemplates",
+                             [(r'\n.\n.\n.\n', True, 1),
+                              (r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd', False, 3),
+                              (r'(\d\d\d)-\d\d\d-\d\d\d\d|1(\d\d\d) \d\d\d-\d\d\d\d|\d\d\d \d\d\d\d\d\d\d', True, 3),
+                              (r'\dr_\v',  False, 1),
+                              (r'\w.\w@\w.com|\w@\w.co.u\k',  False, 2),
+                              ])
+    def test_template_generator_properties(self, template, escapeSpecial, expectedTemplates):
+        test_template = TemplateGenerator(template, escapeSpecialChars=escapeSpecial)
+
+        repr_desc = repr(test_template)
+        assert repr_desc is not None and len(repr_desc.strip()) > 0
+
+        str_desc = str(test_template)
+        assert str_desc is not None and len(str_desc.strip()) > 0
+
+        assert test_template.templates is not None
+        assert len(test_template.templates) == expectedTemplates
+
+
     def test_simple_data_template(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count,
                                          partitions=self.partitions_requested)
@@ -171,6 +191,30 @@ class TestTextGeneration:
         assert counts['email_count'] >= 100
         assert counts['ip_addr_count'] >= 100
         assert counts['phone_count'] >= 100
+
+    def test_raw_iltext_text_generation(self):
+        """ As the test coverage tools dont detect code only used in UDFs,
+            lets add some explicit tests for the underlying code"""
+        import numpy as np
+        # test the IL Text generator
+        tg1 = dg.ILText(paragraphs=(1, 4), sentences=(2, 6), words=(1, 8))
+
+        # test the repr
+        desc = repr(tg1)
+        assert desc is not None and len(desc.strip()) > 0
+
+        # now test generation of text
+        base_rows = np.arange(1000)
+
+        test_values = tg1.generateText(base_rows, base_rows.size)
+
+        data = test_values.tolist()
+        match_pattern = re.compile(r"(\s?[A-Z]([a-z ]+)\.\s*)+")
+
+        # check that paras only contains text
+        for test_value in data:
+            assert test_value is not None
+            assert match_pattern.match(test_value)
 
     def test_large_ILText_driven_data_generation(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000000,
