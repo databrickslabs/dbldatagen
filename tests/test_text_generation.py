@@ -60,6 +60,42 @@ class TestTextGeneration:
         random_values1 = rng1.integers(10, 20, dtype=np.int32)
         assert 10 <= random_values1 <= 20
 
+    @pytest.mark.parametrize("template, escapeSpecial, low, high, useSystemLib",
+                             [
+                              (r'\n.\n.\n.\n',  False, 0, 15, False),
+                              (r'\n.\n.\n.\n',  False, 20, 35, False),
+                              (r'\n.\n.\n.\n',  False, 15, None, False),
+                              (r'\n.\n.\n.\n',  False, 15, -1, False),
+                              (r'\n.\n.\n.\n',  False, 0, 15, True),
+                              (r'\n.\n.\n.\n',  False, 20, 35, True),
+                              (r'\n.\n.\n.\n',  False, 15, None, True),
+                              (r'\n.\n.\n.\n',  False, 15, -1, True),
+                              ])
+    def test_random_number_generator(self, template, escapeSpecial, low, high, useSystemLib):
+        """ As the test coverage tools dont detect code only used in UDFs,
+            lets add some explicit tests for the underlying code"""
+        test_template = TemplateGenerator(template, escapeSpecialChars=escapeSpecial)
+
+        rng1 = test_template.getNPRandomGenerator()
+
+        for x in range(1,1000):
+            if useSystemLib:
+                if high is not None:
+                    random_value = test_template._getRandomInt(low, high)
+                else:
+                    random_value = test_template._getRandomInt(low)
+            else:
+                if high is not None:
+                    random_value = test_template._getRandomInt(low, high, rng1)
+                else:
+                    random_value = test_template._getRandomInt(low, rng=rng1)
+
+            if high is None or high == -1:
+                high = low
+                low = 0
+
+            assert low <= random_value <= high
+
     def test_simple_data_template(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count,
                                          partitions=self.partitions_requested)
