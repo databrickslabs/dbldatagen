@@ -8,7 +8,7 @@ from pyspark.sql.types import BooleanType, DateType
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, TimestampType
 
 import dbldatagen as dg
-from dbldatagen import TemplateGenerator
+from dbldatagen import TemplateGenerator, TextGenerator
 
 schema = StructType([
     StructField("PK1", StringType(), True),
@@ -43,6 +43,22 @@ class TestTextGeneration:
     testDataSpec = None
     row_count = 100000
     partitions_requested = 4
+
+    def test_text_generator_basics(self):
+        import numpy as np
+
+        # test the random humber generator
+        tg1 = TextGenerator()
+
+        # test the repr
+        desc = repr(tg1)
+        assert desc is not None and len(desc.strip()) > 0
+
+        rng1 = tg1.getNPRandomGenerator()
+
+        # get some integers
+        random_values1 = rng1.integers(10, 20, dtype=np.int32)
+        assert 10 <= random_values1 <= 20
 
     def test_simple_data_template(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count,

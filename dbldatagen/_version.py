@@ -33,5 +33,18 @@ def get_version(version):
     return version_info
 
 
-__version__ = "0.2.1"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpversion
+__version__ = "0.3.0"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpversion
 __version_info__ = get_version(__version__)
+
+
+def _get_spark_version(sparkVersion):
+    try:
+        r = re.compile(r'(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(?P<release>.*)')
+        major, minor, patch, release = r.match(sparkVersion).groups()
+        spark_version_info = VersionInfo(int(major), int(minor), int(patch), release, build="0")
+    except (RuntimeError, AttributeError):
+        spark_version_info = VersionInfo(major=3, minor=0, patch=1, release="unknown", build="0")
+        logging.warning("Could not parse spark version - using assumed Spark Version : %s", spark_version_info)
+
+    return spark_version_info
+

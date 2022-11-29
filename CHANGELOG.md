@@ -23,6 +23,30 @@ See the contents of the file `python/require.txt` to see the Python package depe
 * renamed packaging to `dbldatagen`
 * Releases now available at https://github.com/databrickslabs/dbldatagen/releases
 * code tidy up and rename of options
-* added text generation plugin support for python functions and 3rd party libraries such as Faker
+* added text generation plugin support for python functions and 3rd party libraries
 * Use of data generator to generate static and streaming data sources in Databricks Delta Live Tables
 * added support for install from PyPi
+
+### version 0.3.0
+
+The code for the Databricks Data Generator has the following dependencies
+
+* Requires Databricks runtime 9.1 LTS or later
+* Requires Spark 3.1.2 or later 
+* Requires Python 3.8.10 or later
+
+While the data generator framework does not require all libraries used by the runtimes, where a library from 
+the Databricks runtime is used, it will use the version found in the Databricks runtime for 9.1 LTS or later.
+You can use older versions of the Databricks Labs Data Generator by referring to that explicit version.
+
+To use an older DB runtime version in your notebook, you can use the following code in your notebook:
+
+```commandline
+%pip install git+https://github.com/databrickslabs/dbldatagen@dbr_7_3_LTS_compat
+```
+
+See the [Databricks runtime release notes](https://docs.databricks.com/release-notes/runtime/releases.html) 
+ for the full list of dependencies.
+
+This can be found at : https://docs.databricks.com/release-notes/runtime/releases.html
+
