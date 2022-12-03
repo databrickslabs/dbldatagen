@@ -56,7 +56,6 @@ class TestBasicOperation:
 
     def test_basic_data_generation(self, testData):
         """Test basic data generation of distinct values"""
-
         counts = testData.agg(F.countDistinct("id").alias("id_count"),
                               F.countDistinct("code1").alias("code1_count"),
                               F.countDistinct("code2").alias("code2_count"),

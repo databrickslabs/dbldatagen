@@ -4,7 +4,9 @@
 
 See the contents of the file `python/require.txt` to see the Python package dependencies
 
-### Features
+### Version 0.2.1
+
+#### Features
 * Uses pipenv for main build process
 * Supports Conda based development build process
 * Uses `pytest-cov` to track unit test coverage
@@ -47,44 +49,4 @@ See the [Databricks runtime release notes](https://docs.databricks.com/release-n
  for the full list of dependencies.
 
 This can be found at : https://docs.databricks.com/release-notes/runtime/releases.html
-
-## Changelog
-All notable changes to this project will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project follows the guidelines of [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-[Please read through the Keep a Changelog (~5min)](https://keepachangelog.com/en/1.0.0/).
-
-## [UNRELEASED] - YYYY-MM-DD
-
-### Fixed
-
-- Added ability to override column name used for `id` column 
-- Fixes for parsing time strings with seconds, milliseconds 
-
-
-### Changed
-- Added DataGenerator method `withSeedColumnOutput`
-- Deprecated DataGenerator method `withIdOutput`
-- changed layout of `CHANGELOG.md`
-- Updated tests for `utils` class to pytest style instead of unittest style
-
-----
-> Unreleased changes must be tracked above this line.
-> When releasing, Copy the changelog to below this line, with proper version and date.
-> And empty the **[Unreleased]** section above.
-----
-
-## Version 0.2.1
-
-### Fixed
-- doc updates
-- minor bug fixes
-- package updates
-
-### Changed
-- package dependencies 
-- updated Html documentation to reflect Delta Live Tables compatibility
-
 
