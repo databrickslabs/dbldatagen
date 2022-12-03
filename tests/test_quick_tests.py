@@ -698,6 +698,10 @@ class TestQuickTests(unittest.TestCase):
         rowCount = nullRowsDF.count()
         self.assertEqual(rowCount, 0)
 
+    def test_version_info(self):
+        # test access to version info without explicit import
+        print("Data generator version", dg.__version__)
+
 
 # run the tests
 # if __name__ == '__main__':

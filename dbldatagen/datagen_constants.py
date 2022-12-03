@@ -26,9 +26,6 @@ RANDOM_SEED_RANDOM_FLOAT = -1.0
 RANDOM_SEED_FIXED = "fixed"
 RANDOM_SEED_HASH_FIELD_NAME = "hash_fieldname"
 
-# constants related to seed column
-DEFAULT_SEED_COLUMN = "id"
-
-# this is the column name produced by `spark.range`
-# dont change unless semantics of `spark,range` changes
-SPARK_RANGE_COLUMN = "id"
+# minimum versions for version checks
+MIN_PYTHON_VERSION = (3, 8)
+MIN_SPARK_VERSION = (3, 1, 2)

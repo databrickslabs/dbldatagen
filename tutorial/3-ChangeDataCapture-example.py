@@ -1,4 +1,9 @@
 # Databricks notebook source
+# DBTITLE 1,Install package from PyPi
+# MAGIC %pip install dbldatagen
+
+# COMMAND ----------
+
 # MAGIC %md ###Change Data Capture
 
 # COMMAND ----------
