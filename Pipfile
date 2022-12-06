@@ -22,4 +22,4 @@ recommonmark = "*"
 sphinx-markdown-builder = "*"
 
 [requires]
-python_version = "3.8.10"
+python_version = "3.8.11"
