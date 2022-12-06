@@ -47,9 +47,6 @@ jobs:
       - name: Run tests
         run: make test
 
-      - name: Check for updated files
-        run: git status
-
       - name: Publish test coverage to coverage site
         uses: codecov/codecov-action@v2
         with:
