@@ -34,16 +34,16 @@ jobs:
       #     key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
       #     restore-keys: |
       #       ${{ runner.os }}-go-
-      
-      - name: Install 
-        run: pip install pipenv
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pipenv'
-      
+
+      - name: Install 
+        run: pip install pipenv
+
       - name: Run tests
         run: make test
 
