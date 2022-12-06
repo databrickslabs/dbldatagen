@@ -19,7 +19,7 @@ class TestRanges(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        pass
+        print("test")
 
     def test_numeric_range1(self):
         r1 = dg.NRange(1, 20, 1)
