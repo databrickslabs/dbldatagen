@@ -13,8 +13,8 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: [ '3.8' ]
-        os: [ ubuntu-latest ]
+        python-version: [ '3.8.10' ]
+        os: [ ubuntu-20.04 ]
 
     steps:
       - name: Checkout
@@ -43,7 +43,13 @@ jobs:
         run: pip install pipenv
       
       - name: Run tests
-        run: make test
+        run:
+          make test
+
+      - name: Check git status
+        run:
+          git status
+
 
       - name: Publish test coverage to coverage site 
         uses: codecov/codecov-action@v2
