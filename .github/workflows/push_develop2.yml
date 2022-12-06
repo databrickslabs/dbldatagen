@@ -3,7 +3,7 @@ name: update latest tag
 
 on:
   push:
-    branches: [develop2]
+    branches: [develop_na]
 
 jobs:
   update_latest_tag:
