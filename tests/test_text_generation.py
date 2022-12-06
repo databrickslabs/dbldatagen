@@ -1,5 +1,7 @@
 import re
-import unittest
+import pytest
+import pandas as pd
+import numpy as np
 
 import pyspark.sql.functions as F
 from pyspark.sql.types import BooleanType, DateType
@@ -37,18 +39,10 @@ spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
 
 
 # Test manipulation and generation of test data for a large schema
-class TestTextGeneration(unittest.TestCase):
+class TestTextGeneration:
     testDataSpec = None
     row_count = 100000
     partitions_requested = 4
-
-    def setUp(self):
-        print("setting up TestTextDataGenerationTests")
-        print("schema", schema)
-
-    @classmethod
-    def setUpClass(cls):
-        print("setting up class ")
 
     def test_text_generator_basics(self):
         import numpy as np
@@ -58,13 +52,69 @@ class TestTextGeneration(unittest.TestCase):
 
         # test the repr
         desc = repr(tg1)
-        self.assertTrue(desc is not None and len(desc.strip()) > 0)
+        assert desc is not None and len(desc.strip()) > 0
 
         rng1 = tg1.getNPRandomGenerator()
 
         # get some integers
         random_values1 = rng1.integers(10, 20, dtype=np.int32)
-        self.assertTrue(10 <= random_values1 <= 20)
+        assert 10 <= random_values1 <= 20
+
+    @pytest.mark.parametrize("template, escapeSpecial, low, high, useSystemLib",
+                             [
+                              (r'\n.\n.\n.\n',  False, 0, 15, False),
+                              (r'\n.\n.\n.\n',  False, 20, 35, False),
+                              (r'\n.\n.\n.\n',  False, 15, None, False),
+                              (r'\n.\n.\n.\n',  False, 15, -1, False),
+                              (r'\n.\n.\n.\n',  False, 0, 15, True),
+                              (r'\n.\n.\n.\n',  False, 20, 35, True),
+                              (r'\n.\n.\n.\n',  False, 15, None, True),
+                              (r'\n.\n.\n.\n',  False, 15, -1, True),
+                              ])
+    def test_random_number_generator(self, template, escapeSpecial, low, high, useSystemLib):
+        """ As the test coverage tools dont detect code only used in UDFs,
+            lets add some explicit tests for the underlying code"""
+        test_template = TemplateGenerator(template, escapeSpecialChars=escapeSpecial)
+
+        rng1 = test_template.getNPRandomGenerator()
+
+        for x in range(1,1000):
+            if useSystemLib:
+                if high is not None:
+                    random_value = test_template._getRandomInt(low, high)
+                else:
+                    random_value = test_template._getRandomInt(low)
+            else:
+                if high is not None:
+                    random_value = test_template._getRandomInt(low, high, rng1)
+                else:
+                    random_value = test_template._getRandomInt(low, rng=rng1)
+
+            if high is None or high == -1:
+                high = low
+                low = 0
+
+            assert low <= random_value <= high
+
+    @pytest.mark.parametrize("template, escapeSpecial, expectedTemplates",
+                             [(r'\n.\n.\n.\n', True, 1),
+                              (r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd', False, 3),
+                              (r'(\d\d\d)-\d\d\d-\d\d\d\d|1(\d\d\d) \d\d\d-\d\d\d\d|\d\d\d \d\d\d\d\d\d\d', True, 3),
+                              (r'\dr_\v',  False, 1),
+                              (r'\w.\w@\w.com|\w@\w.co.u\k',  False, 2),
+                              ])
+    def test_template_generator_properties(self, template, escapeSpecial, expectedTemplates):
+        test_template = TemplateGenerator(template, escapeSpecialChars=escapeSpecial)
+
+        repr_desc = repr(test_template)
+        assert repr_desc is not None and len(repr_desc.strip()) > 0
+
+        str_desc = str(test_template)
+        assert str_desc is not None and len(str_desc.strip()) > 0
+
+        assert test_template.templates is not None
+        assert len(test_template.templates) == expectedTemplates
+
 
     def test_simple_data_template(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count,
@@ -96,9 +146,19 @@ class TestTextGeneration(unittest.TestCase):
             F.countDistinct("phone").alias("phone_count")
         ).collect()[0]
 
-        self.assertGreaterEqual(counts['email_count'], 10)
-        self.assertGreaterEqual(counts['ip_addr_count'], 10)
-        self.assertGreaterEqual(counts['phone_count'], 10)
+        assert counts['email_count'] >= 10
+        assert counts['ip_addr_count'] >= 10
+        assert counts['phone_count'] >= 10
+
+        rows = df_template_data.select("email", "ip_addr", "phone").collect()
+
+        mail_patt = re.compile(r"[a-z\.@]+")
+        ipaddr_patt = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+")
+        phone_patt = re.compile(r"[0-9\(\) ]+")
+        for r in rows:
+            assert mail_patt.match(r["email"]), "check mail"
+            assert ipaddr_patt.match(r["ip_addr"]), "check ip address"
+            assert phone_patt.match(r["phone"]), "check phone"
 
     def test_large_template_driven_data_generation(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000000,
@@ -128,9 +188,33 @@ class TestTextGeneration(unittest.TestCase):
             F.countDistinct("phone").alias("phone_count")
         ).collect()[0]
 
-        self.assertGreaterEqual(counts['email_count'], 100)
-        self.assertGreaterEqual(counts['ip_addr_count'], 100)
-        self.assertGreaterEqual(counts['phone_count'], 100)
+        assert counts['email_count'] >= 100
+        assert counts['ip_addr_count'] >= 100
+        assert counts['phone_count'] >= 100
+
+    def test_raw_iltext_text_generation(self):
+        """ As the test coverage tools dont detect code only used in UDFs,
+            lets add some explicit tests for the underlying code"""
+        import numpy as np
+        # test the IL Text generator
+        tg1 = dg.ILText(paragraphs=(1, 4), sentences=(2, 6), words=(1, 8))
+
+        # test the repr
+        desc = repr(tg1)
+        assert desc is not None and len(desc.strip()) > 0
+
+        # now test generation of text
+        base_rows = np.arange(1000)
+
+        test_values = tg1.generateText(base_rows, base_rows.size)
+
+        data = test_values.tolist()
+        match_pattern = re.compile(r"(\s?[A-Z]([a-z ]+)\.\s*)+")
+
+        # check that paras only contains text
+        for test_value in data:
+            assert test_value is not None
+            assert match_pattern.match(test_value)
 
     def test_large_ILText_driven_data_generation(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000000,
@@ -157,7 +241,20 @@ class TestTextGeneration(unittest.TestCase):
             F.countDistinct("paras").alias("paragraphs_count")
         ).collect()[0]
 
-        self.assertGreaterEqual(counts['paragraphs_count'], 100)
+        assert counts['paragraphs_count'] >= 100
+
+        df_template_data = testDataSpec.build()
+
+        counts = df_template_data.agg(
+            F.countDistinct("email").alias("email_count"),
+            F.countDistinct("ip_addr").alias("ip_addr_count"),
+            F.countDistinct("phone").alias("phone_count")
+        ).collect()[0]
+
+        assert counts['email_count'] >= 100
+        assert counts['ip_addr_count'] >= 100
+        assert counts['phone_count'] >= 100
+
 
     def test_small_ILText_driven_data_generation(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
@@ -184,7 +281,7 @@ class TestTextGeneration(unittest.TestCase):
             F.countDistinct("paras").alias("paragraphs_count")
         ).collect()[0]
 
-        self.assertGreaterEqual(counts['paragraphs_count'], 10)
+        assert counts['paragraphs_count'] >= 10
 
         data = df_iltext_data.limit(1000).collect()
         match_pattern = re.compile(r"(\s?[A-Z]([a-z ]+)\.\s*)+")
@@ -192,78 +289,33 @@ class TestTextGeneration(unittest.TestCase):
         # check that paras only contains text
         for r in data:
             test_value = r['paras']
-            self.assertIsNotNone(test_value)
-            self.assertTrue(match_pattern.match(test_value))
+            assert test_value is not None
+            assert match_pattern.match(test_value)
 
-    def test_raw_iltext_text_generation(self):
+    @pytest.mark.parametrize("template, expectedOutput, escapeSpecial",
+                             [(r'\n.\n.\n.\n', r"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+", False),
+                              (r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd',
+                                r"(\([0-9]+\)-[0-9]+-[0-9]+)|(1\([0-9]+\) [0-9]+-[0-9]+)|([0-9]+ [0-9]+)", False),
+                              (r'(\d\d\d)-\d\d\d-\d\d\d\d|1(\d\d\d) \d\d\d-\d\d\d\d|\d\d\d \d\d\d\d\d\d\d',
+                               r"(\([0-9]+\)-[0-9]+-[0-9]+)|(1\([0-9]+\) [0-9]+-[0-9]+)|([0-9]+ [0-9]+)", True),
+                              (r'\dr_\v', r"dr_[0-9]+", False),
+                              (r'\w.\w@\w.com|\w@\w.co.u\k', r"[a-z\.\@]+", False),
+                              ])
+    def test_raw_template_text_generation1(self, template, expectedOutput, escapeSpecial):
         """ As the test coverage tools dont detect code only used in UDFs,
             lets add some explicit tests for the underlying code"""
-        import numpy as np
-        # test the IL Text generator
-        tg1 = dg.ILText(paragraphs=(1, 4), sentences=(2, 6), words=(1, 8))
+        match_pattern = re.compile(expectedOutput)
+        test_template = TemplateGenerator(template, escapeSpecialChars=escapeSpecial)
 
-        # test the repr
-        desc = repr(tg1)
-        self.assertTrue(desc is not None and len(desc.strip()) > 0)
+        test_values = test_template.pandasGenerateText(pd.Series([x for x in range(1, 1000)]))
 
-        # now test generation of text
-        base_rows = np.arange(1000)
+        def check_pattern(x):
+            assert match_pattern.match(x), f"test pattern '{expectedOutput}' does not match result '{x}'"
 
-        test_values = tg1.generateText(base_rows, base_rows.size)
-
-        data = test_values.tolist()
-        match_pattern = re.compile(r"(\s?[A-Z]([a-z ]+)\.\s*)+")
-
-        # check that paras only contains text
-        for test_value in data:
-            self.assertIsNotNone(test_value)
-            self.assertTrue(match_pattern.match(test_value))
-
-
-
-
-
-    def test_raw_template_text_generation1(self):
-        """ As the test coverage tools dont detect code only used in UDFs,
-            lets add some explicit tests for the underlying code"""
-        pattern = r'\n.\n.\n.\n'
-        match_pattern = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+")
-        test_template = TemplateGenerator(pattern)
-
-        test_values = [test_template.valueFromSingleTemplate(x, test_template.templates[0]) for x in range(1, 1000)]
-
+        test_values.apply(lambda x: check_pattern(x))
         for test_value in test_values:
-            self.assertIsNotNone(test_value)
-            self.assertTrue(match_pattern.match(test_value))
-
-    def test_raw_template_text_generation2(self):
-        """ As the test coverage tools dont detect code only used in UDFs,
-            lets add some explicit tests for the underlying code"""
-        pattern = r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd'
-        match_pattern = re.compile(r"(\([0-9]+\)-[0-9]+-[0-9]+)|(1\([0-9]+\) [0-9]+-[0-9]+)|([0-9]+ [0-9]+)")
-        test_template = TemplateGenerator(pattern)
-
-        test_values = [test_template.classicGenerateText(x) for x in range(1, 1000)]
-
-        for test_value in test_values:
-            self.assertIsNotNone(test_value)
-            self.assertTrue(match_pattern.match(test_value))
-
-    def test_raw_template_text_generation2a(self):
-        """ As the test coverage tools dont detect code only used in UDFs,
-            lets add some explicit tests for the underlying code
-
-            This variant requires all special chars to be escaped
-        """
-        pattern = r'(\d\d\d)-\d\d\d-\d\d\d\d|1(\d\d\d) \d\d\d-\d\d\d\d|\d\d\d \d\d\d\d\d\d\d'
-        match_pattern = re.compile(r"(\([0-9]+\)-[0-9]+-[0-9]+)|(1\([0-9]+\) [0-9]+-[0-9]+)|([0-9]+ [0-9]+)")
-        test_template = TemplateGenerator(pattern, escapeSpecialChars=True)
-
-        test_values = [test_template.classicGenerateText(x) for x in range(1, 1000)]
-
-        for test_value in test_values:
-            self.assertIsNotNone(test_value)
-            self.assertTrue(match_pattern.match(test_value))
+            assert test_value is not None
+            assert match_pattern.match(test_value), f"test pattern '{expectedOutput}' does not match result '{x}'"
 
     def test_raw_template_text_generation3(self):
         """ As the test coverage tools don't detect code only used in UDFs,
@@ -275,21 +327,8 @@ class TestTextGeneration(unittest.TestCase):
         test_values = [test_template.classicGenerateText(x) for x in range(1, 1000)]
 
         for test_value in test_values:
-            self.assertIsNotNone(test_value)
-            self.assertTrue(match_pattern.match(test_value))
-
-    def test_raw_template_text_generation4(self):
-        """ As the test coverage tools dont detect code only used in UDFs,
-            lets add some explicit tests for the underlying code"""
-        pattern = r'\dr_\v'
-        match_pattern = re.compile(r"dr_[0-9]+")
-        test_template = TemplateGenerator(pattern)
-
-        test_values = [test_template.valueFromSingleTemplate(x, test_template.templates[0]) for x in range(1, 1000)]
-
-        for test_value in test_values:
-            self.assertIsNotNone(test_value)
-            self.assertTrue(match_pattern.match(test_value))
+            assert test_value is not None
+            assert match_pattern.match(test_value)
 
     def test_simple_data2(self):
         testDataSpec2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
@@ -306,6 +345,19 @@ class TestTextGeneration(unittest.TestCase):
                          .withColumnSpec("phone", template=r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd')
                          )
         testDataSpec2.build().show()
+
+        df_template_data = testDataSpec2.build()
+
+        counts = df_template_data.agg(
+            F.countDistinct("email").alias("email_count"),
+            F.countDistinct("ip_addr").alias("ip_addr_count"),
+            F.countDistinct("phone").alias("phone_count")
+        ).collect()[0]
+
+        assert counts['email_count'] >= 100
+        assert counts['ip_addr_count'] >= 100
+        assert counts['phone_count'] >= 100
+
 
     def test_multi_columns(self):
         testDataSpec3 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count,
@@ -415,7 +467,7 @@ class TestTextGeneration(unittest.TestCase):
 
         numRows = df.count()
 
-        self.assertEqual(numRows, 100000)
+        assert numRows == 100000
 
         df2 = testdata_generator.option("startingId", 200000).build()  # build our dataset
 
@@ -423,32 +475,32 @@ class TestTextGeneration(unittest.TestCase):
 
         # check `code` values
         code1_values = [r[0] for r in df.select("code1").distinct().collect()]
-        self.assertSetEqual(set(code1_values), set(range(1, 21)))
+        assert set(code1_values) == set(range(1, 21))
 
         code2_values = [r[0] for r in df.select("code2").distinct().collect()]
-        self.assertSetEqual(set(code2_values), set(range(1, 21)))
+        assert set(code2_values) == set(range(1, 21))
 
         code3_values = [r[0] for r in df.select("code3").distinct().collect()]
-        self.assertSetEqual(set(code3_values), set(range(1, 21)))
+        assert set(code3_values) == set(range(1, 21))
 
         code4_values = [r[0] for r in df.select("code3").distinct().collect()]
-        self.assertSetEqual(set(code4_values), set(range(1, 21)))
+        assert set(code4_values) == set(range(1, 21))
 
         site_codes = [f"site_{x}" for x in range(1, 21)]
         site_code_values = [r[0] for r in df.select("site_cd").distinct().collect()]
-        self.assertSetEqual(set(site_code_values), set(site_codes))
+        assert set(site_code_values) == set(site_codes)
 
         status_codes = [f"status_{x}" for x in range(1, 201)]
         status_code_values = [r[0] for r in df.select("device_status").distinct().collect()]
-        self.assertSetEqual(set(status_code_values), set(status_codes))
+        assert set(status_code_values) == set(status_codes)
 
         site_codes = [f"site:{x}" for x in range(1, 21)]
         site_code_values = [r[0] for r in df.select("site_cd2").distinct().collect()]
-        self.assertSetEqual(set(site_code_values), set(site_codes))
+        assert set(site_code_values) == set(site_codes)
 
         status_codes = [f"status:{x}" for x in range(1, 201)]
         status_code_values = [r[0] for r in df.select("device_status2").distinct().collect()]
-        self.assertSetEqual(set(status_code_values), set(status_codes))
+        assert set(status_code_values) == set(status_codes)
 
     def test_suffix(self):
         # will have implied column `id` for ordinal of row
@@ -473,23 +525,23 @@ class TestTextGeneration(unittest.TestCase):
 
         numRows = df.count()
 
-        self.assertEqual(numRows, 100000)
+        assert numRows == 100000
 
         site_codes = [f"{x}_site" for x in range(1, 21)]
         site_code_values = [r[0] for r in df.select("site_cd").distinct().collect()]
-        self.assertSetEqual(set(site_code_values), set(site_codes))
+        assert set(site_code_values) == set(site_codes)
 
         status_codes = [f"{x}_status" for x in range(1, 201)]
         status_code_values = [r[0] for r in df.select("device_status").distinct().collect()]
-        self.assertSetEqual(set(status_code_values), set(status_codes))
+        assert set(status_code_values) == set(status_codes)
 
         site_codes = [f"{x}:site" for x in range(1, 21)]
         site_code_values = [r[0] for r in df.select("site_cd2").distinct().collect()]
-        self.assertSetEqual(set(site_code_values), set(site_codes))
+        assert set(site_code_values) == set(site_codes)
 
         status_codes = [f"{x}:status" for x in range(1, 201)]
         status_code_values = [r[0] for r in df.select("device_status2").distinct().collect()]
-        self.assertSetEqual(set(status_code_values), set(status_codes))
+        assert set(status_code_values) == set(status_codes)
 
     def test_prefix_and_suffix(self):
         # will have implied column `id` for ordinal of row
@@ -514,32 +566,17 @@ class TestTextGeneration(unittest.TestCase):
 
         numRows = df.count()
 
-        self.assertEqual(numRows, 100000)
+        assert numRows == 100000
 
         status_codes = [f"test_{x}_status" for x in range(1, 201)]
         status_code_values = [r[0] for r in df.select("device_status").distinct().collect()]
-        self.assertSetEqual(set(status_code_values), set(status_codes))
+        assert set(status_code_values) == set(status_codes)
 
         site_codes = [f"test:{x}:site" for x in range(1, 21)]
         site_code_values = [r[0] for r in df.select("site_cd2").distinct().collect()]
-        self.assertSetEqual(set(site_code_values), set(site_codes))
+        assert set(site_code_values) == set(site_codes)
 
         status_codes = [f"test:{x}:status" for x in range(1, 201)]
         status_code_values = [r[0] for r in df.select("device_status2").distinct().collect()]
-        self.assertSetEqual(set(status_code_values), set(status_codes))
+        assert set(status_code_values) == set(status_codes)
 
-# run the tests
-# if __name__ == '__main__':
-#  print("Trying to run tests")
-#  unittest.main(argv=['first-arg-is-ignored'],verbosity=2,exit=False)
-
-# def runTests(suites):
-#    suite = unittest.TestSuite()
-#    result = unittest.TestResult()
-#    for testSuite in suites:
-#        suite.addTest(unittest.makeSuite(testSuite))
-#    runner = unittest.TextTestRunner()
-#    print(runner.run(suite))
-
-
-# runTests([TestBasicOperation])
