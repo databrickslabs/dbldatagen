@@ -46,12 +46,7 @@ jobs:
         run:
           make test
 
-      - name: Check git status
-        run:
-          git status
-
-
-      - name: Publish test coverage to coverage site 
+      - name: Publish test coverage to coverage site
         uses: codecov/codecov-action@v2
         with:
           files: ./coverage.xml
