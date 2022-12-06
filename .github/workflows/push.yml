@@ -27,7 +27,6 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
 
       # - name: Cache packages
       #   uses: actions/cache@v2
