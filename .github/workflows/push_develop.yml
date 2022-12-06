@@ -10,6 +10,24 @@ jobs:
     # Ubuntu 20.04 has Python 3.8
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Unshallow
+        run: git fetch --prune --unshallow
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.8'
+          cache: 'pipenv'
+
+      - name: Install
+        run: pip install pipenv
+
+      - name: Run tests
+        run: make test
+
       - name: "create or update tag"
         uses: actions/github-script@v2
         # continue-on-error: true
