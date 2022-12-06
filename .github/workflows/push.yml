@@ -24,11 +24,6 @@ jobs:
       - name: Unshallow
         run: git fetch --prune --unshallow
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v3
-        with:
-          python-version: ${{ matrix.python-version }}
-
       # - name: Cache packages
       #   uses: actions/cache@v2
       #   with:
@@ -42,6 +37,12 @@ jobs:
       
       - name: Install 
         run: pip install pipenv
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pipenv'
       
       - name: Run tests
         run: make test
