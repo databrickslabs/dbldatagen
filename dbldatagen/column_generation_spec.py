@@ -16,7 +16,7 @@ from pyspark.sql.types import FloatType, IntegerType, StringType, DoubleType, Bo
     TimestampType, DataType, DateType
 
 from .column_spec_options import ColumnSpecOptions
-from .datagen_constants import RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, RANDOM_SEED_RANDOM
+from .datagen_constants import RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, RANDOM_SEED_RANDOM, DEFAULT_SEED_COLUMN
 from .daterange import DateRange
 from .distributions import Normal, DataDistribution
 from .nrange import NRange

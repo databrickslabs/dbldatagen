@@ -695,7 +695,7 @@ class DataGenerator:
     def withColumn(self, colName, colType=StringType(), minValue=None, maxValue=None, step=1,
                    dataRange=None, prefix=None, random=False, distribution=None,
                    baseColumn=None, nullable=True,
-                   omit=False, implicit=False,
+                   omit=False, implicit=False, noWarn=False,
                    **kwargs):
         """ add a new column for specification
 
