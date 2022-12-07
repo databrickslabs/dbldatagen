@@ -8,7 +8,7 @@ on:
 
 jobs:
   tests:
-    # Ubuntu 20.04 has Python 3.8
+    # Ubuntu latest no longer installs Python 3.8 by default so install it
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -27,6 +27,7 @@ jobs:
       #     key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
       #     restore-keys: |
       #       ${{ runner.os }}-go-
+
       - name: Set up Python 3.8
         uses: actions/setup-python@v3
         with:
@@ -35,11 +36,11 @@ jobs:
 
       - name: Install 
         run: pip install pipenv
-      
+
       - name: Run tests
         run: make test
 
-      - name: Publish test coverage to coverage site 
+      - name: Publish test coverage to coverage site
         uses: codecov/codecov-action@v2
         with:
           files: ./coverage.xml
