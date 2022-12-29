@@ -1,0 +1,46 @@
+name: release
+
+on:
+  release:
+    types:
+      [published]
+
+jobs:
+  release:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      max-parallel: 1
+      matrix:
+        python-version: [ 3.8 ]
+        os: [ ubuntu-latest ]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Unshallow
+        run: git fetch --prune --unshallow
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.8'
+          cache: 'pipenv'
+
+      - name: Install
+        run: pip install pipenv
+
+      - name: Build dist
+        run: pipenv run python setup.py sdist bdist_wheel
+
+      - name: Run tests
+        run: make test
+
+      - name: Publish a Python distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.LABS_PYPI_TOKEN }}
+
+
+

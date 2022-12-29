@@ -15,7 +15,10 @@ warrant that you have the legal authority to do so.
 
 ## Python compatibility
 
-The code has been tested with Python 3.7.5 and 3.8
+The code has been tested with Python 3.8.10 and later.
+
+Older releases were tested with Python 3.7.5 but as of this release, it requires the Databricks runtime 9.1 LTS or later
+which relies on Python 3.8.10
 
 ## Checking your code for common issues
 
@@ -77,10 +80,21 @@ Run  `make clean dist` from the main project directory.
 
 # Testing 
 
-## Creating tests
-Preferred style is to use pytest rather than unittest but some unittest based code is used in compatibility mode.
+## Developing new tests
+New tests should be created using PyTest with classes combining multiple `Pytest` tests.
 
-Any new tests should be written as pytest compatible test classes.
+Existing test code contains tests based on Python's `unittest` framework but these are 
+run on `pytest` rather than `unitest`. 
+
+To get a  `spark` instance for test purposes, use the following code:
+
+```python
+import dbldatagen as dg
+
+spark = dg.SparkSingleton.getLocalInstance("<name to flag spark instance>")
+```
+
+The name used to flag the spark instance should be the test module or test class name. 
 
 ## Running unit / integration tests
 
@@ -100,9 +114,32 @@ To run the tests using a `pipenv` environment:
   - Run `make test-with-html-report` to generate test coverage report in `htmlcov/inxdex.html`
 
 # Using the Databricks Labs data generator
-To use the project, the generated wheel should be installed in your Python notebook as a wheel based library
+The recommended method for installation is to install from the PyPi package
 
-Once the library has been installed, you can use it to generate a test data frame.
+You can install the library as a notebook scoped library when working within the Databricks 
+notebook environment through the use of a `%pip` cell in your notebook.
+
+To install as a notebook-scoped library, create and execute a notebook cell with the following text:
+
+> `%pip install dbldatagen`
+
+This installs from the PyPi package
+
+You can also install from release binaries or directly from the Github sources.
+
+The release binaries can be accessed at:
+- Databricks Labs Github Data Generator releases - https://github.com/databrickslabs/dbldatagen/releases
+
+
+The `%pip install` method also works on the Databricks Community Edition.
+
+Alternatively, you use download a wheel file and install using the Databricks install mechanism to install a wheel based
+library into your workspace.
+
+The `%pip install` method can also down load a specific binary release.
+For example, the following code downloads the release V0.2.1
+
+> '%pip install https://github.com/databrickslabs/dbldatagen/releases/download/v021/dbldatagen-0.2.1-py3-none-any.whl'
 
 # Coding Style 
 
