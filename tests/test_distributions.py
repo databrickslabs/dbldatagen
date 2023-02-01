@@ -34,6 +34,9 @@ class TestDistributions(unittest.TestCase):
         )
         cls.testdata_generator.build().cache().createOrReplaceTempView("testdata")
 
+        # change to test build process
+        print("inside setupClass")
+
     @classmethod
     def unique_timestamp_seconds(cls):
         return (datetime.datetime.utcnow() - datetime.datetime.fromtimestamp(0)).total_seconds()
