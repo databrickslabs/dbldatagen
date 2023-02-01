@@ -38,7 +38,7 @@ In addition, two columns in two different tables produced with the same generati
 the same values allowing for creation of multiple tables with referential integrity for use in joins.
 
 .. note::
-   The key exception to repeatability is where the data set contains the timestamp or date of when the
+   The exception to repeatability is where the data set contains the timestamp or date of when the
    data is written. In these cases, runs from a later date will have different values.
 
    This is why we stress generating date or timestamp ranges with a specific ``begin``, ``end`` and ``interval``
@@ -61,6 +61,11 @@ All columns will use the same random seed unless the random seed method is speci
 the seed is overridden at the column level. In the case of the use of the 'hash_fieldname' generation method,
 it will use a hash value of the field name so that each column has a different seed.
 
+.. note::
+   The text generators for templates and ILText always generate random data irrespective of the base column.
+   That means, that these will produce repeatable data from run to run if a random seed is used - but not produce the
+   same values for the same value of the base column.
+
 True random Data
 ^^^^^^^^^^^^^^^^
 To generate true random values, the random seed of -1 must be specified, either at the data spec level or at the
@@ -70,12 +75,18 @@ In this case,
 there is no guarantees of data repeatability - but you can constrain the data generated to specific ranges to use as
 foreign keys for data in other tables.
 
-If columns are not marked random - they will produce a repeatable set of data. For most columns, as the columns
+If columns are not marked random - they will produce a repeatable set of data (with the exception of ILText, Template
+generation and third party library integration). For most columns, as the columns
 are produced by a deterministic transformation on the corresponding base columns, the data will always be repeatable.
 
 For columns generated using an inherently random process such as those produced with the template generation, ILText
 and text data generator plugins, the random process will be seeded with a constant value unless the corresponding
 column specification is marked as ``random``.
+
+.. note::
+   Again this means data will be repeatable run to run but not for a specific
+   value of the base column. For some 3rd party libraries such as `Faker` there is no integration of the random seeding
+   capabilities at present so data will not be repeatable run to run.
 
 If a random seed is provided, either as an argument to the DataGenerator instance specification,
 or as option on the column specification, the random seed will be applied to fields when random data generation is used.

@@ -1,4 +1,4 @@
-import unittest
+import pytest
 
 import pandas as pd
 import numpy as np
@@ -9,30 +9,30 @@ from dbldatagen import PyfuncText, PyfuncTextFactory, FakerTextFactory
 spark = dg.SparkSingleton.getLocalInstance("basic tests")
 
 
-class TestTextGenerationPlugins(unittest.TestCase):
+class TestTextGenerationPlugins:
     row_count = 15000
     column_count = 10
 
-    def test_plugins(self):
+    @pytest.mark.parametrize("dataRows", [1000, 10000, 100000])
+    def test_plugins(self, dataRows):
         partitions_requested = 4
-        data_rows = 100 * 1000
 
         def initPluginContext(context):
             context.prefix = "testing"
 
         text_generator = (lambda context, v: context.prefix + str(v))
 
-        pluginDataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
+        pluginDataspec = (dg.DataGenerator(spark, rows=dataRows, partitions=partitions_requested)
                           .withColumn("text", text=PyfuncText(text_generator, init=initPluginContext))
                           )
         dfPlugin = pluginDataspec.build()
 
-        self.assertTrue(dfPlugin.count() == data_rows)
+        assert dfPlugin.count() == dataRows
 
         dfCheck = dfPlugin.where("text like 'testing%'")
         new_count = dfCheck.count()
 
-        self.assertTrue(new_count == data_rows)
+        assert new_count == dataRows
 
     def test_plugin_clone(self):
         partitions_requested = 4
@@ -51,7 +51,7 @@ class TestTextGenerationPlugins(unittest.TestCase):
         dfCheck = dfPlugin.where("text like 'testing%'")
         new_count = dfCheck.count()
 
-        self.assertTrue(new_count == data_rows)
+        assert new_count == data_rows
 
         # now check the clone
 
@@ -61,7 +61,7 @@ class TestTextGenerationPlugins(unittest.TestCase):
         dfCheck2 = dfPlugin2.where("text like 'testing%'")
         new_count2 = dfCheck2.count()
 
-        self.assertTrue(new_count2 == data_rows)
+        assert new_count2 == data_rows
 
     def test_plugins_extended_syntax(self):
         """ test property syntax"""
@@ -85,12 +85,12 @@ class TestTextGenerationPlugins(unittest.TestCase):
                           )
         dfPlugin = pluginDataspec.build()
 
-        self.assertTrue(dfPlugin.count() == data_rows)
+        assert dfPlugin.count() == data_rows
 
         dfCheck = dfPlugin.where("text like 'testing1'")
         new_count = dfCheck.count()
 
-        self.assertTrue(new_count == data_rows)
+        assert new_count == data_rows
 
     def test_plugins_extended_syntax2(self):
         """ test arg passing"""
@@ -115,12 +115,12 @@ class TestTextGenerationPlugins(unittest.TestCase):
                           )
         dfPlugin = pluginDataspec.build()
 
-        self.assertTrue(dfPlugin.count() == data_rows)
+        assert dfPlugin.count() == data_rows
 
         dfCheck = dfPlugin.where("text like 'testing1'")
         new_count = dfCheck.count()
 
-        self.assertTrue(new_count == data_rows)
+        assert new_count == data_rows
 
     def test_plugins_extended_syntax3(self):
         partitions_requested = 4
@@ -143,12 +143,12 @@ class TestTextGenerationPlugins(unittest.TestCase):
                           )
         dfPlugin = pluginDataspec.build()
 
-        self.assertTrue(dfPlugin.count() == data_rows)
+        assert dfPlugin.count() == data_rows
 
         dfCheck = dfPlugin.where("text like 'testing1again'")
         new_count = dfCheck.count()
 
-        self.assertTrue(new_count == data_rows)
+        assert new_count == data_rows
 
     def test_plugins_extended_syntax4(self):
         """ Test syntax extensions """
@@ -175,7 +175,7 @@ class TestTextGenerationPlugins(unittest.TestCase):
         output = list(textGen.pandasGenerateText(inputSeries))
 
         for x in output:
-            self.assertEqual(x, "testing1again")
+            assert x == "testing1again"
 
     def test_plugins_faker_integration(self):
         """ test faker integration with mock objects"""
@@ -203,7 +203,7 @@ class TestTextGenerationPlugins(unittest.TestCase):
         dfFaker2 = fakerDataspec2.build()
         output = dfFaker2.select("name").collect()
         for x in output:
-            self.assertTrue(x["name"].startswith("<MagicMock"))
+            assert x["name"].startswith("<MagicMock")
 
     def test_plugins_faker_integration2(self):
         """ test faker integration with mock objects"""
@@ -231,24 +231,5 @@ class TestTextGenerationPlugins(unittest.TestCase):
         dfFaker2 = fakerDataspec2.build()
         output = dfFaker2.select("name").collect()
         for x in output:
-            self.assertTrue(x["name"].startswith("<MagicMock"))
+            assert x["name"].startswith("<MagicMock")
 
-
-# run the tests
-# if __name__ == '__main__':
-#  print("Trying to run tests")
-#  unittest.main(argv=['first-arg-is-ignored'],verbosity=2,exit=False)
-
-# def runTests(suites):
-#    suite = unittest.TestSuite()
-#    result = unittest.TestResult()
-#    for testSuite in suites:
-#        suite.addTest(unittest.makeSuite(testSuite))
-#    runner = unittest.TextTestRunner()
-#    print(runner.run(suite))
-
-
-# runTests([TestBasicOperation])
-
-if __name__ == '__main__':
-    unittest.main()
