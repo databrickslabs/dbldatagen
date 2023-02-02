@@ -713,12 +713,9 @@ class DataGenerator:
         if baseColumn is not None:
             self._checkColumnOrColumnList(baseColumn, allowId=True)
 
-        if not noWarn and colName == DEFAULT_SEED_COLUMN and self._seedColumnName == DEFAULT_SEED_COLUMN:
+        if not noWarn and colName == self._seedColumnName:
             self.logger.warning(f"Adding a new column named '{colName}' overrides seed column '{self._seedColumnName}'")
             self.logger.warning(f"Use `seedColumName` option on DataGenerator construction for different seed column")
-        elif not noWarn and colName == self._seedColumnName:
-            self.logger.warning(f"Adding a new column named '{colName}' overrides seed column '{self._seedColumnName}'")
-            self.logger.warning(f"Use `seedColumName` option on DataGenerator construction with different seed column")
 
         # handle migration of old `min` and `max` options
         if _OLD_MIN_OPTION in kwargs:
