@@ -62,7 +62,7 @@ added through this method by a subsequent call to ``withColumnSpec`` to change t
 should be generated
 See :data:`~dbldatagen.data_generator.DataGenerator.withColumnSpecs`.
 
-By default all columns are marked as being dependent on an internal ``id`` column.
+By default all columns are marked as being dependent on an internal ``id`` seed column.
 Use the ``baseColumn`` attribute to mark a column as being dependent on another column or set of columns.
 Use of the base column attribute has several effects:
 
