@@ -63,6 +63,8 @@ class SchemaParser(object):
             retval = IntegerType()
         elif s in ["bigint", "long"]:
             retval = LongType()
+        elif s == "binary":
+            retval = BinaryType()
         elif s in ["bool", "boolean"]:
             retval = BooleanType()
         elif s in ["timestamp", "datetime"]:
@@ -71,13 +73,13 @@ class SchemaParser(object):
             retval = cls._parseDecimal(s)
         elif s == "double":
             retval = DoubleType()
-        elif s == "float":
+        elif s in ["float", "real"]:
             retval = FloatType()
         elif s == "date":
             retval = DateType()
-        elif s == "short":
+        elif s in ["short", "smallint"]:
             retval = ShortType()
-        elif s == "byte":
+        elif s in ["byte", "tinyint"]:
             retval = ByteType()
         else:
             retval = s
