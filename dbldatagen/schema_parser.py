@@ -6,9 +6,8 @@
 This file defines the `SchemaParser` class
 """
 
-import re
 import pyparsing as pp
-
+import re
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
     TimestampType, DateType, DecimalType, ByteType, BinaryType, StructField, StructType, MapType, ArrayType
 
