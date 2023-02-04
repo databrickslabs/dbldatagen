@@ -3,7 +3,7 @@ import pytest
 
 from pyspark.sql import functions as F
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, ArrayType, MapType, \
-                              BinaryType
+                              BinaryType, LongType
 
 import dbldatagen as dg
 
@@ -247,6 +247,38 @@ class TestComplexColumns:
                 )
         df = gen1.build()
         df.show()
+
+    def test_use_of_struct_in_schema1(self, setupLogging):
+        # while this is not ideal form, ensure that it is tolerated to address reported issue
+        # note there is no initializer for the struct and there is an override of the default `id` field
+        struct_type = StructType([
+            StructField('id', LongType(), True),
+            StructField("city", StructType([
+                StructField('id', LongType(), True),
+                StructField('population', LongType(), True)
+            ]), True)])
+
+        gen1 = (dg.DataGenerator(sparkSession=spark, name="nested_schema", rows=10000, partitions=4)
+                .withSchema(struct_type)
+                .withColumn("id")
+                )
+        res1 = gen1.build(withTempView=True)
+        assert res1.count() == 10000
+
+    def test_use_of_struct_in_schema2(self, setupLogging):
+        struct_type = StructType([
+            StructField('id', LongType(), True),
+            StructField("city", StructType([
+                StructField('id', LongType(), True),
+                StructField('population', LongType(), True)
+            ]), True)])
+
+        gen1 = (dg.DataGenerator(sparkSession=spark, name="nested_schema", rows=10000, partitions=4)
+                .withSchema(struct_type)
+                .withColumnSpec("city", expr="named_struct('id', id, 'population', id * 1000)")
+                )
+        res1 = gen1.build(withTempView=True)
+        assert res1.count() == 10000
 
 
 
