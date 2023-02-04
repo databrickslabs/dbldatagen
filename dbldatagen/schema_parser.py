@@ -164,8 +164,8 @@ class SchemaParser(object):
         elif first_token == "decimal":
             if len(ast) == 1:
                 retval = DecimalType(10, 0)
-            elif len(ast) == 2:
-                retval = DecimalType(int(ast[1]), 0)
+            # note if `decimal(10)` is passed, parser will expand to `decimal(10,0)`
+            # so there is no need to handle case here len(ast) == 2
             elif len(ast) == 3:
                 retval = DecimalType(int(ast[1]), int(ast[2]))
             else:
@@ -243,9 +243,13 @@ class SchemaParser(object):
         parser = cls.getTypeDefinitionParser()
 
         # generate abstract syntax tree (AST) from parsed definition
-        ast = parser.parseString(type_string)
+        try:
+            ast = parser.parseString(type_string)
+        except Exception as e:
+            raise ValueError(f"Invalid type definition `{type_string}`",e) from e
 
         type_construct = cls._parse_ast(ast)
+
         return type_construct
 
     @classmethod

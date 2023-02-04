@@ -70,6 +70,16 @@ class TestSchemaParser:
 
         assert output_type == expectedTypeDefn, f"Expect output type {output_type} to match {expectedTypeDefn}"
 
+    @pytest.mark.parametrize("typeDefn",
+                             ["decimal(15,3, 3)", "array<string", "map<string, string, int>", "decimal()"
+                              ])
+    def test_parser_exceptions(self, typeDefn, setupLogging):
+        with pytest.raises(Exception) as e_info:
+            output_type = dg.SchemaParser.columnTypeFromString(typeDefn)
+
+        print("exception:", e_info)
+
+
     def test_table_definition_parser(self, setupLogging):
         table1 = """CREATE TABLE student (id INT, name STRING, age INT)"""
 
