@@ -13,6 +13,9 @@ warrant that you have the legal authority to do so.
 
 # Building the code
 
+## Package Dependencies
+See the contents of the file `python/require.txt` to see the Python package dependencies
+
 ## Python compatibility
 
 The code has been tested with Python 3.8.10 and later.
