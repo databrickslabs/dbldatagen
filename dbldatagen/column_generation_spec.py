@@ -991,8 +991,8 @@ class ColumnGenerationSpec(object):
             # rs: initialize the begin, end and interval if not initialized for date computations
             # defaults are start of day, now, and 1 minute respectively
 
-            #if not type(self.datatype) in [ArrayType, MapType, StructType]:
-            self._computeImpliedRangeIfNeeded(self.datatype)
+            if not type(self.datatype) in [ArrayType, MapType, StructType]:
+                self._computeImpliedRangeIfNeeded(self.datatype)
 
             # TODO: add full support for date value generation
             if self.expr is not None:

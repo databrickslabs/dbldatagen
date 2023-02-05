@@ -214,7 +214,7 @@ class SchemaParser(object):
             except Exception as e:
                 raise ValueError(f"Could not construct struct type definition due to `{e}`") from e
         else:
-            raise ValueError(f" Invalid type `{first_token}` found while processing `{list(ast)}`")
+            raise ValueError(f" Invalid or unsupported type `{first_token}` found while processing `{list(ast)}`")
         return retval
 
     @classmethod
