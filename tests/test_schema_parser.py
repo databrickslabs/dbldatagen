@@ -71,7 +71,9 @@ class TestSchemaParser:
         assert output_type == expectedTypeDefn, f"Expect output type {output_type} to match {expectedTypeDefn}"
 
     @pytest.mark.parametrize("typeDefn",
-                             ["decimal(15,3, 3)", "array<string", "map<string, string, int>", "decimal()"
+                             ["decimal(15,3, 3)", "array<string", "map<string, string, int>", "decimal()",
+                              "interval", "array<interval>", "map<interval, interval>",
+                              "struct<a:interval, b:int>", "binary_float"
                               ])
     def test_parser_exceptions(self, typeDefn, setupLogging):
         with pytest.raises(Exception) as e_info:

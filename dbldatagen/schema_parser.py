@@ -131,8 +131,10 @@ class SchemaParser(object):
             struct_expr = struct_keyword + l_angle + pp.Group(
                 pp.delimitedList(pp.Group(ident + pp.Optional(colon) + pp.Group(type_expr)))) + r_angle
 
+            invalid_type = pp.Word(pp.alphas, pp.alphanums+"_", as_keyword=True)
+
             # use left recursion to handle nesting of types
-            type_expr <<= (primitive_type_keyword | array_expr | map_expr | struct_expr)
+            type_expr <<= pp.MatchFirst([primitive_type_keyword, array_expr, map_expr, struct_expr, invalid_type])
 
             type_parser = pp.StringStart() + type_expr + pp.StringEnd()
             cls._type_parser = type_parser
@@ -180,18 +182,23 @@ class SchemaParser(object):
             retval = ShortType()
         elif first_token in ["byte", "tinyint"]:
             retval = ByteType()
+        elif first_token == "interval":
+            raise ValueError("Interval is invalid type for field definition")
         elif first_token == "array":
             try:
                 assert len(ast) == 2, "array must have nested type"
                 inner_type = cls._parse_ast(ast[1])
                 retval = ArrayType(inner_type)
             except Exception as e:
-                raise ValueError("Could not construct array type definition") from e
+                raise ValueError(f"Could not construct array type definition due to `{e}`") from e
         elif first_token == "map":
-            assert len(ast) == 3, "map must have 2 inner types"
-            inner_type1 = cls._parse_ast(ast[1])
-            inner_type2 = cls._parse_ast(ast[2])
-            retval = MapType(inner_type1, inner_type2)
+            try:
+                assert len(ast) == 3, "map must have 2 inner types"
+                inner_type1 = cls._parse_ast(ast[1])
+                inner_type2 = cls._parse_ast(ast[2])
+                retval = MapType(inner_type1, inner_type2)
+            except Exception as e:
+                raise ValueError(f"Could not construct map type definition due to `{e}`") from e
         elif first_token == "struct":
             try:
                 assert len(ast) == 2, f"struct must have nested list of fields : {len(ast)}"
@@ -205,9 +212,9 @@ class SchemaParser(object):
                     fields.append(StructField(field_name, field_type))
                 retval = StructType(fields)
             except Exception as e:
-                raise ValueError("Could not construct struct type definition") from e
+                raise ValueError(f"Could not construct struct type definition due to `{e}`") from e
         else:
-            raise ValueError(f"Cannot parse type tree {list(ast)}", ValueError("inner error"))
+            raise ValueError(f" Invalid type `{first_token}` found while processing `{list(ast)}`")
         return retval
 
     @classmethod
