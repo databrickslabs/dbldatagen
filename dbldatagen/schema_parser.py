@@ -93,7 +93,7 @@ class SchemaParser(object):
             decimal_keyword = pp.MatchFirst(
                 [pp.CaselessKeyword("decimal"), pp.CaselessKeyword("dec"), pp.CaselessKeyword("number"),
                  pp.CaselessKeyword("numeric")])
-            decimal_keyword.setParseAction(lambda s, loc, tok: "decimal")
+            decimal_keyword.setParseAction(lambda s: "decimal")
             # first number is precision , default 10; second number is scale, default 0
             decimal_type_expr = decimal_keyword + pp.Optional(
                 lbracket + number + pp.Optional(comma + number, "0") + rbracket)
@@ -131,6 +131,7 @@ class SchemaParser(object):
             struct_expr = struct_keyword + l_angle + pp.Group(
                 pp.delimitedList(pp.Group(ident + pp.Optional(colon) + pp.Group(type_expr)))) + r_angle
 
+            # try to capture invalid type name for better error reporting
             invalid_type = pp.Word(pp.alphas, pp.alphanums+"_", as_keyword=True)
 
             # use left recursion to handle nesting of types
@@ -178,9 +179,9 @@ class SchemaParser(object):
             retval = FloatType()
         elif first_token == "date":
             retval = DateType()
-        elif first_token in ["short", "smallint"]:
+        elif first_token == "smallint":
             retval = ShortType()
-        elif first_token in ["byte", "tinyint"]:
+        elif first_token == "tinyint":
             retval = ByteType()
         elif first_token == "interval":
             raise ValueError("Interval is invalid type for field definition")
