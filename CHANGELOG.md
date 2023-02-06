@@ -6,10 +6,19 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 ### Unreleased
 
 #### Changed
-* Refactoring of template text generation for better performance
+* Refactoring of template text generation for better performance via vectorized implementation
+* Additional migration of tests to use of `pytest`
+
+#### Fixed 
+* added type parsing support for binary and constructs such as `nvarchar(10)`
+* Fixed error occurring when schema contains map, array or struct. 
 
 #### Added 
 * Ability to change name of seed column to custom name (defaults to `id`)
+* Added type parsing support for structs, maps and arrays and combinations of the above
+
+#### Notes
+* column definitions for map, struct or array must use `expr` attribute to initialize field. Defaults to `NULL`
 
 ### Version 0.3.0
 
