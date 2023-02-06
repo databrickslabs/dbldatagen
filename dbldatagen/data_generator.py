@@ -39,6 +39,11 @@ class DataGenerator:
     :param batchSize: = UDF batch number of rows to pass via Apache Arrow to Pandas UDFs
     :param debug: = if set to True, output debug level of information
     :param seedColumnName: = if set, this should be the name of the `seed` or logical `id` column. Defaults to `id`
+
+    By default the seed column is named `id`. If you need to use this column name in your generated data,
+    it is recommended that you use a different name for the seed column - for example `_id`.
+
+    This may be specified by setting the `seedColumnName` attribute to `_id`
     """
 
     # class vars
@@ -699,12 +704,28 @@ class DataGenerator:
                    baseColumn=None, nullable=True,
                    omit=False, implicit=False, noWarn=False,
                    **kwargs):
-        """ add a new column for specification
+        """ add a new column to the synthetic data generation specification
+
+        :param colName: Name of column to add. If this conflicts with the underlying seed column (`id`), it is
+                        recommended that the seed column name is customized during the construction of the data
+                        generator spec.
+        :param colType: Data type for column. This may be specified as either a type from one of the possible
+                        pyspark.sql.types (e.g. `StringType`, `DecimalType(10,3)` etc) or as a string containing a Spark
+                        SQL type definition (i.e  `String`, `array<Integer>`, `map<String, Float>`)
+        :param omit: if True, the column will be omitted from the final set of columns in the generated data.
+                     Used to create columns that are used by other columns as intermediate results.
+                     Defaults to False
+
+        :param expr: Specifies SQL expression used to create column value. If specified, overrides the default rules
+                     for creating column value. Defaults to None
+
+        :param baseColumn: String or list of columns to control order of generation of columns. If not specified,
+                           column is dependent on base seed column (which defaults to `id`)
 
         :returns: modified in-place instance of test data generator allowing for chaining of calls
                   following Builder pattern
 
-        You may also add a variety of options to further control the test data generation process.
+        You may also add a variety of additional options to further control the test data generation process.
         For full list of options, see :doc:`/reference/api/dbldatagen.column_spec_options`.
 
         """
