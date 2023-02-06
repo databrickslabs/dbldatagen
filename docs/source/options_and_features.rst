@@ -12,27 +12,60 @@ Options for column specification
 The following table lists some of the common options that can be applied with the ``withColumn`` and ``withColumnSpec``
 methods.
 
+.. table:: Column creation options
+
 ================  ==============================
 Parameter         Usage
 ================  ==============================
 minValue          Minimum value for range of generated value. As alternative use ``dataRange``.
+
 maxValue          Minimum value for range of generated value. As alternative use ``dataRange``.
-step              Step to use for range of generated value. As an alternative, you may use the `dataRange` parameter
-random            If True, will generate random values for column value. Defaults to `False`
-randomSeedMethod  Determines how seed will be used. If 'fixed', will use fixed random seed. If set to 'hash_fieldname'
-                  will use a hash of the field name as the random seed for a specific column.
+
+step              Step to use for range of generated value.
+
+                  As an alternative, you may use the `dataRange` parameter
+
+random            If `True`, will generate random values for column value. Defaults to `False`
+
+randomSeedMethod  Determines how seed will be used.
+
+                  If set to the value 'fixed', will use fixed random seed.
+
+                  If set to 'hash_fieldname', it will use a hash of the field name as the random seed
+                  for a specific column.
+
 baseColumn        Either the string name of the base column, or a list of columns to use to control data generation.
-values            List of discrete values for the column. Discrete values can numeric, dates timestamps, strings etc.
+
+values            List of discrete values for the column.
+
+                  Discrete values can numeric, dates timestamps, strings etc.
+
 weights           List of discrete weights for the column. Controls spread of values
-percentNulls      Percentage of nulls to generate for column. Fraction representing percentage between 0.0 and 1.0
+
+percentNulls      Percentage of nulls to generate for column.
+
+                  Fraction representing percentage between 0.0 and 1.0
+
 uniqueValues      Number of distinct unique values for the column. Use as alternative to data range.
+
 begin             Beginning of range for date and timestamp fields.
+
 end               End of range for date and timestamp fields.
+
 interval          Interval of range for date and timestamp fields.
-dataRange         An instance of an `NRange` or `DateRange` object. This can be used in place of ``minValue``, etc.
+
+dataRange         An instance of an `NRange` or `DateRange` object.
+
+                  This can be used in place of ``minValue``, etc.
+
 template          Template controlling text generation
-omit              If True, omit column from final output. Use when column is only needed to compute other columns.
+
+omit              If True, omit column from final output.
+
+                  Use when column is only needed to compute other columns.
+
 expr              SQL expression to control data generation
+
 ================  ==============================
 
 
@@ -44,11 +77,25 @@ expr              SQL expression to control data generation
      For more information, see :data:`~dbldatagen.daterange.DateRange`
      or :data:`~dbldatagen.daterange.NRange`.
 
+Using custom SQL to control data generation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The `expr` attribute can be used to specify an arbitrary Spark SQL expression to control how the data is
+generated for a column. If the body of the SQL references other columns, you will need to ensure that
+those columns are created first.
+
+By default, the columns are created in the order specified.
+
+However, you can control the order of column creation using the `baseColumn` attribute.
+
+More Details
+^^^^^^^^^^^^
 
 The full set of options for column specification which may be used with the ``withColumn``, ``withColumnSpec`` and
 and ``withColumnSpecs`` method can be found at:
 
    * :data:`~dbldatagen.column_spec_options.ColumnSpecOptions`
+
 
 Generating views automatically
 ------------------------------
