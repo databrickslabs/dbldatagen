@@ -11,7 +11,7 @@ we mean columns that are some combination of `struct`, `array` and `map` of othe
 
 Generating JSON data
 --------------------
-There are several method for generating JSON data:
+There are several methods for generating JSON data:
 
 - Generate a dataframe and save it as JSON will generate full data set as JSON
 - Generate JSON valued fields using SQL functions such as `named_struct` and `to_json`
