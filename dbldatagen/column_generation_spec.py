@@ -13,10 +13,10 @@ from pyspark.sql.functions import col, pandas_udf
 from pyspark.sql.functions import lit, concat, rand, round as sql_round, array, expr, when, udf, \
     format_string
 from pyspark.sql.types import FloatType, IntegerType, StringType, DoubleType, BooleanType, \
-    TimestampType, DataType, DateType
+    TimestampType, DataType, DateType, ArrayType, MapType, StructType
 
 from .column_spec_options import ColumnSpecOptions
-from .datagen_constants import RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, RANDOM_SEED_RANDOM
+from .datagen_constants import RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, RANDOM_SEED_RANDOM, DEFAULT_SEED_COLUMN
 from .daterange import DateRange
 from .distributions import Normal, DataDistribution
 from .nrange import NRange
@@ -68,12 +68,10 @@ class ColumnGenerationSpec(object):
     :param debug: If True, output debugging log statements. Defaults to False.
     :param verbose: If True, output logging statements at the info level. If False (the default),
                     only output warning and error logging statements.
+    :param seedColumnName: if supplied, specifies seed column name
 
     For full list of options, see :doc:`/reference/api/dbldatagen.column_spec_options`.
     """
-
-    #: row seed field for data set
-    SEED_COLUMN = "id"
 
     #: maxValue values for each column type, only if where value is intentionally restricted
     _max_type_range = {
@@ -89,7 +87,9 @@ class ColumnGenerationSpec(object):
 
     def __init__(self, name, colType=None, minValue=0, maxValue=None, step=1, prefix='', random=False,
                  distribution=None, baseColumn=None, randomSeed=None, randomSeedMethod=None,
-                 implicit=False, omit=False, nullable=True, debug=False, verbose=False, **kwargs):
+                 implicit=False, omit=False, nullable=True, debug=False, verbose=False,
+                 seedColumnName=DEFAULT_SEED_COLUMN,
+                 **kwargs):
 
         # set up logging
         self.verbose = verbose
@@ -108,9 +108,11 @@ class ColumnGenerationSpec(object):
         self._initialBuildPlan = []  # the build plan for the column - descriptive only
         self.executionHistory = []  # the execution history for the column
 
+        self._seedColumnName = seedColumnName
+
         # If no base column is specified, assume its dependent on the seed column
         if baseColumn is None:
-            baseColumn = self.SEED_COLUMN
+            baseColumn = self._seedColumnName
 
         # to allow for open ended extension of many column attributes, we use a few specific
         # parameters and pass the rest as keyword arguments
@@ -345,10 +347,10 @@ class ColumnGenerationSpec(object):
 
         :return: base columns as list with dependency on seed column added
         """
-        if self.baseColumn != self.SEED_COLUMN:
-            return list(set(self.baseColumns + [self.SEED_COLUMN]))
+        if self.baseColumn != self._seedColumnName:
+            return list(set(self.baseColumns + [self._seedColumnName]))
         else:
-            return [self.SEED_COLUMN]
+            return [self._seedColumnName]
 
     def setBaseColumnDatatypes(self, columnDatatypes):
         """ Set the data types for the base columns
@@ -968,6 +970,9 @@ class ColumnGenerationSpec(object):
         new_def = None
 
         # generate expression
+        if type(self.datatype) in [ArrayType, MapType, StructType] and self.expr is None:
+            self.logger.warning("Array, Map or Struct type column with no SQL `expr` will result in NULL value")
+            self.executionHistory.append(".. WARNING: Array, Map or Struct type column with no SQL `expr` ")
 
         # handle weighted values for weighted value columns
         # a weighted values column will use a base value denoted by `self._weightedBaseColumn`
@@ -986,7 +991,8 @@ class ColumnGenerationSpec(object):
             # rs: initialize the begin, end and interval if not initialized for date computations
             # defaults are start of day, now, and 1 minute respectively
 
-            self._computeImpliedRangeIfNeeded(self.datatype)
+            if not type(self.datatype) in [ArrayType, MapType, StructType]:
+                self._computeImpliedRangeIfNeeded(self.datatype)
 
             # TODO: add full support for date value generation
             if self.expr is not None:
@@ -996,6 +1002,8 @@ class ColumnGenerationSpec(object):
                 # record execution history
                 self.executionHistory.append(f".. using SQL expression `{self.expr}` as base")
                 self.executionHistory.append(f".. casting to  `{self.datatype}`")
+            elif type(self.datatype) in [ArrayType, MapType, StructType]:
+                new_def = expr("NULL")
             elif self._dataRange is not None and self._dataRange.isFullyPopulated():
                 self.executionHistory.append(f".. computing ranged value: {self._dataRange}")
                 new_def = self._computeRangedColumn(base_column=self.baseColumn, datarange=self._dataRange,

@@ -1,8 +1,35 @@
-## Databricks Labs Data Generator Release Notes
+# Databricks Labs Data Generator Release Notes
 
-### Requirements
+## Change History
+All notable changes to the Databricks Labs Data Generator will be documented in this file.
 
-See the contents of the file `python/require.txt` to see the Python package dependencies
+### Unreleased
+
+#### Changed
+* Refactoring of template text generation for better performance via vectorized implementation
+* Additional migration of tests to use of `pytest`
+
+#### Fixed 
+* added type parsing support for binary and constructs such as `nvarchar(10)`
+* Fixed error occurring when schema contains map, array or struct. 
+
+#### Added 
+* Ability to change name of seed column to custom name (defaults to `id`)
+* Added type parsing support for structs, maps and arrays and combinations of the above
+
+#### Notes
+* column definitions for map, struct or array must use `expr` attribute to initialize field. Defaults to `NULL`
+
+### Version 0.3.0
+
+#### Changes
+* Validation for use in Delta Live Tables
+* Documentation updates
+* Minor bug fixes
+* Changes to build and release process to improve performance
+* Modified dependencies to base release on package versions used by Databricks Runtime 9.1 LTS
+* Updated to Spark 3.2.1 or later
+* Unit test updates - migration from `unittest` to `pytest` for many tests
 
 ### Version 0.2.1
 
@@ -27,7 +54,10 @@ See the contents of the file `python/require.txt` to see the Python package depe
 * Use of data generator to generate static and streaming data sources in Databricks Delta Live Tables
 * added support for install from PyPi
 
-### version 0.3.0
+
+### General Requirements
+
+See the contents of the file `python/require.txt` to see the Python package dependencies
 
 The code for the Databricks Data Generator has the following dependencies
 
@@ -39,6 +69,13 @@ While the data generator framework does not require all libraries used by the ru
 the Databricks runtime is used, it will use the version found in the Databricks runtime for 9.1 LTS or later.
 You can use older versions of the Databricks Labs Data Generator by referring to that explicit version.
 
+The recommended method to install the package is to use `pip install` in your notebook to install the package from 
+PyPi
+
+For example:
+
+`%pip install dbldatagen`
+
 To use an older DB runtime version in your notebook, you can use the following code in your notebook:
 
 ```commandline
@@ -46,7 +83,7 @@ To use an older DB runtime version in your notebook, you can use the following c
 ```
 
 See the [Databricks runtime release notes](https://docs.databricks.com/release-notes/runtime/releases.html) 
- for the full list of dependencies.
+ for the full list of dependencies used by the Databricks runtime.
 
 This can be found at : https://docs.databricks.com/release-notes/runtime/releases.html
 

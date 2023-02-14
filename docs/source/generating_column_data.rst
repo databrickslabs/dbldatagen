@@ -62,7 +62,7 @@ added through this method by a subsequent call to ``withColumnSpec`` to change t
 should be generated
 See :data:`~dbldatagen.data_generator.DataGenerator.withColumnSpecs`.
 
-By default all columns are marked as being dependent on an internal ``id`` column.
+By default all columns are marked as being dependent on an internal ``id`` seed column.
 Use the ``baseColumn`` attribute to mark a column as being dependent on another column or set of columns.
 Use of the base column attribute has several effects:
 
@@ -77,8 +77,20 @@ Use of the base column attribute has several effects:
   Using the same column names for new columns as existing columns may conflict with existing columns.
   This may cause errors during data generation.
 
-  Note that Spark SQL is case insensivite with respect to column names.
+  If you need to generate a field with the same name as the seed column (by default `id`), you may override
+  the default seed column name in the constructor of the data generation spec through the use of the
+
+
+  Note that Spark SQL is case insensitive with respect to column names.
   So a column name that differs only in case to an existing column may cause issues.
+
+Generating complex columns - structs, maps, arrays
+--------------------------------------------------
+
+If the column type is based on a struct, map or array, then the `expr` attribute must be specified to provide a
+value for the column.
+
+If the `expr` attribute is not specified, then the default column value will be `NULL`.
 
 The mechanics of column data generation
 ---------------------------------------

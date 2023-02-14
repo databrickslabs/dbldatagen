@@ -6,10 +6,10 @@
 This file defines the `SchemaParser` class
 """
 
+import pyparsing as pp
 import re
-
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
-    TimestampType, DateType, DecimalType, ByteType
+    TimestampType, DateType, DecimalType, ByteType, BinaryType, StructField, StructType, MapType, ArrayType
 
 
 class SchemaParser(object):
@@ -17,25 +17,206 @@ class SchemaParser(object):
 
         Creates pyspark SQL datatype from string
     """
-    _match_precision_only = re.compile(r"decimal\s*\(\s*([0-9]+)\s*\)")
-    _match_precision_and_scale = re.compile(r"decimal\s*\(\s*([0-9]+)\s*,\s*([0-9]+)\s*\)")
+    _type_parser = None
 
     @classmethod
-    def _parseDecimal(cls, valueStr):
-        """ parse a decimal specifier
-
-        :param valueStr: decimal specifier string such as `decimal(19,4)`, `decimal` or `decimal(10)`
-        :returns: DecimalType instance for parsed result
+    def getTypeDefinitionParser(cls):
         """
-        m = cls._match_precision_only.search(valueStr)
-        if m:
-            return DecimalType(int(m.group(1)))
+        Define a pyparsing based parser for Spark SQL type definitions
 
-        m = cls._match_precision_and_scale.search(valueStr)
-        if m:
-            return DecimalType(int(m.group(1)), int(m.group(2)))
+        Allowable constructs for generated type parser are:
+         * `string`, `varchar`, `char`, `nvarchar`,
+         * `int`, `integer`,
+         * `bigint`, `long`,
+         * `bool`, `boolean`,
+         * `smallint`, `short`
+         * `binary`
+         * `tinyint`, `byte`
+         * `date`
+         * `timestamp`, `datetime`,
+         * `double`, `float`, `date`, `short`, `byte`,
+         * `decimal` or `decimal(p)` or `decimal(p, s)` or `number(p, s)`
+         * `map<type1, type2>` where type1 and type2 are type definitions of form accepted by parser
+         * `array<type1>` where type1 is type definitions of form accepted by parser
+         * `struct<a:binary, b:int, c:float>`
 
-        return DecimalType()
+         Type definitions may be nested recursively - for example, the following are valid type definitions:
+         * `array<array<int>>
+         * `struct<a:array<int>, b:int, c:float>`
+         * `map<string, struct<a:array<int>, b:int, c:float>>`
+
+        :return: parser
+
+        See the package pyparsing for details of how the parser mechanism works
+        `https://pypi.org/project/pyparsing/`
+        """
+        # define grammar for parsing type definitions of the form "INT", "decimal(10,4)"
+        # and "map<string, string>" etc
+        if cls._type_parser is None:
+            int_keyword = pp.CaselessKeyword("int") ^ pp.CaselessKeyword("integer")
+            int_keyword.setParseAction(lambda s: "int")
+
+            bigint_keyword = pp.CaselessKeyword("bigint") ^ pp.CaselessKeyword("long")
+            bigint_keyword.setParseAction(lambda s: "bigint")
+
+            binary_keyword = pp.CaselessKeyword("binary")
+
+            boolean_keyword = pp.CaselessKeyword("boolean") ^ pp.CaselessKeyword("bool")
+            boolean_keyword.setParseAction(lambda s: "boolean")
+
+            date_keyword = pp.CaselessKeyword("date")
+            double_keyword = pp.CaselessKeyword("double")
+
+            float_keyword = pp.CaselessKeyword("float") ^ pp.CaselessKeyword("real")
+            float_keyword.setParseAction(lambda s: "float")
+
+            smallint_keyword = pp.CaselessKeyword("smallint") ^ pp.CaselessKeyword("short")
+            smallint_keyword.setParseAction(lambda s: "smallint")
+
+            timestamp_keyword = pp.CaselessKeyword("timestamp") ^ pp.CaselessKeyword("datetime")
+            timestamp_keyword.setParseAction(lambda s: "timestamp")
+
+            tinyint_keyword = pp.CaselessKeyword("tinyint") ^ pp.CaselessKeyword("byte")
+            tinyint_keyword.setParseAction(lambda s: "tinyint")
+
+            lbracket = (pp.Literal("(").suppress()).setName("lPar")
+            rbracket = pp.Literal(")").suppress().setName("rPar")
+            comma = pp.Literal(",").suppress().setName("comma")
+            number = pp.Word(pp.nums).setName("number_literal")
+
+            # handle string types of the form "STRING", "char(10)" etc
+            string_keyword = pp.oneOf(["string", "nvarchar", "varchar", "char"], caseless=True, asKeyword=True)
+            string_keyword.setParseAction(lambda s: "string")
+            string_type_expr = string_keyword + pp.Optional(lbracket + number + rbracket)
+
+            # handle decimal types of the form "decimal(10)", "real", "numeric(10,3)"
+            decimal_keyword = pp.MatchFirst(
+                [pp.CaselessKeyword("decimal"), pp.CaselessKeyword("dec"), pp.CaselessKeyword("number"),
+                 pp.CaselessKeyword("numeric")])
+            decimal_keyword.setParseAction(lambda s: "decimal")
+            # first number is precision , default 10; second number is scale, default 0
+            decimal_type_expr = decimal_keyword + pp.Optional(
+                lbracket + number + pp.Optional(comma + number, "0") + rbracket)
+
+            primitive_type_keyword = (int_keyword ^ bigint_keyword ^ binary_keyword ^ boolean_keyword
+                                      ^ date_keyword ^ float_keyword ^ smallint_keyword ^ timestamp_keyword
+                                      ^ tinyint_keyword ^ string_type_expr ^ decimal_type_expr ^ double_keyword
+                                      ).setName("primitive_type_defn")
+
+            # handle more complex type definitions such as struct, map and array
+
+            # declare forward reference to type expression
+            type_expr = pp.Forward()
+
+            l_angle = pp.Literal("<").suppress()
+            r_angle = pp.Literal(">").suppress()
+
+            # handle arrays
+            array_keyword = pp.CaselessKeyword("array")
+            array_expr = array_keyword + pp.Group(l_angle + type_expr + r_angle)
+            array_expr.setName("array_type_expr")
+
+            # handle maps
+            map_keyword = pp.CaselessKeyword("map")
+            map_expr = map_keyword + l_angle + pp.Group(type_expr) + comma + pp.Group(type_expr) + r_angle
+            map_expr.setName("map_type_expr")
+
+            # handle SQL identifiers such as "a14" and "`a test`"
+            ident = pp.Word(pp.alphas, pp.alphanums + "_") | pp.QuotedString(quoteChar="`", escQuote="``")
+
+            colon = pp.Literal(":").suppress()
+
+            # handle structs
+            struct_keyword = pp.CaselessKeyword("struct")
+            struct_expr = struct_keyword + l_angle + pp.Group(
+                pp.delimitedList(pp.Group(ident + pp.Optional(colon) + pp.Group(type_expr)))) + r_angle
+
+            # try to capture invalid type name for better error reporting
+            invalid_type = pp.Word(pp.alphas, pp.alphanums+"_", as_keyword=True)
+
+            # use left recursion to handle nesting of types
+            type_expr <<= pp.MatchFirst([primitive_type_keyword, array_expr, map_expr, struct_expr, invalid_type])
+
+            type_parser = pp.StringStart() + type_expr + pp.StringEnd()
+            cls._type_parser = type_parser
+        return cls._type_parser
+
+    @classmethod
+    def _parse_ast(cls, ast):
+        """
+        Parse Abstract Syntax Tree generated from earlier parse
+        :param ast: AST generated by parsing type definition
+        :return: Pyspark Type Definition - e.g StringType() etc
+        """
+        assert len(ast) > 0, "AST tree must contain elements"
+
+        first_token = ast[0]
+
+        if first_token == "string":
+            retval = StringType()
+        elif first_token == "int":
+            retval = IntegerType()
+        elif first_token == "bigint":
+            retval = LongType()
+        elif first_token == "boolean":
+            retval = BooleanType()
+        elif first_token == "binary":
+            retval = BinaryType()
+        elif first_token == "timestamp":
+            retval = TimestampType()
+        elif first_token == "decimal":
+            if len(ast) == 1:
+                retval = DecimalType(10, 0)
+            # note if `decimal(10)` is passed, parser will expand to `decimal(10,0)`
+            # so there is no need to handle case here len(ast) == 2
+            elif len(ast) == 3:
+                retval = DecimalType(int(ast[1]), int(ast[2]))
+            else:
+                raise ValueError(f"Cannot parse decimal type {list(ast)}")
+        elif first_token == "double":
+            retval = DoubleType()
+        elif first_token == "float":
+            retval = FloatType()
+        elif first_token == "date":
+            retval = DateType()
+        elif first_token == "smallint":
+            retval = ShortType()
+        elif first_token == "tinyint":
+            retval = ByteType()
+        elif first_token == "interval":
+            raise ValueError("Interval is invalid type for field definition")
+        elif first_token == "array":
+            try:
+                assert len(ast) == 2, "array must have nested type"
+                inner_type = cls._parse_ast(ast[1])
+                retval = ArrayType(inner_type)
+            except Exception as e:
+                raise ValueError(f"Could not construct array type definition due to `{e}`") from e
+        elif first_token == "map":
+            try:
+                assert len(ast) == 3, "map must have 2 inner types"
+                inner_type1 = cls._parse_ast(ast[1])
+                inner_type2 = cls._parse_ast(ast[2])
+                retval = MapType(inner_type1, inner_type2)
+            except Exception as e:
+                raise ValueError(f"Could not construct map type definition due to `{e}`") from e
+        elif first_token == "struct":
+            try:
+                assert len(ast) == 2, f"struct must have nested list of fields : {len(ast)}"
+                field_list_defns = ast[1]
+                fields = []
+                assert len(field_list_defns) > 0, "field list must be non-empty"
+
+                for field_defn in field_list_defns:
+                    field_name = field_defn[0]
+                    field_type = cls._parse_ast(field_defn[1])
+                    fields.append(StructField(field_name, field_type))
+                retval = StructType(fields)
+            except Exception as e:
+                raise ValueError(f"Could not construct struct type definition due to `{e}`") from e
+        else:
+            raise ValueError(f" Invalid or unsupported type `{first_token}` found while processing `{list(ast)}`")
+        return retval
 
     @classmethod
     def columnTypeFromString(cls, type_string):
@@ -46,42 +227,38 @@ class SchemaParser(object):
          * `int`, `integer`,
          * `bigint`, `long`,
          * `bool`, `boolean`,
+         * `smallint`, `short`
+         * `binary`
+         * `tinyint`, `byte`
+         * `date`
          * `timestamp`, `datetime`,
          * `double`, `float`, `date`, `short`, `byte`,
-         * `decimal(p, s)` or `number(p, s)`
+         * `decimal` or `decimal(p)` or `decimal(p, s)` or `number(p, s)`
+         * `map<type1, type2>` where type1 and type2 are type definitions of form accepted by parser
+         * `array<type1>` where type1 is type definitions of form accepted by parser
+         * `struct<a:binary, b:int, c:float>`
 
+         Type definitions may be nested recursively - for example, the following are valid type definitions:
+         * `array<array<int>>
+         * `struct<a:array<int>, b:int, c:float>`
+         * `map<string, struct<a:array<int>, b:int, c:float>>`
 
         :param type_string: String representation of SQL type such as 'integer' etc.
         :returns: Spark SQL type
         """
         assert type_string is not None, "`type_string` must be specified"
 
-        s = type_string.strip().lower()
-        if s in ["string", "varchar", "char", "nvarchar"]:
-            retval = StringType()
-        elif s in ["int", "integer"]:
-            retval = IntegerType()
-        elif s in ["bigint", "long"]:
-            retval = LongType()
-        elif s in ["bool", "boolean"]:
-            retval = BooleanType()
-        elif s in ["timestamp", "datetime"]:
-            retval = TimestampType()
-        elif s.startswith("decimal") or s.startswith("number"):
-            retval = cls._parseDecimal(s)
-        elif s == "double":
-            retval = DoubleType()
-        elif s == "float":
-            retval = FloatType()
-        elif s == "date":
-            retval = DateType()
-        elif s == "short":
-            retval = ShortType()
-        elif s == "byte":
-            retval = ByteType()
-        else:
-            retval = s
-        return retval
+        parser = cls.getTypeDefinitionParser()
+
+        # generate abstract syntax tree (AST) from parsed definition
+        try:
+            ast = parser.parseString(type_string)
+        except Exception as e:
+            raise ValueError(f"Invalid type definition `{type_string}`",e) from e
+
+        type_construct = cls._parse_ast(ast)
+
+        return type_construct
 
     @classmethod
     def parseCreateTable(cls, sparkSession, source_schema):
