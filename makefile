@@ -29,10 +29,6 @@ create-dev-env:
 	@echo "$(OK_COLOR)=> making conda dev environment$(NO_COLOR)"
 	conda create -n $(ENV_NAME) python=3.8.10
 
-create-dev-env-321:
-	@echo "$(OK_COLOR)=> making conda dev environment for Spark 3.2.1$(NO_COLOR)"
-	conda create -n $(ENV_NAME) python=3.8.10
-
 create-github-build-env:
 	@echo "$(OK_COLOR)=> making conda dev environment$(NO_COLOR)"
 	conda create -n pip_$(ENV_NAME) python=3.8
@@ -40,10 +36,6 @@ create-github-build-env:
 install-dev-dependencies:
 	@echo "$(OK_COLOR)=> installing dev environment requirements$(NO_COLOR)"
 	pip install -r python/dev_require.txt
-
-install-dev-dependencies321:
-	@echo "$(OK_COLOR)=> installing dev environment requirements for Spark 3.2.1$(NO_COLOR)"
-	pip install -r python/dev_require_321.txt
 
 clean-dev-env:
 	@echo "$(OK_COLOR)=> Cleaning dev environment$(NO_COLOR)"
