@@ -8,6 +8,8 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 #### Changed
 * Refactoring of template text generation for better performance via vectorized implementation
 * Additional migration of tests to use of `pytest`
+* Changed parsing of build options for data generator to support use of custom streaming
+* Documentation updates in support of new features such as streaming, complex structures etc
 
 #### Fixed 
 * added type parsing support for binary and constructs such as `nvarchar(10)`
@@ -16,6 +18,9 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 #### Added 
 * Ability to change name of seed column to custom name (defaults to `id`)
 * Added type parsing support for structs, maps and arrays and combinations of the above
+* Added support for additional streaming source types and for use of custom streaming sources
+* Added support for use of file reads as a streaming source (for seed and timestamp columns only)
+* Added support for complex event time in streaming scenarios. It may also be used in batch scenarios for testing
 
 #### Notes
 * column definitions for map, struct or array must use `expr` attribute to initialize field. Defaults to `NULL`

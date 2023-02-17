@@ -32,7 +32,9 @@ class TestStreaming():
         shutil.rmtree(base_dir, ignore_errors=True)
         print(f"\n\n*** test dir [{base_dir}] deleted")
 
-    @pytest.mark.parametrize("seedColumnName", ["id", "_id", None])
+    @pytest.mark.parametrize("seedColumnName", ["id",
+                                                "_id",
+                                                None])
     def test_streaming(self, getStreamingDirs, seedColumnName):
         base_dir, test_dir, checkpoint_dir = getStreamingDirs
 
@@ -104,7 +106,9 @@ class TestStreaming():
         # check that we have at least one second of data
         assert rows_retrieved >= self.rows_per_second
 
-    @pytest.mark.parametrize("seedColumnName", ["id", "_id", None])
+    @pytest.mark.parametrize("seedColumnName", ["id",
+                                                "_id",
+                                                None])
     def test_streaming_trigger_once(self, getStreamingDirs, seedColumnName):
         base_dir, test_dir, checkpoint_dir = getStreamingDirs
 
