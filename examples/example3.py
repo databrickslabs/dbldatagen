@@ -1,5 +1,17 @@
+# Databricks notebook source
+# MAGIC %md Example 3
+
+# COMMAND ----------
+
 from datetime import timedelta, datetime
 import math
+
+# build spark session
+# This is not needed when running examples inside of a Databricks runtime notebook environment
+spark = SparkSession.builder \
+    .master("local[4]") \
+    .appName("Example") \
+    .getOrCreate()
 
 # examples of use
 
