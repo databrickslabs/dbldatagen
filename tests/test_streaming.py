@@ -182,3 +182,78 @@ class TestStreaming():
 
         # check that we have at least one second of data
         assert rows_retrieved >= self.rows_per_second
+
+    @pytest.mark.parametrize("options,optionsExpected",
+                             [ ({"dbldatagen.streaming.source": "rate"},
+                                ({"dbldatagen.streaming.source": "rate"}, {}, {})),
+                               ({"dbldatagen.streaming.source": "rate-micro-batch", "rowsPerSecond": 50},
+                                ({"dbldatagen.streaming.source": "rate-micro-batch"}, {"rowsPerSecond": 50}, {})),
+                                   ({"dbldatagen.streaming.source": "rate-micro-batch",
+                                     "rowsPerSecond": 50,
+                                     "dbldatagen.rows": 100000},
+                                    ({"dbldatagen.streaming.source": "rate-micro-batch"},
+                                     {"rowsPerSecond": 50},
+                                     {"dbldatagen.rows": 100000}))
+                               ])
+    def test_option_parsing(self, options, optionsExpected):
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count,
+                                         partitions=4, seedMethod='hash_fieldname')
+                        .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
+                        .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
+                        .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+                        .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+                        .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+                        )
+
+        datagen_options, passthrough_options, unsupported_options  = testDataSpec._parseBuildOptions(options)
+
+        expected_datagen_options, expected_passthrough_options, expected_unsupported_options = optionsExpected
+
+        assert datagen_options == expected_datagen_options
+        assert passthrough_options == expected_passthrough_options
+        assert unsupported_options == expected_unsupported_options
+
+    @pytest.mark.parametrize("options",
+                             [ {"dbldatagen.streaming.source": "parquet",
+                                 "dbldatagen.streaming.sourcePath": "/tmp/testStreamingFiles/data1"},
+                               {"dbldatagen.streaming.source": "csv",
+                                "dbldatagen.streaming.sourcePath": "/tmp/testStreamingFiles/data2"},
+                               ])
+    def test_basic_file_streaming(self, options, getStreamingDirs):
+        base_dir, test_dir, checkpoint_dir = getStreamingDirs
+
+        # generate file for base of streaming generator
+        testDataSpecBase = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count,
+                                         partitions=4, seedMethod='hash_fieldname')
+                        .withColumn('value', "long", expr="id")
+                        .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
+                        .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+                        )
+        dfBase = testDataSpecBase.build()
+        dfBase.write.format(options["dbldatagen.streaming.source"])\
+            .mode('overwrite')\
+            .save(options["dbldatagen.streaming.source"])
+
+        # generate streaming data frame
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
+                                         partitions=4, seedMethod='hash_fieldname')
+                        .withColumn("a", IntegerType(), minValue=100, maxValue=200)
+                        .withColumn("b", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+                        )
+        dfStreaming = testDataSpecBase.build(withStreaming=True, options=options)
+
+        sq = (dfStreaming
+              .writeStream
+              .format("parquet")
+              .outputMode("append")
+              .option("path", test_dir)
+              .option("checkpointLocation", checkpoint_dir)
+              .start())
+
+        sq.processAllAvailable()
+
+        dfStreamDataRead = spark.read.format("parquet").load(test_dir)
+        rows_read = dfStreamDataRead.count()
+
+        assert rows_read == self.row_count
+

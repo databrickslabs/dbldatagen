@@ -20,6 +20,14 @@ from . _version import _get_spark_version
 _OLD_MIN_OPTION = 'min'
 _OLD_MAX_OPTION = 'max'
 
+_STREAMING_SOURCE_OPTION = "dbldatagen.streaming.source"
+_STREAMING_SCHEMA_OPTION = "dbldatagen.streaming.sourceSchema"
+_STREAMING_PATH_OPTION = "dbldatagen.streaming.sourcePath"
+_STREAMING_ID_FIELD_OPTION = "dbldatagen.streaming.sourceIdField"
+_STREAMING_TIMESTAMP_FIELD_OPTION = "dbldatagen.streaming.sourceTimestampField"
+_STREAMING_GEN_TIMESTAMP_OPTION = "dbldatagen.streaming.generateTimestamp"
+_BUILD_OPTION_PREFIX = "dbldatagen."
+
 _STREAMING_TIMESTAMP_COLUMN = "_source_timestamp"
 
 
@@ -975,6 +983,48 @@ class DataGenerator:
 
         self.buildPlanComputed = True
         return self
+
+    def _parseBuildOptions(self, options):
+        """ Parse build options
+
+        Parse build options into tuple of dictionaries - (datagen options, passthrough options, unsupported options)
+
+        where
+
+        - `datagen options` is dictionary of options to be interpreted by the data generator
+        - `passthrough options` is dictionary of options to be passed through to the underlying base dataframe
+        - `supported options` is dictionary of options that are not supported
+
+        :param options:  Dict of options to control generating of data
+        :returns: tuple of options dictionaries - (datagen_options, passthrough_options, unsupported options)
+
+        """
+        passthrough_options = {}
+        unsupported_options = {}
+        datagen_options = {}
+
+        supported_options = [_STREAMING_SOURCE_OPTION,
+                             _STREAMING_SCHEMA_OPTION,
+                             _STREAMING_PATH_OPTION,
+                             _STREAMING_ID_FIELD_OPTION,
+                             _STREAMING_TIMESTAMP_FIELD_OPTION,
+                             _STREAMING_GEN_TIMESTAMP_OPTION
+                             ]
+
+        if options is not None:
+            for k, v in options.items():
+                if isinstance(k, str):
+                    if k.startswith(_BUILD_OPTION_PREFIX):
+                        if k in supported_options:
+                            datagen_options[k] = v
+                        else:
+                            unsupported_options[k] = v
+                    else:
+                        passthrough_options[k] = v
+                else:
+                    unsupported_options[k] = v
+
+        return datagen_options, passthrough_options, unsupported_options
 
     def build(self, withTempView=False, withView=False, withStreaming=False, options=None):
         """ build the test data set from the column definitions and return a dataframe for it
