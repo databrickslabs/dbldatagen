@@ -3,6 +3,21 @@
 ## Change History
 All notable changes to the Databricks Labs Data Generator will be documented in this file.
 
+### Unreleased
+
+#### Changed
+* Adjusted column build phase separation (i.e which select statement is used to build columns) so that a 
+  column with a SQL expression can refer to previously created columns without use of a `baseColumn` attribute
+
+#### Fixed 
+
+#### Added 
+* Parsing of SQL expressions to determine column dependencies
+
+#### Notes
+* This does not change actual order of column building - but adjusts which phase 
+
+
 ### Version 0.3.1
 
 #### Changed
