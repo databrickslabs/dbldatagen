@@ -3,7 +3,7 @@
 ## Change History
 All notable changes to the Databricks Labs Data Generator will be documented in this file.
 
-### Unreleased
+### Version 0.3.1
 
 #### Changed
 * Refactoring of template text generation for better performance via vectorized implementation
