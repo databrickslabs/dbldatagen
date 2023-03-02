@@ -3,6 +3,15 @@
 ## Change History
 All notable changes to the Databricks Labs Data Generator will be documented in this file.
 
+### Unreleased
+
+#### Changed
+* Documentation changes
+* Changes to examples to allow use in Databricks notebook environment
+
+#### Added
+* Documentation section on use with DLT
+
 ### Version 0.3.1
 
 #### Changed
