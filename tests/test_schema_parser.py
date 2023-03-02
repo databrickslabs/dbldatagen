@@ -118,3 +118,41 @@ class TestSchemaParser:
         assert "id" in schema3.fieldNames()
         assert "name" in schema3.fieldNames()
         assert "age" in schema3.fieldNames()
+
+    @pytest.mark.parametrize("sqlExpr, expectedText",
+                             [("named_struct('name', city_name, 'id', city_id, 'population', city_pop)",
+                               "named_struct(' ', city_name, ' ', city_id, ' ', city_pop)"),
+                              ("cast(10 as decimal(10)",
+                               "cast(10 as decimal(10)"),
+                              (" ", " "),
+                              ("", ""),
+                              ])
+    def test_sql_expression_cleanser(self, sqlExpr, expectedText):
+        newSql = dg.SchemaParser._cleanseSQL(sqlExpr)
+        assert sqlExpr == expectedText or sqlExpr != newSql
+
+        assert newSql == expectedText
+
+    @pytest.mark.parametrize("sqlExpr, expectedReferences, filterColumns",
+                             [("named_struct('name', city_name, 'id', city_id, 'population', city_pop)",
+                               ['named_struct', 'city_name',  'city_id', 'city_pop'],
+                               None),
+                              ("named_struct('name', city_name, 'id', city_id, 'population', city_pop)",
+                               [ 'city_name', 'city_pop'],
+                               ['city_name', 'city_pop']),
+                               ("cast(10 as decimal(10)",  ['cast', 'as', 'decimal'], None),
+                              ("cast(x as decimal(10)", ['x'], ['x']),
+                              (" ", [], None),
+                              ("", [], None),
+                              ])
+    def test_sql_expression_parser(self, sqlExpr, expectedReferences, filterColumns):
+        references = dg.SchemaParser.columnsReferencesFromSQLString(sqlExpr, filter=filterColumns)
+        assert references is not None
+
+        assert isinstance(references, list), "expected list of potential column references to be returned"
+
+        print(references)
+
+        assert set(references) == set(expectedReferences)
+
+

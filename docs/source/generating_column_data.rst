@@ -107,13 +107,29 @@ This performs the following actions:
 - The final set of output fields will be selected (omitting any columns where the ``omit`` attribute was set to
   **True**)
 
+.. note::
+
+  Normally the columns will be built in the order specified in the spec.
+  Use of the `baseColumn` attribute may change the column build ordering.
+
+
 This has several implications:
 
-- If a column is referred to in an expression, the ``baseColumn`` attribute must be defined with a dependency
+- If a column is referred to in an expression, the ``baseColumn`` attribute may need to be defined with a dependency
   on that column
 - If a column uses a base column with a restricted range of values then it is possible that the column
   will not generate the full range of values in the column generation spec
 - If the base column is of type ``boolean`` or some other restricted range type, computations on that base value
   may not produce the expected range of values
-- If base column is not specified, you may see errors reporting that the column in an expression does not exist
+- If base column is not specified, you may see errors reporting that the column in an expression does not exist. T
+  This may be fixed by specifying a column dependency using the `baseColumn` attribute
 
+.. note::
+
+  The implementation performs primitive scanning of SQL expressions (specified using the `expr` attribute)
+  to determine if the sql expression depends on
+  earlier columns and if so, will put the building of the column in a separate phase.
+
+  However it does not reorder the building sequence if there is a reference to a column that will be built later in the
+  SQL expression.
+  To enforce the dependency, you must use the `baseColumn` attribute to indicate the dependency.

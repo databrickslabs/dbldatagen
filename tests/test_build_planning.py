@@ -1,9 +1,12 @@
-import unittest
+import pytest
+import logging
 
 from pyspark.sql.types import BooleanType, DateType
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, TimestampType, DecimalType
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType, TimestampType, DecimalType,  \
+    LongType, DoubleType
 
 import dbldatagen as dg
+
 
 schema = StructType([
     StructField("PK1", StringType(), True),
@@ -141,26 +144,26 @@ schema = StructType([
     StructField("isDeleted", BooleanType(), True)
 ])
 
-print("schema", schema)
-
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
+
+@pytest.fixture(scope="class")
+def setupLogging():
+    FORMAT = '%(asctime)-15s %(message)s'
+    logging.basicConfig(format=FORMAT)
 
 
 # Test manipulation and generation of test data for a large schema
-class TestBuildPlanning(unittest.TestCase):
+class TestBuildPlanning:
     testDataSpec = None
     dfTestData = None
     row_count = 100000
 
-    def setUp(self):
-        print("setting up")
-
-    @classmethod
-    def setUpClass(cls):
+    @pytest.fixture(scope="class")
+    def sampleDataSpec(self):
         sale_values = ['RETAIL', 'ONLINE', 'WHOLESALE', 'RETURN']
         sale_weights = [1, 5, 5, 1]
 
-        cls.testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
+        testDataspec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count,
                                              partitions=4)
                             .withSchema(schema)
                             .withIdOutput()
@@ -181,47 +184,268 @@ class TestBuildPlanning(unittest.TestCase):
 
                             )
 
+        return testDataspec
+
+
+    @pytest.fixture()
+    def sampleDataSet(self, sampleDataSpec):
         print("Test generation plan")
         print("=============================")
-        cls.testDataSpec.explain()
+        sampleDataSpec.explain()
 
-        print("=============================")
-        print("")
-        cls.dfTestData = cls.testDataSpec.build()
+        df = sampleDataSpec.build()
 
-    def test_fieldnames_for_schema(self):
+        return df
+
+    def setup_log_capture(self, caplog_object):
+        """ set up log capture fixture
+
+        Sets up log capture fixture to only capture messages after setup and only
+        capture warnings and errors
+
+        """
+        caplog_object.set_level(logging.WARNING)
+
+        # clear messages from setup
+        caplog_object.clear()
+
+    def get_log_capture_warngings_and_errors(self, caplog_object, textFlag):
+        """
+        gets count of errors containing specified text
+
+        :param caplog_object: log capture object from fixture
+        :param textFlag: text to search for to include error or warning in count
+        :return: count of errors containg text specified in `textFlag`
+        """
+        seed_column_warnings_and_errors = 0
+        for r in caplog_object.records:
+            if (r.levelname == "WARNING" or r.levelname == "ERROR") and textFlag in r.message:
+                seed_column_warnings_and_errors += 1
+
+        return seed_column_warnings_and_errors
+
+    def test_fieldnames_for_schema(self, sampleDataSpec):
         """Test field names in data spec correspond with schema"""
-        fieldsFromGenerator = set(self.testDataSpec.getOutputColumnNames())
+        fieldsFromGenerator = set(sampleDataSpec.getOutputColumnNames())
 
         fieldsFromSchema = set([fld.name for fld in schema.fields])
 
         # output fields should be same + 'id' field
-        self.assertEqual(fieldsFromGenerator - fieldsFromSchema, set(['id']))
+        assert fieldsFromGenerator - fieldsFromSchema == set(['id'])
 
-    def test_explain(self):
-        self.testDataSpec.computeBuildPlan()
-        explain_results = self.testDataSpec.explain()
-        self.assertIsNotNone(explain_results)
+    def test_explain(self, sampleDataSpec):
+        sampleDataSpec.computeBuildPlan()
+        explain_results = sampleDataSpec.explain()
+        assert explain_results is not None
 
-    def test_explain_on_clone(self):
-        testDataSpec2 = self.testDataSpec.clone()
+    def test_explain_on_clone(self, sampleDataSpec):
+        testDataSpec2 = sampleDataSpec.clone()
         testDataSpec2.computeBuildPlan()
         explain_results = testDataSpec2.explain(suppressOutput=True)
 
-        self.assertIsNotNone(explain_results)
+        assert explain_results is not None
 
-# run the tests
-# if __name__ == '__main__':
-#  print("Trying to run tests")
-#  unittest.main(argv=['first-arg-is-ignored'],verbosity=2,exit=False)
+    def test_build_ordering_basic(self, sampleDataSpec):
+        build_order = sampleDataSpec.build_order
 
-# def runTests(suites):
-#    suite = unittest.TestSuite()
-#    result = unittest.TestResult()
-#    for testSuite in suites:
-#        suite.addTest(unittest.makeSuite(testSuite))
-#    runner = unittest.TextTestRunner()
-#    print(runner.run(suite))
+        # make sure that build order is list of lists
+        assert build_order is not None
+        assert isinstance(build_order, list)
+
+        for el in build_order:
+            assert isinstance(el, list)
+
+    def builtBefore(self, field1, field2, build_order):
+        """ check if field1 is built before field2"""
+
+        fieldsBuilt = []
+
+        for phase in build_order:
+            for el in phase:
+                if el == field1:
+                    return field2 in fieldsBuilt
+                fieldsBuilt.append(el)
+
+        return False
+
+    def builtInSeparatePhase(self, field1, field2, build_order):
+        """ check if field1 is built in separate phase to field2"""
+
+        fieldsBuilt = []
+
+        for phase in build_order:
+            for el in phase:
+                if el == field1:
+                    return field2 not in phase
+                fieldsBuilt.append(el)
+
+        return False
 
 
-# runTests([TestBasicOperation])
+    def test_build_ordering_explicit_dependency(self):
+        gen1 = dg.DataGenerator(sparkSession=spark, name="nested_schema", rows=1000, partitions=4,
+                                     seedColumnName="_id") \
+            .withColumn("id", "long", minValue=1000000, uniqueValues=10000, random=True) \
+            .withColumn("city_name", "string", template=r"\w", random=True, omit=True) \
+            .withColumn("city_id", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city_pop", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city", "struct<name:string, id:long, population:long>",
+                        expr="named_struct('name', city_name, 'id', city_id, 'population', city_pop)",
+                        baseColumns=["city2"]) \
+            .withColumn("city2", "struct<name:string, id:long, population:long>",
+                        expr="named_struct('name', city_name, 'id', city_id, 'population', city_pop)",
+                        baseColumns=["city_pop"]) \
+            .withColumn("city_id2", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True,
+                        baseColumn="city_id")
+
+        build_order  = gen1.build_order
+
+        assert self.builtBefore("city_id", "city_name", build_order)
+        assert self.builtBefore("city", "city2", build_order)
+        assert self.builtBefore("city2", "city_pop", build_order)
+        assert self.builtBefore("city_id2", "city_id", build_order)
+
+        assert self.builtBefore("city", "city_name", build_order)
+        assert self.builtBefore("city", "city_id", build_order)
+        assert self.builtBefore("city", "city_pop", build_order)
+
+        assert self.builtInSeparatePhase("city", "city_name", build_order)
+        assert self.builtInSeparatePhase("city", "city_id", build_order)
+        assert self.builtInSeparatePhase("city", "city_pop", build_order)
+
+        print(gen1.build_order)
+
+    def test_build_ordering_explicit_dependency2(self):
+        gen1 = dg.DataGenerator(sparkSession=spark, name="nested_schema", rows=1000, partitions=4,
+                                     seedColumnName="_id") \
+            .withColumn("id", "long", minValue=1000000, uniqueValues=10000, random=True) \
+            .withColumn("city_name", "string", template=r"\w", random=True, omit=True) \
+            .withColumn("city_id", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city_pop", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city", "struct<name:string, id:long, population:long>",
+                        expr="named_struct('name', city_name, 'id', city_id, 'population', city_pop)",
+                        baseColumns=["city_name", "city_id", "city_pop"]) \
+            .withColumn("city2", "struct<name:string, id:long, population:long>",
+                        expr="city",
+                        baseColumns=["city"]) \
+            .withColumn("city_id2", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True,
+                        baseColumn="city_id")
+
+        build_order  = gen1.build_order
+
+        assert self.builtBefore("city", "city_name", build_order)
+        assert self.builtBefore("city", "city_id", build_order)
+        assert self.builtBefore("city", "city_pop", build_order)
+        assert self.builtInSeparatePhase("city", "city_name", build_order)
+        assert self.builtInSeparatePhase("city", "city_id", build_order)
+        assert self.builtInSeparatePhase("city", "city_pop", build_order)
+
+        print(gen1.build_order)
+
+
+    def test_build_ordering_implicit_dependency(self):
+        gen1 = dg.DataGenerator(sparkSession=spark, name="nested_schema", rows=1000, partitions=4,
+                                     seedColumnName="_id") \
+            .withColumn("id", "long", minValue=1000000, uniqueValues=10000, random=True) \
+            .withColumn("city_name", "string", template=r"\w", random=True, omit=True) \
+            .withColumn("city_id", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city_pop", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city", "struct<name:string, id:long, population:long>",
+                        expr="named_struct('name', city_name, 'id', city_id, 'population', city_pop)")
+
+        build_order = gen1.build_order
+        print(gen1.build_order)
+
+        assert self.builtBefore("city", "city_name", build_order)
+        assert self.builtBefore("city", "city_id", build_order)
+        assert self.builtBefore("city", "city_pop", build_order)
+        assert self.builtInSeparatePhase("city", "city_name", build_order), "fields should be built in separate phase"
+        assert self.builtInSeparatePhase("city", "city_id", build_order), "fields should be built in separate phase"
+        assert self.builtInSeparatePhase("city", "city_pop", build_order), "fields should be built in separate phase"
+
+
+    def test_expr_attribute(self):
+        sql_expr = "named_struct('name', city_name, 'id', city_id, 'population', city_pop)"
+        gen1 = dg.DataGenerator(sparkSession=spark, name="nested_schema", rows=1000, partitions=4,
+                                     seedColumnName="_id") \
+            .withColumn("id", "long", minValue=1000000, uniqueValues=10000, random=True) \
+            .withColumn("city_name", "string", template=r"\w", random=True, omit=True) \
+            .withColumn("city_id", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city_pop", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city", "struct<name:string, id:long, population:long>",
+                        expr=sql_expr)
+
+        columnSpec = gen1.getColumnSpec("city")
+
+        assert columnSpec.expr == sql_expr
+
+    def test_build_ordering_duplicate_names1(self):
+        gen1 = dg.DataGenerator(sparkSession=spark, name="nested_schema", rows=1000, partitions=4,
+                                     seedColumnName="_id") \
+            .withColumn("id", "long", minValue=1000000, uniqueValues=10000, random=True) \
+            .withColumn("city_name", "long", minValue=1000000, uniqueValues=10000, random=True) \
+            .withColumn("city_name", "string", template=r"\w", random=True, omit=True) \
+            .withColumn("city_id", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city_pop", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city", "struct<name:string, id:long, population:long>",
+                        expr="named_struct('name', city_name, 'id', city_id, 'population', city_pop)")
+
+        build_order = gen1.build_order
+        print(gen1.build_order)
+
+        df = gen1.build()
+
+        df.show()
+
+        #assert self.builtBefore("city", "city_name", build_order)
+        #assert self.builtBefore("city", "city_id", build_order)
+        #assert self.builtBefore("city", "city_pop", build_order)
+        #assert self.builtInSeparatePhase("city", "city_name", build_order), "fields should be built in separate phase"
+        #assert self.builtInSeparatePhase("city", "city_id", build_order), "fields should be built in separate phase"
+        #assert self.builtInSeparatePhase("city", "city_pop", build_order), "fields should be built in separate phase"
+
+    def test_build_ordering_forward_ref(self, caplog):
+        # caplog fixture captures log content
+        self.setup_log_capture(caplog)
+
+        gen1 = dg.DataGenerator(sparkSession=spark, name="nested_schema", rows=1000, partitions=4,
+                                     seedColumnName="_id") \
+            .withColumn("id", "long", minValue=1000000, uniqueValues=10000, random=True) \
+            .withColumn("city_name", "long", minValue=1000000, uniqueValues=10000, random=True) \
+            .withColumn("city_pop", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city", "struct<name:string, id:long, population:long>",
+                        expr="named_struct('name', city_name, 'id', city_id, 'population', city_pop)") \
+           .withColumn("city_id", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True)
+
+        build_order = gen1.build_order
+        print(gen1.build_order)
+
+        seed_column_warnings_and_errors = self.get_log_capture_warngings_and_errors(caplog, "forward references")
+        assert seed_column_warnings_and_errors >= 1, "Should not have error messages about forward references"
+
+
+    def test_build_ordering_duplicate_names2(self):
+        gen1 = dg.DataGenerator(sparkSession=spark, name="nested_schema", rows=1000, partitions=4,
+                                     seedColumnName="_id") \
+            .withColumn("id", "long", minValue=1000000, uniqueValues=10000, random=True) \
+            .withColumn("city_name", "long", minValue=1000000, uniqueValues=10000, random=True) \
+            .withColumn("city_name", "string", template=r"\w", random=True, omit=True) \
+            .withColumn("city_id", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city_pop", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city", "struct<name:string, id:long, population:long>",
+                        expr="named_struct('name', city_name, 'id', city_id, 'population', city_pop)",
+                        baseColumns=["city_name", "city_id", "city_pop"])
+
+        build_order = gen1.build_order
+        print(gen1.build_order)
+
+        df = gen1.build()
+
+        df.show()
+
+        #assert self.builtBefore("city", "city_name", build_order)
+        #assert self.builtBefore("city", "city_id", build_order)
+        #assert self.builtBefore("city", "city_pop", build_order)
+        #assert self.builtInSeparatePhase("city", "city_name", build_order), "fields should be built in separate phase"
+        #assert self.builtInSeparatePhase("city", "city_id", build_order), "fields should be built in separate phase"
+        #assert self.builtInSeparatePhase("city", "city_pop", build_order), "fields should be built in separate phase"
