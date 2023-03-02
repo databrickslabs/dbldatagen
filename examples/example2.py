@@ -1,3 +1,8 @@
+# Databricks notebook source
+# MAGIC %md Example 2
+
+# COMMAND ----------
+
 from pyspark.sql.functions import col, lit, concat, rand, ceil, floor, round, array, from_unixtime, date_add, datediff, \
     unix_timestamp, bround
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, StructType, StructField, DateType, \
@@ -5,6 +10,14 @@ from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, Stru
 
 from datetime import timedelta, datetime
 import math
+
+# build spark session
+# This is not needed when running examples inside of a Databricks runtime notebook environment
+spark = SparkSession.builder \
+    .master("local[4]") \
+    .appName("Example") \
+    .getOrCreate()
+
 
 # examples of generating date time data
 
