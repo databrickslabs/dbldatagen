@@ -1,8 +1,3 @@
-# Databricks notebook source
-# MAGIC %md Example 6
-
-# COMMAND ----------
-
 from datetime import timedelta, datetime
 
 from pyspark.sql import SparkSession
@@ -14,10 +9,10 @@ start = datetime(2017, 10, 1, 0, 0, 0)
 end = datetime(2018, 10, 1, 6, 0, 0)
 
 # build spark session
-# This is not needed when running examples inside of a Databricks runtime notebook environment
 spark = SparkSession.builder \
     .master("local[4]") \
-    .appName("Example") \
+    .appName("Word Count") \
+    .config("spark.some.config.option", "some-value") \
     .getOrCreate()
 
 schema = dg.SchemaParser.parseCreateTable(spark, """

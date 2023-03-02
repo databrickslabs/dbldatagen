@@ -1,8 +1,3 @@
-# Databricks notebook source
-# MAGIC %md Example 1
-
-# COMMAND ----------
-
 from datetime import timedelta, datetime
 
 from pyspark.sql import SparkSession
@@ -25,12 +20,14 @@ schema = StructType([
 ])
 
 # build spark session
-# This is not needed when running examples inside of a Databricks runtime notebook environment
+
+# global spark
+
 spark = SparkSession.builder \
     .master("local[4]") \
-    .appName("Example") \
+    .appName("Word Count") \
+    .config("spark.some.config.option", "some-value") \
     .getOrCreate()
-
 
 # will have implied column `id` for ordinal of row
 x3 = (dg.DataGenerator(sparkSession=spark, name="association_oss_cell_info", rows=100000, partitions=20)
