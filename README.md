@@ -60,7 +60,7 @@ details of use and many examples.
 
 Release notes and details of the latest changes for this specific release
 can be found in the Github repository
-[here](https://github.com/databrickslabs/dbldatagen/blob/release/v0.3.1/CHANGELOG.md)
+[here](https://github.com/databrickslabs/dbldatagen/blob/release/v0.3.1-ga02/CHANGELOG.md)
 
 # Installation
 
