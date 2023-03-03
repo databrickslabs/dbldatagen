@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>dbldatagen.function_builder &mdash; Databricks Labs Data Generator 0.3.1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/tdg.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../repeatable_data_generation.html">Repeatable data generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference/api/modules.html">The dbldatagen package API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">dbldatagen.function_builder</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for dbldatagen.function_builder</h1><div class="highlight"><pre>
+<span></span><span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="c1">#</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+
+<span class="kn">from</span> <span class="nn">pyspark.sql.types</span> <span class="kn">import</span> <span class="n">StringType</span><span class="p">,</span> <span class="n">DateType</span><span class="p">,</span> <span class="n">TimestampType</span>
+
+
+<div class="viewcode-block" id="ColumnGeneratorBuilder"><a class="viewcode-back" href="../../reference/api/dbldatagen.function_builder.html#dbldatagen.function_builder.ColumnGeneratorBuilder">[docs]</a><span class="k">class</span> <span class="nc">ColumnGeneratorBuilder</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Helper class to build functional column generators of specific forms&quot;&quot;&quot;</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_mkList</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Makes a list of the supplied object instance if it is not already a list</span>
+<span class="sd">        :param x: object to process</span>
+<span class="sd">        :returns: Returns list of supplied object if it is not already a list, otherwise simply returns the object&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">list</span> <span class="k">else</span> <span class="n">x</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_lastElement</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Gets the last element, if the object is a list otherwise returns the object itself&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">x</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span> <span class="k">else</span> <span class="n">x</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_mkCdfProbabilities</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">weights</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; make cumulative distribution function probabilities for each value in values list</span>
+
+<span class="sd">        a cumulative distribution function for discrete values can uses</span>
+<span class="sd">        a  table of cumulative probabilities to evaluate different expressions</span>
+<span class="sd">        based on the cumulative  probability of each value occurring</span>
+
+<span class="sd">        The probabilities can be computed from the weights using the code::</span>
+
+<span class="sd">           weight_interval = 1.0 / total_weights</span>
+<span class="sd">           probs = [x * weight_interval for x in weights]</span>
+<span class="sd">           return reduce((lambda x, y: cls._mk_list(x) + [cls._last_element(x) + y]), probs)</span>
+
+<span class="sd">        but Python provides built-in methods (itertools.accumulate) to compute the accumulated weights</span>
+<span class="sd">        and dividing each resulting accumulated weight by the sum of the total weights will give the cumulative</span>
+<span class="sd">        probabilities.</span>
+
+<span class="sd">        For large data sets (relative to number of values), tests verify that the resulting distribution is</span>
+<span class="sd">        within 10% of the expected distribution when using Spark SQL Rand() as a uniform random number generator.</span>
+<span class="sd">        In testing, test data sets of size 3000 * number_of_values rows produce a distribution within 10% of expected ,</span>
+<span class="sd">        while datasets of size 10,000 x `number of values` gives a repeated</span>
+<span class="sd">        distribution within 5% of expected distribution.</span>
+
+<span class="sd">        Example code to be generated (pseudo code)::</span>
+
+<span class="sd">           # given values value1 .. valueN, prob1 to probN</span>
+<span class="sd">           # cdf_probabilities = [ prob1, prob1+prob2, ... prob1+prob2+prob3 .. +probN]</span>
+<span class="sd">           # this will then be used as follows</span>
+
+<span class="sd">           prob_occurrence = uniform_rand(0.0, 1.0)</span>
+<span class="sd">           if prob_occurrence &lt;= cdf_prob_value1 then value1</span>
+<span class="sd">           elif prob_occurrence &lt;= cdf_prob_value2 then value2</span>
+<span class="sd">           ...</span>
+<span class="sd">           prob_occurrence &lt;= cdf_prob_valueN then valueN</span>
+<span class="sd">           else valueN</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">total_weights</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">/</span> <span class="n">total_weights</span><span class="p">,</span> <span class="n">itertools</span><span class="o">.</span><span class="n">accumulate</span><span class="p">(</span><span class="n">weights</span><span class="p">)))</span>
+
+<div class="viewcode-block" id="ColumnGeneratorBuilder.mkExprChoicesFn"><a class="viewcode-back" href="../../reference/api/dbldatagen.function_builder.html#dbldatagen.function_builder.ColumnGeneratorBuilder.mkExprChoicesFn">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">mkExprChoicesFn</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">seed_column</span><span class="p">,</span> <span class="n">datatype</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Create SQL expression to compute the weighted values expression</span>
+
+<span class="sd">        build an expression of the form::</span>
+
+<span class="sd">           case</span>
+<span class="sd">              when rnd_column &lt;= weight1 then value1</span>
+<span class="sd">              when rnd_column &lt;= weight2 then value2</span>
+<span class="sd">              ...</span>
+<span class="sd">              when rnd_column &lt;= weightN then  valueN</span>
+<span class="sd">              else valueN</span>
+<span class="sd">           end</span>
+
+<span class="sd">        based on computed probability distribution for values.</span>
+
+<span class="sd">        In Python 3.6 onwards, we could use the choices function but this python version is not</span>
+<span class="sd">        guaranteed on all Databricks distributions</span>
+
+<span class="sd">        :param values: list of values</span>
+<span class="sd">        :param weights: list of weights</span>
+<span class="sd">        :param seed_column: base column for expression</span>
+<span class="sd">        :param datatype: data type of function return value</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cdf_probs</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_mkCdfProbabilities</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
+
+        <span class="n">output</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot; CASE &quot;</span><span class="p">]</span>
+
+        <span class="n">conditions</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">cdf_probs</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">v</span><span class="p">,</span> <span class="n">cdf</span> <span class="ow">in</span> <span class="n">conditions</span><span class="p">:</span>
+            <span class="c1"># TODO(alex): single quotes needs to be escaped</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">datatype</span><span class="p">,</span> <span class="p">(</span><span class="n">StringType</span><span class="p">,</span> <span class="n">DateType</span><span class="p">,</span> <span class="n">TimestampType</span><span class="p">)):</span>
+                <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; when </span><span class="si">{</span><span class="n">seed_column</span><span class="si">}</span><span class="s2"> &lt;= </span><span class="si">{</span><span class="n">cdf</span><span class="si">}</span><span class="s2"> then &#39;</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">&#39; &quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; when </span><span class="si">{</span><span class="n">seed_column</span><span class="si">}</span><span class="s2"> &lt;= </span><span class="si">{</span><span class="n">cdf</span><span class="si">}</span><span class="s2"> then </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2"> &quot;</span><span class="p">)</span>
+
+        <span class="c1"># TODO(alex): single quotes needs to be escaped</span>
+        <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;else &#39;</span><span class="si">{values[-1]}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+        <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;end&quot;</span><span class="p">)</span>
+
+        <span class="n">retval</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">retval</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022,2023 Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
