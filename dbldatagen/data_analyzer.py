@@ -8,36 +8,37 @@ This module defines the DataAnalyzer class. This is still a work in progress.
 from pyspark.sql.types import StructField
 from pyspark.sql.functions import lit
 from pyspark.sql import functions as fns
+from .utils import strip_margins
+from .spark_singleton import SparkSingleton
 
+import pyspark.sql as s
 
 class DataAnalyzer:
     """This class is used to analyze an existing data set to assist in generating a test data set with similar
     characteristics
 
     .. warning::
-       Not fully implemented.
+       Experimental
 
     :param df: Spark data frame to analyze
     :param sparkSession: spark session instance to use when performing spark operations
     """
 
-    def __init__(self, df, sparkSession=None):
+    def __init__(self, df=None, sparkSession=None):
         """ Constructor:
         :param df: data frame to analyze
         :param sparkSession: spark session to use
         """
+        assert df is not None, "dataframe must be supplied"
+
         self.rowCount = 0
         self.schema = None
         self.df = df.cache()
-        # assert sparkSession is not None, "The spark session attribute must be initialized"
-        # self.sparkSession = sparkSession
-        # if sparkSession is None:
-        #    raise Exception("""ERROR: spark session not initialized
-        #
-        #            The spark session attribute must be initialized in the DataGenerator initialization
-        #
-        #            i.e DataGenerator(sparkSession=spark, name="test", ...)
-        #            """)
+
+        if sparkSession is None:
+            sparkSession = SparkSingleton.getLocalInstance()
+
+        self.sparkSession = sparkSession
 
     def _lookupFieldType(self, typ):
         """Perform lookup of type name by Spark SQL type name"""
@@ -155,3 +156,51 @@ class DataAnalyzer:
         :return:
         """
         pass
+
+    def scriptDataGeneratorFromData(self, suppressOutput=False, name=None):
+        """
+        generate outline data generator code from an existing data frame
+
+        This will generate a data generator spec from an existing dataframe. The resulting code
+        can be used to generate a data generation specification.
+
+        Note at this point in time, the code generated is stub code only.
+        For most uses, it will require further modification - however it provides a starting point
+        for generation of the specification for a given data set
+
+        The data frame to be analyzed is the data frame passed to the constructor of the DataAnalyzer object
+
+        :param suppressOutput: suppress printing of generated code if True
+        :param name: Optional name for data generator
+        :return: String containing skeleton code
+
+        """
+        assert self.df is not None
+        assert type(self.df) is s.DataFrame, "sourceDf must be a valid Pyspark dataframe"
+
+        self.df.createOrReplaceTempView("evaluation_dataframe")
+
+        sourceDetails = self.sparkSession.sql(f"describe evaluation_dataframe").collect()
+
+        generatedCode = []
+
+        if name is None:
+            name = "test_generator"
+
+        generatedCode.append(f"import dbldatagen as dg")
+
+        generatedCode.append(strip_margins(
+            f"""generation_spec = (dg.DataGenerator(sparkSession=spark, name='{name}', 
+               |                                     rows=100000, 
+               |                                     seed_method='hash_fieldname')""", '|'))
+
+        indent = "                   "
+        for c in sourceDetails:
+            generatedCode.append(indent + f""".withColumn('{c["col_name"]}', '{c["data_type"]}', expr="null")""")
+        generatedCode.append(indent + ")")
+
+        if not suppressOutput:
+            for line in generatedCode:
+                print(line)
+
+        return "\n".join(generatedCode)
