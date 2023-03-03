@@ -287,7 +287,7 @@ class SchemaParser(object):
 
         return transformed_string
 
-    @classmethods
+    @classmethod
     def columnsReferencesFromSQLString(cls, sql_string, filter=None):
         """ Generate a list of possible column references from a SQL string
 
