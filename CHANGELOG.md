@@ -3,6 +3,11 @@
 ## Change History
 All notable changes to the Databricks Labs Data Generator will be documented in this file.
 
+### Version Unreleased
+
+#### Changed
+* Changed build labelling to comply with PEP440
+
 ### Version 0.3.1
 
 #### Changed
