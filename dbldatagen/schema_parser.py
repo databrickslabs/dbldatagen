@@ -132,7 +132,7 @@ class SchemaParser(object):
                 pp.delimitedList(pp.Group(ident + pp.Optional(colon) + pp.Group(type_expr)))) + r_angle
 
             # try to capture invalid type name for better error reporting
-            invalid_type = pp.Word(pp.alphas, pp.alphanums+"_", as_keyword=True)
+            invalid_type = pp.Word(pp.alphas, pp.alphanums+"_", asKeyword=True)
 
             # use left recursion to handle nesting of types
             type_expr <<= pp.MatchFirst([primitive_type_keyword, array_expr, map_expr, struct_expr, invalid_type])
@@ -287,7 +287,7 @@ class SchemaParser(object):
 
         return transformed_string
 
-    @classmethod
+    @classmethods
     def columnsReferencesFromSQLString(cls, sql_string, filter=None):
         """ Generate a list of possible column references from a SQL string
 
