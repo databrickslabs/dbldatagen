@@ -131,3 +131,27 @@ class DataAnalyzer:
             results.append(self._displayRow(r))
 
         return "\n".join([str(x) for x in results])
+
+    def determineIfDataIsCatagorical(self):
+        """
+        The following algorithm provides a useful test for identifying categorical data:
+
+            Calculate the number of unique values in the data set.
+            Calculate the difference between the number of unique values in the data set and the total number of values
+            in the data set.
+            Calculate the difference as a percentage of the total number of values in the data set.
+            If the percentage difference is 90% or more, then the data set is composed of categorical values.
+            When the number of rows is less than around 50, then a lower threshold of 70% works well in practice.
+
+            See: https://jeffreymorgan.io/articles/identifying-categorical-data/
+        :return:
+        """
+        pass
+
+    def determineIfDataIsContinuous(self):
+        """
+
+            See: https://www.intellspot.com/discrete-vs-continuous-data/
+        :return:
+        """
+        pass
