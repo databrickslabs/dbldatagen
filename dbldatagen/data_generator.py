@@ -27,10 +27,16 @@ _STREAMING_PATH_OPTION = "dbldatagen.streaming.sourcePath"
 _STREAMING_ID_FIELD_OPTION = "dbldatagen.streaming.sourceIdField"
 _STREAMING_TIMESTAMP_FIELD_OPTION = "dbldatagen.streaming.sourceTimestampField"
 _STREAMING_GEN_TIMESTAMP_OPTION = "dbldatagen.streaming.generateTimestamp"
+_STREAMING_USE_SOURCE_FIELDS = "dbldatagen.streaming.sourceFields"
 _BUILD_OPTION_PREFIX = "dbldatagen."
 
 _STREAMING_TIMESTAMP_COLUMN = "_source_timestamp"
 
+_STREAMING_SOURCE_RATE = "rate"
+_STREAMING_SOURCE_RATE_MICRO_BATCH = "rate-micro-batch"
+_STREAMING_SOURCE_NUM_PARTITIONS = "numPartitions"
+_STREAMING_SOURCE_ROWS_PER_BATCH = "rowsPerBatch"
+_STREAMING_SOURCE_ROWS_PER_SECOND = "rowsPerSecond"
 
 class DataGenerator:
     """ Main Class for test data set generation
@@ -158,6 +164,10 @@ class DataGenerator:
         self._buildOrder = []
         self._inferredSchemaFields = []
         self.buildPlanComputed = False
+
+        # set of columns that must be present during processing
+        # will be map from column name to reason it is needed
+        self._requiredColumns = {}
 
         # lets add the seed column
         self.withColumn(self._seedColumnName, LongType(), nullable=False, implicit=True, omit=True, noWarn=True)
@@ -860,9 +870,12 @@ class DataGenerator:
 
         :returns: Spark data frame for base data that drives the data generation
         """
+        assert self.partitions is not None, "Expecting partition count to be initialized"
 
+        id_partitions = self.partitions
         end_id = self._rowCount + startId
-        id_partitions = self.partitions if self.partitions is not None else 4
+
+        build_options, passthrough_options, unsupported_options = self._parseBuildOptions(options)
 
         if not streaming:
             status = (f"Generating data frame with ids from {startId} to {end_id} with {id_partitions} partitions")
@@ -877,6 +890,7 @@ class DataGenerator:
                 df1 = df1.withColumnRenamed(SPARK_RANGE_COLUMN, self._seedColumnName)
 
         else:
+            self._applyStreamingDefaults(build_options, passthrough_options)
             status = (
                 f"Generating streaming data frame with ids from {startId} to {end_id} with {id_partitions} partitions")
             self.logger.info(status)
@@ -947,8 +961,7 @@ class DataGenerator:
         assert baseColumn is not None and len(baseColumn) > 0, "baseColumn argument must be supplied"
 
         # add metadata for required timestamp field
-        baseTimestampMeta = RequiredFieldMeta('timestamp', "required by `withEnhancedEventTime` processing")
-        self._requiredColumns[baseColumn] = baseTimestampMeta
+        self._requiredColumns[baseColumn] = f"Column '{baseColumn}' is required by `withEnhancedEventTime` processing"
 
         helper.withEnhancedEventTime(self,
                                      startEventTime,
@@ -1087,7 +1100,14 @@ class DataGenerator:
                 else:
                     unsupported_options[k] = v
 
+        # add defaults
+
         return datagen_options, passthrough_options, unsupported_options
+
+    def _applyStreamingDefaults(self, build_options, passthrough_options):
+        assert build_options is not None
+        assert passthrough_options is not None
+
 
     def build(self, withTempView=False, withView=False, withStreaming=False, options=None):
         """ build the test data set from the column definitions and return a dataframe for it
@@ -1118,6 +1138,8 @@ class DataGenerator:
                """)
 
         df1 = self._getBaseDataFrame(self.starting_id, streaming=withStreaming, options=options)
+
+        # TODO: check that the required columns are present in the base data frame
 
         self.executionHistory.append("Using Pandas Optimizations {True}")
 

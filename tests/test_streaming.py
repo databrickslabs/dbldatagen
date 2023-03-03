@@ -248,6 +248,7 @@ class TestStreaming():
               .outputMode("append")
               .option("path", test_dir)
               .option("checkpointLocation", checkpoint_dir)
+              .trigger(once=True)
               .start())
 
         sq.processAllAvailable()
@@ -256,4 +257,56 @@ class TestStreaming():
         rows_read = dfStreamDataRead.count()
 
         assert rows_read == self.row_count
+
+    def test_withEventTime_batch(self):
+        # test it in batch mode
+        starting_datetime = "2022-06-01 01:00:00"
+        testDataSpecBase = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count,
+                                         partitions=4, seedMethod='hash_fieldname')
+                        .withColumn('value', "long", expr="id")
+                        .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
+                        .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+                        .withColumn("timestamp", "timestamp", expr="now()")
+                        .withEnhancedEventTime(startEventTime=starting_datetime, baseColumn="timestamp",
+                                               eventTimeName="event_ts")
+                        )
+
+        df = testDataSpecBase.build()
+        assert df.count() == self.row_count
+
+        df.show()
+
+    def test_withEventTime_streaming(self, getStreamingDirs):
+        base_dir, test_dir, checkpoint_dir = getStreamingDirs
+
+        # test it in streaming mode
+        starting_datetime = "2022-06-01 01:00:00"
+        testDataSpecBase = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count,
+                                         partitions=4, seedMethod='hash_fieldname')
+                        .withColumn('value', "long", expr="id")
+                        .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
+                        .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+                        .withColumn("timestamp2", "timestamp", expr="timestamp")
+                        .withEnhancedEventTime(startEventTime=starting_datetime, baseColumn="timestamp2",
+                                               eventTimeName="event_ts")
+                        )
+
+        dfStreaming = testDataSpecBase.build(withStreaming=True)
+
+        sq = (dfStreaming
+              .writeStream
+              .format("parquet")
+              .outputMode("append")
+              .option("path", test_dir)
+              .option("checkpointLocation", checkpoint_dir)
+              .start())
+
+        sq.awaitTermination(5)
+        if sq.isActive:
+            sq.stop()
+
+        dfStreamDataRead = spark.read.format("parquet").load(test_dir)
+        rows_read = dfStreamDataRead.count()
+        assert rows_read > 0
+
 

@@ -100,7 +100,7 @@ class EnhancedEventTimeHelper(object):
                               baseColumn="_late_arrival_factor1",
                               omit=omitInterimColumns)
                   .withColumn("_stream_time", "timestamp", expr=f"{baseColumn}",
-                              omit=omitInterimColumns, baseColumn=f"{baseColumn}")
+                              omit=omitInterimColumns, baseColumn=baseColumn)
                   .withColumn("_data_gen_time", "timestamp", expr="now()", omit=omitInterimColumns)
                   .withColumn("_difference_factor", "double",
                               expr=f"cast(_stream_time as double) - cast(TIMESTAMP '{start_of_generation}' as double)",
