@@ -16,6 +16,7 @@ from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_FIXED, RANDOM_SE
                                DEFAULT_SEED_COLUMN, SPARK_RANGE_COLUMN, MIN_SPARK_VERSION
 from .utils import ensure, topologicalSort, DataGenError, deprecated
 from . _version import _get_spark_version
+from .enhanced_event_time import EnhancedEventTimeHelper
 
 _OLD_MIN_OPTION = 'min'
 _OLD_MAX_OPTION = 'max'
@@ -52,6 +53,11 @@ class DataGenerator:
     it is recommended that you use a different name for the seed column - for example `_id`.
 
     This may be specified by setting the `seedColumnName` attribute to `_id`
+
+    Note that the number of partitions requested is not guaranteed to be supplied when generating
+    a streaming data set using a streaming source that generates a different number of partitions.
+    However for most batch use cases, the requested number of partitions will be generated.
+
     """
 
     # class vars
@@ -898,6 +904,63 @@ class DataGenerator:
                        )
 
         return df1
+
+    def withEnhancedEventTime(self, startEventTime=None,
+                              acceleratedEventTimeInterval="10 minutes",
+                              fractionLateArriving=0.1,
+                              lateTimeInterval="6 hours",
+                              jitter=(-0.25, 0.9999),
+                              eventTimeName="event_ts",
+                              baseColumn="timestamp",
+                              keepIntermediateColumns=False):
+        """
+        Delegate to EnhancedEventTimeHelper to implement enhanced event time
+
+        :param startEventTime:               start timestamp of output event time
+        :param acceleratedEventTimeInterval: interval for accelerated event time (i.e "10 minutes")
+        :param fractionLateArriving:         fraction of late arriving data. range [0.0, 1.0]
+        :param lateTimeInterval:             interval for late arriving events (i.e "6 hours")
+        :param jitter:                       jitter factor to avoid strictly increasing order in events
+        :param eventTimeName:                Column name for generated event time column
+        :param baseColumn:                   Base column name used for computations of adjusted event time
+        :param keepIntermediateColumns:      Flag to retain intermediate columns in the output, [ debug / test only]
+
+        :returns instance of data generator (note caller object is changed)
+
+        This adjusts the dataframe to produce IOT style event time that normally increases over time but has a
+        configurable fraction of late arriving data. It uses a base timestamp column (called timestamp)
+        to compute data. There must be a column of the same name  as the base timestamp column in the source data frame
+         and it should have the value of "now()".
+
+        The modified dataframe will have a new column named using the `eventTimeName` parameter containing the
+        new timestamp value.
+
+        By default `rate` and `rate-micro-batch` streaming sources have this column but
+        it can be added to other dataframes - either batch or streaming data frames.
+
+        While the overall intent is to support synthetic IOT style simulated device data in a stream, it can be used
+        with a batch data frame (as long as an appropriate timestamp column is added and designated as the base data
+        timestamp column.
+        """
+
+        helper = EnhancedEventTimeHelper()
+        assert baseColumn is not None and len(baseColumn) > 0, "baseColumn argument must be supplied"
+
+        # add metadata for required timestamp field
+        baseTimestampMeta = RequiredFieldMeta('timestamp', "required by `withEnhancedEventTime` processing")
+        self._requiredColumns[baseColumn] = baseTimestampMeta
+
+        helper.withEnhancedEventTime(self,
+                                     startEventTime,
+                                     acceleratedEventTimeInterval,
+                                     fractionLateArriving,
+                                     lateTimeInterval,
+                                     jitter,
+                                     eventTimeName,
+                                     baseColumn,
+                                     keepIntermediateColumns)
+
+        return self
 
     def _computeColumnBuildOrder(self):
         """ compute the build ordering using a topological sort on dependencies
