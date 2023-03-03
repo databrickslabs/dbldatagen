@@ -9,6 +9,7 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 * Additional migration of tests to use of `pytest`
 * Changed parsing of build options for data generator to support use of custom streaming
 * Documentation updates in support of new features such as streaming, complex structures etc
+* Changed build labelling to comply with PEP440
 
 #### Fixed 
 
