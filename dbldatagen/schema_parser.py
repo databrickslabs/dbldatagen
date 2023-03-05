@@ -262,7 +262,7 @@ class SchemaParser(object):
 
     @classmethod
     def _cleanseSQL(cls, sql_string):
-        """ Cleanse sql string removing strings so that they are not considered as part of potential column
+        """ Cleanse sql string removing string literals so that they are not considered as part of potential column
             references
         :param sql_string: String representation of SQL expression
         :returns: cleansed string
