@@ -10,6 +10,8 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 * Changed parsing of build options for data generator to support use of custom streaming
 * Documentation updates in support of new features such as streaming, complex structures etc
 * Changed build labelling to comply with PEP440
+* Adjusted column build phase separation (i.e which select statement is used to build columns) so that a 
+  column with a SQL expression can refer to previously created columns without use of a `baseColumn` attribute
 
 #### Fixed 
 
@@ -17,6 +19,11 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 * Added support for additional streaming source types and for use of custom streaming sources
 * Added support for use of file reads as a streaming source (for seed and timestamp columns only)
 * Added support for complex event time in streaming scenarios. It may also be used in batch scenarios for testing
+* Parsing of SQL expressions to determine column dependencies
+
+#### Notes
+* This does not change actual order of column building - but adjusts which phase 
+
 
 ### Version 0.3.1
 

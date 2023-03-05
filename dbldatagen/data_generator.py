@@ -8,22 +8,27 @@ This file defines the `DataGenError` and `DataGenerator` classes
 import copy
 import logging
 import re
+import time
+import math
 
 from pyspark.sql.types import LongType, IntegerType, StringType, StructType, StructField, DataType
 from .spark_singleton import SparkSingleton
 from .column_generation_spec import ColumnGenerationSpec
 from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, \
                                DEFAULT_SEED_COLUMN, SPARK_RANGE_COLUMN, MIN_SPARK_VERSION
-from .utils import ensure, topologicalSort, DataGenError, deprecated
+from .utils import ensure, topologicalSort, DataGenError, deprecated, split_list_matching_condition
 from . _version import _get_spark_version
 from .enhanced_event_time import EnhancedEventTimeHelper
-    
+from .schema_parser import SchemaParser
+
+
 _OLD_MIN_OPTION = 'min'
 _OLD_MAX_OPTION = 'max'
 
 _STREAMING_SOURCE_OPTION = "dbldatagen.streaming.source"
 _STREAMING_SCHEMA_OPTION = "dbldatagen.streaming.sourceSchema"
 _STREAMING_PATH_OPTION = "dbldatagen.streaming.sourcePath"
+_STREAMING_TABLE_OPTION = "dbldatagen.streaming.sourceTable"
 _STREAMING_ID_FIELD_OPTION = "dbldatagen.streaming.sourceIdField"
 _STREAMING_TIMESTAMP_FIELD_OPTION = "dbldatagen.streaming.sourceTimestampField"
 _STREAMING_GEN_TIMESTAMP_OPTION = "dbldatagen.streaming.generateTimestamp"
@@ -37,6 +42,13 @@ _STREAMING_SOURCE_RATE_MICRO_BATCH = "rate-micro-batch"
 _STREAMING_SOURCE_NUM_PARTITIONS = "numPartitions"
 _STREAMING_SOURCE_ROWS_PER_BATCH = "rowsPerBatch"
 _STREAMING_SOURCE_ROWS_PER_SECOND = "rowsPerSecond"
+_STREAM_SOURCE_START_TIMESTAMP = "startTimestamp"
+
+_STREAMING_SOURCE_TEXT = "text"
+_STREAMING_SOURCE_TEXT = "parquet"
+_STREAMING_SOURCE_TEXT = "csv"
+_STREAMING_SOURCE_TEXT = "json"
+_STREAMING_SOURCE_TEXT = "ord"
 
 class DataGenerator:
     """ Main Class for test data set generation
@@ -778,7 +790,6 @@ class DataGenerator:
         new_props = {}
         new_props.update(kwargs)
 
-        from .schema_parser import SchemaParser
         if type(colType) == str:
             colType = SchemaParser.columnTypeFromString(colType)
 
@@ -892,30 +903,18 @@ class DataGenerator:
         else:
             self._applyStreamingDefaults(build_options, passthrough_options)
             status = (
-                f"Generating streaming data frame with ids from {startId} to {end_id} with {id_partitions} partitions")
+                f"Generating streaming data frame with {id_partitions} partitions")
             self.logger.info(status)
             self.executionHistory.append(status)
 
             df1 = (self.sparkSession.readStream
                    .format("rate"))
-            if options is not None:
-                if "rowsPerSecond" not in options:
-                    options['rowsPerSecond'] = 1
-                if "numPartitions" not in options:
-                    options['numPartitions'] = id_partitions
 
-                for k, v in options.items():
-                    df1 = df1.option(k, v)
-                df1 = (df1.load()
-                       .withColumnRenamed("value", self._seedColumnName)
-                       )
-
-            else:
-                df1 = (df1.option("rowsPerSecond", 1)
-                       .option("numPartitions", id_partitions)
-                       .load()
-                       .withColumnRenamed("value", self._seedColumnName)
-                       )
+            for k, v in passthrough_options.items():
+                df1 = df1.option(k, v)
+            df1 = (df1.load()
+                   .withColumnRenamed("value", self._seedColumnName)
+                   )
 
         return df1
 
@@ -992,8 +991,6 @@ class DataGenerator:
             self._seedColumnName, set())
                                for x in self._allColumnSpecs]
 
-        # self.pp_list(dependency_ordering, msg="dependencies")
-
         self.logger.info("dependency list: %s", str(dependency_ordering))
 
         self._buildOrder = list(
@@ -1001,8 +998,68 @@ class DataGenerator:
 
         self.logger.info("columnBuildOrder: %s", str(self._buildOrder))
 
-        # self.pp_list(self._buildOrder, "build order")
+        self._buildOrder = self._adjustBuildOrderForSqlDependencies(self._buildOrder,  self._columnSpecsByName)
+
         return self._buildOrder
+
+    def _adjustBuildOrderForSqlDependencies(self, buildOrder, columnSpecsByName):
+        """ Adjust column build order according to the following heuristics
+
+        1: if the column being built in a specific build order phase has a SQL expression and it references
+           other columns in the same build phase (or potentially references them as the expression parsing is
+           primitive), separate that phase into multiple phases.
+
+        It will also issue a warning if the SQL expression appears to reference a column built later
+
+        :param buildOrder: list of lists of ids - each sublist represents phase of build
+        :param columnSpecsByName: dictionary to map column names to column specs
+        :returns: Spark SQL dataframe of generated test data
+
+        """
+        new_build_order = []
+
+        all_columns = set([item for sublist in buildOrder for item in sublist])
+        built_columns = []
+        prior_phase_built_columns = []
+
+        # for each phase, evaluate it to see if it needs to be split
+        for current_phase in buildOrder:
+            separate_phase_columns = []
+
+            for columnBeingBuilt in current_phase:
+
+                if columnBeingBuilt in columnSpecsByName:
+                    cs = columnSpecsByName[columnBeingBuilt]
+
+                    if cs.expr is not None:
+                        sql_references = SchemaParser.columnsReferencesFromSQLString(cs.expr, filter=all_columns)
+
+                        # determine references to columns not yet built
+                        forward_references = set(sql_references) - set(built_columns)
+                        if len(forward_references) > 0:
+                            msg = f"Column '{columnBeingBuilt} may have forward references to {forward_references}."
+                            self.logger.warning(msg)
+                            self.logger.warning("Use `baseColumn` attribute to correct build ordering if necessary")
+
+                        references_not_yet_built = set(sql_references) - set(prior_phase_built_columns)
+
+                        if len(references_not_yet_built.intersection(set(current_phase))) > 0:
+                            separate_phase_columns.append(columnBeingBuilt)
+
+                # for each column, get the set of sql references and filter against column names
+                built_columns.append(columnBeingBuilt)
+
+            if len(separate_phase_columns) > 0:
+                # split phase based on columns in separate_phase_column_list set
+                revised_phase = split_list_matching_condition(current_phase, lambda el: el in separate_phase_columns)
+                new_build_order.extend(revised_phase)
+            else:
+                # no change to phase
+                new_build_order.append(current_phase)
+
+            prior_phase_built_columns.extend(current_phase)
+
+        return new_build_order
 
     @property
     def build_order(self):
@@ -1010,6 +1067,9 @@ class DataGenerator:
 
         The build order will be a list of lists - each list specifying columns that can be built at the same time
         """
+        if not self.buildPlanComputed:
+            self.computeBuildPlan()
+
         return [x for x in self._buildOrder if x != [self._seedColumnName]]
 
     def _getColumnDataTypes(self, columns):
@@ -1080,11 +1140,13 @@ class DataGenerator:
         datagen_options = {}
 
         supported_options = [_STREAMING_SOURCE_OPTION,
-                             _STREAMING_SCHEMA_OPTION,
-                             _STREAMING_PATH_OPTION,
-                             _STREAMING_ID_FIELD_OPTION,
-                             _STREAMING_TIMESTAMP_FIELD_OPTION,
-                             _STREAMING_GEN_TIMESTAMP_OPTION
+                            _STREAMING_SCHEMA_OPTION,
+                            _STREAMING_PATH_OPTION,
+                            _STREAMING_TABLE_OPTION,
+                            _STREAMING_ID_FIELD_OPTION,
+                            _STREAMING_TIMESTAMP_FIELD_OPTION,
+                            _STREAMING_GEN_TIMESTAMP_OPTION,
+                            _STREAMING_USE_SOURCE_FIELDS
                              ]
 
         if options is not None:
@@ -1107,6 +1169,30 @@ class DataGenerator:
     def _applyStreamingDefaults(self, build_options, passthrough_options):
         assert build_options is not None
         assert passthrough_options is not None
+
+        # default to `rate` streaming source
+        if _STREAMING_SOURCE_OPTION not in build_options:
+            build_options[_STREAMING_SOURCE_OPTION] = _STREAMING_SOURCE_RATE
+
+        # setup `numPartitions` if not specified
+        if build_options[_STREAMING_SOURCE_OPTION] in [_STREAMING_SOURCE_RATE,_STREAMING_SOURCE_RATE_MICRO_BATCH]:
+            if _STREAMING_SOURCE_NUM_PARTITIONS not in passthrough_options:
+                passthrough_options[_STREAMING_SOURCE_NUM_PARTITIONS] = self.partitions
+
+        # set up rows per batch if not specified
+        if build_options[_STREAMING_SOURCE_OPTION] == _STREAMING_SOURCE_RATE:
+            if _STREAMING_SOURCE_ROWS_PER_SECOND not in passthrough_options:
+                passthrough_options[_STREAMING_SOURCE_ROWS_PER_SECOND] = 1
+
+        if build_options[_STREAMING_SOURCE_OPTION] == _STREAMING_SOURCE_RATE_MICRO_BATCH:
+            if _STREAMING_SOURCE_ROWS_PER_BATCH not in passthrough_options:
+                passthrough_options[_STREAMING_SOURCE_ROWS_PER_BATCH] = 1
+            if _STREAM_SOURCE_START_TIMESTAMP not in passthrough_options:
+                currentTs = math.floor(time.mktime(time.localtime())) * 1000
+                passthrough_options[_STREAM_SOURCE_START_TIMESTAMP] = currentTs
+
+        if  build_options[_STREAMING_SOURCE_OPTION] == _STREAMING_SOURCE_TEXT:
+            self.logger.warning("Use of the `text` format may not work due to lack of type support")
 
 
     def build(self, withTempView=False, withView=False, withStreaming=False, options=None):
@@ -1168,6 +1254,9 @@ class DataGenerator:
         Build column generation expressions with selects
         :param df1: dataframe for base data generator
         :return: new dataframe
+
+        The data generator build plan is separated into `rounds` of expressions. Each round consists of
+        expressions that are generated using a single `select` operation
         """
         self.executionHistory.append("Generating data with selects")
         # generation with selects may be more efficient as less intermediate data frames
