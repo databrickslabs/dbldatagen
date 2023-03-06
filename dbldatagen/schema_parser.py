@@ -132,7 +132,6 @@ class SchemaParser(object):
                 pp.delimitedList(pp.Group(ident + pp.Optional(colon) + pp.Group(type_expr)))) + r_angle
 
             # try to capture invalid type name for better error reporting
-            # use `asKeyword` not `as_keyword` for maximum version compatibility
             invalid_type = pp.Word(pp.alphas, pp.alphanums+"_", asKeyword=True)
 
             # use left recursion to handle nesting of types
