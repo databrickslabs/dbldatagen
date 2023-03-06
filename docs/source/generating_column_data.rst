@@ -121,7 +121,7 @@ This has several implications:
   will not generate the full range of values in the column generation spec
 - If the base column is of type ``boolean`` or some other restricted range type, computations on that base value
   may not produce the expected range of values
-- If base column is not specified, you may see errors reporting that the column in an expression does not exist. T
+- If base column is not specified, you may see errors reporting that the column in an expression does not exist. 
   This may be fixed by specifying a column dependency using the `baseColumn` attribute
 
 .. note::

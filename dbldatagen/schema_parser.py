@@ -263,7 +263,7 @@ class SchemaParser(object):
 
     @classmethod
     def _cleanseSQL(cls, sql_string):
-        """ Cleanse sql string removing strings so that they are not considered as part of potential column
+        """ Cleanse sql string removing string literals so that they are not considered as part of potential column
             references
         :param sql_string: String representation of SQL expression
         :returns: cleansed string
@@ -274,6 +274,7 @@ class SchemaParser(object):
 
         # skip over quoted identifiers even if they contain quotes
         quoted_ident = pp.QuotedString(quoteChar="`", escQuote="``")
+        quoted_ident.set_parse_action(lambda s, loc, toks: f"`{toks[0]}`")
 
         stringForm1 = pp.Literal('r') + pp.QuotedString(quoteChar="'")
         stringForm2 = pp.Literal('r') + pp.QuotedString(quoteChar='"')

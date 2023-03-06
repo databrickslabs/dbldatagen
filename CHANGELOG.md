@@ -9,6 +9,8 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 * Additional migration of tests to use of `pytest`
 * Changed parsing of build options for data generator to support use of custom streaming
 * Documentation updates in support of new features such as streaming, complex structures etc
+* Adjusted column build phase separation (i.e which select statement is used to build columns) so that a 
+  column with a SQL expression can refer to previously created columns without use of a `baseColumn` attribute
 * Changed build labelling to comply with PEP440
 * Adjusted column build phase separation (i.e which select statement is used to build columns) so that a 
   column with a SQL expression can refer to previously created columns without use of a `baseColumn` attribute
@@ -23,6 +25,15 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 
 #### Notes
 * This does not change actual order of column building - but adjusts which phase 
+
+
+#### Fixed 
+
+#### Added 
+* Parsing of SQL expressions to determine column dependencies
+
+#### Notes
+* This does not change actual order of column building - but adjusts which phase columns are built in 
 
 
 ### Version 0.3.1

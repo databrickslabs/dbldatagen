@@ -21,7 +21,6 @@ from . _version import _get_spark_version
 from .enhanced_event_time import EnhancedEventTimeHelper
 from .schema_parser import SchemaParser
 
-
 _OLD_MIN_OPTION = 'min'
 _OLD_MAX_OPTION = 'max'
 

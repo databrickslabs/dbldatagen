@@ -379,6 +379,21 @@ class TestBuildPlanning:
 
         assert columnSpec.expr == sql_expr
 
+    def test_expr_identifier_with_spaces(self):
+        sql_expr = "named_struct('name', city_name, 'id', city_id, 'population', city_pop)"
+        gen1 = dg.DataGenerator(sparkSession=spark, name="nested_schema", rows=1000, partitions=4,
+                                     seedColumnName="_id") \
+            .withColumn("id", "long", minValue=1000000, uniqueValues=10000, random=True) \
+            .withColumn("city_name", "string", template=r"\w", random=True, omit=True) \
+            .withColumn("city_id", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city_pop", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city 2", "struct<name:string, id:long, population:long>",
+                        expr=sql_expr)
+
+        columnSpec = gen1.getColumnSpec("city 2")
+
+        assert columnSpec.expr == sql_expr
+
     def test_build_ordering_duplicate_names1(self):
         gen1 = dg.DataGenerator(sparkSession=spark, name="nested_schema", rows=1000, partitions=4,
                                      seedColumnName="_id") \
