@@ -135,6 +135,7 @@ class TestSchemaParser:
                               ])
     def test_sql_expression_cleanser(self, sqlExpr, expectedText):
         newSql = dg.SchemaParser._cleanseSQL(sqlExpr)
+        print(newSql)
         assert sqlExpr == expectedText or sqlExpr != newSql
 
         assert newSql == expectedText
