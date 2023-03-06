@@ -12,8 +12,6 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 * Adjusted column build phase separation (i.e which select statement is used to build columns) so that a 
   column with a SQL expression can refer to previously created columns without use of a `baseColumn` attribute
 * Changed build labelling to comply with PEP440
-* Adjusted column build phase separation (i.e which select statement is used to build columns) so that a 
-  column with a SQL expression can refer to previously created columns without use of a `baseColumn` attribute
 
 #### Fixed 
 
