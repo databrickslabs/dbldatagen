@@ -122,6 +122,12 @@ class TestSchemaParser:
     @pytest.mark.parametrize("sqlExpr, expectedText",
                              [("named_struct('name', city_name, 'id', city_id, 'population', city_pop)",
                                "named_struct(' ', city_name, ' ', city_id, ' ', city_pop)"),
+                              ("named_struct('name', `city 2`, 'id', city_id, 'population', city_pop)",
+                                "named_struct(' ', `city 2`, ' ', city_id, ' ', city_pop)"),
+                              ("named_struct('`name 1`', `city 2`, 'id', city_id, 'population', city_pop)",
+                               "named_struct(' ', `city 2`, ' ', city_id, ' ', city_pop)"),
+                              ("named_struct('`name 1`', city, 'id', city_id, 'population', city_pop)",
+                               "named_struct(' ', city, ' ', city_id, ' ', city_pop)"),
                               ("cast(10 as decimal(10)",
                                "cast(10 as decimal(10)"),
                               (" ", " "),
@@ -129,6 +135,7 @@ class TestSchemaParser:
                               ])
     def test_sql_expression_cleanser(self, sqlExpr, expectedText):
         newSql = dg.SchemaParser._cleanseSQL(sqlExpr)
+        print(newSql)
         assert sqlExpr == expectedText or sqlExpr != newSql
 
         assert newSql == expectedText
@@ -142,6 +149,7 @@ class TestSchemaParser:
                                ['city_name', 'city_pop']),
                                ("cast(10 as decimal(10)",  ['cast', 'as', 'decimal'], None),
                               ("cast(x as decimal(10)", ['x'], ['x']),
+                              ("cast(`city 2` as decimal(10)", ['cast', 'city 2', 'as', 'decimal'], None),
                               (" ", [], None),
                               ("", [], None),
                               ])
