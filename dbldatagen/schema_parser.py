@@ -273,6 +273,7 @@ class SchemaParser(object):
 
         # skip over quoted identifiers even if they contain quotes
         quoted_ident = pp.QuotedString(quoteChar="`", escQuote="``")
+        quoted_ident.set_parse_action(lambda s, loc, toks: f"`{toks[0]}`")
 
         stringForm1 = pp.Literal('r') + pp.QuotedString(quoteChar="'")
         stringForm2 = pp.Literal('r') + pp.QuotedString(quoteChar='"')
