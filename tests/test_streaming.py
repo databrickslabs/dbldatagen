@@ -313,4 +313,33 @@ class TestStreaming():
         rows_read = dfStreamDataRead.count()
         assert rows_read > 0
 
+    @pytest.mark.parametrize("options,optionsExpected",
+                             [ ({"dbldatagen.streaming.source": "rate"},
+                                ({"dbldatagen.streaming.source": "rate"},
+                                 {"rowsPerSecond": 1, 'numPartitions': 10}, {})),
+                               ({"dbldatagen.streaming.source": "rate-micro-batch"},
+                                ({"dbldatagen.streaming.source": "rate-micro-batch"}, {'numPartitions': 10, 'rowsPerBatch':1}, {})),
+                               ])
+    def test_default_options(self, options, optionsExpected):
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count,
+                                         partitions=10, seedMethod='hash_fieldname')
+                        .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
+                        .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
+                        .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+                        .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+                        .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+                        )
+
+        datagen_options, passthrough_options, unsupported_options = testDataSpec._parseBuildOptions(options)
+        testDataSpec._applyStreamingDefaults(datagen_options, passthrough_options)
+        if "startTimestamp" in passthrough_options.keys():
+            passthrough_options.pop("startTimestamp", None)
+
+        # remove start timestamp from both options and expected options
+
+        expected_datagen_options, expected_passthrough_options, expected_unsupported_options = optionsExpected
+
+        assert datagen_options == expected_datagen_options
+        assert passthrough_options == expected_passthrough_options
+
 
