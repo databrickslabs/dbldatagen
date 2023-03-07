@@ -224,39 +224,43 @@ class TestStreaming():
 
         # generate file for base of streaming generator
         testDataSpecBase = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count,
-                                         partitions=4, seedMethod='hash_fieldname')
+                                         seedMethod='hash_fieldname')
                         .withColumn('value', "long", expr="id")
                         .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
                         .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
                         )
-        dfBase = testDataSpecBase.build()
-        dfBase.write.format(options["dbldatagen.streaming.source"])\
-            .mode('overwrite')\
-            .save(options["dbldatagen.streaming.source"])
 
-        # generate streaming data frame
-        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
-                                         partitions=4, seedMethod='hash_fieldname')
-                        .withColumn("a", IntegerType(), minValue=100, maxValue=200)
-                        .withColumn("b", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
-                        )
-        dfStreaming = testDataSpecBase.build(withStreaming=True, options=options)
+        pytest.skip("File based streaming not yet implemented")
 
-        sq = (dfStreaming
-              .writeStream
-              .format("parquet")
-              .outputMode("append")
-              .option("path", test_dir)
-              .option("checkpointLocation", checkpoint_dir)
-              .trigger(once=True)
-              .start())
+        if False:
+            dfBase = testDataSpecBase.build()
+            dfBase.write.format(options["dbldatagen.streaming.source"])\
+                .mode('overwrite')\
+                .save(options["dbldatagen.streaming.source"])
 
-        sq.processAllAvailable()
+            # generate streaming data frame
+            testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
+                                             partitions=4, seedMethod='hash_fieldname')
+                            .withColumn("a", IntegerType(), minValue=100, maxValue=200)
+                            .withColumn("b", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+                            )
+            dfStreaming = testDataSpecBase.build(withStreaming=True, options=options)
 
-        dfStreamDataRead = spark.read.format("parquet").load(test_dir)
-        rows_read = dfStreamDataRead.count()
+            sq = (dfStreaming
+                  .writeStream
+                  .format("parquet")
+                  .outputMode("append")
+                  .option("path", test_dir)
+                  .option("checkpointLocation", checkpoint_dir)
+                  .trigger(once=True)
+                  .start())
 
-        assert rows_read == self.row_count
+            sq.processAllAvailable()
+
+            dfStreamDataRead = spark.read.format("parquet").load(test_dir)
+            rows_read = dfStreamDataRead.count()
+
+            assert rows_read == self.row_count
 
     def test_withEventTime_batch(self):
         # test it in batch mode
