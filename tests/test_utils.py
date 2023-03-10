@@ -4,7 +4,11 @@ from datetime import timedelta
 import pytest
 
 from dbldatagen import ensure, mkBoundsList, coalesce_values, deprecated, SparkSingleton, \
+<<<<<<< HEAD
     parse_time_interval, DataGenError, split_list_matching_condition
+=======
+    parse_time_interval, DataGenError, strip_margins
+>>>>>>> feature_generate_from_existing_data
 
 spark = SparkSingleton.getLocalInstance("unit tests")
 
@@ -100,6 +104,23 @@ class TestUtils:
         print(results)
 
         assert results == expectedData
+
+    @pytest.mark.parametrize("inputText,expectedText",
+                             [ ("""one
+                                 |two
+                                 |three""",
+                               "one\ntwo\nthree"),
+                               ("", ""),
+                               ("one\ntwo", "one\ntwo"),
+                               ("    one\ntwo", "    one\ntwo"),
+                               ("    |one\ntwo", "one\ntwo"),
+                               ])
+    def test_strip_margins(self, inputText, expectedText):
+        output = strip_margins(inputText, '|')
+
+        assert output == expectedText
+
+
 
 
 
