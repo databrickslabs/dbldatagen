@@ -44,10 +44,11 @@ _STREAMING_SOURCE_ROWS_PER_SECOND = "rowsPerSecond"
 _STREAM_SOURCE_START_TIMESTAMP = "startTimestamp"
 
 _STREAMING_SOURCE_TEXT = "text"
-_STREAMING_SOURCE_TEXT = "parquet"
-_STREAMING_SOURCE_TEXT = "csv"
-_STREAMING_SOURCE_TEXT = "json"
-_STREAMING_SOURCE_TEXT = "ord"
+_STREAMING_SOURCE_PARQUET = "parquet"
+_STREAMING_SOURCE_CSV = "csv"
+_STREAMING_SOURCE_JSON = "json"
+_STREAMING_SOURCE_ORC = "ord"
+_STREAMING_SOURCE_DELTA = "delta"
 
 class DataGenerator:
     """ Main Class for test data set generation
@@ -901,19 +902,60 @@ class DataGenerator:
 
         else:
             self._applyStreamingDefaults(build_options, passthrough_options)
-            status = (
-                f"Generating streaming data frame with {id_partitions} partitions")
+
+            assert _STREAMING_SOURCE_OPTION in build_options.keys(), "There must be a source type specified"
+            streaming_source_format = build_options[_STREAMING_SOURCE_OPTION]
+
+            if streaming_source_format in [ _STREAMING_SOURCE_RATE, _STREAMING_SOURCE_RATE_MICRO_BATCH]:
+                streaming_partitions = passthrough_options[_STREAMING_SOURCE_NUM_PARTITIONS]
+                status = (
+                    f"Generating streaming data frame with {streaming_partitions} partitions")
+            else:
+                status = (
+                    f"Generating streaming data frame with '{streaming_source_format}' streaming source")
+
             self.logger.info(status)
             self.executionHistory.append(status)
 
             df1 = (self.sparkSession.readStream
-                   .format("rate"))
+                   .format(streaming_source_format))
 
             for k, v in passthrough_options.items():
                 df1 = df1.option(k, v)
-            df1 = (df1.load()
-                   .withColumnRenamed("value", self._seedColumnName)
-                   )
+
+            file_formats = [_STREAMING_SOURCE_TEXT, _STREAMING_SOURCE_JSON, _STREAMING_SOURCE_CSV,
+                            _STREAMING_SOURCE_PARQUET, _STREAMING_SOURCE_DELTA, _STREAMING_SOURCE_ORC]
+
+            data_path = None
+            source_table = None
+            id_column = "value"
+
+            if _STREAMING_ID_FIELD_OPTION in build_options:
+                id_column = build_options[_STREAMING_ID_FIELD_OPTION]
+
+            if _STREAMING_TABLE_OPTION in build_options:
+                source_table = build_options[_STREAMING_TABLE_OPTION]
+
+            if _STREAMING_SCHEMA_OPTION in build_options:
+                source_schema = build_options[_STREAMING_SCHEMA_OPTION]
+                df1 = df1.schema(source_schema)
+
+            # get path for file based reads
+            if _STREAMING_PATH_OPTION in build_options:
+                data_path = build_options[_STREAMING_PATH_OPTION]
+            elif streaming_source_format in file_formats:
+                if "path" in passthrough_options:
+                    data_path = passthrough_options["path"]
+
+            if data_path is not None:
+                df1 = df1.load(data_path)
+            elif source_table is not None:
+                df1 = df1.table(source_table)
+            else:
+                df1 = df1.load()
+
+            if id_column != self._seedColumnName:
+                df1 = df1.withColumnRenamed(id_column, self._seedColumnName)
 
         return df1
 
@@ -1174,7 +1216,7 @@ class DataGenerator:
             build_options[_STREAMING_SOURCE_OPTION] = _STREAMING_SOURCE_RATE
 
         # setup `numPartitions` if not specified
-        if build_options[_STREAMING_SOURCE_OPTION] in [_STREAMING_SOURCE_RATE,_STREAMING_SOURCE_RATE_MICRO_BATCH]:
+        if build_options[_STREAMING_SOURCE_OPTION] in [_STREAMING_SOURCE_RATE, _STREAMING_SOURCE_RATE_MICRO_BATCH]:
             if _STREAMING_SOURCE_NUM_PARTITIONS not in passthrough_options:
                 passthrough_options[_STREAMING_SOURCE_NUM_PARTITIONS] = self.partitions
 
