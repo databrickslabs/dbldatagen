@@ -4,11 +4,7 @@ from datetime import timedelta
 import pytest
 
 from dbldatagen import ensure, mkBoundsList, coalesce_values, deprecated, SparkSingleton, \
-<<<<<<< HEAD
-    parse_time_interval, DataGenError, strip_margins
-=======
-    parse_time_interval, DataGenError, split_list_matching_condition
->>>>>>> master
+    parse_time_interval, DataGenError, strip_margins, split_list_matching_condition
 
 spark = SparkSingleton.getLocalInstance("unit tests")
 
@@ -114,7 +110,6 @@ class TestUtils:
                                  (['no', 'matches'], lambda el: el == 'id', [['no', 'matches']])
                              ])
     def testSplitListOnCondition(self, lstData, matchFn, expectedData):
-
         results = split_list_matching_condition(lstData, matchFn)
         print(results)
 
