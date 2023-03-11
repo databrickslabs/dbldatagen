@@ -126,6 +126,21 @@ examples.
 
 The Github repository also contains further examples in the examples directory
 
+## Spark and Databricks Runtime Compatibility
+The `dbldatagen` package is intended to be compatible with recent LTS versions of the Databricks runtime including 
+older LTS versions at least from 10.4 LTS and later. It also aims to be compatible with Delta Live Table runtimes 
+including `current` and `preview`. 
+
+While we dont specifically drop support for older runtimes, changes in Pyspark APIs or
+APIs from dependent packages such as `numpy`, `pandas`, `pyarrow` and `pyparsing` make cause issues with older
+runtimes. 
+
+Installing `dbldatagen` explicitly does not install releases of dependent packages so as to preserve the curated
+set of packages installed in any Databricks runtime environment.
+
+When building on local environments, the `Pipfile` and requirements files are used to determine the versions 
+tested against for releases and unit tests. 
+
 ## Project Support
 Please note that all projects released under [`Databricks Labs`](https://www.databricks.com/learn/labs)
  are provided for your exploration only, and are not formally supported by Databricks with Service Level Agreements 
