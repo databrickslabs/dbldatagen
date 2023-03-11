@@ -37,6 +37,9 @@ jobs:
       - name: Install 
         run: pip install pipenv
 
+      - name: Install dependencies
+        run: pipenv install --dev
+
       - name: Run tests
         run: make test
 

@@ -3,7 +3,7 @@
 ## Change History
 All notable changes to the Databricks Labs Data Generator will be documented in this file.
 
-### Unreleased
+### Version 0.3.2
 
 #### Changed
 * Adjusted column build phase separation (i.e which select statement is used to build columns) so that a 
@@ -11,12 +11,14 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 * Changed build labelling to comply with PEP440
 
 #### Fixed 
+* Fixed compatibility of build with older versions of runtime that rely on `pyparsing` version 2.4.7
 
 #### Added 
 * Parsing of SQL expressions to determine column dependencies
 
 #### Notes
-* This does not change actual order of column building - but adjusts which phase columns are built in 
+* The enhancements to build ordering does not change actual order of column building -
+  but adjusts which phase columns are built in 
 
 
 ### Version 0.3.1
