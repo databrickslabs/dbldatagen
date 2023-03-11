@@ -14,7 +14,8 @@ warrant that you have the legal authority to do so.
 # Building the code
 
 ## Package Dependencies
-See the contents of the file `python/require.txt` to see the Python package dependencies
+See the contents of the file `python/require.txt` to see the Python package dependencies. 
+Dependent packages are not installed automatically by the `dbldatagen` package.
 
 ## Python compatibility
 

@@ -273,18 +273,18 @@ class SchemaParser(object):
 
         # skip over quoted identifiers even if they contain quotes
         quoted_ident = pp.QuotedString(quoteChar="`", escQuote="``")
-        quoted_ident.set_parse_action(lambda s, loc, toks: f"`{toks[0]}`")
+        quoted_ident.setParseAction(lambda s, loc, toks: f"`{toks[0]}`")
 
         stringForm1 = pp.Literal('r') + pp.QuotedString(quoteChar="'")
         stringForm2 = pp.Literal('r') + pp.QuotedString(quoteChar='"')
         stringForm3 = pp.QuotedString(quoteChar="'", escQuote=r"\'")
         stringForm4 = pp.QuotedString(quoteChar='"', escQuote=r'\"')
         stringForm = stringForm1 ^ stringForm2 ^ stringForm3 ^ stringForm4
-        stringForm.set_parse_action(lambda s, loc, toks: "' '")
+        stringForm.setParseAction(lambda s, loc, toks: "' '")
 
         parser = quoted_ident ^ stringForm
 
-        transformed_string = parser.transform_string(sql_string)
+        transformed_string = parser.transformString(sql_string)
 
         return transformed_string
 
@@ -312,7 +312,7 @@ class SchemaParser(object):
         ident = pp.Word(pp.alphas, pp.alphanums + "_") | pp.QuotedString(quoteChar="`", escQuote="``")
         parser = ident
 
-        references = parser.search_string(cleansed_sql_string)
+        references = parser.searchString(cleansed_sql_string)
 
         results = set([item for sublist in references for item in sublist])
 
