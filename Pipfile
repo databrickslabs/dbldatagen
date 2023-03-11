@@ -14,6 +14,7 @@ ipython = "7.31.1"
 pydata-sphinx-theme = "*"
 recommonmark = "*"
 sphinx-markdown-builder = "*"
+bumpversion = "*"
 
 [packages]
 numpy = "==1.22.0"
