@@ -4,7 +4,11 @@ from datetime import timedelta
 import pytest
 
 from dbldatagen import ensure, mkBoundsList, coalesce_values, deprecated, SparkSingleton, \
+<<<<<<< HEAD
     parse_time_interval, DataGenError, strip_margins
+=======
+    parse_time_interval, DataGenError, split_list_matching_condition
+>>>>>>> master
 
 spark = SparkSingleton.getLocalInstance("unit tests")
 
@@ -90,21 +94,31 @@ class TestUtils:
 
         assert output == expectedText
 
+    @pytest.mark.parametrize("lstData,matchFn, expectedData",
+                             [
+                                 (['id', 'city_name', 'id', 'city_id', 'city_pop', 'id', 'city_id',
+                                   'city_pop','city_id', 'city_pop','id'],
+                                  lambda el: el == 'id',
+                                  [['id'], ['city_name'], ['id'], ['city_id', 'city_pop'], ['id'],
+                                   ['city_id', 'city_pop', 'city_id', 'city_pop'], ['id']]
+                                 ),
+                                 (['id', 'city_name', 'id', 'city_id', 'city_pop', 'id', 'city_id',
+                                   'city_pop2', 'city_id', 'city_pop', 'id'],
+                                  lambda el: el in ['id', 'city_pop'],
+                                  [['id'], ['city_name'], ['id'], ['city_id'], ['city_pop'], ['id'],
+                                   ['city_id', 'city_pop2', 'city_id'], ['city_pop'], ['id']]
+                                  ),
+                                 ([], lambda el: el == 'id', []),
+                                 (['id'], lambda el: el == 'id', [ ['id'] ]),
+                                 (['id', 'id'], lambda el: el == 'id', [['id'], ['id']]),
+                                 (['no', 'matches'], lambda el: el == 'id', [['no', 'matches']])
+                             ])
+    def testSplitListOnCondition(self, lstData, matchFn, expectedData):
+
+        results = split_list_matching_condition(lstData, matchFn)
+        print(results)
+
+        assert results == expectedData
 
 
 
-# run the tests
-# if __name__ == '__main__':
-#  print("Trying to run tests")
-#  unittest.main(argv=['first-arg-is-ignored'],verbosity=2,exit=False)
-
-# def runTests(suites):
-#    suite = unittest.TestSuite()
-#    result = unittest.TestResult()
-#    for testSuite in suites:
-#        suite.addTest(unittest.makeSuite(testSuite))
-#    runner = unittest.TextTestRunner()
-#    print(runner.run(suite))
-
-
-# runTests([TestBasicOperation])

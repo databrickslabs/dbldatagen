@@ -30,6 +30,9 @@ jobs:
       - name: Install
         run: pip install pipenv
 
+      - name: Install dependencies
+        run: pipenv install --dev
+
       - name: Build dist
         run: pipenv run python setup.py sdist bdist_wheel
 

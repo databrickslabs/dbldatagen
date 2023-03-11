@@ -14,8 +14,9 @@ from .spark_singleton import SparkSingleton
 from .column_generation_spec import ColumnGenerationSpec
 from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, \
                                DEFAULT_SEED_COLUMN, SPARK_RANGE_COLUMN, MIN_SPARK_VERSION
-from .utils import ensure, topologicalSort, DataGenError, deprecated
+from .utils import ensure, topologicalSort, DataGenError, deprecated, split_list_matching_condition
 from . _version import _get_spark_version
+from .schema_parser import SchemaParser
 
 _OLD_MIN_OPTION = 'min'
 _OLD_MAX_OPTION = 'max'
@@ -754,7 +755,6 @@ class DataGenerator:
         new_props = {}
         new_props.update(kwargs)
 
-        from .schema_parser import SchemaParser
         if type(colType) == str:
             colType = SchemaParser.columnTypeFromString(colType)
 
@@ -908,8 +908,6 @@ class DataGenerator:
             self._seedColumnName, set())
                                for x in self._allColumnSpecs]
 
-        # self.pp_list(dependency_ordering, msg="dependencies")
-
         self.logger.info("dependency list: %s", str(dependency_ordering))
 
         self._buildOrder = list(
@@ -917,8 +915,68 @@ class DataGenerator:
 
         self.logger.info("columnBuildOrder: %s", str(self._buildOrder))
 
-        # self.pp_list(self._buildOrder, "build order")
+        self._buildOrder = self._adjustBuildOrderForSqlDependencies(self._buildOrder,  self._columnSpecsByName)
+
         return self._buildOrder
+
+    def _adjustBuildOrderForSqlDependencies(self, buildOrder, columnSpecsByName):
+        """ Adjust column build order according to the following heuristics
+
+        1: if the column being built in a specific build order phase has a SQL expression and it references
+           other columns in the same build phase (or potentially references them as the expression parsing is
+           primitive), separate that phase into multiple phases.
+
+        It will also issue a warning if the SQL expression appears to reference a column built later
+
+        :param buildOrder: list of lists of ids - each sublist represents phase of build
+        :param columnSpecsByName: dictionary to map column names to column specs
+        :returns: Spark SQL dataframe of generated test data
+
+        """
+        new_build_order = []
+
+        all_columns = set([item for sublist in buildOrder for item in sublist])
+        built_columns = []
+        prior_phase_built_columns = []
+
+        # for each phase, evaluate it to see if it needs to be split
+        for current_phase in buildOrder:
+            separate_phase_columns = []
+
+            for columnBeingBuilt in current_phase:
+
+                if columnBeingBuilt in columnSpecsByName:
+                    cs = columnSpecsByName[columnBeingBuilt]
+
+                    if cs.expr is not None:
+                        sql_references = SchemaParser.columnsReferencesFromSQLString(cs.expr, filter=all_columns)
+
+                        # determine references to columns not yet built
+                        forward_references = set(sql_references) - set(built_columns)
+                        if len(forward_references) > 0:
+                            msg = f"Column '{columnBeingBuilt} may have forward references to {forward_references}."
+                            self.logger.warning(msg)
+                            self.logger.warning("Use `baseColumn` attribute to correct build ordering if necessary")
+
+                        references_not_yet_built = set(sql_references) - set(prior_phase_built_columns)
+
+                        if len(references_not_yet_built.intersection(set(current_phase))) > 0:
+                            separate_phase_columns.append(columnBeingBuilt)
+
+                # for each column, get the set of sql references and filter against column names
+                built_columns.append(columnBeingBuilt)
+
+            if len(separate_phase_columns) > 0:
+                # split phase based on columns in separate_phase_column_list set
+                revised_phase = split_list_matching_condition(current_phase, lambda el: el in separate_phase_columns)
+                new_build_order.extend(revised_phase)
+            else:
+                # no change to phase
+                new_build_order.append(current_phase)
+
+            prior_phase_built_columns.extend(current_phase)
+
+        return new_build_order
 
     @property
     def build_order(self):
@@ -926,6 +984,9 @@ class DataGenerator:
 
         The build order will be a list of lists - each list specifying columns that can be built at the same time
         """
+        if not self.buildPlanComputed:
+            self.computeBuildPlan()
+
         return [x for x in self._buildOrder if x != [self._seedColumnName]]
 
     def _getColumnDataTypes(self, columns):
@@ -1033,6 +1094,9 @@ class DataGenerator:
         Build column generation expressions with selects
         :param df1: dataframe for base data generator
         :return: new dataframe
+
+        The data generator build plan is separated into `rounds` of expressions. Each round consists of
+        expressions that are generated using a single `select` operation
         """
         self.executionHistory.append("Generating data with selects")
         # generation with selects may be more efficient as less intermediate data frames

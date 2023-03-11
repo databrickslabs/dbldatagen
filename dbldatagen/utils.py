@@ -75,6 +75,7 @@ def ensure(cond, msg="condition does not hold true"):
     :raises: `DataGenError` exception if condition does not hold true
     :returns: Does not return anything but raises exception if condition does not hold
     """
+
     def strip_margin(text):
         return re.sub(r'\n[ \t]*\|', '\n', text)
 
@@ -250,3 +251,56 @@ def strip_margins(s, marginChar):
             revised_lines.append(line)
 
     return '\n'.join(revised_lines)
+
+def split_list_matching_condition(lst, cond):
+    """ Split a list on elements that match a condition
+
+    This will find all matches of a specific condition in the list and split the list into sublists around the
+    element that matches this condition.
+
+    It will handle multiple matches performing splits on each match.
+
+    For example, the following code will produce the results below:
+
+    x = ['id', 'city_name', 'id', 'city_id', 'city_pop', 'id', 'city_id', 'city_pop','city_id', 'city_pop','id']
+    splitListOnCondition(x, lambda el: el == 'id')
+
+
+    result:
+    `[['id'], ['city_name'], ['id'], ['city_id', 'city_pop'],
+     ['id'], ['city_id', 'city_pop', 'city_id', 'city_pop'], ['id']]`
+
+    :arg lst: list of items to perform condition matches against
+    :arg cond: lambda function or function taking single argument and returning True or False
+    :returns: list of sublists
+    """
+
+    def match_condition(matchList, matchFn):
+        """Return first index of element of list matching condition"""
+        if matchList is None or len(matchList) == 0:
+            return -1
+
+        for i in range(len(matchList)):
+            if matchFn(matchList[i]):
+                return i
+
+        return -1
+
+    # main code
+    retval = []
+
+    if lst is None:
+        retval = lst
+    elif len(lst) == 1:
+        retval = [lst]
+    else:
+        ix = match_condition(lst, cond)
+        if ix != -1:
+            retval.extend(split_list_matching_condition(lst[0:ix], cond))
+            retval.append(lst[ix:ix + 1])
+            retval.extend(split_list_matching_condition(lst[ix + 1:], cond))
+        else:
+            retval = [lst]
+
+    # filter out empty lists
+    return [el for el in retval if el != []]
