@@ -16,7 +16,8 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 * Parsing of SQL expressions to determine column dependencies
 
 #### Notes
-* This does not change actual order of column building - but adjusts which phase columns are built in 
+* The enhancements to build ordering does not change actual order of column building -
+  but adjusts which phase columns are built in 
 
 
 ### Version 0.3.1

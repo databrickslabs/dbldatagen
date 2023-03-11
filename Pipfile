@@ -9,9 +9,9 @@ pytest-cov = "*"
 
 numpy = "1.22.0"
 pyspark = "3.1.3"
-pyarrow = "1.0.1"
-pandas = "1.1.3"
-pyparsing = "2.4.7"
+pyarrow = "4.0.0"
+pandas = "1.2.4"
+pyparsing = "==2.4.7"
 
 sphinx = ">=2.0.0,<3.1.0"
 nbsphinx = "*"
@@ -23,4 +23,4 @@ recommonmark = "*"
 sphinx-markdown-builder = "*"
 
 [requires]
-python_version = "3.8"
+python_version = ">=3.8.10"
