@@ -44,7 +44,8 @@ def _get_spark_version(sparkVersion):
         spark_version_info = VersionInfo(int(major), int(minor), int(patch), release, build="0")
     except (RuntimeError, AttributeError):
         spark_version_info = VersionInfo(major=3, minor=0, patch=1, release="unknown", build="0")
-        logging.warning("Could not parse spark version - using assumed Spark Version : %s", spark_version_info)
+        logger = logging.getLogger(__name__)
+        logger.warning("Could not parse spark version - using assumed Spark Version : %s", spark_version_info)
 
     return spark_version_info
 
