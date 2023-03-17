@@ -9,8 +9,10 @@
 <!-- Dont remove: end exclude package -->
 
 [![build](https://github.com/databrickslabs/dbldatagen/workflows/build/badge.svg?branch=master)](https://github.com/databrickslabs/dbldatagen/actions?query=workflow%3Abuild+branch%3Amaster)
+[![PyPi package](https://img.shields.io/pypi/v/dbldatagen?color=green)](https://pypi.org/project/dbldatagen/)
 [![codecov](https://codecov.io/gh/databrickslabs/dbldatagen/branch/master/graph/badge.svg)](https://codecov.io/gh/databrickslabs/dbldatagen)
-[![PyPi downloads](https://img.shields.io/pypi/dm/dbldatagen?label=PyPi%20Downloads)](https://pypi.org/project/dbldatagen/)
+[![PyPi downloads](https://img.shields.io/pypi/dm/dbldatagen?label=PyPi%20Downloads)](https://pypistats.org/packages/dbldatagen)
+
 <!-- 
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/databrickslabs/dbldatagen.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/databrickslabs/dbldatagen/context:python)
 [![downloads](https://img.shields.io/github/downloads/databrickslabs/dbldatagen/total.svg)](https://hanadigital.github.io/grev/?user=databrickslabs&repo=dbldatagen)
@@ -89,6 +91,14 @@ release notes for library compatibility
 
 - https://docs.databricks.com/release-notes/runtime/releases.html
 
+When using the Databricks Labs Data Generator on Unity Catalog enabled environments, the Data Generator requires
+the use of `Single User` or `No Isolation Shared` access modes as some needed features are not available in `Shared` 
+mode (for example, use of 3rd party libraries). Depending on settings, `Custom` access mode may be supported.
+
+See the following documentation for more information:
+
+- https://docs.databricks.com/data-governance/unity-catalog/compute.html
+
 ## Using the Data Generator
 To use the data generator, install the library using the `%pip install` method or install the Python wheel directly 
 in your environment.
@@ -104,19 +114,19 @@ column_count = 10
 data_rows = 1000 * 1000
 df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows,
                                                   partitions=4)
-                            .withIdOutput()
-                            .withColumn("r", FloatType(), 
-                                             expr="floor(rand() * 350) * (86400 + 3600)",
-                                             numColumns=column_count)
-                            .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
-                            .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
-                            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-                            .withColumn("code4", StringType(), values=['a', 'b', 'c'], 
-                                           random=True)
-                            .withColumn("code5", StringType(), values=['a', 'b', 'c'], 
-                                           random=True, weights=[9, 1, 1])
-
-                            )
+           .withIdOutput()
+           .withColumn("r", FloatType(), 
+                            expr="floor(rand() * 350) * (86400 + 3600)",
+                            numColumns=column_count)
+           .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
+           .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
+           .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+           .withColumn("code4", StringType(), values=['a', 'b', 'c'], 
+                          random=True)
+           .withColumn("code5", StringType(), values=['a', 'b', 'c'], 
+                          random=True, weights=[9, 1, 1])
+ 
+           )
                             
 df = df_spec.build()
 num_rows=df.count()                          

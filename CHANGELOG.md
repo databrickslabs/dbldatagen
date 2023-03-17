@@ -3,6 +3,11 @@
 ## Change History
 All notable changes to the Databricks Labs Data Generator will be documented in this file.
 
+### Unreleased
+
+#### Changed
+* Fixed use of logger in _version.py and in spark_singleton.py
+
 ### Version 0.3.2
 
 #### Changed
