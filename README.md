@@ -9,8 +9,10 @@
 <!-- Dont remove: end exclude package -->
 
 [![build](https://github.com/databrickslabs/dbldatagen/workflows/build/badge.svg?branch=master)](https://github.com/databrickslabs/dbldatagen/actions?query=workflow%3Abuild+branch%3Amaster)
+[![PyPi package](https://img.shields.io/pypi/v/dbldatagen?color=green)](https://pypi.org/project/dbldatagen/)
 [![codecov](https://codecov.io/gh/databrickslabs/dbldatagen/branch/master/graph/badge.svg)](https://codecov.io/gh/databrickslabs/dbldatagen)
-[![PyPi downloads](https://img.shields.io/pypi/dm/dbldatagen?label=PyPi%20Downloads)](https://pypi.org/project/dbldatagen/)
+[![PyPi downloads](https://img.shields.io/pypi/dm/dbldatagen?label=PyPi%20Downloads)](https://pypistats.org/packages/dbldatagen)
+
 <!-- 
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/databrickslabs/dbldatagen.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/databrickslabs/dbldatagen/context:python)
 [![downloads](https://img.shields.io/github/downloads/databrickslabs/dbldatagen/total.svg)](https://hanadigital.github.io/grev/?user=databrickslabs&repo=dbldatagen)
@@ -88,6 +90,14 @@ For full library compatibility for a specific Databricks Spark release, see the 
 release notes for library compatibility
 
 - https://docs.databricks.com/release-notes/runtime/releases.html
+
+When using the Databricks Labs Data Generator on Unity Catalog enabled environments, the Data Generator requires
+the use of `Single User` or `No Isolation Shared` access modes as some needed features are not available in `Shared` 
+mode (for example, use of 3rd party libraries). Depending on settings, `Custom` access mode may be supported.
+
+See the following documentation for more information:
+
+- https://docs.databricks.com/data-governance/unity-catalog/compute.html
 
 ## Using the Data Generator
 To use the data generator, install the library using the `%pip install` method or install the Python wheel directly 
