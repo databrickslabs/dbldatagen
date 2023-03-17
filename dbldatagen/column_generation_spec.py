@@ -83,7 +83,7 @@ class ColumnGenerationSpec(object):
 
     # restrict spurious messages from java gateway
     logging.getLogger("py4j").setLevel(logging.WARNING)
-    logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.NOTSET)
+    #logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.NOTSET)
 
     def __init__(self, name, colType=None, minValue=0, maxValue=None, step=1, prefix='', random=False,
                  distribution=None, baseColumn=None, randomSeed=None, randomSeedMethod=None,

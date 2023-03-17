@@ -13,6 +13,8 @@ See: https://pypi.org/project/bumpversion/
 Note the use of `get_version` for method name to conform with bumpversion conventions
 """
 
+from .datagen_logger import LibraryLoggerHelper
+
 from collections import namedtuple
 import re
 import logging
@@ -29,7 +31,7 @@ def get_version(version):
     r = re.compile(r'(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+){0,1}(?P<release>\D*)(?P<build>\d*)')
     major, minor, patch, release, build = r.match(version).groups()
     version_info = VersionInfo(major, minor, patch, release, build)
-    logging.info("Version : %s", version_info)
+    LibraryLoggerHelper.getLogger().info("Version : %s", version_info)
     return version_info
 
 
@@ -44,7 +46,9 @@ def _get_spark_version(sparkVersion):
         spark_version_info = VersionInfo(int(major), int(minor), int(patch), release, build="0")
     except (RuntimeError, AttributeError):
         spark_version_info = VersionInfo(major=3, minor=0, patch=1, release="unknown", build="0")
-        logging.warning("Could not parse spark version - using assumed Spark Version : %s", spark_version_info)
+
+        LibraryLoggerHelper.getLogger().warning("Could not parse spark version - using assumed Spark Version : %s",
+                                                spark_version_info)
 
     return spark_version_info
 
