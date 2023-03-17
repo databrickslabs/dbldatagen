@@ -222,6 +222,15 @@ class DataGenerator:
         This will set the logger at warning, info or debug levels depending on the instance construction parameters
         """
         self.logger = logging.getLogger("DataGenerator")
+
+        date_format = "%Y-%m-%d %H:%M:%S"
+        log_format = "[%(name)s][%(asctime)s][%(levelname)s][%(module)s][%(funcName)s] %(message)s"
+        formatter = logging.Formatter(log_format, date_format)
+        handler = logging.StreamHandler()
+        handler.setFormatter(formatter)
+        self.logger.setLevel(level=logging.INFO)
+        self.logger.addHandler(handler)
+
         if self.debug:
             self.logger.setLevel(logging.DEBUG)
         elif self.verbose:

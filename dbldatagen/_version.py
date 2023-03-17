@@ -17,7 +17,6 @@ from .datagen_logger import LibraryLoggerHelper
 
 from collections import namedtuple
 import re
-import logging
 
 VersionInfo = namedtuple('VersionInfo', ['major', 'minor', 'patch', 'release', 'build'])
 
