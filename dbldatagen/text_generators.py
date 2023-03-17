@@ -11,6 +11,7 @@ import random
 
 import numpy as np
 import pandas as pd
+import logging
 
 #: list of hex digits for template generation
 _HEX_LOWER = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
@@ -243,9 +244,18 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
         self._np_letters_all = np.array(_LETTERS_ALL)
         self._lenWords = len(self._wordList)
 
-        # get the template metadata
+        # get the template metadata - this will be list of metadata entries for each template
+        # for each template, metadata will be tuple of number of placeholders followed by list of random bounds
+        # to be computed when replacing non static placeholder
         template_info =  [self._prepareTemplateStrings(template, escapeSpecialMeaning=escapeSpecialChars)
                                     for template in self._templates]
+
+        logger = logging.getLogger(__name__)
+
+        #if logger.isEnabledFor(logging.DEBUG):
+        for ix, ti in template_info:
+            logger.info(f"templates - {ix} {ti}")
+
         self._max_placeholders = max([ x[0] for x in template_info])
         self._max_rnds_needed = max([ len(x[1]) for x in template_info])
         self._placeholders_needed = [ x[0] for x in template_info]
@@ -637,7 +647,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
             for m in masked_matrices:
                 np.ma.harden_mask(m)
 
-            # expand values into placeholders
+            # expand values into placeholders without affect masked values
             #self._applyTemplateStringsForTemplate(v.to_numpy(dtype=np.object_), #masked_base_values,
             self._applyTemplateStringsForTemplate(v,
                                                     #masked_base_values,
