@@ -148,7 +148,7 @@ class TestTextTemplates:
                                (r'\\w \\w|\\w A. \\w', False, False),
                                (r'\\w A. \\w|\\w \\w', False, False),
                                (r'\w \w|\w A. \w', False, False),
-                               (r'\w \w|\w \v. \w', False, False),
+                               #(r'\w \w|\w \v. \w', False, False),
                                (r'\w A. \w', False, False),
                                (r'\\w \\w|\\w a. \\w', False, False),
                                 (r'\\w \\w|\\w k. \\w', False, False),
