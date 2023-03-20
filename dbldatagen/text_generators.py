@@ -444,7 +444,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
 
         if isinstance(placeholders, np.ma.MaskedArray):
             selected = ~placeholders.mask
-            selected_col0 = selected[:, 1]
+            selected_col0 = selected[:, 0]
 
         # in the following code, the construct `(not escape) ^ self._escapeSpecialMeaning` means apply
         # special meaning if either escape is not true or the option `self._escapeSpecialMeaning` is true.

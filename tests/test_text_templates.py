@@ -175,7 +175,12 @@ class TestTextTemplates:
                                (r'\\w k. \\w', False, True),
                                (r'\w \a. \w', True, True),
                                (r'\w \k. \w', True, True),
-
+                               (r'\w', True, True),
+                               (r'\w', False, True),
+                               (r'\w', False, False),
+                               (r'b', True, True),
+                               (r'b', False, True),
+                               (r'b', False, False),
                                ])
 
     def test_use_pandas(self, template_provided, escapeSpecial, useTemplateObject):
@@ -251,6 +256,9 @@ class TestTextTemplates:
                                (r'\w \k. \w', True, True),
                                (r'\w \w|\w \w \w|\w \n \w|\w \w \w \w', True, True),
                                (r'\w \n \w', True, True),
+                               (r'\w', True, True),
+                               (r'\w', False, True),
+                               (r'\w', False, False),
 
                                ])
 
