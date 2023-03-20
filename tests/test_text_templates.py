@@ -144,8 +144,11 @@ class TestTextTemplates:
 
 
     @pytest.mark.parametrize("template_provided, escapeSpecial, useTemplateObject",
-                             [ (r'\\w \\w|\\w A. \\w', False, False),
+                             [ (r'\w aAdDkKxX \n \N \w', False, False),
+                               (r'\\w \\w|\\w A. \\w', False, False),
+                               (r'\\w A. \\w|\\w \\w', False, False),
                                (r'\w \w|\w A. \w', False, False),
+                               (r'\w \w|\w \v. \w', False, False),
                                (r'\w A. \w', False, False),
                                (r'\\w \\w|\\w a. \\w', False, False),
                                 (r'\\w \\w|\\w k. \\w', False, False),
@@ -175,7 +178,7 @@ class TestTextTemplates:
 
                                ])
 
-    def test_text_templates1(self, template_provided, escapeSpecial, useTemplateObject):
+    def test_use_pandas(self, template_provided, escapeSpecial, useTemplateObject):
         template1 = TemplateGenerator(template_provided, escapeSpecialChars=escapeSpecial)
         print(f"template [{template_provided}]")
 
@@ -216,7 +219,9 @@ class TestTextTemplates:
 
 
     @pytest.mark.parametrize("template_provided, escapeSpecial, useTemplateObject",
-                             [ (r'\\w \\w|\\w A. \\w', False, False),
+                             [ (r'\w aAdDkK \w', False, False),
+
+                               (r'\\w \\w|\\w A. \\w', False, False),
                                (r'\w \w|\w A. \w', False, False),
                                (r'\w A. \w', False, False),
                                (r'\\w \\w|\\w a. \\w', False, False),
@@ -249,7 +254,7 @@ class TestTextTemplates:
 
                                ])
 
-    def test_text_templates2(self, template_provided, escapeSpecial, useTemplateObject):
+    def test_full_build(self, template_provided, escapeSpecial, useTemplateObject):
         import dbldatagen as dg
         print(f"template [{template_provided}]")
 

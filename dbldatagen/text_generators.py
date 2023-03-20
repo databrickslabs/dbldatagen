@@ -244,6 +244,24 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
         self._np_letters_all = np.array(_LETTERS_ALL)
         self._lenWords = len(self._wordList)
 
+        self._templateMappings = {
+            'a': (26, self._np_letters_lower),
+            'A': (26, self._np_letters_upper),
+            'x': (16, self._np_hex_lower),
+            'X': (16, self._np_hex_upper),
+            'd': (10, self._np_digits_zero),
+            'D': (9, self._np_digits_non_zero),
+            'k': (36, self._np_alnum_lower),
+            'K': (36, self._np_alnum_upper)
+        }
+
+        self._templateEscapedMappings = {
+            'n': (256, None),
+            'N': (65536, None),
+            'w': (self._lenWords, self._wordList),
+            'W': (self._lenWords, self._upperWordList)
+        }
+
         # get the template metadata - this will be list of metadata entries for each template
         # for each template, metadata will be tuple of number of placeholders followed by list of random bounds
         # to be computed when replacing non static placeholder
@@ -329,57 +347,17 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
                 # retval.append(str(baseValue[val_index]))
                 num_placeholders += 1
                 use_value = False
-            elif char == 'x' and (not escape) ^ escapeSpecialMeaning:
-                retval.append(16)
+            elif (char in self._templateMappings.keys()) and (not escape) ^ escapeSpecialMeaning:
+                # handle case for ['a','A','k', 'K', 'x', 'X']
+                bound, mappingArr = self._templateMappings[char]
+                retval.append(bound)
                 num_placeholders += 1
-                # used for retval.append(_HEX_LOWER[self._getRandomInt(0, 15, rndGenerator)])
-            elif char == 'X' and (not escape) ^ escapeSpecialMeaning:
-                retval.append(16)
-                num_placeholders += 1
-                # retval.append(_HEX_UPPER[self._getRandomInt(0, 15, rndGenerator)])
-            elif char == 'd' and (not escape) ^ escapeSpecialMeaning:
-                retval.append(10)
-                num_placeholders += 1
-                # retval.append(_DIGITS_ZERO[self._getRandomInt(0, 9, rndGenerator)])
-            elif char == 'D' and (not escape) ^ escapeSpecialMeaning:
-                retval.append(9)
-                num_placeholders += 1
-                # retval.append(_DIGITS_NON_ZERO[self._getRandomInt(0, 8, rndGenerator)])
-            elif char == 'a' and (not escape) ^ escapeSpecialMeaning:
-                retval.append(26)
-                num_placeholders += 1
-                # retval.append(_LETTERS_LOWER[self._getRandomInt(0, 25, rndGenerator)])
-            elif char == 'A' and (not escape) ^ escapeSpecialMeaning:
-                retval.append(26)
-                num_placeholders += 1
-                # retval.append(_LETTERS_UPPER[self._getRandomInt(0, 25, rndGenerator)])
-            elif char == 'k' and (not escape) ^ escapeSpecialMeaning:
-                retval.append(26)
-                num_placeholders += 1
-                # retval.append(_ALNUM_LOWER[self._getRandomInt(0, 35, rndGenerator)])
-            elif char == 'K' and (not escape) ^ escapeSpecialMeaning:
-                retval.append(36)
-                num_placeholders += 1
-                # retval.append(_ALNUM_UPPER[self._getRandomInt(0, 35, rndGenerator)])
-            elif char == 'n' and escape:
-                retval.append(256)
-                num_placeholders += 1
-                # retval.append(str(self._getRandomInt(0, 255, rndGenerator)))
                 escape = False
-            elif char == 'N' and escape:
-                retval.append(65536)
+            elif (char in self._templateEscapedMappings.keys()) and escape:
+                # handle case for ['n', 'N', 'w', 'W']
+                bound, mappingArr = self._templateEscapedMappings[char]
+                retval.append(bound)
                 num_placeholders += 1
-                # retval.append(str(self._getRandomInt(0, 65535, rndGenerator)))
-                escape = False
-            elif char == 'W' and escape:
-                retval.append(self._lenWords)
-                num_placeholders += 1
-                # retval.append(self._upperWordList[self._getRandomWordOffset(self._lenWords, rndGenerator=rndGenerator)])
-                escape = False
-            elif char == 'w' and escape:
-                retval.append(self._lenWords)
-                num_placeholders += 1
-                # retval.append(self._wordList[self._getRandomWordOffset(self._lenWords, rndGenerator=rndGenerator)])
                 escape = False
             elif char == 'v' and escape:
                 escape = False
@@ -420,11 +398,16 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
         `_escapeSpecialMeaning` parameter allows for backwards compatibility with old style syntax while allowing
         for preferred new style template syntax. Specify as True to force escapes for special meanings,.
 
+        Note that both placeholders and rnds are masked arrays
+
         """
         assert baseValue.shape[0] == placeholders.shape[0]
         assert baseValue.shape[0] == rnds.shape[0]
 
         _cached_values = {}
+
+        regularKeys = self._templateMappings.keys()
+        escapedKeys = self._templateEscapedMappings.keys()
 
         def _get_values_as_np_array():
             """Get baseValue which is pd.Series or Dataframe as a numpy array and cache it"""
@@ -454,6 +437,15 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
         num_placeholders = 0
         rnd_offset = 0
 
+        selected = None
+        selected_col0 = None
+
+        assert isinstance(placeholders, np.ma.MaskedArray), "expecting MaskArray"
+
+        if isinstance(placeholders, np.ma.MaskedArray):
+            selected = ~placeholders.mask
+            selected_col0 = selected[:, 1]
+
         # in the following code, the construct `(not escape) ^ self._escapeSpecialMeaning` means apply
         # special meaning if either escape is not true or the option `self._escapeSpecialMeaning` is true.
         # This corresponds to the logical xor operation
@@ -469,71 +461,45 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
                 #placeholders[:, num_placeholders] = pd_base_values.apply(lambda x: str(x[val_index]))
                 num_placeholders += 1
                 use_value = False
-            elif char == 'x' and (not escape) ^ escapeSpecialMeaning:
+            elif char in regularKeys and (not escape) ^ escapeSpecialMeaning:
                 # note vectorized lookup - `rnds[:, rnd_offset]` will get vertical column of
                 # random numbers from `rnds` 2d array
-                placeholders[:, num_placeholders] = self._np_hex_lower[rnds[:, rnd_offset]]
+                bound, valueMappings = self._templateMappings[char]
+
+                print(f"mappings - {bound},{char}", valueMappings)
+                print(f"selected_col0 - {selected_col0}")
+
+                if valueMappings is not None:
+                    if selected_col0 is not None:
+                        placeholders[selected_col0, num_placeholders] = valueMappings[rnds[selected_col0, rnd_offset]]
+                    else:
+                        placeholders[:, num_placeholders] = valueMappings[rnds[:, rnd_offset]]
+                else:
+                    if selected_col0 is not None:
+                        placeholders[selected_col0, num_placeholders] = rnds[selected_col0, rnd_offset]
+                    else:
+                        placeholders[:, num_placeholders] = rnds[:, rnd_offset]
+
                 num_placeholders += 1
                 rnd_offset = rnd_offset + 1
+                escape = False
                 # used for retval.append(_HEX_LOWER[self._getRandomInt(0, 15, rndGenerator)])
-            elif char == 'X' and (not escape) ^ escapeSpecialMeaning:
-                placeholders[:, num_placeholders] = self._np_hex_upper[rnds[:, rnd_offset]]
-                num_placeholders += 1
-                rnd_offset = rnd_offset + 1
-                # retval.append(_HEX_UPPER[self._getRandomInt(0, 15, rndGenerator)])
-            elif char == 'd' and (not escape) ^ escapeSpecialMeaning:
-                placeholders[:, num_placeholders] = self._np_digits_zero[rnds[:, rnd_offset]]
-                num_placeholders += 1
-                rnd_offset = rnd_offset + 1
-                # retval.append(_DIGITS_ZERO[self._getRandomInt(0, 9, rndGenerator)])
-            elif char == 'D' and (not escape) ^ escapeSpecialMeaning:
-                placeholders[:, num_placeholders] = self._np_digits_non_zero[rnds[:, rnd_offset]]
-                num_placeholders += 1
-                rnd_offset = rnd_offset + 1
-                # retval.append(_DIGITS_NON_ZERO[self._getRandomInt(0, 8, rndGenerator)])
-            elif char == 'a' and (not escape) ^ escapeSpecialMeaning:
-                placeholders[:, num_placeholders] = self._np_letters_lower[rnds[:, rnd_offset]]
-                num_placeholders += 1
-                rnd_offset = rnd_offset + 1
-                # retval.append(_LETTERS_LOWER[self._getRandomInt(0, 25, rndGenerator)])
-            elif char == 'A' and (not escape) ^ escapeSpecialMeaning:
-                placeholders[:, num_placeholders] = self._np_letters_upper[rnds[:, rnd_offset]]
-                num_placeholders += 1
-                rnd_offset = rnd_offset + 1
-                # retval.append(_LETTERS_UPPER[self._getRandomInt(0, 25, rndGenerator)])
-            elif char == 'k' and (not escape) ^ escapeSpecialMeaning:
-                placeholders[:, num_placeholders] = self._np_alnum_lower[rnds[:, rnd_offset]]
-                num_placeholders += 1
-                rnd_offset = rnd_offset + 1
-                # retval.append(_ALNUM_LOWER[self._getRandomInt(0, 35, rndGenerator)])
-            elif char == 'K' and (not escape) ^ escapeSpecialMeaning:
-                placeholders[:, num_placeholders] = self._np_alnum_upper[rnds[:, rnd_offset]]
-                num_placeholders += 1
-                rnd_offset = rnd_offset + 1
-                # retval.append(_ALNUM_UPPER[self._getRandomInt(0, 35, rndGenerator)])
-            elif char == 'n' and escape:
-                placeholders[:, num_placeholders] = rnds[:, rnd_offset]
+            elif char in escapedKeys and escape:
+                bound, valueMappings = self._templateEscapedMappings[char]
+
+                if valueMappings is not None:
+                    if selected_col0 is not None:
+                        placeholders[selected_col0, num_placeholders] = valueMappings[rnds[selected_col0, rnd_offset]]
+                    else:
+                        placeholders[:, num_placeholders] = valueMappings[rnds[:, rnd_offset]]
+                else:
+                    if selected_col0 is not None:
+                        placeholders[selected_col0, num_placeholders] = rnds[selected_col0, rnd_offset]
+                    else:
+                        placeholders[:, num_placeholders] = rnds[:, rnd_offset]
                 num_placeholders += 1
                 rnd_offset = rnd_offset + 1
                 # retval.append(str(self._getRandomInt(0, 255, rndGenerator)))
-                escape = False
-            elif char == 'N' and escape:
-                placeholders[:, num_placeholders] = rnds[:, rnd_offset]
-                num_placeholders += 1
-                rnd_offset = rnd_offset + 1
-                # retval.append(str(self._getRandomInt(0, 65535, rndGenerator)))
-                escape = False
-            elif char == 'W' and escape:
-                placeholders[:, num_placeholders] = self._upperWordList[rnds[:, rnd_offset]]
-                num_placeholders += 1
-                rnd_offset = rnd_offset + 1
-                # retval.append(self._upperWordList[self._getRandomWordOffset(self._lenWords, rndGenerator=rndGenerator)])
-                escape = False
-            elif char == 'w' and escape:
-                placeholders[:, num_placeholders] = self._wordList[rnds[:, rnd_offset]]
-                num_placeholders += 1
-                rnd_offset = rnd_offset + 1
-                # retval.append(self._wordList[self._getRandomWordOffset(self._lenWords, rndGenerator=rndGenerator)])
                 escape = False
             elif char == 'v' and escape:
                 escape = False
