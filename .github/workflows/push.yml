@@ -45,7 +45,7 @@ jobs:
 
       - name: Lint
         run: |
-          prospector --profile prospector.yaml
+          pipenv run prospector --profile prospector.yaml
 
       - name: Run tests
         run: make test
