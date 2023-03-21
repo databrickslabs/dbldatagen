@@ -243,6 +243,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
         self._np_letters_all = np.array(_LETTERS_ALL)
         self._lenWords = len(self._wordList)
 
+        # mappings must be mapping from string to tuple(length of mappings, mapping array or list)
         self._templateMappings = {
             'a': (26, self._np_letters_lower),
             'A': (26, self._np_letters_upper),
@@ -254,12 +255,36 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
             'K': (36, self._np_alnum_upper)
         }
 
+        # ensure that each mapping is mapping from string to list or numpy array
+        for k, v in self._templateMappings.items():
+            assert (k is not None) and isinstance(k, str) and len(k) > 0, "key must be non-empty string"
+            assert v is not None and isinstance(v, tuple) and len(v) == 2, "value must be tuple of length 2"
+            mapping_length, mappings = v
+            print(type(mappings))
+            assert isinstance(mapping_length, int), "mapping length must be of type int"
+            assert isinstance(mappings, list) or isinstance(mappings,  np.ndarray),\
+                "mappings are lists or numpy arrays"
+            assert mapping_length == 0 or len(mappings) == mapping_length, "mappings must match mapping_length"
+
         self._templateEscapedMappings = {
             'n': (256, None),
             'N': (65536, None),
             'w': (self._lenWords, self._wordList),
             'W': (self._lenWords, self._upperWordList)
         }
+
+        # ensure that each escaped mapping is mapping from string to None, list or numpy array
+        for k, v in self._templateEscapedMappings.items():
+            assert (k is not None) and isinstance(k, str) and len(k) > 0, "key must be non-empty string"
+            assert v is not None and isinstance(v, tuple) and len(v) == 2, "value must be tuple of length 2"
+            mapping_length, mappings = v
+            assert isinstance(mapping_length, int), "mapping length must be of type int"
+            assert mappings is None or isinstance(mappings, list) or isinstance(mappings,  np.ndarray),\
+                "mappings are lists or numpy arrays"
+
+            # for escaped mappings, the mapping can be None in which case the mapping is to the number itself
+            # i.e mapping[4] = 4
+            assert mappings is None or len(mappings) == mapping_length, "mappings must match mapping_length"
 
         # get the template metadata - this will be list of metadata entries for each template
         # for each template, metadata will be tuple of number of placeholders followed by list of random bounds
@@ -453,14 +478,13 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
         num_placeholders = 0
         rnd_offset = 0
 
-        selected = None
-        selected_col0 = None
+        masked_rows = None
 
         assert isinstance(placeholders, np.ma.MaskedArray), "expecting MaskArray"
 
         if isinstance(placeholders, np.ma.MaskedArray):
-            selected = ~placeholders.mask
-            selected_col0 = selected[:, 0]
+            active_rows = ~placeholders.mask
+            masked_rows = active_rows[:, 0]
 
         # in the following code, the construct `(not escape) ^ self._escapeSpecialMeaning` means apply
         # special meaning if either escape is not true or the option `self._escapeSpecialMeaning` is true.
@@ -482,19 +506,10 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
                 # random numbers from `rnds` 2d array
                 bound, valueMappings = self._templateMappings[char]
 
-                print(f"mappings - {bound},{char}", valueMappings)
-                print(f"selected_col0 - {selected_col0}")
-
-                if valueMappings is not None:
-                    if selected_col0 is not None:
-                        placeholders[selected_col0, num_placeholders] = valueMappings[rnds[selected_col0, rnd_offset]]
-                    else:
-                        placeholders[:, num_placeholders] = valueMappings[rnds[:, rnd_offset]]
+                if masked_rows is not None:
+                    placeholders[masked_rows, num_placeholders] = valueMappings[rnds[masked_rows, rnd_offset]]
                 else:
-                    if selected_col0 is not None:
-                        placeholders[selected_col0, num_placeholders] = rnds[selected_col0, rnd_offset]
-                    else:
-                        placeholders[:, num_placeholders] = rnds[:, rnd_offset]
+                    placeholders[:, num_placeholders] = valueMappings[rnds[:, rnd_offset]]
 
                 num_placeholders += 1
                 rnd_offset = rnd_offset + 1
@@ -504,13 +519,13 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
                 bound, valueMappings = self._templateEscapedMappings[char]
 
                 if valueMappings is not None:
-                    if selected_col0 is not None:
-                        placeholders[selected_col0, num_placeholders] = valueMappings[rnds[selected_col0, rnd_offset]]
+                    if masked_rows is not None:
+                        placeholders[masked_rows, num_placeholders] = valueMappings[rnds[masked_rows, rnd_offset]]
                     else:
                         placeholders[:, num_placeholders] = valueMappings[rnds[:, rnd_offset]]
                 else:
-                    if selected_col0 is not None:
-                        placeholders[selected_col0, num_placeholders] = rnds[selected_col0, rnd_offset]
+                    if masked_rows is not None:
+                        placeholders[masked_rows, num_placeholders] = rnds[masked_rows, rnd_offset]
                     else:
                         placeholders[:, num_placeholders] = rnds[:, rnd_offset]
                 num_placeholders += 1
