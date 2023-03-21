@@ -7,6 +7,7 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 
 #### Changed
 * Fixed use of logger in _version.py and in spark_singleton.py
+* Fixed template issues 
 
 ### Version 0.3.2
 

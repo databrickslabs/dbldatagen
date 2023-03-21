@@ -49,8 +49,8 @@ We'll add a timestamp for when the row was generated and a memo field to mark wh
 
    dataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
                .withColumn("customer_id","long", uniqueValues=uniqueCustomers)
-               .withColumn("name", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w')
-               .withColumn("alias", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w')
+               .withColumn("name", percentNulls=0.01, template=r'\w \w|\w a. \w')
+               .withColumn("alias", percentNulls=0.01, template=r'\w \w|\w a. \w')
                .withColumn("payment_instrument_type", values=['paypal', 'Visa', 'Mastercard',
                            'American Express', 'discover', 'branded visa', 'branded mastercard'],
                            random=True, distribution="normal")
@@ -58,9 +58,9 @@ We'll add a timestamp for when the row was generated and a memo field to mark wh
                            baseColumnType="hash", omit=True)
                .withColumn("payment_instrument", expr="format_number(int_payment_instrument, '**** ****** *####')",
                            baseColumn="int_payment_instrument")
-               .withColumn("email", template=r'\\w.\\w@\\w.com|\\w-\\w@\\w')
-               .withColumn("email2", template=r'\\w.\\w@\\w.com')
-               .withColumn("ip_address", template=r'\\n.\\n.\\n.\\n')
+               .withColumn("email", template=r'\w.\w@\w.com|\w-\w@\w')
+               .withColumn("email2", template=r'\w.\w@\w.com')
+               .withColumn("ip_address", template=r'\n.\n.\n.\n')
                .withColumn("md5_payment_instrument",
                            expr="md5(concat(payment_instrument_type, ':', payment_instrument))",
                            base_column=['payment_instrument_type', 'payment_instrument'])
