@@ -40,6 +40,10 @@ jobs:
       - name: Install dependencies
         run: pipenv install --dev
 
+      - name: Lint
+        run: |
+          prospector --profile prospector.yaml
+          
       - name: Run tests
         run: make test
 
