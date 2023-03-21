@@ -168,5 +168,9 @@ when applied to the values zero to 999. This conforms to the preferred style goi
 will not be treated as a special char.
 
 .. note::
+          The legacy mode of operation has a bug where the template sequence r'\\a' produces the same result as r'\a'.
+          This can be disabled by setting the parameter `legacyEscapeTreatment` to False on the TemplateTextGenerator
+          object. It is true by default.
+
 
 

@@ -274,7 +274,7 @@ class TestTextTemplates:
                                (r'\\a', True, False, r"\\[a-z]"),
                                (r'\\a', False, False, r"\\[a-z]"),
                                (r'\\a', False, True, r"[a-z]"),
-                               (r'\\a', True, True, r"\\[a-z]"),
+                               (r'\\a', True, True, r"[a-z]"),
                                ])
     def test_escape_treatment(self, templateProvided, escapeSpecial, legacyEscapeTreatment, expectedPattern):
 
