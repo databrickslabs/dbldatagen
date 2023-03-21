@@ -267,7 +267,6 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
             assert (k is not None) and isinstance(k, str) and len(k) > 0, "key must be non-empty string"
             assert v is not None and isinstance(v, tuple) and len(v) == 2, "value must be tuple of length 2"
             mapping_length, mappings = v
-            print(type(mappings))
             assert isinstance(mapping_length, int), "mapping length must be of type int"
             assert isinstance(mappings, list) or isinstance(mappings,  np.ndarray),\
                 "mappings are lists or numpy arrays"

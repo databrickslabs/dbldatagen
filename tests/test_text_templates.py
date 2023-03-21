@@ -212,24 +212,12 @@ class TestTextTemplates:
                              ])
     def test_use_pandas(self, template_provided, escapeSpecial, useTemplateObject):
         template1 = TemplateGenerator(template_provided, escapeSpecialChars=escapeSpecial)
-        print(f"template [{template_provided}]")
-
-        print("max_placeholders", template1._max_placeholders )
-        print("max_rnds", template1._max_rnds_needed)
-        print("placeholders", template1._placeholders_needed )
-        print("bounds", template1._template_rnd_bounds)
-
-        print("templates", template1.templates)
 
         TEST_ROWS = 100
 
         arr = np.arange(TEST_ROWS)
 
         template_choices, template_rnd_bounds, template_rnds = template1._prepare_random_bounds(arr)
-
-        print("choices", template_choices)
-        print("rnd bounds", template_rnd_bounds)
-        print("template_rnds", template_rnds)
 
         assert len(template_choices) == len(template_rnds)
         assert len(template_choices) == len(template_rnd_bounds)
@@ -263,17 +251,21 @@ class TestTextTemplates:
 
     @pytest.mark.parametrize("templateProvided, escapeSpecial, legacyEscapeTreatment,expectedPattern ",
                              [ (r'\\w \w', False, True, r"[a-z]+ [a-z]+"),
-                               (r'\\w \w', False, False, r"\\[a-z]+ [a-z]+"),
+                               (r'\\w \w', False, False, r"\\w [a-z]+"),
+                               (r'\\\w \w', False, False, r"\\[a-z]+ [a-z]+"),
                                (r'\\w \w', True, True, r"[a-z]+ [a-z]+"),
-                               (r'\\w \w', True, False, r"\\[a-z]+ [a-z]+"),
+                               (r'\\w \w', True, False, r"\\w [a-z]+"),
+                               (r'\\\w \w', True, False, r"\\[a-z]+ [a-z]+"),
                                (r'\n-\n', False, False, r"[0-9]+-[0-9]+"),
                                (r'\\n-\n', False, True, r"[0-9]+-[0-9]+"),
-                               (r'\\n-\n', False, False, r"\\[0-9]+-[0-9]+"),
+                               (r'\\n-\n', False, False, r"\\n-[0-9]+"),
+                               (r'\\\n-\n', False, False, r"\\[0-9]+-[0-9]+"),
                                (r'\\n-\n', True, True, r"[0-9]+-[0-9]+"),
-                               (r'\\n-\n', True, False, r"\\[0-9]+-[0-9]+"),
-                               (r'\\a', True, False, r"\\[a-z]"),
+                               (r'\\n-\n', True, False, r"\\n-[0-9]+"),
+                               (r'\\\n-\n', True, False, r"\\[0-9]+-[0-9]+"),
+                               (r'\\\a', True, False, r"\\[a-z]"),
                                (r'\\a', False, False, r"\\[a-z]"),
-                               (r'\\a', False, True, r"[a-z]"),
+                               (r'\\a c', False, True, r"[a-z] c"),
                                (r'\\a', True, True, r"[a-z]"),
                                ])
     def test_escape_treatment(self, templateProvided, escapeSpecial, legacyEscapeTreatment, expectedPattern):
