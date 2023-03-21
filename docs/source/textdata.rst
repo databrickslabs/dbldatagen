@@ -164,6 +164,9 @@ If set to False, then the template ``r"\\dr_\\v"`` will generate the values ``"d
 to the values zero to 999. This conforms to earlier implementations for backwards compatibility.
 
 If set to True, then the template ``r"dr_\\v"`` will generate the values ``"dr_0"`` ... ``"dr_999"``
-when applied to the values zero to 999. This conforms to the preferred style going forward
+when applied to the values zero to 999. This conforms to the preferred style going forward. In other words the char `d`
+will not be treated as a special char.
+
+.. note::
 
 
