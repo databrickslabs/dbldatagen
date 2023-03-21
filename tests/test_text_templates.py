@@ -264,7 +264,9 @@ class TestTextTemplates:
 
         arr1 = np.arange(TEST_ROWS)
         arr = pd.Series(arr1)
-    
+
+        print(type(arr1), type(arr))
+
 
         template_choices, template_rnd_bounds, template_rnds = template1._prepare_random_bounds(arr)
 
