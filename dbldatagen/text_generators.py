@@ -227,8 +227,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
 
         self._template = template
         self._escapeSpecialMeaning = bool(escapeSpecialChars)
-        template_str0 = self._template
-        self._templates = [x.replace('$__sep__', '|') for x in template_str0.replace(r'\|', '$__sep__').split('|')]
+        self._templates = self._splitTemplates(self._template)
         self._wordList = np.array(extendedWordList if extendedWordList is not None else _WORDS_LOWER)
         self._upperWordList = np.array([x.upper() for x in extendedWordList]
                                        if extendedWordList is not None else _WORDS_UPPER)
@@ -279,9 +278,20 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
         self._placeholders_needed = [ x[0] for x in template_info]
         self._template_rnd_bounds = [ x[1] for x in template_info]
 
-
     def __repr__(self):
         return f"TemplateGenerator(template='{self._template}')"
+
+    def _splitTemplates(self, templateStr):
+        """ Split template string into individual template strings
+
+        :param templateStr: template string
+        :return: list of individual template strings
+
+
+        """
+        tmp_template = templateStr.replace(r'\\', '$__escape__').replace(r'\|', '$__sep__')
+        results = [x.replace('$__escape__', r'\\').replace('$__sep__', '|') for x in tmp_template.split('|')]
+        return results
 
     @property
     def templates(self):
@@ -398,7 +408,13 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
         `_escapeSpecialMeaning` parameter allows for backwards compatibility with old style syntax while allowing
         for preferred new style template syntax. Specify as True to force escapes for special meanings,.
 
-        Note that both placeholders and rnds are masked arrays
+        .. note::
+                Both `placeholders` and `rnds` are numpy masked arrays. If there are multiple templates in the template
+                generation source template, then this method will be called multiple times with each of
+                the distinct templates passed and the `placeholders` and `rnds` arrays masked so that the each call
+                will apply the template to rows to which that template applies.
+
+                The template may be the empty string.
 
         """
         assert baseValue.shape[0] == placeholders.shape[0]
