@@ -177,6 +177,10 @@ class TestTextTemplates:
                                 (r'\n', True, True),
                                 (r'\v', False, True),
                                 (r'\v', True, True),
+                                (r'\v|\v-\v', False, True),
+                                (r'\v|\v-\v', True, True),
+                                (r'short string|a much longer string which is bigger than short string', False, True),
+                                (r'short string|a much longer string which is bigger than short string', True, True),
                                 (r'\w A. \w', False, False),
                                 (r'\w \a. \w', True, True),
                                 (r'\w \k. \w', True, True),
@@ -203,6 +207,8 @@ class TestTextTemplates:
                                  ('|', False, False),
                                  ('|', False, True),
                                  (r'|', True, True),
+                                 (r'\ww - not e\xpecting two wor\ds', False, False),
+                                 (r'\ww - not expecting two words', True, True)
                              ])
     def test_use_pandas(self, template_provided, escapeSpecial, useTemplateObject):
         template1 = TemplateGenerator(template_provided, escapeSpecialChars=escapeSpecial)
@@ -215,7 +221,9 @@ class TestTextTemplates:
 
         print("templates", template1.templates)
 
-        arr = np.arange(100)
+        TEST_ROWS = 100
+
+        arr = np.arange(TEST_ROWS)
 
         template_choices, template_rnd_bounds, template_rnds = template1._prepare_random_bounds(arr)
 
@@ -237,7 +245,21 @@ class TestTextTemplates:
 
 
         results = template1.pandasGenerateText(arr)
-        print(results)
+        assert results is not None
+
+        results_list = results.tolist()
+
+        results_rows = len(results_list)
+        assert results_rows == TEST_ROWS
+
+        for r in range(len(results)):
+            result_str = results[r]
+            assert result_str is not None and isinstance(result_str, str)
+            assert len(result_str) >= 0
+
+        print("results")
+        for i in range(len(results)):
+            print(f"{i}: '{results[i]}'")
 
     @pytest.mark.parametrize("template_provided, escapeSpecial, useTemplateObject",
                              [ (r'\w aAdDkK \w', False, False),

@@ -49,3 +49,4 @@ jobs:
           files: ./coverage.xml
           name: dbldatagen
           verbose: true
+          token: ${{ secrets.CODECOV_TOKEN }}

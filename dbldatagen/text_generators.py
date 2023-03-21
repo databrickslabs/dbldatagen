@@ -169,6 +169,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
     :param escapeSpecialChars: By default special chars in the template have special meaning if unescaped
                                If set to true, then the special meaning requires escape char ``\\``
     :param extendedWordList: if provided, use specified word list instead of default word list
+    :param legacyEscapeTreatment: if True, sequences of escape char are treated as single escape, Defaults to True
 
     The template generator generates text from a template to allow for generation of synthetic account card numbers,
     VINs, IBANs and many other structured codes.
@@ -219,14 +220,20 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
     If set to True, then the template ``r"dr_\\v"`` will generate the values ``"dr_0"`` ... ``"dr_999"``
     when applied to the values zero to 999. This conforms to the preferred style going forward
 
+    .. note::
+              In previous versions, multiple sequences of escape char are treated as single escape char
+              so template of r'\\w' and r'\w' have same meaning and dont emit escape char. If `legacyEscapeTreatment`
+              is false, r'\\w' will emit escape char in output string.
+
     """
 
-    def __init__(self, template, escapeSpecialChars=False, extendedWordList=None):
+    def __init__(self, template, escapeSpecialChars=False, extendedWordList=None, legacyEscapeTreatment=True):
         assert template is not None, "`template` must be specified"
         super().__init__()
 
         self._template = template
         self._escapeSpecialMeaning = bool(escapeSpecialChars)
+        self._legacyEscapeTreatment = legacyEscapeTreatment
         self._templates = self._splitTemplates(self._template)
         self._wordList = np.array(extendedWordList if extendedWordList is not None else _WORDS_LOWER)
         self._upperWordList = np.array([x.upper() for x in extendedWordList]
@@ -375,7 +382,10 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
             char = genTemplate[i]
             following_char = genTemplate[i + 1] if i + 1 < template_len else None
 
-            if char == '\\':
+            if char == '\\' and (escape and not self._legacyEscapeTreatment):
+                escape = False
+                num_placeholders += 1
+            elif char == '\\':
                 escape = True
             elif use_value and ('0' <= char <= '9'):
                 # val_index = int(char)
@@ -482,7 +492,8 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
 
         assert isinstance(placeholders, np.ma.MaskedArray), "expecting MaskArray"
 
-        if isinstance(placeholders, np.ma.MaskedArray):
+        # if template is empty, then nothing needs to be done
+        if template_len > 0 and isinstance(placeholders, np.ma.MaskedArray):
             active_rows = ~placeholders.mask
             masked_rows = active_rows[:, 0]
 
@@ -493,7 +504,12 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
             char = genTemplate[i]
             following_char = genTemplate[i + 1] if i + 1 < template_len else None
 
-            if char == '\\':
+            if char == '\\' and (escape and not self._legacyEscapeTreatment):
+                escape = False
+                placeholders[:, num_placeholders] = char
+                # retval.append(char)
+                num_placeholders += 1
+            elif char == '\\':
                 escape = True
             elif use_value and ('0' <= char <= '9'):
                 val_index = int(char)
