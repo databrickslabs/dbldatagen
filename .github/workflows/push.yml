@@ -37,13 +37,16 @@ jobs:
       - name: Install 
         run: pip install pipenv
 
+      - name: Install Prospector
+        run: pip install prospector
+
       - name: Install dependencies
         run: pipenv install --dev
 
       - name: Lint
         run: |
           prospector --profile prospector.yaml
-          
+
       - name: Run tests
         run: make test
 
