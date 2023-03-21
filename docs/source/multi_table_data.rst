@@ -167,7 +167,7 @@ when using hashed values, the range of the hashes produced can be large.
    customer_dataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
                .withColumn("customer_id","decimal(10)", minValue=CUSTOMER_MIN_VALUE,
                            uniqueValues=UNIQUE_CUSTOMERS)
-               .withColumn("customer_name", template=r"\w \w|\w a. \w")
+               .withColumn("customer_name", template=r"\\w \\w|\\w a. \\w")
 
                # use the following for a simple sequence
                #.withColumn("device_id","decimal(10)", minValue=DEVICE_MIN_VALUE,

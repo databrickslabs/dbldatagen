@@ -250,11 +250,11 @@ dataspec = (dg.DataGenerator(spark, rows=10000000, partitions=8,
             .withSchema(table_schema))
 
 dataspec = (dataspec
-                .withColumnSpec("name", percentNulls=0.01, template=r'\w \w|\w a. \w')                                       
+                .withColumnSpec("name", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w')                                       
                 .withColumnSpec("serial_number", minValue=1000000, maxValue=10000000, 
                                  prefix="dr", random=True) 
-                .withColumnSpec("email", template=r'\w.\w@\w.com')       
-                .withColumnSpec("license_plate", template=r'\n-\n')
+                .withColumnSpec("email", template=r'\\w.\\w@\\w.com')       
+                .withColumnSpec("license_plate", template=r'\\n-\\n')
            )
 df1 = dataspec.build()
 
@@ -472,7 +472,7 @@ data_rows = 10000000
 spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
 
 dataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=8, randomSeedMethod="hash_fieldname")
-                .withColumn("name", percentNulls=0.01, template=r'\w \w|\w a. \w') 
+                .withColumn("name", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w') 
                 .withColumn("payment_instrument_type", values=['paypal', 'visa', 'mastercard', 'amex'], 
                             random=True)             
                 .withColumn("int_payment_instrument", "int",  minValue=0000, maxValue=9999,  
@@ -481,7 +481,7 @@ dataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=8, randomSeedMeth
                 .withColumn("payment_instrument", 
                              expr="format_number(int_payment_instrument, '**** ****** *####')",
                              baseColumn="int_payment_instrument")
-                .withColumn("email", template=r'\w.\w@\w.com')       
+                .withColumn("email", template=r'\\w.\\w@\\w.com')       
                 .withColumn("md5_payment_instrument", 
                             expr="md5(concat(payment_instrument_type, ':', payment_instrument))",
                             baseColumn=['payment_instrument_type', 'payment_instrument']) 
@@ -524,7 +524,7 @@ spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
 dataspec = (
     dg.DataGenerator(spark, rows=data_rows, partitions=8, randomSeedMethod="hash_fieldname", 
                      randomSeed=42)
-    .withColumn("name", percentNulls=0.01, template=r'\w \w|\w a. \w')
+    .withColumn("name", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w')
     .withColumn("payment_instrument_type", values=['paypal', 'visa', 'mastercard', 'amex'],
                 random=True)
     .withColumn("int_payment_instrument", "int",  minValue=0000, maxValue=9999,  
@@ -533,7 +533,7 @@ dataspec = (
     .withColumn("payment_instrument", 
                 expr="format_number(int_payment_instrument, '**** ****** *####')",
                 baseColumn="int_payment_instrument")
-    .withColumn("email", template=r'\w.\w@\w.com')
+    .withColumn("email", template=r'\\w.\\w@\\w.com')
     .withColumn("md5_payment_instrument",
                 expr="md5(concat(payment_instrument_type, ':', payment_instrument))",
                 baseColumn=['payment_instrument_type', 'payment_instrument'])

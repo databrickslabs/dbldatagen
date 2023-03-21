@@ -50,8 +50,7 @@ class TestTextTemplates:
 
         assert results == splitTemplates
 
-
-    @pytest.mark.parametrize("template_provided, escapeSpecial, useTemplateObject",
+    @pytest.mark.parametrize("templateProvided, escapeSpecial, useTemplateObject",
                              [ #(r'\w \w|\w \v. \w', False, False),
                                 (r'A', False, True),
                                 (r'D', False, True),
@@ -111,10 +110,9 @@ class TestTextTemplates:
                                  ('', False, True),
                                  (r'', True, True),
                              ])
-
-    def test_rnd_compute(self, template_provided, escapeSpecial, useTemplateObject):
-        template1 = TemplateGenerator(template_provided, escapeSpecialChars=escapeSpecial)
-        print(f"template [{template_provided}]")
+    def test_rnd_compute(self, templateProvided, escapeSpecial, useTemplateObject):
+        template1 = TemplateGenerator(templateProvided, escapeSpecialChars=escapeSpecial)
+        print(f"template [{templateProvided}]")
 
         arr = np.arange(100)
 
@@ -135,7 +133,7 @@ class TestTextTemplates:
             for iy in range(len(bounds)):
                 assert bounds[iy] == -1 or (rnds[iy] < bounds[iy])
 
-    @pytest.mark.parametrize("template_provided, escapeSpecial, useTemplateObject",
+    @pytest.mark.parametrize("templateProvided, escapeSpecial, useTemplateObject",
                              [ #(r'\w \w|\w \v. \w', False, False),
                                  (r'\\w \\w|\\w a. \\w', False, False),
                                  (r'\\w \\w|\\w a. \\w', False, True),
@@ -210,26 +208,16 @@ class TestTextTemplates:
                                  (r'\ww - not e\xpecting two wor\ds', False, False),
                                  (r'\ww - not expecting two words', True, True)
                              ])
-    def test_use_pandas(self, template_provided, escapeSpecial, useTemplateObject):
-        template1 = TemplateGenerator(template_provided, escapeSpecialChars=escapeSpecial)
-        print(f"template [{template_provided}]")
-
-        print("max_placeholders", template1._max_placeholders )
-        print("max_rnds", template1._max_rnds_needed)
-        print("placeholders", template1._placeholders_needed )
-        print("bounds", template1._template_rnd_bounds)
-
-        print("templates", template1.templates)
+    def test_use_pandas(self, templateProvided, escapeSpecial, useTemplateObject):
+        template1 = TemplateGenerator(templateProvided, escapeSpecialChars=escapeSpecial)
 
         TEST_ROWS = 100
 
-        arr = np.arange(TEST_ROWS)
+        arr1 = np.arange(TEST_ROWS)
+        arr = pd.Series(arr1)
+
 
         template_choices, template_rnd_bounds, template_rnds = template1._prepare_random_bounds(arr)
-
-        print("choices", template_choices)
-        print("rnd bounds", template_rnd_bounds)
-        print("template_rnds", template_rnds)
 
         assert len(template_choices) == len(template_rnds)
         assert len(template_choices) == len(template_rnd_bounds)
@@ -261,74 +249,24 @@ class TestTextTemplates:
         for i in range(len(results)):
             print(f"{i}: '{results[i]}'")
 
-    @pytest.mark.parametrize("templateProvided, escapeSpecial, legacyEscapeTreatment,expectedPattern ",
-                             [ (r'\\w \w', False, True, r"[a-z]+ [a-z]+"),
-                               (r'\\w \w', False, False, r"\\[a-z]+ [a-z]+"),
-                               (r'\\w \w', True, True, r"[a-z]+ [a-z]+"),
-                               (r'\\w \w', True, False, r"\\[a-z]+ [a-z]+"),
-                               (r'\n-\n', False, False, r"[0-9]+-[0-9]+"),
-                               (r'\\n-\n', False, True, r"[0-9]+-[0-9]+"),
-                               (r'\\n-\n', False, False, r"\\[0-9]+-[0-9]+"),
-                               (r'\\n-\n', True, True, r"[0-9]+-[0-9]+"),
-                               (r'\\n-\n', True, False, r"\\[0-9]+-[0-9]+"),
-                               (r'\\a', True, False, r"\\[a-z]"),
-                               (r'\\a', False, False, r"\\[a-z]"),
-                               (r'\\a', False, True, r"[a-z]"),
-                               (r'\\a', True, True, r"\\[a-z]"),
-                               ])
-    def test_escape_treatment(self, templateProvided, escapeSpecial, legacyEscapeTreatment, expectedPattern):
-
-        template1 = TemplateGenerator(templateProvided, escapeSpecialChars=escapeSpecial,
-                                      legacyEscapeTreatment=legacyEscapeTreatment)
-
-        TEST_ROWS = 100
-
-        arr = np.arange(TEST_ROWS)
-
-        results = template1.pandasGenerateText(arr)
-        assert results is not None
-
-        results_list = results.tolist()
-
-        results_rows = len(results_list)
-        assert results_rows == TEST_ROWS
-
-        print(f"expected pattern - '{expectedPattern}', template '{templateProvided}'" )
-        patt = re.compile(expectedPattern)
-
-        print("results")
-        for i in range(len(results)):
-            print(f"{i}: '{results[i]}'")
-            assert isinstance(results[i], str)
-            assert patt.match(results[i]) is not None, f"expecting match '{results[i]}' === '{expectedPattern}'"
-
-    @pytest.mark.parametrize("template_provided, escapeSpecial, legacyEscapeTreatment,expectedPattern ",
-                             [ (r'\\w \\w|\\w a. \\w', False, False, ""),
-                                 (r'\\w \\w|\\w a. \\w', False, True, ""),
-                                 (r'\w \w|\w a. \w', False, False, ""),
-                                 (r'\w.\w@\w.com', False, False, ""),
-                                 (r'\n-\n', False, False, ""),
+    @pytest.mark.parametrize("templateProvided, escapeSpecial, useTemplateObject",
+                             [  (r'\n', False, True),
+                                (r'\n', True, True),
+                                (r'\v', False, True),
+                                (r'\v', True, True),
+                                (r'\v|\v-\v', False, True),
+                                (r'\v|\v-\v', True, True),
                              ])
-    def test_value_sub1(self, template_provided, escapeSpecial, legacyEscapeTreatment, expectedPattern):
-        template1 = TemplateGenerator(template_provided, escapeSpecialChars=escapeSpecial)
-        print(f"template [{template_provided}]")
-
-        print("max_placeholders", template1._max_placeholders )
-        print("max_rnds", template1._max_rnds_needed)
-        print("placeholders", template1._placeholders_needed )
-        print("bounds", template1._template_rnd_bounds)
-
-        print("templates", template1.templates)
+    def test_sub_value1(self, templateProvided, escapeSpecial, useTemplateObject):
+        template1 = TemplateGenerator(templateProvided, escapeSpecialChars=escapeSpecial)
 
         TEST_ROWS = 100
 
-        arr = np.arange(TEST_ROWS)
+        arr1 = np.arange(TEST_ROWS)
+        arr = pd.Series(arr1)
+    
 
         template_choices, template_rnd_bounds, template_rnds = template1._prepare_random_bounds(arr)
-
-        print("choices", template_choices)
-        print("rnd bounds", template_rnd_bounds)
-        print("template_rnds", template_rnds)
 
         assert len(template_choices) == len(template_rnds)
         assert len(template_choices) == len(template_rnd_bounds)
@@ -360,66 +298,7 @@ class TestTextTemplates:
         for i in range(len(results)):
             print(f"{i}: '{results[i]}'")
 
-    @pytest.mark.parametrize("template_provided, escapeSpecial, legacyEscapeTreatment,expectedPattern ",
-                             [ (r'\\w \\w|\\w a. \\w', False, False, ""),
-                                 (r'\\w \\w|\\w a. \\w', False, True, ""),
-                                 (r'\w \w|\w a. \w', False, False, ""),
-                                 (r'\w.\w@\w.com', False, False, ""),
-                                 (r'\n-\n', False, False, ""),
-                             ])
-    def test_value_sub2(self, template_provided, escapeSpecial, legacyEscapeTreatment, expectedPattern):
-        template1 = TemplateGenerator(template_provided, escapeSpecialChars=escapeSpecial)
-        print(f"template [{template_provided}]")
-
-        print("max_placeholders", template1._max_placeholders )
-        print("max_rnds", template1._max_rnds_needed)
-        print("placeholders", template1._placeholders_needed )
-        print("bounds", template1._template_rnd_bounds)
-
-        print("templates", template1.templates)
-
-        TEST_ROWS = 100
-
-        arr = np.arange(TEST_ROWS)
-
-        template_choices, template_rnd_bounds, template_rnds = template1._prepare_random_bounds(arr)
-
-        print("choices", template_choices)
-        print("rnd bounds", template_rnd_bounds)
-        print("template_rnds", template_rnds)
-
-        assert len(template_choices) == len(template_rnds)
-        assert len(template_choices) == len(template_rnd_bounds)
-
-        for ix in range(len(template_choices)):
-            bounds = template_rnd_bounds[ix]
-            rnds = template_rnds[ix]
-
-            assert len(bounds) == len(rnds)
-
-            for iy in range(len(bounds)):
-                assert bounds[iy] == -1 or (rnds[iy] < bounds[iy])
-
-
-        results = template1.pandasGenerateText(arr)
-        assert results is not None
-
-        results_list = results.tolist()
-
-        results_rows = len(results_list)
-        assert results_rows == TEST_ROWS
-
-        for r in range(len(results)):
-            result_str = results[r]
-            assert result_str is not None and isinstance(result_str, str)
-            assert len(result_str) >= 0
-
-        print("results")
-        for i in range(len(results)):
-            print(f"{i}: '{results[i]}'")
-
-
-    @pytest.mark.parametrize("template_provided, escapeSpecial, useTemplateObject",
+    @pytest.mark.parametrize("templateProvided, escapeSpecial, useTemplateObject",
                              [ (r'\w aAdDkK \w', False, False),
 
                                (r'\\w \\w|\\w A. \\w', False, False),
@@ -457,11 +336,10 @@ class TestTextTemplates:
                                (r'\w', False, False),
 
                                ])
-
-    def test_full_build(self, template_provided, escapeSpecial, useTemplateObject):
+    def test_full_build(self, templateProvided, escapeSpecial, useTemplateObject):
         pytest.skip("skipping to see if this is needed for coverage")
         import dbldatagen as dg
-        print(f"template [{template_provided}]")
+        print(f"template [{templateProvided}]")
 
         data_rows = 10 * 1000
 
@@ -472,10 +350,10 @@ class TestTextTemplates:
                     )
 
         if useTemplateObject or escapeSpecial:
-            template1 = TemplateGenerator(template_provided, escapeSpecialChars=escapeSpecial)
+            template1 = TemplateGenerator(templateProvided, escapeSpecialChars=escapeSpecial)
             dataspec = dataspec.withColumn("name", percentNulls=0.01, text=template1)
         else:
-            dataspec = dataspec.withColumn("name", percentNulls=0.01, template=template_provided)
+            dataspec = dataspec.withColumn("name", percentNulls=0.01, template=templateProvided)
 
         df1 = dataspec.build()
         df1.show()
