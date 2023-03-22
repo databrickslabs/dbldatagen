@@ -140,7 +140,7 @@ def topologicalSort(sources, initial_columns=None, flatten=True):
         provided.extend(gen_provided)
         build_orders.append(gen)
         if not value_emitted:
-            raise ValueError("cyclic or missing dependency detected %r" % (next_pending,))
+            raise ValueError(f"cyclic or missing dependency detected [{next_pending}]")
 
         pending = next_pending
 
@@ -245,8 +245,8 @@ def split_list_matching_condition(lst, cond):
         if matchList is None or len(matchList) == 0:
             return -1
 
-        for i in range(len(matchList)):
-            if matchFn(matchList[i]):
+        for i, matchValue in enumerate(matchList):
+            if matchFn(matchValue):
                 return i
 
         return -1

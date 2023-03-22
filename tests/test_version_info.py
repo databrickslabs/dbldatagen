@@ -64,25 +64,3 @@ class TestVersionInfo:
 
         # will pass but generate warning for bad version string
         assert retval, "expecting Spark version pass"
-
-
-
-
-# run the tests
-# if __name__ == '__main__':
-#  print("Trying to run tests")
-#  unittest.main(argv=['first-arg-is-ignored'],verbosity=2,exit=False)
-
-# def runTests(suites):
-#    suite = unittest.TestSuite()
-#    result = unittest.TestResult()
-#    for testSuite in suites:
-#        suite.addTest(unittest.makeSuite(testSuite))
-#    runner = unittest.TextTestRunner()
-#    print(runner.run(suite))
-
-
-# runTests([TestBasicOperation])
-
-if __name__ == '__main__':
-    unittest.main()

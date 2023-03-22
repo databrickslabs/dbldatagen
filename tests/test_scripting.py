@@ -21,13 +21,13 @@ class TestScripting(unittest.TestCase):
         self.assertEqual(len(schema1.fields), len(schema2.fields), "schemas should have same numbers of fields")
 
         for c1, c2 in zip(schema1.fields, schema2.fields):
-            self.assertEqual(c1.name, c2.name, msg="{} != {}".format(c1.name, c2.name))
-            self.assertEqual(c1.dataType, c2.dataType, msg="{}.datatype ({}) != {}.datatype ({})".format(
-                c1.name, c1.dataType, c2.name, c2.dataType))
+            self.assertEqual(c1.name, c2.name, msg=f"{c1.name} != {c2.name}")
+            self.assertEqual(c1.dataType, c2.dataType,
+                             msg=f"{c1.name}.datatype ({c1.dataType}) != {c2.name}.datatype ({c2.dataType})")
 
     def test_generate_table_script(self):
         tbl_name = "scripted_table1"
-        spark.sql("drop table if exists {}".format(tbl_name))
+        spark.sql(f"drop table if exists {tbl_name}")
 
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count,
                                          partitions=4)
@@ -52,10 +52,10 @@ class TestScripting(unittest.TestCase):
         print("====")
 
         spark.sql(creation_script)
-        df_result = spark.sql("select * from {}".format(tbl_name))
+        df_result = spark.sql(f"select * from {tbl_name}")
 
         dfTestData = testDataSpec.build().cache()
-        spark.sql("drop table if exists {}".format(tbl_name))
+        spark.sql(f"drop table if exists {tbl_name}")
 
         schema1 = df_result.schema
         schema2 = dfTestData.schema
@@ -64,7 +64,7 @@ class TestScripting(unittest.TestCase):
 
     def test_generate_table_script2(self):
         tbl_name = "scripted_table1"
-        spark.sql("drop table if exists {}".format(tbl_name))
+        spark.sql(f"drop table if exists {tbl_name}")
 
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
                                          partitions=4)
@@ -96,7 +96,7 @@ class TestScripting(unittest.TestCase):
         # write the data
         dfTestData.write.mode("overwrite").saveAsTable(tbl_name)
 
-        df_result = spark.sql("select * from {}".format(tbl_name))
+        df_result = spark.sql(f"select * from {tbl_name}")
 
         schema1 = df_result.schema
         schema2 = dfTestData.schema
@@ -106,4 +106,4 @@ class TestScripting(unittest.TestCase):
         self.assertEqual(df_result.count(), dfTestData.count())
 
         # cleanup
-        spark.sql("drop table if exists {}".format(tbl_name))
+        spark.sql(f"drop table if exists {tbl_name}")

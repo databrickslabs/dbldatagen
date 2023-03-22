@@ -1,7 +1,7 @@
+import re
 import pytest
 import numpy as np
 import pandas as pd
-import re
 
 from dbldatagen import TextGenerator, TemplateGenerator
 
@@ -117,7 +117,6 @@ class TestTextGeneratorBasic:
         np_data = np.array(sourceData, dtype=np.object_)
         pd_data = pd.Series(list(np_data), copy=False)
 
-
         results = text_gen1.pandasGenerateText(pd_data)
 
         patt = re.compile(expectedOutput)
@@ -133,16 +132,16 @@ class TestTextGeneratorBasic:
         text_gen1 = text_gen1.withRandomSeed(2112)
 
         i = 0
-        for template in text_gen1.templates:
+        for individualTemplate in text_gen1.templates:
             if type(expectedRandomNumbers) is list:
                 expectedVectorSize = expectedRandomNumbers[i]
             else:
                 expectedVectorSize = expectedRandomNumbers
             i = i + 1
 
-            placeholders, vector_rnd = text_gen1._prepareTemplateStrings(template)
+            placeholders, vector_rnd = text_gen1._prepareTemplateStrings(individualTemplate)
 
-            assert len(vector_rnd) == expectedVectorSize, f"template is '{template}'"
+            assert len(vector_rnd) == expectedVectorSize, f"template is '{individualTemplate}'"
             assert placeholders > len(vector_rnd)
 
     @pytest.mark.parametrize("template, expectedRandomNumbers", [(r'53.123.ddd.ddd', 6),
@@ -212,7 +211,7 @@ class TestTextGeneratorBasic:
         masked_matrices = [masked_placeholders, masked_rnds]
 
         # test logic for template expansion
-        for x in range(len(text_gen1._templates)):
+        for x, selectedTemplate in enumerate(text_gen1._templates):
             masked_placeholders[template_choices_t != x, :] = np.ma.masked
             masked_rnds[template_choices_t != x, :] = np.ma.masked
 
@@ -222,7 +221,7 @@ class TestTextGeneratorBasic:
 
             # expand values into placeholders
             text_gen1._applyTemplateStringsForTemplate(pd_data,
-                                                       text_gen1._templates[x],
+                                                       selectedTemplate,
                                                        masked_placeholders,
                                                        masked_rnds
                                                        )

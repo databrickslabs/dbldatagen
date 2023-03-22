@@ -121,7 +121,7 @@ class TestWeights(unittest.TestCase):
             "select * from (select tech, count(tech) as rc from testdata group by tech ) a order by tech").collect()
         values = [x.tech for x in df_values]
         print("row values:", values)
-        total_count = sum([x.rc for x in df_values])
+        total_count = sum([x.rc for x in df_values])  # pylint: disable=consider-using-generator
         self.assertEqual(total_count, self.rows)
 
         percentages = self.weights_as_percentages([x.rc for x in df_values])
