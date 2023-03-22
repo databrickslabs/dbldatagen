@@ -1,5 +1,4 @@
 import logging
-import sys
 from datetime import timedelta
 import pytest
 
@@ -12,6 +11,9 @@ spark = SparkSingleton.getLocalInstance("unit tests")
 class TestUtils:
     x = 1
 
+    def __init__(self):
+        self.logger = None
+
     @pytest.fixture(autouse=True)
     def setupLogger(self):
         self.logger = logging.getLogger("TestUtils")
@@ -22,7 +24,7 @@ class TestUtils:
 
     def test_ensure(self):
         with pytest.raises(Exception):
-            ensure(1 == 2, "Expected error")
+            ensure(1 == 2, "Expected error")  # pylint: disable=comparison-of-constants
 
     def test_mkBoundsList1(self):
         """ Test utils mkBoundsList"""
@@ -32,12 +34,12 @@ class TestUtils:
 
         test2 = mkBoundsList(None, [1, 1])
 
-        assert len(test2) ==  2
+        assert len(test2) == 2
 
     @pytest.mark.parametrize("test_input,expected",
                              [
-                                 ([None, 1],  1),
-                                 ([2, 1],  2),
+                                 ([None, 1], 1),
+                                 ([2, 1], 2),
                                  ([3, None, 1], 3),
                                  ([None, None, None], None),
                              ])
@@ -48,7 +50,7 @@ class TestUtils:
 
     @pytest.mark.parametrize("test_input,expected",
                              [
-                                 ("1 hours, minutes = 2",  timedelta(hours=1, minutes=2)),
+                                 ("1 hours, minutes = 2", timedelta(hours=1, minutes=2)),
                                  ("4 days, 1 hours, 2 minutes", timedelta(days=4, hours=1, minutes=2)),
                                  ("days=4, hours=1, minutes=2", timedelta(days=4, hours=1, minutes=2)),
                                  ("1 hours, 2 seconds", timedelta(hours=1, seconds=2)),
@@ -78,11 +80,11 @@ class TestUtils:
     @pytest.mark.parametrize("lstData,matchFn, expectedData",
                              [
                                  (['id', 'city_name', 'id', 'city_id', 'city_pop', 'id', 'city_id',
-                                   'city_pop','city_id', 'city_pop','id'],
+                                   'city_pop', 'city_id', 'city_pop', 'id'],
                                   lambda el: el == 'id',
                                   [['id'], ['city_name'], ['id'], ['city_id', 'city_pop'], ['id'],
                                    ['city_id', 'city_pop', 'city_id', 'city_pop'], ['id']]
-                                 ),
+                                  ),
                                  (['id', 'city_name', 'id', 'city_id', 'city_pop', 'id', 'city_id',
                                    'city_pop2', 'city_id', 'city_pop', 'id'],
                                   lambda el: el in ['id', 'city_pop'],
@@ -90,16 +92,12 @@ class TestUtils:
                                    ['city_id', 'city_pop2', 'city_id'], ['city_pop'], ['id']]
                                   ),
                                  ([], lambda el: el == 'id', []),
-                                 (['id'], lambda el: el == 'id', [ ['id'] ]),
+                                 (['id'], lambda el: el == 'id', [['id']]),
                                  (['id', 'id'], lambda el: el == 'id', [['id'], ['id']]),
                                  (['no', 'matches'], lambda el: el == 'id', [['no', 'matches']])
                              ])
     def testSplitListOnCondition(self, lstData, matchFn, expectedData):
-
         results = split_list_matching_condition(lstData, matchFn)
         print(results)
 
         assert results == expectedData
-
-
-

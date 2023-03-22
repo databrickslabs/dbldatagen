@@ -244,18 +244,18 @@ class PyfuncTextFactory:
             if len(args) > 0 and len(kwargs) > 0:
                 # generate lambda with both kwargs and args
                 assert not isProperty, "isProperty cannot be true if using arguments"
-                evalFn = (lambda root: getattr(root, fnName)(*args, **kwargs))
+                evalFn = lambda root: getattr(root, fnName)(*args, **kwargs)
             elif len(args) > 0:
                 # generate lambda with positional args
                 assert not isProperty, "isProperty cannot be true if using arguments"
-                evalFn = (lambda root: getattr(root, fnName)(*args))
+                evalFn = lambda root: getattr(root, fnName)(*args)
             elif len(kwargs) > 0:
                 # generate lambda with keyword args
                 assert not isProperty, "isProperty cannot be true if using arguments"
-                evalFn = (lambda root: getattr(root, fnName)(**kwargs))
+                evalFn = lambda root: getattr(root, fnName)(**kwargs)
             elif isProperty:
                 # generate lambda with property access, not method call
-                evalFn = (lambda root: getattr(root, fnName))
+                evalFn = lambda root: getattr(root, fnName)
             else:
                 # generate lambda with no args
                 evalFn = (lambda root: getattr(root, fnName)())
@@ -361,6 +361,7 @@ class FakerTextFactory(PyfuncTextFactory):
                     globals()[lib] = fakerModule
                     return fakerModule
         except RuntimeError as err:
+            # pylint: disable=raise-missing-from
             raise DataGenError("Could not load or initialize Faker library", err)
 
 
@@ -376,6 +377,6 @@ def fakerText(mname, *args, _lib=None, _rootClass=None, **kwargs):
 
        ``fakerText("sentence")`` is same as ``FakerTextFactory()("sentence")``
     """
-    defaultFactory = FakerTextFactory._getDefaultFactory(lib=_lib, rootClass=_rootClass)
-
-    return defaultFactory(mname, *args, **kwargs)
+    defaultFactory = FakerTextFactory._getDefaultFactory(lib=_lib,
+                                                         rootClass=_rootClass)
+    return defaultFactory(mname, *args, **kwargs)  # pylint: disable=not-callable

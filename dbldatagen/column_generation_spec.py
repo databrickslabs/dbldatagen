@@ -802,7 +802,7 @@ class ColumnGenerationSpec(object):
             ensure(column_props['values'] is not None and len(column_props['values']) > 0,
                    f"weights must be associated with non-empty list of values - column '{column_props['name']}' ")
             ensure(len(column_props['values']) == len(column_props['weights']),
-                   f"length of list of weights must be  equal to length of list of values - column '{column_props['name']}' ")
+                   f"length(list of weights) != length(list of values)  - column '{column_props['name']}' ")
 
     def getPlanEntry(self):
         """ Get execution plan entry for object
@@ -942,9 +942,9 @@ class ColumnGenerationSpec(object):
         :param force: always adjust (possibly for implicit cast reasons)
         """
         if force and datarange is not None:
-            new_def = (baseval + lit(datarange.minValue))
+            new_def = baseval + lit(datarange.minValue)
         elif (datarange is not None) and (datarange.minValue != 0) and (datarange.minValue != 0.0):
-            new_def = (baseval + lit(datarange.minValue))
+            new_def = baseval + lit(datarange.minValue)
         else:
             new_def = baseval
         return new_def
