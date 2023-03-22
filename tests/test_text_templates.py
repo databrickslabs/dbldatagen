@@ -124,14 +124,14 @@ class TestTextTemplates:
         assert len(template_choices) == len(template_rnds)
         assert len(template_choices) == len(template_rnd_bounds)
 
-        for ix in range(len(template_choices)):
+        for ix, _ in enumerate(template_choices):
             bounds = template_rnd_bounds[ix]
             rnds = template_rnds[ix]
 
             assert len(bounds) == len(rnds)
 
-            for iy in range(len(bounds)):
-                assert bounds[iy] == -1 or (rnds[iy] < bounds[iy])
+            for iy, bounds_value in enumerate(bounds):
+                assert bounds_value == -1 or (rnds[iy] < bounds_value)
 
     @pytest.mark.parametrize("templateProvided, escapeSpecial, useTemplateObject",
                              [  # (r'\w \w|\w \v. \w', False, False),
@@ -221,14 +221,14 @@ class TestTextTemplates:
         assert len(template_choices) == len(template_rnds)
         assert len(template_choices) == len(template_rnd_bounds)
 
-        for ix in range(len(template_choices)):
+        for ix, _ in enumerate(template_choices):
             bounds = template_rnd_bounds[ix]
             rnds = template_rnds[ix]
 
             assert len(bounds) == len(rnds)
 
-            for iy in range(len(bounds)):
-                assert bounds[iy] == -1 or (rnds[iy] < bounds[iy])
+            for iy, bounds_value in enumerate(bounds):
+                assert bounds_value == -1 or (rnds[iy] < bounds_value)
 
         results = template1.pandasGenerateText(arr)
         assert results is not None
@@ -238,14 +238,13 @@ class TestTextTemplates:
         results_rows = len(results_list)
         assert results_rows == TEST_ROWS
 
-        for r in range(len(results)):
-            result_str = results[r]
+        for r, result_str in enumerate(results):
             assert result_str is not None and isinstance(result_str, str)
             assert len(result_str) >= 0
 
         print("results")
-        for i in range(len(results)):
-            print(f"{i}: '{results[i]}'")
+        for i, result_value in enumerate(results):
+            print(f"{i}: '{result_value}'")
 
     @pytest.mark.parametrize("templateProvided, escapeSpecial, useTemplateObject",
                              [(r'\n', False, True),
@@ -270,14 +269,14 @@ class TestTextTemplates:
         assert len(template_choices) == len(template_rnds)
         assert len(template_choices) == len(template_rnd_bounds)
 
-        for ix in range(len(template_choices)):
+        for ix, _ in enumerate(template_choices):
             bounds = template_rnd_bounds[ix]
             rnds = template_rnds[ix]
 
             assert len(bounds) == len(rnds)
 
-            for iy in range(len(bounds)):
-                assert bounds[iy] == -1 or (rnds[iy] < bounds[iy])
+            for iy, bounds_value in enumerate(bounds):
+                assert bounds_value == -1 or (rnds[iy] < bounds_value)
 
         results = template1.pandasGenerateText(arr)
         assert results is not None
@@ -287,14 +286,13 @@ class TestTextTemplates:
         results_rows = len(results_list)
         assert results_rows == TEST_ROWS
 
-        for r in range(len(results)):
-            result_str = results[r]
+        for r, result_str in enumerate(results):
             assert result_str is not None and isinstance(result_str, str)
             assert len(result_str) >= 0
 
         print("results")
-        for i in range(len(results)):
-            print(f"{i}: '{results[i]}'")
+        for i, result_value in enumerate(results):
+            print(f"{i}: '{result_value}'")
 
     @pytest.mark.parametrize("templateProvided, escapeSpecial, useTemplateObject",
                              [(r'\w aAdDkK \w', False, False),
