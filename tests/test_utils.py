@@ -3,7 +3,7 @@ from datetime import timedelta
 import pytest
 
 from dbldatagen import ensure, mkBoundsList, coalesce_values, deprecated, SparkSingleton, \
-    parse_time_interval, DataGenError, split_list_matching_condition
+    parse_time_interval, DataGenError, split_list_matching_condition, topologicalSort
 
 spark = SparkSingleton.getLocalInstance("unit tests")
 
@@ -100,3 +100,20 @@ class TestUtils:
         print(results)
 
         assert results == expectedData
+
+    @pytest.mark.parametrize("dependencies, raisesError",
+                             [([], False),
+                              ([("id", []), ("name", ["id"]), ("name2", ["name"])], False),
+                              ([("id", []), ("name", ["id"]), ("name2", ["name3"]), ("name3", ["name2"])], True),
+                              ])
+    def test_topological_sort(self, dependencies, raisesError):
+        raised_exception = False
+        try:
+            results = topologicalSort(dependencies)
+            print("results", results)
+        except ValueError as err:
+            print(err)
+            raised_exception = True
+
+        assert raised_exception == raisesError
+
