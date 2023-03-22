@@ -219,7 +219,6 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
     when applied to the values zero to 999. This conforms to the preferred style going forward
 
     """
-
     def __init__(self, template, escapeSpecialChars=False, extendedWordList=None):
         assert template is not None, "`template` must be specified"
         super().__init__()
@@ -244,13 +243,12 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
         self._lenWords = len(self._wordList)
 
         # get the template metadata
-        template_info =  [self._prepareTemplateStrings(template, escapeSpecialMeaning=escapeSpecialChars)
-                                    for template in self._templates]
-        self._max_placeholders = max([ x[0] for x in template_info])
-        self._max_rnds_needed = max([ len(x[1]) for x in template_info])
-        self._placeholders_needed = [ x[0] for x in template_info]
-        self._template_rnd_bounds = [ x[1] for x in template_info]
-
+        template_info = [self._prepareTemplateStrings(template, escapeSpecialMeaning=escapeSpecialChars)
+                         for template in self._templates]
+        self._max_placeholders = max([x[0] for x in template_info])  # pylint: disable=consider-using-generator
+        self._max_rnds_needed = max([len(x[1]) for x in template_info])  # pylint: disable=consider-using-generator
+        self._placeholders_needed = [x[0] for x in template_info]
+        self._template_rnd_bounds = [x[1] for x in template_info]
 
     def __repr__(self):
         return f"TemplateGenerator(template='{self._template}')"
@@ -364,12 +362,14 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
             elif char == 'W' and escape:
                 retval.append(self._lenWords)
                 num_placeholders += 1
-                # retval.append(self._upperWordList[self._getRandomWordOffset(self._lenWords, rndGenerator=rndGenerator)])
+                # retval.append(self._upperWordList[
+                #                   self._getRandomWordOffset(self._lenWords, rndGenerator=rndGenerator)])
                 escape = False
             elif char == 'w' and escape:
                 retval.append(self._lenWords)
                 num_placeholders += 1
-                # retval.append(self._wordList[self._getRandomWordOffset(self._lenWords, rndGenerator=rndGenerator)])
+                # retval.append(self._wordList[self._getRandomWordOffset(self._lenWords,
+                #                                                        rndGenerator=rndGenerator)])
                 escape = False
             elif char == 'v' and escape:
                 escape = False
@@ -428,11 +428,11 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
             cache_key = f"v_{elem}"
             if cache_key not in _cached_values:
                 np_values = _get_values_as_np_array()
-                #element_values = []
-                element_values = np.ndarray( np_values.shape[0], dtype=np_values.dtype)
+                # element_values = []
+                element_values = np.ndarray(np_values.shape[0], dtype=np_values.dtype)
 
                 for x in range(baseValue.shape[0]):
-                    #element_values.append(baseValue[x][elem])
+                    # element_values.append(baseValue[x][elem])
                     element_values[x] = baseValue[x][elem]
                 _cached_values[cache_key] = element_values
 
@@ -456,7 +456,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
             elif use_value and ('0' <= char <= '9'):
                 val_index = int(char)
                 placeholders[:, num_placeholders] = _get_values_subelement(val_index)
-                #placeholders[:, num_placeholders] = pd_base_values.apply(lambda x: str(x[val_index]))
+                # placeholders[:, num_placeholders] = pd_base_values.apply(lambda x: str(x[val_index]))
                 num_placeholders += 1
                 use_value = False
             elif char == 'x' and (not escape) ^ escapeSpecialMeaning:
@@ -517,13 +517,15 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
                 placeholders[:, num_placeholders] = self._upperWordList[rnds[:, rnd_offset]]
                 num_placeholders += 1
                 rnd_offset = rnd_offset + 1
-                # retval.append(self._upperWordList[self._getRandomWordOffset(self._lenWords, rndGenerator=rndGenerator)])
+                # retval.append(self._upperWordList[self._getRandomWordOffset(self._
+                #                                    lenWords, rndGenerator=rndGenerator)])
                 escape = False
             elif char == 'w' and escape:
                 placeholders[:, num_placeholders] = self._wordList[rnds[:, rnd_offset]]
                 num_placeholders += 1
                 rnd_offset = rnd_offset + 1
-                # retval.append(self._wordList[self._getRandomWordOffset(self._lenWords, rndGenerator=rndGenerator)])
+                # retval.append(self._wordList[self._getRandomWordOffset(self._lenWords,
+                #                                                        rndGenerator=rndGenerator)])
                 escape = False
             elif char == 'v' and escape:
                 escape = False
@@ -628,24 +630,24 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
         masked_matrices = [masked_placeholders, masked_rnds]
 
         # test logic for template expansion
-        for x in range(len(self._templates)):
+        for x in range(len(self._templates)):  # pylint: disable=consider-using-enumerate
             masked_placeholders[template_choices_t != x, :] = np.ma.masked
             masked_rnds[template_choices_t != x, :] = np.ma.masked
-            #masked_base_values[template_choices_t != x] = np.ma.masked
+            # masked_base_values[template_choices_t != x] = np.ma.masked
 
             # harden mask, preventing modifications
             for m in masked_matrices:
                 np.ma.harden_mask(m)
 
             # expand values into placeholders
-            #self._applyTemplateStringsForTemplate(v.to_numpy(dtype=np.object_), #masked_base_values,
+            # self._applyTemplateStringsForTemplate(v.to_numpy(dtype=np.object_), #masked_base_values,
             self._applyTemplateStringsForTemplate(v,
-                                                    #masked_base_values,
-                                                    self._templates[x],
-                                                    masked_placeholders,
-                                                    masked_rnds,
-                                                    escapeSpecialMeaning=self._escapeSpecialMeaning
-                                                    )
+                                                  # masked_base_values,
+                                                  self._templates[x],
+                                                  masked_placeholders,
+                                                  masked_rnds,
+                                                  escapeSpecialMeaning=self._escapeSpecialMeaning
+                                                  )
 
             # soften and clear mask, allowing modifications
             for m in masked_matrices:
@@ -733,7 +735,7 @@ class ILText(TextGenerator):  # lgtm [py/missing-equals]
 
         # set up python list of all words so that we dont have to convert between numpy and python representations
         self._allWordsSize = all_words.size
-        self._wordsAsPythonStrings = list([str(x) for x in all_words])
+        self._wordsAsPythonStrings = [str(x) for x in all_words]
 
         # get smallest type that can represent word offset
         self._wordOffsetType = self.compactNumpyTypeForValues([all_words.size * 2 + 10])

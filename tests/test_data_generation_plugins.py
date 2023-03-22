@@ -232,4 +232,3 @@ class TestTextGenerationPlugins:
         output = dfFaker2.select("name").collect()
         for x in output:
             assert x["name"].startswith("<MagicMock")
-

@@ -6,8 +6,8 @@
 This file defines the `SchemaParser` class
 """
 
-import pyparsing as pp
 import re
+import pyparsing as pp
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
     TimestampType, DateType, DecimalType, ByteType, BinaryType, StructField, StructType, MapType, ArrayType
 
@@ -132,7 +132,7 @@ class SchemaParser(object):
                 pp.delimitedList(pp.Group(ident + pp.Optional(colon) + pp.Group(type_expr)))) + r_angle
 
             # try to capture invalid type name for better error reporting
-            invalid_type = pp.Word(pp.alphas, pp.alphanums+"_", asKeyword=True)
+            invalid_type = pp.Word(pp.alphas, pp.alphanums + "_", asKeyword=True)
 
             # use left recursion to handle nesting of types
             type_expr <<= pp.MatchFirst([primitive_type_keyword, array_expr, map_expr, struct_expr, invalid_type])
@@ -254,7 +254,7 @@ class SchemaParser(object):
         try:
             ast = parser.parseString(type_string)
         except Exception as e:
-            raise ValueError(f"Invalid type definition `{type_string}`",e) from e
+            raise ValueError(f"Invalid type definition `{type_string}`", e) from e
 
         type_construct = cls._parse_ast(ast)
 
@@ -289,7 +289,7 @@ class SchemaParser(object):
         return transformed_string
 
     @classmethod
-    def columnsReferencesFromSQLString(cls, sql_string, filter=None):
+    def columnsReferencesFromSQLString(cls, sql_string, filterItems=None):
         """ Generate a list of possible column references from a SQL string
 
         This method finds all condidate references to SQL columnn ids in the string
@@ -302,10 +302,11 @@ class SchemaParser(object):
         So any uses of this must not assume that all possible references are valid column references
 
         :param sql_string: String representation of SQL expression
+        :param filterItems: filter results to only results in items listed
         :returns: list of possible column references
         """
         assert sql_string is not None, "`sql_string` must be specified"
-        assert filter is None or isinstance(filter, list) or isinstance(filter, set)
+        assert filterItems is None or isinstance(filterItems, (list, set))
 
         cleansed_sql_string = cls._cleanseSQL(sql_string)
 
@@ -316,8 +317,8 @@ class SchemaParser(object):
 
         results = set([item for sublist in references for item in sublist])
 
-        if filter is not None:
-            filtered_results = results.intersection(set(filter))
+        if filterItems is not None:
+            filtered_results = results.intersection(set(filterItems))
             return list(filtered_results)
         else:
             return list(results)

@@ -1,9 +1,9 @@
-import pytest
 import logging
+import pytest
 
-import dbldatagen as dg
 from pyspark.sql.types import IntegerType, StringType
 from pyspark.sql import SparkSession
+import dbldatagen as dg
 
 
 @pytest.fixture(scope="class")

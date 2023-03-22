@@ -48,4 +48,3 @@ def _get_spark_version(sparkVersion):
         logger.warning("Could not parse spark version - using assumed Spark Version : %s", spark_version_info)
 
     return spark_version_info
-

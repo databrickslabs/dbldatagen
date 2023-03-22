@@ -125,7 +125,7 @@ s
 
     }
     #: the set of attributes that are permitted for any call to data generator `withColumn` or `withColumnSpec`
-    _ALLOWED_PROPERTIES = {'name', 'type', 'minValue', 'maxValue', 'minValue', 'maxValue', 'step',
+    _ALLOWED_PROPERTIES = {'name', 'type', 'minValue', 'maxValue', 'step',
                            'prefix', 'random', 'distribution',
                            'range', 'baseColumn', 'baseColumnType', 'values',
                            'numColumns', 'numFeatures', 'structType',
@@ -265,4 +265,4 @@ s
             ensure(columnProps['values'] is not None and len(columnProps['values']) > 0,
                    f"weights must be associated with non-empty list of values - column '{columnProps['name']}' ")
             ensure(len(columnProps['values']) == len(columnProps['weights']),
-                   f"length of list of weights must be  equal to length of list of values - column '{columnProps['name']}' ")
+                   f"length(list of weights) must equal length(list of values) - column '{columnProps['name']}' ")
