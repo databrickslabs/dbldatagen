@@ -293,4 +293,3 @@ class TestTextTemplates:
         print("results")
         for i, result_value in enumerate(results):
             print(f"{i}: '{result_value}'")
-

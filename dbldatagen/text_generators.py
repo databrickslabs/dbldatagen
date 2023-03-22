@@ -260,7 +260,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
             assert v is not None and isinstance(v, tuple) and len(v) == 2, "value must be tuple of length 2"
             mapping_length, mappings = v
             assert isinstance(mapping_length, int), "mapping length must be of type int"
-            assert isinstance(mappings, list) or isinstance(mappings,  np.ndarray),\
+            assert isinstance(mappings, (list, np.ndarray)),\
                 "mappings are lists or numpy arrays"
             assert mapping_length == 0 or len(mappings) == mapping_length, "mappings must match mapping_length"
 
@@ -277,7 +277,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
             assert v is not None and isinstance(v, tuple) and len(v) == 2, "value must be tuple of length 2"
             mapping_length, mappings = v
             assert isinstance(mapping_length, int), "mapping length must be of type int"
-            assert mappings is None or isinstance(mappings, list) or isinstance(mappings,  np.ndarray),\
+            assert mappings is None or isinstance(mappings, (list, np.ndarray)),\
                 "mappings are lists or numpy arrays"
 
             # for escaped mappings, the mapping can be None in which case the mapping is to the number itself
@@ -287,7 +287,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
         # get the template metadata - this will be list of metadata entries for each template
         # for each template, metadata will be tuple of number of placeholders followed by list of random bounds
         # to be computed when replacing non static placeholder
-        template_info =  [self._prepareTemplateStrings(template, escapeSpecialMeaning=escapeSpecialChars)
+        template_info = [self._prepareTemplateStrings(template, escapeSpecialMeaning=escapeSpecialChars)
                                     for template in self._templates]
 
         logger = logging.getLogger(__name__)
@@ -380,13 +380,13 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
                 # retval.append(str(baseValue[val_index]))
                 num_placeholders += 1
                 use_value = False
-            elif (char in self._templateMappings.keys()) and (not escape) ^ escapeSpecialMeaning:
+            elif (char in self._templateMappings) and (not escape) ^ escapeSpecialMeaning:
                 # handle case for ['a','A','k', 'K', 'x', 'X']
                 bound, mappingArr = self._templateMappings[char]
                 retval.append(bound)
                 num_placeholders += 1
                 escape = False
-            elif (char in self._templateEscapedMappings.keys()) and escape:
+            elif (char in self._templateEscapedMappings) and escape:
                 # handle case for ['n', 'N', 'w', 'W']
                 bound, mappingArr = self._templateEscapedMappings[char]
                 retval.append(bound)
