@@ -18,9 +18,12 @@ class TestUtils:
     def setupLogger(self):
         self.logger = logging.getLogger("TestUtils")
 
-    @deprecated("testing deprecated")
     def testDeprecatedMethod(self):
-        pass
+        @deprecated("testing deprecated")
+        def a_test_deprecated_function(x):
+            return x * x
+
+        print("testing deprecated function")
 
     def test_ensure(self):
         with pytest.raises(Exception):
