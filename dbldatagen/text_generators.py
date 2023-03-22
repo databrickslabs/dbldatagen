@@ -9,9 +9,9 @@ This file defines various text generation classes and methods
 import math
 import random
 
+import logging
 import numpy as np
 import pandas as pd
-import logging
 
 #: list of hex digits for template generation
 _HEX_LOWER = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
