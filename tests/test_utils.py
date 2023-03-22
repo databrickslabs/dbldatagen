@@ -116,4 +116,3 @@ class TestUtils:
             raised_exception = True
 
         assert raised_exception == raisesError
-
