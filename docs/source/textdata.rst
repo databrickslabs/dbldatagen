@@ -127,7 +127,7 @@ It uses the following special chars:
     Chars     Meaning
     ========  ======================================
     ``\``     Apply escape to next char.
-    0,1,..9   Use base value as an array of values and substitute the `nth` element ( 0 .. 9). Always escaped.
+    v0,..v9   Use base value as an array of values and substitute the `nth` element ( 0 .. 9). Always escaped.
     x         Insert a random lowercase hex digit
     X         Insert an uppercase random hex digit
     d         Insert a random lowercase decimal digit
@@ -149,7 +149,7 @@ It uses the following special chars:
           If the ``escapeSpecialChars`` option is set to True, then the following char only has its special
           meaning when preceded by an escape.
 
-          Some options must be always escaped for example ``\\0``, ``\\v``, ``\\n`` and ``\\w``.
+          Some options must be always escaped for example  ``\\v``, ``\\n`` and ``\\w``.
 
           A special case exists for ``\\v`` - if immediately followed by a digit 0 - 9, the underlying base value
           is interpreted as an array of values and the nth element is retrieved where `n` is the digit specified.

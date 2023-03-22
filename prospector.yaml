@@ -11,6 +11,9 @@ ignore-paths:
 max-line-length: 120
 
 pylint:
+  options:
+    bad-functions: print
+
   disable:
     - too-many-instance-attributes
     - invalid-name
