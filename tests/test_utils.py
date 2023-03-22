@@ -23,15 +23,17 @@ class TestUtils:
         with pytest.raises(Exception):
             ensure(1 == 2, "Expected error")  # pylint: disable=comparison-of-constants
 
-    def test_mkBoundsList1(self):
+    @pytest.mark.parametrize("value,defaultValues",
+                             [(None, 1),
+                              (None, [1, 2]),
+                              (5, [1, 2]),
+                              (5, 1),
+                              ([1, 2], [3, 4]),
+                              ])
+    def test_mkBoundsList1(self, value, defaultValues):
         """ Test utils mkBoundsList"""
-        test = mkBoundsList(None, 1)
-
+        test = mkBoundsList(value, defaultValues)
         assert len(test) == 2
-
-        test2 = mkBoundsList(None, [1, 1])
-
-        assert len(test2) == 2
 
     @pytest.mark.parametrize("test_input,expected",
                              [
