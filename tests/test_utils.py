@@ -11,18 +11,12 @@ spark = SparkSingleton.getLocalInstance("unit tests")
 class TestUtils:
     x = 1
 
-    def __init__(self):
-        self.logger = None
-
     @pytest.fixture(autouse=True)
     def setupLogger(self):
-        self.logger = logging.getLogger("TestUtils")
+        self.logger = logging.getLogger("TestUtils")  # pylint: disable=attribute-defined-outside-init
 
+    @deprecated("testing deprecated")
     def testDeprecatedMethod(self):
-        @deprecated("testing deprecated")
-        def a_test_deprecated_function(x):
-            return x * x
-
         print("testing deprecated function")
 
     def test_ensure(self):
