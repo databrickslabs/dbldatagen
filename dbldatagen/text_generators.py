@@ -477,14 +477,17 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
         num_placeholders = 0
         rnd_offset = 0
 
-        masked_rows = None
+        unmasked_rows = None  # unmasked_rows is None, indicates that all rows are unmasked
 
         assert isinstance(placeholders, np.ma.MaskedArray), "expecting MaskArray"
 
         # if template is empty, then nothing needs to be done
         if template_len > 0 and isinstance(placeholders, np.ma.MaskedArray):
             active_rows = ~placeholders.mask
-            masked_rows = active_rows[:, 0]
+            unmasked_rows = active_rows[:, 0]
+
+            if np.all(active_rows):
+                unmasked_rows = None
 
         # in the following code, the construct `(not escape) ^ self._escapeSpecialMeaning` means apply
         # special meaning if either escape is not true or the option `self._escapeSpecialMeaning` is true.
@@ -506,8 +509,8 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
                 # random numbers from `rnds` 2d array
                 bound, valueMappings = self._templateMappings[char]
 
-                if masked_rows is not None:
-                    placeholders[masked_rows, num_placeholders] = valueMappings[rnds[masked_rows, rnd_offset]]
+                if unmasked_rows is not None:
+                    placeholders[unmasked_rows, num_placeholders] = valueMappings[rnds[unmasked_rows, rnd_offset]]
                 else:
                     placeholders[:, num_placeholders] = valueMappings[rnds[:, rnd_offset]]
 
@@ -519,13 +522,13 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
                 bound, valueMappings = self._templateEscapedMappings[char]
 
                 if valueMappings is not None:
-                    if masked_rows is not None:
-                        placeholders[masked_rows, num_placeholders] = valueMappings[rnds[masked_rows, rnd_offset]]
+                    if unmasked_rows is not None:
+                        placeholders[unmasked_rows, num_placeholders] = valueMappings[rnds[unmasked_rows, rnd_offset]]
                     else:
                         placeholders[:, num_placeholders] = valueMappings[rnds[:, rnd_offset]]
                 else:
-                    if masked_rows is not None:
-                        placeholders[masked_rows, num_placeholders] = rnds[masked_rows, rnd_offset]
+                    if unmasked_rows is not None:
+                        placeholders[unmasked_rows, num_placeholders] = rnds[unmasked_rows, rnd_offset]
                     else:
                         placeholders[:, num_placeholders] = rnds[:, rnd_offset]
                 num_placeholders += 1
