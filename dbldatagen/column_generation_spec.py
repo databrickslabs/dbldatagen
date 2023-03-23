@@ -1173,7 +1173,8 @@ class ColumnGenerationSpec(object):
             self.executionHistory.append(exec_step_history)
         else:
             self.executionHistory.append(f"generating multiple columns {num_columns} - `{self['name']}`")
-            retval = [self._makeSingleGenerationExpression(x) for x in range(num_columns)]
+            retval = [self._makeSingleGenerationExpression(x, use_pandas_optimizations=True) for x in
+                      range(num_columns)]
 
             if struct_type == 'array':
                 self.executionHistory.append(".. converting multiple columns to array")
