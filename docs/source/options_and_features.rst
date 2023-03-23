@@ -46,7 +46,25 @@ randomSeedMethod  Determines how seed will be used.
                   If set to the value 'fixed', will use fixed random seed.
 
                   If set to 'hash_fieldname', it will use a hash of the field name as the random seed
+
                   for a specific column.
+
+randomSeed        Random seed for the generation of random numbers
+
+
+                  If not set, settings will depend on the `randomSeedMethod` and data generator level
+
+                  `randomSeed` and `randomSeed` methods
+
+
+                  If `randomSeedMethod` is `hashFieldName` for this column or for the data
+                  specification as whole,
+                  the random seed for each column a hash value based on the field name. This is the default unless
+                  these settings are overridden
+
+
+                  If `randomSeed` has a value of -1, then the random value will be a random number from the uniform
+                  distribution and the data generated will not be the same from run to run
 
 distribution      Controls the statistical distribution of random values when the column is generated
                   randomly.
