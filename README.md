@@ -25,7 +25,7 @@ other uses.
 
 It operates by defining a data generation specification in code that controls 
 how the synthetic data is generated.
-The specification may incorporate the use of existing schemas, or create data in an ad-hoc fashion.
+The specification may incorporate the use of existing schemas or create data in an ad-hoc fashion.
 
 It has no dependencies on any libraries that are not already installed in the Databricks 
 runtime, and you can use it from Scala, R or other languages by defining
@@ -48,7 +48,7 @@ used in other computations
 * Generating arrays of values for ML-style feature arrays
 * Applying weights to the occurrence of values
 * Generating values to conform to a schema or independent of an existing schema
-* use of SQL expressions in test data generation
+* use of SQL expressions in synthetic data generation
 * plugin mechanism to allow use of 3rd party libraries such as Faker
 * Use within a Databricks Delta Live Tables pipeline as a synthetic data generation source
 
@@ -93,7 +93,7 @@ release notes for library compatibility
 
 When using the Databricks Labs Data Generator on "Unity Catalog" enabled environments, the Data Generator requires
 the use of `Single User` or `No Isolation Shared` access modes as some needed features are not available in `Shared` 
-mode (for example, use of 3rd party libraries). Depending on settings, `Custom` access mode may be supported.
+mode (for example, use of 3rd party libraries). Depending on settings, the `Custom` access mode may be supported.
 
 See the following documentation for more information:
 
@@ -138,23 +138,23 @@ The GitHub repository also contains further examples in the examples directory.
 
 ## Spark and Databricks Runtime Compatibility
 The `dbldatagen` package is intended to be compatible with recent LTS versions of the Databricks runtime, including 
-older LTS versions at least from 10.4 LTS and later. It also aims to be compatible with Delta Live Table runtimes 
+older LTS versions at least from 10.4 LTS and later. It also aims to be compatible with Delta Live Table runtimes, 
 including `current` and `preview`. 
 
 While we don't specifically drop support for older runtimes, changes in Pyspark APIs or
 APIs from dependent packages such as `numpy`, `pandas`, `pyarrow`, and `pyparsing` make cause issues with older
 runtimes. 
 
-By design, installing `dbldatagen` explicitly does not install releases of dependent packages in order 
-to preserve the curated set of packages installed in any Databricks runtime environment.
+By design, installing `dbldatagen` does not install releases of dependent packages in order 
+to preserve the curated set of packages pre-installed in any Databricks runtime environment.
 
-When building on local environments, the `Pipfile` and requirements files are used to determine the package versions 
-for releases and unit tests. 
+When building on local environments, the build process uses the `Pipfile` and requirements files to determine 
+the package versions for releases and unit tests. 
 
 ## Project Support
 Please note that all projects released under [`Databricks Labs`](https://www.databricks.com/learn/labs)
  are provided for your exploration only, and are not formally supported by Databricks with Service Level Agreements 
-(SLAs).  They are provided AS-IS and, we do not make any guarantees of any kind.  Please do not submit a support ticket 
+(SLAs).  They are provided AS-IS, and we do not make any guarantees of any kind.  Please do not submit a support ticket 
 relating to any issues arising from the use of these projects.
 
 Any issues discovered through the use of this project should be filed as issues on the GitHub Repo.  

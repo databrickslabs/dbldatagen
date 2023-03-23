@@ -67,11 +67,11 @@ Once the data frame is generated, it can be used with any Spark dataframe compat
 to analyze data, to write it to an external database or stream, or used in the same manner as a regular 
 PySpark dataframe.
 
-To consume it from Scala, R, SQL or other languages, create a view over the resulting test dataframe and you can use
-it from any Databricks Spark runtime compatible language. By use of the appropriate parameters, 
-you can instruct the data generator to automatically register a view as part of generating the test data.
+To consume it from Scala, R, SQL or other languages, create a view over the resulting generated dataframe and 
+you can use it from any Databricks Spark runtime compatible language. By use of the appropriate parameters, 
+you can instruct the data generator to automatically register a view as part of generating the synthetic data.
 
-### Generating the test data
+### Generating the synthetic data
 The data generation process is controlled by a data generation spec which can build a schema implicitly, 
 or a schema can be added from an existing table or Spark SQL schema object.
 
@@ -79,7 +79,7 @@ Each column to be generated derives its generated data from a set of one or more
 By default, this is the `id` field of the base data frame 
 (generated with `spark.range` for batch data frames, or using a `Rate` source for streaming data frames).
 
-Each column  can be specified as based on the `id` field or other columns in the test data generation spec. 
+Each column  can be specified as based on the `id` field or other columns in the synthetic data generation spec. 
 Columns may be based on the value of on or more base fields, or on a `hash` of the base values.
 
 Column base values may also be generated at random.
@@ -126,7 +126,7 @@ specifies the rules that control data generation.
 Once the `DataGenerator` specification is created, you use the `build` method to generate a Spark dataframe for the 
 data
 
-## Creating simple test data sets
+## Creating simple synthetic data sets
 
 You can use the data generator with, or without the use of a pre-existing schema. 
 The basic mechanism is as follows:
@@ -146,7 +146,7 @@ schema should be generated
 
 ### Create a data set without pre-existing schemas
 
-Here is an example of creating a simple test data set without use of a schema. 
+Here is an example of creating a simple synthetic data set without use of a schema. 
 
 ```python 
 import dbldatagen as dg
@@ -285,7 +285,7 @@ For example:
 
 ```
 
-## A more complex example - building Device IOT Test Data
+## A more complex example - building Device IOT synthetic Data
 This example shows generation of IOT device style data consisting of events from devices. 
 
 Here we want to generate a random set of events but ensure that the device properties remain the same for the 
