@@ -7,8 +7,8 @@ This includes:
 - The number of rows to be generated
 - Whether columns are generated from an existing schema
 - Whether implicit columns used in the generation process are output in the final data set
-- Whether the generate data set is a streaming or batch data set
-- How the column data should be generated and what the dependencies are
+- Whether the generated data set will be a streaming or batch data set
+- How the column data should be generated and what the dependencies for each column are
 - How random and psuedo-random data is generated
 
 .. seealso::
@@ -21,21 +21,24 @@ This includes:
   * Options for column generation - :doc:`options_and_features`
 
 Column data is generated for all columns whether imported from a schema or explicitly added
-to a data specification.
+to a data specification. However, column data can be omitted from the final output, allowing columns to be used
+for intermediate calculations.
 
 Initializing a data generation spec
 -----------------------------------
-The DataGenerator object instance defines how data is to be generated. It consists of a set of implicit column
-generation specifications in addition to various instance level attributes. These control the data generation process.
+The DataGenerator object instance defines a specification for how data is to be generated.
+It consists of a set of  column generation specifications in addition to various instance level attributes.
+These control the data generation process.
 
 The data generation process itself is deferred until the data generation instance ``build`` method is executed.
 
-So until the ``build`` command is invoked, the data generation specification is in initialization mode.
+So until the ``build`` method is invoked, the data generation specification is in initialization mode.
 
 Once ``build`` has been invoked, the data generation instance holds state about the data set generated.
+
 While ``build`` can be invoked a subsequent time, making further modifications to the definition post build before
-calling ``build`` again is not recommended. We recommend the use of the ``clone`` method to make a new data set similar
-to an existing one if further modifications are needed.
+calling ``build`` again is not recommended. We recommend the use of the ``clone`` method to make a new data generation
+specification similar to an existing one if further modifications are needed.
 
 See :data:`~dbldatagen.data_generator.DataGenerator.clone` for further information.
 

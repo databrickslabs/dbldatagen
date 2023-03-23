@@ -56,7 +56,8 @@ class ColumnGenerationSpec(object):
     :param distribution: Instance of distribution, that will control the distribution of the generated values
     :param baseColumn: String or list of strings representing columns used as basis for generating the column data
     :param randomSeed: random seed value used to generate the random value, if column data is random
-    :param randomSeedMethod: method for computing random values from the random seed
+    :param randomSeedMethod: method for computing random values from the random seed. It may take on the
+           values `fixed`, `hash_fieldname` or
 
     :param implicit: If True, the specification for the column can be replaced by a later definition.
            If not, a later attempt to replace the definition will flag an error.

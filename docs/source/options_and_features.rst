@@ -12,6 +12,18 @@ Options for column specification
 The following table lists some of the common options that can be applied with the ``withColumn`` and ``withColumnSpec``
 methods.
 
+Data generation for each column begins with generating a base expression for the column, which will be a random value
+if `random` is True, or some transformation of the `baseColumns` if not.
+
+The options are then applied - each option successively modifying the generated value. Where possible, the effects of
+an options are applied over the effects of other options so the effect is accumulative.
+
+Finally type conversion is applied.
+
+So options such as `minValue`, `maxValue` and `step` can be applied to strings also if their underlying generation is from
+a numeric root. The default base column `id` is of type long.
+
+
 .. table:: Column creation options
 
 ================  ==============================
@@ -25,6 +37,8 @@ step              Step to use for range of generated value.
 
                   As an alternative, you may use the `dataRange` parameter
 
+prefix            Prefix text to apply to expression.
+
 random            If `True`, will generate random values for column value. Defaults to `False`
 
 randomSeedMethod  Determines how seed will be used.
@@ -34,7 +48,12 @@ randomSeedMethod  Determines how seed will be used.
                   If set to 'hash_fieldname', it will use a hash of the field name as the random seed
                   for a specific column.
 
-baseColumn        Either the string name of the base column, or a list of columns to use to control data generation.
+distribution      Controls the statistical distribution of random values when the column is generated
+                  randomly.
+                  Accepts the values "normal", or a Distribution object instance.
+
+baseColumn        Either the string name of the base column, or a list of columns to use to control
+                  data generation.
 
 values            List of discrete values for the column.
 

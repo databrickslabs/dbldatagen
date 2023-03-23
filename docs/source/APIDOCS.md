@@ -1,21 +1,22 @@
 # Getting started with the Databricks Labs Data Generator
 
-The Databricks Labs data generator (aka `dbldatagen`) is a Spark based solution for generating 
+The Databricks Labs data generator (aka `dbldatagen`) is a Spark-based solution for generating 
 realistic synthetic data. It uses the features of Spark dataframes and Spark SQL 
-to generate synthetic data. As the process produces a Spark dataframe populated 
-with generated data, it may be saved to storage in a variety of formats, saved to tables 
-or generally manipulated using the existing Spark Dataframe APIs. 
+to create synthetic data at scale. As the process produces a Spark dataframe populated 
+with generated data, it may be written to storage in various data formats, saved to tables 
+or manipulated using the existing Spark Dataframe APIs. 
 
-It can also be used as a source in a Delta Live Tables pipeline supporting both streamimg and batch operation.
+The data generator can also be used as a source in a Delta Live Tables pipelines, 
+supporting streaming and batch operation.
 
-It has no dependencies on any libraries that are not already included in the Databricks 
+It has no dependencies on any libraries not already included in the Databricks 
 runtime, and you can use it from Scala, R or other languages by defining
 a view over the generated data.
 
-As the data generator is a Spark process, it can scale to generating data with millions or billions of rows 
-in minutes with reasonable sized clusters.
+As the data generator is a Spark process, the data generation process can scale to producing synthetic data with 
+billions of rows in minutes with reasonable-sized clusters.
 
-For example, at the time of writing, a billion row version of the IOT data set example listed later in the document
+For example, at the time of writing, a billion-row version of the IOT data set example listed later in the document
 can be generated and written to a Delta table in 
 [under 2 minutes using a 12 node x 8 core cluster (using DBR 8.3)](#scaling-it-up)
 
@@ -27,18 +28,18 @@ can be generated and written to a Delta table in
 The Databricks Labs Data Generator is a Python Library that can be used in several different ways:
 1. Generate a synthetic data set [without defining a schema in advance](#create-a-data-set-without-pre-existing-schemas)
 2. Generate a synthetic data set [for an existing Spark SQL schema.](#creating-data-set-with-pre-existing-schema) 
-3. Generate a synthetic data set adding columns according to specifiers provided
+3. Generate a synthetic data set adding columns according to the specifiers provided
 4. Start with an existing schema and add columns along with specifications as to how values are generated
 
 The data generator includes the following features:
 
 * Specify [number of rows to generate](#create-a-data-set-without-pre-existing-schemas)
 * Specify [number of Spark partitions to distribute data generation across](#scaling-it-up)
-* Specify [numeric, time and date ranges for columns](./DATARANGES.md)
+* Specify [numeric, time, and date ranges for columns](./DATARANGES.md)
 * Generate column data at [random or from repeatable seed values](#generating-repeatable-data)
 * Generate column data from [one or more seed columns](#generating-repeatable-data)  
 [values optionally with weighting](#create-a-data-set-without-pre-existing-schemas) of how frequently values occur
-* Use [template based text generation](#creating-data-set-with-pre-existing-schema) 
+* Use [template-based text generation](#creating-data-set-with-pre-existing-schema) 
 and [formatting on string columns](textdata)
 * Use [SQL based expressions](#using-sql-in-data-generation) to control or augment column generation
 * Script Spark SQL table creation statement for dataset 
@@ -50,12 +51,12 @@ and [formatting on string columns](textdata)
 
 In the 
 [Github project directory](https://github.com/databrickslabs/dbldatagen/tree/release/v0.2.1) , 
-there are a number of examples and tutorials.
+there are several examples and tutorials.
 
 The Python examples in the `examples` folder can be run directly or imported into the Databricks runtime environment 
-as Python files.
+as Python notebooks.
 
-The examples in the `tutorials` folder are in Databricks notebook export format and are intended to be imported 
+The examples in the `tutorials` folder are in Databricks notebook export format and can be imported 
 into the Databricks workspace environment.
  
 ## Basic concepts
@@ -488,7 +489,7 @@ dataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=8, randomSeedMeth
            )
 df1 = dataspec.build()
 
-df1.display()
+df1.show()
 ```
 
 See the section on [text generation](textdata) for more details on these options.
@@ -540,7 +541,7 @@ dataspec = (
     )
 df1 = dataspec.build()
 
-df1.display()
+df1.show()
 ```
 
 These options allows for generating multiple tables and ensuring referential 
