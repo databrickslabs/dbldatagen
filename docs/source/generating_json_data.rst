@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Generating JSON and structured column data
+Generating JSON and Structured Column Data
 ==========================================
 
 This section explores generating JSON and structured column data. By structured columns,
@@ -37,44 +37,45 @@ The following example illustrates the basic technique for generating JSON data f
 
    lines = ['delta', 'xyzzy', 'lakehouse', 'gadget', 'droid']
 
-   testDataSpec = (dg.DataGenerator(spark, name="device_data_set", rows=1000000,
-                                    partitions=8,
-                                    randomSeedMethod='hash_fieldname')
-                   .withIdOutput()
-                   # we'll use hash of the base field to generate the ids to
-                   # avoid a simple incrementing sequence
-                   .withColumn("internal_device_id", LongType(), minValue=0x1000000000000,
-                               uniqueValues=device_population, omit=True, baseColumnType="hash")
+   testDataSpec = (
+       dg.DataGenerator(spark, name="device_data_set", rows=1000000,
+                        partitions=8, randomSeedMethod='hash_fieldname')
+       .withIdOutput()
+       # we'll use hash of the base field to generate the ids to
+       # avoid a simple incrementing sequence
+       .withColumn("internal_device_id", LongType(), minValue=0x1000000000000,
+                   uniqueValues=device_population, omit=True, baseColumnType="hash")
 
-                   # note for format strings, we must use "%lx" not "%x" as the
-                   # underlying value is a long
-                   .withColumn("device_id", StringType(), format="0x%013x",
-                               baseColumn="internal_device_id")
+       # note for format strings, we must use "%lx" not "%x" as the
+       # underlying value is a long
+       .withColumn("device_id", StringType(), format="0x%013x",
+                   baseColumn="internal_device_id")
 
-                   # the device / user attributes will be the same for the same device id
-                   # so lets use the internal device id as the base column for these attribute
-                   .withColumn("country", StringType(), values=country_codes,
-                               weights=country_weights,
-                               baseColumn="internal_device_id")
-                   .withColumn("manufacturer", StringType(), values=manufacturers,
-                               baseColumn="internal_device_id")
+       # the device / user attributes will be the same for the same device id
+       # so lets use the internal device id as the base column for these attribute
+       .withColumn("country", StringType(), values=country_codes,
+                   weights=country_weights,
+                   baseColumn="internal_device_id")
+       .withColumn("manufacturer", StringType(), values=manufacturers,
+                   baseColumn="internal_device_id")
 
-                   # use omit = True if you don't want a column to appear in the final output
-                   # but just want to use it as part of generation of another column
-                   .withColumn("line", StringType(), values=lines, baseColumn="manufacturer",
-                               baseColumnType="hash")
-                   .withColumn("model_ser", IntegerType(), minValue=1, maxValue=11,
-                               baseColumn="device_id",
-                               baseColumnType="hash", omit=True)
+       # use omit = True if you don't want a column to appear in the final output
+       # but just want to use it as part of generation of another column
+       .withColumn("line", StringType(), values=lines, baseColumn="manufacturer",
+                   baseColumnType="hash")
+       .withColumn("model_ser", IntegerType(), minValue=1, maxValue=11,
+                   baseColumn="device_id",
+                   baseColumnType="hash", omit=True)
 
-                   .withColumn("event_type", StringType(),
-                               values=["activation", "deactivation", "plan change",
-                                       "telecoms activity", "internet activity", "device error"],
-                               random=True)
-                   .withColumn("event_ts", "timestamp", begin="2020-01-01 01:00:00", end="2020-12-31 23:59:00",
-                               interval="1 minute", random=True)
+       .withColumn("event_type", StringType(),
+                   values=["activation", "deactivation", "plan change",
+                           "telecoms activity", "internet activity", "device error"],
+                   random=True)
+       .withColumn("event_ts", "timestamp", begin="2020-01-01 01:00:00",
+                   end="2020-12-31 23:59:00",
+                   interval="1 minute", random=True)
 
-                   )
+       )
 
    dfTestData = testDataSpec.build()
 
@@ -99,8 +100,11 @@ Note that in the current release, the `expr` attribute will override other colum
 
 .. code-block:: python
 
-   from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
-       TimestampType, DateType, DecimalType, ByteType, BinaryType, ArrayType, MapType, StructType, StructField
+   from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, \
+                                 DoubleType, BooleanType, ShortType, \
+                                 TimestampType, DateType, DecimalType, \
+                                 ByteType, BinaryType, ArrayType, MapType, \
+                                 StructType, StructField
 
    import dbldatagen as dg
 
@@ -114,50 +118,54 @@ Note that in the current release, the `expr` attribute will override other colum
 
    lines = ['delta', 'xyzzy', 'lakehouse', 'gadget', 'droid']
 
-   testDataSpec = (dg.DataGenerator(spark, name="device_data_set", rows=1000000,
-                                    partitions=8,
-                                    randomSeedMethod='hash_fieldname')
-                   .withIdOutput()
-                   # we'll use hash of the base field to generate the ids to
-                   # avoid a simple incrementing sequence
-                   .withColumn("internal_device_id", LongType(), minValue=0x1000000000000,
-                               uniqueValues=device_population, omit=True, baseColumnType="hash")
+   testDataSpec = (
+       dg.DataGenerator(spark, name="device_data_set", rows=1000000,
+                        partitions=8, randomSeedMethod='hash_fieldname')
+       .withIdOutput()
+       # we'll use hash of the base field to generate the ids to
+       # avoid a simple incrementing sequence
+       .withColumn("internal_device_id", LongType(), minValue=0x1000000000000,
+                   uniqueValues=device_population, omit=True, baseColumnType="hash")
 
-                   # note for format strings, we must use "%lx" not "%x" as the
-                   # underlying value is a long
-                   .withColumn("device_id", StringType(), format="0x%013x",
-                               baseColumn="internal_device_id")
+       # note for format strings, we must use "%lx" not "%x" as the
+       # underlying value is a long
+       .withColumn("device_id", StringType(), format="0x%013x",
+                   baseColumn="internal_device_id")
 
-                   # the device / user attributes will be the same for the same device id
-                   # so lets use the internal device id as the base column for these attribute
-                   .withColumn("country", StringType(), values=country_codes,
-                               weights=country_weights,
-                               baseColumn="internal_device_id")
+       # the device / user attributes will be the same for the same device id
+       # so lets use the internal device id as the base column for these attribute
+       .withColumn("country", StringType(), values=country_codes,
+                   weights=country_weights,
+                   baseColumn="internal_device_id")
 
-                   .withColumn("manufacturer", StringType(), values=manufacturers,
-                               baseColumn="internal_device_id", omit=True)
-                   .withColumn("line", StringType(), values=lines, baseColumn="manufacturer",
-                               baseColumnType="hash", omit=True)
-                   .withColumn("manufacturer_info", StructType([StructField('line',StringType()), StructField('manufacturer', StringType())]),
-                                                    expr="named_struct('line', line, 'manufacturer', manufacturer)",
-                               baseColumn=['manufacturer', 'line'])
+       .withColumn("manufacturer", StringType(), values=manufacturers,
+                   baseColumn="internal_device_id", omit=True)
+       .withColumn("line", StringType(), values=lines, baseColumn="manufacturer",
+                   baseColumnType="hash", omit=True)
+       .withColumn("manufacturer_info", StructType([StructField('line',StringType()),
+                                                   StructField('manufacturer', StringType())]),
+                   expr="named_struct('line', line, 'manufacturer', manufacturer)",
+                   baseColumn=['manufacturer', 'line'])
 
 
-                   .withColumn("model_ser", IntegerType(), minValue=1, maxValue=11,
-                               baseColumn="device_id",
-                               baseColumnType="hash", omit=True)
+       .withColumn("model_ser", IntegerType(), minValue=1, maxValue=11,
+                   baseColumn="device_id",
+                   baseColumnType="hash", omit=True)
 
-                   .withColumn("event_type", StringType(),
-                               values=["activation", "deactivation", "plan change",
-                                       "telecoms activity", "internet activity", "device error"],
-                               random=True, omit=True)
-                   .withColumn("event_ts", "timestamp", begin="2020-01-01 01:00:00", end="2020-12-31 23:59:00",
-                               interval="1 minute", random=True, omit=True)
+       .withColumn("event_type", StringType(),
+                   values=["activation", "deactivation", "plan change",
+                           "telecoms activity", "internet activity", "device error"],
+                   random=True, omit=True)
+       .withColumn("event_ts", "timestamp", begin="2020-01-01 01:00:00",
+                   end="2020-12-31 23:59:00",
+                   interval="1 minute", random=True, omit=True)
 
-                   .withColumn("event_info", StructType([StructField('event_type',StringType()), StructField('event_ts', TimestampType())]),
-                                                    expr="named_struct('event_type', event_type, 'event_ts', event_ts)",
-                               baseColumn=['event_type', 'event_ts'])
-                   )
+       .withColumn("event_info",
+                    StructType([StructField('event_type',StringType()),
+                                StructField('event_ts', TimestampType())]),
+                   expr="named_struct('event_type', event_type, 'event_ts', event_ts)",
+                   baseColumn=['event_type', 'event_ts'])
+       )
 
    dfTestData = testDataSpec.build()
    dfTestData.write.format("json").mode("overwrite").save("/tmp/jsonData2")
@@ -170,8 +178,10 @@ functions such as `named_struct` and `to_json`.
 
 .. code-block:: python
 
-   from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
-       TimestampType, DateType, DecimalType, ByteType, BinaryType, ArrayType, MapType, StructType, StructField
+   from pyspark.sql.types import LongType, FloatType, IntegerType, \
+                                 StringType, DoubleType, BooleanType, ShortType, \
+                                 TimestampType, DateType, DecimalType, ByteType, \
+                                 BinaryType, ArrayType, MapType, StructType, StructField
 
    import dbldatagen as dg
 
@@ -210,7 +220,7 @@ functions such as `named_struct` and `to_json`.
                    .withColumn("line", StringType(), values=lines, baseColumn="manufacturer",
                                baseColumnType="hash", omit=True)
                    .withColumn("manufacturer_info", "string",
-                                                    expr="to_json(named_struct('line', line, 'manufacturer', manufacturer))",
+                               expr="to_json(named_struct('line', line, 'manufacturer', manufacturer))",
                                baseColumn=['manufacturer', 'line'])
 
 
@@ -222,11 +232,12 @@ functions such as `named_struct` and `to_json`.
                                values=["activation", "deactivation", "plan change",
                                        "telecoms activity", "internet activity", "device error"],
                                random=True, omit=True)
-                   .withColumn("event_ts", "timestamp", begin="2020-01-01 01:00:00", end="2020-12-31 23:59:00",
+                   .withColumn("event_ts", "timestamp",
+                               begin="2020-01-01 01:00:00", end="2020-12-31 23:59:00",
                                interval="1 minute", random=True, omit=True)
 
                    .withColumn("event_info", "string",
-                                                    expr="to_json(named_struct('event_type', event_type, 'event_ts', event_ts))",
+                               expr="to_json(named_struct('event_type', event_type, 'event_ts', event_ts))",
                                baseColumn=['event_type', 'event_ts'])
                    )
 

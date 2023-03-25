@@ -1,4 +1,4 @@
-Generating column data
+Generating Column Data
 ======================
 
 The data generation specification object controls how the data is to be generated.

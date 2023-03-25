@@ -238,13 +238,14 @@ class DataGenerator:
         """
         cls._randomSeed = seedVal
 
-    @deprecated('Use `useSeed` instead')
+    @deprecated("Use `useSeed` instead")
     @classmethod
     def use_seed(cls, seedVal):
         """ set seed for random number generation
 
             Arguments:
             :param seedVal: - new value for the random number seed
+
         """
         cls._randomSeed = seedVal
 

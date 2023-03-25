@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Databricks Labs Data Generator documentation
+Databricks Labs Data Generator Documentation
 ============================================
 
 The Databricks Labs Data Generator project provides a convenient way to

@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Generating and using data with multiple tables
+Generating and Using Data with Multiple Tables
 ==============================================
 
 See the section repeatable data generation for the concepts that underpin the data generation.
