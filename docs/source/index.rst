@@ -1,20 +1,17 @@
-.. Test Data Generator documentation master file, created by
+.. Databricks Labs Data Generator documentation master file, created by
    sphinx-quickstart on Sun Jun 21 10:54:30 2020.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 
-Databricks Labs Data Generator documentation
+Databricks Labs Data Generator Documentation
 ============================================
 
 The Databricks Labs Data Generator project provides a convenient way to
-generate large volumes of synthetic test data from within a Databricks notebook
-(or regular Spark application).
+generate large volumes of synthetic data from within a Databricks notebook (or a regular Spark application).
 
 By defining a data generation spec, either in conjunction with an existing schema
 or through creating a schema on the fly, you can control how synthetic data is generated.
 
 As the data generator generates a PySpark data frame, it is simple to create a view over it to expose it
-to Scala or R based Spark applications also.
+to Scala or R-based Spark applications also.
 
 As it is installable via `%pip install`, it can also be incorporated in environments such as
 `Delta Live Tables <https://www.databricks.com/product/delta-live-tables>`_ also.
@@ -36,6 +33,7 @@ As it is installable via `%pip install`, it can also be incorporated in environm
    Generating Change Data Capture (CDC) data<generating_cdc_data>
    Using multiple tables <multi_table_data>
    Extending text generation  <extending_text_generation>
+   Use with Delta Live Tables <using_delta_live_tables>
    Troubleshooting data generation <troubleshooting>
 
 .. toctree::

@@ -12,11 +12,16 @@ import logging
 from pyspark.sql.functions import col, pandas_udf
 from pyspark.sql.functions import lit, concat, rand, round as sql_round, array, expr, when, udf, \
     format_string
+
+import pyspark.sql.functions as F
+
 from pyspark.sql.types import FloatType, IntegerType, StringType, DoubleType, BooleanType, \
     TimestampType, DataType, DateType, ArrayType, MapType, StructType
 
 from .column_spec_options import ColumnSpecOptions
-from .datagen_constants import RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, RANDOM_SEED_RANDOM, DEFAULT_SEED_COLUMN
+from .datagen_constants import RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, RANDOM_SEED_RANDOM, \
+    DEFAULT_SEED_COLUMN, OPTION_RANDOM, OPTION_RANDOM_SEED, OPTION_RANDOM_SEED_METHOD
+
 from .daterange import DateRange
 from .distributions import Normal, DataDistribution
 from .nrange import NRange
@@ -56,7 +61,8 @@ class ColumnGenerationSpec(object):
     :param distribution: Instance of distribution, that will control the distribution of the generated values
     :param baseColumn: String or list of strings representing columns used as basis for generating the column data
     :param randomSeed: random seed value used to generate the random value, if column data is random
-    :param randomSeedMethod: method for computing random values from the random seed
+    :param randomSeedMethod: method for computing random values from the random seed. It may take on the
+           values `fixed`, `hash_fieldname` or None
 
     :param implicit: If True, the specification for the column can be replaced by a later definition.
            If not, a later attempt to replace the definition will flag an error.
@@ -119,8 +125,8 @@ class ColumnGenerationSpec(object):
         supplied_options = {'name': name, 'minValue': minValue, 'type': colType,
                             'maxValue': maxValue, 'step': step,
                             'prefix': prefix, 'baseColumn': baseColumn,
-                            'random': random, 'distribution': distribution,
-                            'randomSeedMethod': randomSeedMethod, 'randomSeed': randomSeed,
+                            OPTION_RANDOM: random, 'distribution': distribution,
+                            OPTION_RANDOM_SEED_METHOD: randomSeedMethod, OPTION_RANDOM_SEED: randomSeed,
                             'omit': omit, 'nullable': nullable, 'implicit': implicit
                             }
 
@@ -173,14 +179,14 @@ class ColumnGenerationSpec(object):
         assert randomSeedMethod is None or randomSeedMethod in [RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME], \
             f"`randomSeedMethod` should be none or `{RANDOM_SEED_FIXED}` or `{RANDOM_SEED_HASH_FIELD_NAME}`"
 
-        self._randomSeedMethod = self['randomSeedMethod']
-        self.random = self['random']
+        self._randomSeedMethod = self[OPTION_RANDOM_SEED_METHOD]
+        self.random = self[OPTION_RANDOM]
 
         if self._randomSeedMethod == RANDOM_SEED_HASH_FIELD_NAME:
             assert self.name is not None, "field name cannot be None"
             self._randomSeed = abs(hash(self.name))
         else:
-            self._randomSeed = self["randomSeed"]
+            self._randomSeed = self[OPTION_RANDOM_SEED]
 
         # random seed method should be "fixed" or "hash_fieldname"
         if self._randomSeed is not None and self._randomSeedMethod is None:
@@ -280,6 +286,71 @@ class ColumnGenerationSpec(object):
         # set up the temporary columns needed for data generation
         self._setupTemporaryColumns()
 
+    def _temporaryRename(self, tmpName):
+        """ Create enter / exit object to support temporary renaming of column spec
+
+        This is to support the functionality:
+
+        ```
+           with columSpec._temporaryRename("test") as modifiedColumn:
+             modifiedColumn.doSomthing()
+        ```
+
+        When building array or multi-column valued columns, we rename the column definition temporarily
+        to ensure that logging, saving messages to the execution plan and random number generation based on
+        the field name work correctly
+
+        :param tmpName: temporary name for the column.
+        :return: object supporting `with columSpec._temporaryRename("test") as modifiedColumn:` semantics
+
+        .. note::
+           This does not create a copy of the column spec object
+
+        """
+        # create class for temporary rename enter / exit
+        assert tmpName is not None and len(tmpName) > 0, "method expects valid temporary name"
+
+        class RenameEnterExit:
+            def __init__(self, columnSpec, newName):
+                """ Save column spec and old name to support enter / exit semantics """
+                self._cs = columnSpec
+                self._oldName = columnSpec.name
+                self._newName = newName
+                self._randomSeed = columnSpec._randomSeed
+
+            def __enter__(self):
+                """ Return the inner column spec object """
+                self._cs.name = self._newName
+
+                if self._cs._randomSeedMethod == RANDOM_SEED_HASH_FIELD_NAME:
+                    self._cs._randomSeed = abs(hash(self._cs.name))
+
+                    if self._cs._textGenerator is not None and self._cs._randomSeed is not None:
+                        self._cs._textGenerator = self._cs._textGenerator.withRandomSeed(self._cs._randomSeed)
+
+                return self._cs
+
+            def __exit__(self, exc_type, exc_value, tb):
+                # restore old name
+                self._cs.name = self._oldName
+
+                # restore old random seed
+                self._cs._randomSeed = self._randomSeed
+
+                if self._cs._randomSeedMethod == RANDOM_SEED_HASH_FIELD_NAME:
+                    if self._cs._textGenerator is not None and self._cs._randomSeed is not None:
+                        self._cs._textGenerator = self._cs._textGenerator.withRandomSeed(self._cs._randomSeed)
+
+                if exc_type is not None:
+                    # uncomment for traceback
+                    # import traceback
+                    # traceback.print_exception(exc_type, exc_value, tb)
+                    return False
+
+                return True
+
+        return RenameEnterExit(self, tmpName)
+
     @property
     def specOptions(self):
         """ get column spec options for spec
@@ -320,7 +391,7 @@ class ColumnGenerationSpec(object):
     @property
     def isRandom(self):
         """ returns True if column will be randomly generated"""
-        return self["random"]
+        return self[OPTION_RANDOM]
 
     @property
     def textGenerator(self):
@@ -372,9 +443,8 @@ class ColumnGenerationSpec(object):
         if self.isWeightedValuesColumn:
             # if its a weighted values column, then create temporary for it
             # not supported for feature / array columns for now
-            ensure(self['numFeatures'] is None or self['numFeatures'] <= 1,
-                   "weighted columns not supported for multi-column or multi-feature values")
-            ensure(self['numColumns'] is None or self['numColumns'] <= 1,
+            min_num_columns, max_num_columns, struct_type = self._getMultiColumnDetails(validate=False)
+            ensure(max_num_columns is None or max_num_columns <= 1,
                    "weighted columns not supported for multi-column or multi-feature values")
             if self.random:
                 temp_name = f"_rnd_{self.name}"
@@ -610,21 +680,19 @@ class ColumnGenerationSpec(object):
 
     def getNames(self):
         """ get column names as list of strings"""
-        num_columns = self._csOptions.getOrElse('numColumns', 1)
-        struct_type = self._csOptions.getOrElse('structType', None)
+        min_num_columns, max_num_columns, struct_type = self._getMultiColumnDetails(validate=False)
 
-        if num_columns > 1 and struct_type is None:
-            return [f"{self.name}_{x}" for x in range(0, num_columns)]
+        if max_num_columns > 1 and struct_type is None:
+            return [f"{self.name}_{x}" for x in range(0, max_num_columns)]
         else:
             return [self.name]
 
     def getNamesAndTypes(self):
         """ get column names as list of tuples `(name, datatype)`"""
-        num_columns = self._csOptions.getOrElse('numColumns', 1)
-        struct_type = self._csOptions.getOrElse('structType', None)
+        min_num_columns, max_num_columns, struct_type = self._getMultiColumnDetails(validate=False)
 
-        if num_columns > 1 and struct_type is None:
-            return [(f"{self.name}_{x}", self.datatype) for x in range(0, num_columns)]
+        if max_num_columns > 1 and struct_type is None:
+            return [(f"{self.name}_{x}", self.datatype) for x in range(0, max_num_columns)]
         else:
             return [(self.name, self.datatype)]
 
@@ -766,43 +834,6 @@ class ColumnGenerationSpec(object):
 
         """
         return self._csOptions.getOrElse(key, default)
-
-    def _checkProps(self, column_props):
-        """
-            check that column definition properties are recognized
-            and that the column definition has required properties
-
-        :raises: assertion or exception of checks fail
-        """
-        assert column_props is not None, "Column definition properties should be non-empty"
-        assert self.datatype is not None, "Column datatype must be specified"
-
-        if self.datatype.typeName() in self._max_type_range:
-            minValue = self['minValue']
-            maxValue = self['maxValue']
-
-            if minValue is not None and maxValue is not None:
-                effective_range = maxValue - minValue
-                if effective_range > self._max_type_range[self.datatype.typeName()]:
-                    raise ValueError("Effective range greater than range of type")
-
-        for k in column_props.keys():
-            ensure(k in ColumnSpecOptions._ALLOWED_PROPERTIES, f'invalid column option {k}')
-
-        for arg in ColumnSpecOptions._REQUIRED_PROPERTIES:
-            ensure(column_props.get(arg) is not None, f'missing column option {arg}')
-
-        for arg in ColumnSpecOptions._FORBIDDEN_PROPERTIES:
-            ensure(arg not in column_props, f'forbidden column option {arg}')
-
-        # check weights and values
-        if 'weights' in column_props:
-            ensure('values' in column_props,
-                   f"weights are only allowed for columns with values - column '{column_props['name']}' ")
-            ensure(column_props['values'] is not None and len(column_props['values']) > 0,
-                   f"weights must be associated with non-empty list of values - column '{column_props['name']}' ")
-            ensure(len(column_props['values']) == len(column_props['weights']),
-                   f"length(list of weights) != length(list of values)  - column '{column_props['name']}' ")
 
     def getPlanEntry(self):
         """ Get execution plan entry for object
@@ -949,17 +980,17 @@ class ColumnGenerationSpec(object):
             new_def = baseval
         return new_def
 
-    def _makeSingleGenerationExpression(self, index=None, use_pandas_optimizations=False):
+    def _makeSingleGenerationExpression(self, index=None, use_pandas_optimizations=True):
         """ generate column data for a single column value via Spark SQL expression
 
+            :param index: for multi column generation, specifies index of column being generated
+            :param use_pandas_optimizations: if True, uses Pandas vectorized optimizations. Defaults to `True`
             :returns: spark sql `column` or expression that can be used to generate a column
         """
         self.logger.debug("building column : %s", self.name)
 
         # get key column specification properties
-        col_is_rand, cdistribution = self['random'], self['distribution']
-        base_col = self.baseColumn
-        c_begin, c_end, c_interval = self['begin'], self['end'], self['interval']
+        col_is_rand, cdistribution = self[OPTION_RANDOM], self['distribution']
         percent_nulls = self['percentNulls']
         sformat = self['format']
 
@@ -1143,6 +1174,46 @@ class ColumnGenerationSpec(object):
             self._dataRange = NRange(0, 1, 1)
         self.executionHistory.append(f".. using adjusted effective range: {self._dataRange}")
 
+    def _getMultiColumnDetails(self, validate):
+        """ Determine min and max number of columns to generate along with `structType` for columns
+            with multiple columns / features
+
+        :param validate:  If true, raises ValueError if there are bad option entries
+        :return: tuple of (min_columns, max_columns, structType
+        """
+        num_columns = self['numColumns']
+        struct_type = self['structType']
+
+        if num_columns is None:
+            num_columns = self['numFeatures']
+
+        if num_columns is None:
+            min_num_columns, max_num_columns = 1, 1
+        elif isinstance(num_columns, int):
+            min_num_columns, max_num_columns = int(num_columns), int(num_columns)
+        elif isinstance(num_columns, tuple):
+            if validate and ((len(num_columns) != 2) or not all(isinstance(c, int) for c in num_columns)):
+                raise ValueError(f"Bad value [{num_columns}] for `numColumns` / `numFeatures` attribute")
+
+            min_num_columns, max_num_columns = int(num_columns[0]), int(num_columns[1])
+
+            if validate and (min_num_columns > max_num_columns):
+                raise ValueError(f"Bad value [{num_columns}] for `numColumns` / `numFeatures` attribute")
+        else:
+            if validate:
+                raise ValueError(f"Bad value [{num_columns}] for `numColumns` / `numFeatures` attribute")
+
+            min_num_columns, max_num_columns = 1, 1
+
+        if validate and (min_num_columns != max_num_columns) and (struct_type != "array"):
+            self.logger.warning(
+                f"Varying number of features / columns specified for non-array column [{self.name}]")
+            self.logger.warning(
+                f"Lower bound for number of features / columns ignored for [{self.name}]")
+            min_num_columns = max_num_columns
+
+        return min_num_columns, max_num_columns, struct_type
+
     def makeGenerationExpressions(self):
         """ Generate structured column if multiple columns or features are specified
 
@@ -1154,14 +1225,11 @@ class ColumnGenerationSpec(object):
             :param self: is ColumnGenerationSpec for column
             :returns: spark sql `column` or expression that can be used to generate a column
         """
-        num_columns = self['numColumns']
-        struct_type = self['structType']
+        min_num_columns, max_num_columns, struct_type = self._getMultiColumnDetails(validate=True)
+
         self.executionHistory = []
 
-        if num_columns is None:
-            num_columns = self['numFeatures']
-
-        if num_columns == 1 or num_columns is None:
+        if (min_num_columns == 1) and (max_num_columns == 1):
             # record execution history for troubleshooting
             self.executionHistory.append(f"generating single column - `{self.name}` having type `{self.datatype}`")
 
@@ -1172,15 +1240,23 @@ class ColumnGenerationSpec(object):
             exec_step_history += f"`{self.baseColumn}`, method: `{self._baseColumnComputeMethod}`"
             self.executionHistory.append(exec_step_history)
         else:
-            self.executionHistory.append(f"generating multiple columns {num_columns} - `{self['name']}`")
-            retval = [self._makeSingleGenerationExpression(x, use_pandas_optimizations=True) for x in
-                      range(num_columns)]
+            self.executionHistory.append(f"generating multiple columns {max_num_columns} - `{self.name}`")
+
+            retval = []
+
+            for ix in range(max_num_columns):
+                with self._temporaryRename(f"{self.name}_{ix}") as renamed_cs:
+                    retval.append(renamed_cs._makeSingleGenerationExpression(ix, use_pandas_optimizations=True))
 
             if struct_type == 'array':
                 self.executionHistory.append(".. converting multiple columns to array")
                 retval = array(retval)
-            else:
-                # TODO : update the output columns
-                pass
+
+                if min_num_columns != max_num_columns:
+                    column_set = ",".join(self.baseColumns)
+                    diff = max_num_columns - min_num_columns
+                    expr_str = f"{min_num_columns} + (abs(hash({column_set})) % {diff + 1})"
+
+                    retval = F.slice(retval, F.lit(1), F.expr(expr_str))
 
         return retval

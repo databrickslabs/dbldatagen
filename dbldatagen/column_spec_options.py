@@ -36,6 +36,12 @@ class ColumnSpecOptions(object):
 
     :param step: Step to use for range of generated value. As an alternative, you may use the `dataRange` parameter
 
+    :param numColumns: generate `n` columns numbered from 1 .. n-1 with same definition
+
+    :param numFeatures: generate `n` columns numbered from 0 .. n-1 with same definition. Alias for `numColumns`
+
+    :param structType: If specified as "array" and used with numColumns / numFeatures, will combine columns as array
+
     :param random: If True, will generate random values for column value. Defaults to `False`
 
     :param baseColumn: Either the string name of the base column, or a list of columns to use to
@@ -46,15 +52,15 @@ class ColumnSpecOptions(object):
 
     :param weights: List of discrete weights for the colummn. Should be integer values.
                     For example, you might declare a column for status values with a weighted distribution with
-                    the following statement: \
+                    the following statement:
                     `withColumn("status", StringType(), values=['online', 'offline', 'unknown'], weights=[3,2,1])`
 
     :param percentNulls: Specifies numeric percentage of generated values to be populated with SQL `null`.
                           Value is fraction representing percentage between 0.0 and 1.0
                           For example: `percentNulls=0.12` will give approximately 12% nulls for this field in the
                           output.
-s
-    :param unique_values: Number of unique values for column.
+
+    :param uniqueValues: Number of unique values for column.
                           If the unique values are specified for a timestamp or date field, the values will be chosen
                           working back from the end of the previous month,
                           unless `begin`, `end` and `interval` parameters are specified
@@ -76,7 +82,7 @@ s
 
     :param template: template controlling how text should be generated
 
-    :param text_separator: string specifying separator to be used when constructing strings with prefix and suffix
+    :param textSeparator: string specifying separator to be used when constructing strings with prefix and suffix
 
     :param prefix: string specifying prefix text to construct field from prefix and numeric value. Both `prefix` and
                    `suffix` can be used together

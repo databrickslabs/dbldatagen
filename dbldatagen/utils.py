@@ -15,11 +15,13 @@ import re
 
 
 def deprecated(message=""):
-    ''' Define a deprecated decorator without dependencies on 3rd party libraries
+    """ Define a deprecated decorator without dependencies on 3rd party libraries
 
     Note there is a 3rd party library called `deprecated` that provides this feature but goal is to only have
     dependencies on packages already used in the Databricks runtime
-    '''
+    """
+
+    # create closure around function that follows use of the decorator
 
     def deprecated_decorator(func):
         @functools.wraps(func)
@@ -114,7 +116,13 @@ def topologicalSort(sources, initial_columns=None, flatten=True):
     :arg sources: list of ``(name, set(names of dependencies))`` pairs
     :arg initial_columns: force ``initial_columns`` to be computed first
     :arg flatten: if true, flatten output list
-    :returns: list of names in dependency order. If not flattened, result will be list of lists
+    :returns: list of names in dependency order separated into build phases
+
+    .. note::
+       The algorith will give preference to retaining order of inbound sequence
+       over modifying order to produce a lower number of build phases.
+
+       Overall the effect is that the input build order should be retained unless there are forward references
     """
     # generate a copy so that we can modify in place
     pending = [(name, set(deps)) for name, deps in sources]
@@ -125,27 +133,36 @@ def topologicalSort(sources, initial_columns=None, flatten=True):
         next_pending = []
         gen = []
         value_emitted = False
+        defer_emitted = False
         gen_provided = []
         for entry in pending:
             name, deps = entry
             deps.difference_update(provided)
             if deps:
                 next_pending.append((name, set(deps)))
+
+                # if dependencies will be satisfied by item emitted in this round, defer output
+                if not deps.difference(gen_provided):
+                    defer_emitted = True
+            elif defer_emitted:
+                next_pending.append((name, set(deps)))
             elif name in provided:
-                value_emitted |= True
+                value_emitted = True
             else:
                 gen.append(name)
                 gen_provided.append(name)
-                value_emitted |= True
+                value_emitted = True
         provided.extend(gen_provided)
         build_orders.append(gen)
+
         if not value_emitted:
             raise ValueError(f"cyclic or missing dependency detected [{next_pending}]")
 
         pending = next_pending
 
     if flatten:
-        return [item for sublist in build_orders for item in sublist]
+        flattened_list = [item for sublist in build_orders for item in sublist]
+        return flattened_list
     else:
         return build_orders
 
@@ -156,7 +173,7 @@ _WEEKS_PER_YEAR = 52
 
 
 def parse_time_interval(spec):
-    '''parse time interval from string'''
+    """parse time interval from string"""
     hours = 0
     minutes = 0
     weeks = 0
@@ -220,7 +237,7 @@ def parse_time_interval(spec):
 def split_list_matching_condition(lst, cond):
     """ Split a list on elements that match a condition
 
-    This will find all matches of a specific condition in the list and split the list into sublists around the
+    This will find all matches of a specific condition in the list and split the list into sub lists around the
     element that matches this condition.
 
     It will handle multiple matches performing splits on each match.
@@ -239,6 +256,7 @@ def split_list_matching_condition(lst, cond):
     :arg cond: lambda function or function taking single argument and returning True or False
     :returns: list of sublists
     """
+    retval = []
 
     def match_condition(matchList, matchFn):
         """Return first index of element of list matching condition"""
@@ -250,9 +268,6 @@ def split_list_matching_condition(lst, cond):
                 return i
 
         return -1
-
-    # main code
-    retval = []
 
     if lst is None:
         retval = lst
