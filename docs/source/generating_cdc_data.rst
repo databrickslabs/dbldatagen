@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Generating Change Data Capture data
+Generating Change Data Capture Data
 ===================================
 
 This section explores some of the features for generating CDC style data - that is exploring the ability to

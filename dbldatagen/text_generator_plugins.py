@@ -63,6 +63,7 @@ class PyfuncText(TextGenerator):  # lgtm [py/missing-equals]
             of the `initFn` calls
 
             :param txtGen: - reference to outer PyfnText object
+
         """
 
         def __init__(self, txtGen):
@@ -185,7 +186,8 @@ class PyfuncTextFactory:
     def __init__(self, name=None):
         """
 
-        :param name:
+        :param name: name of generated object (when converted to string via ``str``)
+
         """
         self._initFn = None
         self._rootProperty = None
