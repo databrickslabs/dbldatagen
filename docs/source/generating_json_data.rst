@@ -195,51 +195,52 @@ functions such as `named_struct` and `to_json`.
 
    lines = ['delta', 'xyzzy', 'lakehouse', 'gadget', 'droid']
 
-   testDataSpec = (dg.DataGenerator(spark, name="device_data_set", rows=1000000,
-                                    partitions=8,
-                                    randomSeedMethod='hash_fieldname')
-                   .withIdOutput()
-                   # we'll use hash of the base field to generate the ids to
-                   # avoid a simple incrementing sequence
-                   .withColumn("internal_device_id", LongType(), minValue=0x1000000000000,
-                               uniqueValues=device_population, omit=True, baseColumnType="hash")
+   testDataSpec = (
+       dg.DataGenerator(spark, name="device_data_set", rows=1000000,
+                        partitions=8,
+                        randomSeedMethod='hash_fieldname')
+       .withIdOutput()
+       # we'll use hash of the base field to generate the ids to
+       # avoid a simple incrementing sequence
+       .withColumn("internal_device_id", LongType(), minValue=0x1000000000000,
+                   uniqueValues=device_population, omit=True, baseColumnType="hash")
 
-                   # note for format strings, we must use "%lx" not "%x" as the
-                   # underlying value is a long
-                   .withColumn("device_id", StringType(), format="0x%013x",
-                               baseColumn="internal_device_id")
+       # note for format strings, we must use "%lx" not "%x" as the
+       # underlying value is a long
+       .withColumn("device_id", StringType(), format="0x%013x",
+                   baseColumn="internal_device_id")
 
-                   # the device / user attributes will be the same for the same device id
-                   # so lets use the internal device id as the base column for these attribute
-                   .withColumn("country", StringType(), values=country_codes,
-                               weights=country_weights,
-                               baseColumn="internal_device_id")
+       # the device / user attributes will be the same for the same device id
+       # so lets use the internal device id as the base column for these attribute
+       .withColumn("country", StringType(), values=country_codes,
+                   weights=country_weights,
+                   baseColumn="internal_device_id")
 
-                   .withColumn("manufacturer", StringType(), values=manufacturers,
-                               baseColumn="internal_device_id", omit=True)
-                   .withColumn("line", StringType(), values=lines, baseColumn="manufacturer",
-                               baseColumnType="hash", omit=True)
-                   .withColumn("manufacturer_info", "string",
-                               expr="to_json(named_struct('line', line, 'manufacturer', manufacturer))",
-                               baseColumn=['manufacturer', 'line'])
+       .withColumn("manufacturer", StringType(), values=manufacturers,
+                   baseColumn="internal_device_id", omit=True)
+       .withColumn("line", StringType(), values=lines, baseColumn="manufacturer",
+                   baseColumnType="hash", omit=True)
+       .withColumn("manufacturer_info", "string",
+                   expr="to_json(named_struct('line', line, 'manufacturer', manufacturer))",
+                   baseColumn=['manufacturer', 'line'])
 
 
-                   .withColumn("model_ser", IntegerType(), minValue=1, maxValue=11,
-                               baseColumn="device_id",
-                               baseColumnType="hash", omit=True)
+       .withColumn("model_ser", IntegerType(), minValue=1, maxValue=11,
+                   baseColumn="device_id",
+                   baseColumnType="hash", omit=True)
 
-                   .withColumn("event_type", StringType(),
-                               values=["activation", "deactivation", "plan change",
-                                       "telecoms activity", "internet activity", "device error"],
-                               random=True, omit=True)
-                   .withColumn("event_ts", "timestamp",
-                               begin="2020-01-01 01:00:00", end="2020-12-31 23:59:00",
-                               interval="1 minute", random=True, omit=True)
+       .withColumn("event_type", StringType(),
+                   values=["activation", "deactivation", "plan change",
+                           "telecoms activity", "internet activity", "device error"],
+                   random=True, omit=True)
+       .withColumn("event_ts", "timestamp",
+                   begin="2020-01-01 01:00:00", end="2020-12-31 23:59:00",
+                   interval="1 minute", random=True, omit=True)
 
-                   .withColumn("event_info", "string",
-                               expr="to_json(named_struct('event_type', event_type, 'event_ts', event_ts))",
-                               baseColumn=['event_type', 'event_ts'])
-                   )
+       .withColumn("event_info", "string",
+                   expr="to_json(named_struct('event_type', event_type, 'event_ts', event_ts))",
+                   baseColumn=['event_type', 'event_ts'])
+       )
 
    dfTestData = testDataSpec.build()
 
