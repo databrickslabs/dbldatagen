@@ -10,6 +10,7 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 * Fixed template issues 
 * Added use of prospector to build process to validate common code issues
 * Apply pandas optimizations when generating multiple columns using same `withColumn` or `withColumnSpec`
+* Document reformatting and updates
 
 ### Version 0.3.2
 
