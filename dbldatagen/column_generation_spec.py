@@ -626,7 +626,7 @@ class ColumnGenerationSpec(object):
         """ get column names as list of tuples `(name, datatype)`"""
         min_num_columns, max_num_columns, struct_type = self._getMultiColumnDetails(validate=False)
 
-        if num_columns > 1 and struct_type is None:
+        if max_num_columns > 1 and struct_type is None:
             return [(f"{self.name}_{x}", self.datatype) for x in range(0, max_num_columns)]
         else:
             return [(self.name, self.datatype)]

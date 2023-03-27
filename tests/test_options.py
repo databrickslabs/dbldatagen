@@ -1,4 +1,5 @@
 import re
+import logging
 import pytest
 
 import dbldatagen as dg
@@ -7,8 +8,27 @@ spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
 
 class TestUseOfOptions:
-    def setUp(self):
-        print("setting up")
+
+    @pytest.fixture
+    def errorsAndWarningsLog(self, caplog):
+        class ErrorsAndWarningsLogs:
+
+            def __init__(self, caplog):
+                self._caplog = caplog
+                caplog.set_level(logging.WARNING)
+
+            def clear(self):
+                self._caplog.clear()
+
+            def findMessage(self, searchText):
+                seed_column_warnings_and_errors = 0
+                for r in self._caplog.records:
+                    if (r.levelname in ["WARNING", "ERROR"]) and searchText in r.message:
+                        seed_column_warnings_and_errors += 1
+
+                return seed_column_warnings_and_errors
+
+        return ErrorsAndWarningsLogs(caplog)
 
     def test_basic(self):
         # will have implied column `id` for ordinal of row
@@ -239,8 +259,10 @@ class TestUseOfOptions:
 
             df = ds.build()
 
-    def test_random_multiple_columns_warning(self):
+    def test_random_multiple_columns_warning(self, errorsAndWarningsLog):
         # will have implied column `id` for ordinal of row
+
+        errorsAndWarningsLog.clear()
 
         ds = (
             dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=1000, partitions=4, random=True)
@@ -251,5 +273,9 @@ class TestUseOfOptions:
 
         )
 
-        print("test")
         df = ds.build()
+
+        # find warngings about lower bounds
+        msgs = errorsAndWarningsLog.findMessage("Lower bound")
+
+        assert msgs > 0

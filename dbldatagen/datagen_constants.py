@@ -41,4 +41,3 @@ MIN_SPARK_VERSION = (3, 1, 2)
 OPTION_RANDOM = "random"
 OPTION_RANDOM_SEED_METHOD = "randomSeedMethod"
 OPTION_RANDOM_SEED = "randomSeed"
-
