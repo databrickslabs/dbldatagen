@@ -38,7 +38,7 @@ extended syntax.
                .withColumn("address", text=fakerText("address" ))
                .withColumn("email", text=fakerText("ascii_company_email") )
                .withColumn("ip_address", text=fakerText("ipv4_private" ))
-               .withColumn("faker_text", text=fakerText("sentence", ext_word_list=my_word_list) )
+               .withColumn("faker_text", text=fakerText("sentence", ext_word_list=my_word_list))
                )
    dfFakerOnly = fakerDataspec.build()
 
@@ -91,7 +91,9 @@ The following code shows use of a custom Python function to generate text:
 
    pluginDataspec = (DataGenerator(spark, rows=data_rows, partitions=partitions_requested,
                      randomSeedMethod="hash_fieldname")
-                     .withColumn("text", text=PyfuncText(text_generator, initFn=initPluginContext))
+                     .withColumn("text",
+                                 text=PyfuncText(text_generator,
+                                 initFn=initPluginContext))
                     )
 
    dfPlugin = pluginDataspec.build()

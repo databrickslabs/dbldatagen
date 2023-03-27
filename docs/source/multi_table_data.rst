@@ -1,7 +1,7 @@
 .. Test Data Generator documentation master file, created by
-   sphinx-quickstart on Sun Jun 21 10:54:30 2020.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+sphinx-quickstart on Sun Jun 21 10:54:30 2020.
+You can adapt this file completely to your liking, but it should at least
+contain the root `toctree` directive.
 
 Generating and Using Data with Multiple Tables
 ==============================================
@@ -73,7 +73,9 @@ Here we use a simple sequence for our plan ids.
    import dbldatagen as dg
    import pyspark.sql.functions as F
 
-   spark.catalog.clearCache()  # clear cache so that if we run multiple times to check performance, we're not relying on cache
+   # clear cache so that if we run multiple times to check performance,
+   # we're not relying on cache
+   spark.catalog.clearCache()
 
    UNIQUE_PLANS = 20
    PLAN_MIN_VALUE = 100
@@ -87,36 +89,35 @@ Here we use a simple sequence for our plan ids.
    spark.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", 20000)
 
 
-   plan_dataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
-               .withColumn("plan_id","int", minValue=PLAN_MIN_VALUE, uniqueValues=UNIQUE_PLANS)
-               # use plan_id as root value
-               .withColumn("plan_name", prefix="plan", baseColumn="plan_id")
+   plan_dataspec = (
+       dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
+       .withColumn("plan_id","int", minValue=PLAN_MIN_VALUE, uniqueValues=UNIQUE_PLANS)
+       # use plan_id as root value
+       .withColumn("plan_name", prefix="plan", baseColumn="plan_id")
 
-               # note default step is 1 so you must specify a step for small number ranges,
-               .withColumn("cost_per_mb", "decimal(5,3)", minValue=0.005, maxValue=0.050,
-                           step=0.005, random=True)
-               .withColumn("cost_per_message", "decimal(5,3)", minValue=0.001, maxValue=0.02,
-                           step=0.001, random=True)
-               .withColumn("cost_per_minute", "decimal(5,3)", minValue=0.001, maxValue=0.01,
-                           step=0.001, random=True)
+       # note default step is 1 so you must specify a step for small number ranges,
+       .withColumn("cost_per_mb", "decimal(5,3)", minValue=0.005, maxValue=0.050,
+                   step=0.005, random=True)
+       .withColumn("cost_per_message", "decimal(5,3)", minValue=0.001, maxValue=0.02,
+                   step=0.001, random=True)
+       .withColumn("cost_per_minute", "decimal(5,3)", minValue=0.001, maxValue=0.01,
+                   step=0.001, random=True)
 
-               # we're modelling long distance and international prices simplistically -
-               # each is a multiplier thats applied to base rate
-               .withColumn("ld_multiplier", "decimal(5,3)", minValue=1.5, maxValue=3, step=0.05,
-                           random=True, distribution="normal", omit=True)
-               .withColumn("ld_cost_per_minute", "decimal(5,3)",
-                           expr="cost_per_minute * ld_multiplier",
-                           baseColumns=['cost_per_minute', 'ld_multiplier'])
-               .withColumn("intl_multiplier", "decimal(5,3)", minValue=2, maxValue=4, step=0.05,
-                           random=True,  distribution="normal", omit=True)
-               .withColumn("intl_cost_per_minute", "decimal(5,3)",
-                           expr="cost_per_minute * intl_multiplier",
-                           baseColumns=['cost_per_minute', 'intl_multiplier'])
+       # we're modelling long distance and international prices simplistically -
+       # each is a multiplier thats applied to base rate
+       .withColumn("ld_multiplier", "decimal(5,3)", minValue=1.5, maxValue=3, step=0.05,
+                   random=True, distribution="normal", omit=True)
+       .withColumn("ld_cost_per_minute", "decimal(5,3)",
+                   expr="cost_per_minute * ld_multiplier",
+                   baseColumns=['cost_per_minute', 'ld_multiplier'])
+       .withColumn("intl_multiplier", "decimal(5,3)", minValue=2, maxValue=4, step=0.05,
+                   random=True,  distribution="normal", omit=True)
+       .withColumn("intl_cost_per_minute", "decimal(5,3)",
+                   expr="cost_per_minute * intl_multiplier",
+                   baseColumns=['cost_per_minute', 'intl_multiplier'])
                )
 
-   df_plans = (plan_dataspec.build()
-               .cache()
-              )
+   df_plans = plan_dataspec.build().cache()
 
    display(df_plans)
 
@@ -195,10 +196,11 @@ when using hashed values, the range of the hashes produced can be large.
 
    effective_customers = df_customers.count()
 
-   print(stripMargin(f"""revised customers : {df_customers.count()},
-          |   unique customers: {df_customers.select(F.countDistinct('customer_id')).take(1)[0][0]},
-          |   unique device ids: {df_customers.select(F.countDistinct('device_id')).take(1)[0][0]},
-          |   unique phone numbers: {df_customers.select(F.countDistinct('phone_number')).take(1)[0][0]}""")
+   print(stripMargin(
+     f"""revised customers : {df_customers.count()},
+      |   unique customers: {df_customers.select(F.countDistinct('customer_id')).take(1)[0][0]},
+      |   unique device ids: {df_customers.select(F.countDistinct('device_id')).take(1)[0][0]},
+      |   unique phone numbers: {df_customers.select(F.countDistinct('phone_number')).take(1)[0][0]}""")
         )
 
    display(df_customers)
@@ -247,7 +249,8 @@ A simple approach is simply to multiply the
    # use random seed method of 'hash_fieldname' for better spread - default in later builds
    events_dataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested,
                       randomSeed=42, randomSeedMethod="hash_fieldname")
-                # use same logic as per customers dataset to ensure matching keys - but make them random
+                # use same logic as per customers dataset to ensure matching keys
+                # but make them random
                .withColumn("device_id_base","decimal(10)", minValue=CUSTOMER_MIN_VALUE,
                            uniqueValues=UNIQUE_CUSTOMERS,
                            random=True, omit=True)
@@ -260,12 +263,14 @@ A simple approach is simply to multiply the
                            weights=[50, 50, 20, 10, 5 ], random=True)
 
                # use Gamma distribution for skew towards short calls
-               .withColumn("base_minutes","decimal(7,2)",  minValue=1.0, maxValue=100.0, step=0.1,
+               .withColumn("base_minutes","decimal(7,2)",
+                           minValue=1.0, maxValue=100.0, step=0.1,
                            distribution=dg.distributions.Gamma(shape=1.5, scale=2.0),
                            random=True, omit=True)
 
                # use Gamma distribution for skew towards short transfers
-               .withColumn("base_bytes_transferred","decimal(12)",  minValue=K_1, maxValue=MB_100,
+               .withColumn("base_bytes_transferred","decimal(12)",
+                           minValue=K_1, maxValue=MB_100,
                            distribution=dg.distributions.Gamma(shape=0.75, scale=2.0),
                            random=True, omit=True)
 
@@ -308,8 +313,7 @@ Let's compute the customers and associated plans
    import pyspark.sql.functions as F
    import pyspark.sql.types as T
 
-   df_customer_pricing = df_customers.join(df_plans,
-                                           df_plans.plan_id == df_customers.plan)
+   df_customer_pricing = df_customers.join(df_plans, df_plans.plan_id == df_customers.plan)
 
    display(df_customer_pricing)
 
@@ -365,8 +369,9 @@ now let's compute the invoices
 
 .. code-block:: python
 
-   df_customer_summary = (df_customer_pricing.join(df_summary,
-                                                   df_customer_pricing.device_id == df_summary.device_id )
+   df_customer_summary = (
+         df_customer_pricing.join(df_summary,
+                                   df_customer_pricing.device_id == df_summary.device_id )
                           .createOrReplaceTempView("customer_summary"))
 
    df_invoices = spark.sql("""
