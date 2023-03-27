@@ -279,3 +279,65 @@ class TestUseOfOptions:
         msgs = errorsAndWarningsLog.findMessage("Lower bound")
 
         assert msgs > 0
+
+    @pytest.mark.parametrize("numFeaturesSupplied",
+                             [ 3,
+                               (2, 4),
+                               0,
+                               (0, 3)
+                              ])
+    def test_multiple_columns_email(self, numFeaturesSupplied):
+        # will have implied column `id` for ordinal of row
+
+        ds = (
+            dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=1000, partitions=4, random=True)
+            .withColumn("name", "string", percentNulls=0.01, template=r'\\w \\w|\\w A. \\w|test')
+            .withColumn("emails", "string", template=r'\\w.\\w@\\w.com', random=True,
+                        numFeatures=numFeaturesSupplied, structType="array")
+        )
+
+        df = ds.build()
+
+        data = df.selectExpr("emails").collect()
+
+        lengths = [len(r["emails"]) for r in data ]
+        set_lengths = set(lengths)
+
+        if isinstance(numFeaturesSupplied, int):
+            min_lengths, max_lengths = numFeaturesSupplied, numFeaturesSupplied
+        else:
+            min_lengths, max_lengths = numFeaturesSupplied
+
+        assert min(set_lengths) == min_lengths
+        assert max(set_lengths) == max_lengths
+
+    @pytest.mark.parametrize("numFeaturesSupplied",
+                             [ 3,
+                               (2, 4),
+                               0,
+                               (0, 3)
+                              ])
+    def test_multi_email_random(self, numFeaturesSupplied):
+        # will have implied column `id` for ordinal of row
+
+        ds = (
+            dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=1000, partitions=4, random=True)
+            .withColumn("name", "string", percentNulls=0.01, template=r'\\w \\w|\\w A. \\w|test')
+            .withColumn("emails", "string", template=r'\\w.\\w@\\w.com', random=True,
+                        numFeatures=numFeaturesSupplied, structType="array")
+        )
+
+        df = ds.build()
+
+        data = df.selectExpr("emails").collect()
+
+        lengths = [len(set(r["emails"])) for r in data]
+        set_lengths = set(lengths)
+
+        if isinstance(numFeaturesSupplied, int):
+            min_lengths, max_lengths = numFeaturesSupplied, numFeaturesSupplied
+        else:
+            min_lengths, max_lengths = numFeaturesSupplied
+
+        assert min(set_lengths) == min_lengths
+        assert max(set_lengths) == max_lengths

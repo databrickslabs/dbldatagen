@@ -952,9 +952,11 @@ class ColumnGenerationSpec(object):
             new_def = baseval
         return new_def
 
-    def _makeSingleGenerationExpression(self, index=None, use_pandas_optimizations=False):
+    def _makeSingleGenerationExpression(self, index=None, use_pandas_optimizations=True):
         """ generate column data for a single column value via Spark SQL expression
 
+            :param index: for multi column generation, specifies index of column being generated
+            :param use_pandas_optimizations: if True, uses Pandas vectorized optimizations. Defaults to `True`
             :returns: spark sql `column` or expression that can be used to generate a column
         """
         self.logger.debug("building column : %s", self.name)
@@ -1219,5 +1221,12 @@ class ColumnGenerationSpec(object):
             if struct_type == 'array':
                 self.executionHistory.append(".. converting multiple columns to array")
                 retval = array(retval)
+
+                if min_num_columns != max_num_columns:
+                    column_set = ",".join(self.baseColumns)
+                    diff = max_num_columns - min_num_columns
+                    expr_str = f"{min_num_columns} + (abs(hash({column_set})) % {diff+1})"
+
+                    retval = F.slice(retval, F.lit(1), F.expr(expr_str))
 
         return retval
