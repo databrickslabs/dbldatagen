@@ -12,11 +12,16 @@ import logging
 from pyspark.sql.functions import col, pandas_udf
 from pyspark.sql.functions import lit, concat, rand, round as sql_round, array, expr, when, udf, \
     format_string
+
+import pyspark.sql.functions as F
+
 from pyspark.sql.types import FloatType, IntegerType, StringType, DoubleType, BooleanType, \
     TimestampType, DataType, DateType, ArrayType, MapType, StructType
 
 from .column_spec_options import ColumnSpecOptions
-from .datagen_constants import RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, RANDOM_SEED_RANDOM, DEFAULT_SEED_COLUMN
+from .datagen_constants import RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, RANDOM_SEED_RANDOM, \
+    DEFAULT_SEED_COLUMN, OPTION_RANDOM, OPTION_RANDOM_SEED
+
 from .daterange import DateRange
 from .distributions import Normal, DataDistribution
 from .nrange import NRange
@@ -181,7 +186,7 @@ class ColumnGenerationSpec(object):
             assert self.name is not None, "field name cannot be None"
             self._randomSeed = abs(hash(self.name))
         else:
-            self._randomSeed = self["randomSeed"]
+            self._randomSeed = self[OPTION_RANDOM_SEED]
 
         # random seed method should be "fixed" or "hash_fieldname"
         if self._randomSeed is not None and self._randomSeedMethod is None:
@@ -321,7 +326,7 @@ class ColumnGenerationSpec(object):
     @property
     def isRandom(self):
         """ returns True if column will be randomly generated"""
-        return self["random"]
+        return self[OPTION_RANDOM]
 
     @property
     def textGenerator(self):
@@ -373,9 +378,8 @@ class ColumnGenerationSpec(object):
         if self.isWeightedValuesColumn:
             # if its a weighted values column, then create temporary for it
             # not supported for feature / array columns for now
-            ensure(self['numFeatures'] is None or self['numFeatures'] <= 1,
-                   "weighted columns not supported for multi-column or multi-feature values")
-            ensure(self['numColumns'] is None or self['numColumns'] <= 1,
+            min_num_columns, max_num_columns, struct_type = self._getMultiColumnDetails(validate=False)
+            ensure(max_num_columns is None or max_num_columns <= 1,
                    "weighted columns not supported for multi-column or multi-feature values")
             if self.random:
                 temp_name = f"_rnd_{self.name}"
@@ -611,21 +615,19 @@ class ColumnGenerationSpec(object):
 
     def getNames(self):
         """ get column names as list of strings"""
-        num_columns = self._csOptions.getOrElse('numColumns', 1)
-        struct_type = self._csOptions.getOrElse('structType', None)
+        min_num_columns, max_num_columns, struct_type = self._getMultiColumnDetails(validate=False)
 
-        if num_columns > 1 and struct_type is None:
-            return [f"{self.name}_{x}" for x in range(0, num_columns)]
+        if max_num_columns > 1 and struct_type is None:
+            return [f"{self.name}_{x}" for x in range(0, max_num_columns)]
         else:
             return [self.name]
 
     def getNamesAndTypes(self):
         """ get column names as list of tuples `(name, datatype)`"""
-        num_columns = self._csOptions.getOrElse('numColumns', 1)
-        struct_type = self._csOptions.getOrElse('structType', None)
+        min_num_columns, max_num_columns, struct_type = self._getMultiColumnDetails(validate=False)
 
         if num_columns > 1 and struct_type is None:
-            return [(f"{self.name}_{x}", self.datatype) for x in range(0, num_columns)]
+            return [(f"{self.name}_{x}", self.datatype) for x in range(0, max_num_columns)]
         else:
             return [(self.name, self.datatype)]
 
@@ -1144,6 +1146,46 @@ class ColumnGenerationSpec(object):
             self._dataRange = NRange(0, 1, 1)
         self.executionHistory.append(f".. using adjusted effective range: {self._dataRange}")
 
+    def _getMultiColumnDetails(self, validate):
+        """ Determine min and max number of columns to generate along with `structType` for columns
+            with multiple columns / features
+
+        :param validate:  If true, raises ValueError if there are bad option entries
+        :return: tuple of (min_columns, max_columns, structType
+        """
+        num_columns = self['numColumns']
+        struct_type = self['structType']
+
+        if num_columns is None:
+            num_columns = self['numFeatures']
+
+        if num_columns is None:
+            min_num_columns, max_num_columns = 1, 1
+        elif isinstance(num_columns, int):
+            min_num_columns, max_num_columns = int(num_columns), int(num_columns)
+        elif isinstance(num_columns, tuple):
+            if validate and ((len(num_columns) != 2) or not all(isinstance(c, int) for c in num_columns)):
+                raise ValueError(f"Bad value [{num_columns}] for `numColumns` / `numFeatures` attribute")
+
+            min_num_columns, max_num_columns = int(num_columns[0]), int(num_columns[1])
+
+            if validate and (min_num_columns > max_num_columns):
+                raise ValueError(f"Bad value [{num_columns}] for `numColumns` / `numFeatures` attribute")
+        else:
+            if validate:
+                raise ValueError(f"Bad value [{num_columns}] for `numColumns` / `numFeatures` attribute")
+
+            min_num_columns, max_num_columns = 1, 1
+
+        if validate and (min_num_columns != max_num_columns) and (struct_type != "array"):
+            self.logger.warning(
+                f"Varying number of features / columns specified for non-array column [{self.name}]")
+            self.logger.warning(
+                f"Lower bound for number of features / columns ignored for [{self.name}]")
+            min_num_columns = max_num_columns
+
+        return min_num_columns, max_num_columns, struct_type
+
     def makeGenerationExpressions(self):
         """ Generate structured column if multiple columns or features are specified
 
@@ -1155,14 +1197,11 @@ class ColumnGenerationSpec(object):
             :param self: is ColumnGenerationSpec for column
             :returns: spark sql `column` or expression that can be used to generate a column
         """
-        num_columns = self['numColumns']
-        struct_type = self['structType']
+        min_num_columns, max_num_columns, struct_type = self._getMultiColumnDetails(validate=True)
+
         self.executionHistory = []
 
-        if num_columns is None:
-            num_columns = self['numFeatures']
-
-        if num_columns == 1 or num_columns is None:
+        if (min_num_columns == 1) and (max_num_columns == 1):
             # record execution history for troubleshooting
             self.executionHistory.append(f"generating single column - `{self.name}` having type `{self.datatype}`")
 
@@ -1173,15 +1212,12 @@ class ColumnGenerationSpec(object):
             exec_step_history += f"`{self.baseColumn}`, method: `{self._baseColumnComputeMethod}`"
             self.executionHistory.append(exec_step_history)
         else:
-            self.executionHistory.append(f"generating multiple columns {num_columns} - `{self['name']}`")
+            self.executionHistory.append(f"generating multiple columns {max_num_columns} - `{self['name']}`")
             retval = [self._makeSingleGenerationExpression(x, use_pandas_optimizations=True) for x in
-                      range(num_columns)]
+                      range(max_num_columns)]
 
             if struct_type == 'array':
                 self.executionHistory.append(".. converting multiple columns to array")
                 retval = array(retval)
-            else:
-                # TODO : update the output columns
-                pass
 
         return retval

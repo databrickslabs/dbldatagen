@@ -13,7 +13,9 @@ from pyspark.sql.types import LongType, IntegerType, StringType, StructType, Str
 from .spark_singleton import SparkSingleton
 from .column_generation_spec import ColumnGenerationSpec
 from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, \
-                               DEFAULT_SEED_COLUMN, SPARK_RANGE_COLUMN, MIN_SPARK_VERSION
+                               DEFAULT_SEED_COLUMN, SPARK_RANGE_COLUMN, MIN_SPARK_VERSION, \
+                               OPTION_RANDOM, OPTION_RANDOM_SEED, OPTION_RANDOM_SEED_METHOD
+
 from .utils import ensure, topologicalSort, DataGenError, deprecated, split_list_matching_condition
 from . _version import _get_spark_version
 from .schema_parser import SchemaParser
@@ -40,6 +42,7 @@ class DataGenerator:
     :param batchSize: = UDF batch number of rows to pass via Apache Arrow to Pandas UDFs
     :param debug: = if set to True, output debug level of information
     :param seedColumnName: = if set, this should be the name of the `seed` or logical `id` column. Defaults to `id`
+    :param random: = if set, specifies default value of `random` attribute for all columns where not set
 
     By default the seed column is named `id`. If you need to use this column name in your generated data,
     it is recommended that you use a different name for the seed column - for example `_id`.
@@ -63,6 +66,7 @@ class DataGenerator:
     def __init__(self, sparkSession=None, name=None, randomSeedMethod=None,
                  rows=1000000, startingId=0, randomSeed=None, partitions=None, verbose=False,
                  batchSize=None, debug=False, seedColumnName=DEFAULT_SEED_COLUMN,
+                 random=False,
                  **kwargs):
         """ Constructor for data generator object """
 
@@ -118,6 +122,9 @@ class DataGenerator:
             self.logger.warning("option 'generateWithSelects' switch is deprecated - selects will always be used")
 
         self._seedMethod = randomSeedMethod
+
+        # set default random setting
+        self._defaultRandom = random if random is not None else False
 
         if randomSeed is None:
             self._instanceRandomSeed = self._randomSeed
@@ -296,6 +303,13 @@ class DataGenerator:
     def randomSeed(self):
         """ return the data generation spec random seed"""
         return self._instanceRandomSeed
+
+    @property
+    def random(self):
+        """ return the data generation spec default random setting for columns to be used
+            when an explicit `random` attribute setting is not supplied
+        """
+        return self._defaultRandom
 
     def _markForPlanRegen(self):
         """Mark that build plan needs to be regenerated
@@ -598,6 +612,9 @@ class DataGenerator:
         if fields is not None and type(fields) is str:
             fields = [fields]
 
+        if OPTION_RANDOM not in kwargs:
+            kwargs[OPTION_RANDOM] = self._defaultRandom
+
         # add support for deprecated legacy names
         if "match_types" in kwargs:
             assert matchTypes is None, "Argument 'match_types' is deprecated, use 'matchTypes' instead"
@@ -648,7 +665,7 @@ class DataGenerator:
         return True
 
     def withColumnSpec(self, colName, minValue=None, maxValue=None, step=1, prefix=None,
-                       random=False, distribution=None,
+                       random=None, distribution=None,
                        implicit=False, dataRange=None, omit=False, baseColumn=None, **kwargs):
         """ add a column specification for an existing column
 
@@ -669,6 +686,9 @@ class DataGenerator:
                f"""unnecessary `datatype` argument specified for `withColumnSpec` for column `{colName}` -
                     Datatype parameter is only needed for `withColumn` and not permitted for `withColumnSpec`
                """)
+
+        if random is None:
+            random = self._defaultRandom
 
         # handle migration of old `min` and `max` options
         if _OLD_MIN_OPTION in kwargs:
@@ -705,7 +725,7 @@ class DataGenerator:
         return colName in self._columnSpecsByName
 
     def withColumn(self, colName, colType=StringType(), minValue=None, maxValue=None, step=1,
-                   dataRange=None, prefix=None, random=False, distribution=None,
+                   dataRange=None, prefix=None, random=None, distribution=None,
                    baseColumn=None, nullable=True,
                    omit=False, implicit=False, noWarn=False,
                    **kwargs):
@@ -756,6 +776,9 @@ class DataGenerator:
             maxValue = kwargs[_OLD_MAX_OPTION]
             kwargs.pop(_OLD_MAX_OPTION, None)
 
+        if random is None:
+            random = self._defaultRandom
+
         new_props = {}
         new_props.update(kwargs)
 
@@ -792,25 +815,25 @@ class DataGenerator:
         # if the column  has the option `random` set to true
         # then use the instance level random seed
         # otherwise use the default random seed for the class
-        if "randomSeed" in new_props:
-            effective_random_seed = new_props["randomSeed"]
-            new_props.pop("randomSeed")
-            new_props["random"] = True
+        if OPTION_RANDOM_SEED in new_props:
+            effective_random_seed = new_props[OPTION_RANDOM_SEED]
+            new_props.pop(OPTION_RANDOM_SEED)
+            new_props[OPTION_RANDOM] = True
 
             # if random seed has override but randomSeedMethod does not
             # set it to fixed
-            if "randomSeedMethod" not in new_props:
-                new_props["randomSeedMethod"] = RANDOM_SEED_FIXED
+            if OPTION_RANDOM_SEED_METHOD not in new_props:
+                new_props[OPTION_RANDOM_SEED_METHOD] = RANDOM_SEED_FIXED
 
-        elif "random" in new_props and new_props["random"]:
+        elif OPTION_RANDOM in new_props and new_props[OPTION_RANDOM]:
             effective_random_seed = self._instanceRandomSeed
         else:
             effective_random_seed = self._randomSeed
 
         # handle column level override
-        if "randomSeedMethod" in new_props:
-            effective_random_seed_method = new_props["randomSeedMethod"]
-            new_props.pop("randomSeedMethod")
+        if OPTION_RANDOM_SEED_METHOD in new_props:
+            effective_random_seed_method = new_props[OPTION_RANDOM_SEED_METHOD]
+            new_props.pop(OPTION_RANDOM_SEED_METHOD)
         else:
             effective_random_seed_method = self._seedMethod
 
