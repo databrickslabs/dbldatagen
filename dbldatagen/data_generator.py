@@ -605,6 +605,9 @@ class DataGenerator:
         :returns: modified in-place instance of test data generator allowing for chaining of calls following
                   Builder pattern
 
+        .. note::
+           matchTypes may also take SQL type strings or a list of SQL type strings such as "array<integer>"
+
         You may also add a variety of options to further control the test data generation process.
         For full list of options, see :doc:`/reference/api/dbldatagen.column_spec_options`.
 
