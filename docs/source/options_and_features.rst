@@ -135,7 +135,8 @@ If the attribute, `random` is True, the root column value is generated from a ra
 For random columns, the `randomSeedMethod` and the `randomSeed` method determine how the random root value is generated.
 
 When the `randomSeedMethod` attribute value is `fixed`, it will be generated using a random number generator
- with a designated `randomSeed` unless the `randomSeed` value is -1.
+with a designated `randomSeed` unless the `randomSeed` value is -1. When the `randomSeed` value is -1, then the
+generated values will be generated without a fixed random seed, so data will be different from run to run.
 
 If the `randomSeedMethod` value is `hash_fieldname`, the random seed for each column is computed using a hash function
 over the field name.
