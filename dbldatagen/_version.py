@@ -33,7 +33,7 @@ def get_version(version):
     return version_info
 
 
-__version__ = "0.3.2"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpversion
+__version__ = "0.3.3post2"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpversion
 __version_info__ = get_version(__version__)
 
 
@@ -48,4 +48,3 @@ def _get_spark_version(sparkVersion):
         logger.warning("Could not parse spark version - using assumed Spark Version : %s", spark_version_info)
 
     return spark_version_info
-

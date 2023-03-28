@@ -25,7 +25,7 @@ class TestComplexColumns:
     @pytest.mark.parametrize("complexFieldType, expectedType, invalidValueCondition",
                              [("array<int>", ArrayType(IntegerType()), "complex_field is not Null"),
                               ("array<array<string>>", ArrayType(ArrayType(StringType())), "complex_field is not Null"),
-                              ("map<STRING, INT>", MapType(StringType(), IntegerType()),"complex_field is not Null"),
+                              ("map<STRING, INT>", MapType(StringType(), IntegerType()), "complex_field is not Null"),
                               ("struct<a:binary, b:int, c:float>",
                                StructType([StructField("a", BinaryType()), StructField("b", IntegerType()),
                                            StructField("c", FloatType())]),
@@ -58,7 +58,7 @@ class TestComplexColumns:
     @pytest.mark.parametrize("complexFieldType, expectedType, invalidValueCondition",
                              [("array<int>", ArrayType(IntegerType()), "complex_field is not Null"),
                               ("array<array<string>>", ArrayType(ArrayType(StringType())), "complex_field is not Null"),
-                              ("map<STRING, INT>", MapType(StringType(), IntegerType()),"complex_field is not Null"),
+                              ("map<STRING, INT>", MapType(StringType(), IntegerType()), "complex_field is not Null"),
                               ("struct<a:binary, b:int, c:float>",
                                StructType([StructField("a", BinaryType()), StructField("b", IntegerType()),
                                            StructField("c", FloatType())]),
@@ -125,7 +125,6 @@ class TestComplexColumns:
 
         valid_data_count = df.where(validValueCondition).count()
         assert valid_data_count == data_rows, "Not expecting invalid values"
-
 
     def test_basic_arrays_with_columns(self, setupLogging):
         column_count = 10
@@ -279,13 +278,3 @@ class TestComplexColumns:
                 )
         res1 = gen1.build(withTempView=True)
         assert res1.count() == 10000
-
-
-
-
-
-
-
-
-
-

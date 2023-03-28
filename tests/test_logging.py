@@ -4,7 +4,8 @@ import pytest
 from pyspark.sql import functions as F
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType
 
-#import  dbldatagen as dg
+
+# import  dbldatagen as dg
 
 
 @pytest.fixture(scope="class")
@@ -16,8 +17,8 @@ def setupSpark():
 
 @pytest.fixture(scope="class")
 def setupLogging():
-    #FORMAT = '%(asctime)-15s %(message)s'
-    #logging.basicConfig(format=FORMAT)
+    # FORMAT = '%(asctime)-15s %(message)s'
+    # logging.basicConfig(format=FORMAT)
     pass
 
 
@@ -51,7 +52,7 @@ class TestLoggingOperation:
         """
         flagged_text_warnings_and_errors = 0
         for r in caplog_object.records:
-            if (r.levelname == "WARNING" or r.levelname == "ERROR") and textFlag in r.message:
+            if (r.levelname in ["WARNING", "ERROR"]) and textFlag in r.message:
                 flagged_text_warnings_and_errors += 1
 
         return flagged_text_warnings_and_errors
@@ -70,7 +71,6 @@ class TestLoggingOperation:
                 flagged_text_info += 1
 
         return flagged_text_info
-
 
     def test_logging_operation(self, caplog):
         # caplog fixture captures log content
@@ -102,11 +102,10 @@ class TestLoggingOperation:
         message2_count = self.get_log_capture_info(caplog, "Info message 2")
         assert message2_count == 1, "Should only have 1 message 2"
 
-
     def test_logging_operation2(self, setupSpark, caplog):
         self.setup_log_capture(caplog)
 
-        spark=setupSpark
+        spark = setupSpark
 
         date_format = "%Y-%m-%d %H:%M:%S"
         log_format = "%(asctime)s %(levelname)-8s TESTING2  %(message)s"
@@ -134,7 +133,6 @@ class TestLoggingOperation:
                 )
 
         df = spec.build()
-
 
         # Prints: INFO: Version : VersionInfo(major='0', minor='3', patch='1', release='', build='')
         logger2.info("Info message 2")

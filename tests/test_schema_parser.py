@@ -81,7 +81,6 @@ class TestSchemaParser:
 
         print("exception:", e_info)
 
-
     def test_table_definition_parser(self, setupLogging):
         table1 = """CREATE TABLE student (id INT, name STRING, age INT)"""
 
@@ -154,7 +153,7 @@ class TestSchemaParser:
                               ("", [], None),
                               ])
     def test_sql_expression_parser(self, sqlExpr, expectedReferences, filterColumns):
-        references = dg.SchemaParser.columnsReferencesFromSQLString(sqlExpr, filter=filterColumns)
+        references = dg.SchemaParser.columnsReferencesFromSQLString(sqlExpr, filterItems=filterColumns)
         assert references is not None
 
         assert isinstance(references, list), "expected list of potential column references to be returned"
@@ -162,5 +161,3 @@ class TestSchemaParser:
         print(references)
 
         assert set(references) == set(expectedReferences)
-
-
