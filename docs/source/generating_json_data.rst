@@ -246,3 +246,68 @@ functions such as `named_struct` and `to_json`.
 
    #dfTestData.write.format("json").mode("overwrite").save("/tmp/jsonData2")
    display(dfTestData)
+
+Generating complex column data
+------------------------------
+There are several methods for columns with arrays, structs and maps.
+
+You can define a column has having a value of type array, map or struct. This can
+be specified in the datatype parameter to the `withColumn` method as a string such as "array<string>" or as a
+composite of datatype object instances.
+
+If the column type is based on a struct, map or array, then the `expr` attribute must be specified to provide a
+value for the column.
+
+If the `expr` attribute is not specified, then the default column value will be `NULL`.
+
+The following example illustrates some of these techniques:
+
+.. code-block:: python
+
+   import dbldatagen as dg
+
+   ds = (
+        dg.DataGenerator(spark, name="test_data_set1", rows=1000, random=True)
+       .withColumn("r", "float", minValue=1.0, maxValue=10.0, step=0.1,
+                   numColumns=5)
+       .withColumn("observations", "array<float>",
+                   expr="slice(array(r_0, r_1, r_2, r_3, r_4), 1, abs(hash(id)) % 5 + 1 )",
+                   baseColumn="r")
+       )
+
+   df = ds.build()
+   df.show()
+
+
+The above example constructs a varying length array valued column `observations` using `slice` to take
+variable length subsets of the `r` columns.
+
+ .. note::
+    Note the use of the `baseColumn` attribute here to ensure correct ordering and separation of phases.
+
+Using multi feature columns to generate arrays
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For array valued columns, where all of the elements of the array are to be generated with the same column
+specification, an alternative method is also supported.
+
+You can specify that a column has a specific number of features with structType of 'array' to control the generation of
+the column. In this case, the datatype should be the type of the individual element, not of the array.
+
+For example, the following code will generate rows with varying numbers of synthetic emails for each customer:
+
+.. code-block:: python
+
+   import dbldatagen as dg
+
+   ds = (
+        dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=1000, partitions=4,
+                         random=True)
+        .withColumn("name", "string", percentNulls=0.01, template=r'\\w \\w|\\w A. \\w|test')
+        .withColumn("emails", "string", template=r'\\w.\\w@\\w.com', numFeatures=(1, 6),
+                    structType="array")
+   )
+
+   df = ds.build()
+
+
