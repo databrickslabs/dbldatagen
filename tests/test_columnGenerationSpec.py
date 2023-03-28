@@ -21,6 +21,17 @@ class TestColumnGenerationSpec:
 
         assert cd.name == "test"
 
+    def test_tmp_name_exception(self):
+        with pytest.raises(ValueError):
+
+            cd = dg.ColumnGenerationSpec(name="test")
+
+            with cd._temporaryRename("test2") as cd2:
+                assert cd2.name == "test2"
+                raise ValueError(1)
+
+            assert cd.name == "test"
+
     def test_getNames(self):
         cd = dg.ColumnGenerationSpec(name="test")
         results = cd.getNames()

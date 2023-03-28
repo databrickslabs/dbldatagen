@@ -275,7 +275,7 @@ class TestUseOfOptions:
 
         df = ds.build()
 
-        # find warngings about lower bounds
+        # find warnings about lower bounds
         msgs = errorsAndWarningsLog.findMessage("Lower bound")
 
         assert msgs > 0

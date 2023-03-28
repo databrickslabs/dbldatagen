@@ -144,6 +144,27 @@ over the field name.
 This guarantees that data generation is repeatable unless the `randomSeed` attribute has a value of -1, and the
 `randomSeedMethod` value is `fixed`.
 
+The following example illustrates some of these features.
+
+.. code-block:: python
+
+        ds = (
+            dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=1000, partitions=4,
+                             random=True)
+            .withColumn("name", "string", percentNulls=0.01, template=r'\\w \\w|\\w A. \\w|test')
+            .withColumn("emails", "string", template=r'\\w.\\w@\\w.com', random=True,
+                        numFeatures=numFeaturesSupplied, structType="array")
+        )
+
+        df = ds.build()
+
+The use of `random=True` at the DataGenerator instance level applies `random=True` to all columns.
+
+The combination of `numFeatures=(2,6)` and `structType='array'` will generate array values with varying number of
+elements according to the underlying value generation rules - in this case, the use of a template to generate text.
+
+By default random number seeds are derived from field names, and in the case of columns with multiple features,
+the seed will be different for each feature element.
 
 Using custom SQL to control data generation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

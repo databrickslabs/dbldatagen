@@ -835,43 +835,6 @@ class ColumnGenerationSpec(object):
         """
         return self._csOptions.getOrElse(key, default)
 
-    def _checkProps(self, column_props):
-        """
-            check that column definition properties are recognized
-            and that the column definition has required properties
-
-        :raises: assertion or exception of checks fail
-        """
-        assert column_props is not None, "Column definition properties should be non-empty"
-        assert self.datatype is not None, "Column datatype must be specified"
-
-        if self.datatype.typeName() in self._max_type_range:
-            minValue = self['minValue']
-            maxValue = self['maxValue']
-
-            if minValue is not None and maxValue is not None:
-                effective_range = maxValue - minValue
-                if effective_range > self._max_type_range[self.datatype.typeName()]:
-                    raise ValueError("Effective range greater than range of type")
-
-        for k in column_props.keys():
-            ensure(k in ColumnSpecOptions._ALLOWED_PROPERTIES, f'invalid column option {k}')
-
-        for arg in ColumnSpecOptions._REQUIRED_PROPERTIES:
-            ensure(column_props.get(arg) is not None, f'missing column option {arg}')
-
-        for arg in ColumnSpecOptions._FORBIDDEN_PROPERTIES:
-            ensure(arg not in column_props, f'forbidden column option {arg}')
-
-        # check weights and values
-        if 'weights' in column_props:
-            ensure('values' in column_props,
-                   f"weights are only allowed for columns with values - column '{column_props['name']}' ")
-            ensure(column_props['values'] is not None and len(column_props['values']) > 0,
-                   f"weights must be associated with non-empty list of values - column '{column_props['name']}' ")
-            ensure(len(column_props['values']) == len(column_props['weights']),
-                   f"length(list of weights) != length(list of values)  - column '{column_props['name']}' ")
-
     def getPlanEntry(self):
         """ Get execution plan entry for object
 
