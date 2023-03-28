@@ -637,7 +637,15 @@ class DataGenerator:
             effective_fields = [x for x in effective_fields for y in patterns if re.search(y, x) is not None]
 
         if matchTypes is not None:
-            effective_fields = [x for x in effective_fields for y in matchTypes
+            effective_types = []
+
+            for typ in matchTypes:
+                if isinstance(typ, str):
+                    effective_types.append(SchemaParser.columnTypeFromString(typ))
+                else:
+                    effective_types.append(typ)
+
+            effective_fields = [x for x in effective_fields for y in effective_types
                                 if self.getColumnType(x) == y]
 
         for f in effective_fields:

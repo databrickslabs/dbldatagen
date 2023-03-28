@@ -170,6 +170,16 @@ Note that in the current release, the `expr` attribute will override other colum
    dfTestData = testDataSpec.build()
    dfTestData.write.format("json").mode("overwrite").save("/tmp/jsonData2")
 
+As the datatype can also be specified using a string, the ``withColumn`` entry for ``'event_info'`` could also be
+written as:
+
+.. code-block:: python
+
+   .withColumn("event_info",
+               "struct<event_type:string, event_ts: timestamp>",
+               expr="named_struct('event_type', event_type, 'event_ts', event_ts)",
+               baseColumn=['event_type', 'event_ts'])
+
 Generating JSON valued fields
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -252,13 +262,13 @@ Generating complex column data
 There are several methods for columns with arrays, structs and maps.
 
 You can define a column has having a value of type array, map or struct. This can
-be specified in the datatype parameter to the `withColumn` method as a string such as "array<string>" or as a
+be specified in the datatype parameter to the ``withColumn`` method as a string such as ``"array<string>"`` or as a
 composite of datatype object instances.
 
-If the column type is based on a struct, map or array, then the `expr` attribute must be specified to provide a
+If the column type is based on a struct, map or array, then the ``expr`` attribute must be specified to provide a
 value for the column.
 
-If the `expr` attribute is not specified, then the default column value will be `NULL`.
+If the ``expr`` attribute is not specified, then the default column value will be ``NULL``.
 
 The following example illustrates some of these techniques:
 
@@ -279,8 +289,8 @@ The following example illustrates some of these techniques:
    df.show()
 
 
-The above example constructs a varying length array valued column `observations` using `slice` to take
-variable length subsets of the `r` columns.
+The above example constructs a varying length array valued column ``observations`` using the ``slice`` function to take
+variable length subsets of the ``r`` columns.
 
  .. note::
     Note the use of the `baseColumn` attribute here to ensure correct ordering and separation of phases.
@@ -291,17 +301,18 @@ Using multi feature columns to generate arrays
 For array valued columns, where all of the elements of the array are to be generated with the same column
 specification, an alternative method is also supported.
 
-You can specify that a column has a specific number of features with structType of 'array' to control the generation of
-the column. In this case, the datatype should be the type of the individual element, not of the array.
+You can specify that a column has a specific number of features with ``structType`` attribute value of ``'array'``
+to control the generation of the column. In this case, the datatype should be the type of the individual element,
+not of the array.
 
-For example, the following code will generate rows with varying numbers of synthetic emails for each customer:
+For example, the following code will generate rows with varying numbers of synthetic emails for each customer row:
 
 .. code-block:: python
 
    import dbldatagen as dg
 
    ds = (
-        dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=1000, partitions=4,
+        dg.DataGenerator(sparkSession=spark, name="customers", rows=1000, partitions=4,
                          random=True)
         .withColumn("name", "string", percentNulls=0.01, template=r'\\w \\w|\\w A. \\w|test')
         .withColumn("emails", "string", template=r'\\w.\\w@\\w.com', numFeatures=(1, 6),

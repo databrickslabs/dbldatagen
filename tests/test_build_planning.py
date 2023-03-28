@@ -168,7 +168,7 @@ class TestBuildPlanning:
                         .withColumnSpecs(patterns=".*_ID", match_types=StringType(), format="%010d",
                                          minValue=1, maxValue=123,
                                          step=1)
-                        .withColumnSpecs(patterns=".*_IDS", match_types=StringType(), format="%010d", minValue=1,
+                        .withColumnSpecs(patterns=".*_IDS", match_types="string", format="%010d", minValue=1,
                                          maxValue=100, step=1)
                         # .withColumnSpec("R3D3_CLUSTER_IDS", minValue=1, maxValue=100, step=1)
                         .withColumnSpec("XYYZ_IDS", minValue=1, maxValue=123, step=1,

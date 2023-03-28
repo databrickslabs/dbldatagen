@@ -290,4 +290,3 @@ class TestComplexColumns:
 
         df = df_spec.build()
         df.show()
-
