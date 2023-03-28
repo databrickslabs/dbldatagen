@@ -20,7 +20,7 @@ from pyspark.sql.types import FloatType, IntegerType, StringType, DoubleType, Bo
 
 from .column_spec_options import ColumnSpecOptions
 from .datagen_constants import RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, RANDOM_SEED_RANDOM, \
-    DEFAULT_SEED_COLUMN, OPTION_RANDOM, OPTION_RANDOM_SEED
+    DEFAULT_SEED_COLUMN, OPTION_RANDOM, OPTION_RANDOM_SEED, OPTION_RANDOM_SEED_METHOD
 
 from .daterange import DateRange
 from .distributions import Normal, DataDistribution
@@ -125,8 +125,8 @@ class ColumnGenerationSpec(object):
         supplied_options = {'name': name, 'minValue': minValue, 'type': colType,
                             'maxValue': maxValue, 'step': step,
                             'prefix': prefix, 'baseColumn': baseColumn,
-                            'random': random, 'distribution': distribution,
-                            'randomSeedMethod': randomSeedMethod, 'randomSeed': randomSeed,
+                            OPTION_RANDOM: random, 'distribution': distribution,
+                            OPTION_RANDOM_SEED_METHOD: randomSeedMethod, OPTION_RANDOM_SEED: randomSeed,
                             'omit': omit, 'nullable': nullable, 'implicit': implicit
                             }
 
@@ -179,8 +179,8 @@ class ColumnGenerationSpec(object):
         assert randomSeedMethod is None or randomSeedMethod in [RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME], \
             f"`randomSeedMethod` should be none or `{RANDOM_SEED_FIXED}` or `{RANDOM_SEED_HASH_FIELD_NAME}`"
 
-        self._randomSeedMethod = self['randomSeedMethod']
-        self.random = self['random']
+        self._randomSeedMethod = self[OPTION_RANDOM_SEED_METHOD]
+        self.random = self[OPTION_RANDOM]
 
         if self._randomSeedMethod == RANDOM_SEED_HASH_FIELD_NAME:
             assert self.name is not None, "field name cannot be None"
@@ -285,6 +285,71 @@ class ColumnGenerationSpec(object):
 
         # set up the temporary columns needed for data generation
         self._setupTemporaryColumns()
+
+    def _temporaryRename(self, tmpName):
+        """ Create enter / exit object to support temporary renaming of column spec
+
+        This is to support the functionality:
+
+        ```
+           with columSpec._temporaryRename("test") as modifiedColumn:
+             modifiedColumn.doSomthing()
+        ```
+
+        When building array or multi-column valued columns, we rename the column definition temporarily
+        to ensure that logging, saving messages to the execution plan and random number generation based on
+        the field name work correctly
+
+        :param tmpName: temporary name for the column.
+        :return: object supporting `with columSpec._temporaryRename("test") as modifiedColumn:` semantics
+
+        .. note::
+           This does not create a copy of the column spec object
+
+        """
+        # create class for temporary rename enter / exit
+        assert tmpName is not None and len(tmpName) > 0, "method expects valid temporary name"
+
+        class RenameEnterExit:
+            def __init__(self, columnSpec, newName):
+                """ Save column spec and old name to support enter / exit semantics """
+                self._cs = columnSpec
+                self._oldName = columnSpec.name
+                self._newName = newName
+                self._randomSeed = columnSpec._randomSeed
+
+            def __enter__(self):
+                """ Return the inner column spec object """
+                self._cs.name = self._newName
+
+                if self._cs._randomSeedMethod == RANDOM_SEED_HASH_FIELD_NAME:
+                    self._cs._randomSeed = abs(hash(self._cs.name))
+
+                    if self._cs._textGenerator is not None and self._cs._randomSeed is not None:
+                        self._cs._textGenerator = self._cs._textGenerator.withRandomSeed(self._cs._randomSeed)
+
+                return self._cs
+
+            def __exit__(self, exc_type, exc_value, tb):
+                # restore old name
+                self._cs.name = self._oldName
+
+                # restore old random seed
+                self._cs._randomSeed = self._randomSeed
+
+                if self._cs._randomSeedMethod == RANDOM_SEED_HASH_FIELD_NAME:
+                    if self._cs._textGenerator is not None and self._cs._randomSeed is not None:
+                        self._cs._textGenerator = self._cs._textGenerator.withRandomSeed(self._cs._randomSeed)
+
+                if exc_type is not None:
+                    # uncomment for traceback
+                    # import traceback
+                    # traceback.print_exception(exc_type, exc_value, tb)
+                    return False
+
+                return True
+
+        return RenameEnterExit(self, tmpName)
 
     @property
     def specOptions(self):
@@ -962,9 +1027,7 @@ class ColumnGenerationSpec(object):
         self.logger.debug("building column : %s", self.name)
 
         # get key column specification properties
-        col_is_rand, cdistribution = self['random'], self['distribution']
-        base_col = self.baseColumn
-        c_begin, c_end, c_interval = self['begin'], self['end'], self['interval']
+        col_is_rand, cdistribution = self[OPTION_RANDOM], self['distribution']
         percent_nulls = self['percentNulls']
         sformat = self['format']
 
@@ -1214,9 +1277,13 @@ class ColumnGenerationSpec(object):
             exec_step_history += f"`{self.baseColumn}`, method: `{self._baseColumnComputeMethod}`"
             self.executionHistory.append(exec_step_history)
         else:
-            self.executionHistory.append(f"generating multiple columns {max_num_columns} - `{self['name']}`")
-            retval = [self._makeSingleGenerationExpression(x, use_pandas_optimizations=True) for x in
-                      range(max_num_columns)]
+            self.executionHistory.append(f"generating multiple columns {max_num_columns} - `{self.name}`")
+
+            retval = []
+
+            for ix in range(max_num_columns):
+                with self._temporaryRename(f"{self.name}_{ix}") as renamed_cs:
+                    retval.append(renamed_cs._makeSingleGenerationExpression(ix, use_pandas_optimizations=True))
 
             if struct_type == 'array':
                 self.executionHistory.append(".. converting multiple columns to array")
@@ -1225,7 +1292,7 @@ class ColumnGenerationSpec(object):
                 if min_num_columns != max_num_columns:
                     column_set = ",".join(self.baseColumns)
                     diff = max_num_columns - min_num_columns
-                    expr_str = f"{min_num_columns} + (abs(hash({column_set})) % {diff+1})"
+                    expr_str = f"{min_num_columns} + (abs(hash({column_set})) % {diff + 1})"
 
                     retval = F.slice(retval, F.lit(1), F.expr(expr_str))
 

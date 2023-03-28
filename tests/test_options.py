@@ -281,10 +281,10 @@ class TestUseOfOptions:
         assert msgs > 0
 
     @pytest.mark.parametrize("numFeaturesSupplied",
-                             [ 3,
-                               (2, 4),
-                               0,
-                               (0, 3)
+                             [3,
+                              (2, 4),
+                              0,
+                              (0, 3)
                               ])
     def test_multiple_columns_email(self, numFeaturesSupplied):
         # will have implied column `id` for ordinal of row
@@ -300,7 +300,7 @@ class TestUseOfOptions:
 
         data = df.selectExpr("emails").collect()
 
-        lengths = [len(r["emails"]) for r in data ]
+        lengths = [len(r["emails"]) for r in data]
         set_lengths = set(lengths)
 
         if isinstance(numFeaturesSupplied, int):
@@ -312,10 +312,10 @@ class TestUseOfOptions:
         assert max(set_lengths) == max_lengths
 
     @pytest.mark.parametrize("numFeaturesSupplied",
-                             [ 3,
-                               (2, 4),
-                               0,
-                               (0, 3)
+                             [3,
+                              (2, 4),
+                              0,
+                              (0, 3)
                               ])
     def test_multi_email_random(self, numFeaturesSupplied):
         # will have implied column `id` for ordinal of row

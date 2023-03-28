@@ -1,3 +1,4 @@
+from copy import deepcopy
 import pytest
 
 from pyspark.sql.types import StringType, TimestampType
@@ -6,6 +7,20 @@ import dbldatagen as dg
 
 
 class TestColumnGenerationSpec:
+
+    def test_deepcopy(self):
+        cd = dg.ColumnGenerationSpec(name="test")
+        results = deepcopy(cd)
+        assert results.getNames() == cd.getNames()
+
+    def test_tmp_name(self):
+        cd = dg.ColumnGenerationSpec(name="test")
+
+        with cd._temporaryRename("test2") as cd2:
+            assert cd2.name == "test2"
+
+        assert cd.name == "test"
+
     def test_getNames(self):
         cd = dg.ColumnGenerationSpec(name="test")
         results = cd.getNames()
