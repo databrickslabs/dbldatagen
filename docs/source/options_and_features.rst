@@ -162,8 +162,8 @@ The following example illustrates some of these features.
             dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=1000, partitions=4,
                              random=True)
             .withColumn("name", "string", percentNulls=0.01, template=r'\\w \\w|\\w A. \\w|test')
-            .withColumn("emails", "string", template=r'\\w.\\w@\\w.com', random=True,
-                        numFeatures=numFeaturesSupplied, structType="array")
+            .withColumn("emails", "string", template=r'\\w.\\w@\\w.com',  numFeatures=(2,6,
+                        structType="array")
         )
 
         df = ds.build()
