@@ -315,8 +315,12 @@ For example, the following code will generate rows with varying numbers of synth
         dg.DataGenerator(sparkSession=spark, name="customers", rows=1000, partitions=4,
                          random=True)
         .withColumn("name", "string", percentNulls=0.01, template=r'\\w \\w|\\w A. \\w|test')
-        .withColumn("emails", "string", template=r'\\w.\\w@\\w.com', numFeatures=(1, 6),
-                    structType="array")
+        .withColumn("emails_tmp", "string", template=r'\\w.\\w@\\w.com', numFeatures=3, random=True, 
+                    randomSeed=-1, structType="array", omit=True)
+        .withColumn("emails", "array<string>",
+                    expr="slice(emails_tmp, 1, abs(hash(id)) % 3 + 1 )",
+                    baseColumn="emails_tmp")
+                    
    )
 
    df = ds.build()
