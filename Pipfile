@@ -15,6 +15,7 @@ pydata-sphinx-theme = "*"
 recommonmark = "*"
 sphinx-markdown-builder = "*"
 bumpversion = "*"
+prospector = "*"
 
 [packages]
 numpy = "==1.22.0"

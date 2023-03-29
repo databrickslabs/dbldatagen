@@ -56,7 +56,8 @@ class ColumnGenerationSpec(object):
     :param distribution: Instance of distribution, that will control the distribution of the generated values
     :param baseColumn: String or list of strings representing columns used as basis for generating the column data
     :param randomSeed: random seed value used to generate the random value, if column data is random
-    :param randomSeedMethod: method for computing random values from the random seed
+    :param randomSeedMethod: method for computing random values from the random seed. It may take on the
+           values `fixed`, `hash_fieldname` or None
 
     :param implicit: If True, the specification for the column can be replaced by a later definition.
            If not, a later attempt to replace the definition will flag an error.
@@ -802,7 +803,7 @@ class ColumnGenerationSpec(object):
             ensure(column_props['values'] is not None and len(column_props['values']) > 0,
                    f"weights must be associated with non-empty list of values - column '{column_props['name']}' ")
             ensure(len(column_props['values']) == len(column_props['weights']),
-                   f"length of list of weights must be  equal to length of list of values - column '{column_props['name']}' ")
+                   f"length(list of weights) != length(list of values)  - column '{column_props['name']}' ")
 
     def getPlanEntry(self):
         """ Get execution plan entry for object
@@ -942,9 +943,9 @@ class ColumnGenerationSpec(object):
         :param force: always adjust (possibly for implicit cast reasons)
         """
         if force and datarange is not None:
-            new_def = (baseval + lit(datarange.minValue))
+            new_def = baseval + lit(datarange.minValue)
         elif (datarange is not None) and (datarange.minValue != 0) and (datarange.minValue != 0.0):
-            new_def = (baseval + lit(datarange.minValue))
+            new_def = baseval + lit(datarange.minValue)
         else:
             new_def = baseval
         return new_def
@@ -1173,7 +1174,8 @@ class ColumnGenerationSpec(object):
             self.executionHistory.append(exec_step_history)
         else:
             self.executionHistory.append(f"generating multiple columns {num_columns} - `{self['name']}`")
-            retval = [self._makeSingleGenerationExpression(x) for x in range(num_columns)]
+            retval = [self._makeSingleGenerationExpression(x, use_pandas_optimizations=True) for x in
+                      range(num_columns)]
 
             if struct_type == 'array':
                 self.executionHistory.append(".. converting multiple columns to array")

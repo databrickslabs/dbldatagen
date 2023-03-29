@@ -32,7 +32,7 @@ class Exponential(DataDistribution):
 
     def __str__(self):
         """ Return string representation"""
-        return (f"ExponentialDistribution(rate={self.rate}, randomSeed={self.randomSeed})")
+        return f"ExponentialDistribution(rate={self.rate}, randomSeed={self.randomSeed})"
 
     @staticmethod
     def exponential_func(scale_series: pd.Series, random_seed: pd.Series) -> pd.Series:
@@ -71,7 +71,6 @@ class Exponential(DataDistribution):
     def scale(self):
         """ Return scale implicit parameter. Scale is 1/rate"""
         return 1.0 / self._rate
-
 
     def generateNormalizedDistributionSample(self):
         """ Generate sample of data for distribution

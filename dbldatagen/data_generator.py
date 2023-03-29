@@ -58,7 +58,7 @@ class DataGenerator:
 
     # restrict spurious messages from java gateway
     logging.getLogger("py4j").setLevel(logging.WARNING)
-    logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.NOTSET)
+    #logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.NOTSET)
 
     def __init__(self, sparkSession=None, name=None, randomSeedMethod=None,
                  rows=1000000, startingId=0, randomSeed=None, partitions=None, verbose=False,
@@ -174,7 +174,7 @@ class DataGenerator:
         sparkVersionInfo = _get_spark_version(sparkVersion)
 
         if sparkVersionInfo < minSparkVersion:
-            logging.warn(f"*** Minimum version of Python supported is {minSparkVersion} - found version %s ",
+            logging.warning(f"*** Minimum version of Python supported is {minSparkVersion} - found version %s ",
                          sparkVersionInfo )
             return False
 
@@ -238,13 +238,14 @@ class DataGenerator:
         """
         cls._randomSeed = seedVal
 
-    @deprecated('Use `useSeed` instead')
+    @deprecated("Use `useSeed` instead")
     @classmethod
     def use_seed(cls, seedVal):
         """ set seed for random number generation
 
             Arguments:
             :param seedVal: - new value for the random number seed
+
         """
         cls._randomSeed = seedVal
 
@@ -262,7 +263,7 @@ class DataGenerator:
             :returns: string containing generated name
         """
         cls._nextNameIndex += 1
-        new_name = (cls._untitledNamePrefix + '_' + str(cls._nextNameIndex))
+        new_name = cls._untitledNamePrefix + '_' + str(cls._nextNameIndex)
         return new_name
 
     # noinspection PyAttributeOutsideInit
@@ -316,9 +317,12 @@ class DataGenerator:
 
         rc = self._rowCount
         tasks = self.partitions
-        output = ["", "Data generation plan", "====================",
-                  f"spec=DateGenerator(name={self.name}, rows={rc}, startingId={self.starting_id}, partitions={tasks})"
-                  , ")", "", f"seed column: {self._seedColumnName}", "",
+        output = ["",
+                  "Data generation plan", "====================",
+                  f"spec=DateGenerator(name={self.name}, rows={rc}, startingId={self.starting_id}, partitions={tasks})",
+                  ")",
+                  "",
+                  f"seed column: {self._seedColumnName}", "",
                   f"column build order: {self._buildOrder}", "", "build plan:"]
 
         for plan_action in self._buildPlan:
@@ -737,7 +741,7 @@ class DataGenerator:
 
         if not noWarn and colName == self._seedColumnName:
             self.logger.warning(f"Adding a new column named '{colName}' overrides seed column '{self._seedColumnName}'")
-            self.logger.warning(f"Use `seedColumName` option on DataGenerator construction for different seed column")
+            self.logger.warning("Use `seedColumName` option on DataGenerator construction for different seed column")
 
         # handle migration of old `min` and `max` options
         if _OLD_MIN_OPTION in kwargs:
@@ -851,7 +855,7 @@ class DataGenerator:
         id_partitions = self.partitions if self.partitions is not None else 4
 
         if not streaming:
-            status = (f"Generating data frame with ids from {startId} to {end_id} with {id_partitions} partitions")
+            status = f"Generating data frame with ids from {startId} to {end_id} with {id_partitions} partitions"
             self.logger.info(status)
             self.executionHistory.append(status)
             df1 = self.sparkSession.range(start=startId,
@@ -949,7 +953,7 @@ class DataGenerator:
                     cs = columnSpecsByName[columnBeingBuilt]
 
                     if cs.expr is not None:
-                        sql_references = SchemaParser.columnsReferencesFromSQLString(cs.expr, filter=all_columns)
+                        sql_references = SchemaParser.columnsReferencesFromSQLString(cs.expr, filterItems=all_columns)
 
                         # determine references to columns not yet built
                         forward_references = set(sql_references) - set(built_columns)
@@ -968,7 +972,8 @@ class DataGenerator:
 
             if len(separate_phase_columns) > 0:
                 # split phase based on columns in separate_phase_column_list set
-                revised_phase = split_list_matching_condition(current_phase, lambda el: el in separate_phase_columns)
+                revised_phase = split_list_matching_condition(current_phase,
+                                                              lambda el, cols=separate_phase_columns: el in cols)
                 new_build_order.extend(revised_phase)
             else:
                 # no change to phase
