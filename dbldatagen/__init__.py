@@ -26,7 +26,6 @@ Most of the other classes are used for internal purposes only
 from .data_generator import DataGenerator
 from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_RANDOM, RANDOM_SEED_FIXED, \
                                RANDOM_SEED_HASH_FIELD_NAME, MIN_PYTHON_VERSION, MIN_SPARK_VERSION
-
 from .utils import ensure, topologicalSort, mkBoundsList, coalesce_values, \
     deprecated, parse_time_interval, DataGenError, split_list_matching_condition
 from ._version import __version__

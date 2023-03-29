@@ -397,3 +397,19 @@ class TestWeights(unittest.TestCase):
         values2 = dfAlpha2.collect()
 
         self.assertEqual(values1, values2)
+
+# run the tests
+# if __name__ == '__main__':
+#  print("Trying to run tests")
+#  unittest.main(argv=['first-arg-is-ignored'],verbosity=2,exit=False)
+
+# def runTests(suites):
+#     suite = unittest.TestSuite()
+#     result = unittest.TestResult()
+#     for testSuite in suites:
+#         suite.addTest(unittest.makeSuite(testSuite))
+#     runner = unittest.TextTestRunner()
+#     print(runner.run(suite))
+#
+#
+# runTests([TestWeights])

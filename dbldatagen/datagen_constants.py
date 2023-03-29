@@ -36,8 +36,3 @@ SPARK_RANGE_COLUMN = "id"
 # minimum versions for version checks
 MIN_PYTHON_VERSION = (3, 8)
 MIN_SPARK_VERSION = (3, 1, 2)
-
-# options for randon data generation
-OPTION_RANDOM = "random"
-OPTION_RANDOM_SEED_METHOD = "randomSeedMethod"
-OPTION_RANDOM_SEED = "randomSeed"
