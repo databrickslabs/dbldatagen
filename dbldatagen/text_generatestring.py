@@ -12,242 +12,119 @@ import random
 import numpy as np
 import pandas as pd
 
-#: list of hex digits for template generation
-_HEX_LOWER = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
+from .text_generators import TextGenerator
+from .text_generators import _DIGITS_ZERO, _LETTERS_UPPER, _LETTERS_LOWER, _LETTERS_ALL
 
-#: list of upper case hex digits for template generation
-_HEX_UPPER = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
+import pyspark.sql.functions as F
 
-#: list of non-zero digits for template generation
-_DIGITS_NON_ZERO = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+class GenerateString(TextGenerator):  # lgtm [py/missing-equals]
+    """This class handles the generation of string text of specified length drawn from alphanumeric characters.
 
-#: list of digits for template generation
-_DIGITS_ZERO = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+    The set of chars to be used can be modified based on the parameters
 
-#: list of uppercase letters for template generation
-_LETTERS_UPPER = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
-                  'Q', 'R', 'T', 'S', 'U', 'V', 'W', 'X', 'Y', 'Z']
+    This will generate deterministic strings chosen from the pool of characters `0-9`, `a-z`, `A-Z`, or from a
+    custom character range if specified.
 
-#: list of lowercase letters for template generation
-_LETTERS_LOWER = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q',
-                  'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
-
-#: list of all letters uppercase and lowercase
-_LETTERS_ALL = _LETTERS_LOWER + _LETTERS_UPPER
-
-#: list of alphanumeric chars in lowercase
-_ALNUM_LOWER = _LETTERS_LOWER + _DIGITS_ZERO
-
-#: list of alphanumeric chars in uppercase
-_ALNUM_UPPER = _LETTERS_UPPER + _DIGITS_ZERO
-
-""" words for ipsum lorem based text generation"""
-_WORDS_LOWER = ['lorem', 'ipsum', 'dolor', 'sit', 'amet', 'consectetur', 'adipiscing', 'elit', 'sed', 'do',
-                'eiusmod', 'tempor', 'incididunt', 'ut', 'labore', 'et', 'dolore', 'magna', 'aliqua', 'ut',
-                'enim', 'ad', 'minim', 'veniam', 'quis', 'nostrud', 'exercitation', 'ullamco', 'laboris',
-                'nisi', 'ut', 'aliquip', 'ex', 'ea', 'commodo', 'consequat', 'duis', 'aute', 'irure', 'dolor',
-                'in', 'reprehenderit', 'in', 'voluptate', 'velit', 'esse', 'cillum', 'dolore', 'eu', 'fugiat',
-                'nulla', 'pariatur', 'excepteur', 'sint', 'occaecat', 'cupidatat', 'non', 'proident', 'sunt',
-                'in', 'culpa', 'qui', 'officia', 'deserunt', 'mollit', 'anim', 'id', 'est', 'laborum']
-
-_WORDS_UPPER = ['LOREM', 'IPSUM', 'DOLOR', 'SIT', 'AMET', 'CONSECTETUR', 'ADIPISCING', 'ELIT', 'SED', 'DO',
-                'EIUSMOD', 'TEMPOR', 'INCIDIDUNT', 'UT', 'LABORE', 'ET', 'DOLORE', 'MAGNA', 'ALIQUA', 'UT',
-                'ENIM', 'AD', 'MINIM', 'VENIAM', 'QUIS', 'NOSTRUD', 'EXERCITATION', 'ULLAMCO', 'LABORIS',
-                'NISI', 'UT', 'ALIQUIP', 'EX', 'EA', 'COMMODO', 'CONSEQUAT', 'DUIS', 'AUTE', 'IRURE',
-                'DOLOR', 'IN', 'REPREHENDERIT', 'IN', 'VOLUPTATE', 'VELIT', 'ESSE', 'CILLUM', 'DOLORE',
-                'EU', 'FUGIAT', 'NULLA', 'PARIATUR', 'EXCEPTEUR', 'SINT', 'OCCAECAT', 'CUPIDATAT', 'NON',
-                'PROIDENT', 'SUNT', 'IN', 'CULPA', 'QUI', 'OFFICIA', 'DESERUNT', 'MOLLIT', 'ANIM', 'ID', 'EST',
-                'LABORUM']
-
-
-class TextGenerator(object):
-    """ Base class for text generation classes
-
-    """
-
-    def __init__(self):
-        self._randomSeed = 42
-        self._rngInstance = None
-
-    def __repr__(self):
-        return f"TextGenerator(randomSeed={self._randomSeed})"
-
-    def __str__(self):
-        return f"TextGenerator(randomSeed={self._randomSeed})"
-
-    def __eq__(self, other):
-        return type(self) == type(other) and self._randomSeed == other._randomSeed
-
-    def withRandomSeed(self, seed):
-        """ Set the random seed for the text generator
-
-        :param seed: seed value to set
-        :return: self
-        """
-        assert seed is None or type(seed) is int, "expecting an integer seed for Text Generator"
-        self._randomSeed = seed
-        return self
-
-    @property
-    def randomSeed(self):
-        """ Get random seed for text generator"""
-        return self._randomSeed
-
-    def getNPRandomGenerator(self, forceNewInstance=False):
-        """ Get numpy random number generator
-
-        :return: returns random number generator initialized from previously supplied random seed
-        """
-        assert self._randomSeed is None or type(self._randomSeed) in [int, np.int32, np.int64], \
-            f"`random_seed` must be int or int-like not {type(self._randomSeed)}"
-
-        if self._rngInstance is not None and not forceNewInstance:
-            return self._rngInstance
-
-        from numpy.random import default_rng
-        if self._randomSeed is not None and self._randomSeed not in (-1, -1.0):
-            rng = default_rng(seed=self._randomSeed)
-        else:
-            rng = default_rng()
-
-        if not forceNewInstance:
-            self._rngInstance = rng
-        return rng
-
-    @staticmethod
-    def compactNumpyTypeForValues(listValues):
-        """ determine smallest numpy type to represent values
-
-        :param listValues: list or np.ndarray of values to get np.dtype for
-        :return: np.dtype that is most compact representation for values provided
-        """
-        if type(listValues) is list:
-            max_value_represented = np.max(np.array(listValues).flatten())
-        else:
-            max_value_represented = np.max(listValues.flatten()) + 1
-        bits_required = math.ceil(math.log2(max_value_represented))
-
-        if bits_required <= 8:
-            # for small values, use byte representation
-            retval = np.dtype('B')
-        else:
-            # compute bytes required and raise to nearest power of 2
-            bytesRequired = int(math.ceil(bits_required / 8.0))
-            retval = np.dtype(f"u{bytesRequired}")
-        return retval
-
-    @staticmethod
-    def getAsTupleOrElse(v, defaultValue, valueName):
-        """ get value v as tuple or return default value
-
-            :param v: value to test
-            :param defaultValue: value to use as a default if value of `v` is None. Must be a tuple.
-            :param valueName: name of value for debugging and logging purposes
-            :returns: return `v` as tuple if not `None` or value of `default_v` if `v` is `None`. If `v` is a single
-                      value, returns the tuple (`v`, `v`)"""
-        assert v is None or type(v) is int or type(v) is tuple, f"param {valueName} must be an int, a tuple or None"
-        assert type(defaultValue) is tuple and len(defaultValue) == 2, "default value must be tuple"
-
-        if type(v) is int:
-            return v, v
-        elif type(v) is tuple:
-            assert len(v) == 2, "expecting tuple of length 2"
-            assert type(v[0]) is int and type(v[1]) is int, "expecting tuple with both elements as integers"
-            return v
-        else:
-            assert len(defaultValue) == 2, "must have list or iterable with lenght 2"
-            assert type(defaultValue[0]) is int and type(defaultValue[1]) is int, "all elements must be integers"
-
-        return defaultValue
-
-
-class RandomStr(TextGenerator):  # lgtm [py/missing-equals]
-    """This class handles the generation of random string text
-
-    This will generate random strings chosen from the pool of characters `0-9`, `a-z`, `A-Z`
-
-    :param minLength:  Minimum length of string
-    :param maxLength:  Maximum length of string. If not specified, min and max length are the same
+    :param length: length of string. Can be integer, or tuple (min, max)
     :param leadingAlpha:  If True, leading character will be in range a-zAA-Z
     :param allUpper:  If True, any alpha chars will be uppercase
     :param allLower:  If True, any alpha chars will be lowercase
-    :param allAlpha:  If True, all chars will be in theb range a-z, A-Z
+    :param allAlpha:  If True, all chars will be non numeric
+    :param customChars:  If supplied, specifies a list of chars to use, or string of chars to use.
 
-    This method will generate random strings varying in size from `minLength` to `maxLength`. The characters chosen
-    will be in the range 0-9`, `a-z`, `A-Z` unless modified using the `leadingAlpha`, `allUpper`, `allLower`
-    or `allAlpha` parameters.
+    This method will generate deterministic strings varying in size from `minLength` to `maxLength`.
+    The characters chosen will be in the range 0-9`, `a-z`, `A-Z` unless modified using the `leadingAlpha`,
+    `allUpper`, `allLower`, `allAlpha` or `customChars` parameters.
 
-    The modifiers can be combined - for example RandomStr(1, 5, leadingAlpha=True, allUpper=True)
+    The modifiers can be combined - for example GenerateString(1, 5, leadingAlpha=True, allUpper=True)
 
+    When the length is specified to be a tuple, it wll generate variable length strings of lengths from the lower bound
+    to the upper bound inclusive.
 
-    :param escapeSpecialChars: By default special chars in the template have special meaning if unescaped
-                               If set to true, then the special meaning requires escape char ``\\``
-    :param extendedWordList: if provided, use specified word list instead of default word list
+    The strings are generated deterministically so that they can be used for predictable primary and foreign keys.
 
+    If the column definition that includes this specifies `random` then the string generation will be determined by a
+    seeded random number according to the rules for random numbers and random seeds used in other columns
+
+    If random is false, then the string will be generated from a pseudo random sequence generated purely from the
+    SQL hash of the `baseColumns`
 
     .. note::
-              If escape is used and`escapeSpecialChars` is False, then the following
-              char is assumed to have no special meaning.
-
-              If the `escapeSpecialChars` option is set to True, then the following char only has its special
-              meaning when preceded by an escape.
-
-              Some options must be always escaped for example ``\\0``, ``\\v``, ``\\n`` and ``\\w``.
-
-              A special case exists for ``\\v`` - if immediately followed by a digit 0 - 9, the underlying base value
-              is interpreted as an array of values and the nth element is retrieved where `n` is the digit specified.
-
-    In all other cases, the char itself is used.
-
-    The setting of the `escapeSpecialChars` determines how templates generate data.
-
-    If set to False, then the template ``r"\\dr_\\v"`` will generate the values ``"dr_0"`` ... ``"dr_999"`` when applied
-    to the values zero to 999. This conforms to earlier implementations for backwards compatibility.
-
-    If set to True, then the template ``r"dr_\\v"`` will generate the values ``"dr_0"`` ... ``"dr_999"``
-    when applied to the values zero to 999. This conforms to the preferred style going forward
+       If customChars are specified, then the flag `allAlpha` will only remove digits.
 
     """
 
-    def __init__(self, template, escapeSpecialChars=False, extendedWordList=None):
-        assert template is not None, "`template` must be specified"
+    def __init__(self, length, leadingAlpha=True, allUpper=False, allLower=False, allAlpha=False, customChars=None):
         super().__init__()
 
-        self._template = template
-        self._escapeSpecialMeaning = bool(escapeSpecialChars)
-        template_str0 = self._template
-        self._templates = [x.replace('$__sep__', '|') for x in template_str0.replace(r'\|', '$__sep__').split('|')]
-        self._wordList = np.array(extendedWordList if extendedWordList is not None else _WORDS_LOWER)
-        self._upperWordList = np.array([x.upper() for x in extendedWordList]
-                                       if extendedWordList is not None else _WORDS_UPPER)
+        print("testing")
 
-        self._np_digits_zero = np.array(_DIGITS_ZERO)
-        self._np_digits_non_zero = np.array(_DIGITS_NON_ZERO)
-        self._np_hex_upper = np.array(_HEX_UPPER)
-        self._np_hex_lower = np.array(_HEX_LOWER)
-        self._np_alnum_lower = np.array(_ALNUM_LOWER)
-        self._np_alnum_upper = np.array(_ALNUM_UPPER)
-        self._np_letters_lower = np.array(_LETTERS_LOWER)
-        self._np_letters_upper = np.array(_LETTERS_UPPER)
-        self._np_letters_all = np.array(_LETTERS_ALL)
-        self._lenWords = len(self._wordList)
+        assert customChars is None or isinstance(customChars, list) or isinstance(customChars, str),  \
+               "`customChars` should be list of characters or string containing custom chars"
 
-        # get the template metadata
-        template_info =  [self._prepareTemplateStrings(template, escapeSpecialMeaning=escapeSpecialChars)
-                                    for template in self._templates]
-        self._max_placeholders = max([ x[0] for x in template_info])
-        self._max_rnds_needed = max([ len(x[1]) for x in template_info])
-        self._placeholders_needed = [ x[0] for x in template_info]
-        self._template_rnd_bounds = [ x[1] for x in template_info]
+        assert not allUpper or not allLower, "allUpper and allLower cannot both be True"
 
+        if isinstance(customChars, str):
+            assert len(customChars) > 0, "string of customChars must be non-empty"
+        elif isinstance(customChars, list):
+            assert all(isinstance(c, str) for c in customChars)
+            assert len(customChars) > 0, "list of customChars must be non-empty"
+
+        # determine base alphabet
+        if isinstance(customChars, list):
+            charAlphabet = set("".join(customChars))
+        elif isinstance(customChars, str):
+            charAlphabet = set(customChars)
+        else:
+            charAlphabet = set(_LETTERS_ALL).union(set(_DIGITS_ZERO))
+
+        if allLower:
+            charAlphabet = charAlphabet.difference(set(_LETTERS_UPPER))
+        elif allUpper:
+            charAlphabet = charAlphabet.difference(set(_LETTERS_LOWER))
+
+        if allAlpha:
+            charAlphabet = charAlphabet.difference(set(_DIGITS_ZERO))
+
+        self._charAlphabet = np.array(list(charAlphabet))
+
+        if leadingAlpha:
+            self._firstCharAlphabet = np.array(list(charAlphabet.difference(set(_DIGITS_ZERO))))
+        else:
+            self._firstCharAlphabet = self._charAlphabet
+
+        # compute string lengths
+        if isinstance(length, int):
+            self._minLength, self._maxLength = length, length
+        elif isinstance(length, tuple):
+            assert len(length) == 2, "only 2 elements can be specified if length is a tuple"
+            assert all(isinstance(el, int) for el in length)
+            self._minLength, self._maxLength = length
+        else:
+            raise ValueError("`length` must be an integer or a tuple of two integers")
+
+        # compute bounds for generated strings
+        bounds = []
+        bounds.append( len(self._firstCharAlphabet))
+        for ix in range(1, self._maxLength):
+            bounds.append(len(self._charAlphabet))
+
+        self._bounds = bounds
 
     def __repr__(self):
-        return f"TemplateGenerator(template='{self._template}')"
+        return f"GenerateString(length={length}, leadingAlpha={leadingAlpha})"
 
-    @property
-    def templates(self):
-        """ Get effective templates for text generator"""
-        return self._templates
+    def prepareBaseValue(self, baseDef):
+        """ Prepare the base value for processing
+
+        :param baseDef: base value expression
+        :return: base value expression unchanged
+
+        For generate string processing , we'll use the SQL function abs(hash(baseDef)
+
+        This will ensure that even if there are multiple base values, only a single value is passed to the UDF
+        """
+        return F.abs(F.hash(baseDef))
 
     def _getRandomInt(self, low, high=-1, rng=None):
         """ generate random integer between low and high inclusive
@@ -648,7 +525,7 @@ class RandomStr(TextGenerator):  # lgtm [py/missing-equals]
         return results
 
 
-class ILText(TextGenerator):  # lgtm [py/missing-equals]
+class ILText2(TextGenerator):  # lgtm [py/missing-equals]
     """ Class to generate Ipsum Lorem text paragraphs, words and sentences
 
     :param paragraphs: Number of paragraphs to generate. If tuple will generate random number in range

@@ -161,6 +161,17 @@ class TextGenerator(object):
 
         return defaultValue
 
+    def prepareBaseValue(self, baseDef):
+        """ Prepare the base value for processing
+
+        :param baseDef: base value expression
+        :return: base value expression unchanged
+
+        Derived classes are expected to override this if needed
+        """
+        return baseDef
+
+
 
 class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
     """This class handles the generation of text from templates
