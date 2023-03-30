@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>dbldatagen.daterange &mdash; Databricks Labs Data Generator 0.3.3post2 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/tdg.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/clipboard.min.js"></script>
+        <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference/api/modules.html">The dbldatagen package API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">dbldatagen.daterange</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for dbldatagen.daterange</h1><div class="highlight"><pre>
+<span></span><span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="c1">#</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+
+<span class="kn">from</span> <span class="nn">.datarange</span> <span class="kn">import</span> <span class="n">DataRange</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">parse_time_interval</span>
+
+
+<div class="viewcode-block" id="DateRange"><a class="viewcode-back" href="../../reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange">[docs]</a><span class="k">class</span> <span class="nc">DateRange</span><span class="p">(</span><span class="n">DataRange</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class to represent Date range</span>
+
+<span class="sd">    The date range will represented internally using `datetime` for `start` and `end`, and `timedelta` for `interval`</span>
+
+<span class="sd">    When computing ranges for purposes of the sequences, the maximum value will be adjusted to the</span>
+<span class="sd">    nearest whole multiple of the interval that is before the `end` value.</span>
+
+<span class="sd">    When converting from a string, datetime is assumed to use local timezone unless specified as part of the format</span>
+<span class="sd">    in keeping with the python `datetime` handling of datetime instances that do not specify a timezone</span>
+
+<span class="sd">    :param begin: start of date range as python `datetime` object. If specified as string, converted to datetime</span>
+<span class="sd">    :param end: end of date range as python `datetime` object. If specified as string, converted to datetime</span>
+<span class="sd">    :param interval: interval of date range as python `timedelta` object.</span>
+<span class="sd">                     Note parsing format for interval uses standard timedelta parsing not</span>
+<span class="sd">                     the `datetime_format` string</span>
+<span class="sd">    :param datetime_format: format for conversion of strings to datetime objects</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">DEFAULT_UTC_TS_FORMAT</span> <span class="o">=</span> <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span>
+    <span class="n">DEFAULT_DATE_FORMAT</span> <span class="o">=</span> <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">&quot;</span>
+
+    <span class="n">DEFAULT_START_TIMESTAMP</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">year</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">month</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">day</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">DEFAULT_END_TIMESTAMP</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">year</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">month</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">day</span><span class="o">=</span><span class="mi">31</span><span class="p">,</span> <span class="n">hour</span><span class="o">=</span><span class="mi">23</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="mi">59</span><span class="p">,</span> <span class="n">second</span><span class="o">=</span><span class="mi">59</span><span class="p">)</span>
+    <span class="n">DEFAULT_START_DATE</span> <span class="o">=</span> <span class="n">DEFAULT_START_TIMESTAMP</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+    <span class="n">DEFAULT_END_DATE</span> <span class="o">=</span> <span class="n">DEFAULT_END_TIMESTAMP</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+    <span class="n">DEFAULT_START_DATE_TIMESTAMP</span> <span class="o">=</span> <span class="n">DEFAULT_START_TIMESTAMP</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">hour</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">second</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">DEFAULT_END_DATE_TIMESTAMP</span> <span class="o">=</span> <span class="n">DEFAULT_END_TIMESTAMP</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">hour</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">second</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># todo: deduce format from begin and end params</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">begin</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">datetime_format</span><span class="o">=</span><span class="n">DEFAULT_UTC_TS_FORMAT</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="n">begin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;`begin` must be specified&quot;</span>
+        <span class="k">assert</span> <span class="n">end</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;`end` must be specified&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">begin</span> <span class="o">=</span> <span class="n">begin</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">begin</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_datetime_from_string</span><span class="p">(</span><span class="n">begin</span><span class="p">,</span> <span class="n">datetime_format</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">end</span> <span class="o">=</span> <span class="n">end</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_datetime_from_string</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="n">datetime_format</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">interval</span> <span class="o">=</span> <span class="n">interval</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">interval</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timedelta_from_string</span><span class="p">(</span><span class="n">interval</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">minValue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">begin</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">maxValue</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">minValue</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">interval</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span>
+                         <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">computeTimestampIntervals</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">begin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">interval</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">step</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interval</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_datetime_from_string</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">date_str</span><span class="p">,</span> <span class="n">date_format</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;convert string to Python DateTime object using format&quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">date_str</span><span class="p">,</span> <span class="n">date_format</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_timedelta_from_string</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">interval</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">parseInterval</span><span class="p">(</span><span class="n">interval</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DateRange.parseInterval"><a class="viewcode-back" href="../../reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange.parseInterval">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">parseInterval</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">interval_str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse interval from string&quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">interval_str</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;`interval_str` must be specified&quot;</span>
+        <span class="k">return</span> <span class="n">parse_time_interval</span><span class="p">(</span><span class="n">interval_str</span><span class="p">)</span></div>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_getDateTime</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">datetime_format</span><span class="p">,</span> <span class="n">default_value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dt</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">effective_dt</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_datetime_from_string</span><span class="p">(</span><span class="n">dt</span><span class="p">,</span> <span class="n">datetime_format</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">dt</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">effective_dt</span> <span class="o">=</span> <span class="n">default_value</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">effective_dt</span> <span class="o">=</span> <span class="n">dt</span>
+        <span class="k">return</span> <span class="n">effective_dt</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_getInterval</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">interval</span><span class="p">,</span> <span class="n">default_value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">interval</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">effective_interval</span> <span class="o">=</span> <span class="n">parse_time_interval</span><span class="p">(</span><span class="n">interval</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">interval</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">effective_interval</span> <span class="o">=</span> <span class="n">default_value</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">effective_interval</span> <span class="o">=</span> <span class="n">interval</span>
+        <span class="k">return</span> <span class="n">effective_interval</span>
+
+<div class="viewcode-block" id="DateRange.computeDateRange"><a class="viewcode-back" href="../../reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange.computeDateRange">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">computeDateRange</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">begin</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">interval</span><span class="p">,</span> <span class="n">unique_values</span><span class="p">):</span>
+        <span class="n">effective_interval</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_getInterval</span><span class="p">(</span><span class="n">interval</span><span class="p">,</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">effective_end</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_getDateTime</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="n">DateRange</span><span class="o">.</span><span class="n">DEFAULT_DATE_FORMAT</span><span class="p">,</span>
+                                         <span class="bp">cls</span><span class="o">.</span><span class="n">DEFAULT_END_DATE_TIMESTAMP</span><span class="p">)</span>
+        <span class="n">effective_begin</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_getDateTime</span><span class="p">(</span><span class="n">begin</span><span class="p">,</span> <span class="n">DateRange</span><span class="o">.</span><span class="n">DEFAULT_DATE_FORMAT</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">DEFAULT_START_DATE_TIMESTAMP</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">unique_values</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">unique_values</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span><span class="p">,</span> <span class="s2">&quot;unique_values must be integer&quot;</span>
+            <span class="k">assert</span> <span class="n">unique_values</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;unique_values must be positive integer&quot;</span>
+
+            <span class="n">effective_begin</span> <span class="o">=</span> <span class="n">effective_end</span> <span class="o">-</span> <span class="n">effective_interval</span> <span class="o">*</span> <span class="p">(</span><span class="n">unique_values</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="n">DateRange</span><span class="p">(</span><span class="n">effective_begin</span><span class="p">,</span> <span class="n">effective_end</span><span class="p">,</span> <span class="n">effective_interval</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+<div class="viewcode-block" id="DateRange.computeTimestampRange"><a class="viewcode-back" href="../../reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange.computeTimestampRange">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">computeTimestampRange</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">begin</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">interval</span><span class="p">,</span> <span class="n">unique_values</span><span class="p">):</span>
+
+        <span class="n">effective_interval</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_getInterval</span><span class="p">(</span><span class="n">interval</span><span class="p">,</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">effective_end</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_getDateTime</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="n">DateRange</span><span class="o">.</span><span class="n">DEFAULT_UTC_TS_FORMAT</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">DEFAULT_END_TIMESTAMP</span><span class="p">)</span>
+        <span class="n">effective_begin</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_getDateTime</span><span class="p">(</span><span class="n">begin</span><span class="p">,</span> <span class="n">DateRange</span><span class="o">.</span><span class="n">DEFAULT_UTC_TS_FORMAT</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">DEFAULT_START_TIMESTAMP</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">unique_values</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">unique_values</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span><span class="p">,</span> <span class="s2">&quot;unique_values must be integer&quot;</span>
+            <span class="k">assert</span> <span class="n">unique_values</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;unique_values must be positive integer&quot;</span>
+            <span class="n">effective_begin</span> <span class="o">=</span> <span class="n">effective_end</span> <span class="o">-</span> <span class="n">effective_interval</span> <span class="o">*</span> <span class="p">(</span><span class="n">unique_values</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">DateRange</span><span class="p">(</span><span class="n">effective_begin</span><span class="p">,</span> <span class="n">effective_end</span><span class="p">,</span> <span class="n">effective_interval</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; create string representation of date range&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;DateRange(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">begin</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">interval</span><span class="si">}</span><span class="s2"> == </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">minValue</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">maxValue</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="si">}</span><span class="s2">)&quot;</span>
+
+<div class="viewcode-block" id="DateRange.computeTimestampIntervals"><a class="viewcode-back" href="../../reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange.computeTimestampIntervals">[docs]</a>    <span class="k">def</span> <span class="nf">computeTimestampIntervals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">interval</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Compute number of intervals between start and end date &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">start</span><span class="p">)</span> <span class="ow">is</span> <span class="n">datetime</span><span class="p">,</span> <span class="s2">&quot;Expecting start as type datetime.datetime&quot;</span>
+        <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">end</span><span class="p">)</span> <span class="ow">is</span> <span class="n">datetime</span><span class="p">,</span> <span class="s2">&quot;Expecting end as type datetime.datetime&quot;</span>
+        <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">interval</span><span class="p">)</span> <span class="ow">is</span> <span class="n">timedelta</span><span class="p">,</span> <span class="s2">&quot;Expecting interval as type datetime.timedelta&quot;</span>
+        <span class="n">i1</span> <span class="o">=</span> <span class="n">end</span> <span class="o">-</span> <span class="n">start</span>
+        <span class="n">ni1</span> <span class="o">=</span> <span class="n">i1</span> <span class="o">/</span> <span class="n">interval</span>
+        <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">ni1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DateRange.isFullyPopulated"><a class="viewcode-back" href="../../reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange.isFullyPopulated">[docs]</a>    <span class="k">def</span> <span class="nf">isFullyPopulated</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if minValue, maxValue and step are specified &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">minValue</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">maxValue</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="DateRange.adjustForColumnDatatype"><a class="viewcode-back" href="../../reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange.adjustForColumnDatatype">[docs]</a>    <span class="k">def</span> <span class="nf">adjustForColumnDatatype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctype</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; adjust the range for the column output type</span>
+
+<span class="sd">        :param ctype: Spark SQL data type for column</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="DateRange.getDiscreteRange"><a class="viewcode-back" href="../../reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange.getDiscreteRange">[docs]</a>    <span class="k">def</span> <span class="nf">getDiscreteRange</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Divide continuous range into discrete intervals</span>
+
+<span class="sd">            Note does not modify range object.</span>
+
+<span class="sd">            :returns: range from minValue to maxValue</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">maxValue</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">minValue</span><span class="p">)</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DateRange.isEmpty"><a class="viewcode-back" href="../../reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange.isEmpty">[docs]</a>    <span class="k">def</span> <span class="nf">isEmpty</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if object is empty (i.e all instance vars of note are `None`)&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">begin</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">end</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">interval</span> <span class="ow">is</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="DateRange.getContinuousRange"><a class="viewcode-back" href="../../reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange.getContinuousRange">[docs]</a>    <span class="k">def</span> <span class="nf">getContinuousRange</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert range to continuous range&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">maxValue</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">minValue</span><span class="p">)</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DateRange.getScale"><a class="viewcode-back" href="../../reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange.getScale">[docs]</a>    <span class="k">def</span> <span class="nf">getScale</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get scale of range&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="mi">0</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
