@@ -357,6 +357,91 @@ class TestBuildPlanning:
         assert self.builtInSeparatePhase("city", "city_id", build_order), "fields should be built in separate phase"
         assert self.builtInSeparatePhase("city", "city_pop", build_order), "fields should be built in separate phase"
 
+    # TODO: build ordering should initially try and build in the order supplied but separate into phases
+
+    def test_build_ordering_implicit_dependency2(self):
+        DEVICE_STATES = ['RUNNING', 'IDLE', 'DOWN']
+        DEVICE_WEIGHTS = [10, 5, 1]
+        SITES = ['alpha', 'beta', 'gamma', 'delta', 'phi', 'mu', 'lambda']
+        AREAS = ['area 1', 'area 2', 'area 3', 'area 4', 'area 5']
+        LINES = ['line 1', 'line 2', 'line 3', 'line 4', 'line 5', 'line 6']
+        TAGS = ['statusCode', 'another notification 1', 'another notification 2', 'another notification 3']
+        NUM_LOCAL_DEVICES = 20
+
+        STARTING_DATETIME = "2022-06-01 01:00:00"
+        END_DATETIME = "2022-09-01 23:59:00"
+        EVENT_INTERVAL = "10 seconds"
+
+        gen1 = (
+            dg.DataGenerator(spark, rows=1000, partitions=4)
+            # can combine internal site id computation with value lookup but clearer to use a separate internal column
+            .withColumn("site", "string", values=SITES, random=True)
+            .withColumn("area", "string", values=AREAS, random=True, omit=True)
+            .withColumn("line", "string", values=LINES, random=True, omit=True)
+            .withColumn("local_device_id", "int", maxValue=NUM_LOCAL_DEVICES - 1, omit=True, random=True)
+
+            .withColumn("local_device", "string", prefix="device", baseColumn="local_device_id")
+
+            .withColumn("device_key", "string",
+                        expr="concat('/', site, '/', area, '/', line, '/', local_device)")
+
+            # used to compute the device id
+            .withColumn("internal_device_key", "long", expr="hash(site,  area,  line, local_device)",
+                        omit=True)
+
+            .withColumn("deviceId", "string", format="0x%013x",
+                        baseColumn="internal_device_key")
+
+            # tag name is name of device signal
+            .withColumn("tagName", "string", values=TAGS, random=True)
+
+            # tag value is state
+            .withColumn("tagValue", "string",
+                        values=DEVICE_STATES, weights=DEVICE_WEIGHTS,
+                        random=True)
+
+            .withColumn("tag_ts", "timestamp",
+                        begin=STARTING_DATETIME,
+                        end=END_DATETIME,
+                        interval=EVENT_INTERVAL,
+                        random=True)
+
+            .withColumn("event_date", "date", expr="to_date(tag_ts)")
+        )
+
+        build_order = gen1.build_order
+        print(gen1.build_order)
+
+        assert self.builtBefore("event_date", "tag_ts", build_order)
+        assert self.builtBefore("device_key", "site", build_order)
+        assert self.builtBefore("device_key", "area", build_order)
+        assert self.builtBefore("device_key", "line", build_order)
+        assert self.builtBefore("device_key", "local_device", build_order)
+        assert self.builtBefore( "internal_device_key", "site", build_order)
+        assert self.builtBefore( "internal_device_key", "area", build_order)
+        assert self.builtBefore( "internal_device_key", "line", build_order)
+        assert self.builtBefore("internal_device_key", "local_device", build_order)
+        assert self.builtBefore("device_key", "site",  build_order)
+        assert self.builtBefore("device_key", "area", build_order)
+        assert self.builtBefore("device_key", "line", build_order)
+        assert self.builtBefore("local_device", "device_key", build_order)
+
+        assert self.builtInSeparatePhase("tag_ts", "event_date", build_order)
+        assert self.builtInSeparatePhase("site", "device_key", build_order)
+        assert self.builtInSeparatePhase("area", "device_key", build_order)
+        assert self.builtInSeparatePhase("line", "device_key", build_order)
+        assert self.builtInSeparatePhase("local_device", "device_key", build_order)
+        assert self.builtInSeparatePhase("site", "internal_device_key", build_order)
+        assert self.builtInSeparatePhase("area", "internal_device_key", build_order)
+        assert self.builtInSeparatePhase("line", "internal_device_key", build_order)
+        assert self.builtInSeparatePhase("local_device", "internal_device_key", build_order)
+        assert self.builtInSeparatePhase("site", "device_key", build_order)
+        assert self.builtInSeparatePhase("area", "device_key", build_order)
+        assert self.builtInSeparatePhase("line", "device_key", build_order)
+        assert self.builtInSeparatePhase("local_device", "device_key", build_order)
+
+
+
     def test_expr_attribute(self):
         sql_expr = "named_struct('name', city_name, 'id', city_id, 'population', city_pop)"
         gen1 = dg.DataGenerator(sparkSession=spark, name="nested_schema", rows=1000, partitions=4,
@@ -393,6 +478,8 @@ class TestBuildPlanning:
             .withColumn("id", "long", minValue=1000000, uniqueValues=10000, random=True) \
             .withColumn("city_name", "long", minValue=1000000, uniqueValues=10000, random=True) \
             .withColumn("city_name", "string", template=r"\w", random=True, omit=True) \
+            .withColumn("extra_field", "long", minValue=1000000, uniqueValues=10000, random=True) \
+            .withColumn("extra_field", "string", template=r"\w", random=True) \
             .withColumn("city_id", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
             .withColumn("city_pop", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
             .withColumn("city", "struct<name:string, id:long, population:long>",
@@ -402,15 +489,20 @@ class TestBuildPlanning:
         print(gen1.build_order)
 
         df = gen1.build()
-
         df.show()
 
-        # assert self.builtBefore("city", "city_name", build_order)
-        # assert self.builtBefore("city", "city_id", build_order)
-        # assert self.builtBefore("city", "city_pop", build_order)
-        # assert self.builtInSeparatePhase("city", "city_name", build_order), "fields should be built in separate phase"
-        # assert self.builtInSeparatePhase("city", "city_id", build_order), "fields should be built in separate phase"
-        # assert self.builtInSeparatePhase("city", "city_pop", build_order), "fields should be built in separate phase"
+        # Behavior is allow creation of a duplicate named column. It replaces the previous column
+        # of the same name
+
+        fieldList = [ f.name for f in df.schema.fields]
+        print(fieldList)
+
+        # ensure we have no duplicate names
+        #assert len(fieldList) == len(set(fieldList))
+
+        fieldMap = { f.name: f.dataType for f in df.schema.fields}
+        print("fieldMap", fieldMap)
+        #assert isinstance(fieldMap["extra_field"], StringType)
 
     def test_build_ordering_forward_ref(self, caplog):
         # caplog fixture captures log content

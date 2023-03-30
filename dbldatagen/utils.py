@@ -123,6 +123,8 @@ def topologicalSort(sources, initial_columns=None, flatten=True):
     provided = [] if initial_columns is None else initial_columns[:]
     build_orders = [] if initial_columns is None else [initial_columns]
 
+    print("pending", pending)
+
     while pending:
         next_pending = []
         gen = []
@@ -149,6 +151,7 @@ def topologicalSort(sources, initial_columns=None, flatten=True):
     if flatten:
         return [item for sublist in build_orders for item in sublist]
     else:
+        print("build_orders",  build_orders)
         return build_orders
 
 
