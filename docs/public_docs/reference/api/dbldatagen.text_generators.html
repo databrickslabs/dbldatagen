@@ -217,6 +217,57 @@ VINs, IBANs and many other structured codes.</p>
 <p>The base value is passed to the template generation and may be used in the generated text. The base value is the
 value the column would have if the template generation had not been applied.</p>
 <p>It uses the following special chars:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Chars</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">\</span></code></p></td>
+<td><p>Apply escape to next char.</p></td>
+</tr>
+<tr class="row-odd"><td><p>v0,v1..v9</p></td>
+<td><p>Use base value as an array of values and substitute the <cite>nth</cite> element ( 0 .. 9). Always escaped.</p></td>
+</tr>
+<tr class="row-even"><td><p>x</p></td>
+<td><p>Insert a random lowercase hex digit</p></td>
+</tr>
+<tr class="row-odd"><td><p>X</p></td>
+<td><p>Insert an uppercase random hex digit</p></td>
+</tr>
+<tr class="row-even"><td><p>d</p></td>
+<td><p>Insert a random lowercase decimal digit</p></td>
+</tr>
+<tr class="row-odd"><td><p>D</p></td>
+<td><p>Insert an uppercase random decimal digit</p></td>
+</tr>
+<tr class="row-even"><td><p>a</p></td>
+<td><p>Insert a random lowercase alphabetical character</p></td>
+</tr>
+<tr class="row-odd"><td><p>A</p></td>
+<td><p>Insert a random uppercase alphabetical character</p></td>
+</tr>
+<tr class="row-even"><td><p>k</p></td>
+<td><p>Insert a random lowercase alphanumeric character</p></td>
+</tr>
+<tr class="row-odd"><td><p>K</p></td>
+<td><p>Insert a random uppercase alphanumeric character</p></td>
+</tr>
+<tr class="row-even"><td><p>n</p></td>
+<td><p>Insert a random number between 0 .. 255 inclusive. This option must always be escaped</p></td>
+</tr>
+<tr class="row-odd"><td><p>N</p></td>
+<td><p>Insert a random number between 0 .. 65535 inclusive. This option must always be escaped</p></td>
+</tr>
+<tr class="row-even"><td><p>w</p></td>
+<td><p>Insert a random lowercase word from the ipsum lorem word set. Always escaped</p></td>
+</tr>
+<tr class="row-odd"><td><p>W</p></td>
+<td><p>Insert a random uppercase word from the ipsum lorem word set. Always escaped</p></td>
+</tr>
+</tbody>
+</table>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>If escape is used and`escapeSpecialChars` is False, then the following

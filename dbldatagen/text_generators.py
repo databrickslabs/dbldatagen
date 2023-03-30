@@ -181,7 +181,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
     =========   ================================================================================================
     Chars       Meaning
     =========   ================================================================================================
-    `\\`        Apply escape to next char.
+    ``\\``       Apply escape to next char.
     v0,v1..v9   Use base value as an array of values and substitute the `nth` element ( 0 .. 9). Always escaped.
     x           Insert a random lowercase hex digit
     X           Insert an uppercase random hex digit
