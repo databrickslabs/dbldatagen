@@ -20,7 +20,6 @@ def deprecated(message=""):
     Note there is a 3rd party library called `deprecated` that provides this feature but goal is to only have
     dependencies on packages already used in the Databricks runtime
     """
-
     # create closure around function that follows use of the decorator
 
     def deprecated_decorator(func):
