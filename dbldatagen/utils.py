@@ -20,7 +20,6 @@ def deprecated(message=""):
     Note there is a 3rd party library called `deprecated` that provides this feature but goal is to only have
     dependencies on packages already used in the Databricks runtime
     """
-
     # create closure around function that follows use of the decorator
 
     def deprecated_decorator(func):
@@ -234,8 +233,8 @@ def split_list_matching_condition(lst, cond):
 
 
     result:
-    `[['id'], ['city_name'], ['id'], ['city_id', 'city_pop'],
-     ['id'], ['city_id', 'city_pop', 'city_id', 'city_pop'], ['id']]`
+    [['id'], ['city_name'], ['id'], ['city_id', 'city_pop'],
+    ['id'], ['city_id', 'city_pop', 'city_id', 'city_pop'], ['id']]
 
     :arg lst: list of items to perform condition matches against
     :arg cond: lambda function or function taking single argument and returning True or False

@@ -1,7 +1,5 @@
-.. Test Data Generator documentation master file, created by
+.. Databricks Labs Data Generator documentation master file, created by
    sphinx-quickstart on Sun Jun 21 10:54:30 2020.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 
 Generating JSON and Structured Column Data
 ==========================================
@@ -277,9 +275,9 @@ The following example illustrates some of these techniques:
    import dbldatagen as dg
 
    ds = (
-        dg.DataGenerator(spark, name="test_data_set1", rows=1000, random=True)
+        dg.DataGenerator(spark, name="test_data_set1", rows=1000)
        .withColumn("r", "float", minValue=1.0, maxValue=10.0, step=0.1,
-                   numColumns=5)
+                   numColumns=5, random=True, randomSeed=-1)
        .withColumn("observations", "array<float>",
                    expr="slice(array(r_0, r_1, r_2, r_3, r_4), 1, abs(hash(id)) % 5 + 1 )",
                    baseColumn="r")
@@ -312,11 +310,14 @@ For example, the following code will generate rows with varying numbers of synth
    import dbldatagen as dg
 
    ds = (
-        dg.DataGenerator(sparkSession=spark, name="customers", rows=1000, partitions=4,
-                         random=True)
+        dg.DataGenerator(sparkSession=spark, name="customers", rows=1000, partitions=4)
         .withColumn("name", "string", percentNulls=0.01, template=r'\\w \\w|\\w A. \\w|test')
-        .withColumn("emails", "string", template=r'\\w.\\w@\\w.com', numFeatures=(1, 6),
-                    structType="array")
+        .withColumn("emails_tmp", "string", template=r'\\w.\\w@\\w.com', numFeatures=3, random=True, 
+                    randomSeed=-1, structType="array", omit=True)
+        .withColumn("emails", "array<string>",
+                    expr="slice(emails_tmp, 1, abs(hash(id)) % 3 + 1 )",
+                    baseColumn="emails_tmp")
+                    
    )
 
    df = ds.build()

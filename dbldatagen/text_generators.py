@@ -178,24 +178,24 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
 
     It uses the following special chars:
 
-    ========   ======================================
-    Chars      Meaning
-    ========   ======================================
-    ``\\``     Apply escape to next char.
-    v0,v1,..v9 Use base value as an array of values and substitute the `nth` element ( 0 .. 9). Always escaped.
-    x          Insert a random lowercase hex digit
-    X          Insert an uppercase random hex digit
-    d          Insert a random lowercase decimal digit
-    D          Insert an uppercase random decimal digit
-    a          Insert a random lowercase alphabetical character
-    A          Insert a random uppercase alphabetical character
-    k          Insert a random lowercase alphanumeric character
-    K          Insert a random uppercase alphanumeric character
-    n          Insert a random number between 0 .. 255 inclusive. This option must always be escaped
-    N          Insert a random number between 0 .. 65535 inclusive. This option must always be escaped
-    w          Insert a random lowercase word from the ipsum lorem word set. Always escaped
-    W          Insert a random uppercase word from the ipsum lorem word set. Always escaped
-    ========   ======================================
+    =========   ================================================================================================
+    Chars       Meaning
+    =========   ================================================================================================
+    ``\\``       Apply escape to next char.
+    v0,v1..v9   Use base value as an array of values and substitute the `nth` element ( 0 .. 9). Always escaped.
+    x           Insert a random lowercase hex digit
+    X           Insert an uppercase random hex digit
+    d           Insert a random lowercase decimal digit
+    D           Insert an uppercase random decimal digit
+    a           Insert a random lowercase alphabetical character
+    A           Insert a random uppercase alphabetical character
+    k           Insert a random lowercase alphanumeric character
+    K           Insert a random uppercase alphanumeric character
+    n           Insert a random number between 0 .. 255 inclusive. This option must always be escaped
+    N           Insert a random number between 0 .. 65535 inclusive. This option must always be escaped
+    w           Insert a random lowercase word from the ipsum lorem word set. Always escaped
+    W           Insert a random uppercase word from the ipsum lorem word set. Always escaped
+    =========   ================================================================================================
 
     .. note::
               If escape is used and`escapeSpecialChars` is False, then the following

@@ -1,7 +1,5 @@
-.. Test Data Generator documentation master file, created by
+.. Databricks Labs Data Generator documentation master file, created by
    sphinx-quickstart on Sun Jun 21 10:54:30 2020.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 
 Options and Additional Features
 ===============================
@@ -25,11 +23,9 @@ Finally type conversion is applied.
 The following table lists some of the common options that can be applied with the ``withColumn`` and ``withColumnSpec``
 methods.
 
-.. table:: Column creation options
-
-================  ==============================
+================  =========================================================================================
 Parameter         Usage
-================  ==============================
+================  =========================================================================================
 minValue          Minimum value for range of generated value. Alternatively, use ``dataRange``
 
 maxValue          Minimum value for range of generated value. Alternatively, use ``dataRange``
@@ -111,7 +107,7 @@ numFeatures       Synonym for `numColumns`
 
 structType        If set to `array`, generates array value from multiple columns.
 
-================  ==============================
+================  =========================================================================================
 
 
 .. note::
@@ -129,7 +125,7 @@ You may generate multiple columns with the same column generation spec by specif
 an integer value to generate a specific number of columns. The generated columns will be suffixed with a number
 representing the column - for example "email_0", "email_1" etc.
 
-If you specify the attribute `structType="array"`, the multiple columns will be combined into a single array valued
+If you specify the attribute ``structType="array"``, the multiple columns will be combined into a single array valued
 column.
 
 Generating random values
@@ -159,22 +155,21 @@ The following example illustrates some of these features.
 .. code-block:: python
 
         ds = (
-            dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=1000, partitions=4,
-                             random=True)
-            .withColumn("name", "string", percentNulls=0.01, template=r'\\w \\w|\\w A. \\w|test')
-            .withColumn("emails", "string", template=r'\\w.\\w@\\w.com',  numFeatures=(2,6,
-                        structType="array")
+            dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=1000, partitions=4)
+            .withColumn("name", "string", percentNulls=0.01, template=r'\\w \\w|\\w A. \\w|test',
+                         random=True)
+            .withColumn("emails", "string", template=r'\\w.\\w@\\w.com',  numFeatures=6,
+                        structType="array", random=True)
         )
 
         df = ds.build()
 
-The use of `random=True` at the DataGenerator instance level applies `random=True` to all columns.
 
-The combination of `numFeatures=(2,6)` and `structType='array'` will generate array values with varying number of
+The combination of `numFeatures=6` and `structType='array'` will generate array values with varying number of
 elements according to the underlying value generation rules - in this case, the use of a template to generate text.
 
-By default random number seeds are derived from field names, and in the case of columns with multiple features,
-the seed will be different for each feature element.
+By default random number seeds are derived from field names. In the case of columns with multiple features,
+we can specify a randomSeed of -1 to ensure that the seed will be different for each feature element.
 
 Using custom SQL to control data generation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
