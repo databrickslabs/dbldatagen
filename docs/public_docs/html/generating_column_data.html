@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generating Column Data &mdash; Databricks Labs Data Generator 0.3.3post2 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/tdg.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/clipboard.min.js"></script>
+        <script src="_static/copybutton.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Understanding and Using Data Ranges" href="DATARANGES.html" />
+    <link rel="prev" title="Installation Notes" href="installation_notes.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Generating column data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#initializing-a-data-generation-spec">Initializing a data generation spec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#adding-columns-to-a-data-generation-spec">Adding columns to a data generation spec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#generating-complex-columns-structs-maps-arrays">Generating complex columns - structs, maps, arrays</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-mechanics-of-column-data-generation">The mechanics of column data generation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference/api/modules.html">The dbldatagen package API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Generating Column Data</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/generating_column_data.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="generating-column-data">
+<h1>Generating Column Data<a class="headerlink" href="#generating-column-data" title="Permalink to this heading"></a></h1>
+<p>The data generation specification object controls how the data is to be generated.
+This includes:</p>
+<ul class="simple">
+<li><p>The number of rows to be generated</p></li>
+<li><p>Whether columns are generated from an existing schema</p></li>
+<li><p>Whether implicit columns used in the generation process are output in the final data set</p></li>
+<li><p>Whether the generated data set will be a streaming or batch data set</p></li>
+<li><p>How the column data should be generated and what the dependencies for each column are</p></li>
+<li><p>How random and psuedo-random data is generated</p></li>
+</ul>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<blockquote>
+<div><p>See the following links for more details:</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>The DataGenerator object - <a class="reference internal" href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator" title="dbldatagen.data_generator.DataGenerator"><code class="xref py py-data docutils literal notranslate"><span class="pre">DataGenerator</span></code></a></p></li>
+<li><p>Adding new columns - <a class="reference internal" href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.withColumn" title="dbldatagen.data_generator.DataGenerator.withColumn"><code class="xref py py-data docutils literal notranslate"><span class="pre">withColumn</span></code></a></p></li>
+<li><p>Controlling how existing columns are generated - <a class="reference internal" href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.withColumnSpec" title="dbldatagen.data_generator.DataGenerator.withColumnSpec"><code class="xref py py-data docutils literal notranslate"><span class="pre">withColumnSpec</span></code></a></p></li>
+<li><p>Adding column generation specs in bulk - <a class="reference internal" href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.withColumnSpecs" title="dbldatagen.data_generator.DataGenerator.withColumnSpecs"><code class="xref py py-data docutils literal notranslate"><span class="pre">withColumnSpecs</span></code></a></p></li>
+<li><p>Options for column generation - <a class="reference internal" href="options_and_features.html"><span class="doc">Options and Additional Features</span></a></p></li>
+</ul>
+</div>
+<p>Column data is generated for all columns whether imported from a schema or explicitly added
+to a data specification. However, column data can be omitted from the final output, allowing columns to be used
+for intermediate calculations.</p>
+<section id="initializing-a-data-generation-spec">
+<h2>Initializing a data generation spec<a class="headerlink" href="#initializing-a-data-generation-spec" title="Permalink to this heading"></a></h2>
+<p>The DataGenerator object instance defines a specification for how data is to be generated.
+It consists of a set of  column generation specifications in addition to various instance level attributes.
+These control the data generation process.</p>
+<p>The data generation process itself is deferred until the data generation instance <code class="docutils literal notranslate"><span class="pre">build</span></code> method is executed.</p>
+<p>So until the <code class="docutils literal notranslate"><span class="pre">build</span></code> method is invoked, the data generation specification is in initialization mode.</p>
+<p>Once <code class="docutils literal notranslate"><span class="pre">build</span></code> has been invoked, the data generation instance holds state about the data set generated.</p>
+<p>While <code class="docutils literal notranslate"><span class="pre">build</span></code> can be invoked a subsequent time, making further modifications to the definition post build before
+calling <code class="docutils literal notranslate"><span class="pre">build</span></code> again is not recommended. We recommend the use of the <code class="docutils literal notranslate"><span class="pre">clone</span></code> method to make a new data generation
+specification similar to an existing one if further modifications are needed.</p>
+<p>See <a class="reference internal" href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.clone" title="dbldatagen.data_generator.DataGenerator.clone"><code class="xref py py-data docutils literal notranslate"><span class="pre">clone</span></code></a> for further information.</p>
+</section>
+<section id="adding-columns-to-a-data-generation-spec">
+<h2>Adding columns to a data generation spec<a class="headerlink" href="#adding-columns-to-a-data-generation-spec" title="Permalink to this heading"></a></h2>
+<p>During creation of the data generator object instance (i.e before <code class="docutils literal notranslate"><span class="pre">build</span></code> is called)
+each invocation of <code class="docutils literal notranslate"><span class="pre">withColumnSpec</span></code>, <code class="docutils literal notranslate"><span class="pre">withColumnSpecs</span></code> or <code class="docutils literal notranslate"><span class="pre">withColumn</span></code> adds or modifies a column generation
+specification.</p>
+<p>When building the data generation spec, the <code class="docutils literal notranslate"><span class="pre">withSchema</span></code> method may be used to add columns from an existing schema.
+This does _not_ prevent the use of <code class="docutils literal notranslate"><span class="pre">withColumn</span></code> to add new columns.</p>
+<p>Use <code class="docutils literal notranslate"><span class="pre">withColumn</span></code> to define a new column. This method takes a parameter to specify the data type.
+See <a class="reference internal" href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.withColumn" title="dbldatagen.data_generator.DataGenerator.withColumn"><code class="xref py py-data docutils literal notranslate"><span class="pre">withColumn</span></code></a>.</p>
+<p>Use <code class="docutils literal notranslate"><span class="pre">withColumnSpec</span></code> to define how a column previously defined in a schema should be generated. This method does not
+take a data type property, but uses the data type information defined in the schema.
+See <a class="reference internal" href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.withColumnSpec" title="dbldatagen.data_generator.DataGenerator.withColumnSpec"><code class="xref py py-data docutils literal notranslate"><span class="pre">withColumnSpec</span></code></a>.</p>
+<p>Use <code class="docutils literal notranslate"><span class="pre">withColumnSpecs</span></code> to define how multiple columns imported from a schema should be generated.
+As the pattern matching may inadvertently match an unintended column, it is permitted to override the specification
+added through this method by a subsequent call to <code class="docutils literal notranslate"><span class="pre">withColumnSpec</span></code> to change the definition of how a specific column
+should be generated
+See <a class="reference internal" href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.withColumnSpecs" title="dbldatagen.data_generator.DataGenerator.withColumnSpecs"><code class="xref py py-data docutils literal notranslate"><span class="pre">withColumnSpecs</span></code></a>.</p>
+<p>By default all columns are marked as being dependent on an internal <code class="docutils literal notranslate"><span class="pre">id</span></code> seed column.
+Use the <code class="docutils literal notranslate"><span class="pre">baseColumn</span></code> attribute to mark a column as being dependent on another column or set of columns.
+Use of the base column attribute has several effects:</p>
+<ul class="simple">
+<li><p>The order in which columns are built will be changed</p></li>
+<li><p>The value of the base column (or the hash of the values, depending on the setting for <code class="docutils literal notranslate"><span class="pre">baseColumnType</span></code>) will
+be used to control the generation of data for the new column. The exception to this is when the <code class="docutils literal notranslate"><span class="pre">random</span></code> attribute
+is set - in this case, the root value will be a random number.</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Using the same column names for new columns as existing columns may conflict with existing columns.
+This may cause errors during data generation.</p>
+<p>If you need to generate a field with the same name as the seed column (by default <cite>id</cite>), you may override
+the default seed column name in the constructor of the data generation spec through the use of the</p>
+<p>Note that Spark SQL is case insensitive with respect to column names.
+So a column name that differs only in case to an existing column may cause issues.</p>
+</div>
+</section>
+<section id="generating-complex-columns-structs-maps-arrays">
+<h2>Generating complex columns - structs, maps, arrays<a class="headerlink" href="#generating-complex-columns-structs-maps-arrays" title="Permalink to this heading"></a></h2>
+<p>Complex column types are supported - that is a column may have its type specified as an array, map or struct. This can
+be specified in the datatype parameter to the <cite>withColumn</cite> method as a string such as “array&lt;string&gt;” or as a
+composite of datatype object instances.</p>
+<p>If the column type is based on a struct, map or array, then the <cite>expr</cite> attribute must be specified to provide a
+value for the column.</p>
+<p>If the <cite>expr</cite> attribute is not specified, then the default column value will be <cite>NULL</cite>.</p>
+<p>For array valued columns, where all of the elements of the array are to be generated with the same column
+specification, an alternative method is also supported.</p>
+<p>You can specify that a column has a specific number of features with structType of ‘array’ to control the generation of
+the column. In this case, the datatype should be the type of the individual element, not of the array.</p>
+<p>For example, the following code will generate rows with multiple synthetic emails for each customer:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
+
+<span class="n">ds</span> <span class="o">=</span> <span class="p">(</span>
+     <span class="n">dg</span><span class="o">.</span><span class="n">DataGenerator</span><span class="p">(</span><span class="n">sparkSession</span><span class="o">=</span><span class="n">spark</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;test_dataset1&quot;</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">partitions</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+     <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="n">percentNulls</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">w </span><span class="se">\\</span><span class="s1">w|</span><span class="se">\\</span><span class="s1">w A. </span><span class="se">\\</span><span class="s1">w|test&#39;</span><span class="p">)</span>
+     <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;emails&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">w.</span><span class="se">\\</span><span class="s1">w@</span><span class="se">\\</span><span class="s1">w.com&#39;</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">randomSeed</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+                 <span class="n">numFeatures</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">structType</span><span class="o">=</span><span class="s2">&quot;array&quot;</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="the-mechanics-of-column-data-generation">
+<h2>The mechanics of column data generation<a class="headerlink" href="#the-mechanics-of-column-data-generation" title="Permalink to this heading"></a></h2>
+<p>The data set is generated when the <code class="docutils literal notranslate"><span class="pre">build</span></code> method is invoked on the data generation instance.</p>
+<p>This performs the following actions:</p>
+<ul class="simple">
+<li><p>A pseudo build plan will be computed for debugging purposes</p></li>
+<li><p>The set of columns is reordered to control the order in which column data is generated. The ordering is based on the
+<code class="docutils literal notranslate"><span class="pre">baseColumn</span></code> attribute of individual column generation spec.</p></li>
+<li><p>Cumulative density functions will be computed for columns where weighted values are specified</p></li>
+<li><p>The data set will be computed as a Spark data frame for the data in the order of the computed column ordering</p></li>
+<li><p>Percent nulls transformations will be applied to columns where the <code class="docutils literal notranslate"><span class="pre">percentNulls</span></code> attribute was specified</p></li>
+<li><p>The final set of output fields will be selected (omitting any columns where the <code class="docutils literal notranslate"><span class="pre">omit</span></code> attribute was set to
+<strong>True</strong>)</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Normally the columns will be built in the order specified in the spec.
+Use of the <cite>baseColumn</cite> attribute may change the column build ordering.</p>
+</div>
+<p>This has several implications:</p>
+<ul class="simple">
+<li><p>If a column is referred to in an expression, the <code class="docutils literal notranslate"><span class="pre">baseColumn</span></code> attribute may need to be defined with a dependency
+on that column</p></li>
+<li><p>If a column uses a base column with a restricted range of values then it is possible that the column
+will not generate the full range of values in the column generation spec</p></li>
+<li><p>If the base column is of type <code class="docutils literal notranslate"><span class="pre">boolean</span></code> or some other restricted range type, computations on that base value
+may not produce the expected range of values</p></li>
+<li><p>If base column is not specified, you may see errors reporting that the column in an expression does not exist.
+This may be fixed by specifying a column dependency using the <cite>baseColumn</cite> attribute</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The implementation performs primitive scanning of SQL expressions (specified using the <cite>expr</cite> attribute)
+to determine if the sql expression depends on
+earlier columns and if so, will put the building of the column in a separate phase.</p>
+<p>However it does not reorder the building sequence if there is a reference to a column that will be built later in the
+SQL expression.
+To enforce the dependency, you must use the <cite>baseColumn</cite> attribute to indicate the dependency.</p>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="installation_notes.html" class="btn btn-neutral float-left" title="Installation Notes" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="DATARANGES.html" class="btn btn-neutral float-right" title="Understanding and Using Data Ranges" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
