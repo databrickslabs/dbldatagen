@@ -1,7 +1,0 @@
-dbldatagen.distributions.beta module
-====================================
-
-.. automodule:: dbldatagen.distributions.beta
-   :members:
-   :undoc-members:
-   :show-inheritance:

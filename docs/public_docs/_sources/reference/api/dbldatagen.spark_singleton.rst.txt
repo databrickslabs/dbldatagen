@@ -1,7 +1,0 @@
-dbldatagen.spark\_singleton module
-==================================
-
-.. automodule:: dbldatagen.spark_singleton
-   :members:
-   :undoc-members:
-   :show-inheritance:

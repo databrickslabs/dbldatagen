@@ -1,7 +1,0 @@
-dbldatagen.datarange module
-===========================
-
-.. automodule:: dbldatagen.datarange
-   :members:
-   :undoc-members:
-   :show-inheritance:

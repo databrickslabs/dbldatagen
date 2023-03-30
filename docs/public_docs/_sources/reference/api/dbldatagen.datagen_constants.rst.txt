@@ -1,7 +1,0 @@
-dbldatagen.datagen\_constants module
-====================================
-
-.. automodule:: dbldatagen.datagen_constants
-   :members:
-   :undoc-members:
-   :show-inheritance:

@@ -1,7 +1,0 @@
-dbldatagen
-==========
-
-.. toctree::
-   :maxdepth: 4
-
-   dbldatagen

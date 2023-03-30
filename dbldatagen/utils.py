@@ -234,8 +234,8 @@ def split_list_matching_condition(lst, cond):
 
 
     result:
-    `[['id'], ['city_name'], ['id'], ['city_id', 'city_pop'],
-     ['id'], ['city_id', 'city_pop', 'city_id', 'city_pop'], ['id']]`
+    [['id'], ['city_name'], ['id'], ['city_id', 'city_pop'],
+    ['id'], ['city_id', 'city_pop', 'city_id', 'city_pop'], ['id']]
 
     :arg lst: list of items to perform condition matches against
     :arg cond: lambda function or function taking single argument and returning True or False

@@ -1,7 +1,0 @@
-dbldatagen.data\_generator module
-=================================
-
-.. automodule:: dbldatagen.data_generator
-   :members:
-   :undoc-members:
-   :show-inheritance:

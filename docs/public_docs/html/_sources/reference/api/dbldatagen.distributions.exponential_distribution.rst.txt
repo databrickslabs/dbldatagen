@@ -1,7 +1,0 @@
-dbldatagen.distributions.exponential\_distribution module
-=========================================================
-
-.. automodule:: dbldatagen.distributions.exponential_distribution
-   :members:
-   :undoc-members:
-   :show-inheritance:

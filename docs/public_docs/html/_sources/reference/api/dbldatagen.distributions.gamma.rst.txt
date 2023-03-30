@@ -1,7 +1,0 @@
-dbldatagen.distributions.gamma module
-=====================================
-
-.. automodule:: dbldatagen.distributions.gamma
-   :members:
-   :undoc-members:
-   :show-inheritance:

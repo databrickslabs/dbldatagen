@@ -1,7 +1,0 @@
-dbldatagen.text\_generator\_plugins module
-==========================================
-
-.. automodule:: dbldatagen.text_generator_plugins
-   :members:
-   :undoc-members:
-   :show-inheritance:
