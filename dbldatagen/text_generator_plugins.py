@@ -375,7 +375,6 @@ def fakerText(mname, *args, _lib=None, _rootClass=None, **kwargs):
        :param args: positional args to be passed to underlying Faker instance
        :param _lib: internal only param - library to load
        :param _rootClass: internal only param - root class to create
-
        :returns : instance of PyfuncText for use with Faker
 
        ``fakerText("sentence")`` is same as ``FakerTextFactory()("sentence")``
