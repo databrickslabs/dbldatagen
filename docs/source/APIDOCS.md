@@ -165,13 +165,13 @@ testDataSpec = (
         numColumns=column_count,
     )
     .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
-    .withColumn("code2", "integer", minValue=0, maxValue=10, random=True)
+    .withColumn("code2", IntegerType(), minValue=0, maxValue=10, random=True)
     .withColumn("code3", StringType(), values=["online", "offline", "unknown"])
     .withColumn(
         "code4", StringType(), values=["a", "b", "c"], random=True, percentNulls=0.05
     )
     .withColumn(
-        "code5", "string", values=["a", "b", "c"], random=True, weights=[9, 1, 1]
+        "code5", StringType(), values=["a", "b", "c"], random=True, weights=[9, 1, 1]
     )
 )
 
@@ -193,8 +193,7 @@ column. Note this expression can refer to any preceding column including the `id
 inclusive. These will be computed using modulo arithmetic on the `id` column. 
 
 - The `withColumn` method call for the `code2` column specifies the generation of values between 0 and 10 
-inclusive. These will be computed via a uniformly distributed random value. Note that type strings can be used
-in place of "IntegerType()"
+inclusive. These will be computed via a uniformly distributed random value. 
 
 > By default all random values are uniformly distributed
 > unless either the `weights` option is used or a specific distribution is used. 
@@ -330,29 +329,29 @@ testDataSpec = (
     .withIdOutput()
     # we'll use hash of the base field to generate the ids to
     # avoid a simple incrementing sequence
-    .withColumn("internal_device_id", "long", minValue=0x1000000000000, 
+    .withColumn("internal_device_id", LongType(), minValue=0x1000000000000, 
                 uniqueValues=device_population, omit=True, baseColumnType="hash",
     )
     # note for format strings, we must use "%lx" not "%x" as the
     # underlying value is a long
     .withColumn(
-        "device_id", "string", format="0x%013x", baseColumn="internal_device_id"
+        "device_id", StringType(), format="0x%013x", baseColumn="internal_device_id"
     )
     # the device / user attributes will be the same for the same device id
     # so lets use the internal device id as the base column for these attribute
-    .withColumn("country", "string", values=country_codes, weights=country_weights, 
+    .withColumn("country", StringType(), values=country_codes, weights=country_weights, 
                 baseColumn="internal_device_id")
-    .withColumn("manufacturer", "string", values=manufacturers, 
+    .withColumn("manufacturer", StringType(), values=manufacturers, 
                 baseColumn="internal_device_id", )
     # use omit = True if you don't want a column to appear in the final output
     # but just want to use it as part of generation of another column
-    .withColumn("line", "string", values=lines, baseColumn="manufacturer", 
+    .withColumn("line", StringType(), values=lines, baseColumn="manufacturer", 
                 baseColumnType="hash", omit=True )
-    .withColumn("model_ser", "integer", minValue=1, maxValue=11, baseColumn="device_id", 
+    .withColumn("model_ser", IntegerType(), minValue=1, maxValue=11, baseColumn="device_id", 
                 baseColumnType="hash", omit=True, )
-    .withColumn("model_line", "string", expr="concat(line, '#', model_ser)", 
+    .withColumn("model_line", StringType(), expr="concat(line, '#', model_ser)", 
                 baseColumn=["line", "model_ser"] )
-    .withColumn("event_type", "string", 
+    .withColumn("event_type", StringType(), 
                 values=["activation", "deactivation", "plan change", "telecoms activity", 
                         "internet activity", "device error", ],
                 random=True)
@@ -379,12 +378,6 @@ of unique values.
 
 - The `withColumn` method call for the `line` column introduces a temporary column for purposes of 
 generating other columns, but through the use of the `omit` option, omits it from the final data set.
-
-> NOTE: Type strings can be used in place of instances of data type objects. Type strings use SQL data type syntax
-> and can be used to specify basic types, numeric types such as "decimal(10,3)" as well as complex structured types
-> such as "array<string>", "map<string, int>" and "struct<a:binary, b:int, c:float>".
-> 
-> Type strings are case-insensitive.
 
 ### Scaling it up
 

@@ -290,6 +290,12 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
         template_info = [self._prepareTemplateStrings(template, escapeSpecialMeaning=escapeSpecialChars)
                                     for template in self._templates]
 
+        logger = logging.getLogger(__name__)
+
+        #if logger.isEnabledFor(logging.DEBUG):
+        for ix, ti in template_info:
+            logger.info(f"templates - {ix} {ti}")
+
         self._max_placeholders = max([ x[0] for x in template_info])  # pylint: disable=consider-using-generator
         self._max_rnds_needed = max([ len(x[1]) for x in template_info])  # pylint: disable=consider-using-generator
         self._placeholders_needed = [ x[0] for x in template_info]

@@ -122,16 +122,6 @@ structType        If set to `array`, generates array value from multiple columns
      For more information, see :data:`~dbldatagen.daterange.DateRange`
      or :data:`~dbldatagen.daterange.NRange`.
 
-Generating multiple columns with same generation spec
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-You may generate multiple columns with the same column generation spec by specifying `numFeatures` or `numColumns` with
-an integer value to generate a specific number of columns. The generated columns will be suffixed with a number
-representing the column - for example "email_0", "email_1" etc.
-
-If you specify the attribute `structType="array"`, the multiple columns will be combined into a single array valued
-column.
-
 Generating random values
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -145,8 +135,7 @@ If the attribute, `random` is True, the root column value is generated from a ra
 For random columns, the `randomSeedMethod` and the `randomSeed` method determine how the random root value is generated.
 
 When the `randomSeedMethod` attribute value is `fixed`, it will be generated using a random number generator
-with a designated `randomSeed` unless the `randomSeed` value is -1. When the `randomSeed` value is -1, then the
-generated values will be generated without a fixed random seed, so data will be different from run to run.
+ with a designated `randomSeed` unless the `randomSeed` value is -1.
 
 If the `randomSeedMethod` value is `hash_fieldname`, the random seed for each column is computed using a hash function
 over the field name.
@@ -154,27 +143,6 @@ over the field name.
 This guarantees that data generation is repeatable unless the `randomSeed` attribute has a value of -1, and the
 `randomSeedMethod` value is `fixed`.
 
-The following example illustrates some of these features.
-
-.. code-block:: python
-
-        ds = (
-            dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=1000, partitions=4,
-                             random=True)
-            .withColumn("name", "string", percentNulls=0.01, template=r'\\w \\w|\\w A. \\w|test')
-            .withColumn("emails", "string", template=r'\\w.\\w@\\w.com', random=True,
-                        numFeatures=numFeaturesSupplied, structType="array")
-        )
-
-        df = ds.build()
-
-The use of `random=True` at the DataGenerator instance level applies `random=True` to all columns.
-
-The combination of `numFeatures=(2,6)` and `structType='array'` will generate array values with varying number of
-elements according to the underlying value generation rules - in this case, the use of a template to generate text.
-
-By default random number seeds are derived from field names, and in the case of columns with multiple features,
-the seed will be different for each feature element.
 
 Using custom SQL to control data generation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
