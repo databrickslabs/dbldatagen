@@ -294,6 +294,7 @@ class TestBuildPlanning:
                         baseColumn="city_id")
 
         build_order = gen1.build_order
+        logging.info(f"Build order {build_order}")
 
         assert self.builtBefore("city_id", "city_name", build_order)
         assert self.builtBefore("city", "city2", build_order)
@@ -307,8 +308,6 @@ class TestBuildPlanning:
         assert self.builtInSeparatePhase("city", "city_name", build_order)
         assert self.builtInSeparatePhase("city", "city_id", build_order)
         assert self.builtInSeparatePhase("city", "city_pop", build_order)
-
-        print(gen1.build_order)
 
     def test_build_ordering_explicit_dependency2(self):
         gen1 = dg.DataGenerator(sparkSession=spark, name="nested_schema", rows=1000, partitions=4,
@@ -327,6 +326,7 @@ class TestBuildPlanning:
                         baseColumn="city_id")
 
         build_order = gen1.build_order
+        logging.info(f"Build order {build_order}")
 
         assert self.builtBefore("city", "city_name", build_order)
         assert self.builtBefore("city", "city_id", build_order)
@@ -334,8 +334,6 @@ class TestBuildPlanning:
         assert self.builtInSeparatePhase("city", "city_name", build_order)
         assert self.builtInSeparatePhase("city", "city_id", build_order)
         assert self.builtInSeparatePhase("city", "city_pop", build_order)
-
-        print(gen1.build_order)
 
     def test_build_ordering_implicit_dependency(self):
         gen1 = dg.DataGenerator(sparkSession=spark, name="nested_schema", rows=1000, partitions=4,
@@ -348,7 +346,7 @@ class TestBuildPlanning:
                         expr="named_struct('name', city_name, 'id', city_id, 'population', city_pop)")
 
         build_order = gen1.build_order
-        print(gen1.build_order)
+        logging.info(f"Build order {build_order}")
 
         assert self.builtBefore("city", "city_name", build_order)
         assert self.builtBefore("city", "city_id", build_order)
@@ -410,21 +408,21 @@ class TestBuildPlanning:
         )
 
         build_order = gen1.build_order
-        print(gen1.build_order)
+        logging.info(f"Build order {build_order}")
 
         assert self.builtBefore("event_date", "tag_ts", build_order)
         assert self.builtBefore("device_key", "site", build_order)
         assert self.builtBefore("device_key", "area", build_order)
         assert self.builtBefore("device_key", "line", build_order)
         assert self.builtBefore("device_key", "local_device", build_order)
-        assert self.builtBefore( "internal_device_key", "site", build_order)
-        assert self.builtBefore( "internal_device_key", "area", build_order)
-        assert self.builtBefore( "internal_device_key", "line", build_order)
+        assert self.builtBefore("internal_device_key", "site", build_order)
+        assert self.builtBefore("internal_device_key", "area", build_order)
+        assert self.builtBefore("internal_device_key", "line", build_order)
         assert self.builtBefore("internal_device_key", "local_device", build_order)
-        assert self.builtBefore("device_key", "site",  build_order)
+        assert self.builtBefore("device_key", "site", build_order)
         assert self.builtBefore("device_key", "area", build_order)
         assert self.builtBefore("device_key", "line", build_order)
-        assert self.builtBefore("local_device", "device_key", build_order)
+        assert self.builtBefore("device_key", "local_device", build_order)
 
         assert self.builtInSeparatePhase("tag_ts", "event_date", build_order)
         assert self.builtInSeparatePhase("site", "device_key", build_order)
@@ -440,7 +438,32 @@ class TestBuildPlanning:
         assert self.builtInSeparatePhase("line", "device_key", build_order)
         assert self.builtInSeparatePhase("local_device", "device_key", build_order)
 
+    def test_implicit_dependency3(self):
+        dataspec = (
+            dg.DataGenerator(spark, rows=1000, partitions=4)
+            .withColumn("name", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w')
+            .withColumn("payment_instrument_type", values=['cash', 'cc', 'app'],
+                        random=True)
+            .withColumn("int_payment_instrument", "int", minValue=0000, maxValue=9999,
+                        baseColumn="name",
+                        baseColumnType="hash", omit=True)
+            .withColumn("payment_instrument",
+                        expr="format_number(int_payment_instrument, '**** ****** *####')")
+            .withColumn("email", template=r'\\w.\\w@\\w.com')
+            .withColumn("md5_payment_instrument",
+                        expr="md5(concat(payment_instrument_type, ':', payment_instrument))")
+        )
 
+        build_order = dataspec.build_order
+        logging.info(f"Build order {build_order}")
+
+        assert self.builtBefore("payment_instrument", "int_payment_instrument", build_order)
+        assert self.builtBefore("md5_payment_instrument", "payment_instrument", build_order)
+        assert self.builtBefore("md5_payment_instrument", "payment_instrument_type", build_order)
+
+        assert self.builtInSeparatePhase("int_payment_instrument", "payment_instrument", build_order)
+        assert self.builtInSeparatePhase("md5_payment_instrument", "payment_instrument", build_order)
+        assert self.builtInSeparatePhase("md5_payment_instrument", "payment_instrument_type", build_order)
 
     def test_expr_attribute(self):
         sql_expr = "named_struct('name', city_name, 'id', city_id, 'population', city_pop)"
@@ -485,24 +508,12 @@ class TestBuildPlanning:
             .withColumn("city", "struct<name:string, id:long, population:long>",
                         expr="named_struct('name', city_name, 'id', city_id, 'population', city_pop)")
 
-        build_order = gen1.build_order
-        print(gen1.build_order)
+        logging.info(f"Build order {gen1.build_order}")
 
         df = gen1.build()
-        df.show()
 
-        # Behavior is allow creation of a duplicate named column. It replaces the previous column
-        # of the same name
-
-        fieldList = [ f.name for f in df.schema.fields]
-        print(fieldList)
-
-        # ensure we have no duplicate names
-        #assert len(fieldList) == len(set(fieldList))
-
-        fieldMap = { f.name: f.dataType for f in df.schema.fields}
-        print("fieldMap", fieldMap)
-        #assert isinstance(fieldMap["extra_field"], StringType)
+        count = df.count()
+        assert count == 1000
 
     def test_build_ordering_forward_ref(self, caplog):
         # caplog fixture captures log content
@@ -517,8 +528,7 @@ class TestBuildPlanning:
                         expr="named_struct('name', city_name, 'id', city_id, 'population', city_pop)") \
             .withColumn("city_id", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True)
 
-        build_order = gen1.build_order
-        print(gen1.build_order)
+        logging.info(f"Build order {gen1.build_order}")
 
         seed_column_warnings_and_errors = self.get_log_capture_warngings_and_errors(caplog, "forward references")
         assert seed_column_warnings_and_errors >= 1, "Should not have error messages about forward references"
@@ -535,16 +545,9 @@ class TestBuildPlanning:
                         expr="named_struct('name', city_name, 'id', city_id, 'population', city_pop)",
                         baseColumns=["city_name", "city_id", "city_pop"])
 
-        build_order = gen1.build_order
-        print(gen1.build_order)
+        logging.info(f"Build order {gen1.build_order}")
 
         df = gen1.build()
 
-        df.show()
-
-        # assert self.builtBefore("city", "city_name", build_order)
-        # assert self.builtBefore("city", "city_id", build_order)
-        # assert self.builtBefore("city", "city_pop", build_order)
-        # assert self.builtInSeparatePhase("city", "city_name", build_order), "fields should be built in separate phase"
-        # assert self.builtInSeparatePhase("city", "city_id", build_order), "fields should be built in separate phase"
-        # assert self.builtInSeparatePhase("city", "city_pop", build_order), "fields should be built in separate phase"
+        count = df.count()
+        assert count == 1000
