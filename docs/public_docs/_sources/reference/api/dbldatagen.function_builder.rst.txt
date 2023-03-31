@@ -1,7 +1,0 @@
-dbldatagen.function\_builder module
-===================================
-
-.. automodule:: dbldatagen.function_builder
-   :members:
-   :undoc-members:
-   :show-inheritance:

@@ -1,7 +1,0 @@
-dbldatagen.column\_generation\_spec module
-==========================================
-
-.. automodule:: dbldatagen.column_generation_spec
-   :members:
-   :undoc-members:
-   :show-inheritance:
