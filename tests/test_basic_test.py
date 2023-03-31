@@ -53,17 +53,17 @@ class TestBasicOperation:
         # clear messages from setup
         caplog_object.clear()
 
-    def get_log_capture_warngings_and_errors(self, caplog_object, searchText):
+    def get_log_capture_warngings_and_errors(self, caplog_object, textFlag):
         """
         gets count of errors containing specified text
 
         :param caplog_object: log capture object from fixture
-        :param searchText: text to search for to include error or warning in count
+        :param textFlag: text to search for to include error or warning in count
         :return: count of errors containg text specified in `textFlag`
         """
         seed_column_warnings_and_errors = 0
         for r in caplog_object.records:
-            if (r.levelname in ["WARNING", "ERROR"]) and searchText in r.message:
+            if (r.levelname in ["WARNING", "ERROR"]) and textFlag in r.message:
                 seed_column_warnings_and_errors += 1
 
         return seed_column_warnings_and_errors
