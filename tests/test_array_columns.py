@@ -34,7 +34,9 @@ class TestArrayColumns:
                    )
 
         df = df_spec.build()
-        df.show()
+
+        c = df.count()
+        assert c == data_rows
 
     def test_basic_arrays2(self):
         column_count = 10
@@ -45,7 +47,8 @@ class TestArrayColumns:
                    )
 
         df = df_spec.build()
-        df.show()
+        c = df.count()
+        assert c == data_rows
 
     def test_basic_arrays_with_lit1(self):
         data_rows = 1000
@@ -58,10 +61,12 @@ class TestArrayColumns:
                    .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
                    .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
                    .withColumn("a", ArrayType(StringType()), expr="array(1,2,3,4)")
+                   .withColumn("b", "array<string>", expr="array(1,2,3,4)")
                    )
 
         df = df_spec.build()
-        print(df.schema)
+        c = df.count()
+        assert c == data_rows
 
     def test_basic_arrays_with_lit2(self):
         data_rows = 1000
@@ -74,10 +79,12 @@ class TestArrayColumns:
                    .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
                    .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
                    .withColumn("a", ArrayType(StringType()), expr="array('one','two','three')")
+                   .withColumn("b", "array<string>", expr="array('one','two','three')")
                    )
 
         df = df_spec.build()
-        df.show()
+        c = df.count()
+        assert c == data_rows
 
     def test_basic_arrays_with_columns(self):
         column_count = 10
@@ -87,9 +94,12 @@ class TestArrayColumns:
                    .withIdOutput()
                    .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
                                numColumns=column_count)
+                   .withColumn("r_array", "array<float>", expr="array(r_0, r_1, r_2, r_3)")
                    )
 
         df = df_spec.build()
+        c = df.count()
+        assert c == data_rows
         df.show()
 
     def test_basic_arrays_with_columns2(self):
