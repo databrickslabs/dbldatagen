@@ -22,8 +22,7 @@ class TestArrayColumns:
     def test_basic_arrays(self):
         column_count = 10
         data_rows = 100 * 1000
-        df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows,
-                                    partitions=spark.sparkContext.defaultParallelism)
+        df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows)
                    .withIdOutput()
                    .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
                    .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
@@ -41,8 +40,7 @@ class TestArrayColumns:
     def test_basic_arrays2(self):
         column_count = 10
         data_rows = 100 * 1000
-        df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows,
-                                    partitions=spark.sparkContext.defaultParallelism)
+        df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows)
                    .withColumn("a", ArrayType(StringType()))
                    )
 
@@ -52,8 +50,7 @@ class TestArrayColumns:
 
     def test_basic_arrays_with_lit1(self):
         data_rows = 1000
-        df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows,
-                                    partitions=spark.sparkContext.defaultParallelism)
+        df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows)
                    .withIdOutput()
                    .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
                    .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
@@ -70,8 +67,7 @@ class TestArrayColumns:
 
     def test_basic_arrays_with_lit2(self):
         data_rows = 1000
-        df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows,
-                                    partitions=spark.sparkContext.defaultParallelism)
+        df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows)
                    .withIdOutput()
                    .withColumn("code1", "int", minValue=100, maxValue=200)
                    .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
@@ -89,50 +85,47 @@ class TestArrayColumns:
     def test_basic_arrays_with_columns(self):
         column_count = 10
         data_rows = 10 * 1000
-        df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows,
-                                    partitions=spark.sparkContext.defaultParallelism)
+        df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows)
                    .withIdOutput()
                    .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
                                numColumns=column_count)
-                   .withColumn("r_array", "array<float>", expr="array(r_0, r_1, r_2, r_3)")
+                   .withColumn("r_array", "array<float>", expr="array(r_0, r_1, r_2, r_3)", baseColumn="r")
                    )
 
         df = df_spec.build()
         c = df.count()
         assert c == data_rows
-        df.show()
 
     def test_basic_arrays_with_columns2(self):
         column_count = 10
         data_rows = 10 * 1000
-        df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows,
-                                    partitions=spark.sparkContext.defaultParallelism)
+        df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows)
                    .withIdOutput()
                    .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
                                numColumns=column_count)
                    )
 
         df = df_spec.build()
-        df.show()
+        c = df.count()
+        assert c == data_rows
 
     def test_basic_arrays_with_columns3(self):
         column_count = 10
         data_rows = 10 * 1000
-        df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows,
-                                    partitions=spark.sparkContext.defaultParallelism)
+        df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows)
                    .withIdOutput()
-                   .withColumn("r", ArrayType(FloatType()), expr="floor(rand() * 350) * (86400 + 3600)",
+                   .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
                                numColumns=column_count)
                    )
 
         df = df_spec.build()
-        df.show()
+        c = df.count()
+        assert c == data_rows
 
     def test_basic_arrays_with_columns4(self):
         column_count = 10
         data_rows = 10 * 1000
-        df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows,
-                                    partitions=spark.sparkContext.defaultParallelism)
+        df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows)
                    .withIdOutput()
                    .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
                                numColumns=column_count, structType="array")
@@ -144,7 +137,8 @@ class TestArrayColumns:
                    )
 
         df = df_spec.build()
-        df.show()
+        c = df.count()
+        assert c == data_rows
 
     def test_basic_arrays_with_columns5(self):
         column_count = 10
@@ -162,4 +156,5 @@ class TestArrayColumns:
                    )
 
         df = df_spec.build()
-        df.show()
+        c = df.count()
+        assert c == data_rows
