@@ -826,9 +826,6 @@ class DataGenerator:
                                            seedColumnName=self._seedColumnName,
                                            **new_props)
 
-        print(f"expr in new_props[{colName}]", "expr" in new_props)
-        print(f"colType[{colName}] - {colType}")
-
         self._columnSpecsByName[colName] = column_spec
 
         # if column spec for column already exists - remove it
