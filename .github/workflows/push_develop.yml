@@ -1,0 +1,80 @@
+# update tags for develop branch
+name: update latest tag
+
+on:
+  push:
+    branches: [develop]
+
+jobs:
+  update_latest_tag:
+    # Ubuntu 20.04 has Python 3.8
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Unshallow
+        run: git fetch --prune --unshallow
+
+      # - name: Cache packages
+      #   uses: actions/cache@v2
+      #   with:
+      #     path: |
+      #       ~/go/pkg/mod
+      #       ~/.cache/go-build
+      #       vendor
+      #     key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-go-
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.8'
+          cache: 'pipenv'
+
+      - name: Install
+        run: pip install pipenv
+
+      - name: Install dependencies
+        run: pipenv install --dev
+
+      - name: Lint
+        run: |
+          pipenv run prospector --profile prospector.yaml
+
+      - name: Run tests
+        run: make test
+
+      - name: "create or update tag"
+        uses: actions/github-script@v2
+        # continue-on-error: true
+        with:
+          script: |
+            let tag_name = "preview"
+            // note update uses 'tags/...' while update uses 'refs/tags/...'
+            let update_tag_ref = 'tags/' + tag_name
+            try {
+              console.log("Trying to update reference '", update_tag_ref, "' ...")
+              await github.git.updateRef({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: update_tag_ref,
+                  sha: context.sha, 
+                  force: true
+                })
+              console.log("Completed update: ", update_tag_ref)
+            }
+            catch(err) {
+              console.log("Update failed with error:",err)
+              let create_tag_ref = 'refs/tags/' + tag_name
+              console.log("Trying to create reference: ", create_tag_ref)
+              await github.git.createRef({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: create_tag_ref,
+                  sha: context.sha
+                })
+              console.log("Completed creating reference: ", create_tag_ref)
+            }
+
