@@ -23,9 +23,11 @@ Finally type conversion is applied.
 The following table lists some of the common options that can be applied with the ``withColumn`` and ``withColumnSpec``
 methods.
 
-================  =========================================================================================
+.. table:: Column creation options
+
+================  ==============================
 Parameter         Usage
-================  =========================================================================================
+================  ==============================
 minValue          Minimum value for range of generated value. Alternatively, use ``dataRange``
 
 maxValue          Minimum value for range of generated value. Alternatively, use ``dataRange``
@@ -107,7 +109,7 @@ numFeatures       Synonym for `numColumns`
 
 structType        If set to `array`, generates array value from multiple columns.
 
-================  =========================================================================================
+================  ==============================
 
 
 .. note::

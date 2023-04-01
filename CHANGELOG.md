@@ -21,6 +21,7 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 * Added top level `random` attribute to data generator specification constructor
 
 
+
 ### Version 0.3.2
 
 #### Changed
