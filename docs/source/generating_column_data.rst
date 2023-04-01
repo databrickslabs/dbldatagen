@@ -1,4 +1,4 @@
-Generating column data
+Generating Column Data
 ======================
 
 The data generation specification object controls how the data is to be generated.
@@ -7,8 +7,8 @@ This includes:
 - The number of rows to be generated
 - Whether columns are generated from an existing schema
 - Whether implicit columns used in the generation process are output in the final data set
-- Whether the generate data set is a streaming or batch data set
-- How the column data should be generated and what the dependencies are
+- Whether the generated data set will be a streaming or batch data set
+- How the column data should be generated and what the dependencies for each column are
 - How random and psuedo-random data is generated
 
 .. seealso::
@@ -21,21 +21,24 @@ This includes:
   * Options for column generation - :doc:`options_and_features`
 
 Column data is generated for all columns whether imported from a schema or explicitly added
-to a data specification.
+to a data specification. However, column data can be omitted from the final output, allowing columns to be used
+for intermediate calculations.
 
 Initializing a data generation spec
 -----------------------------------
-The DataGenerator object instance defines how data is to be generated. It consists of a set of implicit column
-generation specifications in addition to various instance level attributes. These control the data generation process.
+The DataGenerator object instance defines a specification for how data is to be generated.
+It consists of a set of  column generation specifications in addition to various instance level attributes.
+These control the data generation process.
 
 The data generation process itself is deferred until the data generation instance ``build`` method is executed.
 
-So until the ``build`` command is invoked, the data generation specification is in initialization mode.
+So until the ``build`` method is invoked, the data generation specification is in initialization mode.
 
 Once ``build`` has been invoked, the data generation instance holds state about the data set generated.
+
 While ``build`` can be invoked a subsequent time, making further modifications to the definition post build before
-calling ``build`` again is not recommended. We recommend the use of the ``clone`` method to make a new data set similar
-to an existing one if further modifications are needed.
+calling ``build`` again is not recommended. We recommend the use of the ``clone`` method to make a new data generation
+specification similar to an existing one if further modifications are needed.
 
 See :data:`~dbldatagen.data_generator.DataGenerator.clone` for further information.
 
@@ -62,7 +65,7 @@ added through this method by a subsequent call to ``withColumnSpec`` to change t
 should be generated
 See :data:`~dbldatagen.data_generator.DataGenerator.withColumnSpecs`.
 
-By default all columns are marked as being dependent on an internal ``id`` column.
+By default all columns are marked as being dependent on an internal ``id`` seed column.
 Use the ``baseColumn`` attribute to mark a column as being dependent on another column or set of columns.
 Use of the base column attribute has several effects:
 
@@ -77,8 +80,20 @@ Use of the base column attribute has several effects:
   Using the same column names for new columns as existing columns may conflict with existing columns.
   This may cause errors during data generation.
 
-  Note that Spark SQL is case insensivite with respect to column names.
+  If you need to generate a field with the same name as the seed column (by default `id`), you may override
+  the default seed column name in the constructor of the data generation spec through the use of the
+
+
+  Note that Spark SQL is case insensitive with respect to column names.
   So a column name that differs only in case to an existing column may cause issues.
+
+Generating complex columns - structs, maps, arrays
+--------------------------------------------------
+
+If the column type is based on a struct, map or array, then the `expr` attribute must be specified to provide a
+value for the column.
+
+If the `expr` attribute is not specified, then the default column value will be `NULL`.
 
 The mechanics of column data generation
 ---------------------------------------
@@ -95,13 +110,29 @@ This performs the following actions:
 - The final set of output fields will be selected (omitting any columns where the ``omit`` attribute was set to
   **True**)
 
+.. note::
+
+  Normally the columns will be built in the order specified in the spec.
+  Use of the `baseColumn` attribute may change the column build ordering.
+
+
 This has several implications:
 
-- If a column is referred to in an expression, the ``baseColumn`` attribute must be defined with a dependency
+- If a column is referred to in an expression, the ``baseColumn`` attribute may need to be defined with a dependency
   on that column
 - If a column uses a base column with a restricted range of values then it is possible that the column
   will not generate the full range of values in the column generation spec
 - If the base column is of type ``boolean`` or some other restricted range type, computations on that base value
   may not produce the expected range of values
-- If base column is not specified, you may see errors reporting that the column in an expression does not exist
+- If base column is not specified, you may see errors reporting that the column in an expression does not exist. 
+  This may be fixed by specifying a column dependency using the `baseColumn` attribute
 
+.. note::
+
+  The implementation performs primitive scanning of SQL expressions (specified using the `expr` attribute)
+  to determine if the sql expression depends on
+  earlier columns and if so, will put the building of the column in a separate phase.
+
+  However it does not reorder the building sequence if there is a reference to a column that will be built later in the
+  SQL expression.
+  To enforce the dependency, you must use the `baseColumn` attribute to indicate the dependency.

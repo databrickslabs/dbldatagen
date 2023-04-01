@@ -1,60 +1,87 @@
-import unittest
+import logging
+import pytest
 
-from pyspark.sql.types import BooleanType, ByteType
-from pyspark.sql.types import IntegerType, StringType, DecimalType
+from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
+    TimestampType, DateType, DecimalType, ByteType, BinaryType, ArrayType, MapType, StructType, StructField
 
 import dbldatagen as dg
-from dbldatagen import SchemaParser
 
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
 
-class TestSchemaParser(unittest.TestCase):
+@pytest.fixture(scope="class")
+def setupLogging():
+    FORMAT = '%(asctime)-15s %(message)s'
+    logging.basicConfig(format=FORMAT)
 
-    def test_type_parser(self):
-        x_int = SchemaParser.columnTypeFromString("int")
 
-        self.assertIsInstance(x_int, IntegerType().__class__)
+class TestSchemaParser:
 
-        x_int2 = SchemaParser.columnTypeFromString("integer")
+    @pytest.mark.parametrize("typeDefn, expectedTypeDefn",
+                             [("byte", ByteType()),
+                              ("tinyint", ByteType()),
+                              ("short", ShortType()),
+                              ("smallint", ShortType()),
+                              ("int", IntegerType()),
+                              ("integer", IntegerType()),
+                              ("long", LongType()),
+                              ("LONG", LongType()),
+                              ("bigint", LongType()),
+                              ("date", DateType()),
+                              ("binary", BinaryType()),
+                              ("timestamp", TimestampType()),
+                              ("bool", BooleanType()),
+                              ("boolean", BooleanType()),
+                              ("string", StringType()),
+                              ("char(10)", StringType()),
+                              ("nvarchar(14)", StringType()),
+                              ("nvarchar", StringType()),
+                              ("varchar", StringType()),
+                              ("varchar(10)", StringType()),
+                              ])
+    def test_primitive_type_parser(self, typeDefn, expectedTypeDefn, setupLogging):
+        output_type = dg.SchemaParser.columnTypeFromString(typeDefn)
 
-        self.assertIsInstance(x_int2, IntegerType().__class__)
+        assert output_type == expectedTypeDefn, f"Expect output type {output_type} to match {expectedTypeDefn}"
 
-        x_str = SchemaParser.columnTypeFromString("string")
+    @pytest.mark.parametrize("typeDefn, expectedTypeDefn",
+                             [("float", FloatType()),
+                              ("real", FloatType()),
+                              ("double", DoubleType()),
+                              ("decimal", DecimalType(10, 0)),
+                              ("decimal(11)", DecimalType(11, 0)),
+                              ("decimal(15,3)", DecimalType(15, 3)),
+                              ])
+    def test_numeric_type_parser(self, typeDefn, expectedTypeDefn, setupLogging):
+        output_type = dg.SchemaParser.columnTypeFromString(typeDefn)
 
-        self.assertIsInstance(x_str, StringType().__class__)
+        assert output_type == expectedTypeDefn, f"Expect output type {output_type} to match {expectedTypeDefn}"
 
-    def test_type_parser_decimal(self):
-        x_dec = SchemaParser.columnTypeFromString("decimal")
+    @pytest.mark.parametrize("typeDefn, expectedTypeDefn",
+                             [("array<int>", ArrayType(IntegerType())),
+                              ("array<array<string>>", ArrayType(ArrayType(StringType()))),
+                              ("map<STRING, INT>", MapType(StringType(), IntegerType())),
+                              ("struct<a:binary, b:int, c:float>",
+                               StructType([StructField("a", BinaryType()), StructField("b", IntegerType()),
+                                           StructField("c", FloatType())]))
+                              ])
+    def test_complex_type_parser(self, typeDefn, expectedTypeDefn, setupLogging):
+        output_type = dg.SchemaParser.columnTypeFromString(typeDefn)
 
-        self.assertIsInstance(x_dec, DecimalType().__class__)
+        assert output_type == expectedTypeDefn, f"Expect output type {output_type} to match {expectedTypeDefn}"
 
-        x_dec2 = SchemaParser.columnTypeFromString("decimal(15)")
+    @pytest.mark.parametrize("typeDefn",
+                             ["decimal(15,3, 3)", "array<string", "map<string, string, int>", "decimal()",
+                              "interval", "array<interval>", "map<interval, interval>",
+                              "struct<a:interval, b:int>", "binary_float"
+                              ])
+    def test_parser_exceptions(self, typeDefn, setupLogging):
+        with pytest.raises(Exception) as e_info:
+            output_type = dg.SchemaParser.columnTypeFromString(typeDefn)
 
-        self.assertIsInstance(x_dec2, DecimalType().__class__)
-        self.assertEqual(x_dec2.precision, 15)
+        print("exception:", e_info)
 
-        x_dec3 = SchemaParser.columnTypeFromString("decimal(19,4)")
-
-        self.assertIsInstance(x_dec3, DecimalType().__class__)
-        self.assertEqual(x_dec3.precision, 19)
-        self.assertEqual(x_dec3.scale, 4)
-
-    def test_type_parser_byte(self):
-        x_byte = SchemaParser.columnTypeFromString("byte")
-
-        self.assertIsInstance(x_byte, ByteType().__class__)
-
-    def test_type_parser_boolean(self):
-        x_bool1 = SchemaParser.columnTypeFromString("bool")
-
-        self.assertIsInstance(x_bool1, BooleanType().__class__)
-
-        x_bool2 = SchemaParser.columnTypeFromString("boolean")
-
-        self.assertIsInstance(x_bool2, BooleanType().__class__)
-
-    def test_table_definition_parser(self):
+    def test_table_definition_parser(self, setupLogging):
         table1 = """CREATE TABLE student (id INT, name STRING, age INT)"""
 
         table2 = """CREATE TABLE student (
@@ -69,43 +96,68 @@ class TestSchemaParser(unittest.TestCase):
                        age int)
                   """
 
-        print("schema1")
-        schema1 = SchemaParser.parseCreateTable(spark, table1)
-        self.assertTrue(schema1 is not None)
+        schema1 = dg.SchemaParser.parseCreateTable(spark, table1)
+        assert schema1 is not None, "Schema should not be none"
 
-        self.assertIn("id", schema1.fieldNames())
-        self.assertIn("name", schema1.fieldNames())
-        self.assertIn("age", schema1.fieldNames())
+        assert "id" in schema1.fieldNames()
+        assert "name" in schema1.fieldNames()
+        assert "age" in schema1.fieldNames()
 
-        print("schema2")
-        schema2 = SchemaParser.parseCreateTable(spark, table2)
-        self.assertTrue(schema2 is not None)
+        schema2 = dg.SchemaParser.parseCreateTable(spark, table2)
+        assert schema2 is not None, "schema2 should not be None"
 
-        self.assertIn("id", schema2.fieldNames())
-        self.assertIn("name", schema2.fieldNames())
-        self.assertIn("age", schema2.fieldNames())
+        assert "id" in schema2.fieldNames()
+        assert "name" in schema2.fieldNames()
+        assert "age" in schema2.fieldNames()
 
         print("schema3")
-        schema3 = SchemaParser.parseCreateTable(spark, table3)
-        self.assertTrue(schema3 is not None)
+        schema3 = dg.SchemaParser.parseCreateTable(spark, table3)
+        assert schema3 is not None, "schema3 should not be None"
 
-        self.assertIn("id", schema3.fieldNames())
-        self.assertIn("name", schema3.fieldNames())
-        self.assertIn("age", schema3.fieldNames())
+        assert "id" in schema3.fieldNames()
+        assert "name" in schema3.fieldNames()
+        assert "age" in schema3.fieldNames()
 
+    @pytest.mark.parametrize("sqlExpr, expectedText",
+                             [("named_struct('name', city_name, 'id', city_id, 'population', city_pop)",
+                               "named_struct(' ', city_name, ' ', city_id, ' ', city_pop)"),
+                              ("named_struct('name', `city 2`, 'id', city_id, 'population', city_pop)",
+                                "named_struct(' ', `city 2`, ' ', city_id, ' ', city_pop)"),
+                              ("named_struct('`name 1`', `city 2`, 'id', city_id, 'population', city_pop)",
+                               "named_struct(' ', `city 2`, ' ', city_id, ' ', city_pop)"),
+                              ("named_struct('`name 1`', city, 'id', city_id, 'population', city_pop)",
+                               "named_struct(' ', city, ' ', city_id, ' ', city_pop)"),
+                              ("cast(10 as decimal(10)",
+                               "cast(10 as decimal(10)"),
+                              (" ", " "),
+                              ("", ""),
+                              ])
+    def test_sql_expression_cleanser(self, sqlExpr, expectedText):
+        newSql = dg.SchemaParser._cleanseSQL(sqlExpr)
+        print(newSql)
+        assert sqlExpr == expectedText or sqlExpr != newSql
 
-# run the tests
-# if __name__ == '__main__':
-#  print("Trying to run tests")
-#  unittest.main(argv=['first-arg-is-ignored'],verbosity=2,exit=False)
+        assert newSql == expectedText
 
-# def runTests(suites):
-#    suite = unittest.TestSuite()
-#    result = unittest.TestResult()
-#    for testSuite in suites:
-#        suite.addTest(unittest.makeSuite(testSuite))
-#    runner = unittest.TextTestRunner()
-#    print(runner.run(suite))
+    @pytest.mark.parametrize("sqlExpr, expectedReferences, filterColumns",
+                             [("named_struct('name', city_name, 'id', city_id, 'population', city_pop)",
+                               ['named_struct', 'city_name',  'city_id', 'city_pop'],
+                               None),
+                              ("named_struct('name', city_name, 'id', city_id, 'population', city_pop)",
+                               [ 'city_name', 'city_pop'],
+                               ['city_name', 'city_pop']),
+                               ("cast(10 as decimal(10)",  ['cast', 'as', 'decimal'], None),
+                              ("cast(x as decimal(10)", ['x'], ['x']),
+                              ("cast(`city 2` as decimal(10)", ['cast', 'city 2', 'as', 'decimal'], None),
+                              (" ", [], None),
+                              ("", [], None),
+                              ])
+    def test_sql_expression_parser(self, sqlExpr, expectedReferences, filterColumns):
+        references = dg.SchemaParser.columnsReferencesFromSQLString(sqlExpr, filterItems=filterColumns)
+        assert references is not None
 
+        assert isinstance(references, list), "expected list of potential column references to be returned"
 
-# runTests([TestBasicOperation])
+        print(references)
+
+        assert set(references) == set(expectedReferences)

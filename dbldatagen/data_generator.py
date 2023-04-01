@@ -12,12 +12,16 @@ import re
 from pyspark.sql.types import LongType, IntegerType, StringType, StructType, StructField, DataType
 from .spark_singleton import SparkSingleton
 from .column_generation_spec import ColumnGenerationSpec
-from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, MIN_SPARK_VERSION
-from .utils import ensure, topologicalSort, DataGenError, deprecated
+from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, \
+                               DEFAULT_SEED_COLUMN, SPARK_RANGE_COLUMN, MIN_SPARK_VERSION
+from .utils import ensure, topologicalSort, DataGenError, deprecated, split_list_matching_condition
 from . _version import _get_spark_version
+from .schema_parser import SchemaParser
 
 _OLD_MIN_OPTION = 'min'
 _OLD_MAX_OPTION = 'max'
+
+_STREAMING_TIMESTAMP_COLUMN = "_source_timestamp"
 
 
 class DataGenerator:
@@ -35,6 +39,12 @@ class DataGenerator:
     :param verbose: = if `True`, generate verbose output
     :param batchSize: = UDF batch number of rows to pass via Apache Arrow to Pandas UDFs
     :param debug: = if set to True, output debug level of information
+    :param seedColumnName: = if set, this should be the name of the `seed` or logical `id` column. Defaults to `id`
+
+    By default the seed column is named `id`. If you need to use this column name in your generated data,
+    it is recommended that you use a different name for the seed column - for example `_id`.
+
+    This may be specified by setting the `seedColumnName` attribute to `_id`
     """
 
     # class vars
@@ -48,11 +58,12 @@ class DataGenerator:
 
     # restrict spurious messages from java gateway
     logging.getLogger("py4j").setLevel(logging.WARNING)
-    logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.NOTSET)
+    #logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.NOTSET)
 
     def __init__(self, sparkSession=None, name=None, randomSeedMethod=None,
                  rows=1000000, startingId=0, randomSeed=None, partitions=None, verbose=False,
-                 batchSize=None, debug=False, **kwargs):
+                 batchSize=None, debug=False, seedColumnName=DEFAULT_SEED_COLUMN,
+                 **kwargs):
         """ Constructor for data generator object """
 
         # set up logging
@@ -60,6 +71,11 @@ class DataGenerator:
         self.debug = debug
 
         self._setupLogger()
+        self._seedColumnName = seedColumnName
+        self._outputStreamingFields = False
+
+        if seedColumnName != DEFAULT_SEED_COLUMN:
+            self.logger.info(f"Using '{self._seedColumnName}' for seed column in place of '{DEFAULT_SEED_COLUMN}")
 
         self.name = name if name is not None else self.generateName()
         self._rowCount = rows
@@ -129,7 +145,9 @@ class DataGenerator:
         self._buildOrder = []
         self._inferredSchemaFields = []
         self.buildPlanComputed = False
-        self.withColumn(ColumnGenerationSpec.SEED_COLUMN, LongType(), nullable=False, implicit=True, omit=True)
+
+        # lets add the seed column
+        self.withColumn(self._seedColumnName, LongType(), nullable=False, implicit=True, omit=True, noWarn=True)
         self._batchSize = batchSize
 
         # set up spark session
@@ -137,6 +155,11 @@ class DataGenerator:
 
         # set up use of pandas udfs
         self._setupPandas(batchSize)
+
+    @property
+    def seedColumnName(self):
+        """ return the name of data generation seed column"""
+        return self._seedColumnName
 
     @classmethod
     def _checkSparkVersion(cls, sparkVersion, minSparkVersion):
@@ -151,7 +174,7 @@ class DataGenerator:
         sparkVersionInfo = _get_spark_version(sparkVersion)
 
         if sparkVersionInfo < minSparkVersion:
-            logging.warn(f"*** Minimum version of Python supported is {minSparkVersion} - found version %s ",
+            logging.warning(f"*** Minimum version of Python supported is {minSparkVersion} - found version %s ",
                          sparkVersionInfo )
             return False
 
@@ -215,13 +238,14 @@ class DataGenerator:
         """
         cls._randomSeed = seedVal
 
-    @deprecated('Use `useSeed` instead')
+    @deprecated("Use `useSeed` instead")
     @classmethod
     def use_seed(cls, seedVal):
         """ set seed for random number generation
 
             Arguments:
             :param seedVal: - new value for the random number seed
+
         """
         cls._randomSeed = seedVal
 
@@ -239,7 +263,7 @@ class DataGenerator:
             :returns: string containing generated name
         """
         cls._nextNameIndex += 1
-        new_name = (cls._untitledNamePrefix + '_' + str(cls._nextNameIndex))
+        new_name = cls._untitledNamePrefix + '_' + str(cls._nextNameIndex)
         return new_name
 
     # noinspection PyAttributeOutsideInit
@@ -291,9 +315,15 @@ class DataGenerator:
         if not self.buildPlanComputed:
             self.computeBuildPlan()
 
-        output = ["", "Data generation plan", "====================",
-                  f"spec=DateGenerator(name={self.name}, rows={self._rowCount}, startingId={self.starting_id}, partitions={self.partitions})"
-            , ")", "", f"column build order: {self._buildOrder}", "", "build plan:"]
+        rc = self._rowCount
+        tasks = self.partitions
+        output = ["",
+                  "Data generation plan", "====================",
+                  f"spec=DateGenerator(name={self.name}, rows={rc}, startingId={self.starting_id}, partitions={tasks})",
+                  ")",
+                  "",
+                  f"seed column: {self._seedColumnName}", "",
+                  f"column build order: {self._buildOrder}", "", "build plan:"]
 
         for plan_action in self._buildPlan:
             output.append(" ==> " + plan_action)
@@ -345,14 +375,14 @@ class DataGenerator:
         return self._rowCount
 
     def withIdOutput(self):
-        """ output seed column field (defaults to `id`) as a column in the test data set if specified
+        """ output seed column field (defaults to `id`) as a column in the generated data set if specified
 
-        If this is not called, the seed column field is omitted from the final test data set
+        If this is not called, the seed column field is omitted from the final generated data set
 
         :returns: modified in-place instance of test data generator allowing for chaining of calls
                   following Builder pattern
         """
-        self._columnSpecsByName[ColumnGenerationSpec.SEED_COLUMN].omit = False
+        self._columnSpecsByName[self._seedColumnName].omit = False
         self._markForPlanRegen()
 
         return self
@@ -584,7 +614,7 @@ class DataGenerator:
 
         all_fields = self.getInferredColumnNames()
         effective_fields = [x for x in all_fields if
-                            (fields is None or x in fields) and x != ColumnGenerationSpec.SEED_COLUMN]
+                            (fields is None or x in fields) and x != self._seedColumnName]
 
         if patterns is not None:
             effective_fields = [x for x in effective_fields for y in patterns if re.search(y, x) is not None]
@@ -605,7 +635,7 @@ class DataGenerator:
         :returns: True if test passes
         """
         inferred_columns = self.getInferredColumnNames()
-        if allowId and columns == ColumnGenerationSpec.SEED_COLUMN:
+        if allowId and columns == self._seedColumnName:
             return True
 
         if type(columns) is list:
@@ -677,14 +707,30 @@ class DataGenerator:
     def withColumn(self, colName, colType=StringType(), minValue=None, maxValue=None, step=1,
                    dataRange=None, prefix=None, random=False, distribution=None,
                    baseColumn=None, nullable=True,
-                   omit=False, implicit=False,
+                   omit=False, implicit=False, noWarn=False,
                    **kwargs):
-        """ add a new column for specification
+        """ add a new column to the synthetic data generation specification
+
+        :param colName: Name of column to add. If this conflicts with the underlying seed column (`id`), it is
+                        recommended that the seed column name is customized during the construction of the data
+                        generator spec.
+        :param colType: Data type for column. This may be specified as either a type from one of the possible
+                        pyspark.sql.types (e.g. `StringType`, `DecimalType(10,3)` etc) or as a string containing a Spark
+                        SQL type definition (i.e  `String`, `array<Integer>`, `map<String, Float>`)
+        :param omit: if True, the column will be omitted from the final set of columns in the generated data.
+                     Used to create columns that are used by other columns as intermediate results.
+                     Defaults to False
+
+        :param expr: Specifies SQL expression used to create column value. If specified, overrides the default rules
+                     for creating column value. Defaults to None
+
+        :param baseColumn: String or list of columns to control order of generation of columns. If not specified,
+                           column is dependent on base seed column (which defaults to `id`)
 
         :returns: modified in-place instance of test data generator allowing for chaining of calls
                   following Builder pattern
 
-        You may also add a variety of options to further control the test data generation process.
+        You may also add a variety of additional options to further control the test data generation process.
         For full list of options, see :doc:`/reference/api/dbldatagen.column_spec_options`.
 
         """
@@ -692,6 +738,10 @@ class DataGenerator:
         ensure(colType is not None, f"Must specify column type for column `{colName}`")
         if baseColumn is not None:
             self._checkColumnOrColumnList(baseColumn, allowId=True)
+
+        if not noWarn and colName == self._seedColumnName:
+            self.logger.warning(f"Adding a new column named '{colName}' overrides seed column '{self._seedColumnName}'")
+            self.logger.warning("Use `seedColumName` option on DataGenerator construction for different seed column")
 
         # handle migration of old `min` and `max` options
         if _OLD_MIN_OPTION in kwargs:
@@ -709,7 +759,6 @@ class DataGenerator:
         new_props = {}
         new_props.update(kwargs)
 
-        from .schema_parser import SchemaParser
         if type(colType) == str:
             colType = SchemaParser.columnTypeFromString(colType)
 
@@ -774,6 +823,7 @@ class DataGenerator:
                                            nullable=nullable,
                                            verbose=self.verbose,
                                            debug=self.debug,
+                                           seedColumnName=self._seedColumnName,
                                            **new_props)
 
         print(f"expr in new_props[{colName}]", "expr" in new_props)
@@ -808,15 +858,16 @@ class DataGenerator:
         id_partitions = self.partitions if self.partitions is not None else 4
 
         if not streaming:
-            status = (f"Generating data frame with ids from {startId} to {end_id} with {id_partitions} partitions")
+            status = f"Generating data frame with ids from {startId} to {end_id} with {id_partitions} partitions"
             self.logger.info(status)
             self.executionHistory.append(status)
             df1 = self.sparkSession.range(start=startId,
                                           end=end_id,
                                           numPartitions=id_partitions)
 
-            if ColumnGenerationSpec.SEED_COLUMN != "id":
-                df1 = df1.withColumnRenamed("id", ColumnGenerationSpec.SEED_COLUMN)
+            # spark.range generates a dataframe with the column `id` so rename it if its not our seed column
+            if SPARK_RANGE_COLUMN != self._seedColumnName:
+                df1 = df1.withColumnRenamed(SPARK_RANGE_COLUMN, self._seedColumnName)
 
         else:
             status = (
@@ -834,12 +885,15 @@ class DataGenerator:
 
                 for k, v in options.items():
                     df1 = df1.option(k, v)
-                df1 = df1.load().withColumnRenamed("value", ColumnGenerationSpec.SEED_COLUMN)
+                df1 = (df1.load()
+                       .withColumnRenamed("value", self._seedColumnName)
+                       )
+
             else:
                 df1 = (df1.option("rowsPerSecond", 1)
                        .option("numPartitions", id_partitions)
                        .load()
-                       .withColumnRenamed("value", ColumnGenerationSpec.SEED_COLUMN)
+                       .withColumnRenamed("value", self._seedColumnName)
                        )
 
         return df1
@@ -857,21 +911,80 @@ class DataGenerator:
 
         :returns: the build ordering
         """
-        dependency_ordering = [(x.name, set(x.dependencies)) if x.name != ColumnGenerationSpec.SEED_COLUMN else (
-            ColumnGenerationSpec.SEED_COLUMN, set())
+        dependency_ordering = [(x.name, set(x.dependencies)) if x.name != self._seedColumnName else (
+            self._seedColumnName, set())
                                for x in self._allColumnSpecs]
-
-        # self.pp_list(dependency_ordering, msg="dependencies")
 
         self.logger.info("dependency list: %s", str(dependency_ordering))
 
         self._buildOrder = list(
-            topologicalSort(dependency_ordering, flatten=False, initial_columns=[ColumnGenerationSpec.SEED_COLUMN]))
+            topologicalSort(dependency_ordering, flatten=False, initial_columns=[self._seedColumnName]))
 
         self.logger.info("columnBuildOrder: %s", str(self._buildOrder))
 
-        # self.pp_list(self._buildOrder, "build order")
+        self._buildOrder = self._adjustBuildOrderForSqlDependencies(self._buildOrder,  self._columnSpecsByName)
+
         return self._buildOrder
+
+    def _adjustBuildOrderForSqlDependencies(self, buildOrder, columnSpecsByName):
+        """ Adjust column build order according to the following heuristics
+
+        1: if the column being built in a specific build order phase has a SQL expression and it references
+           other columns in the same build phase (or potentially references them as the expression parsing is
+           primitive), separate that phase into multiple phases.
+
+        It will also issue a warning if the SQL expression appears to reference a column built later
+
+        :param buildOrder: list of lists of ids - each sublist represents phase of build
+        :param columnSpecsByName: dictionary to map column names to column specs
+        :returns: Spark SQL dataframe of generated test data
+
+        """
+        new_build_order = []
+
+        all_columns = set([item for sublist in buildOrder for item in sublist])
+        built_columns = []
+        prior_phase_built_columns = []
+
+        # for each phase, evaluate it to see if it needs to be split
+        for current_phase in buildOrder:
+            separate_phase_columns = []
+
+            for columnBeingBuilt in current_phase:
+
+                if columnBeingBuilt in columnSpecsByName:
+                    cs = columnSpecsByName[columnBeingBuilt]
+
+                    if cs.expr is not None:
+                        sql_references = SchemaParser.columnsReferencesFromSQLString(cs.expr, filterItems=all_columns)
+
+                        # determine references to columns not yet built
+                        forward_references = set(sql_references) - set(built_columns)
+                        if len(forward_references) > 0:
+                            msg = f"Column '{columnBeingBuilt} may have forward references to {forward_references}."
+                            self.logger.warning(msg)
+                            self.logger.warning("Use `baseColumn` attribute to correct build ordering if necessary")
+
+                        references_not_yet_built = set(sql_references) - set(prior_phase_built_columns)
+
+                        if len(references_not_yet_built.intersection(set(current_phase))) > 0:
+                            separate_phase_columns.append(columnBeingBuilt)
+
+                # for each column, get the set of sql references and filter against column names
+                built_columns.append(columnBeingBuilt)
+
+            if len(separate_phase_columns) > 0:
+                # split phase based on columns in separate_phase_column_list set
+                revised_phase = split_list_matching_condition(current_phase,
+                                                              lambda el, cols=separate_phase_columns: el in cols)
+                new_build_order.extend(revised_phase)
+            else:
+                # no change to phase
+                new_build_order.append(current_phase)
+
+            prior_phase_built_columns.extend(current_phase)
+
+        return new_build_order
 
     @property
     def build_order(self):
@@ -879,7 +992,10 @@ class DataGenerator:
 
         The build order will be a list of lists - each list specifying columns that can be built at the same time
         """
-        return [x for x in self._buildOrder if x != [ColumnGenerationSpec.SEED_COLUMN]]
+        if not self.buildPlanComputed:
+            self.computeBuildPlan()
+
+        return [x for x in self._buildOrder if x != [self._seedColumnName]]
 
     def _getColumnDataTypes(self, columns):
         """ Get data types for columns
@@ -900,7 +1016,7 @@ class DataGenerator:
         self._buildPlan = []
         self.executionHistory = []
         self._processOptions()
-        self._buildPlan.append(f"Build Spark data frame with seed column: {ColumnGenerationSpec.SEED_COLUMN}")
+        self._buildPlan.append(f"Build Spark data frame with seed column: '{self._seedColumnName}'")
 
         # add temporary columns
         for cs in self._allColumnSpecs:
@@ -986,6 +1102,9 @@ class DataGenerator:
         Build column generation expressions with selects
         :param df1: dataframe for base data generator
         :return: new dataframe
+
+        The data generator build plan is separated into `rounds` of expressions. Each round consists of
+        expressions that are generated using a single `select` operation
         """
         self.executionHistory.append("Generating data with selects")
         # generation with selects may be more efficient as less intermediate data frames

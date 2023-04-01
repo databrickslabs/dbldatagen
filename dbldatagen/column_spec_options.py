@@ -53,14 +53,14 @@ class ColumnSpecOptions(object):
 
     :param weights: List of discrete weights for the colummn. Should be integer values.
                     For example, you might declare a column for status values with a weighted distribution with
-                    the following statement: \
+                    the following statement:
                     `withColumn("status", StringType(), values=['online', 'offline', 'unknown'], weights=[3,2,1])`
 
     :param percentNulls: Specifies numeric percentage of generated values to be populated with SQL `null`.
                           Value is fraction representing percentage between 0.0 and 1.0
                           For example: `percentNulls=0.12` will give approximately 12% nulls for this field in the
                           output.
-s
+
     :param uniqueValues: Number of unique values for column.
                           If the unique values are specified for a timestamp or date field, the values will be chosen
                           working back from the end of the previous month,
@@ -132,7 +132,7 @@ s
 
     }
     #: the set of attributes that are permitted for any call to data generator `withColumn` or `withColumnSpec`
-    _ALLOWED_PROPERTIES = {'name', 'type', 'minValue', 'maxValue', 'minValue', 'maxValue', 'step',
+    _ALLOWED_PROPERTIES = {'name', 'type', 'minValue', 'maxValue', 'step',
                            'prefix', 'random', 'distribution',
                            'range', 'baseColumn', 'baseColumnType', 'values',
                            'numColumns', 'numFeatures', 'structType',
@@ -272,4 +272,4 @@ s
             ensure(columnProps['values'] is not None and len(columnProps['values']) > 0,
                    f"weights must be associated with non-empty list of values - column '{columnProps['name']}' ")
             ensure(len(columnProps['values']) == len(columnProps['weights']),
-                   f"length of list of weights must be  equal to length of list of values - column '{columnProps['name']}' ")
+                   f"length(list of weights) must equal length(list of values) - column '{columnProps['name']}' ")
