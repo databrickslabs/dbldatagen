@@ -16,6 +16,17 @@ jobs:
       - name: Unshallow
         run: git fetch --prune --unshallow
 
+      # - name: Cache packages
+      #   uses: actions/cache@v2
+      #   with:
+      #     path: |
+      #       ~/go/pkg/mod
+      #       ~/.cache/go-build
+      #       vendor
+      #     key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-go-
+
       - name: Set up Python 3.8
         uses: actions/setup-python@v3
         with:
@@ -25,8 +36,22 @@ jobs:
       - name: Install
         run: pip install pipenv
 
+      - name: Install dependencies
+        run: pipenv install --dev
+
+      - name: Lint
+        run: |
+          pipenv run prospector --profile prospector.yaml
+
       - name: Run tests
         run: make test
+
+      - name: Publish test coverage to coverage site
+        uses: codecov/codecov-action@v1
+        with:
+          files: ./coverage.xml
+          name: dbldatagen
+          verbose: true
 
       - name: "create or update tag"
         uses: actions/github-script@v2

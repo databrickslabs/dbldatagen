@@ -88,7 +88,7 @@ Run  `make clean dist` from the main project directory.
 New tests should be created using PyTest with classes combining multiple `Pytest` tests.
 
 Existing test code contains tests based on Python's `unittest` framework but these are 
-run on `pytest` rather than `unitest`. These will be migrated to Pytest as new tests are added to these modules
+run on `pytest` rather than `unitest`. 
 
 To get a  `spark` instance for test purposes, use the following code:
 
