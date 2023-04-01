@@ -16,7 +16,6 @@ def setupLogging():
 
 
 class TestBasicOperation:
-    testDataSpec = None
     dfTestData = None
     SMALL_ROW_COUNT = 100000
     TINY_ROW_COUNT = 1000
@@ -41,6 +40,33 @@ class TestBasicOperation:
     @pytest.fixture(scope="class")
     def testData(self, testDataSpec):
         return testDataSpec.build().cache()
+
+    def setup_log_capture(self, caplog_object):
+        """ set up log capture fixture
+
+        Sets up log capture fixture to only capture messages after setup and only
+        capture warnings and errors
+
+        """
+        caplog_object.set_level(logging.WARNING)
+
+        # clear messages from setup
+        caplog_object.clear()
+
+    def get_log_capture_warngings_and_errors(self, caplog_object, textFlag):
+        """
+        gets count of errors containing specified text
+
+        :param caplog_object: log capture object from fixture
+        :param textFlag: text to search for to include error or warning in count
+        :return: count of errors containg text specified in `textFlag`
+        """
+        seed_column_warnings_and_errors = 0
+        for r in caplog_object.records:
+            if (r.levelname in ["WARNING", "ERROR"]) and textFlag in r.message:
+                seed_column_warnings_and_errors += 1
+
+        return seed_column_warnings_and_errors
 
     def test_row_count(self, testDataSpec):
         """Test row count property"""
@@ -71,20 +97,22 @@ class TestBasicOperation:
         assert counts["code4_count"] <= 3
         assert counts["code5_count"] <= 3
 
-    def test_alt_seed_column(self):
-        dgspec = (dg.DataGenerator(sparkSession=spark, name="alt_data_set", rows=10000,
-                                             partitions=4, seedMethod='hash_fieldname', verbose=True,
-                                             seedColumnName="_id")
-                            .withIdOutput()
-                            .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
-                                        numColumns=4)
-                            .withColumn("code1", IntegerType(), min=100, max=200)
-                            .withColumn("code2", IntegerType(), min=0, max=10)
-                            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-                            .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
-                            .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+    def test_alt_seed_column(self, caplog):
+        # caplog fixture captures log content
+        self.setup_log_capture(caplog)
 
-                            )
+        dgspec = (dg.DataGenerator(sparkSession=spark, name="alt_data_set", rows=10000,
+                                   partitions=4, seedMethod='hash_fieldname', verbose=True,
+                                   seedColumnName="_id")
+                  .withIdOutput()
+                  .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
+                              numColumns=4)
+                  .withColumn("code1", IntegerType(), min=100, max=200)
+                  .withColumn("code2", IntegerType(), min=0, max=10)
+                  .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+                  .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+                  .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+                  )
 
         fieldsFromGenerator = set(dgspec.getOutputColumnNames())
 
@@ -104,95 +132,101 @@ class TestBasicOperation:
         assert "_id" in fieldsFromGeneratorClone
         assert "id" not in fieldsFromGeneratorClone
 
-    def test_seed_column_collision1c(self):
-        dgspec = (dg.DataGenerator(sparkSession=spark, name="alt_data_set", rows=10000,
+        # check that there are no warnings or errors due to use of the overridden seed column
+        seed_column_warnings_and_errors = self.get_log_capture_warngings_and_errors(caplog, "seed")
+        assert seed_column_warnings_and_errors == 0, "Should not have error messages about seed column"
+
+    @pytest.mark.parametrize("caseName, withIdOutput, idType, additionalOptions",
+                             [("withIdOutput", True, FloatType(), {}),
+                              ("withIdOutput multicolumn", True, FloatType(), {'numColumns': 4}),
+                              ("with no Id output", False, FloatType(), {}),
+                              ("with no Id output multicolumn", False, FloatType(), {'numColumns': 4}),
+                              ("with no Id output random",
+                               False,
+                               IntegerType(),
+                               {'uniqueValues': 5000, 'random': True})
+                              ])
+    def test_seed_column_nocollision(self, caseName, withIdOutput, idType, additionalOptions, caplog):
+        logging.info(f"case: {caseName}")
+
+        # caplog fixture captures log content
+        self.setup_log_capture(caplog)
+
+        # test that there are no collisions on the use of the 'id' field)
+        dgSpec = (dg.DataGenerator(sparkSession=spark, name="alt_data_set", rows=10000,
                                    partitions=4, seedMethod='hash_fieldname', verbose=True,
-                                   seedColumnName="_id")
-                            .withIdOutput()
-                            .withColumn("id", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
-                                        numColumns=4)
-                            .withColumn("code1", IntegerType(), min=100, max=200)
-                            .withColumn("code2", IntegerType(), min=0, max=10)
-                            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-                            )
+                                   seedColumnName="_id"))
 
-        fieldsFromGenerator = set(dgspec.getOutputColumnNames())
+        if withIdOutput:
+            dgSpec = dgSpec.withIdOutput()
 
-        df_testdata = dgspec.build()
+        dgSpec = (dgSpec
+                  .withColumn("id", idType, expr="floor(rand() * 350) * (86400 + 3600)",
+                              **additionalOptions)
+                  .withColumn("code1", IntegerType(), min=100, max=200)
+                  .withColumn("code2", IntegerType(), min=0, max=10)
+                  .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+                  )
 
-        fieldsFromSchema = set([fld.name for fld in df_testdata.schema.fields])
-        assert fieldsFromGenerator == fieldsFromSchema
+        fieldsFromGenerator = set(dgSpec.getOutputColumnNames())
 
-    def test_seed_column_collision1d(self):
-        dgspec = (dg.DataGenerator(sparkSession=spark, name="alt_data_set", rows=10000,
-                                   partitions=4, seedMethod='hash_fieldname', verbose=True,
-                                   seedColumnName="_id")
-                            .withColumn("id", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
-                                        numColumns=4)
-                            .withColumn("code1", IntegerType(), min=100, max=200)
-                            .withColumn("code2", IntegerType(), min=0, max=10)
-                            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-                            )
-
-        fieldsFromGenerator = set(dgspec.getOutputColumnNames())
-
-        df_testdata = dgspec.build()
+        df_testdata = dgSpec.build()
 
         fieldsFromSchema = set([fld.name for fld in df_testdata.schema.fields])
         assert fieldsFromGenerator == fieldsFromSchema
 
-    def test_seed_column_collision1e(self):
-        dgspec = (dg.DataGenerator(sparkSession=spark, name="alt_data_set", rows=10000,
-                                   partitions=4, seedMethod='hash_fieldname', verbose=True,
-                                   seedColumnName="_id")
-                            .withColumn("id", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
-                                        numColumns=4)
-                            .withColumn("code1", IntegerType(), min=100, max=200)
-                            .withColumn("code2", IntegerType(), min=0, max=10)
-                            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-                            )
+        # check that there are no warnings or errors due to use of the overridden seed column
+        seed_column_warnings_and_errors = self.get_log_capture_warngings_and_errors(caplog, "seed")
+        assert seed_column_warnings_and_errors == 0, "Should not have error messages about seed column"
 
-        fieldsFromGenerator = set(dgspec.getOutputColumnNames())
+    @pytest.mark.parametrize("caseName, withIdOutput, idType, idName",
+                             [("withIdOutput float", True, FloatType(), "id"),
+                              ("withIdOutput int", True, IntegerType(), "id"),
+                              ("with no Id output float", False, FloatType(), "id"),
+                              ("with no Id output int", False, IntegerType(), "id"),
+                              ("withIdOutput _id float", True, FloatType(), "_id"),
+                              ("withIdOutput _id int", True, IntegerType(), "_id"),
+                              ("with no Id output _id float", False, FloatType(), "_id"),
+                              ("with no Id output _id int", False, IntegerType(), "_id"),
+                              ])
+    def test_seed_column_expected_collision1(self, caseName, withIdOutput, idType, idName, caplog):
+        logging.info(f"case: {caseName}")
 
-        df_testdata = dgspec.build()
+        # caplog fixture captures log content
+        self.setup_log_capture(caplog)
 
-        fieldsFromSchema = set([fld.name for fld in df_testdata.schema.fields])
-        assert fieldsFromGenerator == fieldsFromSchema
+        if idName == "id":
+            dgSpec = (dg.DataGenerator(sparkSession=spark, name="alt_data_set", rows=10000,
+                                       partitions=4, seedMethod='hash_fieldname', verbose=True)
+                      )
+        else:
+            dgSpec = (dg.DataGenerator(sparkSession=spark, name="alt_data_set", rows=10000,
+                                       partitions=4, seedMethod='hash_fieldname', verbose=True,
+                                       seedColumnName=idName
+                                       )
+                      )
 
-    def test_seed_column_collision2(self):
-        dgspec = (dg.DataGenerator(sparkSession=spark, name="alt_data_set", rows=10000,
-                                             partitions=4, seedMethod='hash_fieldname', verbose=True)
-                            .withIdOutput()
-                            .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
-                                        numColumns=4)
-                            .withColumn("id", IntegerType(), min=100, max=200)
-                            .withColumn("code2", IntegerType(), min=0, max=10)
-                            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-                            )
+        if withIdOutput:
+            dgSpec = dgSpec.withIdOutput()
 
-        fieldsFromGenerator = set(dgspec.getOutputColumnNames())
+        dgSpec = (dgSpec
+                  .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
+                              numColumns=4)
+                  .withColumn(idName, idType, min=100, max=200)
+                  .withColumn("code2", IntegerType(), min=0, max=10)
+                  .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+                  )
 
-        df_testdata = dgspec.build()
+        fieldsFromGenerator = set(dgSpec.getOutputColumnNames())
 
-        fieldsFromSchema = set([fld.name for fld in df_testdata.schema.fields])
-        assert fieldsFromGenerator == fieldsFromSchema
-
-    def test_seed_column_collision2a(self):
-        dgspec = (dg.DataGenerator(sparkSession=spark, name="alt_data_set", rows=10000,
-                                             partitions=4, seedMethod='hash_fieldname', verbose=True)
-                            .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
-                                        numColumns=4)
-                            .withColumn("id", IntegerType(), min=100, max=200)
-                            .withColumn("code2", IntegerType(), min=0, max=10)
-                            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-                            )
-
-        fieldsFromGenerator = set(dgspec.getOutputColumnNames())
-
-        df_testdata = dgspec.build()
+        df_testdata = dgSpec.build()
 
         fieldsFromSchema = set([fld.name for fld in df_testdata.schema.fields])
         assert fieldsFromGenerator == fieldsFromSchema
+
+        # check that there are warnings or errors due to use of the overridden seed column
+        seed_column_warnings_and_errors = self.get_log_capture_warngings_and_errors(caplog, "seed")
+        assert seed_column_warnings_and_errors >= 1, "Should not have error messages about seed column"
 
     def test_fieldnames(self, testData, testDataSpec):
         """Test field names in data spec correspond with schema"""
@@ -270,7 +304,7 @@ class TestBasicOperation:
 
     def test_default_spark_instance(self):
         """ Test different types of seeding for random values"""
-        ds1 = (dg.DataGenerator( name="test_data_set1", rows=1000, seedMethod='hash_fieldname')
+        ds1 = (dg.DataGenerator(name="test_data_set1", rows=1000, seedMethod='hash_fieldname')
                .withIdOutput()
                .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
                .withColumn("code3", StringType(), values=['a', 'b', 'c'])
@@ -284,7 +318,7 @@ class TestBasicOperation:
 
     def test_default_spark_instance2(self):
         """ Test different types of seeding for random values"""
-        ds1 = (dg.DataGenerator( name="test_data_set1", rows=1000, seedMethod='hash_fieldname')
+        ds1 = (dg.DataGenerator(name="test_data_set1", rows=1000, seedMethod='hash_fieldname')
                .withIdOutput()
                .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
                .withColumn("code3", StringType(), values=['a', 'b', 'c'])

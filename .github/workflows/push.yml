@@ -8,7 +8,7 @@ on:
 
 jobs:
   tests:
-    # Ubuntu 20.04 has Python 3.8
+    # Ubuntu latest no longer installs Python 3.8 by default so install it
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -34,14 +34,21 @@ jobs:
           python-version: '3.8'
           cache: 'pipenv'
 
-      - name: Install
+      - name: Install 
         run: pip install pipenv
-      
+
+      - name: Install dependencies
+        run: pipenv install --dev
+
+      - name: Lint
+        run: |
+          pipenv run prospector --profile prospector.yaml
+
       - name: Run tests
         run: make test
 
-      - name: Publish test coverage to coverage site 
-        uses: codecov/codecov-action@v2
+      - name: Publish test coverage to coverage site
+        uses: codecov/codecov-action@v1
         with:
           files: ./coverage.xml
           name: dbldatagen

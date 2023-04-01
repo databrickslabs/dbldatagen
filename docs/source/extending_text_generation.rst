@@ -1,9 +1,9 @@
-.. Test Data Generator documentation master file, created by
+.. Databricks Labs Data Generator documentation master file, created by
    sphinx-quickstart on Sun Jun 21 10:54:30 2020.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Extending text generation
+Extending Text Generation
 =========================
 
 This feature should be considered ``Experimental``.
@@ -38,7 +38,7 @@ extended syntax.
                .withColumn("address", text=fakerText("address" ))
                .withColumn("email", text=fakerText("ascii_company_email") )
                .withColumn("ip_address", text=fakerText("ipv4_private" ))
-               .withColumn("faker_text", text=fakerText("sentence", ext_word_list=my_word_list) )
+               .withColumn("faker_text", text=fakerText("sentence", ext_word_list=my_word_list))
                )
    dfFakerOnly = fakerDataspec.build()
 
@@ -91,7 +91,9 @@ The following code shows use of a custom Python function to generate text:
 
    pluginDataspec = (DataGenerator(spark, rows=data_rows, partitions=partitions_requested,
                      randomSeedMethod="hash_fieldname")
-                     .withColumn("text", text=PyfuncText(text_generator, initFn=initPluginContext))
+                     .withColumn("text",
+                                 text=PyfuncText(text_generator,
+                                 initFn=initPluginContext))
                     )
 
    dfPlugin = pluginDataspec.build()
