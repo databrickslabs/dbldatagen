@@ -46,13 +46,6 @@ jobs:
       - name: Run tests
         run: make test
 
-      - name: Publish test coverage to coverage site
-        uses: codecov/codecov-action@v1
-        with:
-          files: ./coverage.xml
-          name: dbldatagen
-          verbose: true
-
       - name: "create or update tag"
         uses: actions/github-script@v2
         # continue-on-error: true
