@@ -116,7 +116,13 @@ def topologicalSort(sources, initial_columns=None, flatten=True):
     :arg sources: list of ``(name, set(names of dependencies))`` pairs
     :arg initial_columns: force ``initial_columns`` to be computed first
     :arg flatten: if true, flatten output list
-    :returns: list of names in dependency order. If not flattened, result will be list of lists
+    :returns: list of names in dependency order separated into build phases
+
+    .. note::
+       The algorith will give preference to retaining order of inbound sequence
+       over modifying order to produce a lower number of build phases.
+
+       Overall the effect is that the input build order should be retained unless there are forward references
     """
     # generate a copy so that we can modify in place
     pending = [(name, set(deps)) for name, deps in sources]
@@ -127,27 +133,36 @@ def topologicalSort(sources, initial_columns=None, flatten=True):
         next_pending = []
         gen = []
         value_emitted = False
+        defer_emitted = False
         gen_provided = []
         for entry in pending:
             name, deps = entry
             deps.difference_update(provided)
             if deps:
                 next_pending.append((name, set(deps)))
+
+                # if dependencies will be satisfied by item emitted in this round, defer output
+                if not deps.difference(gen_provided):
+                    defer_emitted = True
+            elif defer_emitted:
+                next_pending.append((name, set(deps)))
             elif name in provided:
-                value_emitted |= True
+                value_emitted = True
             else:
                 gen.append(name)
                 gen_provided.append(name)
-                value_emitted |= True
+                value_emitted = True
         provided.extend(gen_provided)
         build_orders.append(gen)
+
         if not value_emitted:
             raise ValueError(f"cyclic or missing dependency detected [{next_pending}]")
 
         pending = next_pending
 
     if flatten:
-        return [item for sublist in build_orders for item in sublist]
+        flattened_list = [item for sublist in build_orders for item in sublist]
+        return flattened_list
     else:
         return build_orders
 
