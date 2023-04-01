@@ -108,17 +108,18 @@ specification, an alternative method is also supported.
 You can specify that a column has a specific number of features with structType of 'array' to control the generation of
 the column. In this case, the datatype should be the type of the individual element, not of the array.
 
-For example, the following code will generate rows with multiple synthetic emails for each customer:
+For example, the following code will generate rows with varying numbers of synthetic emails for each customer:
 
 .. code-block:: python
 
    import dbldatagen as dg
 
    ds = (
-        dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=1000, partitions=4)
+        dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=1000, partitions=4,
+                         random=True)
         .withColumn("name", "string", percentNulls=0.01, template=r'\\w \\w|\\w A. \\w|test')
-        .withColumn("emails", "string", template=r'\\w.\\w@\\w.com', random=True, randomSeed=-1,
-                    numFeatures=3, structType="array")
+        .withColumn("emails", "string", template=r'\\w.\\w@\\w.com', random=True,
+                    numFeatures=(1, 6), structType="array")
    )
 
    df = ds.build()
