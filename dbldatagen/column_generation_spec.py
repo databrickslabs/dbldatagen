@@ -9,9 +9,8 @@ This file defines the `ColumnGenerationSpec` class
 import copy
 import logging
 
-from pyspark.sql.functions import col, pandas_udf, array
 from pyspark.sql.functions import lit, concat, rand, round as sql_round, array, expr, when, udf, \
-    format_string
+                                  format_string, col, pandas_udf
 from pyspark.sql.types import FloatType, IntegerType, StringType, DoubleType, BooleanType, \
     TimestampType, DataType, DateType, ArrayType, MapType, StructType
 
@@ -1180,7 +1179,7 @@ class ColumnGenerationSpec(object):
             if struct_type == 'array':
                 self.executionHistory.append(".. converting multiple columns to array")
                 retval = array(retval)
-            else: # TODO: add support for other struct types
+            else:  # TODO: add support for other struct types
                 self.logger.warning("Only supports `structType` value of `array` at present")
 
         return retval

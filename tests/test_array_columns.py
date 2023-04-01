@@ -63,10 +63,6 @@ class TestArrayColumns:
         df = df_spec.build()
         print(df.schema)
 
-        field_type =  df.schema.fields['a']
-
-        print(field_type)
-
     def test_basic_arrays_with_lit2(self):
         data_rows = 1000
         df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows,
@@ -157,8 +153,3 @@ class TestArrayColumns:
 
         df = df_spec.build()
         df.show()
-
-
-
-
-
