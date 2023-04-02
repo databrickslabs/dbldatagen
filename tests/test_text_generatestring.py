@@ -70,7 +70,18 @@ class TestTextGenerateString:
 
         assert set(tg1._charAlphabet) == set(alphabet)
 
-    def test_simple_data(self):
+    @pytest.mark.parametrize("genstr",
+                             [
+                                 dg.GenerateString((1, 10)),
+                                 dg.GenerateString((1, 10), leadingAlpha=True),
+                                 dg.GenerateString((4, 64), allUpper=True),
+                                 dg.GenerateString((10, 20), allLower=True),
+                                 dg.GenerateString((1, 10)),
+                                 dg.GenerateString((3, 15)),
+                                 dg.GenerateString((17,22)),
+                                 dg.GenerateString((1, 10)),
+                             ])
+    def test_simple_data(self, genstr):
         dgspec = (dg.DataGenerator(sparkSession=spark, name="alt_data_set", rows=10000,
                                    partitions=4, seedMethod='hash_fieldname', verbose=True,
                                    seedColumnName="_id")
