@@ -1,7 +1,4 @@
 import pytest
-import pandas as pd
-import numpy as np
-
 import pyspark.sql.functions as F
 from pyspark.sql.types import BooleanType, DateType
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, TimestampType
@@ -72,4 +69,21 @@ class TestTextGenerateString:
             alphabet = set(alphabet).intersection(set(customChars))
 
         assert set(tg1._charAlphabet) == set(alphabet)
+
+    def test_simple_data(self):
+        dgspec = (dg.DataGenerator(sparkSession=spark, name="alt_data_set", rows=10000,
+                                   partitions=4, seedMethod='hash_fieldname', verbose=True,
+                                   seedColumnName="_id")
+                  .withIdOutput()
+                  .withColumn("code2", IntegerType(), min=0, max=10)
+                  .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+                  .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+                  .withColumn("code5", StringType(), text=dg.GenerateString( (1, 10) ))
+                  )
+
+        fieldsFromGenerator = set(dgspec.getOutputColumnNames())
+
+        df_testdata = dgspec.build()
+
+        df_testdata.show()
 
