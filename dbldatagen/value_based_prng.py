@@ -50,6 +50,8 @@ class ValueBasedPRNG(object):
 
     MASK_32 = 2 ** 32 - 1
     MASK_64 = 2 ** 64 - 1
+
+    # constants for PCG
     MULTIPLIER = 0x5851f42d4c957f2d
     INITIAL_STATE = 0x4d595df4d0f33173
     INCREMENT = 0x14057b7ef767814f
@@ -58,6 +60,7 @@ class ValueBasedPRNG(object):
     COLUMNS = 50
     BITS_FOR_COLUMNS = int(math.ceil(math.log(COLUMNS, 2)))
 
+    # constants for Java style LCG
     MULTIPLIER = 0x5DEECE66D
     INITIAL_STATE = 0
     INCREMENT = 11
@@ -180,9 +183,6 @@ class ValueBasedPRNG(object):
         assert isinstance(shape, tuple), "expecting tuple for shape"
 
         return shape[0]
-
-    def _init_state(self, values, shape):
-        pass
 
     @property
     def shape(self):
