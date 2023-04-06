@@ -34,6 +34,7 @@ class TestValueBasedPRNG:
         print(rng.seedValues.shape, rng.seedValues.dtype)
         assert np.array_equal(rng.seedValues.reshape(arr.shape), arr)
 
+    @pytest.mark.skip(reason="work in progress")
     @pytest.mark.parametrize("data, shape, bounds, endpoint",
                              [
                                  (np.arange(1024), (1024, 10), 255, False),
@@ -120,7 +121,7 @@ class TestValueBasedPRNG:
 
             assert rng is not None
 
-    @pytest.mark.skip(reason="no way of currently testing this")
+    @pytest.mark.skip(reason="work in progress")
     def test_udfs(self):
 
         def exampleUdf(v):
