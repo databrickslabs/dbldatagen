@@ -5,49 +5,79 @@
 """
 This module defines the ValueBasedPRNG class
 
-The Value Based PRNG (psuedo random number generator) uses the PCG algorithm  to generate repeatable
-psuedo random numbers. It achieves excellent statistical performance with small and fast code, and small state size.
+The Value Based PRNG (psuedo random number generator) uses variations of the PCG algorithm  to generate repeatable
+psuedo random numbers.
 
-More details of the PCG algorithnm can be found here.
+PCG operates by using classic LCG (Linear Congruential Generator) approaches to generate the random state
+but applies a transform to generate the final pseudo random numbers.
 
-https://www.pcg-random.org/index.html
+More details of the LCG and PCG algorithms can be found here.
+  - https://en.wikipedia.org/wiki/Linear_congruential_generator
+  - https://en.wikipedia.org/wiki/Permuted_congruential_generator
 
-The implementation used here, uses as a numpy array of values to seed different random seeds for each row
-so that generating pseudo random sequences across each row of a numpy 2d array are completely repeatable.
+
+The implementation uses as a numpy array of values to seed different random seeds for each row
+so that generating pseudo random sequences across each row of a numpy 2d array are completely repeatable and the
+sequences for a given row will depend on the value of the seed
+
+The goal here is to seed each stream with a seed based on the value passed in for a given row
+so that two rows with the same seed value will produce the same sequence.
 
 This differs from existing Numpy implementations as in existing Numpy random number generators,
 each row does not have a separate random seed.
-
-The goal of this implementation is to ensure that the sequence of psuedo-random numbers generated for a given row
-are independent of the value of the seed in other rows.
 
 In practice, this makes it ideal for generating repeatable foreign keys for a given primary key.
 
 """
 
+import math
 import numpy as np
+
 
 class ValueBasedPRNG(object):
     """ Value based psuedo-random number generator designed to generate repeatable random sequences.
 
-        It uses the supplied array `v` to seed each a set of states for generating random numbers in sequences of shape
-        where the first dimension is a multiple of the size of the seed array `v`.
+        It uses the supplied array `values` to seed each a set of states for generating random numbers in sequences
+        of shape where the first dimension is a multiple of the size of the seed array `v`.
 
         The overall goal is to provide a prng that is replacement for the numpy random number generator where only
         the `integers` method is used.
 
-        Note that by array-like, we mean a list, a numpy array or a numeric value
+        While internal state is of type `numpy.uint64`, emitted values are of type `numpy.uint32` by default.
+
+        Note that by array-like, we mean a list, a numpy array or a numeric scalar value
     """
 
-    _MASK32 = 2 ** 32 - 1  # uint32_t
-    _MASK64 = 2 ** 64 - 1  # uint64_t
+    MASK_32 = 2 ** 32 - 1
+    MASK_64 = 2 ** 64 - 1
+    MULTIPLIER = 0x5851f42d4c957f2d
+    INITIAL_STATE = 0x4d595df4d0f33173
+    INCREMENT = 0x14057b7ef767814f
 
-    def __init__(self, v, shape=None, dtype=None):
-        """
+    ROWS = 20000
+    COLUMNS = 50
+    BITS_FOR_COLUMNS = int(math.ceil(math.log(COLUMNS, 2)))
 
-        :param v: array-like list of values to seed the number generator
-        :param shape: If supplied, indicates that generation should allow for generations of values of supplied shape
-        :param dtype: Numpy dtype for generation of random numbers
+    MULTIPLIER = 0x5DEECE66D
+    INITIAL_STATE = 0
+    INCREMENT = 11
+
+    # MULTIPLIER = 0x5851f42d4c957f2d
+    # INITIAL_STATE = 0x4d595df4d0f33173
+    # INCREMENT = 0x14057b7ef767814f
+
+    MAX_CYCLES = 25
+
+    def __init__(self, values, shape=None, additionalSeed=None):
+        """ Initialize the PRNG
+
+        :param values: array-like list of values to seed the number generator. If values has second or additional
+                       dimension, seedValues are hash of each row. Must be scalar, 1d or 2d array-like value
+        :param shape: If supplied, indicates that generation should optimize for generations of values of supplied
+                      shape.
+                      If supplied, must be 1-d or 2-d shape and first dimension must match first dimension of values
+
+        param additionalSeed: if provided, the additional seed will be combined with base pcg seed. Must be of type int
 
         If a shape is supplied, it creates sufficient state to allow for generation of the number of values indicated
         by the shape parameter independently. In effect, each row has a separate random generator and each column will
@@ -58,35 +88,181 @@ class ValueBasedPRNG(object):
         If converting from string values, it expects that strings can be converted to ints, and if not
         will raise a ValueError.
         """
-        effective_values = np.array(v)  # if v is already numpy array, its a no-op
+        assert values is not None, "`values` must be supplied"
 
-        if effective_values.dtype not in [ np.int32, np.uint32, np.int64, np.uint64]:
-            if np.can_cast(effective_values, np.int64, casting="unsafe"):
-                effective_values = effective_values.astype(np.int64, casting="unsafe")
+        self._additionalSeed = additionalSeed
+
+        effective_values = np.array(values)  # if v is already numpy array, its a no-op
+        supplied_shape = effective_values.shape
+
+        if len(supplied_shape) > 2:
+            raise ValueError("`values` must be scalar, 1d or 2d array-like value")
+
+        if shape is not None and not isinstance(shape, tuple):
+            raise ValueError("`shape` must be tuple, if supplied")
+
+        self._output_shape = shape or effective_values.shape
+
+        print("shape and type", effective_values.shape, effective_values.dtype)
+        # reshape as needed
+        effective_values = self._reshapeAtLeast2d(effective_values)
+
+        # apply hash if needed
+        if len(supplied_shape) > 2 or (len(supplied_shape) == 2 and supplied_shape[1] > 1):
+            # use hash of each row as seed
+            print("hashing")
+            hashing_shape = supplied_shape
+            while len(hashing_shape) > 2 or (len(hashing_shape) == 2 and hashing_shape[1] > 1):
+                effective_values = self._hashSeedValues(effective_values)
+                hashing_shape = effective_values.shape
+        elif np.issubdtype(effective_values.dtype, np.str_):
+            print("converting strings")
+            effective_values = self._hashSeedValues(effective_values)
+        elif np.issubdtype(effective_values.dtype, np.object_):
+            print("hashing objects")
+            effective_values = self._hashSeedValues(effective_values)
+
+        # cast if needed to numpy.uint64
+        effective_values = self._convertTypeIfNecessary(effective_values)
+        effective_values = self._reshapeAtLeast2d(effective_values)
+
+        self._seed_values = effective_values
+
+        # compute initial state
+        columns = self._columns_from_shape(effective_values.shape)
+        bits_for_columns = int(math.ceil(math.log(columns, 2)))
+        rows = self._rows_from_shape(effective_values.shape)
+
+        column_increments = ((effective_values << bits_for_columns) |
+                             np.arange(1, columns + 1, dtype=np.uint64)) << 1 | 1
+
+        self._state = np.full((rows, columns), column_increments + self.INITIAL_STATE, dtype=np.uint64)
+        self._incr = np.full((rows, columns), column_increments, dtype=np.uint64)
+
+    def _reshapeAtLeast2d(self, arr):
+        """ Reshape array as 2d"""
+        if arr.shape == ():
+            return arr.reshape((1, 1))
+        elif len(arr.shape) == 1:
+            return arr.reshape((arr.shape[0], 1))
+        else:
+            return arr
+
+    def _hashSeedValues(self, values):
+        """ Hash and reshape 2d values """
+        print("hashing values", values)
+        values_shape = values.shape
+        results = np.apply_along_axis(lambda r: hash(tuple(r)), 1, values).astype(np.uint64)
+
+        return results
+
+    def _convertTypeIfNecessary(self, values):
+        """ Convert values array"""
+        results = values
+        # cast if needed to numpy.uint64
+        if values.dtype != np.uint64:
+            if np.can_cast(values, np.uint64, casting="unsafe"):
+                results = values.astype(np.uint64, casting="unsafe")
             else:
                 raise TypeError("Cant cast values to np.int64")
+        return results
 
-        self._v = effective_values
-        self._dtype = dtype or effective_values.dtype
+    @staticmethod
+    def _columns_from_shape(shape):
+        assert isinstance(shape, tuple), "expecting tuple for shape"
 
-        # scalars have a numpy shape of ()
-        self._shape = shape or effective_values.shape
-        self._internal_shape = self._shape
+        if len(shape) < 2:
+            return 1
+        return shape[1]
 
-        # internally treat scalars as array of size 1
-        if self._v.shape == ():
-            self._internal_shape = (1,)
+    @staticmethod
+    def _rows_from_shape(shape):
+        assert isinstance(shape, tuple), "expecting tuple for shape"
+
+        return shape[0]
+
+    def _init_state(self, values, shape):
+        pass
 
     @property
     def shape(self):
         """get the `shape` attribute"""
-        return self._shape
+        return self._output_shape
 
     @property
     def seedValues(self):
         """ Get the values that were used to seed the PRNG"""
-        return self._v
-        
+        return self._seed_values
+
+    def random_r(self, state, incr):
+        # compute state change using classic LCG algorithm
+        x = state[...]
+        state[...] = (x * self.MULTIPLIER + incr) & self.MASK_64
+
+        # then use transformation on state to generate actual random numbers
+        # 32 bit variation
+        # xorstate = (((x >> 18) ^ x) >> 27) & MASK_32
+        # count = (x >> 59) & MASK_32
+        # results = ((xorstate >> count) | (xorstate << (-count & 31))) & MASK_32
+
+        count = (x >> 59) & self.MASK_32
+        results = x >> (16 + count) & self.MASK_32
+        return results
+
+    def bounded_random(self, bound, state, incr):
+        """ Use rejection sampling to remove modulo bias
+
+        :param bound: random state
+        :param state: random state
+        :param incr: random increment
+        :return:
+
+        Modulo bias occurs when a set of numbers to be used in a modulus calculation is not an even
+        multiple of the divisor.
+
+        For example: for the set of numbers 0 .. 67, `n` mod 16 will return more numbers in the range 1 .. 3
+
+        So when using classic LCG random number generation `(aX + c) mod m`, the results will not be uniformly
+        distributed unless you discard numbers beyond a threshold of the highest before applying the modulo arithmetic.
+
+        This threshold can be calculated using the expresson ``(-bound & MASK_32) % bound`` for a 32 bit random number.
+
+        While the loop to find numbers over the threshold is usually short, we add a limit to the number of attempts
+        to retry the random number generation. This will produce slightly non-uniform distribution in rare cases
+
+        As the intent for this random number generator to compute random word and character offsets and other uses
+        where the bounds are relatively low, this is acceptable for our use case.
+
+        See:
+            "Efficiently Generating a Random Number in a Range" by Dr M.E O'Neill
+             https://www.pcg-random.org/posts/bounded-rands.html
+
+        """
+
+        threshold = (-bound & self.MASK_32) % bound
+
+        r = self.random_r(state, incr)
+        assert r is not None
+
+        mask = r >= threshold
+        r[mask] = r[mask] % bound
+        print(np.all(mask))
+
+        cycles = 0
+
+        while not np.all(mask) and cycles < self.MAX_CYCLES:
+            r1 = self.random_r(state, incr)
+            mask = r1 >= threshold
+            r[mask] = r1[mask] % bound
+            cycles = cycles + 1
+            print("cycle", cycles)
+
+        final_mask = r >= bound
+        if np.any(final_mask):
+            print("fixup")
+            r[final_mask] = r[final_mask] % bound
+
+        return r
 
     def integers(self, low, high=None, size=None, dtype=None, endpoint=False):
         """ Return psuedo-random integers from low (inclusive) to high (exclusive), or if endpoint=True,

@@ -12,10 +12,11 @@ import random
 import numpy as np
 import pandas as pd
 
+import pyspark.sql.functions as F
+
 from .text_generators import TextGenerator
 from .text_generators import _DIGITS_ZERO, _LETTERS_UPPER, _LETTERS_LOWER, _LETTERS_ALL
 
-import pyspark.sql.functions as F
 
 class GenerateString(TextGenerator):  # lgtm [py/missing-equals]
     """This class handles the generation of string text of specified length drawn from alphanumeric characters.
@@ -57,8 +58,8 @@ class GenerateString(TextGenerator):  # lgtm [py/missing-equals]
     def __init__(self, length, leadingAlpha=True, allUpper=False, allLower=False, allAlpha=False, customChars=None):
         super().__init__()
 
-        assert not customChars or isinstance(customChars, list) or isinstance(customChars, str),  \
-               "`customChars` should be list of characters or string containing custom chars"
+        assert not customChars or isinstance(customChars, (list, str)), \
+            "`customChars` should be list of characters or string containing custom chars"
 
         assert not allUpper or not allLower, "allUpper and allLower cannot both be True"
 
@@ -129,7 +130,7 @@ class GenerateString(TextGenerator):  # lgtm [py/missing-equals]
         return (c_ix.T < lengths.T).T
 
     def mk_bounds(self, v, minLength, maxLength):
-        rng = default_rng(42)
+        rng = np.random.default_rng(42)
         v_bounds = np.full(v.shape[0], (maxLength - minLength) + 1)
         return rng.integers(v_bounds) + minLength
 
@@ -163,7 +164,7 @@ class GenerateString(TextGenerator):  # lgtm [py/missing-equals]
 
         placeholders = np.full((v.shape[0], self._maxLength), '', dtype=np.object_)
 
-        lengths = (v.to_numpy() % (self._maxLength - self._minLength) + self._minLength)
+        lengths = v.to_numpy() % (self._maxLength - self._minLength) + self._minLength
 
         v1 = np.full((v.shape[0], self._maxLength), -1)
 

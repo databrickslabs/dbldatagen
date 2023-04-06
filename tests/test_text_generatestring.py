@@ -78,7 +78,7 @@ class TestTextGenerateString:
                                  dg.GenerateString((10, 20), allLower=True),
                                  dg.GenerateString((1, 10)),
                                  dg.GenerateString((3, 15)),
-                                 dg.GenerateString((17,22)),
+                                 dg.GenerateString((17, 22)),
                                  dg.GenerateString((1, 10)),
                              ])
     def test_simple_data(self, genstr):
@@ -89,7 +89,7 @@ class TestTextGenerateString:
                   .withColumn("code2", IntegerType(), min=0, max=10)
                   .withColumn("code3", StringType(), values=['a', 'b', 'c'])
                   .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
-                  .withColumn("code5", StringType(), text=dg.GenerateString( (1, 10) ))
+                  .withColumn("code5", StringType(), text=dg.GenerateString((1, 10)))
                   )
 
         fieldsFromGenerator = set(dgspec.getOutputColumnNames())
@@ -97,4 +97,3 @@ class TestTextGenerateString:
         df_testdata = dgspec.build()
 
         df_testdata.show()
-

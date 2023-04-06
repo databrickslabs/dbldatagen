@@ -172,7 +172,6 @@ class TextGenerator(object):
         return baseDef
 
 
-
 class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
     """This class handles the generation of text from templates
 
