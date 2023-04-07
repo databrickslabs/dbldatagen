@@ -98,6 +98,34 @@ class DataAnalyzer:
         return (df.withColumn("summary", F.lit(heading))
                 .select(*select_fields))
 
+    def addMeasureToSummary(self, measureName, summaryExpr="''", fieldExprs=None, dfData=None, rowLimit=1,
+                            dfSummary=None):
+        """ Add a measure to the summary dataframe
+
+        :param measureName: name of measure
+        :param summaryExpr: summary expression
+        :param fieldExprs: list of field expressions (or generator)
+        :param dfData: source data df - data being summarized
+        :param rowLimit: number of rows to get for measure
+        :param dfSummary: summary df
+        :return: dfSummary with new measure added
+        """
+        assert dfData is not None, "source data dataframe must be supplied"
+        assert measureName is not None and len(measureName) > 0, "invalid measure name"
+
+        # add measure name and measure summary
+        exprs = [f"'{measureName}' as measure_", f"string({summaryExpr}) as summary_"]
+
+        # add measures for fields
+        exprs.extend(fieldExprs)
+
+        if dfSummary is not None:
+            dfResult = dfSummary.union(dfData.selectExpr(*exprs).limit(rowLimit))
+        else:
+            dfResult = dfData.selectExpr(*exprs).limit(rowLimit)
+
+        return dfResult
+
     def summarizeToDF(self):
         """ Generate summary analysis of data set as dataframe
 
@@ -110,25 +138,45 @@ class DataAnalyzer:
         self.df.cache().createOrReplaceTempView("data_analysis_summary")
 
         dtypes = self.df.dtypes
-        print(dtypes)
 
         # schema information
-        exprs = ["'schema' as measure_", f"to_json(named_struct('column_count', {len(dtypes)})) as summary_"]
-        exprs.extend([f"'{dtype[1]}' as {dtype[0]}" for dtype in dtypes])
-
-        df = self.df.limit(1).selectExpr(*exprs)
+        dfDataSummary = self.addMeasureToSummary(
+            'schema',
+            summaryExpr=f"""to_json(named_struct('column_count', {len(dtypes)}))""",
+            fieldExprs=[f"'{dtype[1]}' as {dtype[0]}" for dtype in dtypes],
+            dfData=self.df)
 
         # count
-        exprs = ["'count' as measure_", "string(count(*)) as summary_"]
-        exprs.extend([f"string(count({dtype[0]})) as {dtype[0]}" for dtype in dtypes])
-
-        df = df.union(self.df.selectExpr(*exprs))
+        dfDataSummary = self.addMeasureToSummary(
+            'count',
+            summaryExpr="count(*)",
+            fieldExprs=[f"string(count({dtype[0]})) as {dtype[0]}" for dtype in dtypes],
+            dfData=self.df,
+            dfSummary=dfDataSummary)
 
         # distinct count
-        exprs = ["'distinct_count' as measure_", "string(count(distinct *)) as summary_"]
-        exprs.extend([f"string(count(distinct {dtype[0]})) as {dtype[0]}" for dtype in dtypes])
+        dfDataSummary = self.addMeasureToSummary(
+            'distinct_count',
+            summaryExpr="count(distinct *)",
+            fieldExprs=[f"string(count(distinct {dtype[0]})) as {dtype[0]}" for dtype in dtypes],
+            dfData=self.df,
+            dfSummary=dfDataSummary)
 
-        df = df.union(self.df.selectExpr(*exprs))
+        # min
+        dfDataSummary = self.addMeasureToSummary(
+            'min',
+            fieldExprs=[f"string(min({dtype[0]})) as {dtype[0]}" for dtype in dtypes],
+            dfData=self.df,
+            dfSummary=dfDataSummary)
+
+        dfDataSummary = self.addMeasureToSummary(
+            'max',
+            fieldExprs=[f"string(max({dtype[0]})) as {dtype[0]}" for dtype in dtypes],
+            dfData=self.df,
+            dfSummary=dfDataSummary)
+
+        descriptionDf = self.df.describe()
+        descriptionDf.show()
 
         # mean
         # exprs = ["'mean' as measure_", "'' as summary_"]
@@ -136,19 +184,7 @@ class DataAnalyzer:
 
         # df = df.union(df_source_data.selectExpr(*exprs))
 
-        # min
-        exprs = ["'min' as measure_", "'' as summary_"]
-        exprs.extend([f"string(min({dtype[0]})) as {dtype[0]}" for dtype in dtypes])
-
-        df = df.union(self.df.selectExpr(*exprs))
-
-        # max
-        exprs = ["'max' as measure_", "'' as summary_"]
-        exprs.extend([f"string(max({dtype[0]})) as {dtype[0]}" for dtype in dtypes])
-
-        df = df.union(self.df.selectExpr(*exprs))
-
-        return df
+        return dfDataSummary
 
     def summarize(self, suppressOutput=False):
         """ Generate summary analysis of data set and return / print summary results
@@ -162,10 +198,10 @@ class DataAnalyzer:
 
         results = []
         summary = f"""
-           count: {count}
-           distinct count: {distinct_count}
-           partition count: {partition_count} 
-        """
+               count: {count}
+               distinct count: {distinct_count}
+               partition count: {partition_count} 
+            """
 
         results.append(summary)
         results.append("schema: " + self.summarizeFields(self.df.schema))
@@ -207,6 +243,7 @@ class DataAnalyzer:
                         |# Column definitions are stubs only - modify to generate correct data  
                         |#""", '|')
 
+
     @classmethod
     def _generatorDefaultAttributesFromType(cls, sqlType):
         """ Generate default set of attributes for each data type
@@ -230,6 +267,7 @@ class DataAnalyzer:
         else:
             result = """expr='null'"""
         return result
+
 
     @classmethod
     def scriptDataGeneratorFromSchema(cls, schema, suppressOutput=False, name=None):
@@ -267,11 +305,11 @@ class DataAnalyzer:
 
         generatedCode.append(strip_margins(
             f"""generation_spec = (
-                                |    dg.DataGenerator(sparkSession=spark, 
-                                |                     name='{name}', 
-                                |                     rows=100000,
-                                |                     random=True,
-                                |                     )""",
+                                    |    dg.DataGenerator(sparkSession=spark, 
+                                    |                     name='{name}', 
+                                    |                     rows=100000,
+                                    |                     random=True,
+                                    |                     )""",
             '|'))
 
         indent = "    "
@@ -289,6 +327,7 @@ class DataAnalyzer:
                 print(line)
 
         return "\n".join(generatedCode)
+
 
     def scriptDataGeneratorFromData(self, suppressOutput=False, name=None):
         """

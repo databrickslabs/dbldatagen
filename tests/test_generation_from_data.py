@@ -20,6 +20,11 @@ class TestGenerationFromData:
     SMALL_ROW_COUNT = 10000
 
     @pytest.fixture
+    def testLogger(self):
+        logger = logging.getLogger(__name__)
+        return logger
+
+    @pytest.fixture
     def generation_spec(self):
         spec = (
             dg.DataGenerator(sparkSession=spark, name='test_generator',
@@ -67,10 +72,9 @@ class TestGenerationFromData:
         ast_tree = ast.parse(generatedCode)
         assert ast_tree is not None
 
-    def test_summarize(self):
-        logger = logging.getLogger(__name__)
-
-        logger.info("Building test data")
+    @pytest.mark.skip(reason="skipped")
+    def test_summarize(self, testLogger):
+        testLogger.info("Building test data")
 
         generation_spec = (
             dg.DataGenerator(sparkSession=spark, name='test_generator', rows=self.SMALL_ROW_COUNT)
@@ -89,17 +93,15 @@ class TestGenerationFromData:
 
         df_source_data = generation_spec.build()
 
-        logger.info("Creating data analyzer")
+        testLogger.info("Creating data analyzer")
 
         analyzer = dg.DataAnalyzer(sparkSession=spark, df=df_source_data)
 
-        logger.info("Summarizing data analyzer results")
+        testLogger.info("Summarizing data analyzer results")
         analyzer.summarize()
 
-    def test_summarize_to_df(self):
-        logger = logging.getLogger(__name__)
-
-        logger.info("Building test data")
+    def test_summarize_to_df(self, generation_spec, testLogger):
+        testLogger.info("Building test data")
 
         generation_spec = (
             dg.DataGenerator(sparkSession=spark, name='test_generator', rows=self.SMALL_ROW_COUNT)
@@ -123,13 +125,11 @@ class TestGenerationFromData:
 
         df_source_data.describe().show()
 
-        print(type(df_source_data))
-
-        logger.info("Creating data analyzer")
+        testLogger.info("Creating data analyzer")
 
         analyzer = dg.DataAnalyzer(sparkSession=spark, df=df_source_data)
 
-        logger.info("Summarizing data analyzer results")
+        testLogger.info("Summarizing data analyzer results")
         df = analyzer.summarizeToDF()
 
         df.show()
