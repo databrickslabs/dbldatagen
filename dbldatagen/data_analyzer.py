@@ -35,8 +35,6 @@ class DataAnalyzer:
         """
         assert df is not None, "dataframe must be supplied"
 
-        self.rowCount = 0
-        self.schema = None
         self.df = df
 
         if sparkSession is None:
@@ -81,10 +79,6 @@ class DataAnalyzer:
             return [x.name for x in schema.fields if isinstance(x, StructField)]
         else:
             return []
-
-    def _getDistinctCounts(self):
-        """ Get distinct counts"""
-        pass
 
     def _displayRow(self, row):
         """Display details for row"""
@@ -198,30 +192,6 @@ class DataAnalyzer:
 
         return summary
 
-    def determineIfDataIsCatagorical(self):
-        """
-        The following algorithm provides a useful test for identifying categorical data:
-
-            Calculate the number of unique values in the data set.
-            Calculate the difference between the number of unique values in the data set and the total number of values
-            in the data set.
-            Calculate the difference as a percentage of the total number of values in the data set.
-            If the percentage difference is 90% or more, then the data set is composed of categorical values.
-            When the number of rows is less than around 50, then a lower threshold of 70% works well in practice.
-
-            See: https://jeffreymorgan.io/articles/identifying-categorical-data/
-        :return:
-        """
-        pass
-
-    def determineIfDataIsContinuous(self):
-        """
-
-            See: https://www.intellspot.com/discrete-vs-continuous-data/
-        :return:
-        """
-        pass
-
     DEFAULT_GENERATED_NAME = "synthetic_data"
 
     GENERATED_COMMENT = strip_margins("""
@@ -239,19 +209,24 @@ class DataAnalyzer:
 
     @classmethod
     def _generatorDefaultAttributesFromType(cls, sqlType):
-        """
+        """ Generate default set of attributes for each data type
 
         :param sqlType: instance of `pyspark.sql.types.DataType`
-        :return:
+        :return: attribute string for supplied sqlType
+
+        When generating code from a schema, we have no data heuristics to determine how data should be generated,
+        so goal is to just generate code that produces some data.
+
+        Users are expected to modify the generated code to their needs.
         """
         assert isinstance(sqlType, DataType)
 
         if sqlType == StringType():
-            result = """template=r'\\\\w', random=True"""
+            result = """template=r'\\\\w'"""
         elif sqlType in [IntegerType(), LongType()]:
-            result = """minValue=1, maxValue=1000000, random=True"""
+            result = """minValue=1, maxValue=1000000"""
         elif sqlType in [FloatType(), DoubleType()]:
-            result = """minValue=1.0, maxValue=1000000.0, step=0.1, random=True"""
+            result = """minValue=1.0, maxValue=1000000.0, step=0.1"""
         else:
             result = """expr='null'"""
         return result
@@ -294,7 +269,8 @@ class DataAnalyzer:
             f"""generation_spec = (
                                 |    dg.DataGenerator(sparkSession=spark, 
                                 |                     name='{name}', 
-                                |                     rows=100000
+                                |                     rows=100000,
+                                |                     random=True,
                                 |                     )""",
             '|'))
 
