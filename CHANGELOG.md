@@ -9,6 +9,7 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 * Modified option to allow for range when specifying `numFeatures` with `structType='array'` to allow generation
   of varying number of columns
 * When generating multi-column or array valued columns, compute random seed with different name for each column
+* Additional build ordering enhancements to reduce circumstances where explicit base column must be specified
 
 #### Added
 * Added top level `random` attribute to data generator specification constructor
