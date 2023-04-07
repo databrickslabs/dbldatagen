@@ -233,6 +233,7 @@ def parse_time_interval(spec):
 
     return delta
 
+
 def strip_margins(s, marginChar):
     """
     Python equivalent of Scala stripMargins method
@@ -268,6 +269,7 @@ def strip_margins(s, marginChar):
             revised_lines.append(line)
 
     return '\n'.join(revised_lines)
+
 
 def split_list_matching_condition(lst, cond):
     """ Split a list on elements that match a condition

@@ -3,7 +3,18 @@
 ## Change History
 All notable changes to the Databricks Labs Data Generator will be documented in this file.
 
+
 ### Unreleased
+
+#### Changed
+* Further enhancements to build ordering to reduce scenarios where baseColumns must be specified
+
+#### Added 
+* Scripting of data generation code from schema
+* Scripting of data generation code from dataframe (basic implementation)
+
+
+### Version 0.3.3post2
 
 #### Changed
 * Fixed use of logger in _version.py and in spark_singleton.py
@@ -11,6 +22,7 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 * Added use of prospector to build process to validate common code issues
 * Apply pandas optimizations when generating multiple columns using same `withColumn` or `withColumnSpec`
 * Document reformatting and updates
+
 
 ### Version 0.3.2
 
