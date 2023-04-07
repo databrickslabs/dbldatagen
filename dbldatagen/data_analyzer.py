@@ -71,29 +71,6 @@ class DataAnalyzer:
         else:
             return typ
 
-    def _summarizeField(self, field):
-        """Generate summary for individual field"""
-        if isinstance(field, StructField):
-            return f"{field.name} {self._lookupFieldType(str(field.dataType))}"
-        else:
-            return str(field)
-
-    def summarizeFields(self, schema):
-        """ Generate summary for all fields in schema"""
-        if schema is not None:
-            fields = schema.fields
-            fields_desc = [self._summarizeField(x) for x in fields]
-            return "Record(" + ",".join(fields_desc) + ")"
-        else:
-            return "N/A"
-
-    def _getFieldNames(self, schema):
-        """ get field names from schema"""
-        if schema is not None and schema.fields is not None:
-            return [x.name for x in schema.fields if isinstance(x, StructField)]
-        else:
-            return []
-
     def _displayRow(self, row):
         """Display details for row"""
         results = []
@@ -102,15 +79,6 @@ class DataAnalyzer:
             results.append(f"{x}: {row[x]}")
 
         return ", ".join(results)
-
-    def _prependSummary(self, df, heading):
-        """ Prepend summary information"""
-        field_names = self._getFieldNames(self.df.schema)
-        select_fields = ["summary"]
-        select_fields.extend(field_names)
-
-        return (df.withColumn("summary", F.lit(heading))
-                .select(*select_fields))
 
     def addMeasureToSummary(self, measureName, summaryExpr="''", fieldExprs=None, dfData=None, rowLimit=1,
                             dfSummary=None):
