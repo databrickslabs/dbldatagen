@@ -119,7 +119,7 @@ class DataAnalyzer:
         print(dtypes)
 
         # schema information
-        exprs = [f"'schema' as measure_", f"to_json(named_struct('column_count', {len(dtypes)})) as summary_"]
+        exprs = ["'schema' as measure_", f"to_json(named_struct('column_count', {len(dtypes)})) as summary_"]
         exprs.extend([f"'{dtype[1]}' as {dtype[0]}" for dtype in dtypes])
 
         df = self.df.limit(1).selectExpr(*exprs)
