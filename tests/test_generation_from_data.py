@@ -114,9 +114,14 @@ class TestGenerationFromData:
             .withColumn('time', 'bigint', expr="now()")
             .withColumn('title', 'string', template=r"\w|\w \w \w|\w \w \w||\w \w \w \w", random=True)
             .withColumn('user', 'string', expr="hex(abs(hash(id)))")
+            .withColumn("event_ts", "timestamp", begin="2020-01-01 01:00:00",
+                        end="2020-12-31 23:59:00",
+                        interval="1 minute", random=True)
         )
 
         df_source_data = generation_spec.build()
+
+        df_source_data.describe().show()
 
         print(type(df_source_data))
 
