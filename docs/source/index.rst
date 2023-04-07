@@ -1,7 +1,5 @@
-.. Test Data Generator documentation master file, created by
+.. Databricks Labs Data Generator documentation master file, created by
    sphinx-quickstart on Sun Jun 21 10:54:30 2020.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 
 Databricks Labs Data Generator Documentation
 ============================================
@@ -36,6 +34,7 @@ As it is installable via `%pip install`, it can also be incorporated in environm
    Generating Change Data Capture (CDC) data<generating_cdc_data>
    Using multiple tables <multi_table_data>
    Extending text generation  <extending_text_generation>
+   Use with Delta Live Tables <using_delta_live_tables>
    Troubleshooting data generation <troubleshooting>
 
 .. toctree::
