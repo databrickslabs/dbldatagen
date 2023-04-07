@@ -45,6 +45,7 @@ and [formatting on string columns](textdata)
 * Script Spark SQL table creation statement for dataset 
 * Specify a [statistical distribution for random values](./DISTRIBUTIONS.md)
 * Support for use within Databricks Delta Live Tables pipelines
+* Support for code generation from existing schema or Spark dataframe to synthesize data
 
 
 ## Tutorials and examples
@@ -290,6 +291,27 @@ For example:
                            minValue=1, maxValue=100, step=1)
 )
 ```
+## Generating code from existing an schema or Spark dataframe
+
+You can use the Data Analyzer class to generate code from an existing schema or Spark dataframe. 
+The generated code will provide a basic data generator to produce synthetic data that conforms to the 
+schema provided or to the schema of the data frame. 
+
+This will allow for quick prototyping of data generation code.
+
+For example, the following code will generate synthetic data generation code from a source dataframe.
+
+```python
+import dbldatagen as dg
+
+dfSource = spark.read.format("parquet").load("/tmp/your/source/dataset")
+
+analyzer = dg.DataAnalyzer(sparkSession=spark, df=df_source_data)
+
+generatedCode = analyzer.scriptDataGeneratorFromData()
+```
+
+See the ``DataAnalyzer`` class and section on `Generating From Existing Data` for more details.
 
 ## A more complex example - building Device IOT synthetic Data
 This example shows generation of IOT device style data consisting of events from devices. 

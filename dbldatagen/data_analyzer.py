@@ -3,12 +3,12 @@
 #
 
 """
-This module defines the DataAnalyzer class.
+This module defines the ``DataAnalyzer`` class.
 
 This code is experimental and both APIs and code generated is liable to change in future versions.
 """
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
-    TimestampType, DateType, DecimalType, ByteType, BinaryType, StructField, StructType, MapType, ArrayType, DataType
+    TimestampType, DateType, DecimalType, ByteType, BinaryType,  StructType, ArrayType, DataType
 
 import pyspark.sql as ssql
 import pyspark.sql.functions as F
@@ -21,15 +21,16 @@ class DataAnalyzer:
     """This class is used to analyze an existing data set to assist in generating a test data set with similar
     characteristics, and to generate code from existing schemas and data
 
+    :param df: Spark data frame to analyze
+    :param sparkSession: spark session instance to use when performing spark operations
+
     .. warning::
        Experimental
 
-    :param df: Spark data frame to analyze
-    :param sparkSession: spark session instance to use when performing spark operations
     """
-    DEFAULT_GENERATED_NAME = "synthetic_data"
+    _DEFAULT_GENERATED_NAME = "synthetic_data"
 
-    GENERATED_COMMENT = strip_margins("""
+    _GENERATED_COMMENT = strip_margins("""
                         |# Code snippet generated with Databricks Labs Data Generator (`dbldatagen`) DataAnalyzer class
                         |# Install with `pip install dbldatagen` or in notebook with `%pip install dbldatagen`
                         |# See the following resources for more details:
@@ -38,38 +39,24 @@ class DataAnalyzer:
                         |#   Github project - [https://github.com/databrickslabs/dbldatagen]
                         |#""", '|')
 
-    GENERATED_FROM_SCHEMA_COMMENT = strip_margins("""
+    _GENERATED_FROM_SCHEMA_COMMENT = strip_margins("""
                         |# Column definitions are stubs only - modify to generate correct data  
                         |#""", '|')
 
     def __init__(self, df=None, sparkSession=None):
         """ Constructor:
-        :param df: data frame to analyze
-        :param sparkSession: spark session to use
+        :param df: Data frame to analyze
+        :param sparkSession: Spark session to use
         """
         assert df is not None, "dataframe must be supplied"
 
-        self.df = df
+        self._df = df
 
         if sparkSession is None:
             sparkSession = SparkSingleton.getLocalInstance()
 
-        self.sparkSession = sparkSession
-
-    def _lookupFieldType(self, typ):
-        """Perform lookup of type name by Spark SQL type name"""
-        type_mappings = {
-            "LongType": "Long",
-            "IntegerType": "Int",
-            "TimestampType": "Timestamp",
-            "FloatType": "Float",
-            "StringType": "String",
-        }
-
-        if typ in type_mappings:
-            return type_mappings[typ]
-        else:
-            return typ
+        self._sparkSession = sparkSession
+        self._dataSummary = None
 
     def _displayRow(self, row):
         """Display details for row"""
@@ -80,8 +67,8 @@ class DataAnalyzer:
 
         return ", ".join(results)
 
-    def addMeasureToSummary(self, measureName, summaryExpr="''", fieldExprs=None, dfData=None, rowLimit=1,
-                            dfSummary=None):
+    def _addMeasureToSummary(self, measureName, summaryExpr="''", fieldExprs=None, dfData=None, rowLimit=1,
+                             dfSummary=None):
         """ Add a measure to the summary dataframe
 
         :param measureName: name of measure
@@ -111,62 +98,63 @@ class DataAnalyzer:
     def summarizeToDF(self):
         """ Generate summary analysis of data set as dataframe
 
-        :param suppressOutput:  if False, prints results to console also
         :return: summary results as dataframe
 
-        The resulting dataframe can be displayed with the `display` function in a notebook environment
-        or with the `show` method
+        The resulting dataframe can be displayed with the ``display`` function in a notebook environment
+        or with the ``show`` method.
+
+        The output is also used in code generation  to generate more accurate code.
         """
-        self.df.cache().createOrReplaceTempView("data_analysis_summary")
+        self._df.cache().createOrReplaceTempView("data_analysis_summary")
 
-        total_count = self.df.count() * 1.0
+        total_count = self._df.count() * 1.0
 
-        dtypes = self.df.dtypes
+        dtypes = self._df.dtypes
 
         # schema information
-        dfDataSummary = self.addMeasureToSummary(
+        dfDataSummary = self._addMeasureToSummary(
             'schema',
             summaryExpr=f"""to_json(named_struct('column_count', {len(dtypes)}))""",
             fieldExprs=[f"'{dtype[1]}' as {dtype[0]}" for dtype in dtypes],
-            dfData=self.df)
+            dfData=self._df)
 
         # count
-        dfDataSummary = self.addMeasureToSummary(
+        dfDataSummary = self._addMeasureToSummary(
             'count',
             summaryExpr=f"{total_count}",
             fieldExprs=[f"string(count({dtype[0]})) as {dtype[0]}" for dtype in dtypes],
-            dfData=self.df,
+            dfData=self._df,
             dfSummary=dfDataSummary)
 
-        dfDataSummary = self.addMeasureToSummary(
+        dfDataSummary = self._addMeasureToSummary(
             'null_probability',
             fieldExprs=[f"""string( round( ({total_count} - count({dtype[0]})) /{total_count}, 2)) as {dtype[0]}"""
                         for dtype in dtypes],
-            dfData=self.df,
+            dfData=self._df,
             dfSummary=dfDataSummary)
 
         # distinct count
-        dfDataSummary = self.addMeasureToSummary(
+        dfDataSummary = self._addMeasureToSummary(
             'distinct_count',
             summaryExpr="count(distinct *)",
             fieldExprs=[f"string(count(distinct {dtype[0]})) as {dtype[0]}" for dtype in dtypes],
-            dfData=self.df,
+            dfData=self._df,
             dfSummary=dfDataSummary)
 
         # min
-        dfDataSummary = self.addMeasureToSummary(
+        dfDataSummary = self._addMeasureToSummary(
             'min',
             fieldExprs=[f"string(min({dtype[0]})) as {dtype[0]}" for dtype in dtypes],
-            dfData=self.df,
+            dfData=self._df,
             dfSummary=dfDataSummary)
 
-        dfDataSummary = self.addMeasureToSummary(
+        dfDataSummary = self._addMeasureToSummary(
             'max',
             fieldExprs=[f"string(max({dtype[0]})) as {dtype[0]}" for dtype in dtypes],
-            dfData=self.df,
+            dfData=self._df,
             dfSummary=dfDataSummary)
 
-        descriptionDf = self.df.describe().where("summary in ('mean', 'stddev')")
+        descriptionDf = self._df.describe().where("summary in ('mean', 'stddev')")
         describeData = descriptionDf.collect()
 
         for row in describeData:
@@ -178,10 +166,10 @@ class DataAnalyzer:
             for k1 in row_key_pairs:
                 values[k1] = str(row[k1])
 
-            dfDataSummary = self.addMeasureToSummary(
+            dfDataSummary = self._addMeasureToSummary(
                 measure,
                 fieldExprs=[f"'{values[dtype[0]]}'" for dtype in dtypes],
-                dfData=self.df,
+                dfData=self._df,
                 dfSummary=dfDataSummary)
 
         return dfDataSummary
@@ -210,10 +198,12 @@ class DataAnalyzer:
         return summary
 
     @classmethod
-    def _generatorDefaultAttributesFromType(cls, sqlType):
+    def _generatorDefaultAttributesFromType(cls, sqlType, dataSummary=None, sourceDf=None):
         """ Generate default set of attributes for each data type
 
         :param sqlType: instance of `pyspark.sql.types.DataType`
+        :param dataSummary: map of maps of attributes from data summary, optional
+        :param sourceDf: source dataframe to retrieve attributes of real data, optional
         :return: attribute string for supplied sqlType
 
         When generating code from a schema, we have no data heuristics to determine how data should be generated,
@@ -227,8 +217,22 @@ class DataAnalyzer:
             result = """template=r'\\\\w'"""
         elif sqlType in [IntegerType(), LongType()]:
             result = """minValue=1, maxValue=1000000"""
+        elif sqlType == ByteType():
+            result = """minValue=1, maxValue=127"""
+        elif sqlType == ShortType():
+            result = """minValue=1, maxValue=32767"""
+        elif sqlType == BooleanType():
+            result = """expr='id % 2 = 1'"""
+        elif sqlType == DateType():
+            result = """expr='current_date()'"""
+        elif isinstance(sqlType, DecimalType):
+            result = """minValue=1, maxValue=1000"""
         elif sqlType in [FloatType(), DoubleType()]:
             result = """minValue=1.0, maxValue=1000000.0, step=0.1"""
+        elif sqlType == TimestampType():
+            result = """begin="2020-01-01 01:00:00", end="2020-12-31 23:59:00", interval="1 minute" """
+        elif sqlType == BinaryType():
+            result = """expr="cast('dbldatagen generated synthetic data' as binary)" """
         else:
             result = """expr='null'"""
         return result
@@ -236,16 +240,16 @@ class DataAnalyzer:
     @classmethod
     def scriptDataGeneratorFromSchema(cls, schema, suppressOutput=False, name=None):
         """
-        generate outline data generator code from an existing data frame
+        Generate outline data generator code from an existing data frame
 
         This will generate a data generator spec from an existing dataframe. The resulting code
         can be used to generate a data generation specification.
 
         Note at this point in time, the code generated is stub code only.
         For most uses, it will require further modification - however it provides a starting point
-        for generation of the specification for a given data set
+        for generation of the specification for a given data set.
 
-        The data frame to be analyzed is the data frame passed to the constructor of the DataAnalyzer object
+        The data frame to be analyzed is the data frame passed to the constructor of the DataAnalyzer object.
 
         :param schema: Pyspark schema - i.e manually constructed StructType or return value from `dataframe.schema`
         :param suppressOutput: suppress printing of generated code if True
@@ -255,19 +259,19 @@ class DataAnalyzer:
         """
         assert isinstance(schema, StructType), "expecting valid Pyspark Schema"
 
-        generatedCode = []
+        stmts = []
 
         if name is None:
-            name = cls.DEFAULT_GENERATED_NAME
+            name = cls._DEFAULT_GENERATED_NAME
 
-        generatedCode.append(cls.GENERATED_COMMENT)
+        stmts.append(cls._GENERATED_COMMENT)
 
-        generatedCode.append("import dbldatagen as dg")
-        generatedCode.append("import pyspark.sql.types")
+        stmts.append("import dbldatagen as dg")
+        stmts.append("import pyspark.sql.types")
 
-        generatedCode.append(cls.GENERATED_FROM_SCHEMA_COMMENT)
+        stmts.append(cls._GENERATED_FROM_SCHEMA_COMMENT)
 
-        generatedCode.append(strip_margins(
+        stmts.append(strip_margins(
             f"""generation_spec = (
                                     |    dg.DataGenerator(sparkSession=spark, 
                                     |                     name='{name}', 
@@ -281,20 +285,26 @@ class DataAnalyzer:
             col_name = fld.name
             col_type = fld.dataType.simpleString()
 
-            field_attributes = cls._generatorDefaultAttributesFromType(fld.dataType)
-
-            generatedCode.append(indent + f""".withColumn('{col_name}', '{col_type}', {field_attributes})""")
-        generatedCode.append(indent + ")")
+            if isinstance(fld.dataType, ArrayType):
+                col_type = fld.dataType.elementType.simpleString()
+                field_attributes = cls._generatorDefaultAttributesFromType(fld.dataType.elementType)
+                array_attributes = """structType='array', numFeatures=(2,6)"""
+                name_and_type = f"""'{col_name}', '{col_type}'"""
+                stmts.append(indent + f""".withColumn({name_and_type}, {field_attributes}, {array_attributes})""")
+            else:
+                field_attributes = cls._generatorDefaultAttributesFromType(fld.dataType)
+                stmts.append(indent + f""".withColumn('{col_name}', '{col_type}', {field_attributes})""")
+        stmts.append(indent + ")")
 
         if not suppressOutput:
-            for line in generatedCode:
+            for line in stmts:
                 print(line)
 
-        return "\n".join(generatedCode)
+        return "\n".join(stmts)
 
     def scriptDataGeneratorFromData(self, suppressOutput=False, name=None):
         """
-        generate outline data generator code from an existing data frame
+        Generate outline data generator code from an existing data frame
 
         This will generate a data generator spec from an existing dataframe. The resulting code
         can be used to generate a data generation specification.
@@ -310,8 +320,7 @@ class DataAnalyzer:
         :return: String containing skeleton code
 
         """
-        assert self.df is not None
-        assert type(self.df) is ssql.DataFrame, "sourceDf must be a valid Pyspark dataframe"
-        assert self.df.schema is not None
+        assert self._df is not None
+        assert type(self._df) is ssql.DataFrame, "sourceDf must be a valid Pyspark dataframe"
 
-        return self.scriptDataGeneratorFromSchema(self.df.schema, suppressOutput=suppressOutput, name=name)
+        return self.scriptDataGeneratorFromSchema(self._df.schema, suppressOutput=suppressOutput, name=name)

@@ -13,248 +13,112 @@ The process often progresses along the following steps:
 - More advanced use cases may include use of an ML model trained on the original data for adjudicating whether
   the synthetic data conforms under specific criteria to the original data set
 
-Over the coming releases, the Databricks Labs Data Generator will add features to support this process.
+The Databricks Labs Data Generator provides the DataAnalyzer class to assist with this process.
+
+For more information, see :data:`~dbldatagen.data_analyzer.DataAnalyzer`
 
 Analyzing the data to be synthesized
 ------------------------------------
 
+You can use the ``summarizeToDf()`` method to generate a summary analysis of a dataframe.
+
+Example:
+
+.. code-block:: python
+
+   import dbldatagen as dg
+
+   dfSource = spark.read.format("parquet").load("/tmp/your/source/dataset")
+
+   analyzer = dg.DataAnalyzer(sparkSession=spark, df=dfSource)
+
+   display(analyzer.summarizeToDf())
+
 Generating code to produce the synthetic data set
 -------------------------------------------------
 
-Generating JSON data
---------------------
-There are several methods for generating JSON data:
+You can use the methods ``scriptDataGeneratorFromSchema`` and the ``scriptDataGeneratorFromData`` to generate code
+from an existing schema or Spark dataframe respectively.
 
-- Generate a dataframe and save it as JSON will generate full data set as JSON
-- Generate JSON valued fields using SQL functions such as `named_struct` and `to_json`
+For example, the following code will generate code to synthesize data from an existing schema.
 
-Writing dataframe as JSON data
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The following example illustrates the basic technique for generating JSON data from a dataframe.
+The generated code is intended to be stub code and will need to be modified to match your desired data layout.
 
 .. code-block:: python
 
-   from pyspark.sql.types import LongType, IntegerType, StringType
-
    import dbldatagen as dg
 
+   dfSource = spark.read.format("parquet").load("/tmp/your/source/dataset")
 
-   country_codes = ['CN', 'US', 'FR', 'CA', 'IN', 'JM', 'IE', 'PK', 'GB', 'IL', 'AU', 'SG',
-                    'ES', 'GE', 'MX', 'ET', 'SA', 'LB', 'NL']
-   country_weights = [1300, 365, 67, 38, 1300, 3, 7, 212, 67, 9, 25, 6, 47, 83, 126, 109, 58, 8,
-                      17]
+   code =  dg.DataAnalyzer.scriptDataGeneratorFromSchema(dfSource.schema)
 
-   manufacturers = ['Delta corp', 'Xyzzy Inc.', 'Lakehouse Ltd', 'Acme Corp', 'Embanks Devices']
-
-   lines = ['delta', 'xyzzy', 'lakehouse', 'gadget', 'droid']
-
-   testDataSpec = (
-       dg.DataGenerator(spark, name="device_data_set", rows=1000000,
-                        partitions=8, randomSeedMethod='hash_fieldname')
-       .withIdOutput()
-       # we'll use hash of the base field to generate the ids to
-       # avoid a simple incrementing sequence
-       .withColumn("internal_device_id", LongType(), minValue=0x1000000000000,
-                   uniqueValues=device_population, omit=True, baseColumnType="hash")
-
-       # note for format strings, we must use "%lx" not "%x" as the
-       # underlying value is a long
-       .withColumn("device_id", StringType(), format="0x%013x",
-                   baseColumn="internal_device_id")
-
-       # the device / user attributes will be the same for the same device id
-       # so lets use the internal device id as the base column for these attribute
-       .withColumn("country", StringType(), values=country_codes,
-                   weights=country_weights,
-                   baseColumn="internal_device_id")
-       .withColumn("manufacturer", StringType(), values=manufacturers,
-                   baseColumn="internal_device_id")
-
-       # use omit = True if you don't want a column to appear in the final output
-       # but just want to use it as part of generation of another column
-       .withColumn("line", StringType(), values=lines, baseColumn="manufacturer",
-                   baseColumnType="hash")
-       .withColumn("model_ser", IntegerType(), minValue=1, maxValue=11,
-                   baseColumn="device_id",
-                   baseColumnType="hash", omit=True)
-
-       .withColumn("event_type", StringType(),
-                   values=["activation", "deactivation", "plan change",
-                           "telecoms activity", "internet activity", "device error"],
-                   random=True)
-       .withColumn("event_ts", "timestamp", begin="2020-01-01 01:00:00",
-                   end="2020-12-31 23:59:00",
-                   interval="1 minute", random=True)
-
-       )
-
-   dfTestData = testDataSpec.build()
-
-   dfTestData.write.format("json").mode("overwrite").save("/tmp/jsonData1")
-
-In the most basic form, you can simply save the dataframe to storage in JSON format.
-
-Use of nested structures in data generation specifications
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-When we save a dataframe containing complex column types such as `map`, `struct` and `array`, these will be
-converted to equivalent constructs in JSON.
-
-So how do we go about creating these?
-
-We can use a struct valued column to hold the nested structure data and write the results out as JSON
-
-Struct / array and map valued columns can be created by adding a column of the appropriate type and using the `expr`
-attribute to assemble the complex column.
-
-Note that in the current release, the `expr` attribute will override other column data generation rules.
+This might produce the following output:
 
 .. code-block:: python
 
-   from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, \
-                                 DoubleType, BooleanType, ShortType, \
-                                 TimestampType, DateType, DecimalType, \
-                                 ByteType, BinaryType, ArrayType, MapType, \
-                                 StructType, StructField
-
    import dbldatagen as dg
 
-
-   country_codes = ['CN', 'US', 'FR', 'CA', 'IN', 'JM', 'IE', 'PK', 'GB', 'IL', 'AU', 'SG',
-                    'ES', 'GE', 'MX', 'ET', 'SA', 'LB', 'NL']
-   country_weights = [1300, 365, 67, 38, 1300, 3, 7, 212, 67, 9, 25, 6, 47, 83, 126, 109, 58, 8,
-                      17]
-
-   manufacturers = ['Delta corp', 'Xyzzy Inc.', 'Lakehouse Ltd', 'Acme Corp', 'Embanks Devices']
-
-   lines = ['delta', 'xyzzy', 'lakehouse', 'gadget', 'droid']
-
-   testDataSpec = (
-       dg.DataGenerator(spark, name="device_data_set", rows=1000000,
-                        partitions=8, randomSeedMethod='hash_fieldname')
-       .withIdOutput()
-       # we'll use hash of the base field to generate the ids to
-       # avoid a simple incrementing sequence
-       .withColumn("internal_device_id", LongType(), minValue=0x1000000000000,
-                   uniqueValues=device_population, omit=True, baseColumnType="hash")
-
-       # note for format strings, we must use "%lx" not "%x" as the
-       # underlying value is a long
-       .withColumn("device_id", StringType(), format="0x%013x",
-                   baseColumn="internal_device_id")
-
-       # the device / user attributes will be the same for the same device id
-       # so lets use the internal device id as the base column for these attribute
-       .withColumn("country", StringType(), values=country_codes,
-                   weights=country_weights,
-                   baseColumn="internal_device_id")
-
-       .withColumn("manufacturer", StringType(), values=manufacturers,
-                   baseColumn="internal_device_id", omit=True)
-       .withColumn("line", StringType(), values=lines, baseColumn="manufacturer",
-                   baseColumnType="hash", omit=True)
-       .withColumn("manufacturer_info", StructType([StructField('line',StringType()),
-                                                   StructField('manufacturer', StringType())]),
-                   expr="named_struct('line', line, 'manufacturer', manufacturer)",
-                   baseColumn=['manufacturer', 'line'])
+   # Column definitions are stubs only - modify to generate correct data
+   generation_spec = (
+        dg.DataGenerator(sparkSession=spark,
+                         name='synthetic_data',
+                         rows=100000,
+                         random=True,
+                         )
+        .withColumn('asin', 'string', template=r'\\w')
+        .withColumn('brand', 'string', template=r'\\w')
+        .withColumn('helpful', 'bigint', minValue=1, maxValue=1000000,
+                    structType='array',
+                    numFeatures=(2,6))
+        .withColumn('img', 'string', template=r'\\w')
+        .withColumn('price', 'double', minValue=1.0, maxValue=1000000.0, step=0.1)
+        .withColumn('rating', 'double', minValue=1.0, maxValue=1000000.0, step=0.1)
+        .withColumn('review', 'string', template=r'\\w')
+        .withColumn('time', 'bigint', minValue=1, maxValue=1000000)
+        .withColumn('title', 'string', template=r'\\w')
+        .withColumn('user', 'string', template=r'\\w')
+        .withColumn('event_ts', 'timestamp',
+                    begin="2020-01-01 01:00:00",
+                    end="2020-12-31 23:59:00",
+                    interval="1 minute" )
+        .withColumn('r_value', 'float', minValue=1.0, maxValue=1000000.0, step=0.1,
+                    structType='array',
+                    numFeatures=(2,6))
+        .withColumn('tf_flag', 'boolean', expr='id % 2 = 1')
+        .withColumn('short_value', 'smallint', minValue=1, maxValue=32767)
+        .withColumn('byte_value', 'tinyint', minValue=1, maxValue=127)
+        .withColumn('decimal_value', 'decimal(10,2)', minValue=1, maxValue=1000)
+        .withColumn('decimal_value', 'decimal(10,2)', minValue=1, maxValue=1000)
+        .withColumn('date_value', 'date', expr='current_date()')
+        .withColumn('binary_value', 'binary',
+                    expr="cast('dbldatagen generated synthetic data' as binary)" )
+    )
 
 
-       .withColumn("model_ser", IntegerType(), minValue=1, maxValue=11,
-                   baseColumn="device_id",
-                   baseColumnType="hash", omit=True)
+When generating code from a schema, the code generation process does not have information about the data attributes
+and so the generated code just illustrates some typical generation expressions.
 
-       .withColumn("event_type", StringType(),
-                   values=["activation", "deactivation", "plan change",
-                           "telecoms activity", "internet activity", "device error"],
-                   random=True, omit=True)
-       .withColumn("event_ts", "timestamp", begin="2020-01-01 01:00:00",
-                   end="2020-12-31 23:59:00",
-                   interval="1 minute", random=True, omit=True)
+If we supply a source data frame to the generation process, the data analyzer instance will use information derived
+from the summary data analysis to refine attributes in the generated code to match the source data better.
 
-       .withColumn("event_info",
-                    StructType([StructField('event_type',StringType()),
-                                StructField('event_ts', TimestampType())]),
-                   expr="named_struct('event_type', event_type, 'event_ts', event_ts)",
-                   baseColumn=['event_type', 'event_ts'])
-       )
+As this is still in the experimental stages, the refinement will continue to evolve over coming versions.
 
-   dfTestData = testDataSpec.build()
-   dfTestData.write.format("json").mode("overwrite").save("/tmp/jsonData2")
+ .. note::
 
-Generating JSON valued fields
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   Note the both of the generate code methods will print the generated code to the output. If you just
+   want the generated code as a string, set the ``suppressOutput`` parameter of the methods to True.
 
-JSON valued fields can be generated as fields of `string` type and assembled using a combination of Spark SQL
-functions such as `named_struct` and `to_json`.
+For example, the following code will generate synthetic data generation code from a source dataframe.
 
 .. code-block:: python
 
-   from pyspark.sql.types import LongType, FloatType, IntegerType, \
-                                 StringType, DoubleType, BooleanType, ShortType, \
-                                 TimestampType, DateType, DecimalType, ByteType, \
-                                 BinaryType, ArrayType, MapType, StructType, StructField
-
    import dbldatagen as dg
 
+   dfSource = spark.read.format("parquet").load("/tmp/your/source/dataset")
 
-   country_codes = ['CN', 'US', 'FR', 'CA', 'IN', 'JM', 'IE', 'PK', 'GB', 'IL', 'AU', 'SG',
-                    'ES', 'GE', 'MX', 'ET', 'SA', 'LB', 'NL']
-   country_weights = [1300, 365, 67, 38, 1300, 3, 7, 212, 67, 9, 25, 6, 47, 83, 126, 109, 58, 8,
-                      17]
+   analyzer = dg.DataAnalyzer(sparkSession=spark, df=df_source_data)
 
-   manufacturers = ['Delta corp', 'Xyzzy Inc.', 'Lakehouse Ltd', 'Acme Corp', 'Embanks Devices']
-
-   lines = ['delta', 'xyzzy', 'lakehouse', 'gadget', 'droid']
-
-   testDataSpec = (
-       dg.DataGenerator(spark, name="device_data_set", rows=1000000,
-                        partitions=8,
-                        randomSeedMethod='hash_fieldname')
-       .withIdOutput()
-       # we'll use hash of the base field to generate the ids to
-       # avoid a simple incrementing sequence
-       .withColumn("internal_device_id", LongType(), minValue=0x1000000000000,
-                   uniqueValues=device_population, omit=True, baseColumnType="hash")
-
-       # note for format strings, we must use "%lx" not "%x" as the
-       # underlying value is a long
-       .withColumn("device_id", StringType(), format="0x%013x",
-                   baseColumn="internal_device_id")
-
-       # the device / user attributes will be the same for the same device id
-       # so lets use the internal device id as the base column for these attribute
-       .withColumn("country", StringType(), values=country_codes,
-                   weights=country_weights,
-                   baseColumn="internal_device_id")
-
-       .withColumn("manufacturer", StringType(), values=manufacturers,
-                   baseColumn="internal_device_id", omit=True)
-       .withColumn("line", StringType(), values=lines, baseColumn="manufacturer",
-                   baseColumnType="hash", omit=True)
-       .withColumn("manufacturer_info", "string",
-                   expr="to_json(named_struct('line', line, 'manufacturer', manufacturer))",
-                   baseColumn=['manufacturer', 'line'])
+   generatedCode = analyzer.scriptDataGeneratorFromData()
 
 
-       .withColumn("model_ser", IntegerType(), minValue=1, maxValue=11,
-                   baseColumn="device_id",
-                   baseColumnType="hash", omit=True)
 
-       .withColumn("event_type", StringType(),
-                   values=["activation", "deactivation", "plan change",
-                           "telecoms activity", "internet activity", "device error"],
-                   random=True, omit=True)
-       .withColumn("event_ts", "timestamp",
-                   begin="2020-01-01 01:00:00", end="2020-12-31 23:59:00",
-                   interval="1 minute", random=True, omit=True)
-
-       .withColumn("event_info", "string",
-                   expr="to_json(named_struct('event_type', event_type, 'event_ts', event_ts))",
-                   baseColumn=['event_type', 'event_ts'])
-       )
-
-   dfTestData = testDataSpec.build()
-
-   #dfTestData.write.format("json").mode("overwrite").save("/tmp/jsonData2")
-   display(dfTestData)
