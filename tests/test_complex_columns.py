@@ -278,3 +278,15 @@ class TestComplexColumns:
                 )
         res1 = gen1.build(withTempView=True)
         assert res1.count() == 10000
+
+    def test_varying_arrays(self, setupLogging):
+        df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=1000, random=True)
+                   .withColumn("r", "float", minValue=1.0, maxValue=10.0, step=0.1,
+                               numColumns=5)
+                   .withColumn("observations", "array<float>",
+                               expr="slice(array(r_0, r_1, r_2, r_3, r_4), 1, abs(hash(id)) % 5 + 1 )",
+                               baseColumn="r")
+                   )
+
+        df = df_spec.build()
+        df.show()
