@@ -36,6 +36,12 @@ class ColumnSpecOptions(object):
 
     :param step: Step to use for range of generated value. As an alternative, you may use the `dataRange` parameter
 
+    :param numColumns: generate `n` columns numbered from 1 .. n-1 with same definition
+
+    :param numFeatures: generate `n` columns numbered from 0 .. n-1 with same definition. Alias for `numColumns`
+
+    :param structType: If specified as "array" and used with numColumns / numFeatures, will combine columns as array
+
     :param random: If True, will generate random values for column value. Defaults to `False`
 
     :param baseColumn: Either the string name of the base column, or a list of columns to use to
