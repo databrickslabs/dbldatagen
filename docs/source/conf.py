@@ -44,7 +44,8 @@ extensions = [
     'sphinx.ext.viewcode',  # add links to source code
     #'numpydoc',  # handle NumPy documentation formatted docstrings. Needs to install
     'recommonmark',  # allow including Commonmark markdown in sources
-    'sphinx_rtd_theme'
+    'sphinx_rtd_theme',
+    'sphinx_copybutton'
 ]
 
 source_suffix = {
