@@ -3,19 +3,18 @@
 ## Change History
 All notable changes to the Databricks Labs Data Generator will be documented in this file.
 
-
-### Unreleased
+### Version 0.3.4
 
 #### Changed
-* Further enhancements to build ordering to reduce scenarios where baseColumns must be specified
 * Modified option to allow for range when specifying `numFeatures` with `structType='array'` to allow generation
   of varying number of columns
 * When generating multi-column or array valued columns, compute random seed with different name for each column
+* Additional build ordering enhancements to reduce circumstances where explicit base column must be specified
 
-#### Added 
+#### Added
+* Added top level `random` attribute to data generator specification constructor
 * Scripting of data generation code from schema (Experimental)
 * Scripting of data generation code from dataframe (Experimental)
-* Added top level `random` attribute to data generator specification constructor
 
 
 ### Version 0.3.3post2
