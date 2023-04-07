@@ -27,6 +27,20 @@ class DataAnalyzer:
     :param df: Spark data frame to analyze
     :param sparkSession: spark session instance to use when performing spark operations
     """
+    DEFAULT_GENERATED_NAME = "synthetic_data"
+
+    GENERATED_COMMENT = strip_margins("""
+                        |# Code snippet generated with Databricks Labs Data Generator (`dbldatagen`) DataAnalyzer class
+                        |# Install with `pip install dbldatagen` or in notebook with `%pip install dbldatagen`
+                        |# See the following resources for more details:
+                        |#
+                        |#   Getting Started - [https://databrickslabs.github.io/dbldatagen/public_docs/APIDOCS.html]
+                        |#   Github project - [https://github.com/databrickslabs/dbldatagen]
+                        |#""", '|')
+
+    GENERATED_FROM_SCHEMA_COMMENT = strip_margins("""
+                        |# Column definitions are stubs only - modify to generate correct data  
+                        |#""", '|')
 
     def __init__(self, df=None, sparkSession=None):
         """ Constructor:
@@ -137,6 +151,8 @@ class DataAnalyzer:
         """
         self.df.cache().createOrReplaceTempView("data_analysis_summary")
 
+        total_count = self.df.count() * 1.0
+
         dtypes = self.df.dtypes
 
         # schema information
@@ -149,10 +165,18 @@ class DataAnalyzer:
         # count
         dfDataSummary = self.addMeasureToSummary(
             'count',
-            summaryExpr="count(*)",
+            summaryExpr=f"{total_count}",
             fieldExprs=[f"string(count({dtype[0]})) as {dtype[0]}" for dtype in dtypes],
             dfData=self.df,
             dfSummary=dfDataSummary)
+
+        dfDataSummary = self.addMeasureToSummary(
+            'null_probability',
+            fieldExprs=[f"""string( round( ({total_count} - count({dtype[0]})) /{total_count}, 2)) as {dtype[0]}"""
+                        for dtype in dtypes],
+            dfData=self.df,
+            dfSummary=dfDataSummary)
+
 
         # distinct count
         dfDataSummary = self.addMeasureToSummary(
@@ -175,14 +199,23 @@ class DataAnalyzer:
             dfData=self.df,
             dfSummary=dfDataSummary)
 
-        descriptionDf = self.df.describe()
-        descriptionDf.show()
+        descriptionDf = self.df.describe().where("summary in ('mean', 'stddev')")
+        describeData = descriptionDf.collect()
 
-        # mean
-        # exprs = ["'mean' as measure_", "'' as summary_"]
-        # exprs.extend([f"string(mean({dtype[0]})) as {dtype[0]}" for dtype in dtypes])
+        for row in describeData:
+            measure = row['summary']
 
-        # df = df.union(df_source_data.selectExpr(*exprs))
+            values = { k[0]: '' for k in dtypes}
+
+            row_key_pairs = row.asDict()
+            for k1 in row_key_pairs:
+                values[k1] = str(row[k1])
+
+            dfDataSummary = self.addMeasureToSummary(
+                measure,
+                fieldExprs=[f"'{values[dtype[0]]}'" for dtype in dtypes],
+                dfData=self.df,
+                dfSummary=dfDataSummary)
 
         return dfDataSummary
 
@@ -192,33 +225,14 @@ class DataAnalyzer:
         :param suppressOutput:  if False, prints results to console also
         :return: summary results as string
         """
-        count = self.df.count()
-        distinct_count = self.df.distinct().count()
-        partition_count = self.df.rdd.getNumPartitions()
+        dfSummary = self.summarizeToDF()
 
-        results = []
-        summary = f"""
-               count: {count}
-               distinct count: {distinct_count}
-               partition count: {partition_count} 
-            """
+        results = [
+            "Data set summary",
+            "================"
+        ]
 
-        results.append(summary)
-        results.append("schema: " + self.summarizeFields(self.df.schema))
-
-        field_names = self._getFieldNames(self.df.schema)
-        select_fields = ["summary"]
-        select_fields.extend(field_names)
-
-        distinct_expressions = [F.countDistinct(x).alias(x) for x in self._getFieldNames(self.df.schema)]
-        results.append(self._displayRow(
-            self._prependSummary(self.df.agg(*distinct_expressions),
-                                 'distinct_count')
-            .select(*select_fields)
-            .collect()[0]
-        ))
-
-        for r in self.df.describe().collect():
+        for r in dfSummary.collect():
             results.append(self._displayRow(r))
 
         summary = "\n".join([str(x) for x in results])
@@ -227,22 +241,6 @@ class DataAnalyzer:
             print(summary)
 
         return summary
-
-    DEFAULT_GENERATED_NAME = "synthetic_data"
-
-    GENERATED_COMMENT = strip_margins("""
-                        |# Code snippet generated with Databricks Labs Data Generator (`dbldatagen`) DataAnalyzer class
-                        |# Install with `pip install dbldatagen` or in notebook with `%pip install dbldatagen`
-                        |# See the following resources for more details:
-                        |#
-                        |#   Getting Started - [https://databrickslabs.github.io/dbldatagen/public_docs/APIDOCS.html]
-                        |#   Github project - [https://github.com/databrickslabs/dbldatagen]
-                        |#""", '|')
-
-    GENERATED_FROM_SCHEMA_COMMENT = strip_margins("""
-                        |# Column definitions are stubs only - modify to generate correct data  
-                        |#""", '|')
-
 
     @classmethod
     def _generatorDefaultAttributesFromType(cls, sqlType):
@@ -327,7 +325,6 @@ class DataAnalyzer:
                 print(line)
 
         return "\n".join(generatedCode)
-
 
     def scriptDataGeneratorFromData(self, suppressOutput=False, name=None):
         """
