@@ -177,7 +177,6 @@ class DataAnalyzer:
             dfData=self.df,
             dfSummary=dfDataSummary)
 
-
         # distinct count
         dfDataSummary = self.addMeasureToSummary(
             'distinct_count',
@@ -265,7 +264,6 @@ class DataAnalyzer:
         else:
             result = """expr='null'"""
         return result
-
 
     @classmethod
     def scriptDataGeneratorFromSchema(cls, schema, suppressOutput=False, name=None):
