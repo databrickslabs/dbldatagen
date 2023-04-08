@@ -172,6 +172,20 @@ class DataAnalyzer:
                 dfData=self._df,
                 dfSummary=dfDataSummary)
 
+        # string characteristics for strings and string representation of other values
+        dfDataSummary = self._addMeasureToSummary(
+            'print_len_min',
+            fieldExprs=[f"min(length(string({dtype[0]}))) as {dtype[0]}" for dtype in dtypes],
+            dfData=self._df,
+            dfSummary=dfDataSummary)
+
+        dfDataSummary = self._addMeasureToSummary(
+            'print_len_max',
+            fieldExprs=[f"max(length(string({dtype[0]}))) as {dtype[0]}" for dtype in dtypes],
+            dfData=self._df,
+            dfSummary=dfDataSummary)
+
+
         return dfDataSummary
 
     def summarize(self, suppressOutput=False):
@@ -267,6 +281,12 @@ class DataAnalyzer:
             result = """expr="cast('dbldatagen generated synthetic data' as binary)" """
         else:
             result = """expr='null'"""
+
+        percentNullsValue = float(cls._valueFromSummary(dataSummary, colName, "null_probability", defaultValue=0.0))
+
+        if percentNullsValue > 0.0:
+            result = result + f", percentNulls={percentNullsValue}"
+
         return result
 
     @classmethod
