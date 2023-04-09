@@ -234,6 +234,43 @@ def parse_time_interval(spec):
     return delta
 
 
+def strip_margins(s, marginChar):
+    """
+    Python equivalent of Scala stripMargins method
+    
+    Takes a string (potentially multiline) and strips all chars up and including the first occurrence of `marginChar`.
+    Used to control the formatting of generated text
+
+    `strip_margins("one\n    |two\n    |three", '|')`
+
+    will produce 
+    
+    ``
+    one 
+    two
+    three
+    ``
+
+    :param s: string to strip margins from
+    :param marginChar: character to strip 
+    :return: modified string
+    """
+    assert s is not None and type(s) is str
+    assert marginChar is not None and type(marginChar) is str
+
+    lines = s.split('\n')
+    revised_lines = []
+
+    for line in lines:
+        if marginChar in line:
+            revised_line = line[line.index(marginChar) + 1:]
+            revised_lines.append(revised_line)
+        else:
+            revised_lines.append(line)
+
+    return '\n'.join(revised_lines)
+
+
 def split_list_matching_condition(lst, cond):
     """ Split a list on elements that match a condition
 
