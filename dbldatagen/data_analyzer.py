@@ -7,10 +7,12 @@ This module defines the ``DataAnalyzer`` class.
 
 This code is experimental and both APIs and code generated is liable to change in future versions.
 """
+import logging
+
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
     TimestampType, DateType, DecimalType, ByteType, BinaryType, StructType, ArrayType, DataType
 
-import pyspark.sql as ssql
+import pyspark.sql as sql
 import pyspark.sql.functions as F
 
 from .utils import strip_margins
@@ -105,32 +107,39 @@ class DataAnalyzer:
 
         The output is also used in code generation  to generate more accurate code.
         """
-        self._df.cache().createOrReplaceTempView("data_analysis_summary")
+        df_under_analysis = self._df.cache()
 
-        total_count = self._df.count() * 1.0
+        logger = logging.getLogger(__name__)
+        logger.info("Analyzing counts")
+        total_count = df_under_analysis.count() * 1.0
 
-        dtypes = self._df.dtypes
+        dtypes = df_under_analysis.dtypes
+
+        # compile column information [ (name, datatype, isArrayColumn) ]
+        dtypes = [ (dtype[0], dtype[1], 1 if dtype[1].lower().startswith('array') else 0) for dtype in dtypes]
+
+        logger.info("Analyzing measures")
 
         # schema information
         dfDataSummary = self._addMeasureToSummary(
             'schema',
             summaryExpr=f"""to_json(named_struct('column_count', {len(dtypes)}))""",
             fieldExprs=[f"'{dtype[1]}' as {dtype[0]}" for dtype in dtypes],
-            dfData=self._df)
+            dfData=df_under_analysis)
 
         # count
         dfDataSummary = self._addMeasureToSummary(
             'count',
             summaryExpr=f"{total_count}",
             fieldExprs=[f"string(count({dtype[0]})) as {dtype[0]}" for dtype in dtypes],
-            dfData=self._df,
+            dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
         dfDataSummary = self._addMeasureToSummary(
             'null_probability',
             fieldExprs=[f"""string( round( ({total_count} - count({dtype[0]})) /{total_count}, 2)) as {dtype[0]}"""
                         for dtype in dtypes],
-            dfData=self._df,
+            dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
         # distinct count
@@ -138,23 +147,24 @@ class DataAnalyzer:
             'distinct_count',
             summaryExpr="count(distinct *)",
             fieldExprs=[f"string(count(distinct {dtype[0]})) as {dtype[0]}" for dtype in dtypes],
-            dfData=self._df,
+            dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
         # min
         dfDataSummary = self._addMeasureToSummary(
             'min',
             fieldExprs=[f"string(min({dtype[0]})) as {dtype[0]}" for dtype in dtypes],
-            dfData=self._df,
+            dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
         dfDataSummary = self._addMeasureToSummary(
             'max',
             fieldExprs=[f"string(max({dtype[0]})) as {dtype[0]}" for dtype in dtypes],
-            dfData=self._df,
+            dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
-        descriptionDf = self._df.describe().where("summary in ('mean', 'stddev')")
+        logger.info("Analyzing basic statistics")
+        descriptionDf = df_under_analysis.describe().where("summary in ('mean', 'stddev')")
         describeData = descriptionDf.collect()
 
         for row in describeData:
@@ -169,20 +179,48 @@ class DataAnalyzer:
             dfDataSummary = self._addMeasureToSummary(
                 measure,
                 fieldExprs=[f"'{values[dtype[0]]}'" for dtype in dtypes],
-                dfData=self._df,
+                dfData=df_under_analysis,
                 dfSummary=dfDataSummary)
 
         # string characteristics for strings and string representation of other values
         dfDataSummary = self._addMeasureToSummary(
             'print_len_min',
             fieldExprs=[f"min(length(string({dtype[0]}))) as {dtype[0]}" for dtype in dtypes],
-            dfData=self._df,
+            dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
         dfDataSummary = self._addMeasureToSummary(
             'print_len_max',
             fieldExprs=[f"max(length(string({dtype[0]}))) as {dtype[0]}" for dtype in dtypes],
-            dfData=self._df,
+            dfData=df_under_analysis,
+            dfSummary=dfDataSummary)
+
+        dfDataSummary = self._addMeasureToSummary(
+            'cardinality_min',
+            fieldExprs=[f"min(cardinality({dtype[0]})) as {dtype[0]}" if dtype[2] else "min(1)"
+                        for dtype in dtypes],
+            dfData=df_under_analysis,
+            dfSummary=dfDataSummary)
+
+        dfDataSummary = self._addMeasureToSummary(
+            'cardinality_max',
+            fieldExprs=[f"max(cardinality({dtype[0]})) as {dtype[0]}" if dtype[2] else "max(1)"
+                        for dtype in dtypes],
+            dfData=df_under_analysis,
+            dfSummary=dfDataSummary)
+
+        dfDataSummary = self._addMeasureToSummary(
+            'array_value_min',
+            fieldExprs=[f"min(array_min({dtype[0]})) as {dtype[0]}" if dtype[2] else "min('')"
+                        for dtype in dtypes],
+            dfData=df_under_analysis,
+            dfSummary=dfDataSummary)
+
+        dfDataSummary = self._addMeasureToSummary(
+            'array_value_max',
+            fieldExprs=[f"max(array_max({dtype[0]})) as {dtype[0]}" if dtype[2] else "max('')"
+                        for dtype in dtypes],
+            dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
         return dfDataSummary
@@ -401,13 +439,22 @@ class DataAnalyzer:
 
         """
         assert self._df is not None
-        assert type(self._df) is ssql.DataFrame, "sourceDf must be a valid Pyspark dataframe"
+        assert type(self._df) is sql.DataFrame, "sourceDf must be a valid Pyspark dataframe"
 
         if self._dataSummary is None:
+            logger = logging.getLogger(__name__)
+            logger.info("Performing data analysis in preparation for code generation")
+
             df_summary = self.summarizeToDF()
 
             self._dataSummary = {}
-            for row in df_summary.collect():
+            logger.info("Performing summary analysis ...")
+
+            analysis_measures = df_summary.collect()
+
+            logger.info("Processing summary analysis results")
+
+            for row in analysis_measures:
                 row_key_pairs = row.asDict()
                 self._dataSummary[row['measure_']] = row_key_pairs
 

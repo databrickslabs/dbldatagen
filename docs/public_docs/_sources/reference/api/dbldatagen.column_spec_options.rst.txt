@@ -1,7 +1,0 @@
-dbldatagen.column\_spec\_options module
-=======================================
-
-.. automodule:: dbldatagen.column_spec_options
-   :members:
-   :undoc-members:
-   :show-inheritance:

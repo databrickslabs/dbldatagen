@@ -1,7 +1,0 @@
-dbldatagen.nrange module
-========================
-
-.. automodule:: dbldatagen.nrange
-   :members:
-   :undoc-members:
-   :show-inheritance:
