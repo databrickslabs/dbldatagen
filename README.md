@@ -51,6 +51,7 @@ used in other computations
 * use of SQL expressions in synthetic data generation
 * plugin mechanism to allow use of 3rd party libraries such as Faker
 * Use within a Databricks Delta Live Tables pipeline as a synthetic data generation source
+* Generate synthetic data generation code from existing schema or data (experimental)
 
 Details of these features can be found in the online documentation  -
  [online documentation](https://databrickslabs.github.io/dbldatagen/public_docs/index.html). 
@@ -62,7 +63,7 @@ details of use and many examples.
 
 Release notes and details of the latest changes for this specific release
 can be found in the GitHub repository
-[here](https://github.com/databrickslabs/dbldatagen/blob/release/v0.3.3post2/CHANGELOG.md)
+[here](https://github.com/databrickslabs/dbldatagen/blob/release/v0.3.4/CHANGELOG.md)
 
 # Installation
 
