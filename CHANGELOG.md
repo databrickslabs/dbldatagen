@@ -12,6 +12,8 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 * Additional build ordering enhancements to reduce circumstances where explicit base column must be specified
 
 #### Added
+* Scripting of data generation code from schema (Experimental)
+* Scripting of data generation code from dataframe (Experimental)
 * Added top level `random` attribute to data generator specification constructor
 
 
