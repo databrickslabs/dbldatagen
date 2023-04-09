@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quick API Index &mdash; Databricks Labs Data Generator 0.3.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/tdg.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/clipboard.min.js"></script>
+        <script src="../_static/copybutton.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="dbldatagen" href="../reference/api/modules.html" />
+    <link rel="prev" title="Troubleshooting" href="../troubleshooting.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generating_from_existing_data.html">Generating synthetic data from existing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Quick API index</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#the-dbldatagen-package">The <code class="docutils literal notranslate"><span class="pre">dbldatagen</span></code> package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#main-user-facing-classes-functions-and-types">Main user facing classes, functions and types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#internal-classes-functions-and-types">Internal classes, functions and types</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#the-dbldatagen-distributions-package">The <code class="docutils literal notranslate"><span class="pre">dbldatagen.distributions</span></code> package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-distribution-related-classes-functions-and-types">Data distribution related classes, functions and types</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/api/modules.html">The dbldatagen package API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Quick API Index</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/relnotes/quickindex.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="quick-api-index">
+<span id="quick-index"></span><h1>Quick API Index<a class="headerlink" href="#quick-api-index" title="Permalink to this heading"></a></h1>
+<section id="the-dbldatagen-package">
+<h2>The <code class="docutils literal notranslate"><span class="pre">dbldatagen</span></code> package<a class="headerlink" href="#the-dbldatagen-package" title="Permalink to this heading"></a></h2>
+<section id="main-user-facing-classes-functions-and-types">
+<h3>Main user facing classes, functions and types<a class="headerlink" href="#main-user-facing-classes-functions-and-types" title="Permalink to this heading"></a></h3>
+<p>Classes</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.column_spec_options.html#dbldatagen.column_spec_options.ColumnSpecOptions" title="dbldatagen.column_spec_options.ColumnSpecOptions"><code class="xref py py-data docutils literal notranslate"><span class="pre">ColumnSpecOptions</span></code></a> - Column Generation Options</p></li>
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.nrange.html#dbldatagen.nrange.NRange" title="dbldatagen.nrange.NRange"><code class="xref py py-data docutils literal notranslate"><span class="pre">NRange</span></code></a> - Numeric ranges</p></li>
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.text_generators.html#dbldatagen.text_generators.ILText" title="dbldatagen.text_generators.ILText"><code class="xref py py-data docutils literal notranslate"><span class="pre">ILText</span></code></a> - Text data generation</p></li>
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.text_generators.html#dbldatagen.text_generators.TemplateGenerator" title="dbldatagen.text_generators.TemplateGenerator"><code class="xref py py-data docutils literal notranslate"><span class="pre">TemplateGenerator</span></code></a> - Text data generation</p></li>
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.text_generators.html#dbldatagen.text_generators.TextGenerator" title="dbldatagen.text_generators.TextGenerator"><code class="xref py py-data docutils literal notranslate"><span class="pre">TextGenerator</span></code></a> - Text data generation</p></li>
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.text_generator_plugins.html#dbldatagen.text_generator_plugins.FakerTextFactory" title="dbldatagen.text_generator_plugins.FakerTextFactory"><code class="xref py py-data docutils literal notranslate"><span class="pre">FakerTextFactory</span></code></a> - Text data generation</p></li>
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.text_generator_plugins.html#dbldatagen.text_generator_plugins.PyfuncText" title="dbldatagen.text_generator_plugins.PyfuncText"><code class="xref py py-data docutils literal notranslate"><span class="pre">PyfuncText</span></code></a> - Text data generation</p></li>
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.text_generator_plugins.html#dbldatagen.text_generator_plugins.PyfuncTextFactory" title="dbldatagen.text_generator_plugins.PyfuncTextFactory"><code class="xref py py-data docutils literal notranslate"><span class="pre">PyfuncTextFactory</span></code></a> - Text data generation</p></li>
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange" title="dbldatagen.daterange.DateRange"><code class="xref py py-data docutils literal notranslate"><span class="pre">DateRange</span></code></a> - Date and time ranges</p></li>
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.datarange.html#dbldatagen.datarange.DataRange" title="dbldatagen.datarange.DataRange"><code class="xref py py-data docutils literal notranslate"><span class="pre">DataRange</span></code></a> - Internal data range abstract types</p></li>
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.data_analyzer.html#dbldatagen.data_analyzer.DataAnalyzer" title="dbldatagen.data_analyzer.DataAnalyzer"><code class="xref py py-data docutils literal notranslate"><span class="pre">DataAnalyzer</span></code></a> - Analysis of existing data</p></li>
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator" title="dbldatagen.data_generator.DataGenerator"><code class="xref py py-data docutils literal notranslate"><span class="pre">DataGenerator</span></code></a> - Main generator classes</p></li>
+</ul>
+<p>Functions</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.text_generator_plugins.html#dbldatagen.text_generator_plugins.fakerText" title="dbldatagen.text_generator_plugins.fakerText"><code class="xref py py-data docutils literal notranslate"><span class="pre">fakerText</span></code></a> - Text data generation</p></li>
+</ul>
+</section>
+<section id="internal-classes-functions-and-types">
+<h3>Internal classes, functions and types<a class="headerlink" href="#internal-classes-functions-and-types" title="Permalink to this heading"></a></h3>
+<p>Classes</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.function_builder.html#dbldatagen.function_builder.ColumnGeneratorBuilder" title="dbldatagen.function_builder.ColumnGeneratorBuilder"><code class="xref py py-data docutils literal notranslate"><span class="pre">ColumnGeneratorBuilder</span></code></a> - Internal utilities to create functions related to weights</p></li>
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec" title="dbldatagen.column_generation_spec.ColumnGenerationSpec"><code class="xref py py-data docutils literal notranslate"><span class="pre">ColumnGenerationSpec</span></code></a> - Column Generation Spec types</p></li>
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.spark_singleton.html#dbldatagen.spark_singleton.SparkSingleton" title="dbldatagen.spark_singleton.SparkSingleton"><code class="xref py py-data docutils literal notranslate"><span class="pre">SparkSingleton</span></code></a> - Spark singleton for test purposes</p></li>
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.utils.html#dbldatagen.utils.DataGenError" title="dbldatagen.utils.DataGenError"><code class="xref py py-data docutils literal notranslate"><span class="pre">DataGenError</span></code></a></p></li>
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.schema_parser.html#dbldatagen.schema_parser.SchemaParser" title="dbldatagen.schema_parser.SchemaParser"><code class="xref py py-data docutils literal notranslate"><span class="pre">SchemaParser</span></code></a> - Internal utilities to parse Spark SQL schema information</p></li>
+</ul>
+<p>Functions</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.utils.html#dbldatagen.utils.coalesce_values" title="dbldatagen.utils.coalesce_values"><code class="xref py py-data docutils literal notranslate"><span class="pre">coalesce_values</span></code></a></p></li>
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.utils.html#dbldatagen.utils.deprecated" title="dbldatagen.utils.deprecated"><code class="xref py py-data docutils literal notranslate"><span class="pre">deprecated</span></code></a></p></li>
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.utils.html#dbldatagen.utils.ensure" title="dbldatagen.utils.ensure"><code class="xref py py-data docutils literal notranslate"><span class="pre">ensure</span></code></a></p></li>
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.utils.html#dbldatagen.utils.mkBoundsList" title="dbldatagen.utils.mkBoundsList"><code class="xref py py-data docutils literal notranslate"><span class="pre">mkBoundsList</span></code></a></p></li>
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.utils.html#dbldatagen.utils.parse_time_interval" title="dbldatagen.utils.parse_time_interval"><code class="xref py py-data docutils literal notranslate"><span class="pre">parse_time_interval</span></code></a></p></li>
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.utils.html#dbldatagen.utils.split_list_matching_condition" title="dbldatagen.utils.split_list_matching_condition"><code class="xref py py-data docutils literal notranslate"><span class="pre">split_list_matching_condition</span></code></a></p></li>
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.utils.html#dbldatagen.utils.strip_margins" title="dbldatagen.utils.strip_margins"><code class="xref py py-data docutils literal notranslate"><span class="pre">strip_margins</span></code></a></p></li>
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.utils.html#dbldatagen.utils.topologicalSort" title="dbldatagen.utils.topologicalSort"><code class="xref py py-data docutils literal notranslate"><span class="pre">topologicalSort</span></code></a></p></li>
+</ul>
+<p>Types</p>
+<ul class="simple">
+<li><p><code class="xref py py-data docutils literal notranslate"><span class="pre">AUTO_COMPUTE_METHOD</span></code></p></li>
+<li><p><code class="xref py py-data docutils literal notranslate"><span class="pre">COMPUTE_METHOD_VALID_VALUES</span></code></p></li>
+<li><p><code class="xref py py-data docutils literal notranslate"><span class="pre">HASH_COMPUTE_METHOD</span></code></p></li>
+<li><p><code class="xref py py-data docutils literal notranslate"><span class="pre">RAW_VALUES_COMPUTE_METHOD</span></code></p></li>
+<li><p><code class="xref py py-data docutils literal notranslate"><span class="pre">VALUES_COMPUTE_METHOD</span></code></p></li>
+<li><p><code class="xref py py-data docutils literal notranslate"><span class="pre">PATTERN_NAME_EQUALS_VALUE</span></code></p></li>
+<li><p><code class="xref py py-data docutils literal notranslate"><span class="pre">PATTERN_VALUE_SPACE_NAME</span></code></p></li>
+</ul>
+</section>
+</section>
+<section id="the-dbldatagen-distributions-package">
+<h2>The <code class="docutils literal notranslate"><span class="pre">dbldatagen.distributions</span></code> package<a class="headerlink" href="#the-dbldatagen-distributions-package" title="Permalink to this heading"></a></h2>
+<section id="data-distribution-related-classes-functions-and-types">
+<h3>Data distribution related classes, functions and types<a class="headerlink" href="#data-distribution-related-classes-functions-and-types" title="Permalink to this heading"></a></h3>
+<p>Classes</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.distributions.exponential_distribution.html#dbldatagen.distributions.exponential_distribution.Exponential" title="dbldatagen.distributions.exponential_distribution.Exponential"><code class="xref py py-data docutils literal notranslate"><span class="pre">Exponential</span></code></a> - Exponential data distribution related code</p></li>
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.distributions.beta.html#dbldatagen.distributions.beta.Beta" title="dbldatagen.distributions.beta.Beta"><code class="xref py py-data docutils literal notranslate"><span class="pre">Beta</span></code></a> - Beta distribution related code</p></li>
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.distributions.normal_distribution.html#dbldatagen.distributions.normal_distribution.Normal" title="dbldatagen.distributions.normal_distribution.Normal"><code class="xref py py-data docutils literal notranslate"><span class="pre">Normal</span></code></a> - Normal data distribution related code</p></li>
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.distributions.data_distribution.html#dbldatagen.distributions.data_distribution.DataDistribution" title="dbldatagen.distributions.data_distribution.DataDistribution"><code class="xref py py-data docutils literal notranslate"><span class="pre">DataDistribution</span></code></a> - Data distribution related code</p></li>
+<li><p><a class="reference internal" href="../reference/api/dbldatagen.distributions.gamma.html#dbldatagen.distributions.gamma.Gamma" title="dbldatagen.distributions.gamma.Gamma"><code class="xref py py-data docutils literal notranslate"><span class="pre">Gamma</span></code></a> - Gamma data distribution related code</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../troubleshooting.html" class="btn btn-neutral float-left" title="Troubleshooting" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../reference/api/modules.html" class="btn btn-neutral float-right" title="dbldatagen" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Extending Text Generation &mdash; Databricks Labs Data Generator 0.3.4 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/tdg.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/clipboard.min.js"></script>
+        <script src="_static/copybutton.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Using the Data Generator with Delta Live Tables" href="using_delta_live_tables.html" />
+    <link rel="prev" title="Generating and Using Data with Multiple Tables" href="multi_table_data.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_from_existing_data.html">Generating synthetic data from existing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Extending text generation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#extended-text-generation-with-python-functions">Extended text generation with Python functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#example-1-using-a-custom-python-function">Example 1: Using a custom Python function</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#extended-text-generation-with-3rd-party-libraries">Extended text generation with 3rd party libraries</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#example-2-using-an-external-text-data-generation-library">Example 2: Using an external text data generation library</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#supporting-extended-syntax-for-3rd-party-library-integration">Supporting extended syntax for 3rd party library integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#faker-specific-library-integration">Faker specific library integration</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference/api/modules.html">The dbldatagen package API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Extending Text Generation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/extending_text_generation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="extending-text-generation">
+<h1>Extending Text Generation<a class="headerlink" href="#extending-text-generation" title="Permalink to this heading"></a></h1>
+<p>This feature should be considered <code class="docutils literal notranslate"><span class="pre">Experimental</span></code>.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">PyfuncText</span></code>,  <code class="docutils literal notranslate"><span class="pre">PyfuncTextFactory</span></code> and <code class="docutils literal notranslate"><span class="pre">FakerTextFactory</span></code> classes provide a mechanism to expand text
+generation to include
+the use of arbitrary Python functions and 3rd party data generation libraries.</p>
+<p>The following example illustrates extension with the open source Faker library using the
+extended syntax.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">dbldatagen</span> <span class="kn">import</span> <span class="n">DataGenerator</span><span class="p">,</span> <span class="n">fakerText</span>
+<span class="kn">from</span> <span class="nn">faker.providers</span> <span class="kn">import</span> <span class="n">internet</span>
+
+<span class="n">shuffle_partitions_requested</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="n">partitions_requested</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="n">data_rows</span> <span class="o">=</span> <span class="mi">100000</span>
+
+<span class="c1"># partition parameters etc.</span>
+<span class="n">spark</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;spark.sql.shuffle.partitions&quot;</span><span class="p">,</span> <span class="n">shuffle_partitions_requested</span><span class="p">)</span>
+
+<span class="n">my_word_list</span> <span class="o">=</span> <span class="p">[</span>
+<span class="s1">&#39;danish&#39;</span><span class="p">,</span><span class="s1">&#39;cheesecake&#39;</span><span class="p">,</span><span class="s1">&#39;sugar&#39;</span><span class="p">,</span>
+<span class="s1">&#39;Lollipop&#39;</span><span class="p">,</span><span class="s1">&#39;wafer&#39;</span><span class="p">,</span><span class="s1">&#39;Gummies&#39;</span><span class="p">,</span>
+<span class="s1">&#39;sesame&#39;</span><span class="p">,</span><span class="s1">&#39;Jelly&#39;</span><span class="p">,</span><span class="s1">&#39;beans&#39;</span><span class="p">,</span>
+<span class="s1">&#39;pie&#39;</span><span class="p">,</span><span class="s1">&#39;bar&#39;</span><span class="p">,</span><span class="s1">&#39;Ice&#39;</span><span class="p">,</span><span class="s1">&#39;oat&#39;</span> <span class="p">]</span>
+
+<span class="n">fakerDataspec</span> <span class="o">=</span> <span class="p">(</span><span class="n">DataGenerator</span><span class="p">(</span><span class="n">spark</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">data_rows</span><span class="p">,</span> <span class="n">partitions</span><span class="o">=</span><span class="n">partitions_requested</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="n">percentNulls</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">fakerText</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span> <span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;address&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">fakerText</span><span class="p">(</span><span class="s2">&quot;address&quot;</span> <span class="p">))</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;email&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">fakerText</span><span class="p">(</span><span class="s2">&quot;ascii_company_email&quot;</span><span class="p">)</span> <span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;ip_address&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">fakerText</span><span class="p">(</span><span class="s2">&quot;ipv4_private&quot;</span> <span class="p">))</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;faker_text&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">fakerText</span><span class="p">(</span><span class="s2">&quot;sentence&quot;</span><span class="p">,</span> <span class="n">ext_word_list</span><span class="o">=</span><span class="n">my_word_list</span><span class="p">))</span>
+            <span class="p">)</span>
+<span class="n">dfFakerOnly</span> <span class="o">=</span> <span class="n">fakerDataspec</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+
+<span class="n">dfFakerOnly</span><span class="o">.</span><span class="n">write</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;delta&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">mode</span><span class="p">(</span><span class="s2">&quot;overwrite&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;/tmp/test-output&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Lets look at the various features provided to do this.</p>
+<section id="extended-text-generation-with-python-functions">
+<h2>Extended text generation with Python functions<a class="headerlink" href="#extended-text-generation-with-python-functions" title="Permalink to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">PyfuncText</span></code> object supports extending text generation with Python functions.</p>
+<p>It allows specification of two functions</p>
+<ul class="simple">
+<li><p>a context initialization function to initialize shared state</p></li>
+<li><p>a text generation function to generate text for a specific column value</p></li>
+</ul>
+<p>This allows integration of both arbitrary Python code and of 3rd party libraries into
+the text generation process.</p>
+<p>For more information, see <a class="reference internal" href="reference/api/dbldatagen.text_generator_plugins.html#dbldatagen.text_generator_plugins.PyfuncText" title="dbldatagen.text_generator_plugins.PyfuncText"><code class="xref py py-data docutils literal notranslate"><span class="pre">PyfuncText</span></code></a></p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The performance of text generation using external libraries or Python functions may be substantially slower than
+the base text generation capabilities. However it should be sufficient for generation of tables of up to
+100 million rows on a medium sized cluster.</p>
+<p>Note that we do not test compatibility with specific libraries and no expectations are made on the
+repeatability of data when generated using external functions or libraries.</p>
+</div>
+<section id="example-1-using-a-custom-python-function">
+<h3>Example 1: Using a custom Python function<a class="headerlink" href="#example-1-using-a-custom-python-function" title="Permalink to this heading"></a></h3>
+<p>The following code shows use of a custom Python function to generate text:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">dbldatagen</span> <span class="kn">import</span> <span class="n">DataGenerator</span><span class="p">,</span> <span class="n">PyfuncText</span>
+<span class="n">partitions_requested</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">data_rows</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">*</span> <span class="mi">1000</span>
+
+<span class="c1"># the initialization function</span>
+<span class="k">def</span> <span class="nf">initPluginContext</span><span class="p">(</span><span class="n">context</span><span class="p">):</span>
+   <span class="n">context</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="s2">&quot;testing&quot;</span>
+
+<span class="c1"># the data generation function</span>
+<span class="n">text_generator</span> <span class="o">=</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">context</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">context</span><span class="o">.</span><span class="n">prefix</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+
+<span class="n">pluginDataspec</span> <span class="o">=</span> <span class="p">(</span><span class="n">DataGenerator</span><span class="p">(</span><span class="n">spark</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">data_rows</span><span class="p">,</span> <span class="n">partitions</span><span class="o">=</span><span class="n">partitions_requested</span><span class="p">,</span>
+                  <span class="n">randomSeedMethod</span><span class="o">=</span><span class="s2">&quot;hash_fieldname&quot;</span><span class="p">)</span>
+                  <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+                              <span class="n">text</span><span class="o">=</span><span class="n">PyfuncText</span><span class="p">(</span><span class="n">text_generator</span><span class="p">,</span>
+                              <span class="n">initFn</span><span class="o">=</span><span class="n">initPluginContext</span><span class="p">))</span>
+                 <span class="p">)</span>
+
+<span class="n">dfPlugin</span> <span class="o">=</span> <span class="n">pluginDataspec</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+<span class="n">dfPlugin</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="extended-text-generation-with-3rd-party-libraries">
+<h2>Extended text generation with 3rd party libraries<a class="headerlink" href="#extended-text-generation-with-3rd-party-libraries" title="Permalink to this heading"></a></h2>
+<p>The same mechanism can be used to make use of the capabilities of 3rd party libraries.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">context</span></code> object can be initialized with any arbitrary properties that may be referenced
+during the execution of the text generation function.</p>
+<p>This can include use of session or connection objects, lookup dictionaries etc.
+As a separate context instance is created for each worker node process for each PyfuncText text generator,
+the object does not have to be pickled or serialized across process boundaries.</p>
+<p>By default the context is shared across calls to the underlying Pandas UDF that generates the text.
+If the context properties cannot be shared across multiple calls, you can specify that the context is recreated for
+each Pandas UDF call.</p>
+<section id="example-2-using-an-external-text-data-generation-library">
+<h3>Example 2: Using an external text data generation library<a class="headerlink" href="#example-2-using-an-external-text-data-generation-library" title="Permalink to this heading"></a></h3>
+<p>The following code shows use of an external text generation library  to generate text.</p>
+<p>In this case, the example is using the <code class="docutils literal notranslate"><span class="pre">Faker</span></code> library.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">Faker</span></code> library is not shipped as part of the data generator and the user is responsible for installing it
+on a cluster or workspace, if using. There is no testing of specific 3rd party libraries for compatibility
+and some features may not function correctly or at scale.</p>
+</div>
+<p>To install <code class="docutils literal notranslate"><span class="pre">Faker</span></code> in a Databricks notebook, you can use the <code class="docutils literal notranslate"><span class="pre">%pip</span></code> instruction in a notebook cell.
+For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="n">pip</span> <span class="n">install</span> <span class="n">Faker</span>
+</pre></div>
+</div>
+<p>The following code makes use the of <code class="docutils literal notranslate"><span class="pre">Faker</span></code> library to generate synthetic names, email addresses,
+IP addresses and credit card numbers.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">dbldatagen</span> <span class="kn">import</span> <span class="n">DataGenerator</span><span class="p">,</span> <span class="n">PyfuncText</span>
+<span class="kn">from</span> <span class="nn">faker</span> <span class="kn">import</span> <span class="n">Faker</span>
+<span class="kn">from</span> <span class="nn">faker.providers</span> <span class="kn">import</span> <span class="n">internet</span>
+
+<span class="n">shuffle_partitions_requested</span> <span class="o">=</span> <span class="mi">36</span>
+<span class="n">partitions_requested</span> <span class="o">=</span> <span class="mi">96</span>
+<span class="n">data_rows</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="mi">1000</span> <span class="o">*</span> <span class="mi">1000</span>
+
+<span class="n">spark</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;spark.sql.shuffle.partitions&quot;</span><span class="p">,</span> <span class="n">shuffle_partitions_requested</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">initFaker</span><span class="p">(</span><span class="n">context</span><span class="p">):</span>
+  <span class="n">context</span><span class="o">.</span><span class="n">faker</span> <span class="o">=</span> <span class="n">Faker</span><span class="p">(</span><span class="n">locale</span><span class="o">=</span><span class="s2">&quot;en_US&quot;</span><span class="p">)</span>
+  <span class="n">context</span><span class="o">.</span><span class="n">faker</span><span class="o">.</span><span class="n">add_provider</span><span class="p">(</span><span class="n">internet</span><span class="p">)</span>
+
+<span class="n">ip_address_generator</span> <span class="o">=</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">context</span><span class="p">,</span> <span class="n">v</span> <span class="p">:</span> <span class="n">context</span><span class="o">.</span><span class="n">faker</span><span class="o">.</span><span class="n">ipv4_private</span><span class="p">())</span>
+<span class="n">name_generator</span> <span class="o">=</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">context</span><span class="p">,</span> <span class="n">v</span> <span class="p">:</span> <span class="n">context</span><span class="o">.</span><span class="n">faker</span><span class="o">.</span><span class="n">name</span><span class="p">())</span>
+<span class="n">address_generator</span> <span class="o">=</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">context</span><span class="p">,</span> <span class="n">v</span> <span class="p">:</span> <span class="n">context</span><span class="o">.</span><span class="n">faker</span><span class="o">.</span><span class="n">address</span><span class="p">())</span>
+<span class="n">email_generator</span> <span class="o">=</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">context</span><span class="p">,</span> <span class="n">v</span> <span class="p">:</span> <span class="n">context</span><span class="o">.</span><span class="n">faker</span><span class="o">.</span><span class="n">ascii_company_email</span><span class="p">())</span>
+
+<span class="n">fakerDataspec</span> <span class="o">=</span> <span class="p">(</span><span class="n">DataGenerator</span><span class="p">(</span><span class="n">spark</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">data_rows</span><span class="p">,</span> <span class="n">partitions</span><span class="o">=</span><span class="n">partitions_requested</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span>
+                        <span class="n">percentNulls</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+                        <span class="n">text</span><span class="o">=</span><span class="n">PyfuncText</span><span class="p">(</span><span class="n">name_generator</span> <span class="p">,</span> <span class="n">initFn</span><span class="o">=</span><span class="n">initFaker</span><span class="p">))</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;address&quot;</span><span class="p">,</span>
+                        <span class="n">text</span><span class="o">=</span><span class="n">PyfuncText</span><span class="p">(</span><span class="n">address_generator</span><span class="p">,</span> <span class="n">initFn</span><span class="o">=</span><span class="n">initFaker</span><span class="p">))</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;email&quot;</span><span class="p">,</span>
+                        <span class="n">text</span><span class="o">=</span><span class="n">PyfuncText</span><span class="p">(</span><span class="n">email_generator</span><span class="p">,</span> <span class="n">initFn</span><span class="o">=</span><span class="n">initFaker</span><span class="p">))</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;ip_address&quot;</span><span class="p">,</span>
+                        <span class="n">text</span><span class="o">=</span><span class="n">PyfuncText</span><span class="p">(</span><span class="n">ip_address_generator</span> <span class="p">,</span> <span class="n">initFn</span><span class="o">=</span><span class="n">initFaker</span><span class="p">))</span>
+            <span class="p">)</span>
+<span class="n">df1</span> <span class="o">=</span> <span class="n">fakerDataspec</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+
+<span class="n">df1</span><span class="o">.</span><span class="n">write</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;delta&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">mode</span><span class="p">(</span><span class="s2">&quot;overwrite&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;/tmp/dbldatagen/fakerData&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="supporting-extended-syntax-for-3rd-party-library-integration">
+<h2>Supporting extended syntax for 3rd party library integration<a class="headerlink" href="#supporting-extended-syntax-for-3rd-party-library-integration" title="Permalink to this heading"></a></h2>
+<p>Use of the <cite>PyfuncTextFactory</cite> class allows the use of the following constructs:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># initialization (for Faker for example)</span>
+
+<span class="c1"># setup use of Faker</span>
+<span class="k">def</span> <span class="nf">initFaker</span><span class="p">(</span><span class="n">ctx</span><span class="p">):</span>
+  <span class="n">ctx</span><span class="o">.</span><span class="n">faker</span> <span class="o">=</span> <span class="n">Faker</span><span class="p">(</span><span class="n">locale</span><span class="o">=</span><span class="s2">&quot;en_US&quot;</span><span class="p">)</span>
+  <span class="n">ctx</span><span class="o">.</span><span class="n">faker</span><span class="o">.</span><span class="n">add_provider</span><span class="p">(</span><span class="n">internet</span><span class="p">)</span>
+
+<span class="n">FakerText</span> <span class="o">=</span> <span class="p">(</span><span class="n">PyfuncTextFactory</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;FakerText&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withInit</span><span class="p">(</span><span class="n">initFaker</span><span class="p">)</span>        <span class="c1"># determines how context should be initialized</span>
+            <span class="o">.</span><span class="n">withRootProperty</span><span class="p">(</span><span class="s2">&quot;faker&quot;</span><span class="p">)</span>  <span class="c1"># determines what context property is passed to fn</span>
+            <span class="p">)</span>
+
+<span class="c1"># later use ...</span>
+<span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;fake_name&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">FakerText</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span> <span class="p">)</span>
+<span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;fake_sentence&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">FakerText</span><span class="p">(</span><span class="s2">&quot;sentence&quot;</span><span class="p">,</span> <span class="n">ext_word_list</span><span class="o">=</span><span class="n">my_word_list</span><span class="p">)</span> <span class="p">)</span>
+
+<span class="c1"># translates to generation of lambda function with keyword arguments</span>
+<span class="c1"># or without as needed</span>
+<span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;fake_name&quot;</span><span class="p">,</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">FakerText</span><span class="p">(</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">faker</span><span class="p">:</span> <span class="n">faker</span><span class="o">.</span><span class="n">name</span><span class="p">(</span> <span class="p">)),</span>
+                            <span class="n">init</span><span class="o">=</span><span class="n">initFaker</span><span class="p">,</span>
+                            <span class="n">rootProperty</span><span class="o">=</span><span class="s2">&quot;faker&quot;</span><span class="p">,</span>
+                            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;FakerText&quot;</span><span class="p">))</span>
+<span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;fake_sentence&quot;</span><span class="p">,</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">FakerText</span><span class="p">(</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">faker</span><span class="p">:</span>
+                                <span class="n">faker</span><span class="o">.</span><span class="n">sentence</span><span class="p">(</span> <span class="o">**</span><span class="p">{</span> <span class="s2">&quot;ext_word_list&quot;</span> <span class="p">:</span> <span class="n">my_word_list</span><span class="p">}</span> <span class="p">)),</span>
+                            <span class="n">init</span><span class="o">=</span><span class="n">initFaker</span><span class="p">,</span>
+                            <span class="n">rootProperty</span><span class="o">=</span><span class="s2">&quot;faker&quot;</span><span class="p">,</span>
+                            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;FakerText&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>By default, when the text generation function is called, the context object is passed to the
+text generation function. However, if a root property is specified, it is interpreted the name of a property
+of the context to be passed to the text generation function.</p>
+<p>How does the string based access work?</p>
+<p>If a string is specified to the PyfuncTextFactory in place of a text generation function or lambda function,
+it is interpreted as the name of a method or property to access on the root object.</p>
+<p>By default, the string is interpreted as the name of a method. But if you need to access a property of the root object,
+you can use the syntax below (example is hypothetical and does not refer to any specific library).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;my_property&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">MyLibraryText</span><span class="p">(</span><span class="s2">&quot;myCustomProperty&quot;</span><span class="p">,</span> <span class="n">isProperty</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="p">)</span>
+</pre></div>
+</div>
+<p>For more information, see <a class="reference internal" href="reference/api/dbldatagen.text_generator_plugins.html#dbldatagen.text_generator_plugins.PyfuncTextFactory" title="dbldatagen.text_generator_plugins.PyfuncTextFactory"><code class="xref py py-data docutils literal notranslate"><span class="pre">PyfuncTextFactory</span></code></a></p>
+</section>
+<section id="faker-specific-library-integration">
+<h2>Faker specific library integration<a class="headerlink" href="#faker-specific-library-integration" title="Permalink to this heading"></a></h2>
+<p>Finally, the <code class="docutils literal notranslate"><span class="pre">FakerTextFactory</span></code> provides a Faker specific version of the <code class="docutils literal notranslate"><span class="pre">PyfuncTextFactory</span></code> class
+that initializes the Faker library and allows specification of locales and providers.</p>
+<p>You will still need to install Faker as it is not included in the binaries.</p>
+<p>If you are not customizing the FakerTextFactory, you can use <code class="docutils literal notranslate"><span class="pre">fakerText</span></code> to get the default faker text factory.</p>
+<p>The following example will generate Italian localized text (where the underlying Faker provider supports it)
+interspersed with use of the default faker text factory.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">dbldatagen</span> <span class="kn">import</span> <span class="n">FakerTextFactory</span><span class="p">,</span> <span class="n">DataGenerator</span><span class="p">,</span> <span class="n">fakerText</span>
+<span class="kn">from</span> <span class="nn">faker.providers</span> <span class="kn">import</span> <span class="n">internet</span>
+
+<span class="n">shuffle_partitions_requested</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="n">partitions_requested</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="n">data_rows</span> <span class="o">=</span> <span class="mi">100000</span>
+
+<span class="c1"># setup use of Faker</span>
+<span class="n">FakerTextIT</span> <span class="o">=</span> <span class="n">FakerTextFactory</span><span class="p">(</span><span class="n">locale</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;it_IT&#39;</span><span class="p">],</span> <span class="n">providers</span><span class="o">=</span><span class="p">[</span><span class="n">internet</span><span class="p">])</span>
+
+<span class="c1"># partition parameters etc.</span>
+<span class="n">spark</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;spark.sql.shuffle.partitions&quot;</span><span class="p">,</span> <span class="n">shuffle_partitions_requested</span><span class="p">)</span>
+
+<span class="n">my_word_list</span> <span class="o">=</span> <span class="p">[</span>
+<span class="s1">&#39;danish&#39;</span><span class="p">,</span><span class="s1">&#39;cheesecake&#39;</span><span class="p">,</span><span class="s1">&#39;sugar&#39;</span><span class="p">,</span>
+<span class="s1">&#39;Lollipop&#39;</span><span class="p">,</span><span class="s1">&#39;wafer&#39;</span><span class="p">,</span><span class="s1">&#39;Gummies&#39;</span><span class="p">,</span>
+<span class="s1">&#39;sesame&#39;</span><span class="p">,</span><span class="s1">&#39;Jelly&#39;</span><span class="p">,</span><span class="s1">&#39;beans&#39;</span><span class="p">,</span>
+<span class="s1">&#39;pie&#39;</span><span class="p">,</span><span class="s1">&#39;bar&#39;</span><span class="p">,</span><span class="s1">&#39;Ice&#39;</span><span class="p">,</span><span class="s1">&#39;oat&#39;</span> <span class="p">]</span>
+
+<span class="n">fakerDataspec</span> <span class="o">=</span> <span class="p">(</span><span class="n">DataGenerator</span><span class="p">(</span><span class="n">spark</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">data_rows</span><span class="p">,</span> <span class="n">partitions</span><span class="o">=</span><span class="n">partitions_requested</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;italian_name&quot;</span><span class="p">,</span> <span class="n">percentNulls</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">FakerTextIT</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span> <span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="n">percentNulls</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">fakerText</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span> <span class="p">)</span>  <span class="c1"># uses default</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;address&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">FakerTextIT</span><span class="p">(</span><span class="s2">&quot;address&quot;</span> <span class="p">))</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;email&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">FakerTextIT</span><span class="p">(</span><span class="s2">&quot;ascii_company_email&quot;</span><span class="p">)</span> <span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;ip_address&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">FakerTextIT</span><span class="p">(</span><span class="s2">&quot;ipv4_private&quot;</span> <span class="p">))</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;faker_text&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">FakerTextIT</span><span class="p">(</span><span class="s2">&quot;sentence&quot;</span><span class="p">)</span> <span class="p">)</span>
+            <span class="p">)</span>
+<span class="n">dfFakerOnly</span> <span class="o">=</span> <span class="n">fakerDataspec</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+
+<span class="n">dfFakerOnly</span><span class="o">.</span><span class="n">write</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;delta&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">mode</span><span class="p">(</span><span class="s2">&quot;overwrite&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;/tmp/test-output-IT&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For more information, see <a class="reference internal" href="reference/api/dbldatagen.text_generator_plugins.html#dbldatagen.text_generator_plugins.FakerTextFactory" title="dbldatagen.text_generator_plugins.FakerTextFactory"><code class="xref py py-data docutils literal notranslate"><span class="pre">FakerTextFactory</span></code></a></p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="multi_table_data.html" class="btn btn-neutral float-left" title="Generating and Using Data with Multiple Tables" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="using_delta_live_tables.html" class="btn btn-neutral float-right" title="Using the Data Generator with Delta Live Tables" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
