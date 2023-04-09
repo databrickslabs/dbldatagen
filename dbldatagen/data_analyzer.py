@@ -185,7 +185,6 @@ class DataAnalyzer:
             dfData=self._df,
             dfSummary=dfDataSummary)
 
-
         return dfDataSummary
 
     def summarize(self, suppressOutput=False):
