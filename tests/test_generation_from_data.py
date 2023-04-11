@@ -47,6 +47,7 @@ class TestGenerationFromData:
                         numColumns=(2, 4), structType="array")
             .withColumn("tf_flag", "boolean", expr="id % 2 = 1")
             .withColumn("short_value", "short", max=32767, percentNulls=0.1)
+            .withColumn("int_value", "int", min=100, max=200, percentNulls=0.1)
             .withColumn("byte_value", "tinyint", max=127)
             .withColumn("decimal_value", "decimal(10,2)", max=1000000)
             .withColumn("decimal_value", "decimal(10,2)", max=1000000)

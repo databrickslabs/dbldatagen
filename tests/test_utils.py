@@ -3,7 +3,8 @@ from datetime import timedelta
 import pytest
 
 from dbldatagen import ensure, mkBoundsList, coalesce_values, deprecated, SparkSingleton, \
-    parse_time_interval, DataGenError, strip_margins, split_list_matching_condition, topologicalSort
+    parse_time_interval, DataGenError, strip_margins, split_list_matching_condition, topologicalSort, \
+    json_value_from_path
 
 spark = SparkSingleton.getLocalInstance("unit tests")
 
@@ -131,3 +132,16 @@ class TestUtils:
             raised_exception = True
 
         assert raised_exception == raisesError
+
+    @pytest.mark.parametrize("path,jsonData, defaultValue, expectedValue",
+                             [("a", """{"a":1,"b":2,"c":[1,2,3]}""", None, 1),
+                              ("b", """{"a":1,"b":2,"c":[1,2,3]}""", None, 2),
+                              ("c[2]", """{"a":1,"b":2,"c":[1,2,3]}""", None, 3),
+                              ])
+    def test_json_value_from_path(self, path,jsonData, defaultValue,  expectedValue):
+        results = json_value_from_path(path, jsonData, defaultValue)
+
+        assert results == expectedValue, f"Expected `{expectedValue}`, got results `{results}`"
+
+
+

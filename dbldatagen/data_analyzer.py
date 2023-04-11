@@ -8,6 +8,7 @@ This module defines the ``DataAnalyzer`` class.
 This code is experimental and both APIs and code generated is liable to change in future versions.
 """
 import logging
+from collections import namedtuple
 
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
     TimestampType, DateType, DecimalType, ByteType, BinaryType, StructType, ArrayType, DataType
@@ -15,8 +16,9 @@ from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, Doub
 import pyspark.sql as sql
 import pyspark.sql.functions as F
 
-from .utils import strip_margins
+from .utils import strip_margins, json_value_from_path
 from .spark_singleton import SparkSingleton
+
 
 
 class DataAnalyzer:
@@ -97,6 +99,42 @@ class DataAnalyzer:
 
         return dfResult
 
+    @staticmethod
+    def _is_numeric_type(dtype):
+        """ return true if dtype is numeric, false otherwise"""
+        if dtype.lower() in ['smallint', 'tinyint', 'double', 'float', 'bigint', 'int']:
+            return True
+        elif dtype.lower().startswith("decimal"):
+            return True
+
+        return False
+
+    def _addMeasuresFromDescribe(self, columnsInfo, dfDataSummary, df_under_analysis):
+        """ Add measures from describe
+
+        :param columnsInfo: List of ColumnInfo tuples (name, dtype, isArrayColumn, isNumeric)
+        :param dfDataSummary: Dataframe for summary information
+        :param df_under_analysis: Dataframe being analyzed
+        :return: Summary dataframe with additional expressions
+        """
+        descriptionDf = df_under_analysis.describe().where("summary in ('mean', 'stddev')")
+        describeData = descriptionDf.collect()
+        for row in describeData:
+            measure = row['summary']
+
+            values = {k.name: '' for k in columnsInfo}
+
+            row_key_pairs = row.asDict()
+            for k1 in row_key_pairs:
+                values[k1] = str(row[k1]) if row[k1] is not None else ''
+
+            dfDataSummary = self._addMeasureToSummary(
+                measure,
+                fieldExprs=[f"'{values[colInfo.name]}'" for colInfo in columnsInfo],
+                dfData=df_under_analysis,
+                dfSummary=dfDataSummary)
+        return dfDataSummary
+
     def summarizeToDF(self):
         """ Generate summary analysis of data set as dataframe
 
@@ -113,32 +151,40 @@ class DataAnalyzer:
         logger.info("Analyzing counts")
         total_count = df_under_analysis.count() * 1.0
 
-        dtypes = df_under_analysis.dtypes
+        df_dtypes = df_under_analysis.dtypes
 
-        # compile column information [ (name, datatype, isArrayColumn) ]
-        dtypes = [ (dtype[0], dtype[1], 1 if dtype[1].lower().startswith('array') else 0) for dtype in dtypes]
+        # compile column information [ (name, datatype, isArrayColumn, isNumeric) ]
+
+        ColInfo = namedtuple("ColInfo", ["name", "dt", "isArrayColumn", "isNumeric"])
+
+        columnsInfo = [ColInfo(dtype[0],
+                               dtype[1],
+                               1 if dtype[1].lower().startswith('array') else 0,
+                               1 if self._is_numeric_type(dtype[1].lower()) else 0)
+                       for dtype in df_dtypes]
 
         logger.info("Analyzing measures")
 
         # schema information
         dfDataSummary = self._addMeasureToSummary(
             'schema',
-            summaryExpr=f"""to_json(named_struct('column_count', {len(dtypes)}))""",
-            fieldExprs=[f"'{dtype[1]}' as {dtype[0]}" for dtype in dtypes],
+            summaryExpr=f"""to_json(named_struct('column_count', {len(columnsInfo)}))""",
+            fieldExprs=[f"'{colInfo.dt}' as {colInfo.name}" for colInfo in columnsInfo],
             dfData=df_under_analysis)
 
         # count
         dfDataSummary = self._addMeasureToSummary(
             'count',
             summaryExpr=f"{total_count}",
-            fieldExprs=[f"string(count({dtype[0]})) as {dtype[0]}" for dtype in dtypes],
+            fieldExprs=[f"string(count({colInfo.name})) as {colInfo.name}" for colInfo in columnsInfo],
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
         dfDataSummary = self._addMeasureToSummary(
             'null_probability',
-            fieldExprs=[f"""string( round( ({total_count} - count({dtype[0]})) /{total_count}, 2)) as {dtype[0]}"""
-                        for dtype in dtypes],
+            fieldExprs=[
+                f"""string(round(({total_count} - count({colInfo.name})) /{total_count}, 2)) as {colInfo.name}"""
+                for colInfo in columnsInfo],
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
@@ -146,82 +192,89 @@ class DataAnalyzer:
         dfDataSummary = self._addMeasureToSummary(
             'distinct_count',
             summaryExpr="count(distinct *)",
-            fieldExprs=[f"string(count(distinct {dtype[0]})) as {dtype[0]}" for dtype in dtypes],
+            fieldExprs=[f"string(count(distinct {colInfo.name})) as {colInfo.name}" for colInfo in columnsInfo],
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
         # min
         dfDataSummary = self._addMeasureToSummary(
             'min',
-            fieldExprs=[f"string(min({dtype[0]})) as {dtype[0]}" for dtype in dtypes],
+            fieldExprs=[f"string(min({colInfo.name})) as {colInfo.name}" for colInfo in columnsInfo],
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
         dfDataSummary = self._addMeasureToSummary(
             'max',
-            fieldExprs=[f"string(max({dtype[0]})) as {dtype[0]}" for dtype in dtypes],
-            dfData=df_under_analysis,
-            dfSummary=dfDataSummary)
-
-        logger.info("Analyzing basic statistics")
-        descriptionDf = df_under_analysis.describe().where("summary in ('mean', 'stddev')")
-        describeData = descriptionDf.collect()
-
-        for row in describeData:
-            measure = row['summary']
-
-            values = {k[0]: '' for k in dtypes}
-
-            row_key_pairs = row.asDict()
-            for k1 in row_key_pairs:
-                values[k1] = str(row[k1])
-
-            dfDataSummary = self._addMeasureToSummary(
-                measure,
-                fieldExprs=[f"'{values[dtype[0]]}'" for dtype in dtypes],
-                dfData=df_under_analysis,
-                dfSummary=dfDataSummary)
-
-        # string characteristics for strings and string representation of other values
-        dfDataSummary = self._addMeasureToSummary(
-            'print_len_min',
-            fieldExprs=[f"min(length(string({dtype[0]}))) as {dtype[0]}" for dtype in dtypes],
+            fieldExprs=[f"string(max({colInfo.name})) as {colInfo.name}" for colInfo in columnsInfo],
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
         dfDataSummary = self._addMeasureToSummary(
-            'print_len_max',
-            fieldExprs=[f"max(length(string({dtype[0]}))) as {dtype[0]}" for dtype in dtypes],
-            dfData=df_under_analysis,
-            dfSummary=dfDataSummary)
-
-        dfDataSummary = self._addMeasureToSummary(
-            'cardinality_min',
-            fieldExprs=[f"min(cardinality({dtype[0]})) as {dtype[0]}" if dtype[2] else "min(1)"
-                        for dtype in dtypes],
-            dfData=df_under_analysis,
-            dfSummary=dfDataSummary)
-
-        dfDataSummary = self._addMeasureToSummary(
-            'cardinality_max',
-            fieldExprs=[f"max(cardinality({dtype[0]})) as {dtype[0]}" if dtype[2] else "max(1)"
-                        for dtype in dtypes],
+            'cardinality',
+            fieldExprs=[f"""to_json(named_struct(
+                                'min', min(cardinality({colInfo.name})), 
+                                'max', min(cardinality({colInfo.name})))) 
+                            as {colInfo.name}"""
+                        if colInfo.isArrayColumn else "min(1)"
+                        for colInfo in columnsInfo],
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
         dfDataSummary = self._addMeasureToSummary(
             'array_value_min',
-            fieldExprs=[f"min(array_min({dtype[0]})) as {dtype[0]}" if dtype[2] else "min('')"
-                        for dtype in dtypes],
+            fieldExprs=[f"min(array_min({colInfo.name})) as {colInfo.name}" if colInfo.isArrayColumn else "min('')"
+                        for colInfo in columnsInfo],
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
         dfDataSummary = self._addMeasureToSummary(
             'array_value_max',
-            fieldExprs=[f"max(array_max({dtype[0]})) as {dtype[0]}" if dtype[2] else "max('')"
-                        for dtype in dtypes],
+            fieldExprs=[f"max(array_max({colInfo.name})) as {colInfo.name}"
+                        if colInfo.isArrayColumn else "max('')"
+                        for colInfo in columnsInfo],
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
+
+        dfDataSummary = self._addMeasureToSummary(
+            'stats',
+            fieldExprs=[f"""to_json(named_struct('skewness', round(skewness({colInfo.name}),4), 
+                                                 'kurtosis', round(kurtosis({colInfo.name}),4),
+                                                 'mean', round(mean({colInfo.name}),4),
+                                                 'stddev', round(stddev_pop({colInfo.name}),4)
+                                                  )) as {colInfo.name}"""
+                        if colInfo.isNumeric else "null"
+                        for colInfo in columnsInfo],
+            dfData=df_under_analysis,
+            dfSummary=dfDataSummary)
+
+        # string characteristics for strings and string representation of other values
+        dfDataSummary = self._addMeasureToSummary(
+            'print_len',
+            fieldExprs=[f"""to_json(named_struct(
+                        'min', min(length(string({colInfo.name}))), 
+                        'max', max(length(string({colInfo.name})))))                        
+                        as {colInfo.name}"""
+                        for colInfo in columnsInfo],
+            dfData=df_under_analysis,
+            dfSummary=dfDataSummary)
+
+        # compute expanded data set
+        # select_exprs = ["'' as measure_", "'' as summary_"]
+
+        # select_exprs.extend([f"explode({dtype[0]}) as {dtype[0]}" if dtype[2]
+        #                                    else f"'' as {dtype[0]}"
+        #                                    for dtype in dtypes])
+        #
+        # df_expanded = df_under_analysis.selectExpr(*select_exprs)
+
+        # df_expanded.show()
+
+        # dfDataSummary = self._addMeasureToSummary(
+        #    'array_distinct_count',
+        #    fieldExprs=[f"count(explode({dtype[0]})) as {dtype[0]}" if dtype[2] else "max('')"
+        #                for dtype in dtypes],
+        #    dfData=df_under_analysis,
+        #    dfSummary=dfDataSummary)
 
         return dfDataSummary
 
@@ -249,7 +302,7 @@ class DataAnalyzer:
         return summary
 
     @classmethod
-    def _valueFromSummary(cls, dataSummary, colName, measure, defaultValue):
+    def _valueFromSummary(cls, dataSummary, colName, measure, defaultValue, jsonPath=None):
         """ Get value from data summary
 
         :param dataSummary: Data summary to search, optional
@@ -257,6 +310,8 @@ class DataAnalyzer:
         :param measure: Measure name of measure to get value for
         :param defaultValue: Default value if any other argument is not specified or value could not be found in
                              data summary
+        :param jsonPath: if jsonPath is supplied, treat initial result as JSON data and perform lookup according to
+                         the supplied json path.
         :return: Value from lookup or `defaultValue` if not found
         """
         if dataSummary is not None and colName is not None and measure is not None:
@@ -264,13 +319,20 @@ class DataAnalyzer:
                 measureValues = dataSummary[measure]
 
                 if colName in measureValues:
-                    return measureValues[colName]
+                    result = measureValues[colName]
+
+                    if jsonPath is not None:
+                        result = json_value_from_path(jsonPath, result, defaultValue)
+
+                    if result is not None:
+                        return result
 
         # return default value if value could not be looked up or found
         return defaultValue
 
     @classmethod
-    def _generatorDefaultAttributesFromType(cls, sqlType, colName=None, dataSummary=None, sourceDf=None):
+    def _generatorDefaultAttributesFromType(cls, sqlType, colName=None, isArrayElement=False, dataSummary=None,
+                                            sourceDf=None):
         """ Generate default set of attributes for each data type
 
         :param sqlType: Instance of `pyspark.sql.types.DataType`
@@ -286,31 +348,34 @@ class DataAnalyzer:
         """
         assert isinstance(sqlType, DataType)
 
+        min_attribute = "min" if not isArrayElement else "array_value_min"
+        max_attribute = "max" if not isArrayElement else "array_value_max"
+
         if sqlType == StringType():
             result = """template=r'\\\\w'"""
         elif sqlType in [IntegerType(), LongType()]:
-            minValue = cls._valueFromSummary(dataSummary, colName, "min", defaultValue=0)
-            maxValue = cls._valueFromSummary(dataSummary, colName, "max", defaultValue=1000000)
+            minValue = cls._valueFromSummary(dataSummary, colName, min_attribute, defaultValue=0)
+            maxValue = cls._valueFromSummary(dataSummary, colName, max_attribute, defaultValue=1000000)
             result = f"""minValue={minValue}, maxValue={maxValue}"""
         elif sqlType == ByteType():
-            minValue = cls._valueFromSummary(dataSummary, colName, "min", defaultValue=0)
-            maxValue = cls._valueFromSummary(dataSummary, colName, "max", defaultValue=127)
+            minValue = cls._valueFromSummary(dataSummary, colName, min_attribute, defaultValue=0)
+            maxValue = cls._valueFromSummary(dataSummary, colName, max_attribute, defaultValue=127)
             result = f"""minValue={minValue}, maxValue={maxValue}"""
         elif sqlType == ShortType():
-            minValue = cls._valueFromSummary(dataSummary, colName, "min", defaultValue=0)
-            maxValue = cls._valueFromSummary(dataSummary, colName, "max", defaultValue=32767)
+            minValue = cls._valueFromSummary(dataSummary, colName, min_attribute, defaultValue=0)
+            maxValue = cls._valueFromSummary(dataSummary, colName, max_attribute, defaultValue=32767)
             result = f"""minValue={minValue}, maxValue={maxValue}"""
         elif sqlType == BooleanType():
             result = """expr='id % 2 = 1'"""
         elif sqlType == DateType():
             result = """expr='current_date()'"""
         elif isinstance(sqlType, DecimalType):
-            minValue = cls._valueFromSummary(dataSummary, colName, "min", defaultValue=0)
-            maxValue = cls._valueFromSummary(dataSummary, colName, "max", defaultValue=1000)
+            minValue = cls._valueFromSummary(dataSummary, colName, min_attribute, defaultValue=0)
+            maxValue = cls._valueFromSummary(dataSummary, colName, max_attribute, defaultValue=1000)
             result = f"""minValue={minValue}, maxValue={maxValue}"""
         elif sqlType in [FloatType(), DoubleType()]:
-            minValue = cls._valueFromSummary(dataSummary, colName, "min", defaultValue=0.0)
-            maxValue = cls._valueFromSummary(dataSummary, colName, "max", defaultValue=1000000.0)
+            minValue = cls._valueFromSummary(dataSummary, colName, min_attribute, defaultValue=0.0)
+            maxValue = cls._valueFromSummary(dataSummary, colName, max_attribute, defaultValue=1000000.0)
             result = f"""minValue={minValue}, maxValue={maxValue}, step=0.1"""
         elif sqlType == TimestampType():
             result = """begin="2020-01-01 01:00:00", end="2020-12-31 23:59:00", interval="1 minute" """
@@ -378,8 +443,25 @@ class DataAnalyzer:
 
             if isinstance(fld.dataType, ArrayType):
                 col_type = fld.dataType.elementType.simpleString()
-                field_attributes = cls._generatorDefaultAttributesFromType(fld.dataType.elementType)  # no data look up
-                array_attributes = """structType='array', numFeatures=(2,6)"""
+                field_attributes = cls._generatorDefaultAttributesFromType(fld.dataType.elementType,
+                                                                           colName=col_name,
+                                                                           isArrayElement=True,
+                                                                           dataSummary=dataSummary,
+                                                                           sourceDf=sourceDf)
+
+                if dataSummary is not None:
+                    minLength = cls._valueFromSummary(dataSummary, col_name, "cardinality",  jsonPath="mint",
+                                                      defaultValue=2)
+                    maxLength = cls._valueFromSummary(dataSummary, col_name, "cardinality", jsonPath="max",
+                                                      defaultValue=6)
+
+                    if minLength != maxLength:
+                        array_attributes = f"""structType='array', numFeatures=({minLength}, {maxLength})"""
+                    else:
+                        array_attributes = f"""structType='array', numFeatures={minLength}"""
+
+                else:
+                    array_attributes = """structType='array', numFeatures=(2,6)"""
                 name_and_type = f"""'{col_name}', '{col_type}'"""
                 stmts.append(indent + f""".withColumn({name_and_type}, {field_attributes}, {array_attributes})""")
             else:

@@ -12,6 +12,8 @@ import functools
 import warnings
 from datetime import timedelta
 import re
+import json
+import jmespath
 
 
 def deprecated(message=""):
@@ -321,3 +323,27 @@ def split_list_matching_condition(lst, cond):
 
     # filter out empty lists
     return [el for el in retval if el != []]
+
+
+def json_value_from_path(searchPath, jsonData, defaultValue):
+    """ Get JSON value from JSON data referenced by searchPath
+
+    searchPath should be a JSON path as supported by the `jmespath` package
+    (see https://jmespath.org/)
+
+    :param searchPath: A `jmespath` compatible JSON search path
+    :param jsonData: The json data to search (string representation of the JSON data)
+    :param defaultValue: The default value to be returned if the value was not found
+    :return: Returns the json value if present, otherwise returns the default value
+    """
+    assert searchPath is not None and len(searchPath) > 0, "search path cannot be empty"
+    assert jsonData is not None and len(jsonData) > 0, "JSON data cannot be empty"
+
+    jsonDict = json.loads(jsonData)
+
+    jsonValue = jmespath.search(searchPath, jsonDict)
+
+    if jsonValue is not None:
+        return jsonValue
+
+    return defaultValue
