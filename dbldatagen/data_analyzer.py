@@ -13,12 +13,11 @@ from collections import namedtuple
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
     TimestampType, DateType, DecimalType, ByteType, BinaryType, StructType, ArrayType, DataType
 
-import pyspark.sql as sql
+from pyspark import sql
 import pyspark.sql.functions as F
 
 from .utils import strip_margins, json_value_from_path
 from .spark_singleton import SparkSingleton
-
 
 
 class DataAnalyzer:

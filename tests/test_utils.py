@@ -78,15 +78,15 @@ class TestUtils:
         self.logger.info(str(testException))
 
     @pytest.mark.parametrize("inputText,expectedText",
-                             [ ("""one
+                             [("""one
                                  |two
                                  |three""",
                                "one\ntwo\nthree"),
-                               ("", ""),
-                               ("one\ntwo", "one\ntwo"),
-                               ("    one\ntwo", "    one\ntwo"),
-                               ("    |one\ntwo", "one\ntwo"),
-                               ])
+                              ("", ""),
+                              ("one\ntwo", "one\ntwo"),
+                              ("    one\ntwo", "    one\ntwo"),
+                              ("    |one\ntwo", "one\ntwo"),
+                              ])
     def test_strip_margins(self, inputText, expectedText):
         output = strip_margins(inputText, '|')
 
@@ -138,10 +138,7 @@ class TestUtils:
                               ("b", """{"a":1,"b":2,"c":[1,2,3]}""", None, 2),
                               ("c[2]", """{"a":1,"b":2,"c":[1,2,3]}""", None, 3),
                               ])
-    def test_json_value_from_path(self, path,jsonData, defaultValue,  expectedValue):
+    def test_json_value_from_path(self, path, jsonData, defaultValue, expectedValue):
         results = json_value_from_path(path, jsonData, defaultValue)
 
         assert results == expectedValue, f"Expected `{expectedValue}`, got results `{results}`"
-
-
-
