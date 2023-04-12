@@ -9,6 +9,9 @@ This code is experimental and both APIs and code generated is liable to change i
 """
 import logging
 from collections import namedtuple
+import pprint
+
+import numpy as np
 
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
     TimestampType, DateType, DecimalType, ByteType, BinaryType, StructType, ArrayType, DataType, MapType
@@ -46,10 +49,23 @@ class DataAnalyzer:
                         |# Column definitions are stubs only - modify to generate correct data  
                         |#""", '|')
 
-    def __init__(self, df=None, sparkSession=None):
+    _INT_32_MAX = 2 ** 16 - 1
+
+    MAX_COLUMN_ELEMENT_LENGTH_THRESHOLD = 40
+    MAX_DISTINCT_THRESHOLD = 20
+
+    # tuple for column infor
+    ColInfo = namedtuple("ColInfo", ["name", "dt", "isArrayColumn", "isNumeric"])
+
+    # tuple for values info
+    ColumnValuesInfo = namedtuple("ColumnValuesInfo", ["name", "statements", "value_refs"])
+
+    def __init__(self, df=None, sparkSession=None, valuesCountThreshold=None):
         """ Constructor:
         :param df: Dataframe to analyze
         :param sparkSession: Spark session to use
+        :param valuesCountThreshold: values will only be computed if less than threshold, If not supplied
+               will use default setting (20)
         """
         assert df is not None, "dataframe must be supplied"
 
@@ -62,6 +78,9 @@ class DataAnalyzer:
         self._dataSummary = None
         self._columnsInfo = None
         self._expandedSourceDf = None
+
+        self._valuesCountThreshold = (valuesCountThreshold if valuesCountThreshold is not None
+                                      else self.MAX_DISTINCT_THRESHOLD)
 
     def _displayRow(self, row):
         """Display details for row"""
@@ -109,8 +128,6 @@ class DataAnalyzer:
             return True
 
         return False
-
-    ColInfo = namedtuple("ColInfo", ["name", "dt", "isArrayColumn", "isNumeric"])
 
     @property
     def columnsInfo(self):
@@ -181,6 +198,13 @@ class DataAnalyzer:
             'item_distinct_count',
             summaryExpr="count(distinct *)",
             fieldExprs=[f"string(count(distinct {colInfo.name})) as {colInfo.name}" for colInfo in self.columnsInfo],
+            dfData=self._getExpandedSourceDf(),
+            dfSummary=dfDataSummary)
+
+        dfDataSummary = self._addMeasureToSummary(
+            'item_count',
+            summaryExpr="count(*)",
+            fieldExprs=[f"string(count({colInfo.name})) as {colInfo.name}" for colInfo in self.columnsInfo],
             dfData=self._getExpandedSourceDf(),
             dfSummary=dfDataSummary)
 
@@ -329,13 +353,8 @@ class DataAnalyzer:
 
         if valuesInfo is not None and \
                 colName in valuesInfo and not isinstance(sqlType, (BinaryType, StructType, MapType)):
-            column_values = valuesInfo[colName].values
-            column_weights = valuesInfo[colName].weights
-
-            if column_weights is not None:
-                result = f"""values={column_values}, weights={column_weights}"""
-            else:
-                result = f"""values={column_values}"""
+            result = valuesInfo[colName].value_refs
+            assert result is not None and len(result) > 0
         elif sqlType == StringType():
             result = """template=r'\\\\w'"""
         elif sqlType in [IntegerType(), LongType()]:
@@ -394,23 +413,91 @@ class DataAnalyzer:
 
         return self._expandedSourceDf
 
-    def _processCategoricalData(self, valueStatements, valueAttributes, dataSummary=None, sourceDf=None):
+    def cleanse_name(self, col_name):
+        """cleanse column name for use in code"""
+        return col_name.replace(' ', '_')
+
+    def format_values(self, values, col_type, indent=4):
+        # if col_type == "string":
+        #    values = ['"' + v + '"' for v in values]
+
+        if len(str(values)) > 60:
+            pp = pprint.PrettyPrinter(indent=indent, width=60, compact=True)
+            values = pp.pformat(values)
+
+        return values
+
+    def _processValuesInfo(self, dataSummary=None, sourceDf=None):
+        """ Computes values clauses for appropriate columns
+
+        :param dataSummary: Data summary
+        :param sourceDf: Source data dataframe
+        :return: Map from column name to ColumnValueInfo tuples
+                 where ColumnValuesInfo = namedtuple("ColumnValuesInfo", ["name", "statements", "weights", "values"])
+        """
         assert dataSummary is not None
         assert sourceDf is not None
 
-        df_expandedSummary = sourceDf
+        results = {}
 
-        # expand source dataframe array columns
-        columns = sourceDf.colnames
+        for fld in sourceDf.schema.fields:
+            col_name = fld.name
+            col_base_type = fld.dataType.elementType if isinstance(fld.dataType, ArrayType) else fld.dataType
+            col_type = col_base_type.simpleString()
 
-        for column in self.columnsInfo:
-            if column.isArrayColumn:
-                df_expandedSummary = df_expandedSummary.withColumn(F.explode(F.col(column.name)))
+            stmts = []
+            value_refs = []
 
-        df_expandedSummary = df_expandedSummary.select(*columns)
+            # we'll compute values set for elements whose max printable length < MAX_COLUMN_ELEMENT_LENGTH_THRESHOLD
+            # whose count of distinct elements is < MAX_DISTINCT_THRESHOLD
+            # and where the type is numeric or string either by itself or in array variant
+            numDistinct = int(self._valueFromSummary(dataSummary, col_name, "item_distinct_count",
+                                                     defaultValue=self._INT_32_MAX))
+            maxPrintable = int(self._valueFromSummary(dataSummary, col_name, "item_max_printlen",
+                                                      defaultValue=self._INT_32_MAX))
 
-        # determine expanded distinct count
-        sourceDf.select(columns)
+            if self._valuesCountThreshold > numDistinct > 1 and \
+                    maxPrintable < self.MAX_COLUMN_ELEMENT_LENGTH_THRESHOLD and \
+                    col_type in ["float", "double", "int", "smallint", "bigint", "tinyint", "string"]:
+
+                value_rows = sorted(sourceDf.select(col_name).groupBy(col_name).count().collect(),
+                                    key=lambda r1, sk=col_name: r1[sk])
+                values = [r[col_name] for r in value_rows]
+                weights = [r['count'] for r in value_rows]
+
+                # simplify the weights
+                countNonNull = int(self._valueFromSummary(dataSummary, col_name, "item_count",
+                                                          defaultValue=sum(weights)))
+
+                weights = ((np.array(weights) / countNonNull) * 100.0).round().astype(np.uint64)
+                weights = np.maximum(weights, 1)  # minumum weight must be 1
+
+                # divide by GCD to get simplified weights
+                gcd = np.gcd.reduce(weights)
+
+                weights = (weights / gcd).astype(np.uint64)
+
+                # if all of the weights are within 10% of mean, ignore the weights
+                avg_weight = np.mean(weights)
+                weight_threshold = avg_weight * 0.1
+                weight_test = np.abs(weights - avg_weight)
+                if np.all(weight_test < weight_threshold):
+                    weights = None
+                else:
+                    weights = list(weights)
+
+                safe_name = self.cleanse_name(col_name)
+
+                if weights is not None:
+                    stmts.append(f"{safe_name}_weights = {weights}")
+                    value_refs.append(f"""weights = {safe_name}_weights""")
+
+                stmts.append(f"{safe_name}_values = {self.format_values(values, col_type)}")
+                value_refs.append(f"""values={safe_name}_values""")
+
+                results[col_name] = self.ColumnValuesInfo(col_name, stmts, ", ".join(value_refs))
+
+        return results
 
     @classmethod
     def _scriptDataGeneratorCode(cls, schema, dataSummary=None, sourceDf=None, suppressOutput=False, name=None,
@@ -456,6 +543,7 @@ class DataAnalyzer:
                 for line in v.statements:
                     stmts.append(line)
 
+        stmts.append("")
         stmts.append(strip_margins(
             f"""generation_spec = (
                                     |    dg.DataGenerator(sparkSession=spark, 
@@ -571,8 +659,11 @@ class DataAnalyzer:
                 row_key_pairs = row.asDict()
                 self._dataSummary[row['measure_']] = row_key_pairs
 
+            values_info = self._processValuesInfo(dataSummary=self._dataSummary, sourceDf=self._getExpandedSourceDf())
+
         return self._scriptDataGeneratorCode(self._df.schema,
                                              suppressOutput=suppressOutput,
                                              name=name,
                                              dataSummary=self._dataSummary,
-                                             sourceDf=self._df)
+                                             sourceDf=self._df,
+                                             valuesInfo=values_info)

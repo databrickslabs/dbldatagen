@@ -6,7 +6,6 @@ import pyspark.sql as ssql
 
 import dbldatagen as dg
 
-
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
 
@@ -26,6 +25,21 @@ class TestGenerationFromData:
 
     @pytest.fixture
     def generation_spec(self):
+
+        country_codes = [
+            "CN", "US", "FR", "CA", "IN", "JM", "IE", "PK", "GB", "IL", "AU",
+            "SG", "ES", "GE", "MX", "ET", "SA", "LB", "NL",
+        ]
+        country_weights = [
+            1300, 365, 67, 38, 1300, 3, 7, 212, 67, 9, 25, 6, 47, 83,
+            126, 109, 58, 8, 17,
+        ]
+
+        eurozone_countries = ["Austria", "Belgium", "Cyprus", "Estonia", "Finland", "France", "Germany", "Greece",
+                              "Ireland", "Italy", "Latvia", "Lithuania", "Luxembourg", "Malta", "Netherlands",
+                              "Portugal", "Slovakia", "Slovenia", "Spain"
+                              ]
+
         spec = (
             dg.DataGenerator(sparkSession=spark, name='test_generator',
                              rows=self.SMALL_ROW_COUNT, seedMethod='hash_fieldname')
@@ -47,6 +61,9 @@ class TestGenerationFromData:
                         numColumns=(2, 4), structType="array")
             .withColumn("tf_flag", "boolean", expr="id % 2 = 1")
             .withColumn("short_value", "short", max=32767, percentNulls=0.1)
+            .withColumn("string_values", "string", values=["one", "two", "three"])
+            .withColumn("country_codes", "string", values=country_codes, weights=country_weights)
+            .withColumn("euro_countries", "string", values=eurozone_countries)
             .withColumn("int_value", "int", min=100, max=200, percentNulls=0.1)
             .withColumn("byte_value", "tinyint", max=127)
             .withColumn("decimal_value", "decimal(10,2)", max=1000000)
