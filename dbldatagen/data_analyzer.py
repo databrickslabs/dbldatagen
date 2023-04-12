@@ -11,7 +11,7 @@ import logging
 from collections import namedtuple
 
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
-    TimestampType, DateType, DecimalType, ByteType, BinaryType, StructType, ArrayType, DataType
+    TimestampType, DateType, DecimalType, ByteType, BinaryType, StructType, ArrayType, DataType, MapType
 
 from pyspark import sql
 import pyspark.sql.functions as F
@@ -53,13 +53,15 @@ class DataAnalyzer:
         """
         assert df is not None, "dataframe must be supplied"
 
-        self._df = df
+        self._df = df.cache()
 
         if sparkSession is None:
             sparkSession = SparkSingleton.getLocalInstance()
 
         self._sparkSession = sparkSession
         self._dataSummary = None
+        self._columnsInfo = None
+        self._expandedSourceDf = None
 
     def _displayRow(self, row):
         """Display details for row"""
@@ -108,31 +110,23 @@ class DataAnalyzer:
 
         return False
 
-    def _addMeasuresFromDescribe(self, columnsInfo, dfDataSummary, df_under_analysis):
-        """ Add measures from describe
+    ColInfo = namedtuple("ColInfo", ["name", "dt", "isArrayColumn", "isNumeric"])
 
-        :param columnsInfo: List of ColumnInfo tuples (name, dtype, isArrayColumn, isNumeric)
-        :param dfDataSummary: Dataframe for summary information
-        :param df_under_analysis: Dataframe being analyzed
-        :return: Summary dataframe with additional expressions
-        """
-        descriptionDf = df_under_analysis.describe().where("summary in ('mean', 'stddev')")
-        describeData = descriptionDf.collect()
-        for row in describeData:
-            measure = row['summary']
+    @property
+    def columnsInfo(self):
+        """ Get extended columns info"""
+        if self._columnsInfo is None:
+            df_dtypes = self._df.dtypes
 
-            values = {k.name: '' for k in columnsInfo}
+            # compile column information [ (name, datatype, isArrayColumn, isNumeric) ]
+            columnsInfo = [self.ColInfo(dtype[0],
+                                        dtype[1],
+                                        1 if dtype[1].lower().startswith('array') else 0,
+                                        1 if self._is_numeric_type(dtype[1].lower()) else 0)
+                           for dtype in df_dtypes]
 
-            row_key_pairs = row.asDict()
-            for k1 in row_key_pairs:
-                values[k1] = str(row[k1]) if row[k1] is not None else ''
-
-            dfDataSummary = self._addMeasureToSummary(
-                measure,
-                fieldExprs=[f"'{values[colInfo.name]}'" for colInfo in columnsInfo],
-                dfData=df_under_analysis,
-                dfSummary=dfDataSummary)
-        return dfDataSummary
+            self._columnsInfo = columnsInfo
+        return self._columnsInfo
 
     def summarizeToDF(self):
         """ Generate summary analysis of data set as dataframe
@@ -144,38 +138,26 @@ class DataAnalyzer:
 
         The output is also used in code generation  to generate more accurate code.
         """
-        df_under_analysis = self._df.cache()
+        df_under_analysis = self._df
 
         logger = logging.getLogger(__name__)
         logger.info("Analyzing counts")
         total_count = df_under_analysis.count() * 1.0
-
-        df_dtypes = df_under_analysis.dtypes
-
-        # compile column information [ (name, datatype, isArrayColumn, isNumeric) ]
-
-        ColInfo = namedtuple("ColInfo", ["name", "dt", "isArrayColumn", "isNumeric"])
-
-        columnsInfo = [ColInfo(dtype[0],
-                               dtype[1],
-                               1 if dtype[1].lower().startswith('array') else 0,
-                               1 if self._is_numeric_type(dtype[1].lower()) else 0)
-                       for dtype in df_dtypes]
 
         logger.info("Analyzing measures")
 
         # schema information
         dfDataSummary = self._addMeasureToSummary(
             'schema',
-            summaryExpr=f"""to_json(named_struct('column_count', {len(columnsInfo)}))""",
-            fieldExprs=[f"'{colInfo.dt}' as {colInfo.name}" for colInfo in columnsInfo],
+            summaryExpr=f"""to_json(named_struct('column_count', {len(self.columnsInfo)}))""",
+            fieldExprs=[f"'{colInfo.dt}' as {colInfo.name}" for colInfo in self.columnsInfo],
             dfData=df_under_analysis)
 
         # count
         dfDataSummary = self._addMeasureToSummary(
             'count',
             summaryExpr=f"{total_count}",
-            fieldExprs=[f"string(count({colInfo.name})) as {colInfo.name}" for colInfo in columnsInfo],
+            fieldExprs=[f"string(count({colInfo.name})) as {colInfo.name}" for colInfo in self.columnsInfo],
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
@@ -183,7 +165,7 @@ class DataAnalyzer:
             'null_probability',
             fieldExprs=[
                 f"""string(round(({total_count} - count({colInfo.name})) /{total_count}, 2)) as {colInfo.name}"""
-                for colInfo in columnsInfo],
+                for colInfo in self.columnsInfo],
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
@@ -191,20 +173,44 @@ class DataAnalyzer:
         dfDataSummary = self._addMeasureToSummary(
             'distinct_count',
             summaryExpr="count(distinct *)",
-            fieldExprs=[f"string(count(distinct {colInfo.name})) as {colInfo.name}" for colInfo in columnsInfo],
+            fieldExprs=[f"string(count(distinct {colInfo.name})) as {colInfo.name}" for colInfo in self.columnsInfo],
+            dfData=df_under_analysis,
+            dfSummary=dfDataSummary)
+
+        dfDataSummary = self._addMeasureToSummary(
+            'item_distinct_count',
+            summaryExpr="count(distinct *)",
+            fieldExprs=[f"string(count(distinct {colInfo.name})) as {colInfo.name}" for colInfo in self.columnsInfo],
+            dfData=self._getExpandedSourceDf(),
+            dfSummary=dfDataSummary)
+
+        # string characteristics for strings and string representation of other values
+        dfDataSummary = self._addMeasureToSummary(
+            'item_max_printlen',
+            fieldExprs=[f"max(length(string({colInfo.name}))) as {colInfo.name}" for colInfo in self.columnsInfo],
+            dfData=self._getExpandedSourceDf(),
+            dfSummary=dfDataSummary)
+
+        dfDataSummary = self._addMeasureToSummary(
+            'print_len',
+            fieldExprs=[f"""to_json(named_struct(
+                        'min', min(length(string({colInfo.name}))), 
+                        'max', max(length(string({colInfo.name})))))                        
+                        as {colInfo.name}"""
+                        for colInfo in self.columnsInfo],
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
         # min
         dfDataSummary = self._addMeasureToSummary(
             'min',
-            fieldExprs=[f"string(min({colInfo.name})) as {colInfo.name}" for colInfo in columnsInfo],
+            fieldExprs=[f"string(min({colInfo.name})) as {colInfo.name}" for colInfo in self.columnsInfo],
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
         dfDataSummary = self._addMeasureToSummary(
             'max',
-            fieldExprs=[f"string(max({colInfo.name})) as {colInfo.name}" for colInfo in columnsInfo],
+            fieldExprs=[f"string(max({colInfo.name})) as {colInfo.name}" for colInfo in self.columnsInfo],
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
@@ -215,14 +221,14 @@ class DataAnalyzer:
                                 'max', min(cardinality({colInfo.name})))) 
                             as {colInfo.name}"""
                         if colInfo.isArrayColumn else "min(1)"
-                        for colInfo in columnsInfo],
+                        for colInfo in self.columnsInfo],
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
         dfDataSummary = self._addMeasureToSummary(
             'array_value_min',
             fieldExprs=[f"min(array_min({colInfo.name})) as {colInfo.name}" if colInfo.isArrayColumn else "min('')"
-                        for colInfo in columnsInfo],
+                        for colInfo in self.columnsInfo],
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
@@ -230,7 +236,7 @@ class DataAnalyzer:
             'array_value_max',
             fieldExprs=[f"max(array_max({colInfo.name})) as {colInfo.name}"
                         if colInfo.isArrayColumn else "max('')"
-                        for colInfo in columnsInfo],
+                        for colInfo in self.columnsInfo],
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
@@ -242,38 +248,9 @@ class DataAnalyzer:
                                                  'stddev', round(stddev_pop({colInfo.name}),4)
                                                   )) as {colInfo.name}"""
                         if colInfo.isNumeric else "null"
-                        for colInfo in columnsInfo],
+                        for colInfo in self.columnsInfo],
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
-
-        # string characteristics for strings and string representation of other values
-        dfDataSummary = self._addMeasureToSummary(
-            'print_len',
-            fieldExprs=[f"""to_json(named_struct(
-                        'min', min(length(string({colInfo.name}))), 
-                        'max', max(length(string({colInfo.name})))))                        
-                        as {colInfo.name}"""
-                        for colInfo in columnsInfo],
-            dfData=df_under_analysis,
-            dfSummary=dfDataSummary)
-
-        # compute expanded data set
-        # select_exprs = ["'' as measure_", "'' as summary_"]
-
-        # select_exprs.extend([f"explode({dtype[0]}) as {dtype[0]}" if dtype[2]
-        #                                    else f"'' as {dtype[0]}"
-        #                                    for dtype in dtypes])
-        #
-        # df_expanded = df_under_analysis.selectExpr(*select_exprs)
-
-        # df_expanded.show()
-
-        # dfDataSummary = self._addMeasureToSummary(
-        #    'array_distinct_count',
-        #    fieldExprs=[f"count(explode({dtype[0]})) as {dtype[0]}" if dtype[2] else "max('')"
-        #                for dtype in dtypes],
-        #    dfData=df_under_analysis,
-        #    dfSummary=dfDataSummary)
 
         return dfDataSummary
 
@@ -331,7 +308,7 @@ class DataAnalyzer:
 
     @classmethod
     def _generatorDefaultAttributesFromType(cls, sqlType, colName=None, isArrayElement=False, dataSummary=None,
-                                            sourceDf=None):
+                                            sourceDf=None, valuesInfo=None):
         """ Generate default set of attributes for each data type
 
         :param sqlType: Instance of `pyspark.sql.types.DataType`
@@ -350,7 +327,16 @@ class DataAnalyzer:
         min_attribute = "min" if not isArrayElement else "array_value_min"
         max_attribute = "max" if not isArrayElement else "array_value_max"
 
-        if sqlType == StringType():
+        if valuesInfo is not None and \
+                colName in valuesInfo and not isinstance(sqlType, (BinaryType, StructType, MapType)):
+            column_values = valuesInfo[colName].values
+            column_weights = valuesInfo[colName].weights
+
+            if column_weights is not None:
+                result = f"""values={column_values}, weights={column_weights}"""
+            else:
+                result = f"""values={column_values}"""
+        elif sqlType == StringType():
             result = """template=r'\\\\w'"""
         elif sqlType in [IntegerType(), LongType()]:
             minValue = cls._valueFromSummary(dataSummary, colName, min_attribute, defaultValue=0)
@@ -390,8 +376,45 @@ class DataAnalyzer:
 
         return result
 
+    def _getExpandedSourceDf(self):
+        """ Get dataframe with array values expanded"""
+
+        if self._expandedSourceDf is None:
+            df_expandedSummary = self._df
+
+            # expand source dataframe array columns
+            columns = df_expandedSummary.columns
+
+            for column in self.columnsInfo:
+                if column.isArrayColumn:
+                    df_expandedSummary = df_expandedSummary.withColumn(column.name, F.explode_outer(F.col(column.name)))
+
+            df_expandedSummary = df_expandedSummary.select(*columns)
+            self._expandedSourceDf = df_expandedSummary
+
+        return self._expandedSourceDf
+
+    def _processCategoricalData(self, valueStatements, valueAttributes, dataSummary=None, sourceDf=None):
+        assert dataSummary is not None
+        assert sourceDf is not None
+
+        df_expandedSummary = sourceDf
+
+        # expand source dataframe array columns
+        columns = sourceDf.colnames
+
+        for column in self.columnsInfo:
+            if column.isArrayColumn:
+                df_expandedSummary = df_expandedSummary.withColumn(F.explode(F.col(column.name)))
+
+        df_expandedSummary = df_expandedSummary.select(*columns)
+
+        # determine expanded distinct count
+        sourceDf.select(columns)
+
     @classmethod
-    def _scriptDataGeneratorCode(cls, schema, dataSummary=None, sourceDf=None, suppressOutput=False, name=None):
+    def _scriptDataGeneratorCode(cls, schema, dataSummary=None, sourceDf=None, suppressOutput=False, name=None,
+                                 valuesInfo=None):
         """
         Generate outline data generator code from an existing dataframe
 
@@ -409,6 +432,7 @@ class DataAnalyzer:
         :param sourceDf: Source dataframe to retrieve attributes of real data, optional
         :param suppressOutput: Suppress printing of generated code if True
         :param name: Optional name for data generator
+        :param valuesInfo: References and statements for `values` clauses
         :return: String containing skeleton code
 
         """
@@ -422,9 +446,15 @@ class DataAnalyzer:
         stmts.append(cls._GENERATED_COMMENT)
 
         stmts.append("import dbldatagen as dg")
-        stmts.append("import pyspark.sql.types")
 
         stmts.append(cls._GENERATED_FROM_SCHEMA_COMMENT)
+
+        if valuesInfo is not None:
+            for k, v in valuesInfo.items():
+                stmts.append("")
+                stmts.append(f"# values for column `{k}`")
+                for line in v.statements:
+                    stmts.append(line)
 
         stmts.append(strip_margins(
             f"""generation_spec = (
@@ -446,10 +476,11 @@ class DataAnalyzer:
                                                                            colName=col_name,
                                                                            isArrayElement=True,
                                                                            dataSummary=dataSummary,
-                                                                           sourceDf=sourceDf)
+                                                                           sourceDf=sourceDf,
+                                                                           valuesInfo=valuesInfo)
 
                 if dataSummary is not None:
-                    minLength = cls._valueFromSummary(dataSummary, col_name, "cardinality",  jsonPath="mint",
+                    minLength = cls._valueFromSummary(dataSummary, col_name, "cardinality", jsonPath="mint",
                                                       defaultValue=2)
                     maxLength = cls._valueFromSummary(dataSummary, col_name, "cardinality", jsonPath="max",
                                                       defaultValue=6)
@@ -467,7 +498,8 @@ class DataAnalyzer:
                 field_attributes = cls._generatorDefaultAttributesFromType(fld.dataType,
                                                                            colName=col_name,
                                                                            dataSummary=dataSummary,
-                                                                           sourceDf=sourceDf)
+                                                                           sourceDf=sourceDf,
+                                                                           valuesInfo=valuesInfo)
                 stmts.append(indent + f""".withColumn('{col_name}', '{col_type}', {field_attributes})""")
         stmts.append(indent + ")")
 
