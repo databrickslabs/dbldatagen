@@ -51,8 +51,12 @@ class DataAnalyzer:
 
     _INT_32_MAX = 2 ** 16 - 1
 
-    MAX_COLUMN_ELEMENT_LENGTH_THRESHOLD = 40
-    MAX_DISTINCT_THRESHOLD = 20
+    _MAX_COLUMN_ELEMENT_LENGTH_THRESHOLD = 40
+    _MAX_DISTINCT_THRESHOLD = 20
+
+    _MAX_VALUES_LINE_LENGTH=60
+    _CODE_GENERATION_INDENT=4
+    _MEASURE_ROUNDING=4
 
     # tuple for column infor
     ColInfo = namedtuple("ColInfo", ["name", "dt", "isArrayColumn", "isNumeric"])
@@ -64,7 +68,7 @@ class DataAnalyzer:
         """ Constructor:
         :param df: Dataframe to analyze
         :param sparkSession: Spark session to use
-        :param valuesCountThreshold: values will only be computed if less than threshold, If not supplied
+        :param valuesCountThreshold: Values will only be computed if less than threshold, If not supplied
                will use default setting (20)
         """
         assert df is not None, "dataframe must be supplied"
@@ -80,7 +84,7 @@ class DataAnalyzer:
         self._expandedSourceDf = None
 
         self._valuesCountThreshold = (valuesCountThreshold if valuesCountThreshold is not None
-                                      else self.MAX_DISTINCT_THRESHOLD)
+                                      else self._MAX_DISTINCT_THRESHOLD)
 
     def _displayRow(self, row):
         """Display details for row"""
@@ -242,7 +246,7 @@ class DataAnalyzer:
             'cardinality',
             fieldExprs=[f"""to_json(named_struct(
                                 'min', min(cardinality({colInfo.name})), 
-                                'max', min(cardinality({colInfo.name})))) 
+                                'max', max(cardinality({colInfo.name})))) 
                             as {colInfo.name}"""
                         if colInfo.isArrayColumn else "min(1)"
                         for colInfo in self.columnsInfo],
@@ -264,12 +268,14 @@ class DataAnalyzer:
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
+        rounding = self._MEASURE_ROUNDING
+
         dfDataSummary = self._addMeasureToSummary(
             'stats',
-            fieldExprs=[f"""to_json(named_struct('skewness', round(skewness({colInfo.name}),4), 
-                                                 'kurtosis', round(kurtosis({colInfo.name}),4),
-                                                 'mean', round(mean({colInfo.name}),4),
-                                                 'stddev', round(stddev_pop({colInfo.name}),4)
+            fieldExprs=[f"""to_json(named_struct('skewness', round(skewness({colInfo.name}),{rounding}), 
+                                                 'kurtosis', round(kurtosis({colInfo.name}),{rounding}),
+                                                 'mean', round(mean({colInfo.name}),{rounding}),
+                                                 'stddev', round(stddev_pop({colInfo.name}),{rounding})
                                                   )) as {colInfo.name}"""
                         if colInfo.isNumeric else "null"
                         for colInfo in self.columnsInfo],
@@ -413,21 +419,20 @@ class DataAnalyzer:
 
         return self._expandedSourceDf
 
-    def cleanse_name(self, col_name):
+    def _cleanse_name(self, col_name):
         """cleanse column name for use in code"""
         return col_name.replace(' ', '_')
 
-    def format_values(self, values, col_type, indent=4):
-        # if col_type == "string":
-        #    values = ['"' + v + '"' for v in values]
-
-        if len(str(values)) > 60:
-            pp = pprint.PrettyPrinter(indent=indent, width=60, compact=True)
-            values = pp.pformat(values)
+    def _format_values_list(self, values):
+        """ Format values """
+        pp = pprint.PrettyPrinter(indent=self._CODE_GENERATION_INDENT,
+                                  width=self._MAX_VALUES_LINE_LENGTH,
+                                  compact=True)
+        values = pp.pformat(values)
 
         return values
 
-    def _processValuesInfo(self, dataSummary=None, sourceDf=None):
+    def _processCategoricalValuesInfo(self, dataSummary=None, sourceDf=None):
         """ Computes values clauses for appropriate columns
 
         :param dataSummary: Data summary
@@ -439,6 +444,9 @@ class DataAnalyzer:
         assert sourceDf is not None
 
         results = {}
+
+        logger = logging.getLogger(__name__)
+        logger.info("Performing categorical data analysis")
 
         for fld in sourceDf.schema.fields:
             col_name = fld.name
@@ -457,8 +465,9 @@ class DataAnalyzer:
                                                       defaultValue=self._INT_32_MAX))
 
             if self._valuesCountThreshold > numDistinct > 1 and \
-                    maxPrintable < self.MAX_COLUMN_ELEMENT_LENGTH_THRESHOLD and \
+                    maxPrintable < self._MAX_COLUMN_ELEMENT_LENGTH_THRESHOLD and \
                     col_type in ["float", "double", "int", "smallint", "bigint", "tinyint", "string"]:
+                logger.info(f"Retrieving categorical values for column `{col_name}`")
 
                 value_rows = sorted(sourceDf.select(col_name).groupBy(col_name).count().collect(),
                                     key=lambda r1, sk=col_name: r1[sk])
@@ -486,13 +495,13 @@ class DataAnalyzer:
                 else:
                     weights = list(weights)
 
-                safe_name = self.cleanse_name(col_name)
+                safe_name = self._cleanse_name(col_name)
 
                 if weights is not None:
-                    stmts.append(f"{safe_name}_weights = {weights}")
+                    stmts.append(f"{safe_name}_weights = {self._format_values_list(weights)}")
                     value_refs.append(f"""weights = {safe_name}_weights""")
 
-                stmts.append(f"{safe_name}_values = {self.format_values(values, col_type)}")
+                stmts.append(f"{safe_name}_values = {self._format_values_list(values)}")
                 value_refs.append(f"""values={safe_name}_values""")
 
                 results[col_name] = self.ColumnValuesInfo(col_name, stmts, ", ".join(value_refs))
@@ -659,7 +668,7 @@ class DataAnalyzer:
                 row_key_pairs = row.asDict()
                 self._dataSummary[row['measure_']] = row_key_pairs
 
-            values_info = self._processValuesInfo(dataSummary=self._dataSummary, sourceDf=self._getExpandedSourceDf())
+            values_info = self._processCategoricalValuesInfo(dataSummary=self._dataSummary, sourceDf=self._getExpandedSourceDf())
 
         return self._scriptDataGeneratorCode(self._df.schema,
                                              suppressOutput=suppressOutput,
