@@ -149,6 +149,13 @@ class DataAnalyzer:
             self._columnsInfo = columnsInfo
         return self._columnsInfo
 
+    _url_regex = r"https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)"
+    _image_url_regex = r"https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)"
+    _email_common_regex = r"([a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6})*"
+    _email_uncommon_regex = r"([a-z0-9_\.\+-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})"
+    _free_text_regex = r"([a-z0-9_\.\+-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})"
+    _ip_addr_regex = r"[0-9]{3}\.[0-9]{3}\.[0-9]{3}\.[0-9]{3}"
+
     def summarizeToDF(self):
         """ Generate summary analysis of data set as dataframe
 
@@ -229,14 +236,11 @@ class DataAnalyzer:
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
-        url_regex = r"https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)"
-        image_url_regex = r"https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)"
-
         # string metrics
         dfDataSummary = self._addMeasureToSummary(
             'string_patterns',
             fieldExprs=[f"""to_json(named_struct(
-                            'ip_addr', round(count_if({colInfo.name} regexp "^[0-9]{3}\.[0-9]{3}\.[0-9]{3}\.[0-9]{3}$") 
+                            'ip_addr', round(count_if({colInfo.name} regexp "^{self._ip_addr_regex}$") 
                                        / count({colInfo.name}), 4), 
                             'alpha_lower', round(count_if({colInfo.name} regexp "^[a-z]+$") 
                                        / count({colInfo.name}), 4), 
@@ -248,9 +252,15 @@ class DataAnalyzer:
                                        / count({colInfo.name}), 4),
                             'alphanumeric', round(count_if({colInfo.name} regexp "^[a-zA-Z0-9]+$") 
                                        / count({colInfo.name}), 4), 
-                            'image_url', round(count_if({colInfo.name} regexp "^{image_url_regex}$") 
+                            'image_url', round(count_if({colInfo.name} regexp "^{self._image_url_regex}$") 
                                        / count({colInfo.name}), 4), 
-                            'url', round(count_if({colInfo.name} regexp "^{url_regex}$") 
+                            'url', round(count_if({colInfo.name} regexp "^{self._url_regex}$") 
+                                       / count({colInfo.name}), 4).
+                            'email_common', round(count_if({colInfo.name} regexp "^{self._email_common_regex}$") 
+                                       / count({colInfo.name}), 4),
+                            'email_uncommon', round(count_if({colInfo.name} regexp "^{self._email_uncommon_regex}$") 
+                                       / count({colInfo.name}), 4), 
+                            'free_text', round(count_if({colInfo.name} regexp "^{self._free_text_regex}$") 
                                        / count({colInfo.name}), 4) 
                                        )) 
                             as {colInfo.name}"""
