@@ -229,6 +229,30 @@ class DataAnalyzer:
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
+        # string metrics
+        dfDataSummary = self._addMeasureToSummary(
+            'string_patterns',
+            fieldExprs=[f"""to_json(named_struct(
+                            'ip_addr', count_if({colInfo.name} regexp "^[0-9]{3}\.[0-9]{3}\.[0-9]{3}\.[0-9]{3}$") 
+                                       / count({colInfo.name}), 
+                            'alpha_lower', count_if({colInfo.name} regexp "^[a-z]+$") 
+                                       / count({colInfo.name}), 
+                            'alpha_upper', count_if({colInfo.name} regexp "^[A-Z]+$") 
+                                       / count({colInfo.name}), 
+                            'alpha', count_if({colInfo.name} regexp "^[A-Za-z]+$") 
+                                       / count({colInfo.name}), 
+                            'digits', count_if({colInfo.name} regexp "^[0-9]+$") 
+                                       / count({colInfo.name}), 
+                            'alphanumeric', count_if({colInfo.name} regexp "^[a-zA-Z0-9]+$") 
+                                       / count({colInfo.name})
+                                       )) 
+                            as {colInfo.name}"""
+                        if colInfo.dt == "string" else "''"
+                        for colInfo in self.columnsInfo],
+            dfData=self._getExpandedSourceDf(),
+            dfSummary=dfDataSummary)
+
+
         # min
         dfDataSummary = self._addMeasureToSummary(
             'min',
