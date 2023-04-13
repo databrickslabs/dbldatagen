@@ -229,7 +229,8 @@ class DataAnalyzer:
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
-        url_regex = r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#()?&//=]*)"
+        url_regex = r"https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)"
+        image_url_regex = r"https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)"
 
         # string metrics
         dfDataSummary = self._addMeasureToSummary(
@@ -246,6 +247,8 @@ class DataAnalyzer:
                             'digits', round(count_if({colInfo.name} regexp "^[0-9]+$") 
                                        / count({colInfo.name}), 4),
                             'alphanumeric', round(count_if({colInfo.name} regexp "^[a-zA-Z0-9]+$") 
+                                       / count({colInfo.name}), 4), 
+                            'image_url', round(count_if({colInfo.name} regexp "^{image_url_regex}$") 
                                        / count({colInfo.name}), 4), 
                             'url', round(count_if({colInfo.name} regexp "^{url_regex}$") 
                                        / count({colInfo.name}), 4) 
