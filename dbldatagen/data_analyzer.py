@@ -242,13 +242,13 @@ class DataAnalyzer:
                             'alpha_upper', round(count_if({colInfo.name} regexp "^[A-Z]+$") 
                                        / count({colInfo.name}), 4), 
                             'alpha', round(count_if({colInfo.name} regexp "^[A-Za-z]+$") 
-                                       / count({colInfo.name}), 4) 
+                                       / count({colInfo.name}), 4), 
                             'digits', round(count_if({colInfo.name} regexp "^[0-9]+$") 
-                                       / count({colInfo.name}), 4) 
+                                       / count({colInfo.name}), 4),
                             'alphanumeric', round(count_if({colInfo.name} regexp "^[a-zA-Z0-9]+$") 
                                        / count({colInfo.name}), 4), 
                             'url', round(count_if({colInfo.name} regexp "^{url_regex}$") 
-                                       / count({colInfo.name}), 4), 
+                                       / count({colInfo.name}), 4) 
                                        )) 
                             as {colInfo.name}"""
                         if colInfo.dt == "string" else "''"
