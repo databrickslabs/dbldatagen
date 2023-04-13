@@ -3,6 +3,14 @@
 ## Change History
 All notable changes to the Databricks Labs Data Generator will be documented in this file.
 
+### Version 0.3.4 Post 1
+
+### Fixed
+* Fix for use and configuration of root logger 
+
+### Acknowledgements
+Thanks to Marvin Schenkel for the contribution
+
 ### Version 0.3.4
 
 #### Changed
