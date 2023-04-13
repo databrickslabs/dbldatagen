@@ -54,9 +54,9 @@ class DataAnalyzer:
     _MAX_COLUMN_ELEMENT_LENGTH_THRESHOLD = 40
     _MAX_DISTINCT_THRESHOLD = 20
 
-    _MAX_VALUES_LINE_LENGTH=60
-    _CODE_GENERATION_INDENT=4
-    _MEASURE_ROUNDING=4
+    _MAX_VALUES_LINE_LENGTH = 60
+    _CODE_GENERATION_INDENT = 4
+    _MEASURE_ROUNDING = 4
 
     # tuple for column infor
     ColInfo = namedtuple("ColInfo", ["name", "dt", "isArrayColumn", "isNumeric"])
@@ -668,7 +668,8 @@ class DataAnalyzer:
                 row_key_pairs = row.asDict()
                 self._dataSummary[row['measure_']] = row_key_pairs
 
-            values_info = self._processCategoricalValuesInfo(dataSummary=self._dataSummary, sourceDf=self._getExpandedSourceDf())
+            values_info = self._processCategoricalValuesInfo(dataSummary=self._dataSummary,
+                                                             sourceDf=self._getExpandedSourceDf())
 
         return self._scriptDataGeneratorCode(self._df.schema,
                                              suppressOutput=suppressOutput,

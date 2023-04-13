@@ -112,13 +112,49 @@ For example, the following code will generate synthetic data generation code fro
 
 .. code-block:: python
 
-   import dbldatagen as dg
+    import dbldatagen as dg
 
-   dfSource = spark.read.format("parquet").load("/tmp/your/source/dataset")
+    # In a Databricks runtime environment
+    # The folder `dbfs:/databricks-datasets` contains a variety of sample data sets
+    dfSource = spark.read.format("parquet").load("dbfs:/databricks-datasets/amazon/test4K/")
 
-   analyzer = dg.DataAnalyzer(sparkSession=spark, df=df_source_data)
+    da = dg.DataAnalyzer(dfSource)
 
-   generatedCode = analyzer.scriptDataGeneratorFromData()
+    df2 = da.summarizeToDF()
+    generatedCode = da.scriptDataGeneratorFromData(suppressOutput=True)
+
+    print(generatedCode)
 
 
+It is not intended to generate complete code to reproduce the dataset but serves as a starting point
+for generating a synthetic data set that mirrors the original source.
 
+This will produce the following generated code.
+
+.. code-block:: python
+    import dbldatagen as dg
+
+    # Column definitions are stubs only - modify to generate correct data
+    #
+
+    # values for column `rating`
+    rating_weights = [10, 5, 8, 18, 59]
+    rating_values = [1.0, 2.0, 3.0, 4.0, 5.0]
+
+    generation_spec = (
+        dg.DataGenerator(sparkSession=spark,
+                         name='synthetic_data',
+                         rows=100000,
+                         random=True,
+                         )
+        .withColumn('asin', 'string', template=r'\\w')
+        .withColumn('brand', 'string', template=r'\\w')
+        .withColumn('helpful', 'bigint', minValue=0, maxValue=417, structType='array', numFeatures=2)
+        .withColumn('img', 'string', template=r'\\w')
+        .withColumn('price', 'double', minValue=0.01, maxValue=962.0, step=0.1)
+        .withColumn('rating', 'double', weights = rating_weights, values=rating_values)
+        .withColumn('review', 'string', template=r'\\w')
+        .withColumn('time', 'bigint', minValue=921369600, maxValue=1406073600)
+        .withColumn('title', 'string', template=r'\\w')
+        .withColumn('user', 'string', template=r'\\w')
+        )
