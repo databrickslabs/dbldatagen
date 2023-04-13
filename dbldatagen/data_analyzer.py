@@ -229,22 +229,26 @@ class DataAnalyzer:
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
+        url_regex = r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#()?&//=]*)"
+
         # string metrics
         dfDataSummary = self._addMeasureToSummary(
             'string_patterns',
             fieldExprs=[f"""to_json(named_struct(
-                            'ip_addr', count_if({colInfo.name} regexp "^[0-9]{3}\.[0-9]{3}\.[0-9]{3}\.[0-9]{3}$") 
-                                       / count({colInfo.name}), 
-                            'alpha_lower', count_if({colInfo.name} regexp "^[a-z]+$") 
-                                       / count({colInfo.name}), 
-                            'alpha_upper', count_if({colInfo.name} regexp "^[A-Z]+$") 
-                                       / count({colInfo.name}), 
-                            'alpha', count_if({colInfo.name} regexp "^[A-Za-z]+$") 
-                                       / count({colInfo.name}), 
-                            'digits', count_if({colInfo.name} regexp "^[0-9]+$") 
-                                       / count({colInfo.name}), 
-                            'alphanumeric', count_if({colInfo.name} regexp "^[a-zA-Z0-9]+$") 
-                                       / count({colInfo.name})
+                            'ip_addr', round(count_if({colInfo.name} regexp "^[0-9]{3}\.[0-9]{3}\.[0-9]{3}\.[0-9]{3}$") 
+                                       / count({colInfo.name}), 4), 
+                            'alpha_lower', round(count_if({colInfo.name} regexp "^[a-z]+$") 
+                                       / count({colInfo.name}), 4), 
+                            'alpha_upper', round(count_if({colInfo.name} regexp "^[A-Z]+$") 
+                                       / count({colInfo.name}), 4), 
+                            'alpha', round(count_if({colInfo.name} regexp "^[A-Za-z]+$") 
+                                       / count({colInfo.name}), 4) 
+                            'digits', round(count_if({colInfo.name} regexp "^[0-9]+$") 
+                                       / count({colInfo.name}), 4) 
+                            'alphanumeric', round(count_if({colInfo.name} regexp "^[a-zA-Z0-9]+$") 
+                                       / count({colInfo.name}), 4), 
+                            'url', round(count_if({colInfo.name} regexp "^{url_regex}$") 
+                                       / count({colInfo.name}), 4), 
                                        )) 
                             as {colInfo.name}"""
                         if colInfo.dt == "string" else "''"
