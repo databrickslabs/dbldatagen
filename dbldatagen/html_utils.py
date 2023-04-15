@@ -8,6 +8,7 @@ This file defines the `HtmlUtils` classes and utility functions
 
 from .utils import system_time_millis
 
+
 class HtmlUtils:
     """ Utility class for formatting code as HTML and other notebook related formatting
 

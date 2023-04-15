@@ -12,7 +12,7 @@ class TestHtmlUtils:
                                 for x in range(10):
                                     print(x)
                              """]
-)
+                             )
     def test_html_format_code(self, content):
         formattedContent = HtmlUtils.formatCodeAsHtml(content)
         assert formattedContent is not None
@@ -23,7 +23,7 @@ class TestHtmlUtils:
                                 this is a test 
                                 this is another one
                              """, "testing"
-                             )])
+                               )])
     def test_html_format_content(self, content, heading):
         formattedContent = HtmlUtils.formatTextAsHtml(content, title=heading)
 
@@ -31,4 +31,3 @@ class TestHtmlUtils:
 
         assert content in formattedContent, "original content missing"
         assert heading in formattedContent, "heading missing from content"
-
