@@ -21,6 +21,7 @@ import pyspark.sql.functions as F
 
 from .utils import strip_margins, json_value_from_path
 from .spark_singleton import SparkSingleton
+from .html_utils import HtmlUtils
 
 
 class DataAnalyzer:
@@ -155,6 +156,40 @@ class DataAnalyzer:
     _email_uncommon_regex = r"([a-z0-9_\.\+-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})"
     _free_text_regex = r"([a-z0-9_\.\+-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})"
     _ip_addr_regex = r"[0-9]{3}\.[0-9]{3}\.[0-9]{3}\.[0-9]{3}"
+    _uuid_regex = r"[0-9]{3}\.[0-9]{3}\.[0-9]{3}\.[0-9]{3}"
+
+    _regex_patterns = {
+        "url": r"https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)",
+        "image_url": r"https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)",
+        "email_common": r"([a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6})*",
+        "email_uncommon": r"([a-z0-9_\.\+-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})",
+        "free_text": r"",
+        "ip_addr": r"[0-9]{3}\.[0-9]{3}\.[0-9]{3}\.[0-9]{3}",
+        "alpha_upper": r"[A-Z]+",
+        "alpha_lower": r"[a-z]+",
+        "digits": r"[0-9]+",
+        "alphanumeric": r"[a-zA-Z0-9]+",
+        "identifier": r"[a-zA-Z0-9_]+",
+
+    }
+
+    def _compute_pattern_match_clauses(self):
+        """Generate string pattern matching expressions to compute probability of matching particular patterns
+        """
+        stmts = []
+
+        for colInfo in self.columnsInfo:
+            clauses = []
+            if colInfo.dt == "string":
+                clauses.append("to_json(named_struct()")
+                clauses.append(f")) as {colInfo.name}")
+
+                stmt = "to_json(named_struct()\n" + ",\n".join(clauses) + f"\n)) as {colInfo.name}"
+            else:
+                stmts.append(f"'' as {colInfo.name}")
+        result = "\n".join(stmts)
+        print(result)
+        return result
 
     def summarizeToDF(self):
         """ Generate summary analysis of data set as dataframe
@@ -236,7 +271,11 @@ class DataAnalyzer:
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
+        metrics_clause = self._compute_pattern_match_clauses()
+
         # string metrics
+        # we'll compute probabilities that string values match specific patterns - this can be subsequently
+        # used to tailor code generation
         dfDataSummary = self._addMeasureToSummary(
             'string_patterns',
             fieldExprs=[f"""to_json(named_struct(
@@ -255,20 +294,21 @@ class DataAnalyzer:
                             'image_url', round(count_if({colInfo.name} regexp "^{self._image_url_regex}$") 
                                        / count({colInfo.name}), 4), 
                             'url', round(count_if({colInfo.name} regexp "^{self._url_regex}$") 
-                                       / count({colInfo.name}), 4).
+                                       / count({colInfo.name}), 4),
                             'email_common', round(count_if({colInfo.name} regexp "^{self._email_common_regex}$") 
                                        / count({colInfo.name}), 4),
                             'email_uncommon', round(count_if({colInfo.name} regexp "^{self._email_uncommon_regex}$") 
                                        / count({colInfo.name}), 4), 
+                            'uuid', round(count_if({colInfo.name} regexp "^{self._uuid_regex}$") 
+                                       / count({colInfo.name}), 4) ,
                             'free_text', round(count_if({colInfo.name} regexp "^{self._free_text_regex}$") 
                                        / count({colInfo.name}), 4) 
-                                       )) 
+                                       ))
                             as {colInfo.name}"""
-                        if colInfo.dt == "string" else "''"
+                        if colInfo.dt == "string" else "'' as {colInfo.name}"
                         for colInfo in self.columnsInfo],
             dfData=self._getExpandedSourceDf(),
             dfSummary=dfDataSummary)
-
 
         # min
         dfDataSummary = self._addMeasureToSummary(
@@ -648,7 +688,7 @@ class DataAnalyzer:
         return "\n".join(stmts)
 
     @classmethod
-    def scriptDataGeneratorFromSchema(cls, schema, suppressOutput=False, name=None):
+    def scriptDataGeneratorFromSchema(cls, schema, suppressOutput=False, name=None, asHtml=False):
         """
         Generate outline data generator code from an existing dataframe
 
@@ -667,11 +707,18 @@ class DataAnalyzer:
         :return: String containing skeleton code
 
         """
-        return cls._scriptDataGeneratorCode(schema,
-                                            suppressOutput=suppressOutput,
-                                            name=name)
+        effective_suppress_output = suppressOutput if not asHtml else False
 
-    def scriptDataGeneratorFromData(self, suppressOutput=False, name=None):
+        generated_code = cls._scriptDataGeneratorCode(schema,
+                                                      suppressOutput=effective_suppress_output,
+                                                      name=name)
+
+        if asHtml:
+            generated_code = HtmlUtils.formatCodeAsHtml(generated_code)
+
+        return generated_code
+
+    def scriptDataGeneratorFromData(self, suppressOutput=False, name=None, asHtml=False):
         """
         Generate outline data generator code from an existing dataframe
 
@@ -691,6 +738,8 @@ class DataAnalyzer:
         """
         assert self._df is not None
         assert type(self._df) is sql.DataFrame, "sourceDf must be a valid Pyspark dataframe"
+
+        effective_suppress_output = suppressOutput if not asHtml else False
 
         if self._dataSummary is None:
             logger = logging.getLogger(__name__)
@@ -712,9 +761,14 @@ class DataAnalyzer:
             values_info = self._processCategoricalValuesInfo(dataSummary=self._dataSummary,
                                                              sourceDf=self._getExpandedSourceDf())
 
-        return self._scriptDataGeneratorCode(self._df.schema,
-                                             suppressOutput=suppressOutput,
-                                             name=name,
-                                             dataSummary=self._dataSummary,
-                                             sourceDf=self._df,
-                                             valuesInfo=values_info)
+        generated_code = self._scriptDataGeneratorCode(self._df.schema,
+                                                       suppressOutput=effective_suppress_output,
+                                                       name=name,
+                                                       dataSummary=self._dataSummary,
+                                                       sourceDf=self._df,
+                                                       valuesInfo=values_info)
+
+        if asHtml:
+            generated_code = HtmlUtils.formatCodeAsHtml(generated_code)
+
+        return generated_code
