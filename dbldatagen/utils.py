@@ -13,6 +13,7 @@ import warnings
 from datetime import timedelta
 import re
 import json
+import time
 import jmespath
 
 
@@ -347,3 +348,12 @@ def json_value_from_path(searchPath, jsonData, defaultValue):
         return jsonValue
 
     return defaultValue
+
+
+def system_time_millis():
+    """ return system time as milliseconds since start of epoch
+
+    :return: system time millis as long
+    """
+    curr_time = round(time.time() / 1000)
+    return curr_time

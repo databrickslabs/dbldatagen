@@ -28,7 +28,7 @@ from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_RANDOM, RANDOM_S
                                RANDOM_SEED_HASH_FIELD_NAME, MIN_PYTHON_VERSION, MIN_SPARK_VERSION
 from .utils import ensure, topologicalSort, mkBoundsList, coalesce_values, \
     deprecated, parse_time_interval, DataGenError, split_list_matching_condition, strip_margins, \
-    json_value_from_path
+    json_value_from_path, system_time_millis
 from ._version import __version__
 from .column_generation_spec import ColumnGenerationSpec
 from .column_spec_options import ColumnSpecOptions

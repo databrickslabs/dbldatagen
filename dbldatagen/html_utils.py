@@ -6,6 +6,7 @@
 This file defines the `HtmlUtils` classes and utility functions
 """
 
+from .utils import system_time_millis
 
 class HtmlUtils:
     """ Utility class for formatting code as HTML and other notebook related formatting
@@ -33,9 +34,11 @@ class HtmlUtils:
             the newer ``navigator`` based functionality as this is blocked for cross domain IFrames by default.
 
         """
+        ts = system_time_millis()
+
         formattedCode = f"""
             <h3>Generated Code</h3>
-            <div style="outline: 1px dashed blue;"><p ><pre><code id="generated_code"> 
+            <div style="outline: 1px dashed blue;"><p ><pre><code id="generated_code_{ts}"> 
               {codeText}
             </code></pre></p></br>
             </div>
@@ -44,7 +47,7 @@ class HtmlUtils:
             function dbldatagen_copy_code_to_clipboard() {{
                try {{
                  var r = document.createRange();
-                 r.selectNode(document.getElementById("generated_code"));
+                 r.selectNode(document.getElementById("generated_code_{ts}"));
                  window.getSelection().removeAllRanges();
                  window.getSelection().addRange(r);
                  document.execCommand('copy');
@@ -70,9 +73,10 @@ class HtmlUtils:
         This will wrap the text content with with Html formatting
 
         """
+        ts = system_time_millis()
         formattedContent = f"""
             <h3>{title}</h3>
-            <div style="outline: 1px dashed blue;"><p ><pre id="generated_content"> 
+            <div style="outline: 1px dashed blue;"><p ><pre id="generated_content_{ts}"> 
               {textContent}
             </pre></p></br>
             </div>
@@ -81,7 +85,7 @@ class HtmlUtils:
             function dbldatagen_copy_to_clipboard() {{
                try {{
                  var r = document.createRange();
-                 r.selectNode(document.getElementById("generated_content"));
+                 r.selectNode(document.getElementById("generated_content_{ts}"));
                  window.getSelection().removeAllRanges();
                  window.getSelection().addRange(r);
                  document.execCommand('copy');

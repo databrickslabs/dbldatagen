@@ -4,7 +4,7 @@ import pytest
 
 from dbldatagen import ensure, mkBoundsList, coalesce_values, deprecated, SparkSingleton, \
     parse_time_interval, DataGenError, strip_margins, split_list_matching_condition, topologicalSort, \
-    json_value_from_path
+    json_value_from_path, system_time_millis
 
 spark = SparkSingleton.getLocalInstance("unit tests")
 
@@ -142,3 +142,7 @@ class TestUtils:
         results = json_value_from_path(path, jsonData, defaultValue)
 
         assert results == expectedValue, f"Expected `{expectedValue}`, got results `{results}`"
+
+    def test_system_time_millis(self):
+        curr_time = system_time_millis()
+        assert curr_time > 0
