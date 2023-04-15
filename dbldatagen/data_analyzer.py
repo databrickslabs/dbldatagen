@@ -678,7 +678,7 @@ class DataAnalyzer:
 
         """
         generated_code = cls._scriptDataGeneratorCode(schema,
-                                                      suppressOutput=suppressOutput if not asHtml else False,
+                                                      suppressOutput=asHtml or suppressOutput,
                                                       name=name)
 
         if asHtml:
@@ -729,7 +729,7 @@ class DataAnalyzer:
                                                              sourceDf=self._getExpandedSourceDf())
 
         generated_code = self._scriptDataGeneratorCode(self._df.schema,
-                                                       suppressOutput=suppressOutput if not asHtml else False,
+                                                       suppressOutput=asHtml or suppressOutput,
                                                        name=name,
                                                        dataSummary=self._dataSummary,
                                                        sourceDf=self._df,
