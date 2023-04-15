@@ -127,10 +127,9 @@ class TestGenerationFromData:
 
         df.show()
 
-
     @pytest.mark.parametrize("sampleString, expectedMatch",
                              [("0234", "digits"),
-                              ("http://www.yahoo.com", "image_url"),
+                              ("http://www.yahoo.com", "url"),
                               ("http://www.yahoo.com/test.png", "image_url"),
                               ("info+new_account@databrickslabs.com", "email_uncommon"),
                               ("abcdefg", "alpha_lower"),
@@ -148,15 +147,9 @@ class TestGenerationFromData:
         pattern_match_result = ""
         for k, v in analyzer._regex_patterns.items():
             pattern = f"^{v}$"
-            print(f"pattern {k}- {pattern}")
 
-            print("testing pattern")
             if re.match(pattern, sampleString) is not None:
                 pattern_match_result = k
                 break
-            print("next one")
 
         assert pattern_match_result == expectedMatch
-
-
-

@@ -1327,4 +1327,5 @@ class DataGenerator:
 
         results.append(ins_clause)
 
-        return "\n".join(results)
+        results = "\n".join(results)
+        return results

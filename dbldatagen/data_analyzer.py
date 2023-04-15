@@ -150,13 +150,8 @@ class DataAnalyzer:
             self._columnsInfo = columnsInfo
         return self._columnsInfo
 
-    _url_regex = r"https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)"
-    _image_url_regex = r"https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)"
-    _email_common_regex = r"([a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6})*"
-    _email_uncommon_regex = r"([a-z0-9_\.\+-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})"
-    _free_text_regex = r"([a-z0-9_\.\+-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})"
-    _ip_addr_regex = r"[0-9]{3}\.[0-9]{3}\.[0-9]{3}\.[0-9]{3}"
-    _uuid_regex = r"[0-9]{3}\.[0-9]{3}\.[0-9]{3}\.[0-9]{3}"
+    _URL_PREFIX = r"https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}"
+    IMAGE_EXTS = r"(png)|(jpg)|(tif)"
 
     _regex_patterns = {
         "alpha_upper": r"[A-Z]+",
@@ -164,8 +159,8 @@ class DataAnalyzer:
         "digits": r"[0-9]+",
         "alphanumeric": r"[a-zA-Z0-9]+",
         "identifier": r"[a-zA-Z0-9_]+",
-        "image_url": r"https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)",
-        "url": r"https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)",
+        "image_url": _URL_PREFIX + r"\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)" + IMAGE_EXTS,
+        "url": _URL_PREFIX + r"\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)",
         "email_common": r"([a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6})*",
         "email_uncommon": r"([a-z0-9_\.\+-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})",
         "ip_addr": r"[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}",
@@ -190,7 +185,7 @@ class DataAnalyzer:
                 stmts.append(stmt)
             else:
                 stmts.append(f"'' as {colInfo.name}")
-        result = stmts #  "\n".join(stmts)
+        result = stmts  # "\n".join(stmts)
         return result
 
     def summarizeToDF(self):
@@ -275,7 +270,7 @@ class DataAnalyzer:
 
         metrics_clause = self._compute_pattern_match_clauses()
 
-        #string metrics
+        # string metrics
         # we'll compute probabilities that string values match specific patterns - this can be subsequently
         # used to tailor code generation
         dfDataSummary = self._addMeasureToSummary(
@@ -677,14 +672,13 @@ class DataAnalyzer:
 
         :param schema: Pyspark schema - i.e manually constructed StructType or return value from `dataframe.schema`
         :param suppressOutput: Suppress printing of generated code if True
+        :param asHtml: If True, will generate Html suitable for notebook ``displayHtml``. If true, suppresses output
         :param name: Optional name for data generator
-        :return: String containing skeleton code
+        :return: String containing skeleton code (in Html form if `asHtml` is True)
 
         """
-        effective_suppress_output = suppressOutput if not asHtml else False
-
         generated_code = cls._scriptDataGeneratorCode(schema,
-                                                      suppressOutput=effective_suppress_output,
+                                                      suppressOutput=suppressOutput if not asHtml else False,
                                                       name=name)
 
         if asHtml:
@@ -707,13 +701,12 @@ class DataAnalyzer:
 
         :param suppressOutput: Suppress printing of generated code if True
         :param name: Optional name for data generator
-        :return: String containing skeleton code
+        :param asHtml: If True, will generate Html suitable for notebook ``displayHtml``. If true, suppresses output
+        :return: String containing skeleton code (in Html form if `asHtml` is True)
 
         """
         assert self._df is not None
         assert type(self._df) is sql.DataFrame, "sourceDf must be a valid Pyspark dataframe"
-
-        effective_suppress_output = suppressOutput if not asHtml else False
 
         if self._dataSummary is None:
             logger = logging.getLogger(__name__)
@@ -736,7 +729,7 @@ class DataAnalyzer:
                                                              sourceDf=self._getExpandedSourceDf())
 
         generated_code = self._scriptDataGeneratorCode(self._df.schema,
-                                                       suppressOutput=effective_suppress_output,
+                                                       suppressOutput=suppressOutput if not asHtml else False,
                                                        name=name,
                                                        dataSummary=self._dataSummary,
                                                        sourceDf=self._df,
