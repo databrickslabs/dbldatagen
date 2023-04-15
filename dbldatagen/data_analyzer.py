@@ -677,9 +677,7 @@ class DataAnalyzer:
         :return: String containing skeleton code (in Html form if `asHtml` is True)
 
         """
-        generated_code = cls._scriptDataGeneratorCode(schema,
-                                                      suppressOutput=asHtml or suppressOutput,
-                                                      name=name)
+        generated_code = cls._scriptDataGeneratorCode(schema, suppressOutput=asHtml or suppressOutput, name=name)
 
         if asHtml:
             generated_code = HtmlUtils.formatCodeAsHtml(generated_code)
