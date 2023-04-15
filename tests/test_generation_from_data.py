@@ -1,5 +1,6 @@
 import logging
 import ast
+import re
 import pytest
 
 import pyspark.sql as ssql
@@ -125,3 +126,37 @@ class TestGenerationFromData:
         df = analyzer.summarizeToDF()
 
         df.show()
+
+
+    @pytest.mark.parametrize("sampleString, expectedMatch",
+                             [("0234", "digits"),
+                              ("http://www.yahoo.com", "image_url"),
+                              ("http://www.yahoo.com/test.png", "image_url"),
+                              ("info+new_account@databrickslabs.com", "email_uncommon"),
+                              ("abcdefg", "alpha_lower"),
+                              ("ABCDEFG", "alpha_upper"),
+                              ("A09", "alphanumeric"),
+                              ("this is a test ", "free_text"),
+                              ("test_function", "identifier"),
+                              ("10.0.0.1", "ip_addr")
+                              ])
+    def test_match_patterns(self, sampleString, expectedMatch, generation_spec):
+        df_source_data = generation_spec.build()
+
+        analyzer = dg.DataAnalyzer(sparkSession=spark, df=df_source_data)
+
+        pattern_match_result = ""
+        for k, v in analyzer._regex_patterns.items():
+            pattern = f"^{v}$"
+            print(f"pattern {k}- {pattern}")
+
+            print("testing pattern")
+            if re.match(pattern, sampleString) is not None:
+                pattern_match_result = k
+                break
+            print("next one")
+
+        assert pattern_match_result == expectedMatch
+
+
+

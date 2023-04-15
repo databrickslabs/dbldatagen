@@ -159,18 +159,17 @@ class DataAnalyzer:
     _uuid_regex = r"[0-9]{3}\.[0-9]{3}\.[0-9]{3}\.[0-9]{3}"
 
     _regex_patterns = {
-        "url": r"https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)",
-        "image_url": r"https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)",
-        "email_common": r"([a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6})*",
-        "email_uncommon": r"([a-z0-9_\.\+-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})",
-        "free_text": r"",
-        "ip_addr": r"[0-9]{3}\.[0-9]{3}\.[0-9]{3}\.[0-9]{3}",
         "alpha_upper": r"[A-Z]+",
         "alpha_lower": r"[a-z]+",
         "digits": r"[0-9]+",
         "alphanumeric": r"[a-zA-Z0-9]+",
         "identifier": r"[a-zA-Z0-9_]+",
-
+        "image_url": r"https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)",
+        "url": r"https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)",
+        "email_common": r"([a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6})*",
+        "email_uncommon": r"([a-z0-9_\.\+-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})",
+        "ip_addr": r"[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}",
+        "free_text": r"(\s*[a-zA-Z0-9]+\s*[\?\.;,]*)*"
     }
 
     def _compute_pattern_match_clauses(self):
@@ -178,17 +177,20 @@ class DataAnalyzer:
         """
         stmts = []
 
+        # for each column
         for colInfo in self.columnsInfo:
             clauses = []
             if colInfo.dt == "string":
-                clauses.append("to_json(named_struct()")
-                clauses.append(f")) as {colInfo.name}")
 
-                stmt = "to_json(named_struct()\n" + ",\n".join(clauses) + f"\n)) as {colInfo.name}"
+                # compute named struct of measures matching specific regular expressions
+                for k, v in self._regex_patterns.items():
+                    clauses.append(f""" '{k}', string(round(count_if(`{colInfo.name}` regexp '^{v}$'), 4)) """)
+
+                stmt = "to_json(named_struct(\n" + ",\n".join(clauses) + f"\n)) as {colInfo.name}"
+                stmts.append(stmt)
             else:
                 stmts.append(f"'' as {colInfo.name}")
-        result = "\n".join(stmts)
-        print(result)
+        result = stmts #  "\n".join(stmts)
         return result
 
     def summarizeToDF(self):
@@ -273,40 +275,12 @@ class DataAnalyzer:
 
         metrics_clause = self._compute_pattern_match_clauses()
 
-        # string metrics
+        #string metrics
         # we'll compute probabilities that string values match specific patterns - this can be subsequently
         # used to tailor code generation
         dfDataSummary = self._addMeasureToSummary(
             'string_patterns',
-            fieldExprs=[f"""to_json(named_struct(
-                            'ip_addr', round(count_if({colInfo.name} regexp "^{self._ip_addr_regex}$") 
-                                       / count({colInfo.name}), 4), 
-                            'alpha_lower', round(count_if({colInfo.name} regexp "^[a-z]+$") 
-                                       / count({colInfo.name}), 4), 
-                            'alpha_upper', round(count_if({colInfo.name} regexp "^[A-Z]+$") 
-                                       / count({colInfo.name}), 4), 
-                            'alpha', round(count_if({colInfo.name} regexp "^[A-Za-z]+$") 
-                                       / count({colInfo.name}), 4), 
-                            'digits', round(count_if({colInfo.name} regexp "^[0-9]+$") 
-                                       / count({colInfo.name}), 4),
-                            'alphanumeric', round(count_if({colInfo.name} regexp "^[a-zA-Z0-9]+$") 
-                                       / count({colInfo.name}), 4), 
-                            'image_url', round(count_if({colInfo.name} regexp "^{self._image_url_regex}$") 
-                                       / count({colInfo.name}), 4), 
-                            'url', round(count_if({colInfo.name} regexp "^{self._url_regex}$") 
-                                       / count({colInfo.name}), 4),
-                            'email_common', round(count_if({colInfo.name} regexp "^{self._email_common_regex}$") 
-                                       / count({colInfo.name}), 4),
-                            'email_uncommon', round(count_if({colInfo.name} regexp "^{self._email_uncommon_regex}$") 
-                                       / count({colInfo.name}), 4), 
-                            'uuid', round(count_if({colInfo.name} regexp "^{self._uuid_regex}$") 
-                                       / count({colInfo.name}), 4) ,
-                            'free_text', round(count_if({colInfo.name} regexp "^{self._free_text_regex}$") 
-                                       / count({colInfo.name}), 4) 
-                                       ))
-                            as {colInfo.name}"""
-                        if colInfo.dt == "string" else "'' as {colInfo.name}"
-                        for colInfo in self.columnsInfo],
+            fieldExprs=metrics_clause,
             dfData=self._getExpandedSourceDf(),
             dfSummary=dfDataSummary)
 
