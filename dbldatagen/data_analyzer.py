@@ -53,7 +53,7 @@ class DataAnalyzer:
     _INT_32_MAX = 2 ** 16 - 1
 
     _MAX_COLUMN_ELEMENT_LENGTH_THRESHOLD = 40
-    _MAX_DISTINCT_THRESHOLD = 20
+    _MAX_DISTINCT_THRESHOLD = 50
 
     _MAX_VALUES_LINE_LENGTH = 60
     _CODE_GENERATION_INDENT = 4
@@ -65,12 +65,18 @@ class DataAnalyzer:
     # tuple for values info
     ColumnValuesInfo = namedtuple("ColumnValuesInfo", ["name", "statements", "value_refs"])
 
-    def __init__(self, df=None, sparkSession=None, valuesCountThreshold=None):
+    def __init__(self, df=None, sparkSession=None, categoricalValuesThreshold=None):
         """ Constructor:
         :param df: Dataframe to analyze
         :param sparkSession: Spark session to use
-        :param valuesCountThreshold: Values will only be computed if less than threshold, If not supplied
-               will use default setting (20)
+        :param categoricalValuesThreshold: Values will only be computed if less than threshold, If not supplied
+               will use default setting (50)
+
+        You may increase the categorical values threshold to a higher value, in which case, columns with higher values
+        of distinct values will be evaluated to see if they can be represented as a values list.
+
+        However the current implementation will flag an error if the number of categorical causes SQL array sizes to be
+        too large. Experimentally, this should be kept below 100 at present.
         """
         assert df is not None, "dataframe must be supplied"
 
@@ -84,7 +90,7 @@ class DataAnalyzer:
         self._columnsInfo = None
         self._expandedSourceDf = None
 
-        self._valuesCountThreshold = (valuesCountThreshold if valuesCountThreshold is not None
+        self._valuesCountThreshold = (categoricalValuesThreshold if categoricalValuesThreshold is not None
                                       else self._MAX_DISTINCT_THRESHOLD)
 
     def _displayRow(self, row):
