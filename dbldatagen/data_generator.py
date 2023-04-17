@@ -17,6 +17,7 @@ from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_FIXED, RANDOM_SE
                                OPTION_RANDOM, OPTION_RANDOM_SEED, OPTION_RANDOM_SEED_METHOD
 
 from .utils import ensure, topologicalSort, DataGenError, deprecated, split_list_matching_condition
+from .html_utils import HtmlUtils
 from . _version import _get_spark_version
 from .schema_parser import SchemaParser
 
@@ -1187,13 +1188,14 @@ class DataGenerator:
 
         return ", ".join(results)
 
-    def scriptTable(self, name=None, location=None, tableFormat="delta"):
+    def scriptTable(self, name=None, location=None, tableFormat="delta", asHtml=False):
         """ generate create table script suitable for format of test data set
 
         :param name: name of table to use in generated script
         :param location: path to location of data. If specified (default is None), will generate
                          an external table definition.
         :param tableFormat: table format for table
+        :param asHtml: if true, generate output suitable for use with `displayHTML` method in notebook environment
         :returns: SQL string for scripted table
         """
         assert name is not None, "`name` must be specified"
@@ -1219,14 +1221,21 @@ class DataGenerator:
         if location is not None:
             results.append(f"location '{location}'")
 
-        return "\n".join(results)
+        results = "\n".join(results)
+
+        if asHtml:
+            results = HtmlUtils.formatCodeAsHtml(results)
+
+        return results
 
     def scriptMerge(self, tgtName=None, srcName=None, updateExpr=None, delExpr=None, joinExpr=None, timeExpr=None,
                     insertExpr=None,
                     useExplicitNames=True,
                     updateColumns=None, updateColumnExprs=None,
                     insertColumns=None, insertColumnExprs=None,
-                    srcAlias="src", tgtAlias="tgt"):
+                    srcAlias="src", tgtAlias="tgt",
+                    asHtml=False
+                    ):
         """ generate merge table script suitable for format of test data set
 
         :param tgtName: name of target table to use in generated script
@@ -1253,6 +1262,7 @@ class DataGenerator:
             By default, will use src column as update value for
             target table. This should have the form [ ("update_column_name", "update column expr"), ...]
         :param useExplicitNames: If True, generate explicit column names in insert and update statements
+        :param asHtml: if true, generate output suitable for use with `displayHTML` method in notebook environment
         :returns: SQL string for scripted merge statement
         """
         assert tgtName is not None, "you must specify a target table"
@@ -1327,4 +1337,9 @@ class DataGenerator:
 
         results.append(ins_clause)
 
-        return "\n".join(results)
+        result = "\n".join(results)
+
+        if asHtml:
+            result = HtmlUtils.formatCodeAsHtml(results)
+
+        return result
