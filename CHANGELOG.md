@@ -3,6 +3,11 @@
 ## Change History
 All notable changes to the Databricks Labs Data Generator will be documented in this file.
 
+### Unreleased
+
+#### Changed
+* Added formatting of generated code as Html for script methods
+
 ### Version 0.3.4 Post 1
 
 ### Fixed
