@@ -85,6 +85,8 @@ class ColumnGenerationSpec(object):
         'short': 65536
     }
 
+    _ARRAY_STRUCT_TYPE = "array"
+
     # set up logging
 
     # restrict spurious messages from java gateway
@@ -1021,7 +1023,8 @@ class ColumnGenerationSpec(object):
             # rs: initialize the begin, end and interval if not initialized for date computations
             # defaults are start of day, now, and 1 minute respectively
 
-            if not type(self.datatype) in [ArrayType, MapType, StructType]:
+            # for array, struct and map types, either value is provided via `expr` or via values
+            if not type(self.datatype) in [ArrayType, MapType, StructType] or self.values is not None:
                 self._computeImpliedRangeIfNeeded(self.datatype)
 
             # TODO: add full support for date value generation
@@ -1032,7 +1035,7 @@ class ColumnGenerationSpec(object):
                 # record execution history
                 self.executionHistory.append(f".. using SQL expression `{self.expr}` as base")
                 self.executionHistory.append(f".. casting to  `{self.datatype}`")
-            elif type(self.datatype) in [ArrayType, MapType, StructType]:
+            elif type(self.datatype) in [ArrayType, MapType, StructType] and self.values is None:
                 new_def = expr("NULL")
             elif self._dataRange is not None and self._dataRange.isFullyPopulated():
                 self.executionHistory.append(f".. computing ranged value: {self._dataRange}")
@@ -1204,7 +1207,7 @@ class ColumnGenerationSpec(object):
 
             min_num_columns, max_num_columns = 1, 1
 
-        if validate and (min_num_columns != max_num_columns) and (struct_type != "array"):
+        if validate and (min_num_columns != max_num_columns) and (struct_type != self._ARRAY_STRUCT_TYPE):
             self.logger.warning(
                 f"Varying number of features / columns specified for non-array column [{self.name}]")
             self.logger.warning(
@@ -1228,7 +1231,7 @@ class ColumnGenerationSpec(object):
 
         self.executionHistory = []
 
-        if (min_num_columns == 1) and (max_num_columns == 1):
+        if (min_num_columns == 1) and (max_num_columns == 1) and struct_type != self._ARRAY_STRUCT_TYPE:
             # record execution history for troubleshooting
             self.executionHistory.append(f"generating single column - `{self.name}` having type `{self.datatype}`")
 
