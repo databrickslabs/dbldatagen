@@ -28,7 +28,7 @@ copyright = '2022, Databricks Inc'
 author = 'Databricks Inc'
 
 # The full version, including alpha/beta/rc tags
-release = "0.3.3post2"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpversion
+release = "0.3.4post1"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpversion
 
 
 # -- General configuration ---------------------------------------------------
@@ -44,7 +44,8 @@ extensions = [
     'sphinx.ext.viewcode',  # add links to source code
     #'numpydoc',  # handle NumPy documentation formatted docstrings. Needs to install
     'recommonmark',  # allow including Commonmark markdown in sources
-    'sphinx_rtd_theme'
+    'sphinx_rtd_theme',
+    'sphinx_copybutton'
 ]
 
 source_suffix = {

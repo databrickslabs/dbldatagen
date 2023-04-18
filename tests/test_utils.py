@@ -3,7 +3,7 @@ from datetime import timedelta
 import pytest
 
 from dbldatagen import ensure, mkBoundsList, coalesce_values, deprecated, SparkSingleton, \
-    parse_time_interval, DataGenError, split_list_matching_condition, topologicalSort
+    parse_time_interval, DataGenError, strip_margins, split_list_matching_condition, topologicalSort
 
 spark = SparkSingleton.getLocalInstance("unit tests")
 
@@ -75,6 +75,21 @@ class TestUtils:
 
         assert type(str(testException)) is str
         self.logger.info(str(testException))
+
+    @pytest.mark.parametrize("inputText,expectedText",
+                             [ ("""one
+                                 |two
+                                 |three""",
+                               "one\ntwo\nthree"),
+                               ("", ""),
+                               ("one\ntwo", "one\ntwo"),
+                               ("    one\ntwo", "    one\ntwo"),
+                               ("    |one\ntwo", "one\ntwo"),
+                               ])
+    def test_strip_margins(self, inputText, expectedText):
+        output = strip_margins(inputText, '|')
+
+        assert output == expectedText
 
     @pytest.mark.parametrize("lstData,matchFn, expectedData",
                              [

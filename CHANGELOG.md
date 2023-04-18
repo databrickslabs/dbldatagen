@@ -3,14 +3,41 @@
 ## Change History
 All notable changes to the Databricks Labs Data Generator will be documented in this file.
 
-### Unreleased
+### Version 0.3.4 Post 1
+
+### Fixed
+* Fix for use and configuration of root logger 
+
+### Acknowledgements
+Thanks to Marvin Schenkel for the contribution
+
+### Version 0.3.4
+
+#### Changed
+* Modified option to allow for range when specifying `numFeatures` with `structType='array'` to allow generation
+  of varying number of columns
+* When generating multi-column or array valued columns, compute random seed with different name for each column
+* Additional build ordering enhancements to reduce circumstances where explicit base column must be specified
+
+#### Added
+* Scripting of data generation code from schema (Experimental)
+* Scripting of data generation code from dataframe (Experimental)
+* Added top level `random` attribute to data generator specification constructor
+
+
+### Version 0.3.3post2
 
 #### Changed
 * Fixed use of logger in _version.py and in spark_singleton.py
 * Fixed template issues 
-* Added use of prospector to build process to validate common code issues
+* Document reformatting and updates, related code comment changes
+
+### Fixed
 * Apply pandas optimizations when generating multiple columns using same `withColumn` or `withColumnSpec`
-* Document reformatting and updates
+
+### Added
+* Added use of prospector to build process to validate common code issues
+
 
 ### Version 0.3.2
 
