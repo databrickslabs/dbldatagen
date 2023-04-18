@@ -97,10 +97,13 @@ Complex column types are supported - that is a column may have its type specifie
 be specified in the datatype parameter to the `withColumn` method as a string such as "array<string>" or as a
 composite of datatype object instances.
 
-If the column type is based on a struct, map or array, then the `expr` attribute must be specified to provide a
-value for the column.
+If the column type is based on a struct, map or array, then either the `expr` or the `values` attributes must be
+specified to provide a value or range of possible values for the column.
 
-If the `expr` attribute is not specified, then the default column value will be `NULL`.
+If the `values` attribute is being used to specify a range of possible values, each of the values elements must be of
+the same type as the column.
+
+If neither the `expr` or `values` attributes are specified, then the default column value will be `NULL`.
 
 For array valued columns, where all of the elements of the array are to be generated with the same column
 specification, an alternative method is also supported.
