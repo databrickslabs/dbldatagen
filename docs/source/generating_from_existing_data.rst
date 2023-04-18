@@ -20,7 +20,7 @@ For more information, see :data:`~dbldatagen.data_analyzer.DataAnalyzer`
 Analyzing the data to be synthesized
 ------------------------------------
 
-You can use the ``summarizeToDf()`` method to generate a summary analysis of a dataframe.
+You can use the ``summarizeToDF()`` method to generate a summary analysis of a dataframe.
 
 Example:
 
@@ -32,7 +32,7 @@ Example:
 
    analyzer = dg.DataAnalyzer(sparkSession=spark, df=dfSource)
 
-   display(analyzer.summarizeToDf())
+   display(analyzer.summarizeToDF())
 
 Generating code to produce the synthetic data set
 -------------------------------------------------
