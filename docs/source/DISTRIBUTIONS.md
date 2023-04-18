@@ -22,7 +22,13 @@ The following distributions are supported:
 - Exponential distribution
 
 > Note the `distribution` option will have no effect for values that are not randomly generated as
-> per use of the `random` option
+> per use of the `random` option.
+> 
+> For values generated randomly, continuous distributions can still be used with discrete values such as strings
+> as the underlying random numbers used to select the appropriate discrete values will be drawn from the specified
+> distribution. So, for discrete values, the frequency of occurrence of particular values should conform approximately
+> to the underlying distribution.
+
 
 ### Examples 
 
