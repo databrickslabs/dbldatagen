@@ -245,6 +245,7 @@ class TestComplexColumns:
                 .withColumnSpec("arrayVal", expr="array(id+1)")
                 )
         df = gen1.build()
+        assert df is not None
         df.show()
 
     def test_use_of_struct_in_schema1(self, setupLogging):
@@ -308,7 +309,6 @@ class TestComplexColumns:
         rows = test_df.collect()
 
         for r in rows:
-            print(r)
             assert r['test'] is not None
 
     def test_single_element_array(self):
@@ -395,5 +395,4 @@ class TestComplexColumns:
         rows = test_df.collect()
 
         for r in rows:
-            print(r)
             assert r['test'] is not None
