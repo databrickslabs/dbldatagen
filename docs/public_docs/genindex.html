@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Index &mdash; Databricks Labs Data Generator 0.3.4post2 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/tdg.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/clipboard.min.js"></script>
+        <script src="_static/copybutton.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="#" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_from_existing_data.html">Generating synthetic data from existing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference/api/modules.html">The dbldatagen package API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Index</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+
+<h1 id="index">Index</h1>
+
+<div class="genindex-jumpbox">
+ <a href="#A"><strong>A</strong></a>
+ | <a href="#B"><strong>B</strong></a>
+ | <a href="#C"><strong>C</strong></a>
+ | <a href="#D"><strong>D</strong></a>
+ | <a href="#E"><strong>E</strong></a>
+ | <a href="#F"><strong>F</strong></a>
+ | <a href="#G"><strong>G</strong></a>
+ | <a href="#H"><strong>H</strong></a>
+ | <a href="#I"><strong>I</strong></a>
+ | <a href="#K"><strong>K</strong></a>
+ | <a href="#M"><strong>M</strong></a>
+ | <a href="#N"><strong>N</strong></a>
+ | <a href="#O"><strong>O</strong></a>
+ | <a href="#P"><strong>P</strong></a>
+ | <a href="#R"><strong>R</strong></a>
+ | <a href="#S"><strong>S</strong></a>
+ | <a href="#T"><strong>T</strong></a>
+ | <a href="#U"><strong>U</strong></a>
+ | <a href="#W"><strong>W</strong></a>
+ 
+</div>
+<h2 id="A">A</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.datarange.html#dbldatagen.datarange.DataRange.adjustForColumnDatatype">adjustForColumnDatatype() (DataRange method)</a>
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange.adjustForColumnDatatype">(DateRange method)</a>
+</li>
+        <li><a href="reference/api/dbldatagen.nrange.html#dbldatagen.nrange.NRange.adjustForColumnDatatype">(NRange method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.distributions.beta.html#dbldatagen.distributions.beta.Beta.alpha">alpha (Beta property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="B">B</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.baseColumn">baseColumn (ColumnGenerationSpec property)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.baseColumns">baseColumns (ColumnGenerationSpec property)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.begin">begin (ColumnGenerationSpec property)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.distributions.beta.html#dbldatagen.distributions.beta.Beta.beta">beta (Beta property)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.distributions.beta.html#dbldatagen.distributions.beta.Beta">Beta (class in dbldatagen.distributions.beta)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.distributions.beta.html#dbldatagen.distributions.beta.Beta.beta_func">beta_func() (Beta static method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.build">build() (DataGenerator method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.build_order">build_order (DataGenerator property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="C">C</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.column_spec_options.html#dbldatagen.column_spec_options.ColumnSpecOptions.checkBoolOption">checkBoolOption() (ColumnSpecOptions method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_spec_options.html#dbldatagen.column_spec_options.ColumnSpecOptions.checkExclusiveOptions">checkExclusiveOptions() (ColumnSpecOptions method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_spec_options.html#dbldatagen.column_spec_options.ColumnSpecOptions.checkOptionValues">checkOptionValues() (ColumnSpecOptions method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_spec_options.html#dbldatagen.column_spec_options.ColumnSpecOptions.checkValidColumnProperties">checkValidColumnProperties() (ColumnSpecOptions method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.text_generators.html#dbldatagen.text_generators.ILText.classicGenerateText">classicGenerateText() (ILText method)</a>
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.text_generators.html#dbldatagen.text_generators.TemplateGenerator.classicGenerateText">(TemplateGenerator method)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.clone">clone() (DataGenerator method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.utils.html#dbldatagen.utils.coalesce_values">coalesce_values() (in module dbldatagen.utils)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec">ColumnGenerationSpec (class in dbldatagen.column_generation_spec)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.function_builder.html#dbldatagen.function_builder.ColumnGeneratorBuilder">ColumnGeneratorBuilder (class in dbldatagen.function_builder)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_spec_options.html#dbldatagen.column_spec_options.ColumnSpecOptions">ColumnSpecOptions (class in dbldatagen.column_spec_options)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.schema_parser.html#dbldatagen.schema_parser.SchemaParser.columnsReferencesFromSQLString">columnsReferencesFromSQLString() (SchemaParser class method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.schema_parser.html#dbldatagen.schema_parser.SchemaParser.columnTypeFromString">columnTypeFromString() (SchemaParser class method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.text_generators.html#dbldatagen.text_generators.TextGenerator.compactNumpyTypeForValues">compactNumpyTypeForValues() (TextGenerator static method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.computeBuildPlan">computeBuildPlan() (DataGenerator method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange.computeDateRange">computeDateRange() (DateRange class method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange.computeTimestampIntervals">computeTimestampIntervals() (DateRange method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange.computeTimestampRange">computeTimestampRange() (DateRange class method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="D">D</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.data_analyzer.html#dbldatagen.data_analyzer.DataAnalyzer">DataAnalyzer (class in dbldatagen.data_analyzer)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.distributions.data_distribution.html#dbldatagen.distributions.data_distribution.DataDistribution">DataDistribution (class in dbldatagen.distributions.data_distribution)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator">DataGenerator (class in dbldatagen.data_generator)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.utils.html#dbldatagen.utils.DataGenError">DataGenError</a>
+</li>
+      <li><a href="reference/api/dbldatagen.datarange.html#dbldatagen.datarange.DataRange">DataRange (class in dbldatagen.datarange)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.datatype">datatype (ColumnGenerationSpec property)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange">DateRange (class in dbldatagen.daterange)</a>
+</li>
+      <li>
+    dbldatagen
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.html#module-dbldatagen">module</a>
+</li>
+      </ul></li>
+      <li>
+    dbldatagen.column_generation_spec
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.column_generation_spec.html#module-dbldatagen.column_generation_spec">module</a>
+</li>
+      </ul></li>
+      <li>
+    dbldatagen.column_spec_options
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.column_spec_options.html#module-dbldatagen.column_spec_options">module</a>
+</li>
+      </ul></li>
+      <li>
+    dbldatagen.data_analyzer
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.data_analyzer.html#module-dbldatagen.data_analyzer">module</a>
+</li>
+      </ul></li>
+      <li>
+    dbldatagen.data_generator
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.data_generator.html#module-dbldatagen.data_generator">module</a>
+</li>
+      </ul></li>
+      <li>
+    dbldatagen.datagen_constants
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.datagen_constants.html#module-dbldatagen.datagen_constants">module</a>
+</li>
+      </ul></li>
+      <li>
+    dbldatagen.datarange
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.datarange.html#module-dbldatagen.datarange">module</a>
+</li>
+      </ul></li>
+      <li>
+    dbldatagen.daterange
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.daterange.html#module-dbldatagen.daterange">module</a>
+</li>
+      </ul></li>
+      <li>
+    dbldatagen.distributions
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.distributions.html#module-dbldatagen.distributions">module</a>
+</li>
+      </ul></li>
+      <li>
+    dbldatagen.distributions.beta
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.distributions.beta.html#module-dbldatagen.distributions.beta">module</a>
+</li>
+      </ul></li>
+      <li>
+    dbldatagen.distributions.data_distribution
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.distributions.data_distribution.html#module-dbldatagen.distributions.data_distribution">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    dbldatagen.distributions.exponential_distribution
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.distributions.exponential_distribution.html#module-dbldatagen.distributions.exponential_distribution">module</a>
+</li>
+      </ul></li>
+      <li>
+    dbldatagen.distributions.gamma
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.distributions.gamma.html#module-dbldatagen.distributions.gamma">module</a>
+</li>
+      </ul></li>
+      <li>
+    dbldatagen.distributions.normal_distribution
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.distributions.normal_distribution.html#module-dbldatagen.distributions.normal_distribution">module</a>
+</li>
+      </ul></li>
+      <li>
+    dbldatagen.function_builder
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.function_builder.html#module-dbldatagen.function_builder">module</a>
+</li>
+      </ul></li>
+      <li>
+    dbldatagen.nrange
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.nrange.html#module-dbldatagen.nrange">module</a>
+</li>
+      </ul></li>
+      <li>
+    dbldatagen.schema_parser
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.schema_parser.html#module-dbldatagen.schema_parser">module</a>
+</li>
+      </ul></li>
+      <li>
+    dbldatagen.spark_singleton
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.spark_singleton.html#module-dbldatagen.spark_singleton">module</a>
+</li>
+      </ul></li>
+      <li>
+    dbldatagen.text_generator_plugins
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.text_generator_plugins.html#module-dbldatagen.text_generator_plugins">module</a>
+</li>
+      </ul></li>
+      <li>
+    dbldatagen.text_generators
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.text_generators.html#module-dbldatagen.text_generators">module</a>
+</li>
+      </ul></li>
+      <li>
+    dbldatagen.utils
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.utils.html#module-dbldatagen.utils">module</a>
+</li>
+      </ul></li>
+      <li><a href="reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange.DEFAULT_DATE_FORMAT">DEFAULT_DATE_FORMAT (DateRange attribute)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange.DEFAULT_END_DATE">DEFAULT_END_DATE (DateRange attribute)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange.DEFAULT_END_DATE_TIMESTAMP">DEFAULT_END_DATE_TIMESTAMP (DateRange attribute)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange.DEFAULT_END_TIMESTAMP">DEFAULT_END_TIMESTAMP (DateRange attribute)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange.DEFAULT_START_DATE">DEFAULT_START_DATE (DateRange attribute)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange.DEFAULT_START_DATE_TIMESTAMP">DEFAULT_START_DATE_TIMESTAMP (DateRange attribute)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange.DEFAULT_START_TIMESTAMP">DEFAULT_START_TIMESTAMP (DateRange attribute)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange.DEFAULT_UTC_TS_FORMAT">DEFAULT_UTC_TS_FORMAT (DateRange attribute)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.utils.html#dbldatagen.utils.deprecated">deprecated() (in module dbldatagen.utils)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.describe">describe() (DataGenerator method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="E">E</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.end">end (ColumnGenerationSpec property)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.utils.html#dbldatagen.utils.ensure">ensure() (in module dbldatagen.utils)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.explain">explain() (DataGenerator method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.distributions.exponential_distribution.html#dbldatagen.distributions.exponential_distribution.Exponential">Exponential (class in dbldatagen.distributions.exponential_distribution)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.distributions.exponential_distribution.html#dbldatagen.distributions.exponential_distribution.Exponential.exponential_func">exponential_func() (Exponential static method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.expr">expr (ColumnGenerationSpec property)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.exprs">exprs (ColumnGenerationSpec property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="F">F</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.text_generator_plugins.html#dbldatagen.text_generator_plugins.fakerText">fakerText() (in module dbldatagen.text_generator_plugins)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.text_generator_plugins.html#dbldatagen.text_generator_plugins.FakerTextFactory">FakerTextFactory (class in dbldatagen.text_generator_plugins)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.flatten">flatten() (DataGenerator static method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="G">G</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.distributions.gamma.html#dbldatagen.distributions.gamma.Gamma">Gamma (class in dbldatagen.distributions.gamma)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.distributions.gamma.html#dbldatagen.distributions.gamma.Gamma.gamma_func">gamma_func() (Gamma static method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.generateName">generateName() (DataGenerator class method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.distributions.beta.html#dbldatagen.distributions.beta.Beta.generateNormalizedDistributionSample">generateNormalizedDistributionSample() (Beta method)</a>
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.distributions.data_distribution.html#dbldatagen.distributions.data_distribution.DataDistribution.generateNormalizedDistributionSample">(DataDistribution method)</a>
+</li>
+        <li><a href="reference/api/dbldatagen.distributions.exponential_distribution.html#dbldatagen.distributions.exponential_distribution.Exponential.generateNormalizedDistributionSample">(Exponential method)</a>
+</li>
+        <li><a href="reference/api/dbldatagen.distributions.gamma.html#dbldatagen.distributions.gamma.Gamma.generateNormalizedDistributionSample">(Gamma method)</a>
+</li>
+        <li><a href="reference/api/dbldatagen.distributions.normal_distribution.html#dbldatagen.distributions.normal_distribution.Normal.generateNormalizedDistributionSample">(Normal method)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/api/dbldatagen.text_generators.html#dbldatagen.text_generators.ILText.generateText">generateText() (ILText method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.distributions.data_distribution.html#dbldatagen.distributions.data_distribution.DataDistribution.get_np_random_generator">get_np_random_generator() (DataDistribution static method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.text_generators.html#dbldatagen.text_generators.TextGenerator.getAsTupleOrElse">getAsTupleOrElse() (TextGenerator static method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.getColumnSpec">getColumnSpec() (DataGenerator method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.getColumnType">getColumnType() (DataGenerator method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.datarange.html#dbldatagen.datarange.DataRange.getContinuousRange">getContinuousRange() (DataRange method)</a>
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange.getContinuousRange">(DateRange method)</a>
+</li>
+        <li><a href="reference/api/dbldatagen.nrange.html#dbldatagen.nrange.NRange.getContinuousRange">(NRange method)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/api/dbldatagen.datarange.html#dbldatagen.datarange.DataRange.getDiscreteRange">getDiscreteRange() (DataRange method)</a>
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange.getDiscreteRange">(DateRange method)</a>
+</li>
+        <li><a href="reference/api/dbldatagen.nrange.html#dbldatagen.nrange.NRange.getDiscreteRange">(NRange method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.getInferredColumnNames">getInferredColumnNames() (DataGenerator method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.spark_singleton.html#dbldatagen.spark_singleton.SparkSingleton.getInstance">getInstance() (SparkSingleton class method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.spark_singleton.html#dbldatagen.spark_singleton.SparkSingleton.getLocalInstance">getLocalInstance() (SparkSingleton class method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.getNames">getNames() (ColumnGenerationSpec method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.getNamesAndTypes">getNamesAndTypes() (ColumnGenerationSpec method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.text_generators.html#dbldatagen.text_generators.TextGenerator.getNPRandomGenerator">getNPRandomGenerator() (TextGenerator method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.getOrElse">getOrElse() (ColumnGenerationSpec method)</a>
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.column_spec_options.html#dbldatagen.column_spec_options.ColumnSpecOptions.getOrElse">(ColumnSpecOptions method)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.getOutputColumnNames">getOutputColumnNames() (DataGenerator method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.getOutputColumnNamesAndTypes">getOutputColumnNamesAndTypes() (DataGenerator method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.getPlanEntry">getPlanEntry() (ColumnGenerationSpec method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.datarange.html#dbldatagen.datarange.DataRange.getScale">getScale() (DataRange method)</a>
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange.getScale">(DateRange method)</a>
+</li>
+        <li><a href="reference/api/dbldatagen.nrange.html#dbldatagen.nrange.NRange.getScale">(NRange method)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/api/dbldatagen.schema_parser.html#dbldatagen.schema_parser.SchemaParser.getTypeDefinitionParser">getTypeDefinitionParser() (SchemaParser class method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="H">H</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.hasColumnSpec">hasColumnSpec() (DataGenerator method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="I">I</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.text_generators.html#dbldatagen.text_generators.ILText">ILText (class in dbldatagen.text_generators)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.inferredSchema">inferredSchema (DataGenerator property)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.interval">interval (ColumnGenerationSpec property)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.datarange.html#dbldatagen.datarange.DataRange.isEmpty">isEmpty() (DataRange method)</a>
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange.isEmpty">(DateRange method)</a>
+</li>
+        <li><a href="reference/api/dbldatagen.nrange.html#dbldatagen.nrange.NRange.isEmpty">(NRange method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.isFieldExplicitlyDefined">isFieldExplicitlyDefined() (DataGenerator method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.isFieldOmitted">isFieldOmitted (ColumnGenerationSpec property)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.datarange.html#dbldatagen.datarange.DataRange.isFullyPopulated">isFullyPopulated() (DataRange method)</a>
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange.isFullyPopulated">(DateRange method)</a>
+</li>
+        <li><a href="reference/api/dbldatagen.nrange.html#dbldatagen.nrange.NRange.isFullyPopulated">(NRange method)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.isRandom">isRandom (ColumnGenerationSpec property)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.isWeightedValuesColumn">isWeightedValuesColumn (ColumnGenerationSpec property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="K">K</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.keys">keys() (ColumnGenerationSpec method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="M">M</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.makeGenerationExpressions">makeGenerationExpressions() (ColumnGenerationSpec method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.max">max (ColumnGenerationSpec property)</a>
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.datarange.html#dbldatagen.datarange.DataRange.max">(DataRange property)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.min">min (ColumnGenerationSpec property)</a>
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.datarange.html#dbldatagen.datarange.DataRange.min">(DataRange property)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/api/dbldatagen.utils.html#dbldatagen.utils.mkBoundsList">mkBoundsList() (in module dbldatagen.utils)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.function_builder.html#dbldatagen.function_builder.ColumnGeneratorBuilder.mkExprChoicesFn">mkExprChoicesFn() (ColumnGeneratorBuilder class method)</a>
+</li>
+      <li>
+    module
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.html#module-dbldatagen">dbldatagen</a>
+</li>
+        <li><a href="reference/api/dbldatagen.column_generation_spec.html#module-dbldatagen.column_generation_spec">dbldatagen.column_generation_spec</a>
+</li>
+        <li><a href="reference/api/dbldatagen.column_spec_options.html#module-dbldatagen.column_spec_options">dbldatagen.column_spec_options</a>
+</li>
+        <li><a href="reference/api/dbldatagen.data_analyzer.html#module-dbldatagen.data_analyzer">dbldatagen.data_analyzer</a>
+</li>
+        <li><a href="reference/api/dbldatagen.data_generator.html#module-dbldatagen.data_generator">dbldatagen.data_generator</a>
+</li>
+        <li><a href="reference/api/dbldatagen.datagen_constants.html#module-dbldatagen.datagen_constants">dbldatagen.datagen_constants</a>
+</li>
+        <li><a href="reference/api/dbldatagen.datarange.html#module-dbldatagen.datarange">dbldatagen.datarange</a>
+</li>
+        <li><a href="reference/api/dbldatagen.daterange.html#module-dbldatagen.daterange">dbldatagen.daterange</a>
+</li>
+        <li><a href="reference/api/dbldatagen.distributions.html#module-dbldatagen.distributions">dbldatagen.distributions</a>
+</li>
+        <li><a href="reference/api/dbldatagen.distributions.beta.html#module-dbldatagen.distributions.beta">dbldatagen.distributions.beta</a>
+</li>
+        <li><a href="reference/api/dbldatagen.distributions.data_distribution.html#module-dbldatagen.distributions.data_distribution">dbldatagen.distributions.data_distribution</a>
+</li>
+        <li><a href="reference/api/dbldatagen.distributions.exponential_distribution.html#module-dbldatagen.distributions.exponential_distribution">dbldatagen.distributions.exponential_distribution</a>
+</li>
+        <li><a href="reference/api/dbldatagen.distributions.gamma.html#module-dbldatagen.distributions.gamma">dbldatagen.distributions.gamma</a>
+</li>
+        <li><a href="reference/api/dbldatagen.distributions.normal_distribution.html#module-dbldatagen.distributions.normal_distribution">dbldatagen.distributions.normal_distribution</a>
+</li>
+        <li><a href="reference/api/dbldatagen.function_builder.html#module-dbldatagen.function_builder">dbldatagen.function_builder</a>
+</li>
+        <li><a href="reference/api/dbldatagen.nrange.html#module-dbldatagen.nrange">dbldatagen.nrange</a>
+</li>
+        <li><a href="reference/api/dbldatagen.schema_parser.html#module-dbldatagen.schema_parser">dbldatagen.schema_parser</a>
+</li>
+        <li><a href="reference/api/dbldatagen.spark_singleton.html#module-dbldatagen.spark_singleton">dbldatagen.spark_singleton</a>
+</li>
+        <li><a href="reference/api/dbldatagen.text_generator_plugins.html#module-dbldatagen.text_generator_plugins">dbldatagen.text_generator_plugins</a>
+</li>
+        <li><a href="reference/api/dbldatagen.text_generators.html#module-dbldatagen.text_generators">dbldatagen.text_generators</a>
+</li>
+        <li><a href="reference/api/dbldatagen.utils.html#module-dbldatagen.utils">dbldatagen.utils</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="N">N</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.distributions.normal_distribution.html#dbldatagen.distributions.normal_distribution.Normal">Normal (class in dbldatagen.distributions.normal_distribution)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.distributions.normal_distribution.html#dbldatagen.distributions.normal_distribution.Normal.normal_func">normal_func() (Normal static method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.nrange.html#dbldatagen.nrange.NRange">NRange (class in dbldatagen.nrange)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.numColumns">numColumns (ColumnGenerationSpec property)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.numFeatures">numFeatures (ColumnGenerationSpec property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="O">O</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.option">option() (DataGenerator method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.column_spec_options.html#dbldatagen.column_spec_options.ColumnSpecOptions.options">options (ColumnSpecOptions property)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.options">options() (DataGenerator method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="P">P</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.text_generators.html#dbldatagen.text_generators.ILText.pandasGenerateText">pandasGenerateText() (ILText method)</a>
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.text_generator_plugins.html#dbldatagen.text_generator_plugins.PyfuncText.pandasGenerateText">(PyfuncText method)</a>
+</li>
+        <li><a href="reference/api/dbldatagen.text_generators.html#dbldatagen.text_generators.TemplateGenerator.pandasGenerateText">(TemplateGenerator method)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/api/dbldatagen.utils.html#dbldatagen.utils.parse_time_interval">parse_time_interval() (in module dbldatagen.utils)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.schema_parser.html#dbldatagen.schema_parser.SchemaParser.parseCreateTable">parseCreateTable() (SchemaParser class method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.daterange.html#dbldatagen.daterange.DateRange.parseInterval">parseInterval() (DateRange class method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.prefix">prefix (ColumnGenerationSpec property)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.text_generator_plugins.html#dbldatagen.text_generator_plugins.PyfuncText">PyfuncText (class in dbldatagen.text_generator_plugins)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.text_generator_plugins.html#dbldatagen.text_generator_plugins.PyfuncTextFactory">PyfuncTextFactory (class in dbldatagen.text_generator_plugins)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="R">R</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.random">random (DataGenerator property)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.randomSeed">randomSeed (ColumnGenerationSpec property)</a>
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.distributions.data_distribution.html#dbldatagen.distributions.data_distribution.DataDistribution.randomSeed">(DataDistribution property)</a>
+</li>
+        <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.randomSeed">(DataGenerator property)</a>
+</li>
+        <li><a href="reference/api/dbldatagen.text_generators.html#dbldatagen.text_generators.TextGenerator.randomSeed">(TextGenerator property)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.distributions.exponential_distribution.html#dbldatagen.distributions.exponential_distribution.Exponential.rate">rate (Exponential property)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.reset">reset() (DataGenerator class method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.distributions.data_distribution.html#dbldatagen.distributions.data_distribution.DataDistribution.rounding">rounding (DataDistribution property)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.rowCount">rowCount (DataGenerator property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="S">S</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.distributions.exponential_distribution.html#dbldatagen.distributions.exponential_distribution.Exponential.scale">scale (Exponential property)</a>
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.distributions.gamma.html#dbldatagen.distributions.gamma.Gamma.scale">(Gamma property)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.schema">schema (DataGenerator property)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.schemaFields">schemaFields (DataGenerator property)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.schema_parser.html#dbldatagen.schema_parser.SchemaParser">SchemaParser (class in dbldatagen.schema_parser)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.data_analyzer.html#dbldatagen.data_analyzer.DataAnalyzer.scriptDataGeneratorFromData">scriptDataGeneratorFromData() (DataAnalyzer method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.data_analyzer.html#dbldatagen.data_analyzer.DataAnalyzer.scriptDataGeneratorFromSchema">scriptDataGeneratorFromSchema() (DataAnalyzer class method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.scriptMerge">scriptMerge() (DataGenerator method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.scriptTable">scriptTable() (DataGenerator method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.seedColumnName">seedColumnName (DataGenerator property)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.setBaseColumnDatatypes">setBaseColumnDatatypes() (ColumnGenerationSpec method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.setRowCount">setRowCount() (DataGenerator method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.distributions.gamma.html#dbldatagen.distributions.gamma.Gamma.shape">shape (Gamma property)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.spark_singleton.html#dbldatagen.spark_singleton.SparkSingleton">SparkSingleton (class in dbldatagen.spark_singleton)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.specOptions">specOptions (ColumnGenerationSpec property)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.utils.html#dbldatagen.utils.split_list_matching_condition">split_list_matching_condition() (in module dbldatagen.utils)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.distributions.normal_distribution.html#dbldatagen.distributions.normal_distribution.Normal.standardNormal">standardNormal() (Normal class method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.step">step (ColumnGenerationSpec property)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.utils.html#dbldatagen.utils.strip_margins">strip_margins() (in module dbldatagen.utils)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.structType">structType() (ColumnGenerationSpec method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.suffix">suffix (ColumnGenerationSpec property)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.data_analyzer.html#dbldatagen.data_analyzer.DataAnalyzer.summarize">summarize() (DataAnalyzer method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.data_analyzer.html#dbldatagen.data_analyzer.DataAnalyzer.summarizeToDF">summarizeToDF() (DataAnalyzer method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="T">T</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.text_generators.html#dbldatagen.text_generators.TemplateGenerator">TemplateGenerator (class in dbldatagen.text_generators)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.text_generators.html#dbldatagen.text_generators.TemplateGenerator.templates">templates (TemplateGenerator property)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.text_separator">text_separator (ColumnGenerationSpec property)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.text_generators.html#dbldatagen.text_generators.TextGenerator">TextGenerator (class in dbldatagen.text_generators)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.column_generation_spec.html#dbldatagen.column_generation_spec.ColumnGenerationSpec.textGenerator">textGenerator (ColumnGenerationSpec property)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.utils.html#dbldatagen.utils.topologicalSort">topologicalSort() (in module dbldatagen.utils)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="U">U</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.use_seed">use_seed() (DataGenerator method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.useSeed">useSeed() (DataGenerator class method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="W">W</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.withColumn">withColumn() (DataGenerator method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.withColumnSpec">withColumnSpec() (DataGenerator method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.withColumnSpecs">withColumnSpecs() (DataGenerator method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.withIdOutput">withIdOutput() (DataGenerator method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.text_generator_plugins.html#dbldatagen.text_generator_plugins.PyfuncTextFactory.withInit">withInit() (PyfuncTextFactory method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.text_generator_plugins.html#dbldatagen.text_generator_plugins.PyfuncTextFactory.withInitPerBatch">withInitPerBatch() (PyfuncTextFactory method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/api/dbldatagen.distributions.data_distribution.html#dbldatagen.distributions.data_distribution.DataDistribution.withRandomSeed">withRandomSeed() (DataDistribution method)</a>
+
+      <ul>
+        <li><a href="reference/api/dbldatagen.text_generators.html#dbldatagen.text_generators.TextGenerator.withRandomSeed">(TextGenerator method)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/api/dbldatagen.text_generator_plugins.html#dbldatagen.text_generator_plugins.PyfuncTextFactory.withRootProperty">withRootProperty() (PyfuncTextFactory method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.distributions.data_distribution.html#dbldatagen.distributions.data_distribution.DataDistribution.withRounding">withRounding() (DataDistribution method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.withRowCount">withRowCount() (DataGenerator method)</a>
+</li>
+      <li><a href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.withSchema">withSchema() (DataGenerator method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

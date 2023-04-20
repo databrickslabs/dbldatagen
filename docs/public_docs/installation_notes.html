@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Installation Notes &mdash; Databricks Labs Data Generator 0.3.4post2 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/tdg.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/clipboard.min.js"></script>
+        <script src="_static/copybutton.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Generating Column Data" href="generating_column_data.html" />
+    <link rel="prev" title="Getting Started with the Databricks Labs Data Generator" href="APIDOCS.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation instructions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installing-from-pypi">Installing from PyPi</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installing-from-databricks-labs-repository-source">Installing from Databricks Labs repository source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installing-older-releases">Installing older releases</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#manual-installation">Manual installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#additional-information">Additional information</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_from_existing_data.html">Generating synthetic data from existing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference/api/modules.html">The dbldatagen package API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Installation Notes</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/installation_notes.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="installation-notes">
+<h1>Installation Notes<a class="headerlink" href="#installation-notes" title="Permalink to this heading"></a></h1>
+<p>The data generator framework can be installed into your Databricks environment by
+one of the following methods:</p>
+<ul class="simple">
+<li><p>Installation from the PyPi package</p></li>
+<li><p>Installing and building directly from the Databricks Labs Github repository</p></li>
+<li><p>Installing the Python wheel file into your environment</p></li>
+</ul>
+<section id="installing-from-pypi">
+<h2>Installing from PyPi<a class="headerlink" href="#installing-from-pypi" title="Permalink to this heading"></a></h2>
+<p>To install the <cite>dbldatagen</cite> package from PyPi, add a cell to your notebook with the following code:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="n">pip</span> <span class="n">install</span> <span class="n">dbldatagen</span>
+</pre></div>
+</div>
+<p>This will install the PyPi package and works in regular notebooks, Delta Live Tables pipeline notebooks, and works on
+the community edition.</p>
+<p>If working using the command line, you can issue the following command to install within your environment.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">dbldatagen</span>
+</pre></div>
+</div>
+</section>
+<section id="installing-from-databricks-labs-repository-source">
+<h2>Installing from Databricks Labs repository source<a class="headerlink" href="#installing-from-databricks-labs-repository-source" title="Permalink to this heading"></a></h2>
+<dl class="simple">
+<dt>When developing with the Databricks notebook environment, you can use the notebook-scoped library install</dt><dd><p>to install and build from the source in the Databricks Labs Github repository.</p>
+</dd>
+</dl>
+<p>To do this, add and execute the following cell at the start of your notebook:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="n">pip</span> <span class="n">install</span> <span class="n">git</span><span class="o">+</span><span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">databrickslabs</span><span class="o">/</span><span class="n">dbldatagen</span><span class="nd">@current</span>
+</pre></div>
+</div>
+<p>By default, this will install a fresh build from the latest release based on the <code class="docutils literal notranslate"><span class="pre">master</span></code> branch.
+You can install from a specific branch by appending the branch identifier or tag to the GitHub URL.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="n">pip</span> <span class="n">install</span> <span class="n">git</span><span class="o">+</span><span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">databrickslabs</span><span class="o">/</span><span class="n">dbldatagen</span><span class="nd">@dbr_7_3_LTS_compat</span>
+</pre></div>
+</div>
+<p>The following tags will be used to pick up specific versions:</p>
+<ul class="simple">
+<li><p><cite>current</cite> - the latest build from the master branch + doc changes and critical bug fixes</p></li>
+<li><p><cite>stable</cite> - the latest release from the master branch (with changes for version marking and documentation only).</p></li>
+<li><p><cite>preview</cite> - a preview build of forthcoming features (typically from the <cite>develop</cite> branch)</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In rare cases, if there are critical bug fixes, these will be incorporated into <cite>stable</cite> version.</p>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p>See the following links for more details:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://docs.microsoft.com/en-us/azure/databricks/libraries/notebooks-python-libraries#install-a-library-from-a-version-control-system-with-pip/">Azure documentation on notebook scoped libraries</a></p></li>
+<li><p><a class="reference external" href="https://docs.databricks.com/libraries/notebooks-python-libraries.html#id5">AWS documentation on notebook scoped libraries</a></p></li>
+<li><p><a class="reference external" href="https://pip.pypa.io/en/stable/cli/pip_install/">VCS support in pip</a></p></li>
+</ul>
+</div>
+</section>
+<section id="installing-older-releases">
+<h2>Installing older releases<a class="headerlink" href="#installing-older-releases" title="Permalink to this heading"></a></h2>
+<p>Prior to the availability of PyPi releases, the release process included  Python wheels in the  GitHub release assets.</p>
+<p>You can download a specific Python wheel directly from the GitHub releases for these cases.</p>
+<p>The complete set of available releases can be accessed <a class="reference external" href="https://github.com/databrickslabs/dbldatagen/releases">here</a>.</p>
+<p>You can install a specific wheel using either <cite>%pip install</cite> or the manual method.</p>
+<p>To install a Python wheel  from a specific release with <cite>pip</cite> use the following syntax:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="n">pip</span> <span class="n">install</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">databrickslabs</span><span class="o">/</span><span class="n">dbldatagen</span><span class="o">/</span><span class="n">releases</span><span class="o">/</span><span class="n">download</span><span class="o">/</span><span class="n">v021</span><span class="o">/</span><span class="n">dbldatagen</span><span class="o">-</span><span class="mf">0.2.1</span><span class="o">-</span><span class="n">py3</span><span class="o">-</span><span class="n">none</span><span class="o">-</span><span class="nb">any</span><span class="o">.</span><span class="n">whl</span>
+</pre></div>
+</div>
+<p>Replace the reference to the <cite>v021</cite> wheel with the reference to the appropriate wheel as needed.</p>
+<p>To install older releases from PyPi, include a release qualifier in the Pip install command.</p>
+<p>For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="n">pip</span> <span class="n">install</span> <span class="n">dbldatagen</span><span class="o">==</span><span class="n">v0</span><span class="mf">.3.0</span>
+</pre></div>
+</div>
+<p>All new releases will be released via PyPi only.</p>
+<section id="manual-installation">
+<h3>Manual installation<a class="headerlink" href="#manual-installation" title="Permalink to this heading"></a></h3>
+<p>Older releases may still be installed manually, however the use of one of the Pip install based methods is recommended.</p>
+<p>The following steps outline how to install an older binary release manually</p>
+<ul class="simple">
+<li><p><strong>Locate the wheel file in the Databricks Labs data generator releases</strong></p></li>
+<li><dl class="simple">
+<dt><strong>Download the wheel artifact from the releases</strong></dt><dd><ul>
+<li><p>Select the desired release</p></li>
+<li><p>Select the wheel artifact from the release assets</p></li>
+<li><p>Download it</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>Create library entry in workspace</strong></dt><dd><ul>
+<li><p>Create the workspace library</p></li>
+<li><p>Upload previously downloaded wheel</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p><strong>Attach library to cluster</strong></p></li>
+</ul>
+</section>
+<section id="additional-information">
+<h3>Additional information<a class="headerlink" href="#additional-information" title="Permalink to this heading"></a></h3>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p>See the following links for more details:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://docs.microsoft.com/en-us/azure/databricks/libraries/">Azure documentation on libraries</a></p></li>
+<li><p><a class="reference external" href="https://docs.databricks.com/libraries/index.html">AWS documentation on libraries</a></p></li>
+</ul>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="APIDOCS.html" class="btn btn-neutral float-left" title="Getting Started with the Databricks Labs Data Generator" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="generating_column_data.html" class="btn btn-neutral float-right" title="Generating Column Data" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

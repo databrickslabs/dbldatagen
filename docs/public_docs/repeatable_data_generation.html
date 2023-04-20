@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Repeatable Data Generation &mdash; Databricks Labs Data Generator 0.3.4post2 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/tdg.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/clipboard.min.js"></script>
+        <script src="_static/copybutton.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Using Streaming Data" href="using_streaming_data.html" />
+    <link rel="prev" title="Options and Additional Features" href="options_and_features.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Repeatable Data Generation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#generating-random-data">Generating random data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#true-random-data">True random Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#use-of-hashed-field-names">Use of Hashed field names</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#data-generation-algorithm">Data Generation algorithm</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#column-value-generation">Column Value Generation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_from_existing_data.html">Generating synthetic data from existing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference/api/modules.html">The dbldatagen package API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Repeatable Data Generation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/repeatable_data_generation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="repeatable-data-generation">
+<h1>Repeatable Data Generation<a class="headerlink" href="#repeatable-data-generation" title="Permalink to this heading"></a></h1>
+<p>One of the basic principles of the data generator is that all data can be generated multiple times and
+produce the same results unless a column is marked <code class="docutils literal notranslate"><span class="pre">random</span></code> and no random seed is being used.</p>
+<p>Data is generated by generating an internal autoincrementing field called <code class="docutils literal notranslate"><span class="pre">id</span></code>. The name of this column may be
+overridden by use of an argument to the instantiation of the DataGenerator object.</p>
+<p>All additional columns are generated through some transformation of the <code class="docutils literal notranslate"><span class="pre">id</span></code> column or some other designated
+<code class="docutils literal notranslate"><span class="pre">baseColumn</span></code>, either by using its value, a hash of its value or an array of values if you are using multiple
+<code class="docutils literal notranslate"><span class="pre">baseColumn</span></code> fields.</p>
+<p>Additional transformations are then applied as directed by the options - including
+transformation of the base field to discrete values, to an arbitrary range of numbers, dates or timestamps, or by
+applying explicit SQL expressions to the base column.</p>
+<p>For text data, the transformations may include applying a suffix, prefix or a format string.</p>
+<p>In addition, there are a number of mechanisms for generating pseudo random text - the ILText text generator,
+a template text generator and the ability to incorporate 3rd party libraries for text generation.
+But as outlined in the next section, these use random number generators with predetermine random seeeds.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The internal <code class="docutils literal notranslate"><span class="pre">id</span></code> field is omitted from the output by default. But calling
+the method <code class="docutils literal notranslate"><span class="pre">withIdOutput</span></code> will include the <code class="docutils literal notranslate"><span class="pre">id</span></code> field in the output.</p>
+</div>
+<p>What all of this means is that the data generation is entirely repeatable, and if you generate the same data set multiple
+times, you will produce the same data.</p>
+<p>In addition, two columns in two different tables produced with the same generation rules and random seed will produce
+the same values allowing for creation of multiple tables with referential integrity for use in joins.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The exception to repeatability is where the data set contains the timestamp or date of when the
+data is written. In these cases, runs from a later date will have different values.</p>
+<p>This is why we stress generating date or timestamp ranges with a specific <code class="docutils literal notranslate"><span class="pre">begin</span></code>, <code class="docutils literal notranslate"><span class="pre">end</span></code> and <code class="docutils literal notranslate"><span class="pre">interval</span></code>
+in the section
+on repeatability, rather than simply using SQL <code class="docutils literal notranslate"><span class="pre">now()</span></code> , <code class="docutils literal notranslate"><span class="pre">current_timestamp()</span></code> etc.</p>
+</div>
+<section id="generating-random-data">
+<h2>Generating random data<a class="headerlink" href="#generating-random-data" title="Permalink to this heading"></a></h2>
+<p>What if random data is desired to avoid data appearing in strict sequences?(although using <code class="docutils literal notranslate"><span class="pre">hash</span></code> as
+the <code class="docutils literal notranslate"><span class="pre">baseColumnType</span></code> to compute the derived value will do some deterministic randomization)</p>
+<p>A field may be marked as <code class="docutils literal notranslate"><span class="pre">random</span></code> in which case a random number generator will be used (either Spark SQL <code class="docutils literal notranslate"><span class="pre">rand()</span></code>
+or Numpy random number generators depending on context).</p>
+<p>By default
+a predefined random seed will be used for all random columns - so by definition all data is repeatable.</p>
+<p>All columns will use the same random seed unless the random seed method is specified to be ‘hash_fieldname’ or
+the seed is overridden at the column level. In the case of the use of the ‘hash_fieldname’ generation method,
+it will use a hash value of the field name so that each column has a different seed.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The text generators for templates and ILText always generate random data irrespective of the base column.
+That means, that these will produce repeatable data from run to run if a random seed is used - but not produce the
+same values for the same value of the base column.</p>
+</div>
+<section id="true-random-data">
+<h3>True random Data<a class="headerlink" href="#true-random-data" title="Permalink to this heading"></a></h3>
+<p>To generate true random values, the random seed of -1 must be specified, either at the data spec level or at the
+individual column level. When specified at the individual column level, it only applies to that column.</p>
+<p>In this case,
+there is no guarantees of data repeatability - but you can constrain the data generated to specific ranges to use as
+foreign keys for data in other tables.</p>
+<p>If columns are not marked random - they will produce a repeatable set of data (with the exception of ILText, Template
+generation and third party library integration). For most columns, as the columns
+are produced by a deterministic transformation on the corresponding base columns, the data will always be repeatable.</p>
+<p>For columns generated using an inherently random process such as those produced with the template generation, ILText
+and text data generator plugins, the random process will be seeded with a constant value unless the corresponding
+column specification is marked as <code class="docutils literal notranslate"><span class="pre">random</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Again this means data will be repeatable run to run but not for a specific
+value of the base column. For some 3rd party libraries such as <cite>Faker</cite> there is no integration of the random seeding
+capabilities at present so data will not be repeatable run to run.</p>
+</div>
+<p>If a random seed is provided, either as an argument to the DataGenerator instance specification,
+or as option on the column specification, the random seed will be applied to fields when random data generation is used.</p>
+<p>By default, a default random seed is used and the randomSeedMethod is set to ‘hash_fieldname’ unless a specific
+random seed is provided.</p>
+</section>
+<section id="use-of-hashed-field-names">
+<h3>Use of Hashed field names<a class="headerlink" href="#use-of-hashed-field-names" title="Permalink to this heading"></a></h3>
+<p>If two columns are generated with the same seed and same data generation rules, they will produce the same values
+unless they are marked random and a different random seed is used for each field.</p>
+<p>To avoid having to pass an explicit seed to every column to generate different sequences of values,
+you can specify that the <code class="docutils literal notranslate"><span class="pre">randomSeedMethod</span></code> is <code class="docutils literal notranslate"><span class="pre">hash_fieldname</span></code>. In this case, a hash of the field name will be used.
+While this cannot guarantee no collisions, in practice the probabilitty of this occurring is extremely low, even for
+tables with 100s of columns.</p>
+</section>
+</section>
+<section id="data-generation-algorithm">
+<h2>Data Generation algorithm<a class="headerlink" href="#data-generation-algorithm" title="Permalink to this heading"></a></h2>
+<p>The overall data generation algorithm operates as follows:</p>
+<ul class="simple">
+<li><p>The order of column generation is computed based on which columns depend on which
+base columns. This is referred to in the code as computing the build plan.</p></li>
+<li><p>For the number of rows specified, generate implicit <code class="docutils literal notranslate"><span class="pre">id</span></code> ranging from 0 to n - 1</p></li>
+<li><p>For each column in schema or interim set of columns , generate column according to colum spec.
+Computation is according to build plan ordering.</p>
+<ul>
+<li><p>If the data spec was initialized from a schema and no column specs are specified ,
+columns are generated as <code class="docutils literal notranslate"><span class="pre">id</span></code> column values converted to column type.</p></li>
+<li><p>For columns of date or timestamp - these
+will be converted to date or timestamp as interpreting first as numeric timestamp.</p></li>
+<li><p>For string values default generation pattern will be to generate string ’item-’+ value of id column</p></li>
+</ul>
+</li>
+<li><p>if column spec is supplied , column generation will proceed according to spec.
+Note column spec does not add column - only describes previously added column
+( via schema or addColumn)</p>
+<ul>
+<li><p>if column spec already exists , later column spec supercedes it</p></li>
+<li><p>if column already exists ( due to being in schema or specified via addColumn),
+adding another column with the same name causes an error (unless the column is
+marked as <code class="docutils literal notranslate"><span class="pre">implicit</span></code>. Note all schema columns are marked as <code class="docutils literal notranslate"><span class="pre">implicit</span></code> allowing them
+to be overridden.</p></li>
+</ul>
+</li>
+<li><p>The output will  drop columns that marked as <code class="docutils literal notranslate"><span class="pre">omit</span></code></p></li>
+<li><p>If the id column is to be retained in the output, use <code class="docutils literal notranslate"><span class="pre">withIdOutput()</span></code> to flag this to the data spec.</p></li>
+<li><p>A schema is not required - the resulting schema will be result of all addColumn statements</p></li>
+<li><p>The final output layout will be derived from any schema + any additional columns added via <code class="docutils literal notranslate"><span class="pre">withColumn</span></code></p></li>
+</ul>
+<section id="column-value-generation">
+<h3>Column Value Generation<a class="headerlink" href="#column-value-generation" title="Permalink to this heading"></a></h3>
+<ul class="simple">
+<li><p>Each column will be generated based on base column value or a random value in the range 0 to number of rows.
+By default the base column is the id column - this may be overridden.</p></li>
+<li><p>If column has limited number of values, the base value will use modulo arithmetic to compute the value
+for array based feature columns , the column spec will determine generation of each value</p></li>
+<li><p>Column spec may specify am explicit SQL expression which will override default column data generation.
+column spec may specify minValue , maxValue values and step to control value cycling</p></li>
+<li><p>Column spec may specify a list of values to restrict values to specific discrete values</p></li>
+<li><p>String values are generated from prefix _ base value _ suffix</p></li>
+<li><p>Use of <code class="docutils literal notranslate"><span class="pre">omit=True</span></code> omits column from final output</p></li>
+<li><p>Columns do not generate nulls unless the option <code class="docutils literal notranslate"><span class="pre">percentNulls</span></code> is specified.</p></li>
+</ul>
+</section>
+</section>
+</section>
+<section id="revisiting-the-iot-data-example">
+<h1>Revisiting the IOT data example<a class="headerlink" href="#revisiting-the-iot-data-example" title="Permalink to this heading"></a></h1>
+<p>Let’s look at the IOT data example again.</p>
+<p>We want to simulate events from devices such as phones.</p>
+<p>Each phone has a manufacturer and model / line.</p>
+<p>We have a distinct set of users, and multiple IOT events for each user,
+but for every user we want to generate the same manufacturer and phone
+model or line. (We could do this via a join but thats a separate topic.)</p>
+<p>Here we want to generate a random set of events but ensure that the device properties remain the same for the
+device from event to event.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyspark.sql.types</span> <span class="kn">import</span> <span class="n">LongType</span><span class="p">,</span> <span class="n">IntegerType</span><span class="p">,</span> <span class="n">StringType</span>
+
+<span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
+
+<span class="n">shuffle_partitions_requested</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="n">device_population</span> <span class="o">=</span> <span class="mi">100000</span>
+<span class="n">data_rows</span> <span class="o">=</span> <span class="mi">20</span> <span class="o">*</span> <span class="mi">1000000</span>
+<span class="n">partitions_requested</span> <span class="o">=</span> <span class="mi">20</span>
+
+<span class="n">spark</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;spark.sql.shuffle.partitions&quot;</span><span class="p">,</span> <span class="n">shuffle_partitions_requested</span><span class="p">)</span>
+
+<span class="n">country_codes</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;CN&#39;</span><span class="p">,</span> <span class="s1">&#39;US&#39;</span><span class="p">,</span> <span class="s1">&#39;FR&#39;</span><span class="p">,</span> <span class="s1">&#39;CA&#39;</span><span class="p">,</span> <span class="s1">&#39;IN&#39;</span><span class="p">,</span> <span class="s1">&#39;JM&#39;</span><span class="p">,</span> <span class="s1">&#39;IE&#39;</span><span class="p">,</span> <span class="s1">&#39;PK&#39;</span><span class="p">,</span> <span class="s1">&#39;GB&#39;</span><span class="p">,</span> <span class="s1">&#39;IL&#39;</span><span class="p">,</span> <span class="s1">&#39;AU&#39;</span><span class="p">,</span> <span class="s1">&#39;SG&#39;</span><span class="p">,</span>
+                 <span class="s1">&#39;ES&#39;</span><span class="p">,</span> <span class="s1">&#39;GE&#39;</span><span class="p">,</span> <span class="s1">&#39;MX&#39;</span><span class="p">,</span> <span class="s1">&#39;ET&#39;</span><span class="p">,</span> <span class="s1">&#39;SA&#39;</span><span class="p">,</span> <span class="s1">&#39;LB&#39;</span><span class="p">,</span> <span class="s1">&#39;NL&#39;</span><span class="p">]</span>
+<span class="n">country_weights</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1300</span><span class="p">,</span> <span class="mi">365</span><span class="p">,</span> <span class="mi">67</span><span class="p">,</span> <span class="mi">38</span><span class="p">,</span> <span class="mi">1300</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">212</span><span class="p">,</span> <span class="mi">67</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">47</span><span class="p">,</span> <span class="mi">83</span><span class="p">,</span> <span class="mi">126</span><span class="p">,</span> <span class="mi">109</span><span class="p">,</span> <span class="mi">58</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span>
+                   <span class="mi">17</span><span class="p">]</span>
+
+<span class="n">manufacturers</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Delta corp&#39;</span><span class="p">,</span> <span class="s1">&#39;Xyzzy Inc.&#39;</span><span class="p">,</span> <span class="s1">&#39;Lakehouse Ltd&#39;</span><span class="p">,</span> <span class="s1">&#39;Acme Corp&#39;</span><span class="p">,</span> <span class="s1">&#39;Embanks Devices&#39;</span><span class="p">]</span>
+
+<span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;delta&#39;</span><span class="p">,</span> <span class="s1">&#39;xyzzy&#39;</span><span class="p">,</span> <span class="s1">&#39;lakehouse&#39;</span><span class="p">,</span> <span class="s1">&#39;gadget&#39;</span><span class="p">,</span> <span class="s1">&#39;droid&#39;</span><span class="p">]</span>
+
+<span class="n">testDataSpec</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">dg</span><span class="o">.</span><span class="n">DataGenerator</span><span class="p">(</span><span class="n">spark</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;device_data_set&quot;</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">data_rows</span><span class="p">,</span>
+                     <span class="n">partitions</span><span class="o">=</span><span class="n">partitions_requested</span><span class="p">,</span>
+                     <span class="n">randomSeedMethod</span><span class="o">=</span><span class="s1">&#39;hash_fieldname&#39;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">withIdOutput</span><span class="p">()</span>
+    <span class="c1"># we&#39;ll use hash of the base field to generate the ids to</span>
+    <span class="c1"># avoid a simple incrementing sequence</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;internal_device_id&quot;</span><span class="p">,</span> <span class="n">LongType</span><span class="p">(),</span> <span class="n">minValue</span><span class="o">=</span><span class="mh">0x1000000000000</span><span class="p">,</span>
+                <span class="n">uniqueValues</span><span class="o">=</span><span class="n">device_population</span><span class="p">,</span> <span class="n">omit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">baseColumnType</span><span class="o">=</span><span class="s2">&quot;hash&quot;</span><span class="p">)</span>
+
+    <span class="c1"># note for format strings, we must use &quot;%lx&quot; not &quot;%x&quot; as the</span>
+    <span class="c1"># underlying value is a long</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;device_id&quot;</span><span class="p">,</span> <span class="n">StringType</span><span class="p">(),</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;0x</span><span class="si">%013x</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">baseColumn</span><span class="o">=</span><span class="s2">&quot;internal_device_id&quot;</span><span class="p">)</span>
+
+    <span class="c1"># the device / user attributes will be the same for the same device id</span>
+    <span class="c1"># so lets use the internal device id as the base column for these attribute</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;country&quot;</span><span class="p">,</span> <span class="n">StringType</span><span class="p">(),</span> <span class="n">values</span><span class="o">=</span><span class="n">country_codes</span><span class="p">,</span>
+                <span class="n">weights</span><span class="o">=</span><span class="n">country_weights</span><span class="p">,</span>
+                <span class="n">baseColumn</span><span class="o">=</span><span class="s2">&quot;internal_device_id&quot;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;manufacturer&quot;</span><span class="p">,</span> <span class="n">StringType</span><span class="p">(),</span> <span class="n">values</span><span class="o">=</span><span class="n">manufacturers</span><span class="p">,</span>
+                <span class="n">baseColumn</span><span class="o">=</span><span class="s2">&quot;internal_device_id&quot;</span><span class="p">)</span>
+
+    <span class="c1"># use omit = True if you don&#39;t want a column to appear in the final output</span>
+    <span class="c1"># but just want to use it as part of generation of another column</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;line&quot;</span><span class="p">,</span> <span class="n">StringType</span><span class="p">(),</span> <span class="n">values</span><span class="o">=</span><span class="n">lines</span><span class="p">,</span> <span class="n">baseColumn</span><span class="o">=</span><span class="s2">&quot;manufacturer&quot;</span><span class="p">,</span>
+                <span class="n">baseColumnType</span><span class="o">=</span><span class="s2">&quot;hash&quot;</span><span class="p">,</span> <span class="n">omit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;model_ser&quot;</span><span class="p">,</span> <span class="n">IntegerType</span><span class="p">(),</span> <span class="n">minValue</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="mi">11</span><span class="p">,</span>
+                <span class="n">baseColumn</span><span class="o">=</span><span class="s2">&quot;device_id&quot;</span><span class="p">,</span>
+                <span class="n">baseColumnType</span><span class="o">=</span><span class="s2">&quot;hash&quot;</span><span class="p">,</span> <span class="n">omit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;model_line&quot;</span><span class="p">,</span> <span class="n">StringType</span><span class="p">(),</span> <span class="n">expr</span><span class="o">=</span><span class="s2">&quot;concat(line, &#39;#&#39;, model_ser)&quot;</span><span class="p">,</span>
+                <span class="n">baseColumn</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;line&quot;</span><span class="p">,</span> <span class="s2">&quot;model_ser&quot;</span><span class="p">])</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;event_type&quot;</span><span class="p">,</span> <span class="n">StringType</span><span class="p">(),</span>
+                <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;activation&quot;</span><span class="p">,</span> <span class="s2">&quot;deactivation&quot;</span><span class="p">,</span> <span class="s2">&quot;plan change&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;telecoms activity&quot;</span><span class="p">,</span> <span class="s2">&quot;internet activity&quot;</span><span class="p">,</span> <span class="s2">&quot;device error&quot;</span><span class="p">],</span>
+                <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;event_ts&quot;</span><span class="p">,</span> <span class="s2">&quot;timestamp&quot;</span><span class="p">,</span>
+                <span class="n">begin</span><span class="o">=</span><span class="s2">&quot;2020-01-01 01:00:00&quot;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;2020-12-31 23:59:00&quot;</span><span class="p">,</span>
+                <span class="n">interval</span><span class="o">=</span><span class="s2">&quot;1 minute&quot;</span><span class="p">,</span>
+                <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="p">)</span>
+
+<span class="n">dfTestData</span> <span class="o">=</span> <span class="n">testDataSpec</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+
+<span class="n">display</span><span class="p">(</span><span class="n">dfTestData</span><span class="p">)</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>The <code class="docutils literal notranslate"><span class="pre">withColumn</span></code> method call for the <code class="docutils literal notranslate"><span class="pre">internalDeviceId</span></code> column uses the <code class="docutils literal notranslate"><span class="pre">uniqueValues</span></code> option to control
+the number of unique values.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">withColumn</span></code> method call for the <code class="docutils literal notranslate"><span class="pre">manufacture</span></code> column uses the <code class="docutils literal notranslate"><span class="pre">baseColumn</span></code> option to ensure we get the same
+manufacturer value for each <cite>internalDeviceId</cite>. This allows us to generate IOT style events  randomly, but still
+constrain properties whenever the same <code class="docutils literal notranslate"><span class="pre">internalDeviceId</span></code> occurs.</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>A column may be based on one or more other columns. This means the value of that column will be used as a seed for
+generating the new column. The <code class="docutils literal notranslate"><span class="pre">baseColumnType</span></code> option determines if the actual value , or hash of the value is
+used as the seed value.</p>
+</div>
+<ul class="simple">
+<li><p>The <code class="docutils literal notranslate"><span class="pre">withColumn</span></code> method call for the <code class="docutils literal notranslate"><span class="pre">line</span></code> column introduces a temporary column for purposes of
+generating other columns, but through the use of the <code class="docutils literal notranslate"><span class="pre">omit</span></code> option, omits it from the final data set.</p></li>
+<li><p>To ensure deterministic matching of values such as <code class="docutils literal notranslate"><span class="pre">country</span></code>, we base them on the internal id.</p></li>
+</ul>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="options_and_features.html" class="btn btn-neutral float-left" title="Options and Additional Features" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="using_streaming_data.html" class="btn btn-neutral float-right" title="Using Streaming Data" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
