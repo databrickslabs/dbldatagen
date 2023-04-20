@@ -43,6 +43,8 @@ SOURCE_FILES = {
                            "grouping": "internal classes"},
     "utils.py": {"briefDesc": "",
                  "grouping": "internal classes"},
+    "html_utils.py": {"briefDesc": "",
+                 "grouping": "internal classes"},
 
     "beta.py": {"briefDesc": "Beta distribution related code",
                 "grouping": "data distribution"},
