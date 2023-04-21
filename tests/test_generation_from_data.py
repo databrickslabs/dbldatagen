@@ -51,9 +51,9 @@ class TestGenerationFromData:
                         baseColumn="asin")
             .withColumn('price', 'double', min=1.0, max=999.0, random=True, step=0.01)
             .withColumn('rating', 'double', values=[1.0, 2, 0, 3.0, 4.0, 5.0], random=True)
-            .withColumn('review', 'string', text=dg.ILText((1, 3), (1, 4), (3, 8)), random=True)
+            .withColumn('review', 'string', text=dg.ILText((1, 3), (1, 4), (3, 8)), random=True, percentNulls=0.1)
             .withColumn('time', 'bigint', expr="now()", percentNulls=0.1)
-            .withColumn('title', 'string', template=r"\w|\w \w \w|\w \w \w||\w \w \w \w", random=True)
+            .withColumn('title', 'string', template=r"\w|\w \w \w|\w \w \w|\w \w \w \w", random=True)
             .withColumn('user', 'string', expr="hex(abs(hash(id)))")
             .withColumn("event_ts", "timestamp", begin="2020-01-01 01:00:00",
                         end="2020-12-31 23:59:00",
@@ -125,7 +125,9 @@ class TestGenerationFromData:
         testLogger.info("Summarizing data analyzer results")
         df = analyzer.summarizeToDF()
 
-        df.show()
+        #df.show()
+
+        df_source_data.where("title is null or length(title) = 0").show()
 
     @pytest.mark.parametrize("sampleString, expectedMatch",
                              [("0234", "digits"),
@@ -152,4 +154,13 @@ class TestGenerationFromData:
                 pattern_match_result = k
                 break
 
-        assert pattern_match_result == expectedMatch
+        assert pattern_match_result == expectedMatch, f"expected match to be {expectedMatch}"
+
+    def test_source_data_property(self, generation_spec):
+        df_source_data = generation_spec.build()
+        analyzer = dg.DataAnalyzer(sparkSession=spark, df=df_source_data, maxRows=1000)
+
+        count_rows = analyzer.sourceSampleDf.count()
+        print(count_rows)
+        assert abs(count_rows - 1000) < 100, "expected count to be close to 1000"
+

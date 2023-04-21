@@ -5,7 +5,11 @@
 """
 This module defines the ``DataAnalyzer`` class.
 
-This code is experimental and both APIs and code generated is liable to change in future versions.
+    .. warning::
+       Experimental
+
+       This code is experimental and both APIs and code generated is liable to change in future versions.
+
 """
 import logging
 from collections import namedtuple
@@ -30,10 +34,15 @@ class DataAnalyzer:
 
     :param df: Spark dataframe to analyze
     :param sparkSession: Spark session instance to use when performing spark operations
+    :param categoricalValuesThreshold: Values will only be computed if less than threshold. If not supplied,
+           will use default setting (50)
+    :param maxRows: if specified, determines max number of rows to analyze.
 
-    .. warning::
-       Experimental
+    You may increase the categorical values threshold to a higher value, in which case, columns with higher values
+    of distinct values will be evaluated to see if they can be represented as a values list.
 
+    However the current implementation will flag an error if the number of categorical causes SQL array sizes to be
+    too large. Experimentally, this should be kept below 100 at present.
     """
     _DEFAULT_GENERATED_NAME = "synthetic_data"
 
@@ -65,12 +74,13 @@ class DataAnalyzer:
     # tuple for values info
     ColumnValuesInfo = namedtuple("ColumnValuesInfo", ["name", "statements", "value_refs"])
 
-    def __init__(self, df=None, sparkSession=None, categoricalValuesThreshold=None):
+    def __init__(self, df=None, sparkSession=None, categoricalValuesThreshold=None, maxRows=None):
         """ Constructor:
         :param df: Dataframe to analyze
         :param sparkSession: Spark session to use
         :param categoricalValuesThreshold: Values will only be computed if less than threshold, If not supplied
                will use default setting (50)
+        :param maxRows: if specified, determines max number of rows to analyze.
 
         You may increase the categorical values threshold to a higher value, in which case, columns with higher values
         of distinct values will be evaluated to see if they can be represented as a values list.
@@ -80,7 +90,7 @@ class DataAnalyzer:
         """
         assert df is not None, "dataframe must be supplied"
 
-        self._df = df.cache()
+        self._df = df
 
         if sparkSession is None:
             sparkSession = SparkSingleton.getLocalInstance()
@@ -92,6 +102,21 @@ class DataAnalyzer:
 
         self._valuesCountThreshold = (categoricalValuesThreshold if categoricalValuesThreshold is not None
                                       else self._MAX_DISTINCT_THRESHOLD)
+        self._maxRows = maxRows
+        self._df_source_sample = None
+
+    @property
+    def sourceSampleDf(self):
+        """ Get source dataframe (capped with maxRows if necessary)"""
+        if self._df_source_sample is None:
+            row_count = self._df.count()
+
+            if self._maxRows is not None and row_count > self._maxRows:
+                self._df_source_sample = self._df.sample(self._maxRows / row_count, seed=42).cache()
+            else:
+                self._df_source_sample = self._df.cache()
+
+        return self._df_source_sample
 
     def _displayRow(self, row):
         """Display details for row"""
@@ -142,9 +167,13 @@ class DataAnalyzer:
 
     @property
     def columnsInfo(self):
-        """ Get extended columns info"""
+        """ Get extended columns info.
+
+          :return: List of column info tuples (named tuple - ColumnValuesInfo)
+
+        """
         if self._columnsInfo is None:
-            df_dtypes = self._df.dtypes
+            df_dtypes = self.sourceSampleDf.dtypes
 
             # compile column information [ (name, datatype, isArrayColumn, isNumeric) ]
             columnsInfo = [self.ColInfo(dtype[0],
@@ -157,7 +186,7 @@ class DataAnalyzer:
         return self._columnsInfo
 
     _URL_PREFIX = r"https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}"
-    IMAGE_EXTS = r"(png)|(jpg)|(tif)"
+    _IMAGE_EXTS = r"(png)|(jpg)|(tif)"
 
     _regex_patterns = {
         "alpha_upper": r"[A-Z]+",
@@ -165,7 +194,7 @@ class DataAnalyzer:
         "digits": r"[0-9]+",
         "alphanumeric": r"[a-zA-Z0-9]+",
         "identifier": r"[a-zA-Z0-9_]+",
-        "image_url": _URL_PREFIX + r"\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)" + IMAGE_EXTS,
+        "image_url": _URL_PREFIX + r"\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)" + _IMAGE_EXTS,
         "url": _URL_PREFIX + r"\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)",
         "email_common": r"([a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6})*",
         "email_uncommon": r"([a-z0-9_\.\+-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})",
@@ -204,7 +233,7 @@ class DataAnalyzer:
 
         The output is also used in code generation  to generate more accurate code.
         """
-        df_under_analysis = self._df
+        df_under_analysis = self.sourceSampleDf
 
         logger = logging.getLogger(__name__)
         logger.info("Analyzing counts")
@@ -268,7 +297,8 @@ class DataAnalyzer:
             'print_len',
             fieldExprs=[f"""to_json(named_struct(
                         'min', min(length(string({colInfo.name}))), 
-                        'max', max(length(string({colInfo.name})))))                        
+                        'max', max(length(string({colInfo.name}))), 
+                        'avg', avg(length(string({colInfo.name})))))                        
                         as {colInfo.name}"""
                         for colInfo in self.columnsInfo],
             dfData=df_under_analysis,
@@ -461,7 +491,7 @@ class DataAnalyzer:
         """ Get dataframe with array values expanded"""
 
         if self._expandedSourceDf is None:
-            df_expandedSummary = self._df
+            df_expandedSummary = self.sourceSampleDf
 
             # expand source dataframe array columns
             columns = df_expandedSummary.columns
@@ -709,8 +739,8 @@ class DataAnalyzer:
         :return: String containing skeleton code (in Html form if `asHtml` is True)
 
         """
-        assert self._df is not None
-        assert type(self._df) is sql.DataFrame, "sourceDf must be a valid Pyspark dataframe"
+        assert self.sourceSampleDf is not None
+        assert type(self.sourceSampleDf) is sql.DataFrame, "sourceDf must be a valid Pyspark dataframe"
 
         if self._dataSummary is None:
             logger = logging.getLogger(__name__)
@@ -732,11 +762,11 @@ class DataAnalyzer:
             values_info = self._processCategoricalValuesInfo(dataSummary=self._dataSummary,
                                                              sourceDf=self._getExpandedSourceDf())
 
-        generated_code = self._scriptDataGeneratorCode(self._df.schema,
+        generated_code = self._scriptDataGeneratorCode(self.sourceSampleDf.schema,
                                                        suppressOutput=asHtml or suppressOutput,
                                                        name=name,
                                                        dataSummary=self._dataSummary,
-                                                       sourceDf=self._df,
+                                                       sourceDf=self.sourceSampleDf,
                                                        valuesInfo=values_info)
 
         if asHtml:
