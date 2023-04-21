@@ -137,6 +137,7 @@ class TestUtils:
     @pytest.mark.parametrize("path,jsonData, defaultValue, expectedValue",
                              [("a", """{"a":1,"b":2,"c":[1,2,3]}""", None, 1),
                               ("b", """{"a":1,"b":2,"c":[1,2,3]}""", None, 2),
+                              ("d", """{"a":1,"b":2,"c":[1,2,3]}""", 42, 42),
                               ("c[2]", """{"a":1,"b":2,"c":[1,2,3]}""", None, 3),
                               ])
     def test_json_value_from_path(self, path, jsonData, defaultValue, expectedValue):
