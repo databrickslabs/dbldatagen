@@ -12,20 +12,18 @@ This module defines the ``DataAnalyzer`` class.
 
 """
 import logging
-from collections import namedtuple
 import pprint
+from collections import namedtuple
 
 import numpy as np
-
+import pyspark.sql.functions as F
+from pyspark import sql
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
     TimestampType, DateType, DecimalType, ByteType, BinaryType, StructType, ArrayType, DataType, MapType
 
-from pyspark import sql
-import pyspark.sql.functions as F
-
-from .utils import strip_margins, json_value_from_path
-from .spark_singleton import SparkSingleton
 from .html_utils import HtmlUtils
+from .spark_singleton import SparkSingleton
+from .utils import strip_margins, json_value_from_path
 
 
 class DataAnalyzer:
@@ -148,12 +146,9 @@ class DataAnalyzer:
         # add measures for fields
         exprs.extend(fieldExprs)
 
-        if dfSummary is not None:
-            dfResult = dfSummary.union(dfData.selectExpr(*exprs).limit(rowLimit))
-        else:
-            dfResult = dfData.selectExpr(*exprs).limit(rowLimit)
+        dfMeasure = dfData.selectExpr(*exprs).limit(rowLimit) if rowLimit is not None else dfData.selectExpr(*exprs)
 
-        return dfResult
+        return dfSummary.union(dfMeasure) if dfSummary is not None else dfMeasure
 
     @staticmethod
     def _is_numeric_type(dtype):
@@ -222,6 +217,112 @@ class DataAnalyzer:
                 stmts.append(f"'' as {colInfo.name}")
         result = stmts  # "\n".join(stmts)
         return result
+
+    def generateTextFeatures(self, sourceDf):
+        """ Generate text features from source dataframe
+
+        Generates set of text features for each column (analyzing string representation of each column value)
+
+        :param sourceDf: Source datafame
+        :return: Dataframe of text features
+        """
+        # generate named struct of text features for each column
+
+        # we need to double escape backslashes in regular expressions as they will be lost in string expansion
+        WORD_REGEX = r"\\b\\w+\\b"
+        SPACE_REGEX = r"\\s+"
+        DIGIT_REGEX = r"\\d"
+        PUNCTUATION_REGEX = r"[\\?\\.\\;\\,\\!\\{\\}\\[\\]\\(\\)\\>\\<]"
+        AT_REGEX = r"\\@"
+        PERIOD_REGEX = r"\\."
+        HTTP_REGEX = r"^http[s]?\\:\\/\\/"
+        ALPHA_REGEX = r"[a-zA-Z]"
+        ALPHA_UPPER_REGEX = r"[A-Z]"
+        ALPHA_LOWER_REGEX = r"[a-z]"
+        HEX_REGEX = r"[0-9a-fA-F]"
+
+        # for each column, extract text features from string representation of column value (leftmost 4096 characters)
+        def left4k(name):
+            return f"left(string({name}), 4096)"
+
+        fieldTextFeatures = []
+
+        for colInfo in self.columnsInfo:
+            fieldTextFeatures.append(
+                strip_margins(
+                    f"""named_struct(
+                    |   'print_len', length(string({colInfo.name})), 
+                    |   'word_count', size(regexp_extract_all({left4k(colInfo.name)}, '{WORD_REGEX}',0)),
+                    |   'space_count', size(regexp_extract_all({left4k(colInfo.name)}, '{SPACE_REGEX}',0)),
+                    |   'digit_count', size(regexp_extract_all({left4k(colInfo.name)}, '{DIGIT_REGEX}',0)),
+                    |   'punctuation_count', size(regexp_extract_all({left4k(colInfo.name)}, '{PUNCTUATION_REGEX}',0)),
+                    |   'at_count', size(regexp_extract_all({left4k(colInfo.name)}, '{AT_REGEX}',0)),
+                    |   'period_count', size(regexp_extract_all({left4k(colInfo.name)}, '{PERIOD_REGEX}',0)),
+                    |   'http_count', size(regexp_extract_all({left4k(colInfo.name)}, '{HTTP_REGEX}',0)),
+                    |   'alpha_count', size(regexp_extract_all({left4k(colInfo.name)}, '{ALPHA_REGEX}',0)),
+                    |   'alpha_lower_count', size(regexp_extract_all({left4k(colInfo.name)}, '{ALPHA_LOWER_REGEX}',0)),
+                    |   'alpha_upper_count', size(regexp_extract_all({left4k(colInfo.name)}, '{ALPHA_UPPER_REGEX}',0)),
+                    |   'hex_digit_count', size(regexp_extract_all({left4k(colInfo.name)}, '{HEX_REGEX}',0))
+                    |   )                       
+                    |   as {colInfo.name}""", marginChar="|")
+            )
+
+        dfTextFeatures = self._addMeasureToSummary(
+            'text_features',
+            fieldExprs=fieldTextFeatures,
+            dfData=sourceDf,
+            dfSummary=None,
+            rowLimit=None)
+
+        return dfTextFeatures
+
+    def _summarizeTextFeatures(self, textFeaturesDf):
+        """
+        Generate summary of text features
+
+        :param textFeaturesDf: Text features dataframe
+        :return: dataframe of summary text features
+        """
+        assert textFeaturesDf is not None, "textFeaturesDf must be specified"
+
+        # generate named struct of summary text features for each column
+        fieldTextFeatures = []
+
+        # TODO: use json syntax asin:print_len when migrating to Spark 10.4LTS as minimum version
+
+        for colInfo in self.columnsInfo:
+            cname = colInfo.name
+            fieldTextFeatures.append(strip_margins(
+                f"""to_json(named_struct(
+                |   'print_len', array(min({cname}.print_len), max({cname}.print_len), avg({cname}.print_len)), 
+                |   'word_count', array(min({cname}.word_count), max({cname}.word_count), avg({cname}.word_count)),
+                |   'space_count',array(min({cname}.space_count), max({cname}.space_count), avg({cname}.space_count)),
+                |   'digit_count', array(min({cname}.digit_count), max({cname}.digit_count), avg({cname}.digit_count)),
+                |   'punctuation_count', array(min({cname}.punctuation_count), max({cname}.punctuation_count),
+                |                              avg({cname}.punctuation_count)),
+                |   'at_count', array(min({cname}.at_count), max({cname}.at_count), avg({cname}.at_count)),
+                |   'period_count', array(min({cname}.period_count), max({cname}.period_count), 
+                |                         avg({cname}.period_count)),
+                |   'http_count', array(min({cname}.http_count), max({cname}.http_count), avg({cname}.http_count)),
+                |   'alpha_count', array(min({cname}.alpha_count), max({cname}.alpha_count), avg({cname}.alpha_count)),
+                |   'alpha_lower_count', array(min({cname}.alpha_lower_count), max({cname}.alpha_lower_count), 
+                |                              avg({cname}.alpha_lower_count)),
+                |   'alpha_upper_count', array(min({cname}.alpha_upper_count), max({cname}.alpha_upper_count), 
+                |                             avg({cname}.alpha_upper_count)),
+                |   'hex_digit_count', array(min({cname}.hex_digit_count), max({cname}.hex_digit_count),
+                |                            avg({cname}.hex_digit_count))
+                |   ))                        
+                |   as {cname}""", marginChar="|")
+            )
+
+        dfSummaryTextFeatures = self._addMeasureToSummary(
+            'summary_text_features',
+            fieldExprs=fieldTextFeatures,
+            dfData=textFeaturesDf,
+            dfSummary=None,
+            rowLimit=1)
+
+        return dfSummaryTextFeatures
 
     def summarizeToDF(self):
         """ Generate summary analysis of data set as dataframe
@@ -367,6 +468,14 @@ class DataAnalyzer:
                         for colInfo in self.columnsInfo],
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
+
+        logger.info("Analyzing text features")
+        dfTextFeatures = self.generateTextFeatures(self._getExpandedSourceDf())
+
+        logger.info("Summarizing text features")
+        dfTextFeaturesSummary = self._summarizeTextFeatures(dfTextFeatures)
+
+        dfDataSummary = dfDataSummary.union(dfTextFeaturesSummary)
 
         return dfDataSummary
 

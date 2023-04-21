@@ -17,7 +17,7 @@ def setupLogging():
 
 
 class TestGenerationFromData:
-    SMALL_ROW_COUNT = 10000
+    SMALL_ROW_COUNT = 1000
 
     @pytest.fixture
     def testLogger(self):
@@ -68,66 +68,86 @@ class TestGenerationFromData:
             .withColumn("int_value", "int", min=100, max=200, percentNulls=0.1)
             .withColumn("byte_value", "tinyint", max=127)
             .withColumn("decimal_value", "decimal(10,2)", max=1000000)
-            .withColumn("decimal_value", "decimal(10,2)", max=1000000)
             .withColumn("date_value", "date", expr="current_date()", random=True)
             .withColumn("binary_value", "binary", expr="cast('spark' as binary)", random=True)
 
         )
         return spec
 
-    def test_code_generation1(self, generation_spec, setupLogging):
+    @pytest.fixture
+    def source_data_df(self, generation_spec):
         df_source_data = generation_spec.build()
-        df_source_data.show()
+        return df_source_data.cache()
 
-        analyzer = dg.DataAnalyzer(sparkSession=spark, df=df_source_data)
+    def test_code_generation1(self, source_data_df, setupLogging):
+        source_data_df.show()
+
+        analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df)
 
         generatedCode = analyzer.scriptDataGeneratorFromData()
 
-        for fld in df_source_data.schema:
+        for fld in source_data_df.schema:
             assert f"withColumn('{fld.name}'" in generatedCode
 
         # check generated code for syntax errors
         ast_tree = ast.parse(generatedCode)
         assert ast_tree is not None
 
-    def test_code_generation_from_schema(self, generation_spec, setupLogging):
-        df_source_data = generation_spec.build()
-        generatedCode = dg.DataAnalyzer.scriptDataGeneratorFromSchema(df_source_data.schema)
+    def test_code_generation_from_schema(self, source_data_df, setupLogging):
+        generatedCode = dg.DataAnalyzer.scriptDataGeneratorFromSchema(source_data_df.schema)
 
-        for fld in df_source_data.schema:
+        for fld in source_data_df.schema:
             assert f"withColumn('{fld.name}'" in generatedCode
 
         # check generated code for syntax errors
         ast_tree = ast.parse(generatedCode)
         assert ast_tree is not None
 
-    def test_summarize(self, testLogger, generation_spec):
-        testLogger.info("Building test data")
-
-        df_source_data = generation_spec.build()
+    def test_summarize(self, testLogger, source_data_df):
 
         testLogger.info("Creating data analyzer")
 
-        analyzer = dg.DataAnalyzer(sparkSession=spark, df=df_source_data)
+        analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df)
 
         testLogger.info("Summarizing data analyzer results")
         analyzer.summarize()
 
-    def test_summarize_to_df(self, generation_spec, testLogger):
-        testLogger.info("Building test data")
-
-        df_source_data = generation_spec.build()
-
+    def test_summarize_to_df(self, source_data_df, testLogger):
         testLogger.info("Creating data analyzer")
 
-        analyzer = dg.DataAnalyzer(sparkSession=spark, df=df_source_data)
+        analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df)
 
         testLogger.info("Summarizing data analyzer results")
         df = analyzer.summarizeToDF()
 
-        #df.show()
+        df.show()
 
-        df_source_data.where("title is null or length(title) = 0").show()
+    def test_generate_text_features(self, source_data_df, testLogger):
+        testLogger.info("Creating data analyzer")
+
+        analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df)
+
+        df_text_features = analyzer.generateTextFeatures(source_data_df).limit(10)
+        df_text_features.show()
+
+        #data = df_text_features.selectExpr("get_json_object(asin, '$.print_len') as asin").limit(10).collect()
+        data = df_text_features.selectExpr("asin.print_len as asin").limit(10).collect()
+        assert data[0]['asin'] is not None
+        print(data[0]['asin'] )
+
+    def test_summarize_text_features(self, source_data_df, testLogger):
+        testLogger.info("Creating data analyzer")
+
+        analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df)
+
+        df_text_features = analyzer.generateTextFeatures(source_data_df)
+        df_summary_text_features = analyzer._summarizeTextFeatures(df_text_features)
+        df_summary_text_features.show()
+
+        data = df_summary_text_features.selectExpr("get_json_object(asin, '$.print_len') as asin").limit(10).collect()
+        assert data[0]['asin'] is not None
+        print(data[0]['asin'])
+
 
     @pytest.mark.parametrize("sampleString, expectedMatch",
                              [("0234", "digits"),
@@ -141,10 +161,8 @@ class TestGenerationFromData:
                               ("test_function", "identifier"),
                               ("10.0.0.1", "ip_addr")
                               ])
-    def test_match_patterns(self, sampleString, expectedMatch, generation_spec):
-        df_source_data = generation_spec.build()
-
-        analyzer = dg.DataAnalyzer(sparkSession=spark, df=df_source_data)
+    def test_match_patterns(self, sampleString, expectedMatch, source_data_df):
+        analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df)
 
         pattern_match_result = ""
         for k, v in analyzer._regex_patterns.items():
@@ -156,11 +174,10 @@ class TestGenerationFromData:
 
         assert pattern_match_result == expectedMatch, f"expected match to be {expectedMatch}"
 
-    def test_source_data_property(self, generation_spec):
-        df_source_data = generation_spec.build()
-        analyzer = dg.DataAnalyzer(sparkSession=spark, df=df_source_data, maxRows=1000)
+    def test_source_data_property(self, source_data_df):
+        analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df, maxRows=500)
 
         count_rows = analyzer.sourceSampleDf.count()
         print(count_rows)
-        assert abs(count_rows - 1000) < 100, "expected count to be close to 1000"
+        assert abs(count_rows - 500) < 50, "expected count to be close to 500"
 
