@@ -35,6 +35,7 @@ class DataAnalyzer:
     :param categoricalValuesThreshold: Values will only be computed if less than threshold. If not supplied,
            will use default setting (50)
     :param maxRows: if specified, determines max number of rows to analyze.
+    :param noCache: if True, does not cache the dataframe when analyzing it. Default is False.
 
     You may increase the categorical values threshold to a higher value, in which case, columns with higher values
     of distinct values will be evaluated to see if they can be represented as a values list.
@@ -72,13 +73,14 @@ class DataAnalyzer:
     # tuple for values info
     ColumnValuesInfo = namedtuple("ColumnValuesInfo", ["name", "statements", "value_refs"])
 
-    def __init__(self, df=None, sparkSession=None, categoricalValuesThreshold=None, maxRows=None):
+    def __init__(self, df=None, sparkSession=None, categoricalValuesThreshold=None, maxRows=None, noCache=False):
         """ Constructor:
         :param df: Dataframe to analyze
         :param sparkSession: Spark session to use
         :param categoricalValuesThreshold: Values will only be computed if less than threshold, If not supplied
                will use default setting (50)
         :param maxRows: if specified, determines max number of rows to analyze.
+        :param noCache: if True, does not cache the dataframe when analyzing it. Default is False.
 
         You may increase the categorical values threshold to a higher value, in which case, columns with higher values
         of distinct values will be evaluated to see if they can be represented as a values list.
@@ -102,6 +104,7 @@ class DataAnalyzer:
                                       else self._MAX_DISTINCT_THRESHOLD)
         self._maxRows = maxRows
         self._df_source_sample = None
+        self._noCache = noCache
 
     @property
     def sourceSampleDf(self):
@@ -110,9 +113,12 @@ class DataAnalyzer:
             row_count = self._df.count()
 
             if self._maxRows is not None and row_count > self._maxRows:
-                self._df_source_sample = self._df.sample(self._maxRows / row_count, seed=42).cache()
+                self._df_source_sample = self._df.sample(self._maxRows / row_count, seed=42)
             else:
-                self._df_source_sample = self._df.cache()
+                self._df_source_sample = self._df
+
+        if not self._noCache:
+            self._df_source_sample = self._df_source_sample.cache()
 
         return self._df_source_sample
 
@@ -643,7 +649,8 @@ class DataAnalyzer:
                     col_type in ["float", "double", "int", "smallint", "bigint", "tinyint", "string"]:
                 logger.info(f"Retrieving categorical values for column `{col_name}`")
 
-                value_rows = sorted(sourceDf.select(col_name).groupBy(col_name).count().collect(),
+                value_rows = sorted(sourceDf.select(col_name).where(f"{col_name} is not null")
+                                    .groupBy(col_name).count().collect(),
                                     key=lambda r1, sk=col_name: r1[sk])
                 values = [r[col_name] for r in value_rows]
                 weights = [r['count'] for r in value_rows]
