@@ -3,8 +3,7 @@ import ast
 import re
 import pytest
 
-import pyspark.sql as ssql
-
+import pyspark.sql.functions as F
 import dbldatagen as dg
 
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
@@ -80,8 +79,6 @@ class TestGenerationFromData:
         return df_source_data.cache()
 
     def test_code_generation1(self, source_data_df, setupLogging):
-        source_data_df.show()
-
         analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df)
 
         generatedCode = analyzer.scriptDataGeneratorFromData()
@@ -131,23 +128,10 @@ class TestGenerationFromData:
         df_text_features.show()
 
         #data = df_text_features.selectExpr("get_json_object(asin, '$.print_len') as asin").limit(10).collect()
-        data = df_text_features.selectExpr("asin.print_len as asin").limit(10).collect()
+        data = (df_text_features.select(F.get_json_object(F.col("asin"), "$.print_len").alias("asin"))
+                                       .limit(10).collect())
         assert data[0]['asin'] is not None
         print(data[0]['asin'] )
-
-    def test_summarize_text_features(self, source_data_df, testLogger):
-        testLogger.info("Creating data analyzer")
-
-        analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df)
-
-        df_text_features = analyzer.generateTextFeatures(source_data_df)
-        df_summary_text_features = analyzer._summarizeTextFeatures(df_text_features)
-        df_summary_text_features.show()
-
-        data = df_summary_text_features.selectExpr("get_json_object(asin, '$.print_len') as asin").limit(10).collect()
-        assert data[0]['asin'] is not None
-        print(data[0]['asin'])
-
 
     @pytest.mark.parametrize("sampleString, expectedMatch",
                              [("0234", "digits"),
