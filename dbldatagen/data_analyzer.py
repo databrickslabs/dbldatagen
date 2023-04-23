@@ -73,7 +73,7 @@ class DataAnalyzer:
     # tuple for values info
     ColumnValuesInfo = namedtuple("ColumnValuesInfo", ["name", "statements", "value_refs"])
 
-    def __init__(self, df=None, sparkSession=None, categoricalValuesThreshold=None, maxRows=None, noCache=False):
+    def __init__(self, df=None, sparkSession=None, categoricalValuesThreshold=None, maxRows=None, noCache=True):
         """ Constructor:
         :param df: Dataframe to analyze
         :param sparkSession: Spark session to use
@@ -357,7 +357,7 @@ class DataAnalyzer:
         dfDataSummary = self._addMeasureToSummary(
             'null_probability',
             fieldExprs=[
-                f"""string(round(({total_count} - count({colInfo.name})) /{total_count}, 2)) as {colInfo.name}"""
+                f"""string(round(({total_count} - count({colInfo.name})) /{total_count}, 5)) as {colInfo.name}"""
                 for colInfo in self.columnsInfo],
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
@@ -457,10 +457,11 @@ class DataAnalyzer:
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
-        logger.info("Analyzing summary text features")
-        dfTextFeaturesSummary = self.generateTextFeatures(self._getExpandedSourceDf())
+        if False:
+            logger.info("Analyzing summary text features")
+            dfTextFeaturesSummary = self.generateTextFeatures(self._getExpandedSourceDf())
 
-        dfDataSummary = dfDataSummary.union(dfTextFeaturesSummary)
+            dfDataSummary = dfDataSummary.union(dfTextFeaturesSummary)
 
         return dfDataSummary
 

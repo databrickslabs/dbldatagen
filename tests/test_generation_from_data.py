@@ -1,12 +1,19 @@
-import logging
 import ast
+import logging
 import re
-import pytest
 
 import pyspark.sql.functions as F
+import pytest
+
 import dbldatagen as dg
 
-spark = dg.SparkSingleton.getLocalInstance("unit tests")
+
+@pytest.fixture(scope="class")
+def spark():
+    sparkSession = dg.SparkSingleton.getLocalInstance("unit tests")
+    sparkSession.conf.set("dbldatagen.data_analysis.checkpoint", "true")
+    sparkSession.sparkContext.setCheckpointDir( "/tmp/dbldatagen/checkpoint")
+    return sparkSession
 
 
 @pytest.fixture(scope="class")
@@ -16,15 +23,15 @@ def setupLogging():
 
 
 class TestGenerationFromData:
-    SMALL_ROW_COUNT = 1000
+    SMALL_ROW_COUNT = 1000000
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def testLogger(self):
         logger = logging.getLogger(__name__)
         return logger
 
-    @pytest.fixture
-    def generation_spec(self):
+    @pytest.fixture(scope="class")
+    def generation_spec(self, spark):
 
         country_codes = [
             "CN", "US", "FR", "CA", "IN", "JM", "IE", "PK", "GB", "IL", "AU",
@@ -73,12 +80,12 @@ class TestGenerationFromData:
         )
         return spec
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def source_data_df(self, generation_spec):
         df_source_data = generation_spec.build()
-        return df_source_data.cache()
+        return df_source_data.checkpoint(eager=True)
 
-    def test_code_generation1(self, source_data_df, setupLogging):
+    def test_code_generation1(self, source_data_df, setupLogging, spark):
         analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df)
 
         generatedCode = analyzer.scriptDataGeneratorFromData()
@@ -100,7 +107,7 @@ class TestGenerationFromData:
         ast_tree = ast.parse(generatedCode)
         assert ast_tree is not None
 
-    def test_summarize(self, testLogger, source_data_df):
+    def test_summarize(self, testLogger, source_data_df, spark):
 
         testLogger.info("Creating data analyzer")
 
@@ -109,7 +116,7 @@ class TestGenerationFromData:
         testLogger.info("Summarizing data analyzer results")
         analyzer.summarize()
 
-    def test_summarize_to_df(self, source_data_df, testLogger):
+    def test_summarize_to_df(self, source_data_df, testLogger, spark):
         testLogger.info("Creating data analyzer")
 
         analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df)
@@ -119,7 +126,7 @@ class TestGenerationFromData:
 
         df.show()
 
-    def test_generate_text_features(self, source_data_df, testLogger):
+    def test_generate_text_features(self, source_data_df, testLogger, spark):
         testLogger.info("Creating data analyzer")
 
         analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df)
@@ -127,11 +134,11 @@ class TestGenerationFromData:
         df_text_features = analyzer.generateTextFeatures(source_data_df).limit(10)
         df_text_features.show()
 
-        #data = df_text_features.selectExpr("get_json_object(asin, '$.print_len') as asin").limit(10).collect()
+        # data = df_text_features.selectExpr("get_json_object(asin, '$.print_len') as asin").limit(10).collect()
         data = (df_text_features.select(F.get_json_object(F.col("asin"), "$.print_len").alias("asin"))
-                                       .limit(10).collect())
+                .limit(10).collect())
         assert data[0]['asin'] is not None
-        print(data[0]['asin'] )
+        print(data[0]['asin'])
 
     @pytest.mark.parametrize("sampleString, expectedMatch",
                              [("0234", "digits"),
@@ -145,7 +152,7 @@ class TestGenerationFromData:
                               ("test_function", "identifier"),
                               ("10.0.0.1", "ip_addr")
                               ])
-    def test_match_patterns(self, sampleString, expectedMatch, source_data_df):
+    def test_match_patterns(self, sampleString, expectedMatch, source_data_df, spark):
         analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df)
 
         pattern_match_result = ""
@@ -158,10 +165,9 @@ class TestGenerationFromData:
 
         assert pattern_match_result == expectedMatch, f"expected match to be {expectedMatch}"
 
-    def test_source_data_property(self, source_data_df):
+    def test_source_data_property(self, source_data_df, spark):
         analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df, maxRows=500)
 
         count_rows = analyzer.sourceSampleDf.count()
         print(count_rows)
         assert abs(count_rows - 500) < 50, "expected count to be close to 500"
-
