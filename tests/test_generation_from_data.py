@@ -138,7 +138,6 @@ class TestGenerationFromData:
         data = (df_text_features.select(F.get_json_object(F.col("asin"), "$.print_len").alias("asin"))
                 .limit(10).collect())
         assert data[0]['asin'] is not None
-        print(data[0]['asin'])
 
     @pytest.mark.parametrize("sampleString, expectedMatch",
                              [("0234", "digits"),
@@ -169,5 +168,13 @@ class TestGenerationFromData:
         analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df, maxRows=500)
 
         count_rows = analyzer.sampledSourceDf.count()
-        print(count_rows)
         assert abs(count_rows - 500) < 50, "expected count to be close to 500"
+
+    def test_sample_data(self, source_data_df, spark):
+        # create a DataAnalyzer object
+        analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df, maxRows=500)
+
+        # sample the data
+        df_sample = analyzer.sampleData(source_data_df, 100)
+        assert df_sample.count() <= 100, "expected count to be 100"
+

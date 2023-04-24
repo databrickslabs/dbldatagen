@@ -186,7 +186,6 @@ class DataAnalyzer:
 
         return self._expandedSampleDf
 
-
     def _displayRow(self, row):
         """Display details for row"""
         results = []
@@ -204,7 +203,7 @@ class DataAnalyzer:
         :param summaryExpr: Summary expression - string or sql.Column
         :param fieldExprs: list of field expressions (or generator) - either string or sql.Column instances
         :param dfData: Source data df - data being summarized
-        :param rowLimit: Number of rows to get for measure
+        :param rowLimit: Number of rows to get for measure - usually 1
         :param dfSummary: Summary df
         :return: dfSummary with new measure added
         """
@@ -396,7 +395,7 @@ class DataAnalyzer:
 
         The output is also used in code generation  to generate more accurate code.
         """
-        #if self._cacheSource:
+        # if self._cacheSource:
         #    self._df.cache().createOrReplaceTempView("data_analysis_summary")
 
         df_under_analysis = self.sampledSourceDf
@@ -459,16 +458,24 @@ class DataAnalyzer:
         # string characteristics for strings and string representation of other values
         # feature : print len max, [minimal, sample, complete]
         dfDataSummary = self._addMeasureToSummary(
-            'print_len_max',
-            fieldExprs=[f"max(length(string({colInfo.name}))) as {colInfo.name}" for colInfo in self.columnsInfo],
+            'print_len',
+            fieldExprs=[F.to_json(F.struct(F.expr(f"min(length(string({colInfo.name})))").alias("min"),
+                                           F.expr(f"max(length(string({colInfo.name})))").alias("max"),
+                                           F.expr(f"avg(length(string({colInfo.name})))").alias("avg")))
+                        .alias(colInfo.name)
+                        for colInfo in self.columnsInfo],
             dfData=self._df,
             dfSummary=dfDataSummary)
 
         # string characteristics for strings and string representation of other values
         # feature : item print len max, [minimal, sample, complete]
         dfDataSummary = self._addMeasureToSummary(
-            'item_max_printlen',
-            fieldExprs=[f"max(length(string({colInfo.name}))) as {colInfo.name}" for colInfo in self.columnsInfo],
+            'item_printlen',
+            fieldExprs=[F.to_json(F.struct(F.expr(f"min(length(string({colInfo.name})))").alias("min"),
+                                           F.expr(f"max(length(string({colInfo.name})))").alias("max"),
+                                           F.expr(f"avg(length(string({colInfo.name})))").alias("avg")))
+                        .alias(colInfo.name)
+                        for colInfo in self.columnsInfo],
             dfData=self.expandedSampleDf,
             dfSummary=dfDataSummary)
 
@@ -540,7 +547,7 @@ class DataAnalyzer:
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
 
-        if False:
+        if self._analysisLevel in ["analyze_text", "full"]:
             logger.info("Analyzing summary text features")
             dfTextFeaturesSummary = self.generateTextFeatures(self.expandedSampleDf)
 
@@ -664,7 +671,6 @@ class DataAnalyzer:
             result = result + f", percentNulls={percentNullsValue}"
 
         return result
-
 
     def _cleanse_name(self, col_name):
         """cleanse column name for use in code"""
