@@ -32,16 +32,16 @@ class DataAnalyzer:
 
     :param df: Spark dataframe to analyze
     :param sparkSession: Spark session instance to use when performing spark operations
-    :param categoricalValuesThreshold: Values will only be computed if less than threshold. If not supplied,
-           will use default setting (50)
-    :param maxRows: if specified, determines max number of rows to analyze.
-    :param noCache: if True, does not cache the dataframe when analyzing it. Default is False.
+    :param maxRows: if specified, determines max number of rows to analyze when `analysisLevel` is "sample"
+    :param analysisLevel: Determines level of analysis to perform. Options are ["minimal", "sample", "full"].
+                              Default is "sample
 
-    You may increase the categorical values threshold to a higher value, in which case, columns with higher values
-    of distinct values will be evaluated to see if they can be represented as a values list.
+    You may increase the categorical values threshold to a higher value using the Spark config option
+    `dbldatagen.analyzer.categoricalValuesThreshold`  in which case, columns with higher values of distinct values
+    will be evaluated to see if they can be represented as a values list.
 
-    However the current implementation will flag an error if the number of categorical causes SQL array sizes to be
-    too large. Experimentally, this should be kept below 100 at present.
+    However the sampling may fail if this level is set too high.
+    Experimentally, this should be kept below 100 at present.
     """
     _DEFAULT_GENERATED_NAME = "synthetic_data"
 
@@ -61,7 +61,7 @@ class DataAnalyzer:
     _INT_32_MAX = 2 ** 16 - 1
 
     _MAX_COLUMN_ELEMENT_LENGTH_THRESHOLD = 40
-    _MAX_DISTINCT_THRESHOLD = 50
+    _CATEGORICAL_VALUE_DEFAULT_THRESHOLD = 50
 
     _MAX_VALUES_LINE_LENGTH = 60
     _CODE_GENERATION_INDENT = 4
@@ -73,14 +73,24 @@ class DataAnalyzer:
     # tuple for values info
     ColumnValuesInfo = namedtuple("ColumnValuesInfo", ["name", "statements", "value_refs"])
 
-    def __init__(self, df=None, sparkSession=None, categoricalValuesThreshold=None, maxRows=None, noCache=True):
+    # options
+    _ANALYSIS_LEVELS = ["minimal", "sample", "analyze_text", "full"]
+    _CATEGORICAL_VALUES_THRESHOLD_OPTION = "dbldatagen.analyzer.categoricalValuesThreshold"
+    _SAMPLE_ROWS_THRESHOLD_OPTION = "dbldatagen.analyzer.sampleRowsThreshold"
+    _CACHE_SOURCE_OPTION = "dbldatagen.analyzer.cacheSource"
+    _CACHE_SAMPLE_OPTION = "dbldatagen.analyzer.cacheSample"
+
+    _DEFAULT_SAMPLE_ROWS_THRESHOLD = 10000
+
+    def __init__(self, df=None, sparkSession=None, maxRows=None, analysisLevel="sample"):
         """ Constructor:
         :param df: Dataframe to analyze
         :param sparkSession: Spark session to use
-        :param categoricalValuesThreshold: Values will only be computed if less than threshold, If not supplied
-               will use default setting (50)
         :param maxRows: if specified, determines max number of rows to analyze.
-        :param noCache: if True, does not cache the dataframe when analyzing it. Default is False.
+        :param analysisLevel: Determines level of analysis to perform. Options are ["minimal", "sample", "full"].
+                              Default is "sample
+
+
 
         You may increase the categorical values threshold to a higher value, in which case, columns with higher values
         of distinct values will be evaluated to see if they can be represented as a values list.
@@ -92,35 +102,90 @@ class DataAnalyzer:
 
         self._df = df
 
+        assert analysisLevel in self._ANALYSIS_LEVELS, f"analysisLevel must be one of {self._ANALYSIS_LEVELS}"
+        assert maxRows is None or maxRows > 0, "maxRows must be greater than 0, if supplied"
+
         if sparkSession is None:
             sparkSession = SparkSingleton.getLocalInstance()
 
         self._sparkSession = sparkSession
         self._dataSummary = None
         self._columnsInfo = None
-        self._expandedSourceDf = None
+        self._expandedSampleDf = None
 
-        self._valuesCountThreshold = (categoricalValuesThreshold if categoricalValuesThreshold is not None
-                                      else self._MAX_DISTINCT_THRESHOLD)
-        self._maxRows = maxRows
-        self._df_source_sample = None
-        self._noCache = noCache
+        self._valuesCountThreshold = int(self._sparkSession.conf.get(self._CATEGORICAL_VALUES_THRESHOLD_OPTION,
+                                                                     str(self._CATEGORICAL_VALUE_DEFAULT_THRESHOLD)))
+
+        # max rows is supplied parameter or default
+        self._maxRows = maxRows or self._DEFAULT_SAMPLE_ROWS_THRESHOLD
+        self._df_sampled_data = None
+        self._analysisLevel = analysisLevel
+        self._cacheSource = self._sparkSession.conf.get(self._CACHE_SOURCE_OPTION, "false").lower() == "true"
+        self._cacheSample = self._sparkSession.conf.get(self._CACHE_SAMPLE_OPTION, "true").lower() == "true"
+
+    @classmethod
+    def sampleData(cls, df, maxRows):
+        """
+        Sample data from a dataframe specifying the max rows to sample
+
+        :param df: The dataframe to sample
+        :param maxRows: The maximum number of rows to samples
+        :return: The dataframe with the sampled data
+        """
+        assert df is not None, "dataframe must be supplied"
+        assert maxRows is not None and isinstance(maxRows, int) and maxRows > 0, "maxRows must be a non-zero integer"
+
+        # use count with limit of maxRows + 1 to determine if the dataframe is larger than maxRows
+        if df.limit(maxRows + 1).count() <= maxRows:
+            return df
+
+        # if the dataframe is larger than maxRows, then sample it
+        # and constrain the output to the limit of maxRows
+        return df.sample(maxRows / df.count(), seed=42).limit(maxRows)
 
     @property
-    def sourceSampleDf(self):
+    def sourceDf(self):
+        """ Get source dataframe"""
+        return self._df
+
+    @property
+    def sampledSourceDf(self):
         """ Get source dataframe (capped with maxRows if necessary)"""
-        if self._df_source_sample is None:
-            row_count = self._df.count()
-
-            if self._maxRows is not None and row_count > self._maxRows:
-                self._df_source_sample = self._df.sample(self._maxRows / row_count, seed=42)
+        if self._df_sampled_data is None:
+            # by default, use the full source
+            if self._analysisLevel == "full":
+                self._df_sampled_data = self._df
             else:
-                self._df_source_sample = self._df
+                self._df_sampled_data = self.sampleData(self._df, self._maxRows)
 
-        if not self._noCache:
-            self._df_source_sample = self._df_source_sample.cache()
+            if self._cacheSample:
+                self._df_sampled_data = self._df_sampled_data.cache()
 
-        return self._df_source_sample
+        return self._df_sampled_data
+
+    @property
+    def expandedSampleDf(self):
+        """ Get dataframe with array values expanded"""
+
+        if self._expandedSampleDf is None:
+            df_expandedSample = self.sampledSourceDf
+
+            # expand source dataframe array columns
+            columns = df_expandedSample.columns
+
+            for column in self.columnsInfo:
+                if column.isArrayColumn:
+                    df_expandedSample = df_expandedSample.withColumn(column.name, F.explode_outer(F.col(column.name)))
+
+            df_expandedSample = df_expandedSample.select(*columns)
+
+            if self._cacheSample:
+                df_expandedSample = df_expandedSample.cache()
+
+            self._expandedSampleDf = df_expandedSample
+
+        return self._expandedSampleDf
+
 
     def _displayRow(self, row):
         """Display details for row"""
@@ -185,7 +250,7 @@ class DataAnalyzer:
 
         """
         if self._columnsInfo is None:
-            df_dtypes = self.sourceSampleDf.dtypes
+            df_dtypes = self.sampledSourceDf.dtypes
 
             # compile column information [ (name, datatype, isArrayColumn, isNumeric) ]
             columnsInfo = [self.ColInfo(dtype[0],
@@ -232,7 +297,7 @@ class DataAnalyzer:
                 stmt = F.to_json(F.struct(*clauses)).alias(colInfo.name)
                 stmts.append(stmt)
             else:
-                stmts.append(F.lit('').alias(colInfo.name))
+                stmts.append(F.first(F.lit('')).alias(colInfo.name))
         result = stmts
         return result
 
@@ -331,7 +396,10 @@ class DataAnalyzer:
 
         The output is also used in code generation  to generate more accurate code.
         """
-        df_under_analysis = self.sourceSampleDf
+        #if self._cacheSource:
+        #    self._df.cache().createOrReplaceTempView("data_analysis_summary")
+
+        df_under_analysis = self.sampledSourceDf
 
         logger = logging.getLogger(__name__)
         logger.info("Analyzing counts")
@@ -339,58 +407,72 @@ class DataAnalyzer:
 
         logger.info("Analyzing measures")
 
-        # schema information
+        # feature : schema information, [minimal, sample, complete]
         dfDataSummary = self._addMeasureToSummary(
             'schema',
             summaryExpr=f"""to_json(named_struct('column_count', {len(self.columnsInfo)}))""",
             fieldExprs=[f"'{colInfo.dt}' as {colInfo.name}" for colInfo in self.columnsInfo],
-            dfData=df_under_analysis)
+            dfData=self.sourceDf)
 
         # count
+        # feature : count, [minimal, sample, complete]
         dfDataSummary = self._addMeasureToSummary(
             'count',
-            summaryExpr=f"{total_count}",
+            summaryExpr=f"count(*)",
             fieldExprs=[f"string(count({colInfo.name})) as {colInfo.name}" for colInfo in self.columnsInfo],
-            dfData=df_under_analysis,
+            dfData=self.sourceDf,
             dfSummary=dfDataSummary)
 
+        # feature : probability of nulls, [minimal, sample, complete]
         dfDataSummary = self._addMeasureToSummary(
             'null_probability',
             fieldExprs=[
-                f"""string(round(({total_count} - count({colInfo.name})) /{total_count}, 5)) as {colInfo.name}"""
+                f"""string(round((count(*) - count({colInfo.name})) /count(*), 5)) as {colInfo.name}"""
                 for colInfo in self.columnsInfo],
-            dfData=df_under_analysis,
+            dfData=self.sourceDf,
             dfSummary=dfDataSummary)
 
-        # distinct count
+        # feature : distinct count, [minimal, sample, complete]
         dfDataSummary = self._addMeasureToSummary(
             'distinct_count',
             summaryExpr="count(distinct *)",
             fieldExprs=[f"string(count(distinct {colInfo.name})) as {colInfo.name}" for colInfo in self.columnsInfo],
-            dfData=df_under_analysis,
+            dfData=self.sourceDf,
             dfSummary=dfDataSummary)
 
+        # feature : item distinct count (i.e distinct count of array items), [minimal, sample, complete]
         dfDataSummary = self._addMeasureToSummary(
             'item_distinct_count',
             summaryExpr="count(distinct *)",
             fieldExprs=[f"string(count(distinct {colInfo.name})) as {colInfo.name}" for colInfo in self.columnsInfo],
-            dfData=self._getExpandedSourceDf(),
+            dfData=self.expandedSampleDf,
             dfSummary=dfDataSummary)
 
+        # feature : item  count (i.e count of individual array items), [minimal, sample, complete]
         dfDataSummary = self._addMeasureToSummary(
             'item_count',
             summaryExpr="count(*)",
             fieldExprs=[f"string(count({colInfo.name})) as {colInfo.name}" for colInfo in self.columnsInfo],
-            dfData=self._getExpandedSourceDf(),
+            dfData=self.expandedSampleDf,
             dfSummary=dfDataSummary)
 
         # string characteristics for strings and string representation of other values
+        # feature : print len max, [minimal, sample, complete]
+        dfDataSummary = self._addMeasureToSummary(
+            'print_len_max',
+            fieldExprs=[f"max(length(string({colInfo.name}))) as {colInfo.name}" for colInfo in self.columnsInfo],
+            dfData=self._df,
+            dfSummary=dfDataSummary)
+
+        # string characteristics for strings and string representation of other values
+        # feature : item print len max, [minimal, sample, complete]
         dfDataSummary = self._addMeasureToSummary(
             'item_max_printlen',
             fieldExprs=[f"max(length(string({colInfo.name}))) as {colInfo.name}" for colInfo in self.columnsInfo],
-            dfData=self._getExpandedSourceDf(),
+            dfData=self.expandedSampleDf,
             dfSummary=dfDataSummary)
 
+        # feature : item print len max, [minimal, sample, complete]
         metrics_clause = self._compute_pattern_match_clauses()
 
         # string metrics
@@ -399,7 +481,7 @@ class DataAnalyzer:
         dfDataSummary = self._addMeasureToSummary(
             'string_patterns',
             fieldExprs=metrics_clause,
-            dfData=self._getExpandedSourceDf(),
+            dfData=self.expandedSampleDf,
             dfSummary=dfDataSummary)
 
         # min
@@ -428,7 +510,8 @@ class DataAnalyzer:
 
         dfDataSummary = self._addMeasureToSummary(
             'array_value_min',
-            fieldExprs=[f"min(array_min({colInfo.name})) as {colInfo.name}" if colInfo.isArrayColumn else "min('')"
+            fieldExprs=[f"min(array_min({colInfo.name})) as {colInfo.name}"
+                        if colInfo.isArrayColumn else f"first('') as {colInfo.name}"
                         for colInfo in self.columnsInfo],
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
@@ -436,7 +519,7 @@ class DataAnalyzer:
         dfDataSummary = self._addMeasureToSummary(
             'array_value_max',
             fieldExprs=[f"max(array_max({colInfo.name})) as {colInfo.name}"
-                        if colInfo.isArrayColumn else "max('')"
+                        if colInfo.isArrayColumn else f"first('') as {colInfo.name}"
                         for colInfo in self.columnsInfo],
             dfData=df_under_analysis,
             dfSummary=dfDataSummary)
@@ -459,7 +542,7 @@ class DataAnalyzer:
 
         if False:
             logger.info("Analyzing summary text features")
-            dfTextFeaturesSummary = self.generateTextFeatures(self._getExpandedSourceDf())
+            dfTextFeaturesSummary = self.generateTextFeatures(self.expandedSampleDf)
 
             dfDataSummary = dfDataSummary.union(dfTextFeaturesSummary)
 
@@ -582,23 +665,6 @@ class DataAnalyzer:
 
         return result
 
-    def _getExpandedSourceDf(self):
-        """ Get dataframe with array values expanded"""
-
-        if self._expandedSourceDf is None:
-            df_expandedSummary = self.sourceSampleDf
-
-            # expand source dataframe array columns
-            columns = df_expandedSummary.columns
-
-            for column in self.columnsInfo:
-                if column.isArrayColumn:
-                    df_expandedSummary = df_expandedSummary.withColumn(column.name, F.explode_outer(F.col(column.name)))
-
-            df_expandedSummary = df_expandedSummary.select(*columns)
-            self._expandedSourceDf = df_expandedSummary
-
-        return self._expandedSourceDf
 
     def _cleanse_name(self, col_name):
         """cleanse column name for use in code"""
@@ -835,8 +901,8 @@ class DataAnalyzer:
         :return: String containing skeleton code (in Html form if `asHtml` is True)
 
         """
-        assert self.sourceSampleDf is not None
-        assert type(self.sourceSampleDf) is sql.DataFrame, "sourceDf must be a valid Pyspark dataframe"
+        assert self.sampledSourceDf is not None
+        assert type(self.sampledSourceDf) is sql.DataFrame, "sourceDf must be a valid Pyspark dataframe"
 
         if self._dataSummary is None:
             logger = logging.getLogger(__name__)
@@ -856,13 +922,13 @@ class DataAnalyzer:
                 self._dataSummary[row['measure_']] = row_key_pairs
 
             values_info = self._processCategoricalValuesInfo(dataSummary=self._dataSummary,
-                                                             sourceDf=self._getExpandedSourceDf())
+                                                             sourceDf=self.expandedSampleDf)
 
-        generated_code = self._scriptDataGeneratorCode(self.sourceSampleDf.schema,
+        generated_code = self._scriptDataGeneratorCode(self.sampledSourceDf.schema,
                                                        suppressOutput=asHtml or suppressOutput,
                                                        name=name,
                                                        dataSummary=self._dataSummary,
-                                                       sourceDf=self.sourceSampleDf,
+                                                       sourceDf=self.sampledSourceDf,
                                                        valuesInfo=values_info)
 
         if asHtml:

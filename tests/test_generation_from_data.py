@@ -23,7 +23,7 @@ def setupLogging():
 
 
 class TestGenerationFromData:
-    SMALL_ROW_COUNT = 1000000
+    SMALL_ROW_COUNT = 50000
 
     @pytest.fixture(scope="class")
     def testLogger(self):
@@ -111,7 +111,7 @@ class TestGenerationFromData:
 
         testLogger.info("Creating data analyzer")
 
-        analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df)
+        analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df, maxRows=1000)
 
         testLogger.info("Summarizing data analyzer results")
         analyzer.summarize()
@@ -119,7 +119,7 @@ class TestGenerationFromData:
     def test_summarize_to_df(self, source_data_df, testLogger, spark):
         testLogger.info("Creating data analyzer")
 
-        analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df)
+        analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df, maxRows=1000)
 
         testLogger.info("Summarizing data analyzer results")
         df = analyzer.summarizeToDF()
@@ -129,7 +129,7 @@ class TestGenerationFromData:
     def test_generate_text_features(self, source_data_df, testLogger, spark):
         testLogger.info("Creating data analyzer")
 
-        analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df)
+        analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df, maxRows=1000)
 
         df_text_features = analyzer.generateTextFeatures(source_data_df).limit(10)
         df_text_features.show()
@@ -168,6 +168,6 @@ class TestGenerationFromData:
     def test_source_data_property(self, source_data_df, spark):
         analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df, maxRows=500)
 
-        count_rows = analyzer.sourceSampleDf.count()
+        count_rows = analyzer.sampledSourceDf.count()
         print(count_rows)
         assert abs(count_rows - 500) < 50, "expected count to be close to 500"
