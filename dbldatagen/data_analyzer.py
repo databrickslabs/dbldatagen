@@ -124,7 +124,7 @@ class DataAnalyzer:
         self._cacheSample = self._sparkSession.conf.get(self._CACHE_SAMPLE_OPTION, "true").lower() == "true"
 
     @classmethod
-    def sampleData(cls, df, maxRows):
+    def sampleData(cls, df:DataFrame, maxRows:int):
         """
         Sample data from a dataframe specifying the max rows to sample
 

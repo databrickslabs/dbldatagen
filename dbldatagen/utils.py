@@ -9,11 +9,12 @@ These are meant for internal use only
 """
 
 import functools
+import json
+import re
+import time
 import warnings
 from datetime import timedelta
-import re
-import json
-import time
+
 import jmespath
 
 

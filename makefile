@@ -35,7 +35,7 @@ create-github-build-env:
 
 install-dev-dependencies:
 	@echo "$(OK_COLOR)=> installing dev environment requirements$(NO_COLOR)"
-	pip install -r python/dev_require.txt
+	pip install -v -r python/dev_require.txt
 
 clean-dev-env:
 	@echo "$(OK_COLOR)=> Cleaning dev environment$(NO_COLOR)"
