@@ -18,14 +18,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Unshallow
-        run: git fetch --prune --unshallow
-
       - name: Set up Python 3.8
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.8'
+          python-version: '3.8.12'
           cache: 'pipenv'
+
+      - name: Check Python version
+        run: python --version
+
+      - name: Install pip
+        run: python -m pip install --upgrade pip
 
       - name: Install
         run: pip install pipenv

@@ -28,4 +28,4 @@ pyparsing = "==2.4.7"
 jmespath = "==0.10.0"
 
 [requires]
-python_version = ">=3.8.10"
+python_version = "3.8.12"

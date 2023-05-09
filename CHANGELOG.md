@@ -8,6 +8,10 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 #### Changed
 * Added formatting of generated code as Html for script methods
 
+### Version 0.3.4 Post 3
+
+### Changed
+* Build now uses Python 3.8.12. Updated build process to reflect that.
 
 ### Version 0.3.4 Post 2
 
