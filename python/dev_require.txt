@@ -31,7 +31,6 @@ pypandoc
 ipython==7.22.0
 recommonmark
 sphinx-markdown-builder
-rst2pdf==0.98
 Jinja2 < 3.1
 sphinx-copybutton
 
