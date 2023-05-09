@@ -27,10 +27,10 @@ jobs:
       #     restore-keys: |
       #       ${{ runner.os }}-go-
 
-      - name: Set up Python 3.9
+      - name: Set up Python 3.8
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.8.12'
           cache: 'pipenv'
 
       - name: Check Python version
