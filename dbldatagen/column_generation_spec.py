@@ -1107,7 +1107,7 @@ class ColumnGenerationSpec(object):
             new_def = concat(new_def.astype(IntegerType()), lit(text_separator), lit(csuffix))
         return new_def
 
-    def _applyTextGenerationExpression(self, new_def, use_pandas_optimizations):
+    def _applyTextGenerationExpression(self, new_def, use_pandas_optimizations=True):
         """Apply text generation expression to column expression
 
         :param new_def : column definition being created
