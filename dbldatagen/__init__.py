@@ -47,7 +47,7 @@ from .html_utils import HtmlUtils
 __all__ = ["data_generator", "data_analyzer", "schema_parser", "daterange", "nrange",
            "column_generation_spec", "utils", "function_builder",
            "spark_singleton", "text_generators", "datarange", "datagen_constants",
-           "text_generator_plugins", "html_utils", "text_generatestring", "value_based_prng"
+           "text_generator_plugins", "html_utils", "text_generatestring"
            ]
 
 
