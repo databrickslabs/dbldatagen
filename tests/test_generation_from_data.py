@@ -71,6 +71,9 @@ class TestGenerationFromData:
         ast_tree = ast.parse(generatedCode)
         assert ast_tree is not None
 
+        generatedCode2 = analyzer.scriptDataGeneratorFromData(asHtml=True)
+        assert generatedCode in generatedCode2
+
     def test_code_generation_from_schema(self, generation_spec, setupLogging):
         df_source_data = generation_spec.build()
         generatedCode = dg.DataAnalyzer.scriptDataGeneratorFromSchema(df_source_data.schema)
@@ -81,6 +84,10 @@ class TestGenerationFromData:
         # check generated code for syntax errors
         ast_tree = ast.parse(generatedCode)
         assert ast_tree is not None
+
+        generatedCode2 = dg.DataAnalyzer.scriptDataGeneratorFromSchema(df_source_data.schema, asHtml=True)
+
+        assert generatedCode in generatedCode2
 
     def test_summarize(self, testLogger, generation_spec):
         testLogger.info("Building test data")
