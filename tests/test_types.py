@@ -358,19 +358,3 @@ class TestTypes(unittest.TestCase):
         self.assertLessEqual(max3, 1000.0)
         self.assertLessEqual(max4, 99999.99999)
         self.assertLessEqual(max5, 2000.0)
-
-# run the tests
-# if __name__ == '__main__':
-#  print("Trying to run tests")
-#  unittest.main(argv=['first-arg-is-ignored'],verbosity=2,exit=False)
-
-# def runTests(suites):
-#    suite = unittest.TestSuite()
-#    result = unittest.TestResult()
-#    for testSuite in suites:
-#        suite.addTest(unittest.makeSuite(testSuite))
-#    runner = unittest.TextTestRunner()
-#    print(runner.run(suite))
-
-
-# runTests([TestBasicOperation])

@@ -12,6 +12,9 @@ import functools
 import warnings
 from datetime import timedelta
 import re
+import json
+import time
+import jmespath
 
 
 def deprecated(message=""):
@@ -234,6 +237,43 @@ def parse_time_interval(spec):
     return delta
 
 
+def strip_margins(s, marginChar):
+    """
+    Python equivalent of Scala stripMargins method
+    
+    Takes a string (potentially multiline) and strips all chars up and including the first occurrence of `marginChar`.
+    Used to control the formatting of generated text
+
+    `strip_margins("one\n    |two\n    |three", '|')`
+
+    will produce 
+    
+    ``
+    one 
+    two
+    three
+    ``
+
+    :param s: string to strip margins from
+    :param marginChar: character to strip 
+    :return: modified string
+    """
+    assert s is not None and type(s) is str
+    assert marginChar is not None and type(marginChar) is str
+
+    lines = s.split('\n')
+    revised_lines = []
+
+    for line in lines:
+        if marginChar in line:
+            revised_line = line[line.index(marginChar) + 1:]
+            revised_lines.append(revised_line)
+        else:
+            revised_lines.append(line)
+
+    return '\n'.join(revised_lines)
+
+
 def split_list_matching_condition(lst, cond):
     """ Split a list on elements that match a condition
 
@@ -284,3 +324,36 @@ def split_list_matching_condition(lst, cond):
 
     # filter out empty lists
     return [el for el in retval if el != []]
+
+
+def json_value_from_path(searchPath, jsonData, defaultValue):
+    """ Get JSON value from JSON data referenced by searchPath
+
+    searchPath should be a JSON path as supported by the `jmespath` package
+    (see https://jmespath.org/)
+
+    :param searchPath: A `jmespath` compatible JSON search path
+    :param jsonData: The json data to search (string representation of the JSON data)
+    :param defaultValue: The default value to be returned if the value was not found
+    :return: Returns the json value if present, otherwise returns the default value
+    """
+    assert searchPath is not None and len(searchPath) > 0, "search path cannot be empty"
+    assert jsonData is not None and len(jsonData) > 0, "JSON data cannot be empty"
+
+    jsonDict = json.loads(jsonData)
+
+    jsonValue = jmespath.search(searchPath, jsonDict)
+
+    if jsonValue is not None:
+        return jsonValue
+
+    return defaultValue
+
+
+def system_time_millis():
+    """ return system time as milliseconds since start of epoch
+
+    :return: system time millis as long
+    """
+    curr_time = round(time.time() / 1000)
+    return curr_time

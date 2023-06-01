@@ -1,9 +1,11 @@
 import logging
 from datetime import timedelta
+
 import pytest
 
 from dbldatagen import ensure, mkBoundsList, coalesce_values, deprecated, SparkSingleton, \
-    parse_time_interval, DataGenError, split_list_matching_condition, topologicalSort
+    parse_time_interval, DataGenError, strip_margins, split_list_matching_condition, topologicalSort, \
+    json_value_from_path, system_time_millis
 
 spark = SparkSingleton.getLocalInstance("unit tests")
 
@@ -76,6 +78,21 @@ class TestUtils:
         assert type(str(testException)) is str
         self.logger.info(str(testException))
 
+    @pytest.mark.parametrize("inputText,expectedText",
+                             [("""one
+                                 |two
+                                 |three""",
+                               "one\ntwo\nthree"),
+                              ("", ""),
+                              ("one\ntwo", "one\ntwo"),
+                              ("    one\ntwo", "    one\ntwo"),
+                              ("    |one\ntwo", "one\ntwo"),
+                              ])
+    def test_strip_margins(self, inputText, expectedText):
+        output = strip_margins(inputText, '|')
+
+        assert output == expectedText
+
     @pytest.mark.parametrize("lstData,matchFn, expectedData",
                              [
                                  (['id', 'city_name', 'id', 'city_id', 'city_pop', 'id', 'city_id',
@@ -116,3 +133,18 @@ class TestUtils:
             raised_exception = True
 
         assert raised_exception == raisesError
+
+    @pytest.mark.parametrize("path,jsonData, defaultValue, expectedValue",
+                             [("a", """{"a":1,"b":2,"c":[1,2,3]}""", None, 1),
+                              ("b", """{"a":1,"b":2,"c":[1,2,3]}""", None, 2),
+                              ("d", """{"a":1,"b":2,"c":[1,2,3]}""", 42, 42),
+                              ("c[2]", """{"a":1,"b":2,"c":[1,2,3]}""", None, 3),
+                              ])
+    def test_json_value_from_path(self, path, jsonData, defaultValue, expectedValue):
+        results = json_value_from_path(path, jsonData, defaultValue)
+
+        assert results == expectedValue, f"Expected `{expectedValue}`, got results `{results}`"
+
+    def test_system_time_millis(self):
+        curr_time = system_time_millis()
+        assert curr_time > 0

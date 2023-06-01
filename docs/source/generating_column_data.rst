@@ -1,3 +1,6 @@
+.. Databricks Labs Data Generator documentation master file, created by
+   sphinx-quickstart on Sun Jun 21 10:54:30 2020.
+
 Generating Column Data
 ======================
 
@@ -90,10 +93,39 @@ Use of the base column attribute has several effects:
 Generating complex columns - structs, maps, arrays
 --------------------------------------------------
 
-If the column type is based on a struct, map or array, then the `expr` attribute must be specified to provide a
-value for the column.
+Complex column types are supported - that is a column may have its type specified as an array, map or struct. This can
+be specified in the datatype parameter to the `withColumn` method as a string such as "array<string>" or as a
+composite of datatype object instances.
 
-If the `expr` attribute is not specified, then the default column value will be `NULL`.
+If the column type is based on a struct, map or array, then either the `expr` or the `values` attributes must be
+specified to provide a value or range of possible values for the column.
+
+If the `values` attribute is being used to specify a range of possible values, each of the values elements must be of
+the same type as the column.
+
+If neither the `expr` or `values` attributes are specified, then the default column value will be `NULL`.
+
+For array valued columns, where all of the elements of the array are to be generated with the same column
+specification, an alternative method is also supported.
+
+You can specify that a column has a specific number of features with structType of 'array' to control the generation of
+the column. In this case, the datatype should be the type of the individual element, not of the array.
+
+For example, the following code will generate rows with varying numbers of synthetic emails for each customer:
+
+.. code-block:: python
+
+   import dbldatagen as dg
+
+   ds = (
+        dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=1000, partitions=4,
+                         random=True)
+        .withColumn("name", "string", percentNulls=0.01, template=r'\\w \\w|\\w A. \\w|test')
+        .withColumn("emails", "string", template=r'\\w.\\w@\\w.com', random=True,
+                    numFeatures=(1, 6), structType="array")
+   )
+
+   df = ds.build()
 
 The mechanics of column data generation
 ---------------------------------------
