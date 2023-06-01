@@ -33,6 +33,8 @@ SOURCE_FILES = {
                            "grouping": "main classes"},
     "text_generator_plugins.py": {"briefDesc": "Text data generation",
                                   "grouping": "main classes"},
+    "text_generatestring.py": {"briefDesc": "Text data generation",
+                           "grouping": "main classes"},
     "data_analyzer.py": {"briefDesc": "Analysis of existing data",
                          "grouping": "main classes"},
     "function_builder.py": {"briefDesc": "Internal utilities to create functions related to weights",

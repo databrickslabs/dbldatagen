@@ -60,12 +60,6 @@ _WORDS_UPPER = ['LOREM', 'IPSUM', 'DOLOR', 'SIT', 'AMET', 'CONSECTETUR', 'ADIPIS
                 'PROIDENT', 'SUNT', 'IN', 'CULPA', 'QUI', 'OFFICIA', 'DESERUNT', 'MOLLIT', 'ANIM', 'ID', 'EST',
                 'LABORUM']
 
-# spacing smbols - note that order is important
-SPACE_SYMBOLS = ["\n\n", " ", ""]
-
-# default punctuation symbols
-DEFAULT_PUNCTUATION = [". "]
-
 
 class TextGenerator(object):
     """ Base class for text generation classes
@@ -169,8 +163,10 @@ class TextGenerator(object):
 
     def prepareBaseValue(self, baseDef):
         """ Prepare the base value for processing
+
         :param baseDef: base value expression
         :return: base value expression unchanged
+
         Derived classes are expected to override this if needed
         """
         return baseDef
@@ -682,16 +678,10 @@ class ILText(TextGenerator):  # lgtm [py/missing-equals]
     :param paragraphs: Number of paragraphs to generate. If tuple will generate random number in range
     :param sentences:  Number of sentences to generate. If tuple will generate random number in tuple range
     :param words:  Number of words per sentence to generate. If tuple, will generate random number in tuple range
-    :param punctuation:  List of strings or single string of punctuation to use
-
-    If `punctuation` is not specified, the following punctuation will be used: [". "]
-
-    Note that punctuation will only be used at end of each logical sentence, not at end of each word.
-
 
     """
 
-    def __init__(self, paragraphs=None, sentences=None, words=None, extendedWordList=None, punctuation=None):
+    def __init__(self, paragraphs=None, sentences=None, words=None, extendedWordList=None):
         """
         Initialize the ILText with text generation parameters
         """
@@ -705,7 +695,6 @@ class ILText(TextGenerator):  # lgtm [py/missing-equals]
         self.sentences = self.getAsTupleOrElse(sentences, (1, 1), "sentences")
         self.wordList = extendedWordList if extendedWordList is not None else _WORDS_LOWER
         self.shape = [self.paragraphs[1], self.sentences[1], self.words[1]]
-        self.punctuation = np.array(punctuation) if punctuation is not None else np.array(DEFAULT_PUNCTUATION)
 
         # values needed for the text generation
         # numpy uses fixed sizes for strings , so compute whats needed
@@ -738,15 +727,11 @@ class ILText(TextGenerator):  # lgtm [py/missing-equals]
 
         self._wordOffsetSize = all_words.size
         self._sentenceEndOffset = all_words.size
-
-        punctuation = []
-        punctuation.extend(self.punctuation)
-        punctuation.extend(SPACE_SYMBOLS)
-
-        self._paragraphEnd = self._sentenceEndOffset + len(self.punctuation)
+        self._paragraphEnd = self._sentenceEndOffset + 1
         self._wordSpaceOffset = self._paragraphEnd + 1
         self._emptyStringOffset = self._wordSpaceOffset + 1
 
+        punctuation = [". ", "\n\n", " ", ""]
         all_words = np.concatenate((all_words, punctuation))
 
         self._startOfCapitalsOffset = all_words.size
@@ -845,8 +830,6 @@ class ILText(TextGenerator):  # lgtm [py/missing-equals]
         new_col = new_word_offsets[:, :, :, np.newaxis]
         terminated_word_offsets = np.ma.concatenate((masked_offsets, new_col), axis=3)
         new_column = terminated_word_offsets[:, :, :, -1]
-
-        # TODO: modify to add punctuation to end of sentences
         new_column[~new_column.mask] = self._sentenceEndOffset
 
         # reshape to paragraphs

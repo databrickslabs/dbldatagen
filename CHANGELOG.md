@@ -7,6 +7,7 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 
 #### Changed
 * Added formatting of generated code as Html for script methods
+* Added text generator `GenerateString`
 
 ### Version 0.3.4 Post 3
 
