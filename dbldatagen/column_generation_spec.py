@@ -20,7 +20,7 @@ from pyspark.sql.types import FloatType, IntegerType, StringType, DoubleType, Bo
 
 from .column_spec_options import ColumnSpecOptions
 from .datagen_constants import RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, RANDOM_SEED_RANDOM, \
-    DEFAULT_SEED_COLUMN, OPTION_RANDOM, OPTION_RANDOM_SEED, OPTION_RANDOM_SEED_METHOD
+    DEFAULT_SEED_COLUMN, OPTION_RANDOM, OPTION_RANDOM_SEED, OPTION_RANDOM_SEED_METHOD, INFER_DATATYPE
 
 from .daterange import DateRange
 from .distributions import Normal, DataDistribution
@@ -109,6 +109,12 @@ class ColumnGenerationSpec(object):
 
         if colType is None:  # default to integer field if none specified
             colType = IntegerType()
+            self._inferDataType = False
+        elif colType == INFER_DATATYPE:
+            colType = StringType()  # default inferred data type to string until exact type is known
+            self._inferDataType = True
+        else:
+            self._inferDataType = False
 
         assert isinstance(colType, DataType), f"colType `{colType}` is not instance of DataType"
 
@@ -398,6 +404,12 @@ class ColumnGenerationSpec(object):
     def textGenerator(self):
         """ Get the text generator for the column spec"""
         return self._textGenerator
+
+    @property
+    def inferDatatype(self):
+        """ If True indicates that datatype should be inferred to be result of computing SQL expression
+        """
+        return self._inferDataType
 
     @property
     def baseColumns(self):

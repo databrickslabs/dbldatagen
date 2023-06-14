@@ -10,18 +10,17 @@ import logging
 import re
 
 from pyspark.sql.types import LongType, IntegerType, StringType, StructType, StructField, DataType
-from .spark_singleton import SparkSingleton
+
+from ._version import _get_spark_version
 from .column_generation_spec import ColumnGenerationSpec
 from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, \
-                               DEFAULT_SEED_COLUMN, SPARK_RANGE_COLUMN, MIN_SPARK_VERSION, \
-                               OPTION_RANDOM, OPTION_RANDOM_SEED, OPTION_RANDOM_SEED_METHOD, \
-                               INFER_DATATYPE
-
-
-from .utils import ensure, topologicalSort, DataGenError, deprecated, split_list_matching_condition
+    DEFAULT_SEED_COLUMN, SPARK_RANGE_COLUMN, MIN_SPARK_VERSION, \
+    OPTION_RANDOM, OPTION_RANDOM_SEED, OPTION_RANDOM_SEED_METHOD, \
+    INFER_DATATYPE
 from .html_utils import HtmlUtils
-from . _version import _get_spark_version
 from .schema_parser import SchemaParser
+from .spark_singleton import SparkSingleton
+from .utils import ensure, topologicalSort, DataGenError, deprecated, split_list_matching_condition
 
 _OLD_MIN_OPTION = 'min'
 _OLD_MAX_OPTION = 'max'
@@ -64,7 +63,8 @@ class DataGenerator:
 
     # restrict spurious messages from java gateway
     logging.getLogger("py4j").setLevel(logging.WARNING)
-    #logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.NOTSET)
+
+    # logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.NOTSET)
 
     def __init__(self, sparkSession=None, name=None, randomSeedMethod=None,
                  rows=1000000, startingId=0, randomSeed=None, partitions=None, verbose=False,
@@ -185,7 +185,7 @@ class DataGenerator:
 
         if sparkVersionInfo < minSparkVersion:
             logging.warning(f"*** Minimum version of Python supported is {minSparkVersion} - found version %s ",
-                         sparkVersionInfo )
+                            sparkVersionInfo)
             return False
 
         return True
@@ -809,7 +809,7 @@ class DataGenerator:
         new_props = {}
         new_props.update(kwargs)
 
-        if type(colType) == str:
+        if type(colType) == str and colType != INFER_DATATYPE:
             colType = SchemaParser.columnTypeFromString(colType)
 
         self.logger.info("effective range: %s, %s, %s args: %s", minValue, maxValue, step, kwargs)
@@ -830,8 +830,7 @@ class DataGenerator:
                   we'll mark that the build plan needs to be regenerated.
            For our purposes, the build plan determines the order of column generation etc.
 
-        :returns: modified in-place instance of test data generator allowing for chaining of calls
-                  following Builder pattern
+        :returns: Newly added column_spec
         """
         if colType is None:
             colType = self.getColumnType(baseColumn)
@@ -891,7 +890,7 @@ class DataGenerator:
         # mark that the build plan needs to be regenerated
         self._markForPlanRegen()
 
-        return self
+        return column_spec
 
     def _getBaseDataFrame(self, startId=0, streaming=False, options=None):
         """ generate the base data frame and seed column (which defaults to `id`) , partitioning the data if necessary
@@ -972,7 +971,7 @@ class DataGenerator:
 
         self.logger.info("columnBuildOrder: %s", str(self._buildOrder))
 
-        self._buildOrder = self._adjustBuildOrderForSqlDependencies(self._buildOrder,  self._columnSpecsByName)
+        self._buildOrder = self._adjustBuildOrderForSqlDependencies(self._buildOrder, self._columnSpecsByName)
 
         return self._buildOrder
 

@@ -421,13 +421,7 @@ class TestComplexColumns:
         browserver = ['Version 113.0.5672.126']
         osver = ['13.3.1 (22E261)']
 
-        dataspec = (
-            dg.DataGenerator(spark, name="device_data_set", rows=10000,
-                             partitions=8
-                             , randomSeedMethod='hash_fieldname')
-        )
-
-        logging.info(dataspec.partitions)
+        dataspec = dg.DataGenerator(spark, name="device_data_set", rows=10000, randomSeedMethod='hash_fieldname')
 
         dataspec = (dataspec
                     # Design
@@ -661,5 +655,51 @@ class TestComplexColumns:
 
             df = df_spec.build()
             df.show()
+
+    def test_inferred_with_schema(self):
+        """Test use of schema"""
+        schema = StructType([
+            StructField("region_id", IntegerType(), True),
+            StructField("region_cd", StringType(), True),
+            StructField("c", StringType(), True),
+            StructField("c1", StringType(), True),
+            StructField("state1", StringType(), True),
+            StructField("state2", StringType(), True),
+            StructField("st_desc", StringType(), True),
+
+        ])
+
+        testDataSpec = (dg.DataGenerator(spark, name="test_data_set1", rows=10000)
+                        .withSchema(schema)
+                        )
+
+        with pytest.raises(ValueError):
+            testDataSpec2 = testDataSpec.withColumnSpecs(matchTypes=[dg.INFER_DATATYPE], minValue=0, maxValue=100)
+            df = testDataSpec2.build()
+            df.show()
+
+    def test_inferred_column_types3(self, setupLogging):
+        column_count = 10
+        data_rows = 10 * 1000
+        df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows)
+                   .withIdOutput()
+                   .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
+                               numColumns=column_count, structType="array")
+                   .withColumn("code1", "integer", minValue=100, maxValue=200)
+                   .withColumn("code2", "integer", minValue=0, maxValue=10)
+                   .withColumn("code3", dg.INFER_DATATYPE, expr="code1 + code2")
+                   .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+                   .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+                   )
+
+        columnSpec1 = df_spec.getColumnType("code1")
+        assert columnSpec1.infertype is False
+
+        columnSpec2 = df_spec.getColumnType("code3")
+        assert columnSpec3.infertype is True
+
+
+
+
 
 
