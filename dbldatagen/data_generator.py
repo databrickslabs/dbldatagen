@@ -14,7 +14,9 @@ from .spark_singleton import SparkSingleton
 from .column_generation_spec import ColumnGenerationSpec
 from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, \
                                DEFAULT_SEED_COLUMN, SPARK_RANGE_COLUMN, MIN_SPARK_VERSION, \
-                               OPTION_RANDOM, OPTION_RANDOM_SEED, OPTION_RANDOM_SEED_METHOD
+                               OPTION_RANDOM, OPTION_RANDOM_SEED, OPTION_RANDOM_SEED_METHOD, \
+                               INFER_DATATYPE
+
 
 from .utils import ensure, topologicalSort, DataGenError, deprecated, split_list_matching_condition
 from .html_utils import HtmlUtils
@@ -607,7 +609,8 @@ class DataGenerator:
                   Builder pattern
 
         .. note::
-           matchTypes may also take SQL type strings or a list of SQL type strings such as "array<integer>"
+           matchTypes may also take SQL type strings or a list of SQL type strings such as "array<integer>". However,
+           you may not use ``INFER_DATYTYPE`` as part of the matchTypes list.
 
         You may also add a variety of options to further control the test data generation process.
         For full list of options, see :doc:`/reference/api/dbldatagen.column_spec_options`.
@@ -645,6 +648,9 @@ class DataGenerator:
 
             for typ in matchTypes:
                 if isinstance(typ, str):
+                    if typ == INFER_DATATYPE:
+                        raise ValueError("You cannot use INFER_DATATYPE with the method `withColumnSpecs`")
+
                     effective_types.append(SchemaParser.columnTypeFromString(typ))
                 else:
                     effective_types.append(typ)
@@ -762,6 +768,15 @@ class DataGenerator:
         :returns: modified in-place instance of test data generator allowing for chaining of calls
                   following Builder pattern
 
+        .. note::
+           if the value ``None`` is used for the ``colType`` parameter, the method will try to use the underlying
+           datatype derived from the base columns.
+
+           If the value ``INFER_DATATYPE`` is used for the ``colType`` parameter and a SQL expression has been supplied
+           via the ``expr`` parameter, the method will try to infer the column datatype from the SQL expression.
+
+           Inferred data types can only be used if the ``expr`` parameter is specified.
+
         You may also add a variety of additional options to further control the test data generation process.
         For full list of options, see :doc:`/reference/api/dbldatagen.column_spec_options`.
 
@@ -820,6 +835,9 @@ class DataGenerator:
         """
         if colType is None:
             colType = self.getColumnType(baseColumn)
+
+            if colType == INFER_DATATYPE:
+                raise ValueError("When base column(s) have inferred datatype, you must specify the column type")
 
         new_props = {}
         new_props.update(kwargs)

@@ -178,6 +178,18 @@ written as:
                expr="named_struct('event_type', event_type, 'event_ts', event_ts)",
                baseColumn=['event_type', 'event_ts'])
 
+ To simplify the specification of struct valued columns, the keyword "__infer__" can be used in place of the datatype
+when the `expr` attribute is specified. This will cause the datatype to be inferred from the expression.
+
+In this case, the previous code would be written as follows:
+
+.. code-block:: python
+
+   .withColumn("event_info",
+               "__infer__",
+               expr="named_struct('event_type', event_type, 'event_ts', event_ts)",
+               baseColumn=['event_type', 'event_ts'])
+
 Generating JSON valued fields
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -292,6 +304,22 @@ variable length subsets of the ``r`` columns.
 
  .. note::
     Note the use of the `baseColumn` attribute here to ensure correct ordering and separation of phases.
+
+Using inferred datatypes
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+When building columns with complex data types such as structs especially with nested structs, it can be repetitive and
+error prone to specify the datatypes - especially when the column is based on the resuls of a SQL expression
+(as specified by the ``expr`` attribute).
+
+You may use the constant ``INFER_DATATYPE`` in place of the actual datatype when the ``expr`` attribute is used.
+
+When the ``INFER_DATATYPE`` constant is used for the datatype, the actual datatype for the column will be inferred
+from the SQL expression passed using the ``expr`` parameter. This is only supported when the ``expr`` parameter is
+populated.
+
+The following example illustrates this:
+
 
 Using multi feature columns to generate arrays
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
