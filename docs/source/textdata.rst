@@ -118,6 +118,12 @@ Here are some examples of its use to generate dummy email addresses, ip addresse
 
 The implementation of the template expansion uses the underlying `TemplateGenerator` class.
 
+.. note ::
+   The ``template`` option is shorthand for ``text=dg.TemplateGenerator(template=...)``
+
+   This can be specified in multiple modes - see the `TemplateGenerator` documentation for more details.
+
+
 TemplateGenerator options
 ---------------------------------------------
 
@@ -161,6 +167,9 @@ It uses the following special chars:
           is interpreted as an array of values and the nth element is retrieved where `n` is the digit specified.
           
           The ``escapeSpecialChars`` is set to False by default for backwards compatibility.
+
+          To use the ``escapeSpecialChars`` option, use the variant
+          ``text=dg.TemplateGenerator(template=...), escapeSpecialChars=True``
 
 In all other cases, the char itself is used.
 
