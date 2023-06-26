@@ -878,7 +878,7 @@ class DataGenerator:
         struct_expression = f"named_struct({','.join(struct_expressions)})"
         return struct_expression
 
-    def _mkStructFromDict(self,fields):
+    def _mkStructFromDict(self, fields):
         assert fields is not None and isinstance(fields, dict), \
             "Fields must be a non-empty dict of fields that make up the struct elements"
         struct_expressions = []
@@ -925,7 +925,7 @@ class DataGenerator:
         for fld in fields:
             assert fld in self.getInferredColumnNames(), f"Field `{fld}` not found in column specs"
 
-        fieldExprs = [f"'{fld}', fld" for fld in l]
+        fieldExprs = [f"'{fld}', fld" for fld in fields]
         outputExpr = f"named_struct({','.join(fieldExprs)})"
         if asJson:
             outputExpr = f"to_json({outputExpr})"

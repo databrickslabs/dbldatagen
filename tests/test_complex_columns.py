@@ -588,7 +588,7 @@ class TestComplexColumns:
         type2 = self.getFieldType(df.schema, "struct2")
         assert type2 == StructType([StructField('a', DateType()), StructField('b', StringType())])
 
-    def test_inferred_column_structs2(self, setupLogging):
+    def test_with_struct_column2(self, setupLogging):
         column_count = 10
         data_rows = 10 * 1000
 
@@ -620,7 +620,7 @@ class TestComplexColumns:
             [StructField('a', StructType([StructField('a', IntegerType()), StructField('b', IntegerType())])),
              StructField('b', StructType([StructField('a', DateType()), StructField('b', StringType())]))])
 
-    def test_inferred_column_structs3(self, setupLogging):
+    def test_with_struct_column3(self, setupLogging):
         column_count = 10
         data_rows = 10 * 1000
 

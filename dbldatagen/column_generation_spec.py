@@ -117,7 +117,7 @@ class ColumnGenerationSpec(object):
             self._inferDataType = True
 
             if EXPR_OPTION not in kwargs:
-                raise ValueError(f"Column generation spec must have `expr` attribute specified if datatype is inferred")
+                raise ValueError("Column generation spec must have `expr` attribute specified if datatype is inferred")
 
         elif type(colType) == str and colType != INFER_DATATYPE:
             colType = SchemaParser.columnTypeFromString(colType)
