@@ -27,11 +27,13 @@ from .distributions import Normal, DataDistribution
 from .nrange import NRange
 from .text_generators import TemplateGenerator
 from .utils import ensure, coalesce_values
+from .schema_parser import SchemaParser
 
 HASH_COMPUTE_METHOD = "hash"
 VALUES_COMPUTE_METHOD = "values"
 RAW_VALUES_COMPUTE_METHOD = "raw_values"
 AUTO_COMPUTE_METHOD = "auto"
+EXPR_OPTION = "expr"
 COMPUTE_METHOD_VALID_VALUES = [HASH_COMPUTE_METHOD,
                                AUTO_COMPUTE_METHOD,
                                VALUES_COMPUTE_METHOD,
@@ -107,14 +109,18 @@ class ColumnGenerationSpec(object):
         # set up default range and type for column
         self._dataRange = NRange(None, None, None)  # by default range of values for  column is unconstrained
 
+        self._inferDataType = False
         if colType is None:  # default to integer field if none specified
             colType = IntegerType()
-            self._inferDataType = False
         elif colType == INFER_DATATYPE:
             colType = StringType()  # default inferred data type to string until exact type is known
             self._inferDataType = True
-        else:
-            self._inferDataType = False
+
+            if EXPR_OPTION not in kwargs:
+                raise ValueError(f"Column generation spec must have `expr` attribute specified if datatype is inferred")
+
+        elif type(colType) == str and colType != INFER_DATATYPE:
+            colType = SchemaParser.columnTypeFromString(colType)
 
         assert isinstance(colType, DataType), f"colType `{colType}` is not instance of DataType"
 
