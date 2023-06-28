@@ -647,6 +647,36 @@ class TestComplexColumns:
         type2 = self.getFieldType(df.schema, "struct2")
         assert type2 == StringType()
 
+    def test_with_json_struct_column2(self, setupLogging):
+        column_count = 10
+        data_rows = 10 * 1000
+
+        column_count = 10
+        data_rows = 10 * 1000
+        df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows)
+                   .withIdOutput()
+                   .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
+                               numColumns=column_count, structType="array")
+                   .withColumn("code1", "integer", minValue=100, maxValue=200)
+                   .withColumn("code2", "integer", minValue=0, maxValue=10)
+                   .withColumn("code3", "string", values=['one', 'two', 'three'])
+                   .withColumn("code4", "string", values=['one', 'two', 'three'])
+                   .withColumn("code5", dg.INFER_DATATYPE, expr="current_date()")
+                   .withColumn("code6", dg.INFER_DATATYPE, expr="concat(code3, code4)")
+                   .withStructColumn("struct1", fields={'codes': ["code6", "code6"]}, asJson=True)
+                   .withStructColumn("struct2", fields=['code5', 'code6'], asJson=True)
+                   )
+
+        df = df_spec.build()
+
+        type1 = self.getFieldType(df.schema, "struct1")
+        print("type1", type1)
+        assert type1 == StringType()
+
+        type2 = df_spec.inferredSchema["struct1"].dataType
+        assert type2 == StringType()
+
+
     def test_with_struct_column3(self, setupLogging):
         column_count = 10
         data_rows = 10 * 1000
