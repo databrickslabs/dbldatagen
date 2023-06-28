@@ -912,25 +912,35 @@ class DataGenerator:
         .. note::
             Additional options for the field specification may be specified as keyword arguments.
 
+            The field specification may be :
+            - a list of field references (strings) which will be used as both the field name and the SQL expression
+            - a list of tuples of the form (field_name, field_expression) where field_name is the name of the field
+            - a Python dict outlining the structure of the struct column. The keys of the dict are the field names
+
+            When using the ``struct`` form of the field specifications, a field whose value is a list will be treated
+            as creating a SQL array literal.
+
         """
-        assert fields is not None and type(fields) is list and len(fields) > 0, \
+        assert fields is not None and isinstance(fields, (list, dict)), \
             "Must specify at least one field for struct column"
         assert type(colName) is str and len(colName) > 0, "Must specify a column name"
 
         if isinstance(fields, list):
-            return self.withColumn(colName, INFER_DATATYPE, expr=self._mkSqlStructFromList(fields),  **kwargs)
+            assert len(fields) > 0, \
+                "Must specify at least one field for struct column"
+            struct_expr = self._mkSqlStructFromList(fields)
         elif isinstance(fields, dict):
-            return self.withColumn(colName, INFER_DATATYPE, expr=self._mkStructFromDict(fields),  **kwargs)
+            struct_expr = self._mkStructFromDict(fields)
+        else:
+            raise ValueError(f"Invalid field specification for struct column `{colName}`")
 
-        for fld in fields:
-            assert fld in self.getInferredColumnNames(), f"Field `{fld}` not found in column specs"
-
-        fieldExprs = [f"'{fld}', fld" for fld in fields]
-        outputExpr = f"named_struct({','.join(fieldExprs)})"
         if asJson:
-            outputExpr = f"to_json({outputExpr})"
+            output_expr = f"to_json({struct_expr})"
+            newDf = self.withColumn(colName, StringType(), expr=output_expr,  **kwargs)
+        else:
+            newDf = self.withColumn(colName, INFER_DATATYPE, expr=struct_expr, **kwargs)
 
-        return self.withColumn(colName, INFER_DATATYPE, expr=outputExpr, baseColumn=fields, **kwargs)
+        return newDf
 
     def _generateColumnDefinition(self, colName, colType=None, baseColumn=None,
                                   implicit=False, omit=False, nullable=True, **kwargs):

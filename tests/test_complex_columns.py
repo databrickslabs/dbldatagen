@@ -635,16 +635,17 @@ class TestComplexColumns:
                    .withColumn("code4", "string", values=['one', 'two', 'three'])
                    .withColumn("code5", dg.INFER_DATATYPE, expr="current_date()")
                    .withColumn("code6", dg.INFER_DATATYPE, expr="concat(code3, code4)")
-                   .withStructColumn("struct1", fields=['code1', 'code2'], toJson=True)
-                   .withStructColumn("struct2", fields=['code5', 'code6'], toJson=True)
+                   .withStructColumn("struct1", fields=['code1', 'code2'], asJson=True)
+                   .withStructColumn("struct2", fields=['code5', 'code6'], asJson=True)
                    )
 
         df = df_spec.build()
 
         type1 = self.getFieldType(df.schema, "struct1")
-        assert type1 == StructType([StructField('code1', IntegerType()), StructField('code2', IntegerType())])
+        print("type1", type1)
+        assert type1 == StringType()
         type2 = self.getFieldType(df.schema, "struct2")
-        assert type2 == StructType([StructField('code5', DateType(), False), StructField('code6', StringType())])
+        assert type2 == StringType()
 
     def test_with_struct_column3(self, setupLogging):
         column_count = 10
@@ -706,8 +707,9 @@ class TestComplexColumns:
         type1 = self.getFieldType(df.schema, "struct1")
         assert type1 == StructType([StructField('a', IntegerType()), StructField('b', IntegerType())])
         type2 = self.getFieldType(df.schema, "struct2")
-        assert type2 == StructType([StructField('a', DateType()), StructField('b', StringType())])
+        assert type2 == StructType([StructField('a', DateType(), False), StructField('b', StringType())])
         type3 = self.getFieldType(df.schema, "struct3")
         assert type3 == StructType(
-            [StructField('a', StructType([StructField('a', IntegerType()), StructField('b', IntegerType())])),
-             StructField('b', StructType([StructField('a', DateType()), StructField('b', StringType())]))])
+            [StructField('a', StructType([StructField('a', IntegerType()), StructField('b', IntegerType())]), False),
+             StructField('b', StructType([StructField('a', DateType(), False), StructField('b', StringType())]),
+                         False)])

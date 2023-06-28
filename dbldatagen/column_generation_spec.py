@@ -1113,11 +1113,9 @@ class ColumnGenerationSpec(object):
         .. note:: The purpose of this method is to allow for introspection of information such as datatype
                   which can only be determined when column specifications expression is used.
         """
-        self.logger.warning(f"_onSelect: Column {self.name} is of type {self.datatype} ")
-
         if self._inferDataType:
             inferred_type = df.schema[self.name].dataType
-            self.logger.warning("Inferred datatype for column %s as %s", self.name, str(inferred_type))
+            self.logger.info("Inferred datatype for column %s as %s", self.name, str(inferred_type))
             self._csOptions.options['type'] = inferred_type
 
     def _applyTextFormatExpression(self, new_def, sformat):

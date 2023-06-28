@@ -178,17 +178,18 @@ written as:
                expr="named_struct('event_type', event_type, 'event_ts', event_ts)",
                baseColumn=['event_type', 'event_ts'])
 
- To simplify the specification of struct valued columns, the keyword "__infer__" can be used in place of the datatype
-when the `expr` attribute is specified. This will cause the datatype to be inferred from the expression.
+ To simplify the specification of struct valued columns, the defined value of `INFER_DATATYPE` can be used in place of
+the datatype when the `expr` attribute is specified. This will cause the datatype to be inferred from the expression.
 
 In this case, the previous code would be written as follows:
 
 .. code-block:: python
 
    .withColumn("event_info",
-               "__infer__",
-               expr="named_struct('event_type', event_type, 'event_ts', event_ts)",
-               baseColumn=['event_type', 'event_ts'])
+               dg.INFER_DATATYPE,
+               expr="named_struct('event_type', event_type, 'event_ts', event_ts)")
+
+The helper method ``withStructColumn`` can also be used to simplify the specification of struct valued columns.
 
 Generating JSON valued fields
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -266,6 +267,11 @@ functions such as `named_struct` and `to_json`.
 
    #dfTestData.write.format("json").mode("overwrite").save("/tmp/jsonData2")
    display(dfTestData)
+
+The helper method ``withStructColumn`` in the DataGenerator class can also be used to simplify the specification
+of struct valued columns. When the argument ``asJson`` is set to ``True``, the resulting structure
+will be transformed to JSON.
+
 
 Generating complex column data
 ------------------------------
