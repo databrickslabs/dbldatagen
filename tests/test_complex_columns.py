@@ -676,7 +676,6 @@ class TestComplexColumns:
         type2 = df_spec.inferredSchema["struct1"].dataType
         assert type2 == StringType()
 
-
     def test_with_struct_column3(self, setupLogging):
         column_count = 10
         data_rows = 10 * 1000
