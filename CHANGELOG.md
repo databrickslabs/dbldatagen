@@ -9,6 +9,10 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 * Added formatting of generated code as Html for script methods
 * Allow use of inferred types on `withColumn` method when `expr` attribute is used
 
+#### Changed
+* Added ``withStructColumn`` method to allow simplified generation of struct and JSON columns
+
+
 ### Version 0.3.4 Post 3
 
 ### Changed
