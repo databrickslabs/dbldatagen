@@ -499,7 +499,7 @@ class TestComplexColumns:
         type2 = self.getFieldType(df.schema, "code6")
         assert type2 == IntegerType()
 
-        type3 = self.getFieldType(df.schema, "code")
+        type3 = self.getFieldType(df.schema, "code7")
         assert type3 == StringType()
 
     def test_inferred_column_structs1(self, setupLogging):
@@ -525,9 +525,12 @@ class TestComplexColumns:
         df = df_spec.build()
 
         type1 = self.getFieldType(df.schema, "struct1")
-        assert type1 == StructType([StructField('a', IntegerType()), StructField('b', IntegerType())])
+        expectedType = StructType([StructField('a', IntegerType()), StructField('b', IntegerType())])
+        assert type1 == expectedType
+
         type2 = self.getFieldType(df.schema, "struct2")
-        assert type2 == StructType([StructField('a', DateType()), StructField('b', StringType())])
+        expectedType2 = StructType([StructField('a', DateType(), False), StructField('b', StringType())])
+        assert type2 == expectedType2
 
     def test_inferred_column_structs2(self, setupLogging):
         column_count = 10
@@ -555,11 +558,12 @@ class TestComplexColumns:
         type1 = self.getFieldType(df.schema, "struct1")
         assert type1 == StructType([StructField('a', IntegerType()), StructField('b', IntegerType())])
         type2 = self.getFieldType(df.schema, "struct2")
-        assert type2 == StructType([StructField('a', DateType()), StructField('b', StringType())])
+        assert type2 == StructType([StructField('a', DateType(), False), StructField('b', StringType())])
         type3 = self.getFieldType(df.schema, "struct3")
         assert type3 == StructType(
-            [StructField('a', StructType([StructField('a', IntegerType()), StructField('b', IntegerType())])),
-             StructField('b', StructType([StructField('a', DateType()), StructField('b', StringType())]))])
+            [StructField('a', StructType([StructField('a', IntegerType()), StructField('b', IntegerType())]), False),
+             StructField('b', StructType([StructField('a', DateType(), False), StructField('b', StringType())]), False)]
+        )
 
     def test_with_struct_column1(self, setupLogging):
         column_count = 10
@@ -586,9 +590,63 @@ class TestComplexColumns:
         type1 = self.getFieldType(df.schema, "struct1")
         assert type1 == StructType([StructField('a', IntegerType()), StructField('b', IntegerType())])
         type2 = self.getFieldType(df.schema, "struct2")
-        assert type2 == StructType([StructField('a', DateType()), StructField('b', StringType())])
+        assert type2 == StructType([StructField('a', DateType(), False), StructField('b', StringType())])
 
     def test_with_struct_column2(self, setupLogging):
+        column_count = 10
+        data_rows = 10 * 1000
+
+        column_count = 10
+        data_rows = 10 * 1000
+        df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows)
+                   .withIdOutput()
+                   .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
+                               numColumns=column_count, structType="array")
+                   .withColumn("code1", "integer", minValue=100, maxValue=200)
+                   .withColumn("code2", "integer", minValue=0, maxValue=10)
+                   .withColumn("code3", "string", values=['one', 'two', 'three'])
+                   .withColumn("code4", "string", values=['one', 'two', 'three'])
+                   .withColumn("code5", dg.INFER_DATATYPE, expr="current_date()")
+                   .withColumn("code6", dg.INFER_DATATYPE, expr="concat(code3, code4)")
+                   .withStructColumn("struct1", fields=['code1', 'code2'])
+                   .withStructColumn("struct2", fields=['code5', 'code6'])
+                   )
+
+        df = df_spec.build()
+
+        type1 = self.getFieldType(df.schema, "struct1")
+        assert type1 == StructType([StructField('code1', IntegerType()), StructField('code2', IntegerType())])
+        type2 = self.getFieldType(df.schema, "struct2")
+        assert type2 == StructType([StructField('code5', DateType(), False), StructField('code6', StringType())])
+
+    def test_with_json_struct_column(self, setupLogging):
+        column_count = 10
+        data_rows = 10 * 1000
+
+        column_count = 10
+        data_rows = 10 * 1000
+        df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows)
+                   .withIdOutput()
+                   .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
+                               numColumns=column_count, structType="array")
+                   .withColumn("code1", "integer", minValue=100, maxValue=200)
+                   .withColumn("code2", "integer", minValue=0, maxValue=10)
+                   .withColumn("code3", "string", values=['one', 'two', 'three'])
+                   .withColumn("code4", "string", values=['one', 'two', 'three'])
+                   .withColumn("code5", dg.INFER_DATATYPE, expr="current_date()")
+                   .withColumn("code6", dg.INFER_DATATYPE, expr="concat(code3, code4)")
+                   .withStructColumn("struct1", fields=['code1', 'code2'], toJson=True)
+                   .withStructColumn("struct2", fields=['code5', 'code6'], toJson=True)
+                   )
+
+        df = df_spec.build()
+
+        type1 = self.getFieldType(df.schema, "struct1")
+        assert type1 == StructType([StructField('code1', IntegerType()), StructField('code2', IntegerType())])
+        type2 = self.getFieldType(df.schema, "struct2")
+        assert type2 == StructType([StructField('code5', DateType(), False), StructField('code6', StringType())])
+
+    def test_with_struct_column3(self, setupLogging):
         column_count = 10
         data_rows = 10 * 1000
 
@@ -614,13 +672,14 @@ class TestComplexColumns:
         type1 = self.getFieldType(df.schema, "struct1")
         assert type1 == StructType([StructField('a', IntegerType()), StructField('b', IntegerType())])
         type2 = self.getFieldType(df.schema, "struct2")
-        assert type2 == StructType([StructField('a', DateType()), StructField('b', StringType())])
+        assert type2 == StructType([StructField('a', DateType(), False), StructField('b', StringType())])
         type3 = self.getFieldType(df.schema, "struct3")
         assert type3 == StructType(
-            [StructField('a', StructType([StructField('a', IntegerType()), StructField('b', IntegerType())])),
-             StructField('b', StructType([StructField('a', DateType()), StructField('b', StringType())]))])
+            [StructField('a', StructType([StructField('a', IntegerType()), StructField('b', IntegerType())]), False),
+             StructField('b', StructType([StructField('a', DateType(), False), StructField('b', StringType())]),
+                         False)])
 
-    def test_with_struct_column3(self, setupLogging):
+    def test_with_struct_column4(self, setupLogging):
         column_count = 10
         data_rows = 10 * 1000
 

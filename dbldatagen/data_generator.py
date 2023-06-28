@@ -1256,6 +1256,7 @@ class DataGenerator:
 
         return df1
 
+    # noinspection PyProtectedMember
     def _buildColumnExpressionsWithSelects(self, df1):
         """
         Build column generation expressions with selects
@@ -1270,6 +1271,7 @@ class DataGenerator:
         # are generated resulting in shorter lineage
         for colNames in self.build_order:
             build_round = ["*"]
+            column_specs_applied = []
             inx_col = 0
             self.executionHistory.append(f"building stage for columns: {colNames}")
             for colName in colNames:
@@ -1285,9 +1287,14 @@ class DataGenerator:
                         i += 1
                 else:
                     build_round.append(column_generators.alias(colName))
+                column_specs_applied.append(col1)
                 inx_col = inx_col + 1
 
             df1 = df1.select(*build_round)
+
+            # apply any post select processing
+            for cs in column_specs_applied:
+                cs._onSelect(df1)
         return df1
 
     def _sqlTypeFromSparkType(self, dt):
