@@ -505,9 +505,6 @@ class TestComplexColumns:
     def test_inferred_column_structs1(self, setupLogging):
         column_count = 10
         data_rows = 10 * 1000
-
-        column_count = 10
-        data_rows = 10 * 1000
         df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows)
                    .withIdOutput()
                    .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
@@ -533,9 +530,6 @@ class TestComplexColumns:
         assert type2 == expectedType2
 
     def test_inferred_column_structs2(self, setupLogging):
-        column_count = 10
-        data_rows = 10 * 1000
-
         column_count = 10
         data_rows = 10 * 1000
         df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows)
@@ -568,9 +562,6 @@ class TestComplexColumns:
     def test_with_struct_column1(self, setupLogging):
         column_count = 10
         data_rows = 10 * 1000
-
-        column_count = 10
-        data_rows = 10 * 1000
         df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows)
                    .withIdOutput()
                    .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
@@ -595,9 +586,6 @@ class TestComplexColumns:
     def test_with_struct_column2(self, setupLogging):
         column_count = 10
         data_rows = 10 * 1000
-
-        column_count = 10
-        data_rows = 10 * 1000
         df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows)
                    .withIdOutput()
                    .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
@@ -620,9 +608,6 @@ class TestComplexColumns:
         assert type2 == StructType([StructField('code5', DateType(), False), StructField('code6', StringType())])
 
     def test_with_json_struct_column(self, setupLogging):
-        column_count = 10
-        data_rows = 10 * 1000
-
         column_count = 10
         data_rows = 10 * 1000
         df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows)
@@ -650,9 +635,6 @@ class TestComplexColumns:
     def test_with_json_struct_column2(self, setupLogging):
         column_count = 10
         data_rows = 10 * 1000
-
-        column_count = 10
-        data_rows = 10 * 1000
         df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows)
                    .withIdOutput()
                    .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
@@ -677,9 +659,6 @@ class TestComplexColumns:
         assert type2 == StringType()
 
     def test_with_struct_column3(self, setupLogging):
-        column_count = 10
-        data_rows = 10 * 1000
-
         column_count = 10
         data_rows = 10 * 1000
         df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows)
@@ -712,9 +691,6 @@ class TestComplexColumns:
     def test_with_struct_column4(self, setupLogging):
         column_count = 10
         data_rows = 10 * 1000
-
-        column_count = 10
-        data_rows = 10 * 1000
         df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows)
                    .withIdOutput()
                    .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
@@ -742,3 +718,44 @@ class TestComplexColumns:
             [StructField('a', StructType([StructField('a', IntegerType()), StructField('b', IntegerType())]), False),
              StructField('b', StructType([StructField('a', DateType(), False), StructField('b', StringType())]),
                          False)])
+
+    def test_with_struct_column_err1(self, setupLogging):
+        column_count = 10
+        data_rows = 10 * 1000
+
+        with pytest.raises(ValueError):
+            df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows)
+                       .withIdOutput()
+                       .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
+                                   numColumns=column_count, structType="array")
+                       .withColumn("code1", "integer", minValue=100, maxValue=200)
+                       .withColumn("code2", "integer", minValue=0, maxValue=10)
+                       .withColumn("code3", "string", values=['one', 'two', 'three'])
+                       .withColumn("code4", "string", values=['one', 'two', 'three'])
+                       .withColumn("code5", dg.INFER_DATATYPE, expr="current_date()")
+                       .withColumn("code6", dg.INFER_DATATYPE, expr="concat(code3, code4)")
+                       .withStructColumn("struct1", fields={'BAD_FIELD': 45})
+                       )
+
+            df = df_spec.build()
+
+    def test_with_struct_column_err2(self, setupLogging):
+        column_count = 10
+        data_rows = 10 * 1000
+
+        with pytest.raises(Exception):
+            df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows)
+                       .withIdOutput()
+                       .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
+                                   numColumns=column_count, structType="array")
+                       .withColumn("code1", "integer", minValue=100, maxValue=200)
+                       .withColumn("code2", "integer", minValue=0, maxValue=10)
+                       .withColumn("code3", "string", values=['one', 'two', 'three'])
+                       .withColumn("code4", "string", values=['one', 'two', 'three'])
+                       .withColumn("code5", dg.INFER_DATATYPE, expr="current_date()")
+                       .withColumn("code6", dg.INFER_DATATYPE, expr="concat(code3, code4)")
+                       .withStructColumn("struct1", fields=23)
+                       )
+
+            df = df_spec.build()
+

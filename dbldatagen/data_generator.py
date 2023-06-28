@@ -922,7 +922,7 @@ class DataGenerator:
 
         """
         assert fields is not None and isinstance(fields, (list, dict)), \
-            "Must specify at least one field for struct column"
+            "Fields argument must be a list of field specifications or dict outlining the target structure "
         assert type(colName) is str and len(colName) > 0, "Must specify a column name"
 
         if isinstance(fields, list):
