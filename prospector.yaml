@@ -11,6 +11,9 @@ ignore-paths:
 max-line-length: 120
 
 pylint:
+  options:
+    bad-functions: print
+
   disable:
     - too-many-instance-attributes
     - invalid-name
@@ -33,6 +36,9 @@ pylint:
     - too-many-branches
     - unnecessary-lambda
     - unused-variable  # TBD: this rule is actually a good one, we need to disable it and refactor code
+    - logging-fstring-interpolation # using f-strings for logging where cost of computing string is low
+    - unnecessary-lambda-assignment # in some cases, prefer using lambda rather than function for clarity / conciseness
+    - redefined-outer-name  # pylint flags use of pytest fixtures as redefinition
 
 pyflakes:
   disable:
@@ -53,6 +59,7 @@ pep8:
     - E128 # formatting only
     - E126 # formatting only
     - N815 # disabled as we use mixed case names following pyspark convention
+    - E731 # prefer use of lambda in some cases for clarity / conciseness
 
 mccabe:
   disable:

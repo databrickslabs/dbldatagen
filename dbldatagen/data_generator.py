@@ -15,8 +15,11 @@ from pyspark.sql.types import LongType, IntegerType, StringType, StructType, Str
 from .spark_singleton import SparkSingleton
 from .column_generation_spec import ColumnGenerationSpec
 from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, \
-                               DEFAULT_SEED_COLUMN, SPARK_RANGE_COLUMN, MIN_SPARK_VERSION
+                               DEFAULT_SEED_COLUMN, SPARK_RANGE_COLUMN, MIN_SPARK_VERSION, \
+                               OPTION_RANDOM, OPTION_RANDOM_SEED, OPTION_RANDOM_SEED_METHOD
+
 from .utils import ensure, topologicalSort, DataGenError, deprecated, split_list_matching_condition
+from .html_utils import HtmlUtils
 from . _version import _get_spark_version
 from .enhanced_event_time import EnhancedEventTimeHelper
 from .schema_parser import SchemaParser
@@ -66,6 +69,7 @@ class DataGenerator:
     :param batchSize: = UDF batch number of rows to pass via Apache Arrow to Pandas UDFs
     :param debug: = if set to True, output debug level of information
     :param seedColumnName: = if set, this should be the name of the `seed` or logical `id` column. Defaults to `id`
+    :param random: = if set, specifies default value of `random` attribute for all columns where not set
 
     By default the seed column is named `id`. If you need to use this column name in your generated data,
     it is recommended that you use a different name for the seed column - for example `_id`.
@@ -89,11 +93,12 @@ class DataGenerator:
 
     # restrict spurious messages from java gateway
     logging.getLogger("py4j").setLevel(logging.WARNING)
-    logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.NOTSET)
+    #logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.NOTSET)
 
     def __init__(self, sparkSession=None, name=None, randomSeedMethod=None,
                  rows=1000000, startingId=0, randomSeed=None, partitions=None, verbose=False,
                  batchSize=None, debug=False, seedColumnName=DEFAULT_SEED_COLUMN,
+                 random=False,
                  **kwargs):
         """ Constructor for data generator object """
 
@@ -149,6 +154,9 @@ class DataGenerator:
             self.logger.warning("option 'generateWithSelects' switch is deprecated - selects will always be used")
 
         self._seedMethod = randomSeedMethod
+
+        # set default random setting
+        self._defaultRandom = random if random is not None else False
 
         if randomSeed is None:
             self._instanceRandomSeed = self._randomSeed
@@ -209,7 +217,7 @@ class DataGenerator:
         sparkVersionInfo = _get_spark_version(sparkVersion)
 
         if sparkVersionInfo < minSparkVersion:
-            logging.warn(f"*** Minimum version of Python supported is {minSparkVersion} - found version %s ",
+            logging.warning(f"*** Minimum version of Python supported is {minSparkVersion} - found version %s ",
                          sparkVersionInfo )
             return False
 
@@ -273,13 +281,14 @@ class DataGenerator:
         """
         cls._randomSeed = seedVal
 
-    @deprecated('Use `useSeed` instead')
+    @deprecated("Use `useSeed` instead")
     @classmethod
     def use_seed(cls, seedVal):
         """ set seed for random number generation
 
             Arguments:
             :param seedVal: - new value for the random number seed
+
         """
         cls._randomSeed = seedVal
 
@@ -297,7 +306,7 @@ class DataGenerator:
             :returns: string containing generated name
         """
         cls._nextNameIndex += 1
-        new_name = (cls._untitledNamePrefix + '_' + str(cls._nextNameIndex))
+        new_name = cls._untitledNamePrefix + '_' + str(cls._nextNameIndex)
         return new_name
 
     # noinspection PyAttributeOutsideInit
@@ -331,6 +340,13 @@ class DataGenerator:
         """ return the data generation spec random seed"""
         return self._instanceRandomSeed
 
+    @property
+    def random(self):
+        """ return the data generation spec default random setting for columns to be used
+            when an explicit `random` attribute setting is not supplied
+        """
+        return self._defaultRandom
+
     def _markForPlanRegen(self):
         """Mark that build plan needs to be regenerated
 
@@ -351,9 +367,12 @@ class DataGenerator:
 
         rc = self._rowCount
         tasks = self.partitions
-        output = ["", "Data generation plan", "====================",
-                  f"spec=DateGenerator(name={self.name}, rows={rc}, startingId={self.starting_id}, partitions={tasks})"
-                  , ")", "", f"seed column: {self._seedColumnName}", "",
+        output = ["",
+                  "Data generation plan", "====================",
+                  f"spec=DateGenerator(name={self.name}, rows={rc}, startingId={self.starting_id}, partitions={tasks})",
+                  ")",
+                  "",
+                  f"seed column: {self._seedColumnName}", "",
                   f"column build order: {self._buildOrder}", "", "build plan:"]
 
         for plan_action in self._buildPlan:
@@ -622,12 +641,18 @@ class DataGenerator:
         :returns: modified in-place instance of test data generator allowing for chaining of calls following
                   Builder pattern
 
+        .. note::
+           matchTypes may also take SQL type strings or a list of SQL type strings such as "array<integer>"
+
         You may also add a variety of options to further control the test data generation process.
         For full list of options, see :doc:`/reference/api/dbldatagen.column_spec_options`.
 
         """
         if fields is not None and type(fields) is str:
             fields = [fields]
+
+        if OPTION_RANDOM not in kwargs:
+            kwargs[OPTION_RANDOM] = self._defaultRandom
 
         # add support for deprecated legacy names
         if "match_types" in kwargs:
@@ -651,7 +676,15 @@ class DataGenerator:
             effective_fields = [x for x in effective_fields for y in patterns if re.search(y, x) is not None]
 
         if matchTypes is not None:
-            effective_fields = [x for x in effective_fields for y in matchTypes
+            effective_types = []
+
+            for typ in matchTypes:
+                if isinstance(typ, str):
+                    effective_types.append(SchemaParser.columnTypeFromString(typ))
+                else:
+                    effective_types.append(typ)
+
+            effective_fields = [x for x in effective_fields for y in effective_types
                                 if self.getColumnType(x) == y]
 
         for f in effective_fields:
@@ -679,7 +712,7 @@ class DataGenerator:
         return True
 
     def withColumnSpec(self, colName, minValue=None, maxValue=None, step=1, prefix=None,
-                       random=False, distribution=None,
+                       random=None, distribution=None,
                        implicit=False, dataRange=None, omit=False, baseColumn=None, **kwargs):
         """ add a column specification for an existing column
 
@@ -700,6 +733,9 @@ class DataGenerator:
                f"""unnecessary `datatype` argument specified for `withColumnSpec` for column `{colName}` -
                     Datatype parameter is only needed for `withColumn` and not permitted for `withColumnSpec`
                """)
+
+        if random is None:
+            random = self._defaultRandom
 
         # handle migration of old `min` and `max` options
         if _OLD_MIN_OPTION in kwargs:
@@ -736,7 +772,7 @@ class DataGenerator:
         return colName in self._columnSpecsByName
 
     def withColumn(self, colName, colType=StringType(), minValue=None, maxValue=None, step=1,
-                   dataRange=None, prefix=None, random=False, distribution=None,
+                   dataRange=None, prefix=None, random=None, distribution=None,
                    baseColumn=None, nullable=True,
                    omit=False, implicit=False, noWarn=False,
                    **kwargs):
@@ -772,7 +808,7 @@ class DataGenerator:
 
         if not noWarn and colName == self._seedColumnName:
             self.logger.warning(f"Adding a new column named '{colName}' overrides seed column '{self._seedColumnName}'")
-            self.logger.warning(f"Use `seedColumName` option on DataGenerator construction for different seed column")
+            self.logger.warning("Use `seedColumName` option on DataGenerator construction for different seed column")
 
         # handle migration of old `min` and `max` options
         if _OLD_MIN_OPTION in kwargs:
@@ -786,6 +822,9 @@ class DataGenerator:
                 "Only one of `maxValue` and `maxValue` can be specified. Use of `maxValue` is preferred"
             maxValue = kwargs[_OLD_MAX_OPTION]
             kwargs.pop(_OLD_MAX_OPTION, None)
+
+        if random is None:
+            random = self._defaultRandom
 
         new_props = {}
         new_props.update(kwargs)
@@ -823,25 +862,25 @@ class DataGenerator:
         # if the column  has the option `random` set to true
         # then use the instance level random seed
         # otherwise use the default random seed for the class
-        if "randomSeed" in new_props:
-            effective_random_seed = new_props["randomSeed"]
-            new_props.pop("randomSeed")
-            new_props["random"] = True
+        if OPTION_RANDOM_SEED in new_props:
+            effective_random_seed = new_props[OPTION_RANDOM_SEED]
+            new_props.pop(OPTION_RANDOM_SEED)
+            new_props[OPTION_RANDOM] = True
 
             # if random seed has override but randomSeedMethod does not
             # set it to fixed
-            if "randomSeedMethod" not in new_props:
-                new_props["randomSeedMethod"] = RANDOM_SEED_FIXED
+            if OPTION_RANDOM_SEED_METHOD not in new_props:
+                new_props[OPTION_RANDOM_SEED_METHOD] = RANDOM_SEED_FIXED
 
-        elif "random" in new_props and new_props["random"]:
+        elif OPTION_RANDOM in new_props and new_props[OPTION_RANDOM]:
             effective_random_seed = self._instanceRandomSeed
         else:
             effective_random_seed = self._randomSeed
 
         # handle column level override
-        if "randomSeedMethod" in new_props:
-            effective_random_seed_method = new_props["randomSeedMethod"]
-            new_props.pop("randomSeedMethod")
+        if OPTION_RANDOM_SEED_METHOD in new_props:
+            effective_random_seed_method = new_props[OPTION_RANDOM_SEED_METHOD]
+            new_props.pop(OPTION_RANDOM_SEED_METHOD)
         else:
             effective_random_seed_method = self._seedMethod
 
@@ -889,7 +928,7 @@ class DataGenerator:
         build_options, passthrough_options, unsupported_options = self._parseBuildOptions(options)
 
         if not streaming:
-            status = (f"Generating data frame with ids from {startId} to {end_id} with {id_partitions} partitions")
+            status = f"Generating data frame with ids from {startId} to {end_id} with {id_partitions} partitions"
             self.logger.info(status)
             self.executionHistory.append(status)
             df1 = self.sparkSession.range(start=startId,
@@ -1073,7 +1112,7 @@ class DataGenerator:
                     cs = columnSpecsByName[columnBeingBuilt]
 
                     if cs.expr is not None:
-                        sql_references = SchemaParser.columnsReferencesFromSQLString(cs.expr, filter=all_columns)
+                        sql_references = SchemaParser.columnsReferencesFromSQLString(cs.expr, filterItems=all_columns)
 
                         # determine references to columns not yet built
                         forward_references = set(sql_references) - set(built_columns)
@@ -1092,7 +1131,8 @@ class DataGenerator:
 
             if len(separate_phase_columns) > 0:
                 # split phase based on columns in separate_phase_column_list set
-                revised_phase = split_list_matching_condition(current_phase, lambda el: el in separate_phase_columns)
+                revised_phase = split_list_matching_condition(current_phase,
+                                                              lambda el, cols=separate_phase_columns: el in cols)
                 new_build_order.extend(revised_phase)
             else:
                 # no change to phase
@@ -1349,13 +1389,14 @@ class DataGenerator:
 
         return ", ".join(results)
 
-    def scriptTable(self, name=None, location=None, tableFormat="delta"):
+    def scriptTable(self, name=None, location=None, tableFormat="delta", asHtml=False):
         """ generate create table script suitable for format of test data set
 
         :param name: name of table to use in generated script
         :param location: path to location of data. If specified (default is None), will generate
                          an external table definition.
         :param tableFormat: table format for table
+        :param asHtml: if true, generate output suitable for use with `displayHTML` method in notebook environment
         :returns: SQL string for scripted table
         """
         assert name is not None, "`name` must be specified"
@@ -1381,14 +1422,21 @@ class DataGenerator:
         if location is not None:
             results.append(f"location '{location}'")
 
-        return "\n".join(results)
+        results = "\n".join(results)
+
+        if asHtml:
+            results = HtmlUtils.formatCodeAsHtml(results)
+
+        return results
 
     def scriptMerge(self, tgtName=None, srcName=None, updateExpr=None, delExpr=None, joinExpr=None, timeExpr=None,
                     insertExpr=None,
                     useExplicitNames=True,
                     updateColumns=None, updateColumnExprs=None,
                     insertColumns=None, insertColumnExprs=None,
-                    srcAlias="src", tgtAlias="tgt"):
+                    srcAlias="src", tgtAlias="tgt",
+                    asHtml=False
+                    ):
         """ generate merge table script suitable for format of test data set
 
         :param tgtName: name of target table to use in generated script
@@ -1415,6 +1463,7 @@ class DataGenerator:
             By default, will use src column as update value for
             target table. This should have the form [ ("update_column_name", "update column expr"), ...]
         :param useExplicitNames: If True, generate explicit column names in insert and update statements
+        :param asHtml: if true, generate output suitable for use with `displayHTML` method in notebook environment
         :returns: SQL string for scripted merge statement
         """
         assert tgtName is not None, "you must specify a target table"
@@ -1489,4 +1538,9 @@ class DataGenerator:
 
         results.append(ins_clause)
 
-        return "\n".join(results)
+        result = "\n".join(results)
+
+        if asHtml:
+            result = HtmlUtils.formatCodeAsHtml(results)
+
+        return result

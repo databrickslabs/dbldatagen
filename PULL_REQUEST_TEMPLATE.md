@@ -26,7 +26,7 @@ This is simply a reminder of what we are going to look for before merging your c
 - [ ] I have added necessary documentation (if appropriate)
 - [ ] Any dependent changes have been merged and published in downstream modules
 - [ ] Submission does not reduce code coverage numbers
-- [ ] Submission does not increase alerts or messages from LGTM
+- [ ] Submission does not increase alerts or messages from prospector / lint
 
 ## Further comments
 

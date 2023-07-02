@@ -54,7 +54,7 @@ class TestStreaming():
     @pytest.fixture
     def getStreamingDirs(self):
         time_now = int(round(time.time() * 1000))
-        base_dir = "/tmp/testdatagenerator_{}".format(time_now)
+        base_dir = f"/tmp/testdatagenerator_{time_now}"
         print("test dir created")
         data_dir = os.path.join(base_dir, "data")
         checkpoint_dir = os.path.join(base_dir, "checkpoint")
@@ -143,7 +143,7 @@ class TestStreaming():
                 rows_retrieved = df2.count()
 
             # ignore file or metadata not found issues arising from read before stream has written first batch
-            except Exception as exc:
+            except Exception as exc:  # pylint: disable=broad-exception-caught
                 print("Exception:", exc)
 
         if sq.isActive:
@@ -152,7 +152,7 @@ class TestStreaming():
         end_time = time.time()
 
         print("*** Done ***")
-        print("read {} rows from newly written data".format(rows_retrieved))
+        print(f"read {rows_retrieved} rows from newly written data")
         print("elapsed time (seconds)", end_time - start_time)
 
         # check that we have at least one second of data
@@ -220,7 +220,7 @@ class TestStreaming():
                 rows_retrieved = df2.count()
 
             # ignore file or metadata not found issues arising from read before stream has written first batch
-            except Exception as exc:
+            except Exception as exc:  # pylint: disable=broad-exception-caught
                 print("Exception:", exc)
 
             if sq.isActive:
@@ -229,7 +229,7 @@ class TestStreaming():
         end_time = time.time()
 
         print("*** Done ***")
-        print("read {} rows from newly written data".format(rows_retrieved))
+        print(f"read {rows_retrieved} rows from newly written data")
         print("elapsed time (seconds)", end_time - start_time)
 
         # check that we have at least one second of data

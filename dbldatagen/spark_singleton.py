@@ -42,7 +42,8 @@ class SparkSingleton:
         else:
             spark_core_count = cpu_count - 1
 
-        logging.info("Spark core count: %d", spark_core_count)
+        logger = logging.getLogger(__name__)
+        logger.info("Spark core count: %d", spark_core_count)
 
         sparkSession = SparkSession.builder \
             .master(f"local[{spark_core_count}]") \
