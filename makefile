@@ -87,6 +87,16 @@ dev-test:
 	@echo "$(OK_COLOR)=> Running unit tests in directory $(PWD) $(NO_COLOR)"
 	pytest tests/ --cov $(PACKAGE_NAME) --cov-report=xml
 
+dev-lint-report:
+	@echo "$(OK_COLOR)=> Running Prospector lint reporting $(PWD) $(NO_COLOR)"
+	prospector --profile prospector.yaml dbldatagen > prospector_report.txt
+	prospector --profile prospector.yaml tests >> prospector_report.txt
+
+dev-lint:
+	@echo "$(OK_COLOR)=> Running Prospector lint reporting $(PWD) $(NO_COLOR)"
+	prospector --profile prospector.yaml dbldatagen
+	prospector --profile prospector.yaml tests
+
 dev-test-with-html-report:
 	@echo "$(OK_COLOR)=> Running unit tests with HTML test coverage report$(NO_COLOR)"
 	pytest --cov $(PACKAGE_NAME) --cov-report html -s

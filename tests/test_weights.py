@@ -121,7 +121,7 @@ class TestWeights(unittest.TestCase):
             "select * from (select tech, count(tech) as rc from testdata group by tech ) a order by tech").collect()
         values = [x.tech for x in df_values]
         print("row values:", values)
-        total_count = sum([x.rc for x in df_values])
+        total_count = sum([x.rc for x in df_values])  # pylint: disable=consider-using-generator
         self.assertEqual(total_count, self.rows)
 
         percentages = self.weights_as_percentages([x.rc for x in df_values])
@@ -397,19 +397,3 @@ class TestWeights(unittest.TestCase):
         values2 = dfAlpha2.collect()
 
         self.assertEqual(values1, values2)
-
-# run the tests
-# if __name__ == '__main__':
-#  print("Trying to run tests")
-#  unittest.main(argv=['first-arg-is-ignored'],verbosity=2,exit=False)
-
-# def runTests(suites):
-#     suite = unittest.TestSuite()
-#     result = unittest.TestResult()
-#     for testSuite in suites:
-#         suite.addTest(unittest.makeSuite(testSuite))
-#     runner = unittest.TextTestRunner()
-#     print(runner.run(suite))
-#
-#
-# runTests([TestWeights])

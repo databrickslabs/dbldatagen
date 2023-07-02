@@ -1,9 +1,7 @@
-.. Test Data Generator documentation master file, created by
+.. Databricks Labs Data Generator documentation master file, created by
    sphinx-quickstart on Sun Jun 21 10:54:30 2020.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 
-Generating Change Data Capture data
+Generating Change Data Capture Data
 ===================================
 
 This section explores some of the features for generating CDC style data - that is exploring the ability to
@@ -47,28 +45,30 @@ We'll add a timestamp for when the row was generated and a memo field to mark wh
 
    uniqueCustomers = 10 * 1000000
 
-   dataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
-               .withColumn("customer_id","long", uniqueValues=uniqueCustomers)
-               .withColumn("name", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w')
-               .withColumn("alias", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w')
-               .withColumn("payment_instrument_type", values=['paypal', 'Visa', 'Mastercard',
-                           'American Express', 'discover', 'branded visa', 'branded mastercard'],
-                           random=True, distribution="normal")
-               .withColumn("int_payment_instrument", "int",  minValue=0000, maxValue=9999,  baseColumn="customer_id",
-                           baseColumnType="hash", omit=True)
-               .withColumn("payment_instrument", expr="format_number(int_payment_instrument, '**** ****** *####')",
-                           baseColumn="int_payment_instrument")
-               .withColumn("email", template=r'\\w.\\w@\\w.com|\\w-\\w@\\w')
-               .withColumn("email2", template=r'\\w.\\w@\\w.com')
-               .withColumn("ip_address", template=r'\\n.\\n.\\n.\\n')
-               .withColumn("md5_payment_instrument",
-                           expr="md5(concat(payment_instrument_type, ':', payment_instrument))",
-                           base_column=['payment_instrument_type', 'payment_instrument'])
-               .withColumn("customer_notes", text=dg.ILText(words=(1,8)))
-               .withColumn("created_ts", "timestamp", expr="now()")
-               .withColumn("modified_ts", "timestamp", expr="now()")
-               .withColumn("memo", expr="'original data'")
-               )
+   dataspec = (
+       dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
+         .withColumn("customer_id","long", uniqueValues=uniqueCustomers)
+         .withColumn("name", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w')
+         .withColumn("alias", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w')
+         .withColumn("payment_instrument_type", values=['paypal', 'Visa', 'Mastercard',
+                     'American Express', 'discover', 'branded visa', 'branded mastercard'],
+                     random=True, distribution="normal")
+         .withColumn("int_payment_instrument", "int",  minValue=0000, maxValue=9999,
+                     baseColumn="customer_id", baseColumnType="hash", omit=True)
+         .withColumn("payment_instrument",
+                     expr="format_number(int_payment_instrument, '**** ****** *####')",
+                     baseColumn="int_payment_instrument")
+         .withColumn("email", template=r'\\w.\\w@\\w.com|\\w-\\w@\\w')
+         .withColumn("email2", template=r'\\w.\\w@\\w.com')
+         .withColumn("ip_address", template=r'\\n.\\n.\\n.\\n')
+         .withColumn("md5_payment_instrument",
+                     expr="md5(concat(payment_instrument_type, ':', payment_instrument))",
+                     base_column=['payment_instrument_type', 'payment_instrument'])
+         .withColumn("customer_notes", text=dg.ILText(words=(1,8)))
+         .withColumn("created_ts", "timestamp", expr="now()")
+         .withColumn("modified_ts", "timestamp", expr="now()")
+         .withColumn("memo", expr="'original data'")
+         )
    df1 = dataspec.build()
 
    # write table
@@ -168,7 +168,6 @@ values of the columns from the source table will be used.
                                                     ])
 
    print(sqlStmt)
-
    spark.sql(sqlStmt)
 
 That's all that's required to perform merges with the data generation framework.

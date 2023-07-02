@@ -27,7 +27,8 @@ from .data_generator import DataGenerator
 from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_RANDOM, RANDOM_SEED_FIXED, \
                                RANDOM_SEED_HASH_FIELD_NAME, MIN_PYTHON_VERSION, MIN_SPARK_VERSION
 from .utils import ensure, topologicalSort, mkBoundsList, coalesce_values, \
-    deprecated, parse_time_interval, DataGenError, split_list_matching_condition
+    deprecated, parse_time_interval, DataGenError, split_list_matching_condition, strip_margins, \
+    json_value_from_path, system_time_millis
 from ._version import __version__
 from .column_generation_spec import ColumnGenerationSpec
 from .column_spec_options import ColumnSpecOptions
@@ -40,12 +41,14 @@ from .function_builder import ColumnGeneratorBuilder
 from .spark_singleton import SparkSingleton
 from .text_generators import TemplateGenerator, ILText, TextGenerator
 from .text_generator_plugins import PyfuncText, PyfuncTextFactory, FakerTextFactory, fakerText
+from .html_utils import HtmlUtils
 
 __all__ = ["data_generator", "data_analyzer", "schema_parser", "daterange", "nrange",
            "column_generation_spec", "utils", "function_builder",
            "spark_singleton", "text_generators", "datarange", "datagen_constants",
-           "text_generator_plugins"
+           "text_generator_plugins", "html_utils"
            ]
+
 
 def python_version_check(python_version_expected):
     """Check against Python version

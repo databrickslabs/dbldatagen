@@ -1,9 +1,9 @@
 import logging
-import pytest
 
+import pytest
 from pyspark.sql import functions as F
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, ArrayType, MapType, \
-                              BinaryType, LongType
+    BinaryType, LongType
 
 import dbldatagen as dg
 
@@ -25,7 +25,7 @@ class TestComplexColumns:
     @pytest.mark.parametrize("complexFieldType, expectedType, invalidValueCondition",
                              [("array<int>", ArrayType(IntegerType()), "complex_field is not Null"),
                               ("array<array<string>>", ArrayType(ArrayType(StringType())), "complex_field is not Null"),
-                              ("map<STRING, INT>", MapType(StringType(), IntegerType()),"complex_field is not Null"),
+                              ("map<STRING, INT>", MapType(StringType(), IntegerType()), "complex_field is not Null"),
                               ("struct<a:binary, b:int, c:float>",
                                StructType([StructField("a", BinaryType()), StructField("b", IntegerType()),
                                            StructField("c", FloatType())]),
@@ -58,7 +58,7 @@ class TestComplexColumns:
     @pytest.mark.parametrize("complexFieldType, expectedType, invalidValueCondition",
                              [("array<int>", ArrayType(IntegerType()), "complex_field is not Null"),
                               ("array<array<string>>", ArrayType(ArrayType(StringType())), "complex_field is not Null"),
-                              ("map<STRING, INT>", MapType(StringType(), IntegerType()),"complex_field is not Null"),
+                              ("map<STRING, INT>", MapType(StringType(), IntegerType()), "complex_field is not Null"),
                               ("struct<a:binary, b:int, c:float>",
                                StructType([StructField("a", BinaryType()), StructField("b", IntegerType()),
                                            StructField("c", FloatType())]),
@@ -125,7 +125,6 @@ class TestComplexColumns:
 
         valid_data_count = df.where(validValueCondition).count()
         assert valid_data_count == data_rows, "Not expecting invalid values"
-
 
     def test_basic_arrays_with_columns(self, setupLogging):
         column_count = 10
@@ -246,6 +245,7 @@ class TestComplexColumns:
                 .withColumnSpec("arrayVal", expr="array(id+1)")
                 )
         df = gen1.build()
+        assert df is not None
         df.show()
 
     def test_use_of_struct_in_schema1(self, setupLogging):
@@ -280,12 +280,119 @@ class TestComplexColumns:
         res1 = gen1.build(withTempView=True)
         assert res1.count() == 10000
 
+    def test_varying_arrays(self, setupLogging):
+        df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=1000, random=True)
+                   .withColumn("r", "float", minValue=1.0, maxValue=10.0, step=0.1,
+                               numColumns=5)
+                   .withColumn("observations", "array<float>",
+                               expr="slice(array(r_0, r_1, r_2, r_3, r_4), 1, abs(hash(id)) % 5 + 1 )",
+                               baseColumn="r")
+                   )
 
+        df = df_spec.build()
+        df.show()
 
+    def test_array_values(self):
+        df_spec = dg.DataGenerator(spark, name="test-data", rows=2)
+        df_spec = df_spec.withColumn(
+            "test",
+            ArrayType(StringType()),
+            values=[
+                F.array(F.lit("A")),
+                F.array(F.lit("C")),
+                F.array(F.lit("T")),
+                F.array(F.lit("G")),
+            ],
+        )
+        test_df = df_spec.build()
 
+        rows = test_df.collect()
 
+        for r in rows:
+            assert r['test'] is not None
 
+    def test_single_element_array(self):
+        df_spec = dg.DataGenerator(spark, name="test-data", rows=2)
+        df_spec = df_spec.withColumn(
+            "test1",
+            ArrayType(StringType()),
+            values=[
+                F.array(F.lit("A")),
+                F.array(F.lit("C")),
+                F.array(F.lit("T")),
+                F.array(F.lit("G")),
+            ],
+        )
+        df_spec = df_spec.withColumn(
+            "test2", "string", structType="array", numFeatures=1, values=["one", "two", "three"]
+        )
+        df_spec = df_spec.withColumn(
+            "test3", "string", structType="array", numFeatures=(1, 1), values=["one", "two", "three"]
+        )
+        df_spec = df_spec.withColumn(
+            "test4", "string", structType="array", values=["one", "two", "three"]
+        )
 
+        test_df = df_spec.build()
 
+        for field in test_df.schema:
+            assert isinstance(field.dataType, ArrayType)
 
+    def test_map_values(self):
+        df_spec = dg.DataGenerator(spark, name="test-data", rows=50, random=True)
+        df_spec = df_spec.withColumn(
+            "v1",
+            "array<string>",
+            values=[
+                F.array(F.lit("A")),
+                F.array(F.lit("C")),
+                F.array(F.lit("T")),
+                F.array(F.lit("G")),
+            ],
+        )
+        df_spec = df_spec.withColumn(
+            "v2",
+            "array<string>",
+            values=[
+                F.array(F.lit("one")),
+                F.array(F.lit("two")),
+                F.array(F.lit("three")),
+                F.array(F.lit("four")),
+            ],
+        )
+        df_spec = df_spec.withColumn(
+            "v3",
+            "array<string>",
+            values=[
+                F.array(F.lit("alpha")),
+                F.array(F.lit("beta")),
+                F.array(F.lit("delta")),
+                F.array(F.lit("gamma")),
+            ],
+        )
+        df_spec = df_spec.withColumn(
+            "v4",
+            "string",
+            values=["this", "is", "a", "test"],
+            numFeatures=1,
+            structType="array"
+        )
 
+        df_spec = df_spec.withColumn(
+            "test",
+            "map<string,string>",
+            values=[F.map_from_arrays(F.col("v1"), F.col("v2")),
+                    F.map_from_arrays(F.col("v1"), F.col("v3")),
+                    F.map_from_arrays(F.col("v2"), F.col("v3")),
+                    F.map_from_arrays(F.col("v1"), F.col("v4")),
+                    F.map_from_arrays(F.col("v2"), F.col("v4")),
+                    F.map_from_arrays(F.col("v3"), F.col("v4"))
+                    ],
+            baseColumns=["v1", "v2", "v3", "v4"]
+        )
+        test_df = df_spec.build()
+
+        rows = test_df.collect()
+
+        for r in rows:
+            assert r['test'] is not None

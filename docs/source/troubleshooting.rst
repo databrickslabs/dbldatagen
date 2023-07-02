@@ -1,7 +1,5 @@
-.. Test Data Generator documentation master file, created by
+.. Databricks Labs Data Generator documentation master file, created by
    sphinx-quickstart on Sun Jun 21 10:54:30 2020.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 
 Troubleshooting
 ===============
@@ -165,50 +163,55 @@ In these cases, we use the `baseColumn` attribute to ensure the correct column b
 
    lines = ['delta', 'xyzzy', 'lakehouse', 'gadget', 'droid']
 
-   testDataSpec = (dg.DataGenerator(spark, name="device_data_set", rows=1000000,
-                                    partitions=8,
-                                    randomSeedMethod='hash_fieldname')
-                   # we'll use hash of the base field to generate the ids to
-                   # avoid a simple incrementing sequence
-                   .withColumn("internal_device_id", "long", minValue=0x1000000000000,
-                               uniqueValues=device_population, omit=True, baseColumnType="hash")
+   testDataSpec = (
+       dg.DataGenerator(spark, name="device_data_set", rows=1000000,
+                        partitions=8,
+                        randomSeedMethod='hash_fieldname')
+       # we'll use hash of the base field to generate the ids to
+       # avoid a simple incrementing sequence
+       .withColumn("internal_device_id", "long", minValue=0x1000000000000,
+                   uniqueValues=device_population, omit=True, baseColumnType="hash")
 
-                   # note for format strings, we must use "%lx" not "%x" as the
-                   # underlying value is a long
-                   .withColumn("device_id", "string", format="0x%013x",
-                               baseColumn="internal_device_id")
+       # note for format strings, we must use "%lx" not "%x" as the
+       # underlying value is a long
+       .withColumn("device_id", "string", format="0x%013x",
+                   baseColumn="internal_device_id")
 
-                   # the device / user attributes will be the same for the same device id
-                   # so lets use the internal device id as the base column for these attribute
-                   .withColumn("country", "string", values=country_codes,
-                               weights=country_weights,
-                               baseColumn="internal_device_id")
+       # the device / user attributes will be the same for the same device id
+       # so lets use the internal device id as the base column for these attribute
+       .withColumn("country", "string", values=country_codes,
+                   weights=country_weights,
+                   baseColumn="internal_device_id")
 
-                   .withColumn("manufacturer", "string", values=manufacturers,
-                               baseColumn="internal_device_id", omit=True)
+       .withColumn("manufacturer", "string", values=manufacturers,
+                   baseColumn="internal_device_id", omit=True)
 
-                   .withColumn("line", StringType(), values=lines, baseColumn="manufacturer",
-                               baseColumnType="hash", omit=True)
+       .withColumn("line", StringType(), values=lines, baseColumn="manufacturer",
+                   baseColumnType="hash", omit=True)
 
-                   # note use of baseColumn to control column build ordering
-                   .withColumn("manufacturer_info", "string",
-                                expr="to_json(named_struct('line', line, 'manufacturer', manufacturer))",
-                               baseColumn=["line", "manufacturer"]
-                              )
+       # note use of baseColumn to control column build ordering
+       .withColumn("manufacturer_info", "string",
+                    expr="to_json(named_struct('line', line, 'manufacturer', manufacturer))",
+                   baseColumn=["line", "manufacturer"]
+                  )
 
-                   .withColumn("event_type", "string",
-                               values=["activation", "deactivation", "plan change",
-                                       "telecoms activity", "internet activity", "device error"],
-                               random=True, omit=True)
+       .withColumn("event_type", "string",
+                   values=["activation", "deactivation", "plan change",
+                           "telecoms activity", "internet activity", "device error"],
+                   random=True, omit=True)
 
-                   .withColumn("event_ts", "timestamp", begin="2020-01-01 01:00:00", end="2020-12-31 23:59:00",
-                               interval="1 minute", random=True, omit=True)
+       .withColumn("event_ts", "timestamp",
+                   begin="2020-01-01 01:00:00",
+                   end="2020-12-31 23:59:00",
+                   interval="1 minute",
+                   random=True,
+                   omit=True)
 
-                   # note use of baseColumn to control column build ordering
-                   .withColumn("event_info", "string",
-                                expr="to_json(named_struct('event_type', event_type, 'event_ts', event_ts))",
-                                baseColumn=["event_type", "event_ts"])
-                   )
+       # note use of baseColumn to control column build ordering
+       .withColumn("event_info", "string",
+                    expr="to_json(named_struct('event_type', event_type, 'event_ts', event_ts))",
+                    baseColumn=["event_type", "event_ts"])
+       )
 
    dfTestData = testDataSpec.build()
 

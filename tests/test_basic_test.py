@@ -16,7 +16,6 @@ def setupLogging():
 
 
 class TestBasicOperation:
-    testDataSpec = None
     dfTestData = None
     SMALL_ROW_COUNT = 100000
     TINY_ROW_COUNT = 1000
@@ -54,17 +53,17 @@ class TestBasicOperation:
         # clear messages from setup
         caplog_object.clear()
 
-    def get_log_capture_warngings_and_errors(self, caplog_object, textFlag):
+    def get_log_capture_warngings_and_errors(self, caplog_object, searchText):
         """
         gets count of errors containing specified text
 
         :param caplog_object: log capture object from fixture
-        :param textFlag: text to search for to include error or warning in count
+        :param searchText: text to search for to include error or warning in count
         :return: count of errors containg text specified in `textFlag`
         """
         seed_column_warnings_and_errors = 0
         for r in caplog_object.records:
-            if (r.levelname == "WARNING" or r.levelname == "ERROR") and textFlag in r.message:
+            if (r.levelname in ["WARNING", "ERROR"]) and searchText in r.message:
                 seed_column_warnings_and_errors += 1
 
         return seed_column_warnings_and_errors
@@ -103,18 +102,17 @@ class TestBasicOperation:
         self.setup_log_capture(caplog)
 
         dgspec = (dg.DataGenerator(sparkSession=spark, name="alt_data_set", rows=10000,
-                                             partitions=4, seedMethod='hash_fieldname', verbose=True,
-                                             seedColumnName="_id")
-                            .withIdOutput()
-                            .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
-                                        numColumns=4)
-                            .withColumn("code1", IntegerType(), min=100, max=200)
-                            .withColumn("code2", IntegerType(), min=0, max=10)
-                            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-                            .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
-                            .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
-
-                            )
+                                   partitions=4, seedMethod='hash_fieldname', verbose=True,
+                                   seedColumnName="_id")
+                  .withIdOutput()
+                  .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
+                              numColumns=4)
+                  .withColumn("code1", IntegerType(), min=100, max=200)
+                  .withColumn("code2", IntegerType(), min=0, max=10)
+                  .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+                  .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+                  .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+                  )
 
         fieldsFromGenerator = set(dgspec.getOutputColumnNames())
 
@@ -306,7 +304,7 @@ class TestBasicOperation:
 
     def test_default_spark_instance(self):
         """ Test different types of seeding for random values"""
-        ds1 = (dg.DataGenerator( name="test_data_set1", rows=1000, seedMethod='hash_fieldname')
+        ds1 = (dg.DataGenerator(name="test_data_set1", rows=1000, seedMethod='hash_fieldname')
                .withIdOutput()
                .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
                .withColumn("code3", StringType(), values=['a', 'b', 'c'])
@@ -320,7 +318,7 @@ class TestBasicOperation:
 
     def test_default_spark_instance2(self):
         """ Test different types of seeding for random values"""
-        ds1 = (dg.DataGenerator( name="test_data_set1", rows=1000, seedMethod='hash_fieldname')
+        ds1 = (dg.DataGenerator(name="test_data_set1", rows=1000, seedMethod='hash_fieldname')
                .withIdOutput()
                .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
                .withColumn("code3", StringType(), values=['a', 'b', 'c'])

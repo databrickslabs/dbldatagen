@@ -1,4 +1,4 @@
-# Understanding and using data ranges
+# Understanding and Using Data Ranges
 
 The data generator uses data ranges to constrain the values for generated data. 
 
@@ -27,14 +27,15 @@ import dbldatagen as dg
 from pyspark.sql.types import IntegerType, StringType
 
 row_count=1000 * 100
-testDataSpec = (dg.DataGenerator(spark, name="test_data_set1", rows=row_count,
-                                  partitions=4, randomSeedMethod='hash_fieldname')
-                   .withIdOutput()
-                   .withColumn("purchase_id", IntegerType(), minValue=1000000, 
-                                maxValue=2000000, random=True)
-                   .withColumn("product_code", IntegerType(), uniqueValues=10000, random=True)
-                   .withColumn("in_stock", StringType(), values=['yes', 'no', 'unknown'])
-                   )
+testDataSpec = (
+   dg.DataGenerator(spark, name="test_data_set1", rows=row_count,
+                    partitions=4, randomSeedMethod='hash_fieldname')
+   .withIdOutput()
+   .withColumn("purchase_id", IntegerType(), minValue=1000000, 
+                maxValue=2000000, random=True)
+   .withColumn("product_code", IntegerType(), uniqueValues=10000, random=True)
+   .withColumn("in_stock", StringType(), values=['yes', 'no', 'unknown'])
+   )
 
 dfTestData = testDataSpec.build()
 ```
@@ -92,16 +93,17 @@ import dbldatagen as dg
 from pyspark.sql.types import IntegerType
 
 row_count=1000 * 100
-testDataSpec = (dg.DataGenerator(spark, name="test_data_set1", rows=row_count,
-                                  partitions=4, randomSeedMethod='hash_fieldname', 
-                                  verbose=True)
-                   .withColumn("purchase_id", IntegerType(), minValue=1000000, 
-                                  maxValue=2000000)
-                   .withColumn("product_code", IntegerType(), uniqueValues=10000, 
-                                  random=True)
-                   .withColumn("purchase_date", "date", uniqueValues=300, 
-                                  random=True)
-                   )
+testDataSpec = (
+      dg.DataGenerator(spark, name="test_data_set1", rows=row_count,
+                       partitions=4, randomSeedMethod='hash_fieldname', 
+                       verbose=True)
+      .withColumn("purchase_id", IntegerType(), minValue=1000000, 
+                     maxValue=2000000)
+      .withColumn("product_code", IntegerType(), uniqueValues=10000, 
+                     random=True)
+      .withColumn("purchase_date", "date", uniqueValues=300, 
+                     random=True)
+      )
 
 dfTestData = testDataSpec.build()
 ```
@@ -114,22 +116,25 @@ Here we specify an explicit date range and add a random number of days for the r
 import dbldatagen as dg
 from pyspark.sql.types import IntegerType
 
-row_count=1000 * 100
-testDataSpec = (dg.DataGenerator(spark, name="test_data_set1", rows=row_count,
-                                  partitions=4, randomSeedMethod='hash_fieldname', 
-                                  verbose=True)
-                   .withColumn("purchase_id", IntegerType(), minValue=1000000, maxValue=2000000)
-                   .withColumn("product_code", IntegerType(), uniqueValues=10000, random=True)
-                   .withColumn("purchase_date", "date", data_range=dg.DateRange("2017-10-01 00:00:00",
-                                                                             "2018-10-06 11:55:00",
-                                                                             "days=3"), 
-                                                                                   random=True)
-                   .withColumn("return_date", "date", 
-                        expr="date_add(purchase_date, cast(floor(rand() * 100 + 1) as int))", 
-                              baseColumn="purchase_date")
-
-                   )
-
+row_count = 1000 * 100
+testDataSpec = (
+    dg.DataGenerator( spark, name="test_data_set1", rows=row_count, partitions=4, 
+                      randomSeedMethod="hash_fieldname", verbose=True, )
+    .withColumn("purchase_id", IntegerType(), minValue=1000000, maxValue=2000000)
+    .withColumn("product_code", IntegerType(), uniqueValues=10000, random=True)
+    .withColumn(
+        "purchase_date",
+        "date",
+        data_range=dg.DateRange("2017-10-01 00:00:00", "2018-10-06 11:55:00", "days=3"),
+        random=True,
+    )
+    .withColumn(
+        "return_date",
+        "date",
+        expr="date_add(purchase_date, cast(floor(rand() * 100 + 1) as int))",
+        baseColumn="purchase_date",
+    )
+)
 dfTestData = testDataSpec.build()
 ```
 

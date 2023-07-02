@@ -37,7 +37,7 @@ class TestSchemaParser:
                               ("nvarchar(14)", StringType()),
                               ("nvarchar", StringType()),
                               ("varchar", StringType()),
-                              ("varchar(10)", StringType()),
+                              ("varchar(10)", StringType())
                               ])
     def test_primitive_type_parser(self, typeDefn, expectedTypeDefn, setupLogging):
         output_type = dg.SchemaParser.columnTypeFromString(typeDefn)
@@ -63,7 +63,10 @@ class TestSchemaParser:
                               ("map<STRING, INT>", MapType(StringType(), IntegerType())),
                               ("struct<a:binary, b:int, c:float>",
                                StructType([StructField("a", BinaryType()), StructField("b", IntegerType()),
-                                           StructField("c", FloatType())]))
+                                           StructField("c", FloatType())])),
+                              ("struct<event_type:string, event_ts: timestamp>",
+                               StructType([StructField('event_type', StringType()),
+                                           StructField('event_ts', TimestampType())]))
                               ])
     def test_complex_type_parser(self, typeDefn, expectedTypeDefn, setupLogging):
         output_type = dg.SchemaParser.columnTypeFromString(typeDefn)
@@ -80,7 +83,6 @@ class TestSchemaParser:
             output_type = dg.SchemaParser.columnTypeFromString(typeDefn)
 
         print("exception:", e_info)
-
 
     def test_table_definition_parser(self, setupLogging):
         table1 = """CREATE TABLE student (id INT, name STRING, age INT)"""
@@ -123,7 +125,7 @@ class TestSchemaParser:
                              [("named_struct('name', city_name, 'id', city_id, 'population', city_pop)",
                                "named_struct(' ', city_name, ' ', city_id, ' ', city_pop)"),
                               ("named_struct('name', `city 2`, 'id', city_id, 'population', city_pop)",
-                                "named_struct(' ', `city 2`, ' ', city_id, ' ', city_pop)"),
+                               "named_struct(' ', `city 2`, ' ', city_id, ' ', city_pop)"),
                               ("named_struct('`name 1`', `city 2`, 'id', city_id, 'population', city_pop)",
                                "named_struct(' ', `city 2`, ' ', city_id, ' ', city_pop)"),
                               ("named_struct('`name 1`', city, 'id', city_id, 'population', city_pop)",
@@ -142,19 +144,19 @@ class TestSchemaParser:
 
     @pytest.mark.parametrize("sqlExpr, expectedReferences, filterColumns",
                              [("named_struct('name', city_name, 'id', city_id, 'population', city_pop)",
-                               ['named_struct', 'city_name',  'city_id', 'city_pop'],
+                               ['named_struct', 'city_name', 'city_id', 'city_pop'],
                                None),
                               ("named_struct('name', city_name, 'id', city_id, 'population', city_pop)",
-                               [ 'city_name', 'city_pop'],
+                               ['city_name', 'city_pop'],
                                ['city_name', 'city_pop']),
-                               ("cast(10 as decimal(10)",  ['cast', 'as', 'decimal'], None),
+                              ("cast(10 as decimal(10)", ['cast', 'as', 'decimal'], None),
                               ("cast(x as decimal(10)", ['x'], ['x']),
                               ("cast(`city 2` as decimal(10)", ['cast', 'city 2', 'as', 'decimal'], None),
                               (" ", [], None),
                               ("", [], None),
                               ])
     def test_sql_expression_parser(self, sqlExpr, expectedReferences, filterColumns):
-        references = dg.SchemaParser.columnsReferencesFromSQLString(sqlExpr, filter=filterColumns)
+        references = dg.SchemaParser.columnsReferencesFromSQLString(sqlExpr, filterItems=filterColumns)
         assert references is not None
 
         assert isinstance(references, list), "expected list of potential column references to be returned"
@@ -162,5 +164,3 @@ class TestSchemaParser:
         print(references)
 
         assert set(references) == set(expectedReferences)
-
-

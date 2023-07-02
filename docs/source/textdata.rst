@@ -1,4 +1,7 @@
-Generating and manipulating text data
+.. Databricks Labs Data Generator documentation master file, created by
+   sphinx-quickstart on Sun Jun 21 10:54:30 2020.
+
+Generating and Manipulating Text Data
 =====================================
 
 There are a number of ways to generate and manipulate text data.
@@ -20,13 +23,15 @@ The following example illustrates generating data for specific ranges of values:
 
 .. code-block:: python
 
-    import dbldatagen as dg
-    df_spec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
-                                                      partitions=4, randomSeedMethod="hash_fieldname")
-                           .withIdOutput()
-                           .withColumn("code3", StringType(), values=['online', 'offline', 'unknown'])
-                           .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True, percentNulls=0.05)
-                           .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+   import dbldatagen as dg
+   df_spec = (
+       dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
+                      partitions=4, randomSeedMethod="hash_fieldname")
+      .withIdOutput()
+      .withColumn("code3", StringType(), values=['online', 'offline', 'unknown'])
+      .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True, percentNulls=0.05)
+      .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+   )
 
 Generating text from existing values
 ------------------------------------
@@ -75,13 +80,13 @@ The following example illustrates its use:
 .. code-block:: python
 
     import dbldatagen as dg
-    df_spec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
-                                                      partitions=4, randomSeedMethod="hash_fieldname")
-                                .withIdOutput()
-                                .withColumnSpec("sample_text",
-                                                text=dg.ILText(paragraphs=(1, 4),
-                                                               sentences=(2, 6)))
-                                )
+    df_spec = (
+       dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
+                      partitions=4, randomSeedMethod="hash_fieldname")
+       .withIdOutput()
+       .withColumnSpec("sample_text", text=dg.ILText(paragraphs=(1, 4),
+                       sentences=(2, 6)))
+    )
 
     df = df_spec.build()
     num_rows=df.count()
@@ -96,21 +101,28 @@ Here are some examples of its use to generate dummy email addresses, ip addresse
 .. code-block:: python
 
     import dbldatagen as dg
-    df_spec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
-                                                      partitions=4, randomSeedMethod="hash_fieldname")
-                                .withIdOutput()
-                                .withColumnSpec("email",
-                                                template=r'\w.\w@\w.com|\w@\w.co.u\k')
-                                .withColumnSpec("ip_addr",
-                                                 template=r'\n.\n.\n.\n')
-                                .withColumnSpec("phone",
-                                                 template=r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd')
-                                )
+    df_spec = (
+         dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
+                          partitions=4, randomSeedMethod="hash_fieldname")
+        .withIdOutput()
+        .withColumnSpec("email",
+                        template=r'\w.\w@\w.com|\w@\w.co.u\k')
+        .withColumnSpec("ip_addr",
+                         template=r'\n.\n.\n.\n')
+        .withColumnSpec("phone",
+                         template=r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd')
+        )
 
     df = df_spec.build()
     num_rows=df.count()
 
 The implementation of the template expansion uses the underlying `TemplateGenerator` class.
+
+.. note ::
+   The ``template`` option is shorthand for ``text=dg.TemplateGenerator(template=...)``
+
+   This can be specified in multiple modes - see the `TemplateGenerator` documentation for more details.
+
 
 TemplateGenerator options
 ---------------------------------------------
@@ -127,7 +139,7 @@ It uses the following special chars:
     Chars     Meaning
     ========  ======================================
     ``\``     Apply escape to next char.
-    0,1,..9   Use base value as an array of values and substitute the `nth` element ( 0 .. 9). Always escaped.
+    v0,..v9   Use base value as an array of values and substitute the `nth` element ( 0 .. 9). Always escaped.
     x         Insert a random lowercase hex digit
     X         Insert an uppercase random hex digit
     d         Insert a random lowercase decimal digit
@@ -149,12 +161,15 @@ It uses the following special chars:
           If the ``escapeSpecialChars`` option is set to True, then the following char only has its special
           meaning when preceded by an escape.
 
-          Some options must be always escaped for example ``\\0``, ``\\v``, ``\\n`` and ``\\w``.
+          Some options must be always escaped for example  ``\\v``, ``\\n`` and ``\\w``.
 
           A special case exists for ``\\v`` - if immediately followed by a digit 0 - 9, the underlying base value
           is interpreted as an array of values and the nth element is retrieved where `n` is the digit specified.
           
           The ``escapeSpecialChars`` is set to False by default for backwards compatibility.
+
+          To use the ``escapeSpecialChars`` option, use the variant
+          ``text=dg.TemplateGenerator(template=...), escapeSpecialChars=True``
 
 In all other cases, the char itself is used.
 

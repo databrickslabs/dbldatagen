@@ -45,8 +45,6 @@ class TestTextGeneration:
     partitions_requested = 4
 
     def test_text_generator_basics(self):
-        import numpy as np
-
         # test the random humber generator
         tg1 = TextGenerator()
 
@@ -62,15 +60,15 @@ class TestTextGeneration:
 
     @pytest.mark.parametrize("template, escapeSpecial, low, high, useSystemLib",
                              [
-                              (r'\n.\n.\n.\n',  False, 0, 15, False),
-                              (r'\n.\n.\n.\n',  False, 20, 35, False),
-                              (r'\n.\n.\n.\n',  False, 15, None, False),
-                              (r'\n.\n.\n.\n',  False, 15, -1, False),
-                              (r'\n.\n.\n.\n',  False, 0, 15, True),
-                              (r'\n.\n.\n.\n',  False, 20, 35, True),
-                              (r'\n.\n.\n.\n',  False, 15, None, True),
-                              (r'\n.\n.\n.\n',  False, 15, -1, True),
-                              ])
+                                 (r'\n.\n.\n.\n', False, 0, 15, False),
+                                 (r'\n.\n.\n.\n', False, 20, 35, False),
+                                 (r'\n.\n.\n.\n', False, 15, None, False),
+                                 (r'\n.\n.\n.\n', False, 15, -1, False),
+                                 (r'\n.\n.\n.\n', False, 0, 15, True),
+                                 (r'\n.\n.\n.\n', False, 20, 35, True),
+                                 (r'\n.\n.\n.\n', False, 15, None, True),
+                                 (r'\n.\n.\n.\n', False, 15, -1, True),
+                             ])
     def test_random_number_generator(self, template, escapeSpecial, low, high, useSystemLib):
         """ As the test coverage tools dont detect code only used in UDFs,
             lets add some explicit tests for the underlying code"""
@@ -78,7 +76,7 @@ class TestTextGeneration:
 
         rng1 = test_template.getNPRandomGenerator()
 
-        for x in range(1,1000):
+        for x in range(1, 1000):
             if useSystemLib:
                 if high is not None:
                     random_value = test_template._getRandomInt(low, high)
@@ -100,8 +98,8 @@ class TestTextGeneration:
                              [(r'\n.\n.\n.\n', True, 1),
                               (r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd', False, 3),
                               (r'(\d\d\d)-\d\d\d-\d\d\d\d|1(\d\d\d) \d\d\d-\d\d\d\d|\d\d\d \d\d\d\d\d\d\d', True, 3),
-                              (r'\dr_\v',  False, 1),
-                              (r'\w.\w@\w.com|\w@\w.co.u\k',  False, 2),
+                              (r'\dr_\v', False, 1),
+                              (r'\w.\w@\w.com|\w@\w.co.u\k', False, 2),
                               ])
     def test_template_generator_properties(self, template, escapeSpecial, expectedTemplates):
         test_template = TemplateGenerator(template, escapeSpecialChars=escapeSpecial)
@@ -114,7 +112,6 @@ class TestTextGeneration:
 
         assert test_template.templates is not None
         assert len(test_template.templates) == expectedTemplates
-
 
     def test_simple_data_template(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count,
@@ -195,7 +192,6 @@ class TestTextGeneration:
     def test_raw_iltext_text_generation(self):
         """ As the test coverage tools dont detect code only used in UDFs,
             lets add some explicit tests for the underlying code"""
-        import numpy as np
         # test the IL Text generator
         tg1 = dg.ILText(paragraphs=(1, 4), sentences=(2, 6), words=(1, 8))
 
@@ -255,7 +251,6 @@ class TestTextGeneration:
         assert counts['ip_addr_count'] >= 100
         assert counts['phone_count'] >= 100
 
-
     def test_small_ILText_driven_data_generation(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
                                          partitions=8)
@@ -295,7 +290,7 @@ class TestTextGeneration:
     @pytest.mark.parametrize("template, expectedOutput, escapeSpecial",
                              [(r'\n.\n.\n.\n', r"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+", False),
                               (r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd',
-                                r"(\([0-9]+\)-[0-9]+-[0-9]+)|(1\([0-9]+\) [0-9]+-[0-9]+)|([0-9]+ [0-9]+)", False),
+                               r"(\([0-9]+\)-[0-9]+-[0-9]+)|(1\([0-9]+\) [0-9]+-[0-9]+)|([0-9]+ [0-9]+)", False),
                               (r'(\d\d\d)-\d\d\d-\d\d\d\d|1(\d\d\d) \d\d\d-\d\d\d\d|\d\d\d \d\d\d\d\d\d\d',
                                r"(\([0-9]+\)-[0-9]+-[0-9]+)|(1\([0-9]+\) [0-9]+-[0-9]+)|([0-9]+ [0-9]+)", True),
                               (r'\dr_\v', r"dr_[0-9]+", False),
@@ -307,7 +302,7 @@ class TestTextGeneration:
         match_pattern = re.compile(expectedOutput)
         test_template = TemplateGenerator(template, escapeSpecialChars=escapeSpecial)
 
-        test_values = test_template.pandasGenerateText(pd.Series([x for x in range(1, 1000)]))
+        test_values = test_template.pandasGenerateText(pd.Series(list(range(1, 1000))))
 
         def check_pattern(x):
             assert match_pattern.match(x), f"test pattern '{expectedOutput}' does not match result '{x}'"
@@ -315,7 +310,7 @@ class TestTextGeneration:
         test_values.apply(lambda x: check_pattern(x))
         for test_value in test_values:
             assert test_value is not None
-            assert match_pattern.match(test_value), f"test pattern '{expectedOutput}' does not match result '{x}'"
+            assert match_pattern.match(test_value), f"pattern '{expectedOutput}' doesn't match result '{test_value}'"
 
     def test_raw_template_text_generation3(self):
         """ As the test coverage tools don't detect code only used in UDFs,
@@ -357,7 +352,6 @@ class TestTextGeneration:
         assert counts['email_count'] >= 100
         assert counts['ip_addr_count'] >= 100
         assert counts['phone_count'] >= 100
-
 
     def test_multi_columns(self):
         testDataSpec3 = (dg.DataGenerator(sparkSession=spark, name="test_data_set3", rows=self.row_count,
@@ -447,19 +441,19 @@ class TestTextGeneration:
         # will have implied column `id` for ordinal of row
         testdata_generator = (
             dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=100000, partitions=20)
-                .withIdOutput()  # id column will be emitted in the output
-                .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
-                .withColumn("code2", "integer", minValue=1, maxValue=20, step=1)
-                .withColumn("code3", "integer", minValue=1, maxValue=20, step=1)
-                .withColumn("code4", "integer", minValue=1, maxValue=20, step=1)
-                # base column specifies dependent column
+            .withIdOutput()  # id column will be emitted in the output
+            .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
+            .withColumn("code2", "integer", minValue=1, maxValue=20, step=1)
+            .withColumn("code3", "integer", minValue=1, maxValue=20, step=1)
+            .withColumn("code4", "integer", minValue=1, maxValue=20, step=1)
+            # base column specifies dependent column
 
-                .withColumn("site_cd", "string", prefix='site', baseColumn='code1')
-                .withColumn("device_status", "string", minValue=1, maxValue=200, step=1, prefix='status', random=True)
+            .withColumn("site_cd", "string", prefix='site', baseColumn='code1')
+            .withColumn("device_status", "string", minValue=1, maxValue=200, step=1, prefix='status', random=True)
 
-                .withColumn("site_cd2", "string", prefix='site', baseColumn='code1', text_separator=":")
-                .withColumn("device_status2", "string", minValue=1, maxValue=200, step=1,
-                            prefix='status', text_separator=":")
+            .withColumn("site_cd2", "string", prefix='site', baseColumn='code1', text_separator=":")
+            .withColumn("device_status2", "string", minValue=1, maxValue=200, step=1,
+                        prefix='status', text_separator=":")
 
         )
 
@@ -506,19 +500,19 @@ class TestTextGeneration:
         # will have implied column `id` for ordinal of row
         testdata_generator = (
             dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=100000, partitions=20)
-                .withIdOutput()  # id column will be emitted in the output
-                .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
-                .withColumn("code2", "integer", minValue=1, maxValue=20, step=1)
-                .withColumn("code3", "integer", minValue=1, maxValue=20, step=1)
-                .withColumn("code4", "integer", minValue=1, maxValue=20, step=1)
-                # base column specifies dependent column
+            .withIdOutput()  # id column will be emitted in the output
+            .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
+            .withColumn("code2", "integer", minValue=1, maxValue=20, step=1)
+            .withColumn("code3", "integer", minValue=1, maxValue=20, step=1)
+            .withColumn("code4", "integer", minValue=1, maxValue=20, step=1)
+            # base column specifies dependent column
 
-                .withColumn("site_cd", "string", suffix='site', baseColumn='code1')
-                .withColumn("device_status", "string", minValue=1, maxValue=200, step=1, suffix='status', random=True)
+            .withColumn("site_cd", "string", suffix='site', baseColumn='code1')
+            .withColumn("device_status", "string", minValue=1, maxValue=200, step=1, suffix='status', random=True)
 
-                .withColumn("site_cd2", "string", suffix='site', baseColumn='code1', text_separator=":")
-                .withColumn("device_status2", "string", minValue=1, maxValue=200, step=1,
-                            suffix='status', text_separator=":")
+            .withColumn("site_cd2", "string", suffix='site', baseColumn='code1', text_separator=":")
+            .withColumn("device_status2", "string", minValue=1, maxValue=200, step=1,
+                        suffix='status', text_separator=":")
         )
 
         df = testdata_generator.build()  # build our dataset
@@ -547,19 +541,19 @@ class TestTextGeneration:
         # will have implied column `id` for ordinal of row
         testdata_generator = (
             dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=100000, partitions=20)
-                .withIdOutput()  # id column will be emitted in the output
-                .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
-                .withColumn("code2", "integer", minValue=1, maxValue=20, step=1)
-                .withColumn("code3", "integer", minValue=1, maxValue=20, step=1)
-                .withColumn("code4", "integer", minValue=1, maxValue=20, step=1)
-                # base column specifies dependent column
-                .withColumn("site_cd", "string", suffix='site', baseColumn='code1', prefix="test")
-                .withColumn("device_status", "string", minValue=1, maxValue=200, step=1, suffix='status', prefix="test")
+            .withIdOutput()  # id column will be emitted in the output
+            .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
+            .withColumn("code2", "integer", minValue=1, maxValue=20, step=1)
+            .withColumn("code3", "integer", minValue=1, maxValue=20, step=1)
+            .withColumn("code4", "integer", minValue=1, maxValue=20, step=1)
+            # base column specifies dependent column
+            .withColumn("site_cd", "string", suffix='site', baseColumn='code1', prefix="test")
+            .withColumn("device_status", "string", minValue=1, maxValue=200, step=1, suffix='status', prefix="test")
 
-                .withColumn("site_cd2", "string", suffix='site', baseColumn='code1', text_separator=":", prefix="test")
-                .withColumn("device_status2", "string", minValue=1, maxValue=200, step=1,
-                            suffix='status', text_separator=":",
-                            prefix="test")
+            .withColumn("site_cd2", "string", suffix='site', baseColumn='code1', text_separator=":", prefix="test")
+            .withColumn("device_status2", "string", minValue=1, maxValue=200, step=1,
+                        suffix='status', text_separator=":",
+                        prefix="test")
         )
 
         df = testdata_generator.build()  # build our dataset
@@ -579,4 +573,3 @@ class TestTextGeneration:
         status_codes = [f"test:{x}:status" for x in range(1, 201)]
         status_code_values = [r[0] for r in df.select("device_status2").distinct().collect()]
         assert set(status_code_values) == set(status_codes)
-
