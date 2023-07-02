@@ -3,11 +3,20 @@
 ## Change History
 All notable changes to the Databricks Labs Data Generator will be documented in this file.
 
-### Version 0.3.2
+### Version 0.3.5
 
 #### Changed
 * Added formatting of generated code as Html for script methods
 * Modified pipfile to use newer version of package specifications
+* Additional migration of tests to use of `pytest`
+* Changed parsing of build options for data generator to support use of custom streaming
+* Documentation updates in support of new features such as streaming, complex structures etc
+
+#### Added 
+* Added support for additional streaming source types and for use of custom streaming sources
+* Added support for use of file reads as a streaming source (for seed and timestamp columns only)
+* Added support for complex event time in streaming scenarios. It may also be used in batch scenarios for testing
+
 
 ### Version 0.3.4 Post 3
 
@@ -60,9 +69,6 @@ Thanks to Marvin Schenkel for the contribution
 ### Version 0.3.2
 
 #### Changed
-* Additional migration of tests to use of `pytest`
-* Changed parsing of build options for data generator to support use of custom streaming
-* Documentation updates in support of new features such as streaming, complex structures etc
 * Adjusted column build phase separation (i.e which select statement is used to build columns) so that a 
   column with a SQL expression can refer to previously created columns without use of a `baseColumn` attribute
 * Changed build labelling to comply with PEP440
@@ -71,9 +77,6 @@ Thanks to Marvin Schenkel for the contribution
 * Fixed compatibility of build with older versions of runtime that rely on `pyparsing` version 2.4.7
 
 #### Added 
-* Added support for additional streaming source types and for use of custom streaming sources
-* Added support for use of file reads as a streaming source (for seed and timestamp columns only)
-* Added support for complex event time in streaming scenarios. It may also be used in batch scenarios for testing
 * Parsing of SQL expressions to determine column dependencies
 
 #### Notes
