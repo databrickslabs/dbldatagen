@@ -3,11 +3,20 @@
 ## Change History
 All notable changes to the Databricks Labs Data Generator will be documented in this file.
 
-### Unreleased
+### Version 0.3.5
 
 #### Changed
 * Added formatting of generated code as Html for script methods
 * Modified pipfile to use newer version of package specifications
+* Additional migration of tests to use of `pytest`
+* Changed parsing of build options for data generator to support use of custom streaming
+* Documentation updates in support of new features such as streaming, complex structures etc
+
+#### Added 
+* Added support for additional streaming source types and for use of custom streaming sources
+* Added support for use of file reads as a streaming source (for seed and timestamp columns only)
+* Added support for complex event time in streaming scenarios. It may also be used in batch scenarios for testing
+
 
 ### Version 0.3.4 Post 3
 
