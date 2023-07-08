@@ -824,9 +824,6 @@ class DataGenerator:
         new_props = {}
         new_props.update(kwargs)
 
-        # if type(colType) == str and colType != INFER_DATATYPE:
-        #    colType = SchemaParser.columnTypeFromString(colType)
-
         self.logger.info("effective range: %s, %s, %s args: %s", minValue, maxValue, step, kwargs)
         self.logger.info("adding column - `%s` with baseColumn : `%s`, implicit : %s , omit %s",
                          colName, baseColumn, implicit, omit)
