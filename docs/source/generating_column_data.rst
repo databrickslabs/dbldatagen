@@ -59,17 +59,17 @@ When building the data generation spec, the ``withSchema`` method may be used to
 This does _not_ prevent the use of ``withColumn`` to add new columns.
 
 | Use ``withColumn`` to define a new column. This method takes a parameter to specify the data type.
-| See :data:`~dbldatagen.data_generator.DataGenerator.withColumn` for further details.
+| See the method :data:`~dbldatagen.data_generator.DataGenerator.withColumn` for further details.
 
 Use ``withColumnSpec`` to define how a column previously defined in a schema should be generated. This method does not
 take a data type property, but uses the data type information defined in the schema.
-See :data:`~dbldatagen.data_generator.DataGenerator.withColumnSpec` for further details.
+See the method :data:`~dbldatagen.data_generator.DataGenerator.withColumnSpec` for further details.
 
 | Use ``withColumnSpecs`` to define how multiple columns imported from a schema should be generated.
   As the pattern matching may inadvertently match an unintended column, it is permitted to override the specification
   added through this method by a subsequent call to ``withColumnSpec`` to change the definition of how a specific column
   should be generated.
-| See :data:`~dbldatagen.data_generator.DataGenerator.withColumnSpecs` for further details.
+| See the method :data:`~dbldatagen.data_generator.DataGenerator.withColumnSpecs` for further details.
 
 Use the method :data:`~dbldatagen.data_generator.DataGenerator.withStructColumn` for simpler creation of struct and
 JSON valued columns.
