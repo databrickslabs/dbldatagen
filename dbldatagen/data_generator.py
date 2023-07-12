@@ -901,20 +901,24 @@ class DataGenerator:
         a struct of the specified fields.
 
         :param colName: name of column
-        :param fields: list of fields to compose as a struct valued column
+        :param fields: list of elements to compose as a struct valued column (each being a string or tuple), or a dict
+                          outlining the structure of the struct column
         :param asJson: If False, generate a struct valued column. If True, generate a JSON string column
+        :param kwargs: keyword arguments to pass to the underlying column generators as per `withColumn`
         :return: A modified in-place instance of data generator allowing for chaining of calls
                   following the Builder pattern
 
         .. note::
             Additional options for the field specification may be specified as keyword arguments.
 
-            The field specification may be :
-            - a list of field references (strings) which will be used as both the field name and the SQL expression
-            - a list of tuples of the form (field_name, field_expression) where field_name is the name of the field
-            - a Python dict outlining the structure of the struct column. The keys of the dict are the field names
+            The fields specification specified by the `fields` argument may be :
 
-            When using the ``struct`` form of the field specifications, a field whose value is a list will be treated
+            - A list of field references (`strings`) which will be used as both the field name and the SQL expression
+            - A list of tuples of the form **(field_name, field_expression)** where `field_name` is the name of the
+              field. In that case, the `field_expression` string should be a SQL expression to generate the field value
+            - A Python dict outlining the structure of the struct column. The keys of the dict are the field names
+
+            When using the `dict` form of the field specifications, a field whose value is a list will be treated
             as creating a SQL array literal.
 
         """
