@@ -9,16 +9,18 @@ These are meant for internal use only
 """
 
 import functools
+import json
+import re
+import time
 import warnings
 from datetime import timedelta
-import re
-import json
-import time
+
 import jmespath
 
 
 def deprecated(message=""):
-    """ Define a deprecated decorator without dependencies on 3rd party libraries
+    """
+    Define a deprecated decorator without dependencies on 3rd party libraries
 
     Note there is a 3rd party library called `deprecated` that provides this feature but goal is to only have
     dependencies on packages already used in the Databricks runtime
@@ -275,7 +277,8 @@ def strip_margins(s, marginChar):
 
 
 def split_list_matching_condition(lst, cond):
-    """ Split a list on elements that match a condition
+    """
+    Split a list on elements that match a condition
 
     This will find all matches of a specific condition in the list and split the list into sub lists around the
     element that matches this condition.
@@ -288,9 +291,9 @@ def split_list_matching_condition(lst, cond):
     splitListOnCondition(x, lambda el: el == 'id')
 
 
-    result:
+    Result:
     `[['id'], ['city_name'], ['id'], ['city_id', 'city_pop'],
-     ['id'], ['city_id', 'city_pop', 'city_id', 'city_pop'], ['id']]`
+      ['id'], ['city_id', 'city_pop', 'city_id', 'city_pop'], ['id']]`
 
     :arg lst: list of items to perform condition matches against
     :arg cond: lambda function or function taking single argument and returning True or False
