@@ -13,6 +13,7 @@ This includes:
 - Whether the generated data set will be a streaming or batch data set
 - How the column data should be generated and what the dependencies for each column are
 - How random and psuedo-random data is generated
+- The structure for structured columns and JSON valued columns
 
 .. seealso::
    See the following links for more details:
@@ -22,6 +23,7 @@ This includes:
   * Controlling how existing columns are generated - :data:`~dbldatagen.data_generator.DataGenerator.withColumnSpec`
   * Adding column generation specs in bulk - :data:`~dbldatagen.data_generator.DataGenerator.withColumnSpecs`
   * Options for column generation - :doc:`options_and_features`
+  * Generating JSON and complex data - :doc:`generating_json_data`
 
 Column data is generated for all columns whether imported from a schema or explicitly added
 to a data specification. However, column data can be omitted from the final output, allowing columns to be used
@@ -35,7 +37,8 @@ These control the data generation process.
 
 The data generation process itself is deferred until the data generation instance ``build`` method is executed.
 
-So until the ``build`` method is invoked, the data generation specification is in initialization mode.
+So until the :data:`~dbldatagen.data_generator.DataGenerator.build` method is invoked, the data generation
+specification is in initialization mode.
 
 Once ``build`` has been invoked, the data generation instance holds state about the data set generated.
 
@@ -43,7 +46,7 @@ While ``build`` can be invoked a subsequent time, making further modifications t
 calling ``build`` again is not recommended. We recommend the use of the ``clone`` method to make a new data generation
 specification similar to an existing one if further modifications are needed.
 
-See :data:`~dbldatagen.data_generator.DataGenerator.clone` for further information.
+See the method :data:`~dbldatagen.data_generator.DataGenerator.clone` for further information.
 
 Adding columns to a data generation spec
 ----------------------------------------
@@ -55,18 +58,21 @@ specification.
 When building the data generation spec, the ``withSchema`` method may be used to add columns from an existing schema.
 This does _not_ prevent the use of ``withColumn`` to add new columns.
 
-Use ``withColumn`` to define a new column. This method takes a parameter to specify the data type.
-See :data:`~dbldatagen.data_generator.DataGenerator.withColumn`.
+| Use ``withColumn`` to define a new column. This method takes a parameter to specify the data type.
+| See the method :data:`~dbldatagen.data_generator.DataGenerator.withColumn` for further details.
 
 Use ``withColumnSpec`` to define how a column previously defined in a schema should be generated. This method does not
 take a data type property, but uses the data type information defined in the schema.
-See :data:`~dbldatagen.data_generator.DataGenerator.withColumnSpec`.
+See the method :data:`~dbldatagen.data_generator.DataGenerator.withColumnSpec` for further details.
 
-Use ``withColumnSpecs`` to define how multiple columns imported from a schema should be generated.
-As the pattern matching may inadvertently match an unintended column, it is permitted to override the specification
-added through this method by a subsequent call to ``withColumnSpec`` to change the definition of how a specific column
-should be generated
-See :data:`~dbldatagen.data_generator.DataGenerator.withColumnSpecs`.
+| Use ``withColumnSpecs`` to define how multiple columns imported from a schema should be generated.
+  As the pattern matching may inadvertently match an unintended column, it is permitted to override the specification
+  added through this method by a subsequent call to ``withColumnSpec`` to change the definition of how a specific column
+  should be generated.
+| See the method :data:`~dbldatagen.data_generator.DataGenerator.withColumnSpecs` for further details.
+
+Use the method :data:`~dbldatagen.data_generator.DataGenerator.withStructColumn` for simpler creation of struct and
+JSON valued columns.
 
 By default all columns are marked as being dependent on an internal ``id`` seed column.
 Use the ``baseColumn`` attribute to mark a column as being dependent on another column or set of columns.
@@ -85,6 +91,7 @@ Use of the base column attribute has several effects:
 
   If you need to generate a field with the same name as the seed column (by default `id`), you may override
   the default seed column name in the constructor of the data generation spec through the use of the
+  ``seedColumnName`` parameter.
 
 
   Note that Spark SQL is case insensitive with respect to column names.
@@ -127,6 +134,12 @@ For example, the following code will generate rows with varying numbers of synth
 
    df = ds.build()
 
+| The helper method ``withStructColumn`` of the ``DataGenerator`` class enables simpler definition of structured
+  and JSON valued columns.
+| See the documentation for the method :data:`~dbldatagen.data_generator.DataGenerator.withStructColumn` for
+  further details.
+
+
 The mechanics of column data generation
 ---------------------------------------
 The data set is generated when the ``build`` method is invoked on the data generation instance.
@@ -168,3 +181,4 @@ This has several implications:
   However it does not reorder the building sequence if there is a reference to a column that will be built later in the
   SQL expression.
   To enforce the dependency, you must use the `baseColumn` attribute to indicate the dependency.
+

@@ -152,7 +152,7 @@ For example:
 
 To use an older DB runtime version in your notebook, you can use the following code in your notebook:
 
-```commandline
+```shell
 %pip install git+https://github.com/databrickslabs/dbldatagen@dbr_7_3_LTS_compat
 ```
 

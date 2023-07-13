@@ -12,7 +12,7 @@ Generating JSON data
 There are several methods for generating JSON data:
 
 - Generate a dataframe and save it as JSON will generate full data set as JSON
-- Generate JSON valued fields using SQL functions such as `named_struct` and `to_json`
+- Generate JSON valued fields using SQL functions such as `named_struct` and `to_json`.
 
 Writing dataframe as JSON data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -178,7 +178,8 @@ written as:
                expr="named_struct('event_type', event_type, 'event_ts', event_ts)",
                baseColumn=['event_type', 'event_ts'])
 
- To simplify the specification of struct valued columns, the defined value of `INFER_DATATYPE` can be used in place of
+
+To simplify the specification of struct valued columns, the defined value of `INFER_DATATYPE` can be used in place of
 the datatype when the `expr` attribute is specified. This will cause the datatype to be inferred from the expression.
 
 In this case, the previous code would be written as follows:
@@ -190,6 +191,20 @@ In this case, the previous code would be written as follows:
                expr="named_struct('event_type', event_type, 'event_ts', event_ts)")
 
 The helper method ``withStructColumn`` can also be used to simplify the specification of struct valued columns.
+
+Using this method, the previous code can be written as one of the following options:
+
+.. code-block:: python
+
+   # Use either form to create the struct valued field
+   .withStructColumn("event_info1", fields=['event_type', 'event_ts'])
+   .withStructColumn("event_info2", fields={'event_type': 'event_type',
+                                            'event_ts': 'event_ts'})
+
+In the case of the second variant, the expression following the struct field name can be any arbitrary SQL string. It
+can also generate JSON for the same definition.
+
+See the following documentation for more details: :data:`~dbldatagen.data_generator.DataGenerator.withStructColumn`
 
 Generating JSON valued fields
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
