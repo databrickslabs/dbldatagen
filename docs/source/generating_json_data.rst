@@ -12,7 +12,7 @@ Generating JSON data
 There are several methods for generating JSON data:
 
 - Generate a dataframe and save it as JSON will generate full data set as JSON
-- Generate JSON valued fields using SQL functions such as `named_struct` and `to_json`
+- Generate JSON valued fields using SQL functions such as `named_struct` and `to_json`.
 
 Writing dataframe as JSON data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -178,6 +178,34 @@ written as:
                expr="named_struct('event_type', event_type, 'event_ts', event_ts)",
                baseColumn=['event_type', 'event_ts'])
 
+
+To simplify the specification of struct valued columns, the defined value of `INFER_DATATYPE` can be used in place of
+the datatype when the `expr` attribute is specified. This will cause the datatype to be inferred from the expression.
+
+In this case, the previous code would be written as follows:
+
+.. code-block:: python
+
+   .withColumn("event_info",
+               dg.INFER_DATATYPE,
+               expr="named_struct('event_type', event_type, 'event_ts', event_ts)")
+
+The helper method ``withStructColumn`` can also be used to simplify the specification of struct valued columns.
+
+Using this method, the previous code can be written as one of the following options:
+
+.. code-block:: python
+
+   # Use either form to create the struct valued field
+   .withStructColumn("event_info1", fields=['event_type', 'event_ts'])
+   .withStructColumn("event_info2", fields={'event_type': 'event_type',
+                                            'event_ts': 'event_ts'})
+
+In the case of the second variant, the expression following the struct field name can be any arbitrary SQL string. It
+can also generate JSON for the same definition.
+
+See the following documentation for more details: :data:`~dbldatagen.data_generator.DataGenerator.withStructColumn`
+
 Generating JSON valued fields
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -255,6 +283,11 @@ functions such as `named_struct` and `to_json`.
    #dfTestData.write.format("json").mode("overwrite").save("/tmp/jsonData2")
    display(dfTestData)
 
+The helper method ``withStructColumn`` in the DataGenerator class can also be used to simplify the specification
+of struct valued columns. When the argument ``asJson`` is set to ``True``, the resulting structure
+will be transformed to JSON.
+
+
 Generating complex column data
 ------------------------------
 There are several methods for columns with arrays, structs and maps.
@@ -292,6 +325,22 @@ variable length subsets of the ``r`` columns.
 
  .. note::
     Note the use of the `baseColumn` attribute here to ensure correct ordering and separation of phases.
+
+Using inferred datatypes
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+When building columns with complex data types such as structs especially with nested structs, it can be repetitive and
+error prone to specify the datatypes - especially when the column is based on the resuls of a SQL expression
+(as specified by the ``expr`` attribute).
+
+You may use the constant ``INFER_DATATYPE`` in place of the actual datatype when the ``expr`` attribute is used.
+
+When the ``INFER_DATATYPE`` constant is used for the datatype, the actual datatype for the column will be inferred
+from the SQL expression passed using the ``expr`` parameter. This is only supported when the ``expr`` parameter is
+populated.
+
+The following example illustrates this:
+
 
 Using multi feature columns to generate arrays
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
