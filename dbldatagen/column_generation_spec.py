@@ -20,18 +20,20 @@ from pyspark.sql.types import FloatType, IntegerType, StringType, DoubleType, Bo
 
 from .column_spec_options import ColumnSpecOptions
 from .datagen_constants import RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, RANDOM_SEED_RANDOM, \
-    DEFAULT_SEED_COLUMN, OPTION_RANDOM, OPTION_RANDOM_SEED, OPTION_RANDOM_SEED_METHOD
+    DEFAULT_SEED_COLUMN, OPTION_RANDOM, OPTION_RANDOM_SEED, OPTION_RANDOM_SEED_METHOD, INFER_DATATYPE
 
 from .daterange import DateRange
 from .distributions import Normal, DataDistribution
 from .nrange import NRange
 from .text_generators import TemplateGenerator
 from .utils import ensure, coalesce_values
+from .schema_parser import SchemaParser
 
 HASH_COMPUTE_METHOD = "hash"
 VALUES_COMPUTE_METHOD = "values"
 RAW_VALUES_COMPUTE_METHOD = "raw_values"
 AUTO_COMPUTE_METHOD = "auto"
+EXPR_OPTION = "expr"
 COMPUTE_METHOD_VALID_VALUES = [HASH_COMPUTE_METHOD,
                                AUTO_COMPUTE_METHOD,
                                VALUES_COMPUTE_METHOD,
@@ -107,8 +109,18 @@ class ColumnGenerationSpec(object):
         # set up default range and type for column
         self._dataRange = NRange(None, None, None)  # by default range of values for  column is unconstrained
 
+        self._inferDataType = False
         if colType is None:  # default to integer field if none specified
             colType = IntegerType()
+        elif colType == INFER_DATATYPE:
+            colType = StringType()  # default inferred data type to string until exact type is known
+            self._inferDataType = True
+
+            if EXPR_OPTION not in kwargs:
+                raise ValueError("Column generation spec must have `expr` attribute specified if datatype is inferred")
+
+        elif type(colType) == str:
+            colType = SchemaParser.columnTypeFromString(colType)
 
         assert isinstance(colType, DataType), f"colType `{colType}` is not instance of DataType"
 
@@ -398,6 +410,12 @@ class ColumnGenerationSpec(object):
     def textGenerator(self):
         """ Get the text generator for the column spec"""
         return self._textGenerator
+
+    @property
+    def inferDatatype(self):
+        """ If True indicates that datatype should be inferred to be result of computing SQL expression
+        """
+        return self._inferDataType
 
     @property
     def baseColumns(self):
@@ -1030,11 +1048,12 @@ class ColumnGenerationSpec(object):
             # TODO: add full support for date value generation
             if self.expr is not None:
                 # note use of SQL expression ignores range specifications
-                new_def = expr(self.expr).astype(self.datatype)
-
-                # record execution history
+                new_def = expr(self.expr)
                 self.executionHistory.append(f".. using SQL expression `{self.expr}` as base")
-                self.executionHistory.append(f".. casting to  `{self.datatype}`")
+
+                if not self._inferDataType:
+                    new_def = new_def.astype(self.datatype)
+                    self.executionHistory.append(f".. casting to  `{self.datatype}`")
             elif type(self.datatype) in [ArrayType, MapType, StructType] and self.values is None:
                 new_def = expr("NULL")
             elif self._dataRange is not None and self._dataRange.isFullyPopulated():
@@ -1082,6 +1101,22 @@ class ColumnGenerationSpec(object):
         if percent_nulls is not None:
             new_def = self._applyComputePercentNullsExpression(new_def, percent_nulls)
         return new_def
+
+    def _onSelect(self, df):
+        """
+        The _onSelect method is called when the column specifications expression as produced by the
+        method ``_makeSingleGenerationExpression`` is used in a select statement.
+
+        :param df: Dataframe in which expression is used
+        :return: nothing
+
+        .. note:: The purpose of this method is to allow for introspection of information such as datatype
+                  which can only be determined when column specifications expression is used.
+        """
+        if self._inferDataType:
+            inferred_type = df.schema[self.name].dataType
+            self.logger.info("Inferred datatype for column %s as %s", self.name, str(inferred_type))
+            self._csOptions.options['type'] = inferred_type
 
     def _applyTextFormatExpression(self, new_def, sformat):
         # note :
@@ -1144,6 +1179,9 @@ class ColumnGenerationSpec(object):
         # cast the result to the appropriate type. For dates, cast first to timestamp, then to date
         if type(col_type) is DateType:
             new_def = new_def.astype(TimestampType()).astype(col_type)
+        elif self._inferDataType:
+            # dont apply cast when column has an inferred data type
+            pass
         else:
             new_def = new_def.astype(col_type)
 

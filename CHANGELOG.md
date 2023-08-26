@@ -3,11 +3,13 @@
 ## Change History
 All notable changes to the Databricks Labs Data Generator will be documented in this file.
 
-### Unreleased
+### Version 0.3.5
 
 #### Changed
 * Added formatting of generated code as Html for script methods
-* Added text generator `GenerateString`
+* Allow use of inferred types on `withColumn` method when `expr` attribute is used
+* Added ``withStructColumn`` method to allow simplified generation of struct and JSON columns
+* Modified pipfile to use newer version of package specifications
 
 ### Version 0.3.4 Post 3
 
@@ -150,7 +152,7 @@ For example:
 
 To use an older DB runtime version in your notebook, you can use the following code in your notebook:
 
-```commandline
+```shell
 %pip install git+https://github.com/databrickslabs/dbldatagen@dbr_7_3_LTS_compat
 ```
 
