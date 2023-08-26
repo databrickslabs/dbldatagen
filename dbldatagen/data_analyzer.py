@@ -321,9 +321,8 @@ class DataAnalyzer:
     _BOOLEAN = "boolean"
 
     _textFeatures = {
-        'print_len': (f"length(string($name$))", _MINMAXAVG),
-        'word_count'
-        : (f"size(regexp_extract_all(left(string($name$), 4096), '{_WORD_REGEX}', 0))", _MINMAXAVG),
+        'print_len': ("length(string($name$))", _MINMAXAVG),
+        'word_count': (f"size(regexp_extract_all(left(string($name$), 4096), '{_WORD_REGEX}', 0))", _MINMAXAVG),
         'space_count': (f"size(regexp_extract_all(left(string($name$), 4096), '{_SPACE_REGEX}', 0))", _MINMAXAVG),
         'digit_count': (f"size(regexp_extract_all(left(string($name$), 4096), '{_DIGIT_REGEX}', 0))", _MINMAXAVG),
         'punctuation_count': (

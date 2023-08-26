@@ -10,16 +10,17 @@ import logging
 import re
 
 from pyspark.sql.types import LongType, IntegerType, StringType, StructType, StructField, DataType
-from .spark_singleton import SparkSingleton
+
+from ._version import _get_spark_version
 from .column_generation_spec import ColumnGenerationSpec
 from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, \
-                               DEFAULT_SEED_COLUMN, SPARK_RANGE_COLUMN, MIN_SPARK_VERSION, \
-                               OPTION_RANDOM, OPTION_RANDOM_SEED, OPTION_RANDOM_SEED_METHOD
-
-from .utils import ensure, topologicalSort, DataGenError, deprecated, split_list_matching_condition
+    DEFAULT_SEED_COLUMN, SPARK_RANGE_COLUMN, MIN_SPARK_VERSION, \
+    OPTION_RANDOM, OPTION_RANDOM_SEED, OPTION_RANDOM_SEED_METHOD, \
+    INFER_DATATYPE
 from .html_utils import HtmlUtils
-from . _version import _get_spark_version
 from .schema_parser import SchemaParser
+from .spark_singleton import SparkSingleton
+from .utils import ensure, topologicalSort, DataGenError, deprecated, split_list_matching_condition
 
 _OLD_MIN_OPTION = 'min'
 _OLD_MAX_OPTION = 'max'
@@ -62,7 +63,8 @@ class DataGenerator:
 
     # restrict spurious messages from java gateway
     logging.getLogger("py4j").setLevel(logging.WARNING)
-    #logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.NOTSET)
+
+    # logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.NOTSET)
 
     def __init__(self, sparkSession=None, name=None, randomSeedMethod=None,
                  rows=1000000, startingId=0, randomSeed=None, partitions=None, verbose=False,
@@ -183,7 +185,7 @@ class DataGenerator:
 
         if sparkVersionInfo < minSparkVersion:
             logging.warning(f"*** Minimum version of Python supported is {minSparkVersion} - found version %s ",
-                         sparkVersionInfo )
+                            sparkVersionInfo)
             return False
 
         return True
@@ -489,12 +491,23 @@ class DataGenerator:
         """ infer spark output schema definition from the field specifications
 
         :returns: Spark SQL `StructType` for schema
+
+        ..note::
+          If the data generation specification contains columns for which the datatype is inferred, the schema type
+          for inferred columns may not be correct until the build command has completed.
+
         """
         return StructType(self.schemaFields)
 
     @property
     def inferredSchema(self):
-        """ infer spark interim schema definition from the field specifications"""
+        """ infer spark interim schema definition from the field specifications
+
+        ..note::
+          If the data generation specification contains columns for which the datatype is inferred, the schema type
+          for inferred columns may not be correct until the build command has completed.
+
+        """
         self._checkFieldList()
         return StructType(self._inferredSchemaFields)
 
@@ -607,7 +620,8 @@ class DataGenerator:
                   Builder pattern
 
         .. note::
-           matchTypes may also take SQL type strings or a list of SQL type strings such as "array<integer>"
+           matchTypes may also take SQL type strings or a list of SQL type strings such as "array<integer>". However,
+           you may not use ``INFER_DATYTYPE`` as part of the matchTypes list.
 
         You may also add a variety of options to further control the test data generation process.
         For full list of options, see :doc:`/reference/api/dbldatagen.column_spec_options`.
@@ -645,6 +659,9 @@ class DataGenerator:
 
             for typ in matchTypes:
                 if isinstance(typ, str):
+                    if typ == INFER_DATATYPE:
+                        raise ValueError("You cannot use INFER_DATATYPE with the method `withColumnSpecs`")
+
                     effective_types.append(SchemaParser.columnTypeFromString(typ))
                 else:
                     effective_types.append(typ)
@@ -762,6 +779,19 @@ class DataGenerator:
         :returns: modified in-place instance of test data generator allowing for chaining of calls
                   following Builder pattern
 
+        .. note::
+           if the value ``None`` is used for the ``colType`` parameter, the method will try to use the underlying
+           datatype derived from the base columns.
+
+           If the value ``INFER_DATATYPE`` is used for the ``colType`` parameter and a SQL expression has been supplied
+           via the ``expr`` parameter, the method will try to infer the column datatype from the SQL expression when
+           the ``build()`` method is called.
+
+           Inferred data types can only be used if the ``expr`` parameter is specified.
+
+           Note that properties which return a schema based on the specification may not be accurate until the
+           ``build()`` method is called. Prior to this, the schema may indicate a default column type for those fields.
+
         You may also add a variety of additional options to further control the test data generation process.
         For full list of options, see :doc:`/reference/api/dbldatagen.column_spec_options`.
 
@@ -794,18 +824,124 @@ class DataGenerator:
         new_props = {}
         new_props.update(kwargs)
 
-        if type(colType) == str:
-            colType = SchemaParser.columnTypeFromString(colType)
-
         self.logger.info("effective range: %s, %s, %s args: %s", minValue, maxValue, step, kwargs)
         self.logger.info("adding column - `%s` with baseColumn : `%s`, implicit : %s , omit %s",
                          colName, baseColumn, implicit, omit)
-        self._generateColumnDefinition(colName, colType, minValue=minValue, maxValue=maxValue,
-                                       step=step, prefix=prefix, random=random,
-                                       distribution=distribution, baseColumn=baseColumn, dataRange=dataRange,
-                                       implicit=implicit, omit=omit, **new_props)
-        self._inferredSchemaFields.append(StructField(colName, colType, nullable))
+        newColumn = self._generateColumnDefinition(colName, colType, minValue=minValue, maxValue=maxValue,
+                                                   step=step, prefix=prefix, random=random,
+                                                   distribution=distribution, baseColumn=baseColumn,
+                                                   dataRange=dataRange,
+                                                   implicit=implicit, omit=omit, **new_props)
+
+        # note for inferred columns, the column type is initially sey to a StringType but may be superceded later
+        self._inferredSchemaFields.append(StructField(colName, newColumn.datatype, nullable))
         return self
+
+    def _mkSqlStructFromList(self, fields):
+        """
+        Create a SQL struct expression from a list of fields
+
+        :param fields: a list of elements that make up the SQL struct expression (each being a string or tuple)
+        :returns: SQL expression to generate the struct
+
+        .. note::
+          This method is used internally when creating struct columns. It is not intended for general use.
+
+          Each element of the list may be a simple string, or a tuple.
+          When the element is specified as a simple string, it must be the name of a previously defined column which
+          will be used as both the field name within the struct and the SQL expression to generate the field value.
+
+          When the element is specified as a tuple, it must be a tuple of two elements. The first element must be the
+          name of the field within the struct. The second element must be a SQL expression that will be used to generate
+          the field value, and may reference previously defined columns.
+        """
+        assert fields is not None and isinstance(fields, list), \
+            "Fields must be a non-empty list of fields that make up the struct elements"
+        assert len(fields) >= 1, "Fields must be a non-empty list of fields that make up the struct elements"
+
+        struct_expressions = []
+
+        for fieldSpec in fields:
+            if isinstance(fieldSpec, str):
+                struct_expressions.append(f"'{fieldSpec}'")
+                struct_expressions.append(fieldSpec)
+            elif isinstance(fieldSpec, tuple):
+                assert len(fieldSpec) == 2, "tuple must be field name and SQL expression strings"
+                assert isinstance(fieldSpec[0], str), "First element must be field name string"
+                assert isinstance(fieldSpec[1], str), "Second element must be field value SQL string"
+                struct_expressions.append(f"'{fieldSpec[0]}'")
+                struct_expressions.append(fieldSpec[1])
+
+        struct_expression = f"named_struct({','.join(struct_expressions)})"
+        return struct_expression
+
+    def _mkStructFromDict(self, fields):
+        assert fields is not None and isinstance(fields, dict), \
+            "Fields must be a non-empty dict of fields that make up the struct elements"
+        struct_expressions = []
+
+        for key, value in fields.items():
+            struct_expressions.append(f"'{key}'")
+            if isinstance(value, str):
+                struct_expressions.append(str(value))
+            elif isinstance(value, dict):
+                struct_expressions.append(self._mkStructFromDict(value))
+            elif isinstance(value, list):
+                array_expressions = ",".join([str(x) for x in value])
+                struct_expressions.append(f"array({array_expressions})")
+            else:
+                raise ValueError(f"Invalid field element for field `{key}`")
+
+        struct_expression = f"named_struct({','.join(struct_expressions)})"
+        return struct_expression
+
+    def withStructColumn(self, colName, fields=None, asJson=False, **kwargs):
+        """
+        Add a struct column to the synthetic data generation specification. This will add a new column composed of
+        a struct of the specified fields.
+
+        :param colName: name of column
+        :param fields: list of elements to compose as a struct valued column (each being a string or tuple), or a dict
+                          outlining the structure of the struct column
+        :param asJson: If False, generate a struct valued column. If True, generate a JSON string column
+        :param kwargs: keyword arguments to pass to the underlying column generators as per `withColumn`
+        :return: A modified in-place instance of data generator allowing for chaining of calls
+                  following the Builder pattern
+
+        .. note::
+            Additional options for the field specification may be specified as keyword arguments.
+
+            The fields specification specified by the `fields` argument may be :
+
+            - A list of field references (`strings`) which will be used as both the field name and the SQL expression
+            - A list of tuples of the form **(field_name, field_expression)** where `field_name` is the name of the
+              field. In that case, the `field_expression` string should be a SQL expression to generate the field value
+            - A Python dict outlining the structure of the struct column. The keys of the dict are the field names
+
+            When using the `dict` form of the field specifications, a field whose value is a list will be treated
+            as creating a SQL array literal.
+
+        """
+        assert fields is not None and isinstance(fields, (list, dict)), \
+            "Fields argument must be a list of field specifications or dict outlining the target structure "
+        assert type(colName) is str and len(colName) > 0, "Must specify a column name"
+
+        if isinstance(fields, list):
+            assert len(fields) > 0, \
+                "Must specify at least one field for struct column"
+            struct_expr = self._mkSqlStructFromList(fields)
+        elif isinstance(fields, dict):
+            struct_expr = self._mkStructFromDict(fields)
+        else:
+            raise ValueError(f"Invalid field specification for struct column `{colName}`")
+
+        if asJson:
+            output_expr = f"to_json({struct_expr})"
+            newDf = self.withColumn(colName, StringType(), expr=output_expr,  **kwargs)
+        else:
+            newDf = self.withColumn(colName, INFER_DATATYPE, expr=struct_expr, **kwargs)
+
+        return newDf
 
     def _generateColumnDefinition(self, colName, colType=None, baseColumn=None,
                                   implicit=False, omit=False, nullable=True, **kwargs):
@@ -815,11 +951,13 @@ class DataGenerator:
                   we'll mark that the build plan needs to be regenerated.
            For our purposes, the build plan determines the order of column generation etc.
 
-        :returns: modified in-place instance of test data generator allowing for chaining of calls
-                  following Builder pattern
+        :returns: Newly added column_spec
         """
         if colType is None:
             colType = self.getColumnType(baseColumn)
+
+            if colType == INFER_DATATYPE:
+                raise ValueError("When base column(s) have inferred datatype, you must specify the column type")
 
         new_props = {}
         new_props.update(kwargs)
@@ -873,7 +1011,7 @@ class DataGenerator:
         # mark that the build plan needs to be regenerated
         self._markForPlanRegen()
 
-        return self
+        return column_spec
 
     def _getBaseDataFrame(self, startId=0, streaming=False, options=None):
         """ generate the base data frame and seed column (which defaults to `id`) , partitioning the data if necessary
@@ -954,7 +1092,7 @@ class DataGenerator:
 
         self.logger.info("columnBuildOrder: %s", str(self._buildOrder))
 
-        self._buildOrder = self._adjustBuildOrderForSqlDependencies(self._buildOrder,  self._columnSpecsByName)
+        self._buildOrder = self._adjustBuildOrderForSqlDependencies(self._buildOrder, self._columnSpecsByName)
 
         return self._buildOrder
 
@@ -1129,6 +1267,7 @@ class DataGenerator:
 
         return df1
 
+    # noinspection PyProtectedMember
     def _buildColumnExpressionsWithSelects(self, df1):
         """
         Build column generation expressions with selects
@@ -1143,6 +1282,7 @@ class DataGenerator:
         # are generated resulting in shorter lineage
         for colNames in self.build_order:
             build_round = ["*"]
+            column_specs_applied = []
             inx_col = 0
             self.executionHistory.append(f"building stage for columns: {colNames}")
             for colName in colNames:
@@ -1158,9 +1298,14 @@ class DataGenerator:
                         i += 1
                 else:
                     build_round.append(column_generators.alias(colName))
+                column_specs_applied.append(col1)
                 inx_col = inx_col + 1
 
             df1 = df1.select(*build_round)
+
+            # apply any post select processing
+            for cs in column_specs_applied:
+                cs._onSelect(df1)
         return df1
 
     def _sqlTypeFromSparkType(self, dt):
