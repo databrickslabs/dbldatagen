@@ -177,5 +177,3 @@ class TestGenerationFromData:
         # sample the data
         df_sample = analyzer.sampleData(source_data_df, 100)
         assert df_sample.count() <= 100, "expected count to be 100"
-
-
