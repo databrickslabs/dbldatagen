@@ -37,7 +37,7 @@ class DataAnalyzer:
                               Default is "sample
 
     You may increase the categorical values threshold to a higher value using the Spark config option
-    `dbldatagen.analyzer.categoricalValuesThreshold`  in which case, columns with higher values of distinct values
+    `dbldatagen.analyzer.categoricalValuesThreshold` in which case, columns with higher numbers of distinct values
     will be evaluated to see if they can be represented as a values list.
 
     However the sampling may fail if this level is set too high.
