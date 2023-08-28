@@ -18,6 +18,7 @@ from collections import namedtuple
 import numpy as np
 import pyspark.sql.functions as F
 from pyspark import sql
+from pyspark.sql import DataFrame
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
     TimestampType, DateType, DecimalType, ByteType, BinaryType, StructType, ArrayType, DataType, MapType
 
