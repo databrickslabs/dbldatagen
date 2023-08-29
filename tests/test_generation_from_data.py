@@ -42,7 +42,7 @@ class TestGenerationFromData:
             if tag in self._tags:
                 self._tags[tag] -= 1
             else:
-                self.errors.append(f"end tag {tag} found without start tag")
+                self._errors.append(f"end tag {tag} found without start tag")
                 self._tags[tag] = -1
 
         def checkHtml(self, htmlText):
@@ -52,7 +52,6 @@ class TestGenerationFromData:
             :param htmlText: html text to parse
             :return: Returns the the list of errors
             """
-            """check """
             for tag, count in self._tags.items():
                 if count > 0:
                     self._errors.append(f"tag {tag} has {count} additional start tags")
@@ -164,7 +163,6 @@ class TestGenerationFromData:
         # check generated code for syntax errors
         ast_tree = ast.parse(generatedCode)
         assert ast_tree is not None
-
 
     def test_summarize(self, testLogger, source_data_df, spark):
 
