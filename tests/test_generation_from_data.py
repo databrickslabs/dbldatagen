@@ -26,7 +26,7 @@ def setupLogging():
 class TestGenerationFromData:
     SMALL_ROW_COUNT = 50000
 
-    class SimpleValidator(HTMLParser):
+    class SimpleValidator(HTMLParser):  # pylint: disable=abstract-method
         def __init__(self):
             super().__init__()
             self._errors = []
@@ -138,9 +138,9 @@ class TestGenerationFromData:
 
         # note the generateed code does not have html tags
         validator = self.SimpleValidator()
-        errors = validator.checkHtml(generatedCode)
+        parsing_errors = validator.checkHtml(generatedCode)
 
-        assert len(errors) == 0, "Number of errors should be zero"
+        assert len(parsing_errors) == 0, "Number of errors should be zero"
 
         print(generatedCode)
 
@@ -157,12 +157,13 @@ class TestGenerationFromData:
     def test_code_generation_as_html_from_schema(self, source_data_df, setupLogging):
         generatedCode = dg.DataAnalyzer.scriptDataGeneratorFromSchema(source_data_df.schema)
 
-        for fld in source_data_df.schema:
-            assert f"withColumn('{fld.name}'" in generatedCode
+        # note the generated code does not have html tags
+        validator = self.SimpleValidator()
+        parsing_errors = validator.checkHtml(generatedCode)
 
-        # check generated code for syntax errors
-        ast_tree = ast.parse(generatedCode)
-        assert ast_tree is not None
+        assert len(parsing_errors) == 0, "Number of errors should be zero"
+
+        print(generatedCode)
 
     def test_summarize(self, testLogger, source_data_df, spark):
 
