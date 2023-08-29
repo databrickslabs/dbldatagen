@@ -18,6 +18,7 @@ from collections import namedtuple
 import numpy as np
 import pyspark.sql.functions as F
 from pyspark import sql
+from pyspark.sql import DataFrame
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
     TimestampType, DateType, DecimalType, ByteType, BinaryType, StructType, ArrayType, DataType, MapType
 
@@ -124,7 +125,7 @@ class DataAnalyzer:
         self._cacheSample = self._sparkSession.conf.get(self._CACHE_SAMPLE_OPTION, "true").lower() == "true"
 
     @classmethod
-    def sampleData(cls, df:DataFrame, maxRows:int):
+    def sampleData(cls, df: DataFrame, maxRows: int):
         """
         Sample data from a dataframe specifying the max rows to sample
 
@@ -416,7 +417,7 @@ class DataAnalyzer:
         # feature : count, [minimal, sample, complete]
         dfDataSummary = self._addMeasureToSummary(
             'count',
-            summaryExpr=f"count(*)",
+            summaryExpr="count(*)",
             fieldExprs=[f"string(count({colInfo.name})) as {colInfo.name}" for colInfo in self.columnsInfo],
             dfData=self.sourceDf,
             dfSummary=dfDataSummary)
