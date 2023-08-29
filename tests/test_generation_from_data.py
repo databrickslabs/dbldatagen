@@ -1,6 +1,7 @@
 import ast
 import logging
 import re
+from html.parser import HTMLParser
 
 import pyspark.sql.functions as F
 import pytest
@@ -24,6 +25,40 @@ def setupLogging():
 
 class TestGenerationFromData:
     SMALL_ROW_COUNT = 50000
+
+    class SimpleValidator(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self._errors = []
+            self._tags = {}
+
+        def handle_starttag(self, tag, attrs):
+            if tag in self._tags:
+                self._tags[tag] += 1
+            else:
+                self._tags[tag] = 1
+
+        def handle_endtag(self, tag):
+            if tag in self._tags:
+                self._tags[tag] -= 1
+            else:
+                self.errors.append(f"end tag {tag} found without start tag")
+                self._tags[tag] = -1
+
+        def checkHtml(self, htmlText):
+            """
+            Check if htmlText produces errors
+
+            :param htmlText: html text to parse
+            :return: Returns the the list of errors
+            """
+            """check """
+            for tag, count in self._tags.items():
+                if count > 0:
+                    self._errors.append(f"tag {tag} has {count} additional start tags")
+                elif count < 0:
+                    self._errors.append(f"tag {tag} has {-count} additional end tags")
+            return self._errors
 
     @pytest.fixture(scope="class")
     def testLogger(self):
@@ -97,6 +132,19 @@ class TestGenerationFromData:
         ast_tree = ast.parse(generatedCode)
         assert ast_tree is not None
 
+    def test_code_generation_as_html(self, source_data_df, setupLogging, spark):
+        analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df)
+
+        generatedCode = analyzer.scriptDataGeneratorFromData(asHtml=True)
+
+        # note the generateed code does not have html tags
+        validator = self.SimpleValidator()
+        errors = validator.checkHtml(generatedCode)
+
+        assert len(errors) == 0, "Number of errors should be zero"
+
+        print(generatedCode)
+
     def test_code_generation_from_schema(self, source_data_df, setupLogging):
         generatedCode = dg.DataAnalyzer.scriptDataGeneratorFromSchema(source_data_df.schema)
 
@@ -106,6 +154,17 @@ class TestGenerationFromData:
         # check generated code for syntax errors
         ast_tree = ast.parse(generatedCode)
         assert ast_tree is not None
+
+    def test_code_generation_as_html_from_schema(self, source_data_df, setupLogging):
+        generatedCode = dg.DataAnalyzer.scriptDataGeneratorFromSchema(source_data_df.schema)
+
+        for fld in source_data_df.schema:
+            assert f"withColumn('{fld.name}'" in generatedCode
+
+        # check generated code for syntax errors
+        ast_tree = ast.parse(generatedCode)
+        assert ast_tree is not None
+
 
     def test_summarize(self, testLogger, source_data_df, spark):
 
