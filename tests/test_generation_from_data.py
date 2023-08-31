@@ -24,7 +24,8 @@ def setupLogging():
 
 
 class TestGenerationFromData:
-    SMALL_ROW_COUNT = 50000
+    SMALL_ROW_COUNT = 10000
+    MEDIUM_ROW_COUNT = 50000
 
     class SimpleValidator(HTMLParser):  # pylint: disable=abstract-method
         def __init__(self):
@@ -64,8 +65,7 @@ class TestGenerationFromData:
         logger = logging.getLogger(__name__)
         return logger
 
-    @pytest.fixture(scope="class")
-    def generation_spec(self, spark):
+    def mk_generation_spec(self, spark, row_count):
 
         country_codes = [
             "CN", "US", "FR", "CA", "IN", "JM", "IE", "PK", "GB", "IL", "AU",
@@ -115,47 +115,33 @@ class TestGenerationFromData:
         return spec
 
     @pytest.fixture(scope="class")
-    def source_data_df(self, generation_spec):
+    def small_source_data_df(self, spark):
+        generation_spec = self.mk_generation_spec(spark, self.SMALL_ROW_COUNT)
         df_source_data = generation_spec.build()
         return df_source_data.checkpoint(eager=True)
 
-    def test_code_generation1(self, source_data_df, setupLogging, spark):
-        analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df)
+    @pytest.fixture(scope="class")
+    def medium_source_data_df(self, spark):
+        generation_spec = self.mk_generation_spec(spark, self.MEDIUM_ROW_COUNT)
+        df_source_data = generation_spec.build()
+        return df_source_data.checkpoint(eager=True)
+
+    def test_code_generation1(self, small_source_data_df, setupLogging, spark):
+        analyzer = dg.DataAnalyzer(sparkSession=spark, df=small_source_data_df)
 
         generatedCode = analyzer.scriptDataGeneratorFromData()
 
-        for fld in source_data_df.schema:
+        for fld in small_source_data_df.schema:
             assert f"withColumn('{fld.name}'" in generatedCode
 
         # check generated code for syntax errors
         ast_tree = ast.parse(generatedCode)
         assert ast_tree is not None
 
-    def test_code_generation_as_html(self, source_data_df, setupLogging, spark):
-        analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df)
+    def test_code_generation_as_html(self, small_source_data_df, setupLogging, spark):
+        analyzer = dg.DataAnalyzer(sparkSession=spark, df=small_source_data_df)
 
         generatedCode = analyzer.scriptDataGeneratorFromData(asHtml=True)
-
-        # note the generateed code does not have html tags
-        validator = self.SimpleValidator()
-        parsing_errors = validator.checkHtml(generatedCode)
-
-        assert len(parsing_errors) == 0, "Number of errors should be zero"
-
-        print(generatedCode)
-
-    def test_code_generation_from_schema(self, source_data_df, setupLogging):
-        generatedCode = dg.DataAnalyzer.scriptDataGeneratorFromSchema(source_data_df.schema)
-
-        for fld in source_data_df.schema:
-            assert f"withColumn('{fld.name}'" in generatedCode
-
-        # check generated code for syntax errors
-        ast_tree = ast.parse(generatedCode)
-        assert ast_tree is not None
-
-    def test_code_generation_as_html_from_schema(self, source_data_df, setupLogging):
-        generatedCode = dg.DataAnalyzer.scriptDataGeneratorFromSchema(source_data_df.schema)
 
         # note the generated code does not have html tags
         validator = self.SimpleValidator()
@@ -165,31 +151,52 @@ class TestGenerationFromData:
 
         print(generatedCode)
 
-    def test_summarize(self, testLogger, source_data_df, spark):
+    def test_code_generation_from_schema(self, small_source_data_df, setupLogging):
+        generatedCode = dg.DataAnalyzer.scriptDataGeneratorFromSchema(small_source_data_df.schema)
+
+        for fld in small_source_data_df.schema:
+            assert f"withColumn('{fld.name}'" in generatedCode
+
+        # check generated code for syntax errors
+        ast_tree = ast.parse(generatedCode)
+        assert ast_tree is not None
+
+    def test_code_generation_as_html_from_schema(self, small_source_data_df, setupLogging):
+        generatedCode = dg.DataAnalyzer.scriptDataGeneratorFromSchema(small_source_data_df.schema, asHtml=True)
+
+        # note the generated code does not have html tags
+        validator = self.SimpleValidator()
+        parsing_errors = validator.checkHtml(generatedCode)
+
+        assert len(parsing_errors) == 0, "Number of errors should be zero"
+
+        print(generatedCode)
+
+    def test_summarize(self, testLogger, small_source_data_df, spark):
 
         testLogger.info("Creating data analyzer")
 
-        analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df, maxRows=1000)
+        analyzer = dg.DataAnalyzer(sparkSession=spark, df=small_source_data_df, maxRows=1000)
 
         testLogger.info("Summarizing data analyzer results")
         analyzer.summarize()
 
-    def test_summarize_to_df(self, source_data_df, testLogger, spark):
+    def test_summarize_to_df(self, small_source_data_df, testLogger, spark):
         testLogger.info("Creating data analyzer")
 
-        analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df, maxRows=1000)
+        analyzer = dg.DataAnalyzer(sparkSession=spark, df=small_source_data_df, maxRows=1000)
 
         testLogger.info("Summarizing data analyzer results")
         df = analyzer.summarizeToDF()
 
         df.show()
 
-    def test_generate_text_features(self, source_data_df, testLogger, spark):
+    def test_generate_text_features(self, small_source_data_df, testLogger, spark):
         testLogger.info("Creating data analyzer")
 
-        analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df, maxRows=1000)
+        analyzer = dg.DataAnalyzer(sparkSession=spark, df=small_source_data_df, maxRows=1000)
 
-        df_text_features = analyzer.generateTextFeatures(source_data_df).limit(10)
+        df_text_features = analyzer.generateTextFeatures(small_source_data_df).limit(10)
         df_text_features.show()
 
         # data = df_text_features.selectExpr("get_json_object(asin, '$.print_len') as asin").limit(10).collect()
@@ -209,8 +216,8 @@ class TestGenerationFromData:
                               ("test_function", "identifier"),
                               ("10.0.0.1", "ip_addr")
                               ])
-    def test_match_patterns(self, sampleString, expectedMatch, source_data_df, spark):
-        analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df)
+    def test_match_patterns(self, sampleString, expectedMatch, small_source_data_df, spark):
+        analyzer = dg.DataAnalyzer(sparkSession=spark, df=small_source_data_df)
 
         pattern_match_result = ""
         for k, v in analyzer._regex_patterns.items():
@@ -222,16 +229,16 @@ class TestGenerationFromData:
 
         assert pattern_match_result == expectedMatch, f"expected match to be {expectedMatch}"
 
-    def test_source_data_property(self, source_data_df, spark):
-        analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df, maxRows=500)
+    def test_source_data_property(self, small_source_data_df, spark):
+        analyzer = dg.DataAnalyzer(sparkSession=spark, df=small_source_data_df, maxRows=500)
 
         count_rows = analyzer.sampledSourceDf.count()
         assert abs(count_rows - 500) < 50, "expected count to be close to 500"
 
-    def test_sample_data(self, source_data_df, spark):
+    def test_sample_data(self, small_source_data_df, spark):
         # create a DataAnalyzer object
-        analyzer = dg.DataAnalyzer(sparkSession=spark, df=source_data_df, maxRows=500)
+        analyzer = dg.DataAnalyzer(sparkSession=spark, df=small_source_data_df, maxRows=500)
 
         # sample the data
-        df_sample = analyzer.sampleData(source_data_df, 100)
+        df_sample = analyzer.sampleData(small_source_data_df, 100)
         assert df_sample.count() <= 100, "expected count to be 100"

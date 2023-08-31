@@ -409,7 +409,7 @@ class DataAnalyzer:
         # feature : schema information, [minimal, sample, complete]
         dfDataSummary = self._addMeasureToSummary(
             'schema',
-            summaryExpr=f"""to_json(named_struct('column_count', {len(self.columnsInfo)}))""",
+            summaryExpr=F.to_json(F.expr(f"""named_struct('column_count', {len(self.columnsInfo)})""")),
             fieldExprs=[f"'{colInfo.dt}' as {colInfo.name}" for colInfo in self.columnsInfo],
             dfData=self.sourceDf)
 
