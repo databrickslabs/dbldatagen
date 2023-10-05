@@ -51,8 +51,8 @@ and [formatting on string columns](textdata)
 ## Databricks environment compatibility
 
 Dbldatagen is compatible with the following Databricks runtime environments:
-* Databricks runtime 9.1 LTS and above (13.3 LTS is recommended)
-* Databricks ML runtime 9.1 LTS and above (13.3 LTS is recommended)
+* Databricks runtime 9.1 LTS and above (13.3 LTS or above is recommended)
+* Databricks ML runtime 9.1 LTS and above (13.3 LTS or above is recommended)
 * Databricks Delta Live Tables runtime
 
 Unity Catalog cluster modes `Single User` and `No Isolation Shared` are supported in Databricks runtime 9.1 LTS and 
