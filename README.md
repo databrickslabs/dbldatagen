@@ -83,7 +83,7 @@ contains details of installation using alternative mechanisms.
 ## Compatibility 
 The Databricks Labs Data Generator framework can be used with Pyspark 3.1.2 and Python 3.8 or later. These are 
 compatible with the Databricks runtime 9.1 LTS and later releases. For full Unity Catalog support, 
-we recommend using Databricks runtime 13.2 or later (Databricks 13.3 LTS preferred)
+we recommend using Databricks runtime 13.2 or later (Databricks 13.3 LTS or above preferred)
 
 For full library compatibility for a specific Databricks Spark release, see the Databricks 
 release notes for library compatibility
