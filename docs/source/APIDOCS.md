@@ -46,7 +46,19 @@ and [formatting on string columns](textdata)
 * Specify a [statistical distribution for random values](./DISTRIBUTIONS.md)
 * Support for use within Databricks Delta Live Tables pipelines
 * Support for code generation from existing schema or Spark dataframe to synthesize data
+* Support for Unity Catalog enabled clusters 
 
+## Databricks environment compatibility
+
+Dbldatagen is compatible with the following Databricks runtime environments:
+* Databricks runtime 9.1 LTS and above (13.3 LTS is recommended)
+* Databricks ML runtime 9.1 LTS and above (13.3 LTS is recommended)
+* Databricks Delta Live Tables runtime
+
+Unity Catalog cluster modes `Single User` and `No Isolation Shared` are supported in Databricks runtime 9.1 LTS and 
+above.
+
+Unity Catalog `shared` cluster mode is supported in Databricks runtime 13.2 and above.
 
 ## Tutorials and examples
 
