@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generating and Manipulating Text Data &mdash; Databricks Labs Data Generator 0.3.5 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/tdg.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/clipboard.min.js"></script>
+        <script src="_static/copybutton.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Generating Data that Conforms to a Known Statistical Distribution" href="DISTRIBUTIONS.html" />
+    <link rel="prev" title="Understanding and Using Data Ranges" href="DATARANGES.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Generating text data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#generating-data-from-a-specific-set-of-values">Generating data from a specific set of values</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#generating-text-from-existing-values">Generating text from existing values</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#formatting-text-based-on-an-existing-value">Formatting text based on an existing value</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#using-a-sql-expression-to-transform-existing-or-random-values">Using a SQL expression to transform existing or random values</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#using-text-generators">Using Text Generators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#using-the-general-purpose-text-generator">Using the general purpose text generator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#templategenerator-options">TemplateGenerator options</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_from_existing_data.html">Generating synthetic data from existing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference/api/modules.html">The dbldatagen package API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Generating and Manipulating Text Data</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/textdata.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="generating-and-manipulating-text-data">
+<h1>Generating and Manipulating Text Data<a class="headerlink" href="#generating-and-manipulating-text-data" title="Permalink to this heading"></a></h1>
+<p>There are a number of ways to generate and manipulate text data.</p>
+<ul class="simple">
+<li><p>Generating values from a specific set of values</p></li>
+<li><p>Formatting text based on an existing value</p></li>
+<li><p>Using a SQL expression to transform an existing or random value</p></li>
+<li><p>Using the Ipsum Lorem text generator</p></li>
+<li><p>Using the general purpose text generator</p></li>
+</ul>
+<section id="generating-data-from-a-specific-set-of-values">
+<h2>Generating data from a specific set of values<a class="headerlink" href="#generating-data-from-a-specific-set-of-values" title="Permalink to this heading"></a></h2>
+<p>You can specify a specific set of values for a column - these can be of the same type as the column data type,
+or if not, at runtime, they will be cast to the column data type automatically.</p>
+<p>This is the simplest way to specify a small set of discrete values for a column.</p>
+<p>The following example illustrates generating data for specific ranges of values:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
+<span class="n">df_spec</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">dg</span><span class="o">.</span><span class="n">DataGenerator</span><span class="p">(</span><span class="n">sparkSession</span><span class="o">=</span><span class="n">spark</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;test_data_set1&quot;</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="mi">100000</span><span class="p">,</span>
+                   <span class="n">partitions</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">randomSeedMethod</span><span class="o">=</span><span class="s2">&quot;hash_fieldname&quot;</span><span class="p">)</span>
+   <span class="o">.</span><span class="n">withIdOutput</span><span class="p">()</span>
+   <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;code3&quot;</span><span class="p">,</span> <span class="n">StringType</span><span class="p">(),</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;online&#39;</span><span class="p">,</span> <span class="s1">&#39;offline&#39;</span><span class="p">,</span> <span class="s1">&#39;unknown&#39;</span><span class="p">])</span>
+   <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;code4&quot;</span><span class="p">,</span> <span class="n">StringType</span><span class="p">(),</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">],</span> <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">percentNulls</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
+   <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;code5&quot;</span><span class="p">,</span> <span class="n">StringType</span><span class="p">(),</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">],</span> <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="p">[</span><span class="mi">9</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="generating-text-from-existing-values">
+<h2>Generating text from existing values<a class="headerlink" href="#generating-text-from-existing-values" title="Permalink to this heading"></a></h2>
+<p>We can also generate text data from existing values whether numeric, or other data types via a set of transformations:</p>
+<dl class="simple">
+<dt>This can include:</dt><dd><ul class="simple">
+<li><p>adding a prefix</p></li>
+<li><p>adding a suffix</p></li>
+<li><p>formatting an existing value as a string</p></li>
+<li><p>using a custom SQL expression to generate a string</p></li>
+</ul>
+</dd>
+</dl>
+<p>The root value in these cases is taken from the <code class="docutils literal notranslate"><span class="pre">base_column</span></code> or in simple cases, may be specified as part of the basic
+column generation.</p>
+<section id="formatting-text-based-on-an-existing-value">
+<h3>Formatting text based on an existing value<a class="headerlink" href="#formatting-text-based-on-an-existing-value" title="Permalink to this heading"></a></h3>
+<dl class="simple">
+<dt>Often we want to generate a text value based on some numeric value</dt><dd><ul class="simple">
+<li><p>by combining a prefix</p></li>
+<li><p>by adding a suffix</p></li>
+<li><p>by addeding arbitrary formatting or other transformations.</p></li>
+</ul>
+</dd>
+</dl>
+<p>See the online documentation for the <code class="docutils literal notranslate"><span class="pre">ColumnSpecOptions</span></code> class for more details.</p>
+</section>
+</section>
+<section id="using-a-sql-expression-to-transform-existing-or-random-values">
+<h2>Using a SQL expression to transform existing or random values<a class="headerlink" href="#using-a-sql-expression-to-transform-existing-or-random-values" title="Permalink to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">expr</span></code> attribute can be used to generate data values from arbitrary SQL expressions. These can include expressions
+such as <code class="docutils literal notranslate"><span class="pre">concat</span></code> that generate text results.</p>
+<p>See the online documentation for the <code class="docutils literal notranslate"><span class="pre">ColumnSpecOptions</span></code> class for more details.</p>
+</section>
+<section id="using-text-generators">
+<h2>Using Text Generators<a class="headerlink" href="#using-text-generators" title="Permalink to this heading"></a></h2>
+<p>The Data Generation framework provides a number of classes for general purpose text generation</p>
+<p>### Using the Ipsum Lorem text generator
+The Ipsum lorem text generator generates sequences of words, sentances, and paragraphs following the
+Ipsum Lorem convention used in UI mockups. It originates from a technique used in type setting.</p>
+<p>See <code class="docutils literal notranslate"><span class="pre">Wikipedia</span> <span class="pre">article</span></code> on <a class="reference external" href="https://en.wikipedia.org/wiki/Lorem_ipsum">Lorem Ipsum</a></p>
+<p>The following example illustrates its use:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
+<span class="n">df_spec</span> <span class="o">=</span> <span class="p">(</span>
+   <span class="n">dg</span><span class="o">.</span><span class="n">DataGenerator</span><span class="p">(</span><span class="n">sparkSession</span><span class="o">=</span><span class="n">spark</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;test_data_set1&quot;</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="mi">100000</span><span class="p">,</span>
+                  <span class="n">partitions</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">randomSeedMethod</span><span class="o">=</span><span class="s2">&quot;hash_fieldname&quot;</span><span class="p">)</span>
+   <span class="o">.</span><span class="n">withIdOutput</span><span class="p">()</span>
+   <span class="o">.</span><span class="n">withColumnSpec</span><span class="p">(</span><span class="s2">&quot;sample_text&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">dg</span><span class="o">.</span><span class="n">ILText</span><span class="p">(</span><span class="n">paragraphs</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
+                   <span class="n">sentences</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">)))</span>
+<span class="p">)</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">df_spec</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+<span class="n">num_rows</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="using-the-general-purpose-text-generator">
+<h2>Using the general purpose text generator<a class="headerlink" href="#using-the-general-purpose-text-generator" title="Permalink to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">template</span></code> attribute allows specification of templated text generation.</p>
+<p>Here are some examples of its use to generate dummy email addresses, ip addressed and phone numbers</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
+<span class="n">df_spec</span> <span class="o">=</span> <span class="p">(</span>
+     <span class="n">dg</span><span class="o">.</span><span class="n">DataGenerator</span><span class="p">(</span><span class="n">sparkSession</span><span class="o">=</span><span class="n">spark</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;test_data_set1&quot;</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="mi">100000</span><span class="p">,</span>
+                      <span class="n">partitions</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">randomSeedMethod</span><span class="o">=</span><span class="s2">&quot;hash_fieldname&quot;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">withIdOutput</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">withColumnSpec</span><span class="p">(</span><span class="s2">&quot;email&quot;</span><span class="p">,</span>
+                    <span class="n">template</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;\w.\w@\w.com|\w@\w.co.u\k&#39;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">withColumnSpec</span><span class="p">(</span><span class="s2">&quot;ip_addr&quot;</span><span class="p">,</span>
+                     <span class="n">template</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;\n.\n.\n.\n&#39;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">withColumnSpec</span><span class="p">(</span><span class="s2">&quot;phone&quot;</span><span class="p">,</span>
+                     <span class="n">template</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd&#39;</span><span class="p">)</span>
+    <span class="p">)</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">df_spec</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+<span class="n">num_rows</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The implementation of the template expansion uses the underlying <cite>TemplateGenerator</cite> class.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">template</span></code> option is shorthand for <code class="docutils literal notranslate"><span class="pre">text=dg.TemplateGenerator(template=...)</span></code></p>
+<p>This can be specified in multiple modes - see the <cite>TemplateGenerator</cite> documentation for more details.</p>
+</div>
+</section>
+<section id="templategenerator-options">
+<h2>TemplateGenerator options<a class="headerlink" href="#templategenerator-options" title="Permalink to this heading"></a></h2>
+<p>The template generator generates text from a template to allow for generation of synthetic credit card numbers,
+VINs, IBANs and many other structured codes.</p>
+<p>The base value is passed to the template generation and may be used in the generated text. The base value is the
+value the column would have if the template generation had not been applied.</p>
+<p>It uses the following special chars:</p>
+<blockquote>
+<div><table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Chars</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">\</span></code></p></td>
+<td><p>Apply escape to next char.</p></td>
+</tr>
+<tr class="row-odd"><td><p>v0,..v9</p></td>
+<td><p>Use base value as an array of values and substitute the <cite>nth</cite> element ( 0 .. 9). Always escaped.</p></td>
+</tr>
+<tr class="row-even"><td><p>x</p></td>
+<td><p>Insert a random lowercase hex digit</p></td>
+</tr>
+<tr class="row-odd"><td><p>X</p></td>
+<td><p>Insert an uppercase random hex digit</p></td>
+</tr>
+<tr class="row-even"><td><p>d</p></td>
+<td><p>Insert a random lowercase decimal digit</p></td>
+</tr>
+<tr class="row-odd"><td><p>D</p></td>
+<td><p>Insert an uppercase random decimal digit</p></td>
+</tr>
+<tr class="row-even"><td><p>a</p></td>
+<td><p>Insert a random lowercase alphabetical character</p></td>
+</tr>
+<tr class="row-odd"><td><p>A</p></td>
+<td><p>Insert a random uppercase alphabetical character</p></td>
+</tr>
+<tr class="row-even"><td><p>k</p></td>
+<td><p>Insert a random lowercase alphanumeric character</p></td>
+</tr>
+<tr class="row-odd"><td><p>K</p></td>
+<td><p>Insert a random uppercase alphanumeric character</p></td>
+</tr>
+<tr class="row-even"><td><p>n</p></td>
+<td><p>Insert a random number between 0 .. 255 inclusive. This option must always be escaped</p></td>
+</tr>
+<tr class="row-odd"><td><p>N</p></td>
+<td><p>Insert a random number between 0 .. 65535 inclusive. This option must always be escaped</p></td>
+</tr>
+<tr class="row-even"><td><p>w</p></td>
+<td><p>Insert a random lowercase word from the ipsum lorem word set. Always escaped</p></td>
+</tr>
+<tr class="row-odd"><td><p>W</p></td>
+<td><p>Insert a random uppercase word from the ipsum lorem word set. Always escaped</p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If escape is used and <code class="docutils literal notranslate"><span class="pre">escapeSpecialChars</span></code> is False, then the following
+char is assumed to have no special meaning.</p>
+<p>If the <code class="docutils literal notranslate"><span class="pre">escapeSpecialChars</span></code> option is set to True, then the following char only has its special
+meaning when preceded by an escape.</p>
+<p>Some options must be always escaped for example  <code class="docutils literal notranslate"><span class="pre">\\v</span></code>, <code class="docutils literal notranslate"><span class="pre">\\n</span></code> and <code class="docutils literal notranslate"><span class="pre">\\w</span></code>.</p>
+<p>A special case exists for <code class="docutils literal notranslate"><span class="pre">\\v</span></code> - if immediately followed by a digit 0 - 9, the underlying base value
+is interpreted as an array of values and the nth element is retrieved where <cite>n</cite> is the digit specified.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">escapeSpecialChars</span></code> is set to False by default for backwards compatibility.</p>
+<p>To use the <code class="docutils literal notranslate"><span class="pre">escapeSpecialChars</span></code> option, use the variant
+<code class="docutils literal notranslate"><span class="pre">text=dg.TemplateGenerator(template=...),</span> <span class="pre">escapeSpecialChars=True</span></code></p>
+</div>
+<p>In all other cases, the char itself is used.</p>
+<p>The setting of the <code class="docutils literal notranslate"><span class="pre">escapeSpecialChars</span></code> determines how templates generate data.</p>
+<p>If set to False, then the template <code class="docutils literal notranslate"><span class="pre">r&quot;\\dr_\\v&quot;</span></code> will generate the values <code class="docutils literal notranslate"><span class="pre">&quot;dr_0&quot;</span></code> … <code class="docutils literal notranslate"><span class="pre">&quot;dr_999&quot;</span></code> when applied
+to the values zero to 999. This conforms to earlier implementations for backwards compatibility.</p>
+<p>If set to True, then the template <code class="docutils literal notranslate"><span class="pre">r&quot;dr_\\v&quot;</span></code> will generate the values <code class="docutils literal notranslate"><span class="pre">&quot;dr_0&quot;</span></code> … <code class="docutils literal notranslate"><span class="pre">&quot;dr_999&quot;</span></code>
+when applied to the values zero to 999. This conforms to the preferred style going forward</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="DATARANGES.html" class="btn btn-neutral float-left" title="Understanding and Using Data Ranges" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="DISTRIBUTIONS.html" class="btn btn-neutral float-right" title="Generating Data that Conforms to a Known Statistical Distribution" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

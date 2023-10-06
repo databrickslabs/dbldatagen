@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>dbldatagen.text_generator_plugins module &mdash; Databricks Labs Data Generator 0.3.5 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/tdg.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/clipboard.min.js"></script>
+        <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="dbldatagen.text_generators module" href="dbldatagen.text_generators.html" />
+    <link rel="prev" title="dbldatagen.spark_singleton module" href="dbldatagen.spark_singleton.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_from_existing_data.html">Generating synthetic data from existing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">The dbldatagen package API</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="dbldatagen.html">dbldatagen package</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.html#subpackages">Subpackages</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="dbldatagen.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.column_generation_spec.html">dbldatagen.column_generation_spec module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.column_spec_options.html">dbldatagen.column_spec_options module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.data_analyzer.html">dbldatagen.data_analyzer module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.data_generator.html">dbldatagen.data_generator module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.datagen_constants.html">dbldatagen.datagen_constants module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.datarange.html">dbldatagen.datarange module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.daterange.html">dbldatagen.daterange module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.function_builder.html">dbldatagen.function_builder module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.html_utils.html">dbldatagen.html_utils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.nrange.html">dbldatagen.nrange module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.schema_parser.html">dbldatagen.schema_parser module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.spark_singleton.html">dbldatagen.spark_singleton module</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">dbldatagen.text_generator_plugins module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.text_generators.html">dbldatagen.text_generators module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.utils.html">dbldatagen.utils module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.html#module-dbldatagen">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">dbldatagen</a></li>
+          <li class="breadcrumb-item"><a href="dbldatagen.html">dbldatagen package</a></li>
+      <li class="breadcrumb-item active">dbldatagen.text_generator_plugins module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/reference/api/dbldatagen.text_generator_plugins.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-dbldatagen.text_generator_plugins">
+<span id="dbldatagen-text-generator-plugins-module"></span><h1>dbldatagen.text_generator_plugins module<a class="headerlink" href="#module-dbldatagen.text_generator_plugins" title="Permalink to this heading"></a></h1>
+<p>This file defines the text generator plugin class <cite>PyfuncText</cite></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="dbldatagen.text_generator_plugins.FakerTextFactory">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">FakerTextFactory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">locale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">providers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'FakerText'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lib</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rootClass</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generator_plugins.html#FakerTextFactory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generator_plugins.FakerTextFactory" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dbldatagen.text_generator_plugins.PyfuncTextFactory" title="dbldatagen.text_generator_plugins.PyfuncTextFactory"><code class="xref py py-class docutils literal notranslate"><span class="pre">PyfuncTextFactory</span></code></a></p>
+<p>Factory object for Faker text generator flavored <code class="docutils literal notranslate"><span class="pre">PyfuncText</span></code> objects</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>locale</strong> – list of locales. If empty, defaults to <code class="docutils literal notranslate"><span class="pre">en-US</span></code></p></li>
+<li><p><strong>providers</strong> – list of providers</p></li>
+<li><p><strong>name</strong> – name of generated objects. Defaults to <code class="docutils literal notranslate"><span class="pre">FakerText</span></code></p></li>
+<li><p><strong>lib</strong> – library import name of Faker library. If none passed, uses <code class="docutils literal notranslate"><span class="pre">faker</span></code></p></li>
+<li><p><strong>rootClass</strong> – name of root object class If none passed, uses <code class="docutils literal notranslate"><span class="pre">Faker</span></code></p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>..note ::</dt><dd><p>Both the library name and root object class can be overridden - this is primarily for internal testing purposes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="dbldatagen.text_generator_plugins.PyfuncText">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PyfuncText</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initPerBatch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rootProperty</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generator_plugins.html#PyfuncText"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generator_plugins.PyfuncText" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="dbldatagen.text_generators.html#dbldatagen.text_generators.TextGenerator" title="dbldatagen.text_generators.TextGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">TextGenerator</span></code></a></p>
+<p>Text generator that supports generating text from arbitrary Python function</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fn</strong> – function to call to generate text.</p></li>
+<li><p><strong>init</strong> – function to call to initialize context</p></li>
+<li><p><strong>initPerBatch</strong> – if init per batch is set to True, initialization of context is performed on every Pandas udf
+call. Default is False.</p></li>
+<li><p><strong>name</strong> – String representing name of text generator when converted to string via <code class="docutils literal notranslate"><span class="pre">repr</span></code> or <code class="docutils literal notranslate"><span class="pre">str</span></code></p></li>
+</ul>
+</dd>
+</dl>
+<p>The two functions define the plugin model</p>
+<p>The first function, <code class="docutils literal notranslate"><span class="pre">fn</span></code> is called whenever text should be generated for a single column of a single row</p>
+<p>It is called with the signature <code class="docutils literal notranslate"><span class="pre">fn(context,</span> <span class="pre">value)</span></code> unless a root property is set, in which the signature is
+<code class="docutils literal notranslate"><span class="pre">fn(rootProperty)</span></code> with rootProperty having the value of the root property of the context.</p>
+<p>Context is the stored context containing instances of random number generators, 3rd party
+client library objects etc.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">initFn</span></code> is called to initialize the function call context. The plugin code can store arbitrary properties
+in the context following normal Python object rules.</p>
+<p>The context is initialized with the property <cite>textGenerator</cite> prior to being initialized which is a reference to the
+enclosing text generator.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>There are no expectations of repeatability of data generation when using external code
+or external libraries to generate text.</p>
+<p>However, custom code can call the base class method to get a Numpy random
+number generator instance. This will have been seeded using the <code class="docutils literal notranslate"><span class="pre">dbldatagen</span></code>
+random number seed if one was specified, so random numbers generated from this will be repeatable.</p>
+<p>The custom code may call the property <code class="docutils literal notranslate"><span class="pre">randomSeed</span></code> on the text generator object to get the random seed
+which may be used to seed library specific initialization.</p>
+<p>This random seed property may have the values <code class="docutils literal notranslate"><span class="pre">None</span></code> or <code class="docutils literal notranslate"><span class="pre">-1</span></code> which should be treated as meaning dont
+use a random seed.</p>
+<p>The code does not guarantee thread or cross process safety. If a new instance of the random number
+generator is needed, you may call the base class method with the argument <cite>forceNewInstance</cite> set to True.</p>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="dbldatagen.text_generator_plugins.PyfuncText.pandasGenerateText">
+<span class="sig-name descname"><span class="pre">pandasGenerateText</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generator_plugins.html#PyfuncText.pandasGenerateText"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generator_plugins.PyfuncText.pandasGenerateText" title="Permalink to this definition"></a></dt>
+<dd><p>Called to generate text via Pandas UDF mechanism</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>v</strong> – base value of column as Pandas Series</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="dbldatagen.text_generator_plugins.PyfuncTextFactory">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PyfuncTextFactory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generator_plugins.html#PyfuncTextFactory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generator_plugins.PyfuncTextFactory" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>PyfuncTextFactory applies syntactic wrapping around creation of PyfuncText objects</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> – name of generated object (when converted to string via <code class="docutils literal notranslate"><span class="pre">str</span></code>)</p>
+</dd>
+</dl>
+<p>It allows the use of the following constructs:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># initialization (for Faker for example)</span>
+
+<span class="c1"># setup use of Faker</span>
+<span class="k">def</span> <span class="nf">initFaker</span><span class="p">(</span><span class="n">ctx</span><span class="p">):</span>
+  <span class="n">ctx</span><span class="o">.</span><span class="n">faker</span> <span class="o">=</span> <span class="n">Faker</span><span class="p">(</span><span class="n">locale</span><span class="o">=</span><span class="s2">&quot;en_US&quot;</span><span class="p">)</span>
+  <span class="n">ctx</span><span class="o">.</span><span class="n">faker</span><span class="o">.</span><span class="n">add_provider</span><span class="p">(</span><span class="n">internet</span><span class="p">)</span>
+
+<span class="n">FakerText</span> <span class="o">=</span> <span class="p">(</span><span class="n">PyfuncTextFactory</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;FakerText&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withInit</span><span class="p">(</span><span class="n">initFaker</span><span class="p">)</span>        <span class="c1"># determines how context should be initialized</span>
+            <span class="o">.</span><span class="n">withRootProperty</span><span class="p">(</span><span class="s2">&quot;faker&quot;</span><span class="p">)</span>  <span class="c1"># determines what context property is passed to fn</span>
+            <span class="p">)</span>
+
+<span class="c1"># later use ...</span>
+<span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;fake_name&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">FakerText</span><span class="p">(</span><span class="s2">&quot;sentence&quot;</span><span class="p">,</span> <span class="n">ext_word_list</span><span class="o">=</span><span class="n">my_word_list</span><span class="p">)</span> <span class="p">)</span>
+<span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;fake_sentence&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">FakerText</span><span class="p">(</span><span class="s2">&quot;sentence&quot;</span><span class="p">,</span> <span class="n">ext_word_list</span><span class="o">=</span><span class="n">my_word_list</span><span class="p">)</span> <span class="p">)</span>
+
+<span class="c1"># translates to generation of lambda function with keyword arguments</span>
+<span class="c1"># or without as needed</span>
+<span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;fake_name&quot;</span><span class="p">,</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">FakerText</span><span class="p">(</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">faker</span><span class="p">:</span> <span class="n">faker</span><span class="o">.</span><span class="n">name</span><span class="p">(</span> <span class="p">)),</span>
+                            <span class="n">init</span><span class="o">=</span><span class="n">initFaker</span><span class="p">,</span>
+                            <span class="n">rootProperty</span><span class="o">=</span><span class="s2">&quot;faker&quot;</span><span class="p">,</span>
+                            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;FakerText&quot;</span><span class="p">))</span>
+<span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;fake_sentence&quot;</span><span class="p">,</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">FakerText</span><span class="p">(</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">faker</span><span class="p">:</span>
+                                <span class="n">faker</span><span class="o">.</span><span class="n">sentence</span><span class="p">(</span> <span class="o">**</span><span class="p">{</span> <span class="s2">&quot;ext_word_list&quot;</span> <span class="p">:</span> <span class="n">my_word_list</span><span class="p">}</span> <span class="p">)),</span>
+                            <span class="n">init</span><span class="o">=</span><span class="n">initFaker</span><span class="p">,</span>
+                            <span class="n">rootProperty</span><span class="o">=</span><span class="s2">&quot;faker&quot;</span><span class="p">,</span>
+                            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;FakerText&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="dbldatagen.text_generator_plugins.PyfuncTextFactory.withInit">
+<span class="sig-name descname"><span class="pre">withInit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generator_plugins.html#PyfuncTextFactory.withInit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generator_plugins.PyfuncTextFactory.withInit" title="Permalink to this definition"></a></dt>
+<dd><p>Specifies context initialization function</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fn</strong> – function pointer or lambda function for initialization
+signature should <code class="docutils literal notranslate"><span class="pre">initFunction(context)</span></code></p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This variation initializes the context once per worker process per text generator
+instance.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dbldatagen.text_generator_plugins.PyfuncTextFactory.withInitPerBatch">
+<span class="sig-name descname"><span class="pre">withInitPerBatch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generator_plugins.html#PyfuncTextFactory.withInitPerBatch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generator_plugins.PyfuncTextFactory.withInitPerBatch" title="Permalink to this definition"></a></dt>
+<dd><p>Specifies context initialization function</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fn</strong> – function pointer or lambda function for initialization
+signature should <code class="docutils literal notranslate"><span class="pre">initFunction(context)</span></code></p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This variation initializes the context once per internal pandas UDF call.
+The UDF call will be called once per 10,000 rows if system is configured using defaults.
+Setting the pandas batch size as an argument to the DataSpec creation will change the default
+batch size.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dbldatagen.text_generator_plugins.PyfuncTextFactory.withRootProperty">
+<span class="sig-name descname"><span class="pre">withRootProperty</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prop</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generator_plugins.html#PyfuncTextFactory.withRootProperty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generator_plugins.PyfuncTextFactory.withRootProperty" title="Permalink to this definition"></a></dt>
+<dd><p>If called, specifies the property of the context to be passed to the text generation function.
+If not called, the context object itself will be passed to the text generation function.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dbldatagen.text_generator_plugins.fakerText">
+<span class="sig-name descname"><span class="pre">fakerText</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mname</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_lib</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_rootClass</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generator_plugins.html#fakerText"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generator_plugins.fakerText" title="Permalink to this definition"></a></dt>
+<dd><p>Generate faker text generator object using default FakerTextFactory
+instance</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mname</strong> – method name to invoke</p></li>
+<li><p><strong>args</strong> – positional args to be passed to underlying Faker instance</p></li>
+<li><p><strong>_lib</strong> – internal only param - library to load</p></li>
+<li><p><strong>_rootClass</strong> – internal only param - root class to create</p></li>
+</ul>
+</dd>
+</dl>
+<p>:returns : instance of PyfuncText for use with Faker</p>
+<p><code class="docutils literal notranslate"><span class="pre">fakerText(&quot;sentence&quot;)</span></code> is same as <code class="docutils literal notranslate"><span class="pre">FakerTextFactory()(&quot;sentence&quot;)</span></code></p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="dbldatagen.spark_singleton.html" class="btn btn-neutral float-left" title="dbldatagen.spark_singleton module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="dbldatagen.text_generators.html" class="btn btn-neutral float-right" title="dbldatagen.text_generators module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

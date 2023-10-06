@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generating Data that Conforms to a Known Statistical Distribution &mdash; Databricks Labs Data Generator 0.3.5 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/tdg.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/clipboard.min.js"></script>
+        <script src="_static/copybutton.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Options and Additional Features" href="options_and_features.html" />
+    <link rel="prev" title="Generating and Manipulating Text Data" href="textdata.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="textdata.html">Generating text data</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Using data distributions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_from_existing_data.html">Generating synthetic data from existing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference/api/modules.html">The dbldatagen package API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Generating Data that Conforms to a Known Statistical Distribution</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/DISTRIBUTIONS.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="generating-data-that-conforms-to-a-known-statistical-distribution">
+<h1>Generating Data that Conforms to a Known Statistical Distribution<a class="headerlink" href="#generating-data-that-conforms-to-a-known-statistical-distribution" title="Permalink to this heading"></a></h1>
+<p>By the default, data that is being generated at random uses a uniform random number generator.</p>
+<p>Sometimes it is useful to generate data that conforms to a known distribution.</p>
+<p>While use of the <code class="docutils literal notranslate"><span class="pre">weights</span></code> option with discrete value lists can be used to introduce skew,
+this can be awkward to manage for large sets of values.</p>
+<p>To enable this, we support use of known distributions for randomly generated data on any field.</p>
+<p>When the field is not numeric, the underlying seed value will generated to conform to the
+known distribution before being converted
+to the appropriate type as per usual semantics.</p>
+<p>Note that the distribution will be scaled to the possible range of values</p>
+<p>The following distributions are supported:</p>
+<ul class="simple">
+<li><p>normal or Gaussian distribution</p></li>
+<li><p>Beta distribution</p></li>
+<li><p>Gamma distribution</p></li>
+<li><p>Exponential distribution</p></li>
+</ul>
+<blockquote>
+<div><p>Note the <code class="docutils literal notranslate"><span class="pre">distribution</span></code> option will have no effect for values that are not randomly generated as
+per use of the <code class="docutils literal notranslate"><span class="pre">random</span></code> option.</p>
+<p>For values generated randomly, continuous distributions can still be used with discrete values such as strings
+as the underlying random numbers used to select the appropriate discrete values will be drawn from the specified
+distribution. So, for discrete values, the frequency of occurrence of particular values should conform approximately
+to the underlying distribution.</p>
+</div></blockquote>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
+<p>In the following example (taken from the section on date ranges), we will simulate returns and
+ensure the return date is after the purchase date.</p>
+<p>Here we specify an explicit date range and add a random number of days for the return.</p>
+<p>However, unlike the example in the date range section, we will use a specific distribution to
+make returns more frequent in the period immediately following the purchase.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyspark.sql.types</span> <span class="kn">import</span> <span class="n">IntegerType</span>
+
+<span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
+<span class="kn">import</span> <span class="nn">dbldatagen.distributions</span> <span class="k">as</span> <span class="nn">dist</span>
+
+
+<span class="n">row_count</span> <span class="o">=</span> <span class="mi">1000</span> <span class="o">*</span> <span class="mi">100</span>
+<span class="n">testDataSpec</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">dg</span><span class="o">.</span><span class="n">DataGenerator</span><span class="p">(</span><span class="n">spark</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;test_data_set1&quot;</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">row_count</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;purchase_id&quot;</span><span class="p">,</span> <span class="n">IntegerType</span><span class="p">(),</span> <span class="n">minValue</span><span class="o">=</span><span class="mi">1000000</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="mi">2000000</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;product_code&quot;</span><span class="p">,</span> <span class="n">IntegerType</span><span class="p">(),</span> <span class="n">uniqueValues</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span>
+        <span class="s2">&quot;purchase_date&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;date&quot;</span><span class="p">,</span>
+        <span class="n">data_range</span><span class="o">=</span><span class="n">dg</span><span class="o">.</span><span class="n">DateRange</span><span class="p">(</span><span class="s2">&quot;2017-10-01 00:00:00&quot;</span><span class="p">,</span> <span class="s2">&quot;2018-10-06 11:55:00&quot;</span><span class="p">,</span> <span class="s2">&quot;days=3&quot;</span><span class="p">),</span>
+        <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># create return delay , favoring short delay times</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span>
+        <span class="s2">&quot;return_delay&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+        <span class="n">minValue</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">maxValue</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+        <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">distribution</span><span class="o">=</span><span class="n">dist</span><span class="o">.</span><span class="n">Gamma</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">),</span>
+        <span class="n">omit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span>
+        <span class="s2">&quot;return_date&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;date&quot;</span><span class="p">,</span>
+        <span class="n">expr</span><span class="o">=</span><span class="s2">&quot;date_add(purchase_date, return_delay)&quot;</span><span class="p">,</span>
+        <span class="n">baseColumn</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;purchase_date&quot;</span><span class="p">,</span> <span class="s2">&quot;return_delay&quot;</span><span class="p">],</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+
+<span class="n">dfTestData</span> <span class="o">=</span> <span class="n">testDataSpec</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Here we use a computed column, <code class="docutils literal notranslate"><span class="pre">return_delay</span></code>, for effect only. By specifying <code class="docutils literal notranslate"><span class="pre">omit=True</span></code>,
+it is omitted from the final data set.</p>
+<p>You can view the distribution of the return delays using the following code sample in the Databricks
+environment.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pyspark.sql.functions</span> <span class="k">as</span> <span class="nn">F</span>
+<span class="n">dfDelays</span> <span class="o">=</span> <span class="n">dfTestData</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;delay&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">expr</span><span class="p">(</span><span class="s2">&quot;datediff(return_date, purchase_date)&quot;</span><span class="p">))</span>
+
+<span class="n">display</span><span class="p">(</span><span class="n">dfDelays</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Use the plot options to plot the delay as a bar chart.</p>
+<p>Specify the key as <code class="docutils literal notranslate"><span class="pre">delay</span></code>, the values as <code class="docutils literal notranslate"><span class="pre">delay</span></code> and the aggregation as <code class="docutils literal notranslate"><span class="pre">COUNT</span></code> to see the data
+distribution.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="textdata.html" class="btn btn-neutral float-left" title="Generating and Manipulating Text Data" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="options_and_features.html" class="btn btn-neutral float-right" title="Options and Additional Features" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
