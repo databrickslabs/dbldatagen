@@ -1085,7 +1085,7 @@ class ColumnGenerationSpec(object):
                                .astype(self.datatype))
 
             if self.values is not None:
-                new_def = F.array([F.lit(x) for x in self.values])[new_def.astype(IntegerType())]
+                new_def = F.element_at(F.array([F.lit(x) for x in self.values]), new_def.astype(IntegerType())+1)
             elif type(self.datatype) is StringType and self.expr is None:
                 new_def = self._applyPrefixSuffixExpressions(self.prefix, self.suffix, new_def)
 
