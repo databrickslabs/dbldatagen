@@ -16,7 +16,7 @@ from .column_generation_spec import ColumnGenerationSpec
 from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, \
     DEFAULT_SEED_COLUMN, SPARK_RANGE_COLUMN, MIN_SPARK_VERSION, \
     OPTION_RANDOM, OPTION_RANDOM_SEED, OPTION_RANDOM_SEED_METHOD, \
-    INFER_DATATYPE
+    INFER_DATATYPE, SPARK_DEFAULT_PARALLELISM
 from .html_utils import HtmlUtils
 from .schema_parser import SchemaParser
 from .spark_singleton import SparkSingleton
@@ -50,6 +50,9 @@ class DataGenerator:
     it is recommended that you use a different name for the seed column - for example `_id`.
 
     This may be specified by setting the `seedColumnName` attribute to `_id`
+
+    Note: in a shared spark session, the sparkContext is not available, so the default parallelism is set to 200.
+    We recommend passing an explicit value for `partitions` in this case.
     """
 
     # class vars
@@ -97,9 +100,8 @@ class DataGenerator:
         # if the active Spark session is stopped, you may end up with a valid SparkSession object but the underlying
         # SparkContext will be invalid
         assert sparkSession is not None, "Spark session not initialized"
-        assert sparkSession.sparkContext is not None, "Expecting spark session to have valid sparkContext"
 
-        self.partitions = partitions if partitions is not None else sparkSession.sparkContext.defaultParallelism
+        self.partitions = partitions if partitions is not None else self._getDefaultSparkParallelism(sparkSession)
 
         # check for old versions of args
         if "starting_id" in kwargs:
@@ -238,6 +240,22 @@ class DataGenerator:
             self.logger.setLevel(logging.INFO)
         else:
             self.logger.setLevel(logging.WARNING)
+
+    @staticmethod
+    def _getDefaultSparkParallelism(sparkSession):
+        """Get the default parallelism for a spark session, if spark session supports getting the sparkContext
+        :param sparkSession: spark session
+        :return: default parallelism
+        """
+        try:
+            if sparkSession.sparkContext is not None:
+                return sparkSession.sparkContext.defaultParallelism
+            else:
+                return SPARK_DEFAULT_PARALLELISM
+        except Exception as err:  # pylint: disable=broad-exception-caught
+            logging.warning(
+                f"Exception during retrieval of sparkContext, using default of 200 - exception: {type(err)} {err}")
+            return 200
 
     @classmethod
     def useSeed(cls, seedVal):
