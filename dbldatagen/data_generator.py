@@ -248,7 +248,10 @@ class DataGenerator:
         :return: default parallelism
         """
         try:
-            default_parallelism = sparkSession.sparkContext.defaultParallelism
+            if sparkSession.sparkContext is not None:
+                return sparkSession.sparkContext.defaultParallelism
+            else:
+                return SPARK_DEFAULT_PARALLELISM
         except Exception as err:  # pylint: disable=broad-exception-caught
             err_msg = f"Error getting default parallelism, using default setting of {SPARK_DEFAULT_PARALLELISM}"
             logging.warning(err_msg)
