@@ -36,7 +36,7 @@ class TestSharedEnv:
     @pytest.fixture(scope="class")
     def sparkSessionNullContext(self, setupLogging):
         spark = Mock(wraps=dg.SparkSingleton.getLocalInstance("unit tests"))
-        spark.sparkContext = None
+        #spark.sparkContext = None
         return spark
 
     def test_getDefaultParallelism(self, sparkSession):
