@@ -1,5 +1,5 @@
 import logging
-from unittest.mock import Mock
+from unittest.mock import Mock, PropertyMock
 
 import pytest
 import dbldatagen as dg
@@ -35,8 +35,12 @@ class TestSharedEnv:
 
     @pytest.fixture(scope="class")
     def sparkSessionNullContext(self, setupLogging):
-        spark = Mock(wraps=dg.SparkSingleton.getLocalInstance("unit tests"))
-        #spark.sparkContext = None
+
+        class MockSparkSession:
+            def __init__(self):
+                self.sparkContext = None
+
+        spark = MockSparkSession()
         return spark
 
     def test_getDefaultParallelism(self, sparkSession):
