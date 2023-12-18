@@ -254,8 +254,8 @@ class DataGenerator:
                 return SPARK_DEFAULT_PARALLELISM
         except Exception as err:  # pylint: disable=broad-exception-caught
             logging.warning(
-                f"Exception during retrieval of sparkContext, using default of 200 - exception: {type(err)} {err}")
-            return 200
+                f"Exception during retrieval of sparkContext, using default of spark partitions setting of 200")
+            return SPARK_DEFAULT_PARALLELISM
 
     @classmethod
     def useSeed(cls, seedVal):
