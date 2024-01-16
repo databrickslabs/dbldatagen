@@ -14,7 +14,7 @@ def setupLogging():
 class TestSharedEnv:
     """Tests to simulate testing under a Unity Catalog shared environment. In a Unity Catalog shared environment with
     the 14.x versions of the Databricks runtime, the sparkSession object does not support use of the sparkContext
-    attribute to get the default parallelism. In this cases, we want to catch errors and return a default of
+    attribute to get the default parallelism. In this case, we want to catch errors and return a default of
     200 as the default number of partitions. This is the same as the default parallelism in many versions of Spark.
 
 
