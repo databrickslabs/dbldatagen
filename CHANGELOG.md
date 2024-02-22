@@ -3,11 +3,12 @@
 ## Change History
 All notable changes to the Databricks Labs Data Generator will be documented in this file.
 
+### Version 0.3.6
+
 #### Changed
 * Updated readme to include details on which versions of Databricks runtime support Unity Catalog `shared` access mode.
 * Updated code to use default parallelism of 200 when using a shared Spark session
 * Updated code to use Spark's SQL function `element_at` instead of array indexing due to incompatibility
-
 
 ### Version 0.3.5
 
