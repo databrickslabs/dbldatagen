@@ -43,3 +43,6 @@ OPTION_RANDOM_SEED_METHOD = "randomSeedMethod"
 OPTION_RANDOM_SEED = "randomSeed"
 
 INFER_DATATYPE = "__infer__"
+
+# default parallelism when sparkContext is not available
+SPARK_DEFAULT_PARALLELISM = 200
