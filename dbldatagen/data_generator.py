@@ -10,6 +10,7 @@ import logging
 import re
 
 from pyspark.sql.types import LongType, IntegerType, StringType, StructType, StructField, DataType
+import pyspark.sql.functions as F
 
 from ._version import _get_spark_version
 from .column_generation_spec import ColumnGenerationSpec
@@ -21,6 +22,9 @@ from .html_utils import HtmlUtils
 from .schema_parser import SchemaParser
 from .spark_singleton import SparkSingleton
 from .utils import ensure, topologicalSort, DataGenError, deprecated, split_list_matching_condition
+from .generation_model import GenerationModel
+from .constraints import SqlExpr, Constraint
+
 
 _OLD_MIN_OPTION = 'min'
 _OLD_MAX_OPTION = 'max'
@@ -83,6 +87,9 @@ class DataGenerator:
         self._setupLogger()
         self._seedColumnName = seedColumnName
         self._outputStreamingFields = False
+
+        self._generationModel = None
+        self._constraints = []
 
         if seedColumnName != DEFAULT_SEED_COLUMN:
             self.logger.info(f"Using '{self._seedColumnName}' for seed column in place of '{DEFAULT_SEED_COLUMN}")
@@ -319,6 +326,15 @@ class DataGenerator:
             # set logger to old value, disable pylint warning to ensure not triggered for this statement
             self.logger = old_logger  # pylint: disable=attribute-defined-outside-init
         return new_copy
+
+    @property
+    def generationModel(self):
+        """ returns the GenerationModel interface to allow setting of data generation parameters that
+            operate across multiple columns.
+        """
+        if self._generationModel is None:
+            self._generationModel = GenerationModel(self)
+        return self._generationModel
 
     @property
     def randomSeed(self):
@@ -1192,6 +1208,45 @@ class DataGenerator:
         """
         return [self._columnSpecsByName[colspec].datatype for colspec in columns]
 
+    def withConstraint(self, constraint):
+        """Add a constraint to control the data generation
+
+        :param constraint: a constraint object to apply to the data generation
+        :returns: reference to the dataa generator spec allowing calls to be chained
+
+        Note: Irrespective of where the constraint has been added, the constraints are applied at the end of the data
+        generation. Depending on the type of the constraint, the constraint may also affect other aspects of the
+        data generation
+        """
+        self._constraints.append(constraint)
+        return self
+
+    def withConstraints(self, constraints):
+        """Add a constraint to control the data generation
+
+        :param constraints: a list of constraint objects to apply to the data generation
+        :returns: reference to the dataa generator spec allowing calls to be chained
+
+        Note: Irrespective of where the constraint has been added, the constraints are applied at the end of the data
+        generation. Depending on the type of the constraint, the constraint may also affect other aspects of the
+        data generation
+        """
+        self._constraints.extend(constraints)
+        return self
+
+    def withSqlConstraint(self, sqlExpression: str):
+        """ Add a sql expression as a constraint
+
+        :param sqlExpression: SQL expression for constraint. Rows will be returned where SQL expression evaluates true
+        :return:
+
+        Note in the current implementation, this may be equivalent to adding where clauses to the generated dataframe
+        but in future releases, this may be optimized to affect the underlying data generation so that constraints
+        are satisfied more efficiently.
+        """
+        self.withConstraint(SqlExpr(sqlExpression))
+        return self
+
     def computeBuildPlan(self):
         """ prepare for building by computing a pseudo build plan
 
@@ -1233,6 +1288,20 @@ class DataGenerator:
         self.buildPlanComputed = True
         return self
 
+    def _applyPostGenerationConstraints(self, df):
+        """ Build and apply the constraint expressions as SQL filters"""
+        if self._constraints is not None and len(self._constraints) > 0:
+            # get set of constraint expressions
+            constraint_expressions = [ constraint.filterExpression for constraint in self._constraints
+                                       if constraint.filterExpression is not None
+                                       ]
+
+            constraint_expression = Constraint.combineConstraintExpressions(constraint_expressions)
+
+            df = df.where(constraint_expression)
+
+        return df
+
     def build(self, withTempView=False, withView=False, withStreaming=False, options=None):
         """ build the test data set from the column definitions and return a dataframe for it
 
@@ -1268,8 +1337,12 @@ class DataGenerator:
         # build columns
         df1 = self._buildColumnExpressionsWithSelects(df1)
 
+        # apply post generation constraints
+        df1 = self._applyPostGenerationConstraints(df1)
+
         df1 = df1.select(*self.getOutputColumnNames())
         self.executionHistory.append(f"selecting columns: {self.getOutputColumnNames()}")
+
 
         # register temporary or global views if necessary
         if withView:
