@@ -56,6 +56,24 @@ SOURCE_FILES = {
                  "grouping": "data distribution"},
     "exponential_distribution.py": {"briefDesc": "Exponential data distribution related code",
                                     "grouping": "data distribution"}
+
+    "constraint.py": {"briefDesc": "Constraint related code",
+                "grouping": "data generation constraints"},
+    "chained_relation.py": {"briefDesc": "ChainedInequality constraint related code",
+                             "grouping": "data generation constraints"},
+    "value_multiple_constraint.py": {"briefDesc": "FixedIncrement constraint related code",
+                               "grouping": "data generation constraints"},
+    "negative_values.py": {"briefDesc": "Negative constraint related code",
+                 "grouping": "data generation constraints"},
+    "positive_values.py": {"briefDesc": "Positive constraint related code",
+                                    "grouping": "data generation constraints"},
+    "literal_relation_constraint.py": {"briefDesc": "Scalar inequality constraint related code",
+                               "grouping": "data generation constraints"},
+    "literal_range_constraint.py": {"briefDesc": "ScalarRange constraint related code",
+                                        "grouping": "data generation constraints"},
+    "sql_expr.py": {"briefDesc": "SQL expression constraint related code",
+                                        "grouping": "data generation constraints"},
+
 }
 
 # grouping metadata information
@@ -69,6 +87,9 @@ GROUPING_INFO = {
     },
     "data distribution": {
         "heading": "Data distribution related classes, functions and types"
+    },
+    "data generation constraints": {
+        "heading": "Data generation constraints related classes, functions and types"
     }
 }
 

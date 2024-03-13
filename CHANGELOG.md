@@ -3,6 +3,16 @@
 ## Change History
 All notable changes to the Databricks Labs Data Generator will be documented in this file.
 
+### Unreleased
+
+### Changed
+* Modified data generator to allow specification of constraints to the data generation process
+
+### Added
+* Added classes for constraints on the data generation via new package `dbldatagen.constraints`
+
+### Version 0.3.6
+
 #### Changed
 * Updated readme to include details on which versions of Databricks runtime support Unity Catalog `shared` access mode.
 * Updated code to use default parallelism of 200 when using a shared Spark session
