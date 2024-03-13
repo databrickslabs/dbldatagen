@@ -20,14 +20,14 @@ requested number of rows.
 For the current implementation, most of the constraint strategies will be implemented using rejection based criteria.
 """
 
+from .chained_relation import ChainedRelation
 from .constraint import Constraint
-from .sql_expr import SqlExpr
+from .literal_range_constraint import LiteralRange
+from .literal_relation_constraint import LiteralRelation
 from .negative_values import NegativeValues
 from .positive_values import PositiveValues
-from .literal_relation_constraint import LiteralRelation
-from .chained_relation import ChainedRelation
-from .literal_range_constraint import LiteralRange
 from .ranged_values_constraint import RangedValues
+from .sql_expr import SqlExpr
 
 __all__ = ["chained_relation",
            "constraint",

@@ -5,8 +5,9 @@
 """
 This module defines the ScalarRange class
 """
-from .constraint import Constraint
 import pyspark.sql.functions as F
+
+from .constraint import Constraint
 
 
 class RangedValues(Constraint):
@@ -19,6 +20,7 @@ class RangedValues(Constraint):
 
     Note `lowValue` and `highValue` must be names of columns that contain the low and high values
     """
+
     def __init__(self, columns, lowValue, highValue, strict=False):
         Constraint.__init__(self)
         self._columns = self._columnsFromListOrString(columns)
@@ -34,9 +36,9 @@ class RangedValues(Constraint):
 
         # build ranged comparison expressions
         if self._strict:
-            filters = [ (column_expr > minValue) & (column_expr < maxValue) for column_expr in expressions]
+            filters = [(column_expr > minValue) & (column_expr < maxValue) for column_expr in expressions]
         else:
-            filters = [ column_expr.between(minValue,  maxValue) for column_expr in expressions]
+            filters = [column_expr.between(minValue, maxValue) for column_expr in expressions]
 
         # ... and combine them using logical `and` operation
         return self.combineConstraintExpressions(filters)

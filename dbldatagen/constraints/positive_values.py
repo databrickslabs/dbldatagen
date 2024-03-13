@@ -5,8 +5,8 @@
 """
 This module defines the Positive class
 """
-from .constraint import Constraint
 import pyspark.sql.functions as F
+from .constraint import Constraint
 
 
 class PositiveValues(Constraint):
@@ -21,6 +21,7 @@ class PositiveValues(Constraint):
     or greater than zero if strict has the value `True`
 
     """
+
     def __init__(self, columns, strict=False):
         Constraint.__init__(self)
         self._columns = self._columnsFromListOrString(columns)
@@ -35,6 +36,3 @@ class PositiveValues(Constraint):
             filters = [col.isNotNull() & col >= 0 for col in expressions]
 
         return self.combineConstraintExpressions(filters)
-
-
-

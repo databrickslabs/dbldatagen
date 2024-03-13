@@ -1343,7 +1343,6 @@ class DataGenerator:
         df1 = df1.select(*self.getOutputColumnNames())
         self.executionHistory.append(f"selecting columns: {self.getOutputColumnNames()}")
 
-
         # register temporary or global views if necessary
         if withView:
             self.executionHistory.append("registering view")

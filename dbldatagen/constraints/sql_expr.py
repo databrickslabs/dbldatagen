@@ -5,8 +5,9 @@
 """
 This module defines the SqlExpr class
 """
-from .constraint import Constraint
 import pyspark.sql.functions as F
+
+from .constraint import Constraint
 
 
 class SqlExpr(Constraint):
@@ -17,6 +18,7 @@ class SqlExpr(Constraint):
     :param expr: A SQL expression as a string
 
     """
+
     def __init__(self, expr: str):
         Constraint.__init__(self)
         assert expr is not None, "Expression must be a valid SQL string"
@@ -26,4 +28,3 @@ class SqlExpr(Constraint):
     def _generate_filter_expression(self):
         """ Generate a SQL filter expression that may be used for filtering"""
         return F.expr(self._expr)
-

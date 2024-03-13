@@ -5,8 +5,8 @@
 """
 This module defines the ChainedInequality class
 """
-from .constraint import Constraint
 import pyspark.sql.functions as F
+from .constraint import Constraint
 
 
 class ChainedRelation(Constraint):
@@ -39,7 +39,7 @@ class ChainedRelation(Constraint):
         if relation not in self.SUPPORTED_OPERATORS:
             raise ValueError(f"Parameter `relation` should be one of the operators :{self.SUPPORTED_OPERATORS}")
 
-        if not isinstance(self._columns,list) or len(self._columns) <= 1:
+        if not isinstance(self._columns, list) or len(self._columns) <= 1:
             raise ValueError("ChainedRelation constraints must be defined across more than one column")
 
     def _generate_filter_expression(self):
@@ -57,8 +57,7 @@ class ChainedRelation(Constraint):
         filters = []
         # build set of filters for chained expressions
         for ix in range(1, len(expressions)):
-            filters.append(self._generate_relation_expression(expressions[ix-1], self._relation, expressions[ix]))
+            filters.append(self._generate_relation_expression(expressions[ix - 1], self._relation, expressions[ix]))
 
         # ... and combine them using logical `and` operation
         return self.combineConstraintExpressions(filters)
-

@@ -223,7 +223,7 @@ class TestConstraints:
                         .withColumn("code3", IntegerType(), min=100, max=200)
                         .withConstraints([SqlExpr("id < 100"),
                                           SqlExpr("id > 0")])
-                        .withConstraint(LiteralRange("id",0, 100, strict=True))
+                        .withConstraint(LiteralRange("id", 0, 100, strict=True))
                         )
 
         testDataDF = testDataSpec.build()

@@ -97,7 +97,3 @@ class Constraint(object):
             self._filterExpression = self._generate_filter_expression()
             self._calculatedFilterExpression = True
         return self._filterExpression
-
-
-
-

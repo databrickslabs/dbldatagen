@@ -5,10 +5,11 @@
 """
 This module defines the Negative class
 """
+import pyspark.sql.functions as F
 from .constraint import Constraint
 
 
-class NegativeValues(object):
+class NegativeValues(Constraint):
     """ Negative Value constraints
 
     Applies constraint to ensure columns have negative values
@@ -20,6 +21,7 @@ class NegativeValues(object):
     or less than zero if strict has the value `True`
 
     """
+
     def __init__(self, columns, strict=False):
         Constraint.__init__(self)
         self._columns = self._columnsFromListOrString(columns)
@@ -33,5 +35,3 @@ class NegativeValues(object):
             filters = [col.isNotNull() & (col <= 0) for col in expressions]
 
         return self.combineConstraintExpressions(filters)
-
-

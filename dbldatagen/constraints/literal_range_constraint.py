@@ -5,8 +5,9 @@
 """
 This module defines the ScalarRange class
 """
-from .constraint import Constraint
 import pyspark.sql.functions as F
+
+from .constraint import Constraint
 
 
 class LiteralRange(Constraint):
@@ -20,6 +21,7 @@ class LiteralRange(Constraint):
     Note `lowValue` and `highValue` must be values that can be converted to a literal expression using the
     `pyspark.sql.functions.lit` function
     """
+
     def __init__(self, columns, lowValue, highValue, strict=False):
         Constraint.__init__(self)
         self._columns = self._columnsFromListOrString(columns)
@@ -35,9 +37,9 @@ class LiteralRange(Constraint):
 
         # build ranged comparison expressions
         if self._strict:
-            filters = [ (column_expr > minValue) & (column_expr < maxValue) for column_expr in expressions]
+            filters = [(column_expr > minValue) & (column_expr < maxValue) for column_expr in expressions]
         else:
-            filters = [ column_expr.between(minValue,  maxValue) for column_expr in expressions]
+            filters = [column_expr.between(minValue, maxValue) for column_expr in expressions]
 
         # ... and combine them using logical `and` operation
         return self.combineConstraintExpressions(filters)
