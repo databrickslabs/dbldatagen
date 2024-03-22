@@ -14,11 +14,6 @@ As the APIs return a data generation specification rather than a dataframe, addi
 manipulation can be performed before generation of actual data.
 
 """
-from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
-    TimestampType, DateType, DecimalType, ByteType, BinaryType, StructType, ArrayType, DataType
-
-import pyspark.sql as ssql
-import pyspark.sql.functions as F
 
 from .utils import strip_margins
 from .spark_singleton import SparkSingleton
