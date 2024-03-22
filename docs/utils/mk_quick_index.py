@@ -55,7 +55,7 @@ SOURCE_FILES = {
     "gamma.py": {"briefDesc": "Gamma data distribution related code",
                  "grouping": "data distribution"},
     "exponential_distribution.py": {"briefDesc": "Exponential data distribution related code",
-                                    "grouping": "data distribution"}
+                                    "grouping": "data distribution"},
 
     "constraint.py": {"briefDesc": "Constraint related code",
                 "grouping": "data generation constraints"},

@@ -10,7 +10,6 @@ import logging
 import re
 
 from pyspark.sql.types import LongType, IntegerType, StringType, StructType, StructField, DataType
-import pyspark.sql.functions as F
 
 from ._version import _get_spark_version
 from .column_generation_spec import ColumnGenerationSpec
@@ -22,8 +21,8 @@ from .html_utils import HtmlUtils
 from .schema_parser import SchemaParser
 from .spark_singleton import SparkSingleton
 from .utils import ensure, topologicalSort, DataGenError, deprecated, split_list_matching_condition
-from .generation_model import GenerationModel
-from .constraints import SqlExpr, Constraint
+from .constraints.constraint import Constraint
+from .constraints.sql_expr import SqlExpr
 
 
 _OLD_MIN_OPTION = 'min'
@@ -326,15 +325,6 @@ class DataGenerator:
             # set logger to old value, disable pylint warning to ensure not triggered for this statement
             self.logger = old_logger  # pylint: disable=attribute-defined-outside-init
         return new_copy
-
-    @property
-    def generationModel(self):
-        """ returns the GenerationModel interface to allow setting of data generation parameters that
-            operate across multiple columns.
-        """
-        if self._generationModel is None:
-            self._generationModel = GenerationModel(self)
-        return self._generationModel
 
     @property
     def randomSeed(self):
@@ -1288,6 +1278,13 @@ class DataGenerator:
         self.buildPlanComputed = True
         return self
 
+    def _applyPreGenerationConstraints(self):
+        """ Apply pre data generation constraints """
+        if self._constraints is not None and len(self._constraints) > 0:
+            for constraint in self._constraints:
+                assert isinstance(constraint, Constraint), "constraint should be of type Constraint"
+                constraint.prepareDataGenerator(self)
+
     def _applyPostGenerationConstraints(self, df):
         """ Build and apply the constraint expressions as SQL filters"""
         if self._constraints is not None and len(self._constraints) > 0:
@@ -1321,6 +1318,8 @@ class DataGenerator:
         """
         self.logger.debug("starting build ... withStreaming [%s]", withStreaming)
         self.executionHistory = []
+
+        self._applyPreGenerationConstraints()
         self.computeBuildPlan()
 
         output_columns = self.getOutputColumnNames()

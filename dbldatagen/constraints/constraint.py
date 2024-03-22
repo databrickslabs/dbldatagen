@@ -79,12 +79,27 @@ class Constraint(object):
         else:
             raise ValueError("Invalid list of constraint expressions")
 
-    def _prepare_data_generator(self, dataGenerator):
+    def prepareDataGenerator(self, dataGenerator):
         """ Prepare the data generator to generate data that matches the constraint
 
            This method may modify the data generation rules to meet the constraint
+
+           :param dataGenerator: Data generation object that will generate the dataframe
+           :return: modified or unmodified data generator
         """
         return dataGenerator
+
+    def _transform_dataframe(self, dataGenerator, dataFrame):
+        """ Transform the dataframe to make data conform to constraint if possible
+
+           This method should not modify the dataGenerator - but may modify the dataframe
+
+           :param dataGenerator: Data generation object that generated the dataframe
+           :return: modified or unmodified Spark dataframe
+
+        """
+        return dataFrame
+
 
     def _generate_filter_expression(self):
         """ Generate a Pyspark expression that may be used for filtering"""
