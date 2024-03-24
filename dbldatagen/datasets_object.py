@@ -15,7 +15,7 @@ manipulation can be performed before generation of actual data.
 
 """
 
-from .utils import strip_margins
+from .datasets import DatasetProvider
 from .spark_singleton import SparkSingleton
 
 
@@ -27,8 +27,11 @@ class Datasets:
     :param sparkSession: Spark session instance to use when performing spark operations
     :param name: Dataset name to
 
-
     """
+
+    DEFAULT_ROWS = 1000000
+    DEFAULT_PARTITIONS = 4
+
     _registered_providers = {}
 
     def __init__(self, sparkSession=None, name=None, streaming=False):
@@ -52,7 +55,32 @@ class Datasets:
 
     @classmethod
     def list(cls, pattern=None, output="text/plain"):
-        pass
+        """This method lists the registered datasets
+            It filters the list by a regular expression pattern if provided
+        """
+        summary_list = [(name, provider.summary) for name, provider in DatasetProvider.registered_providers.items()]
+
+        # filter the list if a pattern is provided
+        if pattern is not None:
+            summary_list = [(name, summary) for name, summary in summary_list if re.match(pattern, name)]
+
+        # now format the list for output
+        if output == "text/plain":
+            for name, summary in summary_list:
+                print(f"{name}: {summary}")
+        elif output == "text/html" or output == "html":
+            # check if function named displayHtml is defined in the current context
+            if "displayHtml" in globals():
+                displayHtml(summary_list)
+            else:
+                print("<html><body>")
+            print("<table>")
+            for name, summary in summary_list:
+                print(f"<tr><td>{name}</td><td>{summary}</td></tr>")
+            print("</table>")
+            print("</body></html>")
+        else:
+            raise ValueError(f"Output format '{output}' not supported")
 
     @classmethod
     def describe(cls, name, output="text/plain"):
@@ -61,3 +89,6 @@ class Datasets:
     def get(self, tableName=None, rows=None, partitions=None):
         pass
 
+    @property
+    def registeredDatasets(self):
+        return

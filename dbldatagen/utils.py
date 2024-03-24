@@ -360,3 +360,4 @@ def system_time_millis():
     """
     curr_time = round(time.time() / 1000)
     return curr_time
+
