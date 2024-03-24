@@ -14,6 +14,7 @@ import pyspark.sql as ssql
 import pyspark.sql.functions as F
 
 from .utils import strip_margins
+from .html_utils import HtmlUtils
 from .spark_singleton import SparkSingleton
 
 
@@ -359,7 +360,7 @@ class DataAnalyzer:
         return "\n".join(stmts)
 
     @classmethod
-    def scriptDataGeneratorFromSchema(cls, schema, suppressOutput=False, name=None):
+    def scriptDataGeneratorFromSchema(cls, schema, suppressOutput=False, name=None, asHtml=False):
         """
         Generate outline data generator code from an existing dataframe
 
@@ -373,16 +374,24 @@ class DataAnalyzer:
         The dataframe to be analyzed is the dataframe passed to the constructor of the DataAnalyzer object.
 
         :param schema: Pyspark schema - i.e manually constructed StructType or return value from `dataframe.schema`
-        :param suppressOutput: Suppress printing of generated code if True
+        :param suppressOutput: Suppress printing of generated code if True. If asHtml is True, output is suppressed
         :param name: Optional name for data generator
-        :return: String containing skeleton code
+        :param asHtml: If True, will generate Html suitable for notebook ``displayHtml``.
+        :return: String containing skeleton code (in Html form if `asHtml` is True)
 
         """
-        return cls._scriptDataGeneratorCode(schema,
-                                            suppressOutput=suppressOutput,
-                                            name=name)
+        omit_output_printing = suppressOutput or asHtml
 
-    def scriptDataGeneratorFromData(self, suppressOutput=False, name=None):
+        generated_code = cls._scriptDataGeneratorCode(schema,
+                                                      suppressOutput=omit_output_printing,
+                                                      name=name)
+
+        if asHtml:
+            generated_code = HtmlUtils.formatCodeAsHtml(generated_code)
+
+        return generated_code
+
+    def scriptDataGeneratorFromData(self, suppressOutput=False, name=None, asHtml=False):
         """
         Generate outline data generator code from an existing dataframe
 
@@ -395,13 +404,16 @@ class DataAnalyzer:
 
         The dataframe to be analyzed is the Spark dataframe passed to the constructor of the DataAnalyzer object
 
-        :param suppressOutput: Suppress printing of generated code if True
+        :param suppressOutput: Suppress printing of generated code if True. If asHtml is True, output is suppressed
         :param name: Optional name for data generator
-        :return: String containing skeleton code
+        :param asHtml: If True, will generate Html suitable for notebook ``displayHtml``.
+        :return: String containing skeleton code (in Html form if `asHtml` is True)
 
         """
         assert self._df is not None
         assert type(self._df) is ssql.DataFrame, "sourceDf must be a valid Pyspark dataframe"
+
+        omit_output_printing = suppressOutput or asHtml
 
         if self._dataSummary is None:
             df_summary = self.summarizeToDF()
@@ -411,8 +423,13 @@ class DataAnalyzer:
                 row_key_pairs = row.asDict()
                 self._dataSummary[row['measure_']] = row_key_pairs
 
-        return self._scriptDataGeneratorCode(self._df.schema,
-                                             suppressOutput=suppressOutput,
-                                             name=name,
-                                             dataSummary=self._dataSummary,
-                                             sourceDf=self._df)
+        generated_code = self._scriptDataGeneratorCode(self._df.schema,
+                                                      suppressOutput=omit_output_printing,
+                                                      name=name,
+                                                      dataSummary=self._dataSummary,
+                                                      sourceDf=self._df)
+
+        if asHtml:
+            generated_code = HtmlUtils.formatCodeAsHtml(generated_code)
+
+        return generated_code

@@ -272,6 +272,8 @@ class TestTextGeneration:
 
         df_iltext_data = testDataSpec.build()
 
+        df_iltext_data.show()
+
         counts = df_iltext_data.agg(
             F.countDistinct("paras").alias("paragraphs_count")
         ).collect()[0]
