@@ -5,7 +5,10 @@
 """
 This module defines the ``DataAnalyzer`` class.
 
-This code is experimental and both APIs and code generated is liable to change in future versions.
+    .. warning::
+       Experimental
+       This code is experimental and both APIs and code generated is liable to change in future versions.
+       
 """
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
     TimestampType, DateType, DecimalType, ByteType, BinaryType, StructType, ArrayType, DataType
@@ -14,6 +17,7 @@ import pyspark.sql as ssql
 import pyspark.sql.functions as F
 
 from .utils import strip_margins
+from .html_utils import HtmlUtils
 from .spark_singleton import SparkSingleton
 
 
@@ -57,6 +61,11 @@ class DataAnalyzer:
 
         self._sparkSession = sparkSession
         self._dataSummary = None
+
+    @property
+    def sourceDf(self):
+        """ Get source dataframe"""
+        return self._df
 
     def _displayRow(self, row):
         """Display details for row"""
@@ -116,21 +125,21 @@ class DataAnalyzer:
             'schema',
             summaryExpr=f"""to_json(named_struct('column_count', {len(dtypes)}))""",
             fieldExprs=[f"'{dtype[1]}' as {dtype[0]}" for dtype in dtypes],
-            dfData=self._df)
+            dfData=self.sourceDf)
 
         # count
         dfDataSummary = self._addMeasureToSummary(
             'count',
             summaryExpr=f"{total_count}",
             fieldExprs=[f"string(count({dtype[0]})) as {dtype[0]}" for dtype in dtypes],
-            dfData=self._df,
+            dfData=self.sourceDf,
             dfSummary=dfDataSummary)
 
         dfDataSummary = self._addMeasureToSummary(
             'null_probability',
             fieldExprs=[f"""string( round( ({total_count} - count({dtype[0]})) /{total_count}, 2)) as {dtype[0]}"""
                         for dtype in dtypes],
-            dfData=self._df,
+            dfData=self.sourceDf,
             dfSummary=dfDataSummary)
 
         # distinct count
@@ -138,20 +147,20 @@ class DataAnalyzer:
             'distinct_count',
             summaryExpr="count(distinct *)",
             fieldExprs=[f"string(count(distinct {dtype[0]})) as {dtype[0]}" for dtype in dtypes],
-            dfData=self._df,
+            dfData=self.sourceDf,
             dfSummary=dfDataSummary)
 
         # min
         dfDataSummary = self._addMeasureToSummary(
             'min',
             fieldExprs=[f"string(min({dtype[0]})) as {dtype[0]}" for dtype in dtypes],
-            dfData=self._df,
+            dfData=self.sourceDf,
             dfSummary=dfDataSummary)
 
         dfDataSummary = self._addMeasureToSummary(
             'max',
             fieldExprs=[f"string(max({dtype[0]})) as {dtype[0]}" for dtype in dtypes],
-            dfData=self._df,
+            dfData=self.sourceDf,
             dfSummary=dfDataSummary)
 
         descriptionDf = self._df.describe().where("summary in ('mean', 'stddev')")
@@ -169,20 +178,20 @@ class DataAnalyzer:
             dfDataSummary = self._addMeasureToSummary(
                 measure,
                 fieldExprs=[f"'{values[dtype[0]]}'" for dtype in dtypes],
-                dfData=self._df,
+                dfData=self.sourceDf,
                 dfSummary=dfDataSummary)
 
         # string characteristics for strings and string representation of other values
         dfDataSummary = self._addMeasureToSummary(
             'print_len_min',
             fieldExprs=[f"min(length(string({dtype[0]}))) as {dtype[0]}" for dtype in dtypes],
-            dfData=self._df,
+            dfData=self.sourceDf,
             dfSummary=dfDataSummary)
 
         dfDataSummary = self._addMeasureToSummary(
             'print_len_max',
             fieldExprs=[f"max(length(string({dtype[0]}))) as {dtype[0]}" for dtype in dtypes],
-            dfData=self._df,
+            dfData=self.sourceDf,
             dfSummary=dfDataSummary)
 
         return dfDataSummary
@@ -359,7 +368,7 @@ class DataAnalyzer:
         return "\n".join(stmts)
 
     @classmethod
-    def scriptDataGeneratorFromSchema(cls, schema, suppressOutput=False, name=None):
+    def scriptDataGeneratorFromSchema(cls, schema, suppressOutput=False, name=None, asHtml=False):
         """
         Generate outline data generator code from an existing dataframe
 
@@ -375,14 +384,20 @@ class DataAnalyzer:
         :param schema: Pyspark schema - i.e manually constructed StructType or return value from `dataframe.schema`
         :param suppressOutput: Suppress printing of generated code if True
         :param name: Optional name for data generator
-        :return: String containing skeleton code
+        :param asHtml: If True, will generate Html suitable for notebook ``displayHtml``. If true, suppresses output
+        :return: String containing skeleton code  (in Html form if `asHtml` is True)
 
         """
-        return cls._scriptDataGeneratorCode(schema,
+        generated_code = cls._scriptDataGeneratorCode(schema,
                                             suppressOutput=suppressOutput,
                                             name=name)
 
-    def scriptDataGeneratorFromData(self, suppressOutput=False, name=None):
+        if asHtml:
+            generated_code = HtmlUtils.formatCodeAsHtml(generated_code)
+
+        return generated_code
+
+    def scriptDataGeneratorFromData(self, suppressOutput=False, name=None, asHtml=False):
         """
         Generate outline data generator code from an existing dataframe
 
@@ -411,8 +426,13 @@ class DataAnalyzer:
                 row_key_pairs = row.asDict()
                 self._dataSummary[row['measure_']] = row_key_pairs
 
-        return self._scriptDataGeneratorCode(self._df.schema,
+        generated_code = self._scriptDataGeneratorCode(self._df.schema,
                                              suppressOutput=suppressOutput,
                                              name=name,
                                              dataSummary=self._dataSummary,
-                                             sourceDf=self._df)
+                                             sourceDf=self.sourceDf)
+
+        if asHtml:
+            generated_code = HtmlUtils.formatCodeAsHtml(generated_code)
+
+        return generated_code
