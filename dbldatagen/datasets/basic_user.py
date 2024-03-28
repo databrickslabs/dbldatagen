@@ -8,11 +8,12 @@ class BasicUserProvider(DatasetProvider):
 
     """
 
-    def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=-1, **options):
+    def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=-1,random=False, dummyValues=0,
+                 **options):
         import dbldatagen as dg
 
-        random = options.get("random", False)
-        dummyValues = options.get("dummyValues", 0)
+        #random = options.get("random", False)
+        #dummyValues = options.get("dummyValues", 0)
 
         assert tableName is None or tableName == "primary", "Invalid table name"
         df_spec = (
@@ -29,7 +30,7 @@ class BasicUserProvider(DatasetProvider):
             )
 
         if dummyValues > 0:
-            df_spec = df_spec.withColumn("dummy", "long", random=True, numValues=dummyValues, minValue=1)
+            df_spec = df_spec.withColumn("dummy", "long", random=True, numColumns=dummyValues, minValue=1)
 
         return df_spec
 
