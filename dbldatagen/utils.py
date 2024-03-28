@@ -360,32 +360,3 @@ def system_time_millis():
     """
     curr_time = round(time.time() / 1000)
     return curr_time
-
-
-def get_global_function(fnName, packagePrefix=None):
-    """Get a global function if available from module or package beginning with a specific prefix
-
-    :param fnName: name of function to check for
-    :param packagePrefix: prefix of package to search for function
-    :returns: the function if function is available, otherwise None
-    """
-    assert fnName is not None and len(fnName) > 0, "Function name must be specified"
-    assert packagePrefix is None or len(packagePrefix) > 0, "Package prefix must be either null or string"
-
-    try:
-        candidate_function = globals()[fnName]
-
-        if candidate_function is not None or fnName in globals():
-            candidate_function = globals()[fnName]
-            if candidate_function is not None and callable(candidate_function):
-                if packagePrefix is not None:
-                        if candidate_function.__module__.startswith(packagePrefix):
-                            return candidate_function
-                else:
-                    return candidate_function
-        else:
-            print(f"Function {fnName} not found in globals")
-        return None
-    except Exception as e:
-        return None
-
