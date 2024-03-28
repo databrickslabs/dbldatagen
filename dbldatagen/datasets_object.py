@@ -168,7 +168,7 @@ class Datasets:
 
         self._providerDefinition = providers[0]
 
-    def get(self, tableName=None, rows=None, partitions=None, *args, **kwargs):
+    def get(self, tableName, rows=None, partitions=None, **kwargs):
         provider = self._providerDefinition.providerClass()
 
         if tableName is None:
