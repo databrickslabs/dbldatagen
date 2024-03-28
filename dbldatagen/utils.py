@@ -361,3 +361,49 @@ def system_time_millis():
     curr_time = round(time.time() / 1000)
     return curr_time
 
+
+def get_global_function(fnName, packagePrefix=None):
+    """Get a global function if available from module or package beginning with a specific prefix
+
+    :param fnName: name of function to check for
+    :param packagePrefix: prefix of package to search for function
+    :returns: the function if function is available, otherwise None
+    """
+    assert fnName is not None and len(fnName) > 0, "Function name must be specified"
+    assert packagePrefix is None or len(packagePrefix) > 0, "Package prefix must be either null or string"
+
+    try:
+        if fnName in globals():
+            candidate_function = globals()[fnName]
+            if candidate_function is not None and callable(candidate_function):
+                if packagePrefix is not None:
+                        if candidate_function.__module__.startswith(packagePrefix):
+                            return candidate_function
+                else:
+                    return candidate_function
+        return None
+    except Exception as e:
+        return None
+
+
+def get_global_var(varname, typeCheck=None):
+    """Get a global variable if available and optionally matches specific type or is subclass of type
+
+    :param varname: name of variable to check for
+    :param typeCheck: type to check against
+    :returns: the variable if variable is available, otherwise None
+    """
+    assert varname is not None and len(varname) > 0, "Variable name must be specified"
+    assert typeCheck is not None, "typeCheck type must be specified"
+
+    try:
+        if varname in globals():
+            candidate_var = globals()[varname]
+            if candidate_var is not None and \
+                    (type(candidate_var) == typeCheck) or issubclass(type(candidate_var), typeCheck):
+                return candidate_var
+            else:
+                return None
+        return None
+    except Exception as e:
+        return None

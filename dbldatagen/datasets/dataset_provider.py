@@ -170,9 +170,13 @@ class DatasetProvider:
                                                                  )
                 setattr(self._targetCls, "_DATASET_DEFINITION", dataset_desc)
                 retval = self._targetCls
-                return retval
             else:
                 raise ValueError("Decorator must be applied to a class")
+
+            if autoRegister:
+                DatasetProvider.registerDataset(dataset_desc, retval)
+
+            return retval
 
 
 def dataset_definition(cls=None, *args, autoRegister=False, **kwargs):

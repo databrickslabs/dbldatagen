@@ -15,9 +15,13 @@ manipulation can be performed before generation of actual data.
 
 """
 
+import pprint
+import re
+
+
 from .datasets import DatasetProvider
 from .spark_singleton import SparkSingleton
-
+from .utils import strip_margins
 
 class Datasets:
     """This class is used to generate standard data sets based on a plugin provider model.
@@ -54,37 +58,96 @@ class Datasets:
         pass
 
     @classmethod
+    def getProviderDefinitions(cls, name=None, pattern=None):
+        """Get provider definition for a dataset
+
+        :param name: name of dataset to get provider for, if None, returns all providers
+        :param pattern: pattern to match dataset name, if None, returns all providers optionally matching name
+        :return: list of tuples for provider definitions matching name and matching pattern
+
+        Each tuple will be of the form (name, provider_definition)
+
+        """
+        if pattern is not None and name is not None:
+            summary_list = [provider_definition
+                            for provider_definition, provider_cls in DatasetProvider.getRegisteredDatasets().values()
+                            if re.match(pattern, provider_definition.name) and name == provider_definition.name]
+        elif pattern is not None:
+            summary_list = [provider_definition
+                            for provider_definition, provider_cls in DatasetProvider.getRegisteredDatasets().values()
+                            if re.match(pattern, provider_definition.name)]
+        elif name is not None:
+            summary_list = [provider_definition
+                            for provider_definition, provider_cls in DatasetProvider.getRegisteredDatasets().values()
+                            if name == provider_definition.name]
+        else:
+            summary_list = [provider_definition
+                            for provider_definition, provider_cls in DatasetProvider.getRegisteredDatasets().values()]
+        return summary_list
+
+    @classmethod
     def list(cls, pattern=None, output="text/plain"):
         """This method lists the registered datasets
             It filters the list by a regular expression pattern if provided
         """
-        summary_list = [(name, provider.summary) for name, provider in DatasetProvider.registered_providers.items()]
-
-        # filter the list if a pattern is provided
-        if pattern is not None:
-            summary_list = [(name, summary) for name, summary in summary_list if re.match(pattern, name)]
+        summary_list = sorted([ (providerDefinition.name, providerDefinition.summary) for
+                         providerDefinition in cls.getProviderDefinitions(name=None, pattern=pattern)])
 
         # now format the list for output
         if output == "text/plain":
-            for name, summary in summary_list:
-                print(f"{name}: {summary}")
+            print("The followed datasets are registered and available for use:")
+            pprint.pprint(summary_list, indent=4, width=80)
         elif output == "text/html" or output == "html":
             # check if function named displayHtml is defined in the current context
-            if "displayHtml" in globals():
-                displayHtml(summary_list)
+            htmlListing = ["<html><body>",
+                           "<h1>Registered Datasets</h1>",
+                           "<table>"]
+            htmlListing.extend([f"<tr><td>{name}</td><td>{summary}</td></tr>" for name, summary in summary_list])
+            htmlListing.extend(["</table>", "</body></html>"])
+
+            displayHtml = globals().get("displayHTML")
+            if displayHtml is not None:
+                displayHtml("\n".join(htmlListing))
             else:
-                print("<html><body>")
-            print("<table>")
-            for name, summary in summary_list:
-                print(f"<tr><td>{name}</td><td>{summary}</td></tr>")
-            print("</table>")
-            print("</body></html>")
+                print("\n".join(htmlListing))
         else:
             raise ValueError(f"Output format '{output}' not supported")
 
     @classmethod
     def describe(cls, name, output="text/plain"):
-        pass
+        """This method lists the registered datasets
+                   It filters the list by a regular expression pattern if provided
+               """
+        providers = cls.getProviderDefinitions(name=name)
+
+        assert [len(providers) >= 1], f"Dataset '{name}' not found"
+
+        providerDef = providers[0]
+
+        # now format the list for output
+        if output == "text/plain":
+            summaryAttributes = f""" 
+                            | Dataset Name: {providerDef.name}
+                            | Summary: {providerDef.summary}
+                            | Supports Streaming: {providerDef.supportsStreaming}
+                            | Provides Tables: {providerDef.tables}
+                            | Primary Table: {providerDef.primaryTable}
+                          |"""
+
+            print(f"The dataset '{providerDef.name}' is described as follows:")
+            print(strip_margins(summaryAttributes, '|'))
+            print("\n".join([x.strip() for x in providers[0].description.split("\n")]))
+        elif output == "text/html" or output == "html":
+            # check if function named displayHtml is defined in the current context
+            displayHtml = globals().get("displayHTML")
+            if displayHtml is not None:
+                displayHtml(providers[0])
+            else:
+                print("<html><body>")
+                print(providers[0])
+                print("</body></html>")
+        else:
+            raise ValueError(f"Output format '{output}' not supported")
 
     def get(self, tableName=None, rows=None, partitions=None):
         pass

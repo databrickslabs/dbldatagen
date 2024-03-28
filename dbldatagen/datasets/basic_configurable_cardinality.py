@@ -2,8 +2,10 @@ import dbldatagen as dg
 from . import DatasetProvider, dataset_definition
 
 
-@dataset_definition(name="basic/user", summary="Basic User Data Set", autoRegister=True)
-class BasicUserProvider(DatasetProvider):
+@dataset_definition(name="basic/configurable-cardinality",
+                    summary="Basic Configurable Cardinality Data Set",
+                    autoRegister=True)
+class BasicConfigurableCardinalityProvider(DatasetProvider):
     """ Basic User Data Set
 
     This is a basic user data set with customer id, name, email, ip address, and phone number.
@@ -24,4 +26,3 @@ class BasicUserProvider(DatasetProvider):
             )
 
         return df_spec
-

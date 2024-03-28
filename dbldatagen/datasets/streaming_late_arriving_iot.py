@@ -2,8 +2,8 @@ import dbldatagen as dg
 from . import DatasetProvider, dataset_definition
 
 
-@dataset_definition(name="basic/user", summary="Basic User Data Set", autoRegister=True)
-class BasicUserProvider(DatasetProvider):
+@dataset_definition(name="streaming/late-arriving-iot", summary="Basic User Data Set", autoRegister=True)
+class StreamingLateArrivingIOTProvider(DatasetProvider):
     """ Basic User Data Set
 
     This is a basic user data set with customer id, name, email, ip address, and phone number.

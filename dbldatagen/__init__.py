@@ -29,7 +29,7 @@ from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_RANDOM, RANDOM_S
                                INFER_DATATYPE, SPARK_DEFAULT_PARALLELISM
 from .utils import ensure, topologicalSort, mkBoundsList, coalesce_values, \
     deprecated, parse_time_interval, DataGenError, split_list_matching_condition, strip_margins, \
-    json_value_from_path, system_time_millis #, get_global_function, get_global_var
+    json_value_from_path, system_time_millis, get_global_function, get_global_var
 
 from ._version import __version__
 from .column_generation_spec import ColumnGenerationSpec
