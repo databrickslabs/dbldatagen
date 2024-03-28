@@ -18,8 +18,10 @@ manipulation can be performed before generation of actual data.
 import pprint
 import re
 
+from pyspark.sql.session import SparkSession
+
 from .spark_singleton import SparkSingleton
-from .utils import strip_margins, get_global_function
+from .utils import strip_margins
 from dbldatagen.datasets.dataset_provider import DatasetProvider
 
 
@@ -52,6 +54,80 @@ class Datasets:
         self._sparkSession = sparkSession
         self._name = name
         self._streaming = streaming
+
+    @staticmethod
+    def getGlobalDisplayHtmlFn():
+        def get_global_function(globals, fnName, packagePrefix=None):
+            """Get a global function if available from module or package beginning with a specific prefix
+
+            :param fnName: name of function to check for
+            :param packagePrefix: prefix of package to search for function
+            :returns: the function if function is available, otherwise None
+            """
+            assert fnName is not None and len(fnName) > 0, "Function name must be specified"
+            assert packagePrefix is None or len(packagePrefix) > 0, "Package prefix must be either null or string"
+
+            try:
+                candidate_function = globals[fnName]
+
+                if candidate_function is not None or fnName in globals:
+                    candidate_function = globals[fnName]
+                    if candidate_function is not None and callable(candidate_function):
+                        if packagePrefix is not None:
+                            if candidate_function.__module__.startswith(packagePrefix):
+                                return candidate_function
+                        else:
+                            return candidate_function
+                else:
+                    print(f"Function {fnName} not found in globals")
+                return None
+            except Exception as e:
+                return None
+
+        import inspect
+        current = inspect.currentframe()
+
+        while current is not None:
+            fn = get_global_function(current.f_globals, "displayHTML")
+            if fn is not None:
+                return fn
+            current = current.f_back
+        return None
+
+    @staticmethod
+    def getGlobalSparkSession():
+
+        def get_global_variable(ctx_globals, varname, typeCheck):
+            """Get a global variable if available and optionally matches specific type or is subclass of type
+
+            :param varname: name of variable to check for
+            :param typeCheck: type to check against
+            :returns: the variable if variable is available, otherwise None
+            """
+            assert varname is not None and len(varname) > 0, "Variable name must be specified"
+            assert typeCheck is not None, "typeCheck type must be specified"
+
+            try:
+                if varname in ctx_globals:
+                    candidate_var = ctx_globals[varname]
+                    if candidate_var is not None and \
+                            (type(candidate_var) == typeCheck) or issubclass(type(candidate_var), typeCheck):
+                        return candidate_var
+                    else:
+                        return None
+                return None
+            except Exception as e:
+                return None
+
+        import inspect
+        current = inspect.currentframe()
+
+        while current is not None:
+            fn = get_global_variable(current.f_globals, "spark", typeCheck=SparkSession)
+            if fn is not None:
+                return fn
+            current = current.f_back
+        return None
 
     @classmethod
     def registerProvider(cls, name, providerType):
@@ -104,7 +180,7 @@ class Datasets:
 
         # determine the output format if auto
         if output == "auto":
-            output = "text/html" if get_global_function("displayHTML") is not None else "text/plain"
+            output = "text/html" if Datasets.getGlobalDisplayHtmlFn() is not None else "text/plain"
 
         # now format the list for output
         if output == "text/plain":
@@ -118,7 +194,7 @@ class Datasets:
             htmlListing.extend([f"<tr><td>{name}</td><td>{summary}</td></tr>" for name, summary in summary_list])
             htmlListing.extend(["</table>", "</body></html>"])
 
-            displayHtml = get_global_function("displayHTML")
+            displayHtml = Datasets.getGlobalDisplayHtmlFn()
             if displayHtml is not None:
                 displayHtml("\n".join(htmlListing))
             else:
@@ -149,7 +225,7 @@ class Datasets:
 
         # determine the output format if auto
         if output == "auto":
-            output = "text/html" if get_global_function("displayHTML") is not None else "text/plain"
+            output = "text/html" if Datasets.getGlobalDisplayHtmlFn() is not None else "text/plain"
 
         # now format the list for output
         if output == "text/plain":
@@ -166,7 +242,7 @@ class Datasets:
             print("\n".join([x.strip() for x in providers[0].description.split("\n")]))
         elif output == "text/html" or output == "html":
             # check if function named displayHtml is defined in the current context
-            displayHtml = get_global_function("displayHTML")
+            displayHtml = Datasets.getGlobalDisplayHtmlFn()
             if displayHtml is not None:
                 displayHtml(providers[0])
             else:

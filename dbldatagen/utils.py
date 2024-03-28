@@ -389,25 +389,3 @@ def get_global_function(fnName, packagePrefix=None):
     except Exception as e:
         return None
 
-
-def get_global_var(varname, typeCheck=None):
-    """Get a global variable if available and optionally matches specific type or is subclass of type
-
-    :param varname: name of variable to check for
-    :param typeCheck: type to check against
-    :returns: the variable if variable is available, otherwise None
-    """
-    assert varname is not None and len(varname) > 0, "Variable name must be specified"
-    assert typeCheck is not None, "typeCheck type must be specified"
-
-    try:
-        if varname in globals():
-            candidate_var = globals()[varname]
-            if candidate_var is not None and \
-                    (type(candidate_var) == typeCheck) or issubclass(type(candidate_var), typeCheck):
-                return candidate_var
-            else:
-                return None
-        return None
-    except Exception as e:
-        return None

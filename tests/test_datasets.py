@@ -177,24 +177,13 @@ class TestDatasets:
             print(html)
 
         global displayHTML
-        #displayHTML = custom_displayHtml
+        displayHTML = custom_displayHtml
 
-        assert displayHTML is not None
-        assert callable(displayHTML), "displayHTML should be callable"
-        assert "displayHTML" in globals(), "displayHTML should be in globals"
-        fnName = "displayHTML"
-        if fnName in globals():
-            candidate_function = globals()[fnName]
-            print(f"found function {candidate_function} in globals")
-
-        assert globals()["displayHTML"] is not None, "displayHTML should be set in globals"
-        import dbldatagen as dg2
-        assert dg2.get_global_function("displayHTML") is not None, "displayHTML should be set"
+        assert displayHTML is not None and callable(displayHTML), "displayHTML should be callable"
+        assert dg.Datasets.getGlobalDisplayHtmlFn() is not None, "displayHTML should be set"
 
         # now clean it up
         displayHTML = None
-        assert "displayHTML" not in globals() or globals()["displayHTML"] is None, \
-            "displayHTML should be set in globals"
 
     def test_listing3(self):
         # caplog fixture captures log content
