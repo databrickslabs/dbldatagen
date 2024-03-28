@@ -152,6 +152,13 @@ class TestDatasets:
         assert df.count() == dg.Datasets.DEFAULT_ROWS
         df.show()
 
+    def test_basic_iot(self):
+        ds = dg.Datasets(spark, "basic/iot").get()
+        assert ds is not None
+        df = ds.build()
+        assert df.count() == dg.Datasets.DEFAULT_ROWS
+        df.show()
+
     def test_listing(self):
         # caplog fixture captures log content
         # self.setup_log_capture(caplog)
