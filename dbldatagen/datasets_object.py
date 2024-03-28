@@ -170,6 +170,7 @@ class Datasets:
 
     def get(self, table=None, rows=None, partitions=None, **kwargs):
         provider = self._providerDefinition.providerClass()
+        print(f" provider: {provider}")
         assert provider is not None and issubclass(provider, DatasetProvider), "Invalid provider class"
 
         if table is None:
