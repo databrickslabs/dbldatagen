@@ -20,7 +20,7 @@ import re
 
 from .spark_singleton import SparkSingleton
 from .utils import strip_margins, get_global_function
-from .datasets.dataset_provider import DatasetProvider
+from dbldatagen.datasets.dataset_provider import DatasetProvider
 
 
 class Datasets:
