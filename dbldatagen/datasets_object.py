@@ -170,15 +170,19 @@ class Datasets:
 
     def get(self, table=None, rows=None, partitions=None, **kwargs):
         provider = self._providerDefinition.providerClass()
+        assert provider is not None and issubclass(provider, DatasetProvider), "Invalid provider class"
 
         if table is None:
             table = self._providerDefinition.primaryTable
+            assert table is not None, "Primary table not defined"
 
         if rows is None:
             rows = Datasets.DEFAULT_ROWS
+            assert rows is not None, "Number of rows not defined"
 
-        if partitions is None:
+        if partitions is None or partitions == -1:
             partitions = Datasets.DEFAULT_PARTITIONS
+            assert paritions is not None and partitions > 0, "Number of partitions not defined"
 
         tableDefn = provider.getTable(self._sparkSession, tableName=table, rows=rows, partitions=partitions,
                                       **kwargs)
