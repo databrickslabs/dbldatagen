@@ -1,4 +1,3 @@
-import dbldatagen as dg
 from . import DatasetProvider, dataset_definition
 
 
@@ -10,7 +9,7 @@ class BasicUserProvider(DatasetProvider):
 
     """
 
-    def getTable(self, rows=1000000, partitions=-1, dummyValues=0, random=False):
+    def getTable(self, dg, rows=1000000, partitions=-1, dummyValues=0, random=False):
         df_spec = (
              dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
                               partitions=4, randomSeedMethod="hash_fieldname")

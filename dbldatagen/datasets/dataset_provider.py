@@ -101,7 +101,7 @@ class DatasetProvider:
         else:
             raise ValueError(f"Data provider does not provide table named '{tableName}'")
 
-    def getTable(self, tableName, rows=1000000, partitions=4, **options):
+    def getTable(self, dg, tableName, rows=1000000, partitions=4, **options):
         """Gets table for named table
 
         :param tableName: Name of table to provide
