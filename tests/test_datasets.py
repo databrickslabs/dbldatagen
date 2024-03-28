@@ -145,6 +145,13 @@ class TestDatasets:
         df = ds.build()
         assert df.count() == dg.Datasets.DEFAULT_ROWS
 
+    def test_basic2(self):
+        ds = dg.Datasets(spark, "basic/user").get(dummyValues=5, random=True)
+        assert ds is not None
+        df = ds.build()
+        assert df.count() == dg.Datasets.DEFAULT_ROWS
+        df.show()
+
     def test_listing(self):
         # caplog fixture captures log content
         # self.setup_log_capture(caplog)
