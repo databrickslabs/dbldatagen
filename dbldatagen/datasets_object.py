@@ -40,64 +40,6 @@ class Datasets:
 
     _registered_providers = {}
 
-    def __init__(self, sparkSession=None, name=None, streaming=False):
-        """ Constructor:
-        :param sparkSession: Spark session to use
-        :param name: name of dataset to search for
-        :param streaming: if True, validdates that dataset supports streaming data
-        """
-        assert name is not None, "Dataset name must be supplied"
-
-        if sparkSession is None:
-            sparkSession = SparkSingleton.getLocalInstance()
-
-        self._sparkSession = sparkSession
-        self._name = name
-        self._streaming = streaming
-
-    @staticmethod
-    def getGlobalDisplayHtmlFn():
-        def get_global_function(ctx_functions, fnName, packagePrefix=None):
-            """Get a global function if available from module or package beginning with a specific prefix
-
-            :param fnName: name of function to check for
-            :param packagePrefix: prefix of package to search for function
-            :returns: the function if function is available, otherwise None
-            """
-            assert fnName is not None and len(fnName) > 0, "Function name must be specified"
-            assert packagePrefix is None or len(packagePrefix) > 0, "Package prefix must be either null or string"
-
-            try:
-                candidate_function = ctx_functions[fnName]
-
-                if candidate_function is not None or fnName in ctx_functions:
-                    candidate_function = ctx_functions[fnName]
-                    if candidate_function is not None and callable(candidate_function):
-                        if packagePrefix is not None:
-                            if candidate_function.__module__.startswith(packagePrefix):
-                                return candidate_function
-                        else:
-                            return candidate_function
-                else:
-                    print(f"Function {fnName} not found in globals")
-                return None
-            except Exception as e:
-                return None
-
-        import inspect
-        current = inspect.currentframe()
-
-        while current is not None:
-            fn = get_global_function(current.f_globals, "displayHTML")
-            if fn is not None:
-                return fn
-            else:
-                fn = get_global_function(current.f_locals, "displayHTML")
-                if fn is not None:
-                    return fn
-            current = current.f_back
-        return None
-
     @staticmethod
     def getGlobalSparkSession():
 
@@ -150,76 +92,40 @@ class Datasets:
         """
         if pattern is not None and name is not None:
             summary_list = [provider_definition
-                            for provider_definition, provider_cls in DatasetProvider.getRegisteredDatasets().values()
+                            for provider_definition in DatasetProvider.getRegisteredDatasets().values()
                             if re.match(pattern, provider_definition.name) and name == provider_definition.name]
         elif pattern is not None:
             summary_list = [provider_definition
-                            for provider_definition, provider_cls in DatasetProvider.getRegisteredDatasets().values()
+                            for provider_definition in DatasetProvider.getRegisteredDatasets().values()
                             if re.match(pattern, provider_definition.name)]
         elif name is not None:
             summary_list = [provider_definition
-                            for provider_definition, provider_cls in DatasetProvider.getRegisteredDatasets().values()
+                            for provider_definition in DatasetProvider.getRegisteredDatasets().values()
                             if name == provider_definition.name]
         else:
             summary_list = [provider_definition
-                            for provider_definition, provider_cls in DatasetProvider.getRegisteredDatasets().values()]
+                            for provider_definition in DatasetProvider.getRegisteredDatasets().values()]
         return summary_list
 
     @classmethod
-    def list(cls, pattern=None, output="text/plain"):
+    def list(cls, pattern=None):
         """This method lists the registered datasets
             It filters the list by a regular expression pattern if provided
 
             :param pattern: Pattern to match dataset names. If None, all datasets are listed
-            :param output: output format to use - if 'auto', it will determine the format to use based on the context
-
-            If output is 'text/plain', it will print the dataset description in plain text
-            If output is 'text/html', it will print the dataset description in HTML format using the
-            'displayHTML' global function if available
-            if output is 'auto', it will determine the output format based on the context (i.e depending on whether
-            the function is being called from a notebook or a script)
         """
         summary_list = sorted([(providerDefinition.name, providerDefinition.summary) for
                                providerDefinition in cls.getProviderDefinitions(name=None, pattern=pattern)])
 
-        # determine the output format if auto
-        if output == "auto":
-            output = "text/html" if Datasets.getGlobalDisplayHtmlFn() is not None else "text/plain"
-
-        # now format the list for output
-        if output == "text/plain":
-            print("The followed datasets are registered and available for use:")
-            pprint.pprint(summary_list, indent=4, width=80)
-        elif output == "text/html" or output == "html":
-            # check if function named displayHtml is defined in the current context
-            htmlListing = ["<html><body>",
-                           "<h1>Registered Datasets</h1>",
-                           "<table>"]
-            htmlListing.extend([f"<tr><td>{name}</td><td>{summary}</td></tr>" for name, summary in summary_list])
-            htmlListing.extend(["</table>", "</body></html>"])
-
-            displayHtml = Datasets.getGlobalDisplayHtmlFn()
-            if displayHtml is not None:
-                displayHtml("\n".join(htmlListing))
-            else:
-                print("\n".join(htmlListing))
-        else:
-            raise ValueError(f"Output format '{output}' not supported")
+        print("The followed datasets are registered and available for use:")
+        pprint.pprint(summary_list, indent=4, width=80)
 
     @classmethod
-    def describe(cls, name, output="auto"):
+    def describe(cls, name):
         """This method lists the registered datasets
             It filters the list by a regular expression pattern if provided
 
             :param name: name of dataset to describe
-            :param output: output format to use - if 'auto', it will determine the format to use based on the context
-
-            If output is 'text/plain', it will print the dataset description in plain text
-            If output is 'text/html', it will print the dataset description in HTML format using the
-            'displayHTML' global function if available
-            if output is 'auto', it will determine the output format based on the context (i.e depending on whether
-            the function is being called from a notebook or a script)
-
         """
         providers = cls.getProviderDefinitions(name=name)
 
@@ -227,38 +133,54 @@ class Datasets:
 
         providerDef = providers[0]
 
-        # determine the output format if auto
-        if output == "auto":
-            output = "text/html" if Datasets.getGlobalDisplayHtmlFn() is not None else "text/plain"
+        summaryAttributes = f""" 
+                        | Dataset Name: {providerDef.name}
+                        | Summary: {providerDef.summary}
+                        | Supports Streaming: {providerDef.supportsStreaming}
+                        | Provides Tables: {providerDef.tables}
+                        | Primary Table: {providerDef.primaryTable}
+                      |"""
 
-        # now format the list for output
-        if output == "text/plain":
-            summaryAttributes = f""" 
-                            | Dataset Name: {providerDef.name}
-                            | Summary: {providerDef.summary}
-                            | Supports Streaming: {providerDef.supportsStreaming}
-                            | Provides Tables: {providerDef.tables}
-                            | Primary Table: {providerDef.primaryTable}
-                          |"""
+        print(f"The dataset '{providerDef.name}' is described as follows:")
+        print(strip_margins(summaryAttributes, '|'))
+        print("\n".join([x.strip() for x in providers[0].description.split("\n")]))
 
-            print(f"The dataset '{providerDef.name}' is described as follows:")
-            print(strip_margins(summaryAttributes, '|'))
-            print("\n".join([x.strip() for x in providers[0].description.split("\n")]))
-        elif output == "text/html" or output == "html":
-            # check if function named displayHtml is defined in the current context
-            displayHtml = Datasets.getGlobalDisplayHtmlFn()
-            if displayHtml is not None:
-                displayHtml(providers[0])
-            else:
-                print("<html><body>")
-                print(providers[0])
-                print("</body></html>")
-        else:
-            raise ValueError(f"Output format '{output}' not supported")
+    def __init__(self, sparkSession=None, name=None, streaming=False):
+        """ Constructor:
+        :param sparkSession: Spark session to use
+        :param name: name of dataset to search for
+        :param streaming: if True, validdates that dataset supports streaming data
+        """
+        assert name is not None, "Dataset name must be supplied"
 
-    def get(self, tableName=None, rows=None, partitions=None):
-        pass
+        if sparkSession is None:
+            sparkSession = SparkSingleton.getLocalInstance()
 
-    @property
-    def registeredDatasets(self):
-        return
+        self._sparkSession = sparkSession
+        self._name = name
+        self._streaming = streaming
+
+        providers = self.getProviderDefinitions(name=name)
+        assert providers is not None and len(providers) > 0, f"Dataset '{name}' not found"
+
+        if streaming:
+            assert self._providerDefinition.supportsStreaming, f"Dataset '{name}' does not support streaming"
+
+        self._providerDefinition = providers[0]
+
+    def get(self, tableName=None, rows=None, partitions=None, *args, **kwargs):
+        provider = self._providerDefinition.providerClass()
+
+        if tableName is None:
+            tableName = self._providerDefinition.primaryTable
+
+        if rows is None:
+            rows = Datasets.DEFAULT_ROWS
+
+        if partitions is None:
+            partitions = Datasets.DEFAULT_PARTITIONS
+
+        tableDefn = provider.getTable(self._sparkSession, tableName=tableName, rows=rows, partitions=partitions,
+                                      **kwargs)
+        return tableDefn
+

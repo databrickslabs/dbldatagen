@@ -47,18 +47,18 @@ class DatasetProvider:
         supportsStreaming: bool = False
         tables: list[str] = None
         primaryTable: str = None
+        providerClass: type = None
 
     @classmethod
     def getDatasetDefinition(cls):
         return cls._DATASET_DEFINITION
 
     @classmethod
-    def registerDataset(cls, datasetDefinition, datasetClass):
+    def registerDataset(cls, datasetDefinition):
         """ Register the dataset with the given name
 
         :param name: Name of the dataset
-        :param datasetDefinition: Dataset object
-        :param datasetClass: Dataset object
+        :param datasetDefinition: Dataset definition object
         :return: None
         """
         assert isinstance(datasetDefinition, cls.DatasetDefinition), \
@@ -70,10 +70,10 @@ class DatasetProvider:
         assert datasetDefinition.name is not None, \
                "datasetDefinition must contain a name for the data set"
 
-        assert issubclass(datasetClass, cls) , \
+        assert issubclass(datasetDefinition.providerClass, cls) , \
                "datasetClass must be a subclass of DatasetProvider"
 
-        cls._registeredDatasets[datasetDefinition.name] = (datasetDefinition, datasetClass)
+        cls._registeredDatasets[datasetDefinition.name] = datasetDefinition
 
     @classmethod
     def getRegisteredDatasets(cls):
@@ -101,7 +101,7 @@ class DatasetProvider:
         else:
             raise ValueError(f"Data provider does not provide table named '{tableName}'")
 
-    def getTable(self, dg, tableName, rows=1000000, partitions=4, **options):
+    def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=4, **options):
         """Gets table for named table
 
         :param tableName: Name of table to provide
@@ -165,7 +165,8 @@ class DatasetProvider:
                                                                  primaryTable=self._primaryTable,
                                                                  summary=self._summary,
                                                                  description=self._description,
-                                                                 supportsStreaming=self._supportsStreaming
+                                                                 supportsStreaming=self._supportsStreaming,
+                                                                 providerClass=self._targetCls
                                                                  )
                 setattr(self._targetCls, "_DATASET_DEFINITION", dataset_desc)
                 retval = self._targetCls
@@ -173,7 +174,7 @@ class DatasetProvider:
                 raise ValueError("Decorator must be applied to a class")
 
             if autoRegister:
-                DatasetProvider.registerDataset(dataset_desc, retval)
+                DatasetProvider.registerDataset(dataset_desc)
 
             return retval
 

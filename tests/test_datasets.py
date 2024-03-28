@@ -9,9 +9,6 @@ from dbldatagen.datasets import DatasetProvider, dataset_definition
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
 
-def displayHTML(html):
-    print(html)
-
 @pytest.fixture(scope="class")
 def setupLogging():
     FORMAT = '%(asctime)-15s %(message)s'
@@ -152,7 +149,7 @@ class TestDatasets:
         # self.setup_log_capture(caplog)
 
         print("listing datasets")
-        dg.Datasets.list(output="text/plain")
+        dg.Datasets.list()
         print("done listing datasets")
 
         # check that there are no warnings or errors due to use of the overridden seed column
@@ -164,40 +161,7 @@ class TestDatasets:
         # self.setup_log_capture(caplog)
 
         print("listing datasets")
-        dg.Datasets.list(pattern="basic.*", output="text/plain")
-        print("done listing datasets")
-
-        # check that there are no warnings or errors due to use of the overridden seed column
-        # seed_column_warnings_and_errors = self.get_log_capture_warngings_and_errors(caplog, "listing")
-        # assert seed_column_warnings_and_errors == 0, "Should not have error messages about seed column"
-
-    def test_custom_displayHtml(self):
-        def custom_displayHtml(html):
-            print("dislaying HTML")
-            print(html)
-
-        global displayHTML
-        displayHTML = custom_displayHtml
-
-        assert displayHTML is not None and callable(displayHTML), "displayHTML should be callable"
-        assert dg.Datasets.getGlobalDisplayHtmlFn() is not None, "displayHTML should be set"
-
-        # now clean it up
-        displayHTML = None
-
-    def test_listing3(self):
-        # caplog fixture captures log content
-        # self.setup_log_capture(caplog)
-
-        def custom_displayHtml(html):
-            print("dislaying HTML")
-            print(html)
-
-        global displayHTML
-        displayHTML = custom_displayHtml
-
-        print("listing datasets")
-        dg.Datasets.list()
+        dg.Datasets.list(pattern="basic.*")
         print("done listing datasets")
 
         # check that there are no warnings or errors due to use of the overridden seed column
