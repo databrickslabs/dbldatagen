@@ -373,7 +373,9 @@ def get_global_function(fnName, packagePrefix=None):
     assert packagePrefix is None or len(packagePrefix) > 0, "Package prefix must be either null or string"
 
     try:
-        if fnName in globals():
+        candidate_function = globals()[fnName]
+
+        if candidate_function is not None or fnName in globals():
             candidate_function = globals()[fnName]
             if candidate_function is not None and callable(candidate_function):
                 if packagePrefix is not None:
@@ -381,6 +383,8 @@ def get_global_function(fnName, packagePrefix=None):
                             return candidate_function
                 else:
                     return candidate_function
+        else:
+            print(f"Function {fnName} not found in globals")
         return None
     except Exception as e:
         return None

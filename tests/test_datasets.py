@@ -9,6 +9,9 @@ from dbldatagen.datasets import DatasetProvider, dataset_definition
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
 
+def displayHTML(html):
+    print(html)
+
 @pytest.fixture(scope="class")
 def setupLogging():
     FORMAT = '%(asctime)-15s %(message)s'
@@ -139,7 +142,6 @@ class TestDatasets:
 
         print("description\n", ds_definition.description)
 
-
     def test_basic(self):
         ds = dg.Datasets(spark, "basic/user").get()
         df = ds.build()
@@ -147,40 +149,83 @@ class TestDatasets:
 
     def test_listing(self):
         # caplog fixture captures log content
-        #self.setup_log_capture(caplog)
+        # self.setup_log_capture(caplog)
+
+        print("listing datasets")
+        dg.Datasets.list(output="text/plain")
+        print("done listing datasets")
+
+        # check that there are no warnings or errors due to use of the overridden seed column
+        # seed_column_warnings_and_errors = self.get_log_capture_warngings_and_errors(caplog, "listing")
+        # assert seed_column_warnings_and_errors == 0, "Should not have error messages about seed column"
+
+    def test_listing2(self):
+        # caplog fixture captures log content
+        # self.setup_log_capture(caplog)
+
+        print("listing datasets")
+        dg.Datasets.list(pattern="basic.*", output="text/plain")
+        print("done listing datasets")
+
+        # check that there are no warnings or errors due to use of the overridden seed column
+        # seed_column_warnings_and_errors = self.get_log_capture_warngings_and_errors(caplog, "listing")
+        # assert seed_column_warnings_and_errors == 0, "Should not have error messages about seed column"
+
+    def test_custom_displayHtml(self):
+        def custom_displayHtml(html):
+            print("dislaying HTML")
+            print(html)
+
+        global displayHTML
+        #displayHTML = custom_displayHtml
+
+        assert displayHTML is not None
+        assert callable(displayHTML), "displayHTML should be callable"
+        assert "displayHTML" in globals(), "displayHTML should be in globals"
+        fnName = "displayHTML"
+        if fnName in globals():
+            candidate_function = globals()[fnName]
+            print(f"found function {candidate_function} in globals")
+
+        assert globals()["displayHTML"] is not None, "displayHTML should be set in globals"
+        import dbldatagen as dg2
+        assert dg2.get_global_function("displayHTML") is not None, "displayHTML should be set"
+
+        # now clean it up
+        displayHTML = None
+        assert "displayHTML" not in globals() or globals()["displayHTML"] is None, \
+            "displayHTML should be set in globals"
+
+    def test_listing3(self):
+        # caplog fixture captures log content
+        # self.setup_log_capture(caplog)
+
+        def custom_displayHtml(html):
+            print("dislaying HTML")
+            print(html)
+
+        global displayHTML
+        displayHTML = custom_displayHtml
 
         print("listing datasets")
         dg.Datasets.list()
         print("done listing datasets")
 
         # check that there are no warnings or errors due to use of the overridden seed column
-        #seed_column_warnings_and_errors = self.get_log_capture_warngings_and_errors(caplog, "listing")
-        #assert seed_column_warnings_and_errors == 0, "Should not have error messages about seed column"
-
-    def test_listing2(self):
-        # caplog fixture captures log content
-        #self.setup_log_capture(caplog)
-
-        print("listing datasets")
-        dg.Datasets.list(pattern="basic.*")
-        print("done listing datasets")
-
-        # check that there are no warnings or errors due to use of the overridden seed column
-        #seed_column_warnings_and_errors = self.get_log_capture_warngings_and_errors(caplog, "listing")
-        #assert seed_column_warnings_and_errors == 0, "Should not have error messages about seed column"
+        # seed_column_warnings_and_errors = self.get_log_capture_warngings_and_errors(caplog, "listing")
+        # assert seed_column_warnings_and_errors == 0, "Should not have error messages about seed column"
 
     def test_describe_basic_usr(self):
         # caplog fixture captures log content
-        #self.setup_log_capture(caplog)
+        # self.setup_log_capture(caplog)
 
         print("listing datasets")
         dg.Datasets.describe("basic/user")
         print("done listing datasets")
 
         # check that there are no warnings or errors due to use of the overridden seed column
-        #seed_column_warnings_and_errors = self.get_log_capture_warngings_and_errors(caplog, "listing")
-        #assert seed_column_warnings_and_errors == 0, "Should not have error messages about seed column"
-
+        # seed_column_warnings_and_errors = self.get_log_capture_warngings_and_errors(caplog, "listing")
+        # assert seed_column_warnings_and_errors == 0, "Should not have error messages about seed column"
 
     def test_alt_seed_column(self, caplog):
         # caplog fixture captures log content

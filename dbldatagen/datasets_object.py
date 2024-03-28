@@ -18,10 +18,10 @@ manipulation can be performed before generation of actual data.
 import pprint
 import re
 
-
 from .datasets import DatasetProvider
 from .spark_singleton import SparkSingleton
-from .utils import strip_margins
+from .utils import strip_margins, get_global_function
+
 
 class Datasets:
     """This class is used to generate standard data sets based on a plugin provider model.
@@ -89,9 +89,22 @@ class Datasets:
     def list(cls, pattern=None, output="text/plain"):
         """This method lists the registered datasets
             It filters the list by a regular expression pattern if provided
+
+            :param pattern: Pattern to match dataset names. If None, all datasets are listed
+            :param output: output format to use - if 'auto', it will determine the format to use based on the context
+
+            If output is 'text/plain', it will print the dataset description in plain text
+            If output is 'text/html', it will print the dataset description in HTML format using the
+            'displayHTML' global function if available
+            if output is 'auto', it will determine the output format based on the context (i.e depending on whether
+            the function is being called from a notebook or a script)
         """
-        summary_list = sorted([ (providerDefinition.name, providerDefinition.summary) for
-                         providerDefinition in cls.getProviderDefinitions(name=None, pattern=pattern)])
+        summary_list = sorted([(providerDefinition.name, providerDefinition.summary) for
+                               providerDefinition in cls.getProviderDefinitions(name=None, pattern=pattern)])
+
+        # determine the output format if auto
+        if output == "auto":
+            output = "text/html" if get_global_function("displayHTML") is not None else "text/plain"
 
         # now format the list for output
         if output == "text/plain":
@@ -105,7 +118,7 @@ class Datasets:
             htmlListing.extend([f"<tr><td>{name}</td><td>{summary}</td></tr>" for name, summary in summary_list])
             htmlListing.extend(["</table>", "</body></html>"])
 
-            displayHtml = globals().get("displayHTML")
+            displayHtml = get_global_function("displayHTML")
             if displayHtml is not None:
                 displayHtml("\n".join(htmlListing))
             else:
@@ -114,15 +127,29 @@ class Datasets:
             raise ValueError(f"Output format '{output}' not supported")
 
     @classmethod
-    def describe(cls, name, output="text/plain"):
+    def describe(cls, name, output="auto"):
         """This method lists the registered datasets
-                   It filters the list by a regular expression pattern if provided
-               """
+            It filters the list by a regular expression pattern if provided
+
+            :param name: name of dataset to describe
+            :param output: output format to use - if 'auto', it will determine the format to use based on the context
+
+            If output is 'text/plain', it will print the dataset description in plain text
+            If output is 'text/html', it will print the dataset description in HTML format using the
+            'displayHTML' global function if available
+            if output is 'auto', it will determine the output format based on the context (i.e depending on whether
+            the function is being called from a notebook or a script)
+
+        """
         providers = cls.getProviderDefinitions(name=name)
 
         assert [len(providers) >= 1], f"Dataset '{name}' not found"
 
         providerDef = providers[0]
+
+        # determine the output format if auto
+        if output == "auto":
+            output = "text/html" if get_global_function("displayHTML") is not None else "text/plain"
 
         # now format the list for output
         if output == "text/plain":
@@ -139,7 +166,7 @@ class Datasets:
             print("\n".join([x.strip() for x in providers[0].description.split("\n")]))
         elif output == "text/html" or output == "html":
             # check if function named displayHtml is defined in the current context
-            displayHtml = globals().get("displayHTML")
+            displayHtml = get_global_function("displayHTML")
             if displayHtml is not None:
                 displayHtml(providers[0])
             else:

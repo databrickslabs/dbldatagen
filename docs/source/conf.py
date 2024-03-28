@@ -28,7 +28,7 @@ copyright = '2022, Databricks Inc'
 author = 'Databricks Inc'
 
 # The full version, including alpha/beta/rc tags
-release = "0.3.7a2"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpversion
+release = "0.3.7a3"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpversion
 
 
 # -- General configuration ---------------------------------------------------
