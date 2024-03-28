@@ -57,7 +57,7 @@ class Datasets:
 
     @staticmethod
     def getGlobalDisplayHtmlFn():
-        def get_global_function(globals, fnName, packagePrefix=None):
+        def get_global_function(ctx_functions, fnName, packagePrefix=None):
             """Get a global function if available from module or package beginning with a specific prefix
 
             :param fnName: name of function to check for
@@ -68,10 +68,10 @@ class Datasets:
             assert packagePrefix is None or len(packagePrefix) > 0, "Package prefix must be either null or string"
 
             try:
-                candidate_function = globals[fnName]
+                candidate_function = ctx_functions[fnName]
 
-                if candidate_function is not None or fnName in globals:
-                    candidate_function = globals[fnName]
+                if candidate_function is not None or fnName in ctx_functions:
+                    candidate_function = ctx_functions[fnName]
                     if candidate_function is not None and callable(candidate_function):
                         if packagePrefix is not None:
                             if candidate_function.__module__.startswith(packagePrefix):
@@ -91,6 +91,10 @@ class Datasets:
             fn = get_global_function(current.f_globals, "displayHTML")
             if fn is not None:
                 return fn
+            else:
+                fn = get_global_function(current.f_locals, "displayHTML")
+                if fn is not None:
+                    return fn
             current = current.f_back
         return None
 
