@@ -168,11 +168,11 @@ class Datasets:
 
         self._providerDefinition = providers[0]
 
-    def get(self, tableName, rows=None, partitions=None, **kwargs):
+    def get(self, table=None, rows=None, partitions=None, **kwargs):
         provider = self._providerDefinition.providerClass()
 
-        if tableName is None:
-            tableName = self._providerDefinition.primaryTable
+        if table is None:
+            table = self._providerDefinition.primaryTable
 
         if rows is None:
             rows = Datasets.DEFAULT_ROWS
@@ -180,7 +180,7 @@ class Datasets:
         if partitions is None:
             partitions = Datasets.DEFAULT_PARTITIONS
 
-        tableDefn = provider.getTable(self._sparkSession, tableName=tableName, rows=rows, partitions=partitions,
+        tableDefn = provider.getTable(self._sparkSession, tableName=table, rows=rows, partitions=partitions,
                                       **kwargs)
         return tableDefn
 

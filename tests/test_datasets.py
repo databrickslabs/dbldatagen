@@ -141,6 +141,7 @@ class TestDatasets:
 
     def test_basic(self):
         ds = dg.Datasets(spark, "basic/user").get()
+        assert ds is not None
         df = ds.build()
         assert df.count() == dg.Datasets.DEFAULT_ROWS
 
