@@ -6,7 +6,6 @@
 This file defines the DatasetProvider class
 """
 from __future__ import annotations  # needed when using dataclasses in Python 3.8 with type of `list[str]`
-
 from dataclasses import dataclass
 
 
