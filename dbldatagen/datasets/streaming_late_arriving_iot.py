@@ -19,7 +19,7 @@ class StreamingLateArrivingIOTProvider(DatasetProvider):
         assert tableName is None or tableName == "primary", "Invalid table name"
         df_spec = (
              dg.DataGenerator(sparkSession=sparkSession, name="test_data_set1", rows=rows,
-                              partitions=4, randomSeedMethod="hash_fieldname";)
+                              partitions=4, randomSeedMethod="hash_fieldname")
             .withColumn("customer_id", "long", minValue=1000000, random=generateRandom)
             .withColumn("name", "string",
                             template=r'\w \w|\w \w \w', random=generateRandom)
