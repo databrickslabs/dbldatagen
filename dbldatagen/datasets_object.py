@@ -18,9 +18,9 @@ manipulation can be performed before generation of actual data.
 import pprint
 import re
 
-from .datasets import DatasetProvider
 from .spark_singleton import SparkSingleton
 from .utils import strip_margins, get_global_function
+from .datasets import DatasetProvider
 
 
 class Datasets:
