@@ -8,8 +8,11 @@ class BasicUserProvider(DatasetProvider):
 
     """
 
-    def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=-1, dummyValues=0, random=False):
+    def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=-1, **options):
         import dbldatagen as dg
+
+        random = options.get("random", False)
+        dummyValues = options.get("dummyValues", 0)
 
         assert tableName is None or tableName == "primary", "Invalid table name"
         df_spec = (

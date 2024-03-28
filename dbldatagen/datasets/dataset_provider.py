@@ -70,7 +70,7 @@ class DatasetProvider:
         assert datasetDefinition.name is not None, \
                "datasetDefinition must contain a name for the data set"
 
-        assert issubclass(datasetDefinition.providerClass, cls) , \
+        assert issubclass(datasetDefinition.providerClass, cls), \
                "datasetClass must be a subclass of DatasetProvider"
 
         cls._registeredDatasets[datasetDefinition.name] = datasetDefinition
@@ -83,27 +83,10 @@ class DatasetProvider:
         """
         return cls._registeredDatasets
 
-    def get(self, tableName=None, **options):
-        """ gets table for table name
-
-        :param tableName:
-        :param options:
-        :return:
-
-        Implementors should use this method but override the getTable method
-        """
-
-        if tableName is None:
-            tableName = self.tables[0]
-
-        if tableName in self.tables:
-            return self.getTable(tableName, **options)
-        else:
-            raise ValueError(f"Data provider does not provide table named '{tableName}'")
-
     def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=4, **options):
         """Gets table for named table
 
+        :param sparkSession: Spark session to use
         :param tableName: Name of table to provide
         :param rows: Number of rows requested
         :param partitions: Number of partitions requested
