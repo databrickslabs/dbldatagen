@@ -3,6 +3,11 @@
 ## Change History
 All notable changes to the Databricks Labs Data Generator will be documented in this file.
 
+### Unreleased
+
+#### Added
+* Added support for standard data sets
+
 ### Version 0.3.6
 
 #### Changed
