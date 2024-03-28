@@ -20,9 +20,9 @@ import re
 
 from pyspark.sql.session import SparkSession
 
+from dbldatagen.datasets.dataset_provider import DatasetProvider
 from .spark_singleton import SparkSingleton
 from .utils import strip_margins
-from dbldatagen.datasets.dataset_provider import DatasetProvider
 
 
 class Datasets:
@@ -145,7 +145,7 @@ class Datasets:
         print(strip_margins(summaryAttributes, '|'))
         print("\n".join([x.strip() for x in providers[0].description.split("\n")]))
 
-    def __init__(self, sparkSession=None, name=None, streaming=False):
+    def __init__(self, sparkSession, name=None, streaming=False):
         """ Constructor:
         :param sparkSession: Spark session to use
         :param name: name of dataset to search for
@@ -169,18 +169,24 @@ class Datasets:
         self._providerDefinition = providers[0]
 
     def get(self, table=None, rows=None, partitions=None, **kwargs):
-        provider = self._providerDefinition.providerClass()
+        provider = self._providerDefinition.providerClass
+        print(f" provider: {provider}")
+        assert provider is not None and issubclass(provider, DatasetProvider), "Invalid provider class"
+
+        providerInstance = provider()
 
         if table is None:
             table = self._providerDefinition.primaryTable
+            assert table is not None, "Primary table not defined"
 
         if rows is None:
             rows = Datasets.DEFAULT_ROWS
+            assert rows is not None, "Number of rows not defined"
 
-        if partitions is None:
+        if partitions is None or partitions == -1:
             partitions = Datasets.DEFAULT_PARTITIONS
+            assert partitions is not None and partitions > 0, "Number of partitions not defined"
 
-        tableDefn = provider.getTable(self._sparkSession, tableName=table, rows=rows, partitions=partitions,
-                                      **kwargs)
+        tableDefn = providerInstance.getTable(self._sparkSession, tableName=table, rows=rows, partitions=partitions,
+                                              **kwargs)
         return tableDefn
-
