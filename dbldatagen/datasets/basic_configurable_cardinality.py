@@ -1,4 +1,4 @@
-from . import DatasetProvider, dataset_definition
+from .dataset_provider import DatasetProvider, dataset_definition
 
 
 @dataset_definition(name="basic/configurable-cardinality",
@@ -13,26 +13,26 @@ class BasicConfigurableCardinalityProvider(DatasetProvider):
 
     def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=-1,
                  **options):
-        import dbldatagen as dg
+        import dbldatagen as dg  # pylint: disable=cyclic-import
 
         random = options.get("random", False)
         dummyValues = options.get("dummyValues", 0)
 
         assert tableName is None or tableName == "primary", "Invalid table name"
         df_spec = (
-             dg.DataGenerator(sparkSession=sparkSession, name="test_data_set1", rows=rows,
-                              partitions=4, randomSeedMethod="hash_fieldname")
+            dg.DataGenerator(sparkSession=sparkSession, name="test_data_set1", rows=rows,
+                             partitions=4, randomSeedMethod="hash_fieldname")
             .withColumn("customer_id", "long", minValue=1000000, random=random)
             .withColumn("name", "string",
-                            template=r'\w \w|\w \w \w', random=random)
+                        template=r'\w \w|\w \w \w', random=random)
             .withColumn("email", "string",
-                            template=r'\w.\w@\w.com|\w@\w.co.u\k', random=random)
+                        template=r'\w.\w@\w.com|\w@\w.co.u\k', random=random)
             .withColumn("ip_addr", "string",
-                             template=r'\n.\n.\n.\n', random=random)
+                        template=r'\n.\n.\n.\n', random=random)
             .withColumn("phone", "string",
-                             template=r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd',
-                            random=random)
-            )
+                        template=r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd',
+                        random=random)
+        )
 
         if dummyValues > 0:
             df_spec = df_spec.withColumn("dummy", "long", random=True, numColumns=dummyValues, minValue=1)

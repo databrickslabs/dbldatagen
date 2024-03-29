@@ -1,4 +1,4 @@
-from . import DatasetProvider, dataset_definition
+from .dataset_provider import DatasetProvider, dataset_definition
 
 
 @dataset_definition(name="multi-table/telephony", summary="Multi-table telephony dataset", supportsStreaming=True,
@@ -24,7 +24,7 @@ class MultiTableTelephonyProvider(DatasetProvider):
 
         if tableName == "plans":
             plan_dataspec = (
-                dg.DataGenerator(spark, rows=rows, partitions=partitions)
+                dg.DataGenerator(sparkSession, rows=rows, partitions=partitions)
                 .withColumn("plan_id", "int", minValue=PLAN_MIN_VALUE, uniqueValues=UNIQUE_PLANS)
                 # use plan_id as root value
                 .withColumn("plan_name", prefix="plan", baseColumn="plan_id")
@@ -51,5 +51,3 @@ class MultiTableTelephonyProvider(DatasetProvider):
                             baseColumns=['cost_per_minute', 'intl_multiplier'])
             )
             return plan_dataspec
-
-

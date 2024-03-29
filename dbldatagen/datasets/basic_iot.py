@@ -1,6 +1,7 @@
-from . import DatasetProvider, dataset_definition
 from pyspark.sql.types import LongType, StringType, IntegerType
-import dbldatagen as dg
+
+from .dataset_provider import DatasetProvider, dataset_definition
+
 
 @dataset_definition(name="basic/iot", summary="Basic IOT Data Set", autoRegister=True)
 class BasicIOTProvider(DatasetProvider):
@@ -23,6 +24,7 @@ class BasicIOTProvider(DatasetProvider):
 
     def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=-1,
                  **options):
+        import dbldatagen as dg  # import locally to avoid circular imports
 
         device_population = options.get("devicePopulation", 100000)
 
@@ -90,7 +92,7 @@ class BasicIOTProvider(DatasetProvider):
                             interval="1 minute",
                             random=True)
 
-                )
+            )
         finally:
             if oldShufffleSetting >= 0:
                 sparkSession.conf.set("spark.sql.shuffle.partitions", oldShufffleSetting)

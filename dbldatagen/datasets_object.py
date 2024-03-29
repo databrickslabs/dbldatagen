@@ -62,7 +62,7 @@ class Datasets:
                     else:
                         return None
                 return None
-            except Exception as e:
+            except ValueError:
                 return None
 
         import inspect
@@ -103,8 +103,7 @@ class Datasets:
                             for provider_definition in DatasetProvider.getRegisteredDatasets().values()
                             if name == provider_definition.name]
         else:
-            summary_list = [provider_definition
-                            for provider_definition in DatasetProvider.getRegisteredDatasets().values()]
+            summary_list = list(DatasetProvider.getRegisteredDatasets().values())
         return summary_list
 
     @classmethod
@@ -163,10 +162,10 @@ class Datasets:
         providers = self.getProviderDefinitions(name=name)
         assert providers is not None and len(providers) > 0, f"Dataset '{name}' not found"
 
+        self._providerDefinition = providers[0]
+
         if streaming:
             assert self._providerDefinition.supportsStreaming, f"Dataset '{name}' does not support streaming"
-
-        self._providerDefinition = providers[0]
 
     def get(self, table=None, rows=None, partitions=None, **kwargs):
         provider = self._providerDefinition.providerClass

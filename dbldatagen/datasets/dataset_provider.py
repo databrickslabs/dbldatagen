@@ -162,7 +162,7 @@ class DatasetProvider:
             return retval
 
 
-def dataset_definition(cls=None, *args, autoRegister=False, **kwargs):
+def dataset_definition(cls=None, *args, autoRegister=False, **kwargs):  # pylint: disable=keyword-arg-before-vararg
     """ decorator to define standard dataset definition
 
     This is intended to be applied classes derived from DatasetProvider to simplify the implementation
@@ -195,7 +195,7 @@ def dataset_definition(cls=None, *args, autoRegister=False, **kwargs):
 
     """
 
-    def inner_wrapper(inner_cls=None, *inner_args, **inner_kwargs):
+    def inner_wrapper(inner_cls=None, *inner_args, **inner_kwargs):  # pylint: disable=keyword-arg-before-vararg
         return DatasetProvider.DatasetDefinitionDecorator(inner_cls, *args, **kwargs).mkClass(autoRegister)
 
     # handle the decorator syntax with no arguments

@@ -1,4 +1,4 @@
-from . import DatasetProvider, dataset_definition
+from .dataset_provider import DatasetProvider, dataset_definition
 
 
 @dataset_definition(name="json/device-status",
@@ -20,19 +20,19 @@ class JSONDeviceStatusProvider(DatasetProvider):
 
         assert tableName is None or tableName == "primary", "Invalid table name"
         df_spec = (
-             dg.DataGenerator(sparkSession=sparkSession, name="test_data_set1", rows=rows,
-                              partitions=4, randomSeedMethod="hash_fieldname")
+            dg.DataGenerator(sparkSession=sparkSession, name="test_data_set1", rows=rows,
+                             partitions=4, randomSeedMethod="hash_fieldname")
             .withColumn("customer_id", "long", minValue=1000000, random=generateRandom)
             .withColumn("name", "string",
-                            template=r'\w \w|\w \w \w', random=generateRandom)
+                        template=r'\w \w|\w \w \w', random=generateRandom)
             .withColumn("email", "string",
-                            template=r'\w.\w@\w.com|\w@\w.co.u\k', random=generateRandom)
+                        template=r'\w.\w@\w.com|\w@\w.co.u\k', random=generateRandom)
             .withColumn("ip_addr", "string",
-                             template=r'\n.\n.\n.\n', random=generateRandom)
+                        template=r'\n.\n.\n.\n', random=generateRandom)
             .withColumn("phone", "string",
-                             template=r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd',
-                            random=generateRandom)
-            )
+                        template=r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd',
+                        random=generateRandom)
+        )
 
         if dummyValues > 0:
             df_spec = df_spec.withColumn("dummy", "long", random=True, numColumns=dummyValues, minValue=1)
