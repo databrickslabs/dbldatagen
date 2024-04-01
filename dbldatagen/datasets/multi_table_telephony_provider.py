@@ -9,10 +9,15 @@ class MultiTableTelephonyProvider(DatasetProvider):
     This is a basic user data set with customer id, name, email, ip address, and phone number.
 
     """
+    MAX_LONG = 9223372036854775807
+    ALLOWED_OPTIONS = ["random", "dummyValues","rows", "partitions", "tableName"]
 
     def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=-1,
                  **options):
         import dbldatagen as dg
+
+        if partitions < 0:
+            partitions = self.autoComputePartitions(rows, 8)
 
         random = options.get("random", False)
         dummyValues = options.get("dummyValues", 0)

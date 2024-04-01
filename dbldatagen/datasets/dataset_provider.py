@@ -7,7 +7,7 @@ This file defines the DatasetProvider class
 """
 from __future__ import annotations  # needed when using dataclasses in Python 3.8 with type of `list[str]`
 from dataclasses import dataclass
-
+import math
 
 class DatasetProvider:
     """
@@ -94,6 +94,27 @@ class DatasetProvider:
         :return: DataGenerator for table if successful, throws error otherwise
         """
         raise NotImplementedError("Base data provider does not provide any tables!")
+
+    def checkOptions(self, options, allowedOptions):
+        """ Check that options are valid
+
+        :param options: options to check as dict
+        :param allowedOptions: allowed options as list of strings
+        :return: self
+        """
+        for key in options.keys():
+            assert key in allowedOptions, f"Invalid option '{key}'"
+
+        return self
+
+    def autoComputePartitions(self, rows, columns):
+        """ Compute the number of partitions based on rows and columns
+
+        :param rows: number of rows
+        :param columns: number of columns
+        :return: number of partitions
+        """
+        return max(4, int(math.log(rows/500_000) * max(1, math.log(columns))))
 
     class DatasetDefinitionDecorator:
         """ Defines the predefined_dataset decorator

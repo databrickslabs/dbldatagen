@@ -8,10 +8,15 @@ class StreamingLateArrivingIOTProvider(DatasetProvider):
     This is a basic user data set with customer id, name, email, ip address, and phone number.
 
     """
+    MAX_LONG = 9223372036854775807
+    ALLOWED_OPTIONS = ["random", "dummyValues","rows", "partitions", "tableName"]
 
     def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=-1,
                  **options):
         import dbldatagen as dg
+
+        if partitions < 0:
+            partitions = self.autoComputePartitions(rows, 8)
 
         generateRandom = options.get("random", False)
         dummyValues = options.get("dummyValues", 0)
@@ -19,8 +24,8 @@ class StreamingLateArrivingIOTProvider(DatasetProvider):
         assert tableName is None or tableName == "primary", "Invalid table name"
         df_spec = (
             dg.DataGenerator(sparkSession=sparkSession, name="test_data_set1", rows=rows,
-                             partitions=4, randomSeedMethod="hash_fieldname")
-            .withColumn("customer_id", "long", minValue=1000000, random=generateRandom)
+                             partitions=partitions,randomSeedMethod="hash_fieldname")
+            .withColumn("customer_id", "long", minValue=1000000,  maxValue=self.MAX_LONG, random=generateRandom)
             .withColumn("name", "string",
                         template=r'\w \w|\w \w \w', random=generateRandom)
             .withColumn("email", "string",
