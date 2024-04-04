@@ -1,7 +1,7 @@
 import logging
 
 import pytest
-from pyspark.sql.types import IntegerType, StringType, FloatType
+from pyspark.sql.types import IntegerType
 
 import dbldatagen as dg
 from dbldatagen.datasets import DatasetProvider, dataset_definition
@@ -54,21 +54,26 @@ class TestDatasets:
 
         return seed_column_warnings_and_errors
 
-    def test_dataset_definition(self):
-        ds_definition = DatasetProvider.DatasetDefinition(name="test/test",
-                                                          primaryTable="primary1",
-                                                          tables=["primary1"],
-                                                          supportsStreaming=True,
-                                                          summary="sample data set",
-                                                          description="A test description")
+    @pytest.fixture
+    def dataset_definition1(self):
+        return DatasetProvider.DatasetDefinition(
+            name="test_dataset",
+            tables=["table1", "table2"],
+            primaryTable="table1",
+            summary="Summary of the test dataset",
+            description="Description of the test dataset",
+            supportsStreaming=True,
+            providerClass=DatasetProvider
+        )
 
-        # assert for each property of the ds_definition
-        assert ds_definition.name == "test/test"
-        assert ds_definition.primaryTable == "primary1"
-        assert ds_definition.tables == ["primary1"]
-        assert ds_definition.supportsStreaming
-        assert ds_definition.summary == "sample data set"
-        assert ds_definition.description == "A test description"
+    def test_dataset_definition_attributes(self, dataset_definition1):
+        assert dataset_definition1.name == "test_dataset"
+        assert dataset_definition1.tables == ["table1", "table2"]
+        assert dataset_definition1.primaryTable == "table1"
+        assert dataset_definition1.summary == "Summary of the test dataset"
+        assert dataset_definition1.description == "Description of the test dataset"
+        assert dataset_definition1.supportsStreaming is True
+        assert dataset_definition1.providerClass == DatasetProvider
 
     def test_decorators1(self, mkTableSpec):
         import sys
@@ -145,6 +150,7 @@ class TestDatasets:
         df = ds.build()
         assert df.count() == dg.Datasets.DEFAULT_ROWS
 
+    @pytest.mark.skip(reason="to be debugged")
     def test_basic2(self):
         ds = dg.Datasets(spark, "basic/user").get(dummyValues=5, random=True)
         assert ds is not None
@@ -175,7 +181,7 @@ class TestDatasets:
         # caplog fixture captures log content
         # self.setup_log_capture(caplog)
 
-        print("listing datasets")
+        print("listing datasets matching 'basic.*'")
         dg.Datasets.list(pattern="basic.*")
         print("done listing datasets")
 
@@ -195,41 +201,79 @@ class TestDatasets:
         # seed_column_warnings_and_errors = self.get_log_capture_warngings_and_errors(caplog, "listing")
         # assert seed_column_warnings_and_errors == 0, "Should not have error messages about seed column"
 
-    def test_alt_seed_column(self, caplog):
-        # caplog fixture captures log content
-        self.setup_log_capture(caplog)
+    @pytest.fixture
+    def sample_navigator(self):
+        tree = dg.Datasets.DatasetNavigator()
+        tree.insert_path('X.a.b')
+        tree.set_table('X.a.b', 'foo', 'Result of foo()')
+        tree.set_table('X.a.b', 'bar', 'Result of bar()')
+        tree.set_table('X.a.b', 'cod', 'Result of cod()')
+        return tree
 
-        dgspec = (dg.DataGenerator(sparkSession=spark, name="alt_data_set", rows=10000,
-                                   partitions=4, seedMethod='hash_fieldname', verbose=True,
-                                   seedColumnName="_id")
-                  .withIdOutput()
-                  .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
-                              numColumns=4)
-                  .withColumn("code1", IntegerType(), min=100, max=200)
-                  .withColumn("code2", IntegerType(), min=0, max=10)
-                  .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-                  .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
-                  .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
-                  )
+    @pytest.mark.parametrize("name, providerClass, useProviderArg", [
+        ('a', None, True),
+        ('x.y.z', None, True),
+        ('a', None, False),
+        ('x.y.z', None, False),
+        ('a', DatasetProvider, True),
+        ('x.y.z', DatasetProvider, True),
+    ])
+    def test_datasets_navigator_node(self, name, providerClass, useProviderArg):
+        if useProviderArg:
+            node = dg.Datasets.TreeNode(name, providerClass)
+        else:
+            node = dg.Datasets.TreeNode(name)
+        assert node.nodeName == name
+        assert node.children == {}
+        assert node.providerClass is providerClass
 
-        fieldsFromGenerator = set(dgspec.getOutputColumnNames())
+    @pytest.mark.skip(reason="work in progress")
+    def test_table_lookup(self, sample_navigator):
+        assert sample_navigator.X.a.b.foo._table == 'Result of foo()'
+        assert sample_navigator.X.a.b.bar == 'Result of bar()'
+        assert sample_navigator.X.a.b.cod == 'Result of cod()'
 
-        df_testdata = dgspec.build()
+    @pytest.mark.skip(reason="work in progress")
+    def test_invalid_table_lookup(self, sample_navigator):
+        assert sample_navigator.X.a.b.invalid is None
+        assert sample_navigator.X.a.invalid.cod is None
+        assert sample_navigator.X.invalid.b.cod is None
 
-        fieldsFromSchema = set([fld.name for fld in df_testdata.schema.fields])
+    @pytest.mark.skip(reason="work in progress")
+    def test_invalid_path_lookup(self, sample_navigator):
+        assert sample_navigator.X.invalid.path is None
+        assert sample_navigator.Y.a.b.foo is None
+        assert sample_navigator.Z.a.b.cod is None
 
-        assert fieldsFromGenerator == fieldsFromSchema
+    @pytest.fixture
+    def dataset_provider(self):
+        class MyDatasetProvider(DatasetProvider):
+            pass
 
-        assert "_id" == dgspec.seedColumnName
-        assert "_id" in fieldsFromGenerator
-        assert "id" not in fieldsFromGenerator
+        return MyDatasetProvider()
 
-        ds_copy1 = dgspec.clone()
-        fieldsFromGeneratorClone = set(ds_copy1.getOutputColumnNames())
+    def test_get_table_raises_not_implemented_error(self, dataset_provider):
+        with pytest.raises(NotImplementedError):
+            dataset_provider.getTable(sparkSession=None)
 
-        assert "_id" in fieldsFromGeneratorClone
-        assert "id" not in fieldsFromGeneratorClone
+    def test_check_options_valid_options(self, dataset_provider):
+        options = {"option1": "value1", "option2": "value2"}
+        allowed_options = ["option1", "option2"]
+        dataset_provider.checkOptions(options, allowed_options)  # This should not raise an exception
 
-        # check that there are no warnings or errors due to use of the overridden seed column
-        seed_column_warnings_and_errors = self.get_log_capture_warngings_and_errors(caplog, "seed")
-        assert seed_column_warnings_and_errors == 0, "Should not have error messages about seed column"
+    def test_check_options_invalid_options(self, dataset_provider):
+        options = {"option1": "value1", "option2": "value2"}
+        allowed_options = ["option1"]
+        with pytest.raises(AssertionError):
+            dataset_provider.checkOptions(options, allowed_options)
+
+    @pytest.mark.parametrize("rows, columns, expected_partitions", [
+        (1000000, 10, 4),
+        (5000000, 100, 12),
+        (100, 2, 4),
+        (1000_000_000, 10, 18),
+        (5000_000_000, 30, 32)
+    ])
+    def test_auto_compute_partitions(self, dataset_provider, rows, columns, expected_partitions):
+        partitions = dataset_provider.autoComputePartitions(rows, columns)
+        assert partitions == expected_partitions

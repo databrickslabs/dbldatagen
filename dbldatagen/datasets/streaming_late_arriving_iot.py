@@ -9,9 +9,10 @@ class StreamingLateArrivingIOTProvider(DatasetProvider):
 
     """
     MAX_LONG = 9223372036854775807
-    ALLOWED_OPTIONS = ["random", "dummyValues","rows", "partitions", "tableName"]
+    ALLOWED_OPTIONS = ["random", "dummyValues", "rows", "partitions", "tableName"]
 
     def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=-1,
+                 autoSize=False,
                  **options):
         import dbldatagen as dg
 
@@ -24,8 +25,8 @@ class StreamingLateArrivingIOTProvider(DatasetProvider):
         assert tableName is None or tableName == "primary", "Invalid table name"
         df_spec = (
             dg.DataGenerator(sparkSession=sparkSession, name="test_data_set1", rows=rows,
-                             partitions=partitions,randomSeedMethod="hash_fieldname")
-            .withColumn("customer_id", "long", minValue=1000000,  maxValue=self.MAX_LONG, random=generateRandom)
+                             partitions=partitions, randomSeedMethod="hash_fieldname")
+            .withColumn("customer_id", "long", minValue=1000000, maxValue=self.MAX_LONG, random=generateRandom)
             .withColumn("name", "string",
                         template=r'\w \w|\w \w \w', random=generateRandom)
             .withColumn("email", "string",

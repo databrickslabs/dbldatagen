@@ -10,9 +10,10 @@ class MultiTableTelephonyProvider(DatasetProvider):
 
     """
     MAX_LONG = 9223372036854775807
-    ALLOWED_OPTIONS = ["random", "dummyValues","rows", "partitions", "tableName"]
+    ALLOWED_OPTIONS = ["random", "dummyValues", "rows", "partitions", "tableName"]
 
     def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=-1,
+                 autoSize=False,
                  **options):
         import dbldatagen as dg
 

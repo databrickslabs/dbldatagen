@@ -6,8 +6,10 @@
 This file defines the DatasetProvider class
 """
 from __future__ import annotations  # needed when using dataclasses in Python 3.8 with type of `list[str]`
-from dataclasses import dataclass
+
 import math
+from dataclasses import dataclass
+
 
 class DatasetProvider:
     """
@@ -19,7 +21,7 @@ class DatasetProvider:
 
     If no table name is specified, it defaults to a table name of `primary`
 
-    Note that the DatasetDefinitionDecorator class will be used as a decorator to subclasses of this and
+    Note that the DatasetDefinitionDecorator inner class will be used as a decorator to subclasses of this and
     will overwrite the constants _DATASET_NAME, _DATASET_TABLES, _DATASET_DESCRIPTION, _DATASET_SUMMARY and
     _DATASET_SUPPORTS_STREAMING
 
@@ -41,39 +43,71 @@ class DatasetProvider:
 
     @dataclass
     class DatasetDefinition:
-        name: str = None
-        summary: str = None
-        description: str = None
-        supportsStreaming: bool = False
-        tables: list[str] = None
-        primaryTable: str = None
-        providerClass: type = None
+        """ Dataset Definition class - stores the attributes related to the dataset for use by the implementation
+        of the decorator.
+
+        This stores the name of the dataset (e.g. `basic/user`), the list of tables provided by the dataset,
+        the primary table, a summary of the dataset, a detailed description of the dataset, whether the dataset
+        supports streaming, and the provider class.
+        """
+        name: str
+        tables: list[str]
+        primaryTable: str
+        summary: str
+        description: str
+        supportsStreaming: bool
+        providerClass: type
 
     @classmethod
     def getDatasetDefinition(cls):
+        """ Get the dataset definition for the class """
         return cls._DATASET_DEFINITION
+
+    @classmethod
+    def getDatasetTables(cls):
+        """ Get the dataset tables list for the class """
+        datasetDefinition = cls.getDatasetDefinition()
+
+        if datasetDefinition is None or datasetDefinition.tables is None:
+            return [cls.DEFAULT_TABLE_NAME]
+
+        return datasetDefinition.tables
 
     @classmethod
     def registerDataset(cls, datasetDefinition):
         """ Register the dataset with the given name
 
-        :param name: Name of the dataset
         :param datasetDefinition: Dataset definition object
         :return: None
+
+        The dataset definition object should be an instance of the DatasetDefinition class. It will be populated by
+        the decorator and should contain the name of the dataset, the list of tables provided by the dataset,
+        the primary table, a summary of the dataset, a detailed description of the dataset,
+        whether the dataset supports streaming, and the provider class.
         """
         assert isinstance(datasetDefinition, cls.DatasetDefinition), \
-               "datasetDefinition must be an instance of DatasetDefinition"
+            "datasetDefinition must be an instance of DatasetDefinition"
 
         assert datasetDefinition.name is not None, \
-               "datasetDefinition must contain a name for the data set"
+            "datasetDefinition must contain a name for the data set"
 
         assert datasetDefinition.name is not None, \
-               "datasetDefinition must contain a name for the data set"
+            "datasetDefinition must contain a name for the data set"
 
         assert issubclass(datasetDefinition.providerClass, cls), \
-               "datasetClass must be a subclass of DatasetProvider"
+            "datasetClass must be a subclass of DatasetProvider"
 
         cls._registeredDatasets[datasetDefinition.name] = datasetDefinition
+
+    @classmethod
+    def unregisterDataset(cls, name):
+        """ Unregister the dataset with the specified name
+
+        :param name: Name of the dataset to unregister
+        """
+        assert name is not None and len(name.strip()) > 0, "name must be provided and not empty"
+        assert name in cls._registeredDatasets, f"Dataset '{name}' not found in registered datasets"
+        del cls._registeredDatasets[name]
 
     @classmethod
     def getRegisteredDatasets(cls):
@@ -83,15 +117,20 @@ class DatasetProvider:
         """
         return cls._registeredDatasets
 
-    def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=4, **options):
+    def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=4, autoSize=False, **options):
         """Gets table for named table
 
         :param sparkSession: Spark session to use
         :param tableName: Name of table to provide
         :param rows: Number of rows requested
         :param partitions: Number of partitions requested
+        :param autoSize: Whether to automatically size the partitions from the number of rows
         :param options: Options passed to generate the table
         :return: DataGenerator for table if successful, throws error otherwise
+
+        Implementors of the individual data providers are responsible for sizing partitions for the datasets based
+        on the number of rows and columns. The number of partitions should be computed based on the number of rows
+        and columns using the `autoComputePartitions` method.
         """
         raise NotImplementedError("Base data provider does not provide any tables!")
 
@@ -113,8 +152,16 @@ class DatasetProvider:
         :param rows: number of rows
         :param columns: number of columns
         :return: number of partitions
+
+        The equations is based on the number of rows and columns. It will produce 4 partitions as a minimum with
+        12 partitions with 5,000,000 rows and 100 columns.
+
+        For very large tables such as 1 billion rows and 10 columns, it will produce 18 partitions and increase
+        logarithmically with the number of rows and columns.
+
+        Implementors of standard datasets can chose to scale this value or use their own calculation.
         """
-        return max(4, int(math.log(rows/500_000) * max(1, math.log(columns))))
+        return max(4, int(math.log(rows / 350_000) * max(1, math.log(columns))))
 
     class DatasetDefinitionDecorator:
         """ Defines the predefined_dataset decorator
@@ -127,6 +174,7 @@ class DatasetProvider:
             :param description: Detailed description of the class. If None, will use the target class doc string
             :param supportsStreaming: Whether data set can be used in streaming scenarios
         """
+
         def __init__(self, cls=None, *, name=None, tables=None, primaryTable=None, summary=None, description=None,
                      supportsStreaming=False):
             self._targetCls = cls
@@ -217,6 +265,15 @@ def dataset_definition(cls=None, *args, autoRegister=False, **kwargs):  # pylint
     """
 
     def inner_wrapper(inner_cls=None, *inner_args, **inner_kwargs):  # pylint: disable=keyword-arg-before-vararg
+        """ The inner wrapper function is used to handle the case where the decorator is used with arguments.
+        It defers the application of the decorator to the target class until the target class is available.
+
+        :param inner_cls: inner class object
+        :param inner_args: inner args
+        :param inner_kwargs: inner keyword args
+
+        :return: Returns the target class object
+        """
         return DatasetProvider.DatasetDefinitionDecorator(inner_cls, *args, **kwargs).mkClass(autoRegister)
 
     # handle the decorator syntax with no arguments
@@ -226,5 +283,6 @@ def dataset_definition(cls=None, *args, autoRegister=False, **kwargs):  # pylint
         assert issubclass(cls, DatasetProvider), f"Target class of decorator ({cls}) must inherit from DataProvider"
         return DatasetProvider.DatasetDefinitionDecorator(cls, *args, **kwargs).mkClass(autoRegister)
     else:
-        # handle decorator syntax with arguments
+        # handle decorator syntax with arguments - here we simply return the inner wrapper function
+        # and the subsequent call with arguments will apply the decorator to the target class
         return inner_wrapper

@@ -31,7 +31,18 @@ class Datasets:
        It allows for quick generation of data for common scenarios.
 
     :param sparkSession: Spark session instance to use when performing spark operations
-    :param name: Dataset name to
+    :param name: Dataset name to use
+
+    Dataset names are registered with the DatasetProvider class. By convention, dataset names should be hierarchical
+    and separated by slashes ('/')
+
+    For example, the dataset name 'sales/retail' would indicate that the dataset is a retail dataset within the sales
+    category.
+
+    The dataset name is used to look up the provider class that will be used to generate the data.
+
+    If a dataset provider supports multiple tables, the name of the table to retrieve is passed to the
+    `get` method, along with any parameters that are required to generate the data.
 
     """
 
@@ -76,8 +87,18 @@ class Datasets:
         return None
 
     @classmethod
-    def registerProvider(cls, name, providerType):
-        pass
+    def registerProvider(cls, providerType):
+        """Register a provider with the datasets class.
+
+           This passes the provider to the DatasetProvider class for registration.
+        """
+        assert providerType is not None, "Provider type must be specified"
+        assert issubclass(providerType, DatasetProvider), "Provider type must be a subclass of DatasetProvider"
+
+        providerDefinition = providerType.getDatasetDefinition()
+        assert providerDefinition is not None, "Provider definition missing - did you forget to add the decorator?"
+
+        DatasetProvider.registerDataset(providerDefinition)
 
     @classmethod
     def getProviderDefinitions(cls, name=None, pattern=None):
@@ -85,9 +106,9 @@ class Datasets:
 
         :param name: name of dataset to get provider for, if None, returns all providers
         :param pattern: pattern to match dataset name, if None, returns all providers optionally matching name
-        :return: list of tuples for provider definitions matching name and matching pattern
+        :return: list of provider definitions matching name and  pattern
 
-        Each tuple will be of the form (name, provider_definition)
+        Each entry will be of the form DatasetProvider.DatasetProviderDefinition
 
         """
         if pattern is not None and name is not None:
@@ -144,30 +165,121 @@ class Datasets:
         print(strip_margins(summaryAttributes, '|'))
         print("\n".join([x.strip() for x in providers[0].description.split("\n")]))
 
+    class TreeNode:
+        """"Tree node class for DatasetNavigator tree"""
+
+        def __init__(self, nodeName, providerClass=None):
+            assert nodeName is not None and len(nodeName.strip()) > 0, "Node name must be specified"
+            self._nodeName = nodeName
+            self._providerClass = providerClass  # provider class for provider
+            self.children = {}  # dictionary of children
+
+        def __str__(self):
+            return f"Node: {self._nodeName}"
+
+        @property
+        def nodeName(self):
+            return self._nodeName
+
+        @property
+        def providerClass(self):
+            return self._providerClass
+
+    class DatasetNavigator:
+        """Dataset Navigator class for navigating datasets
+
+        This class is used to navigate datasets and their tables via dotted notation.
+
+        Ie X.dataset_grouping.dataset.table where X is an intance of the dataset navigator.
+
+        The navigator is initialized with a set of paths and objects (usually providers) that are registered with the
+        DatasetProvider class.
+
+        When accessed via dotted notation, the navigator will use the pathSegment to locate the provider and create it.
+
+        Any remaining pathSegment traversed will be used to locate the table within the provider.
+
+        Overall, this just provides a syntactic layering over the creation of the provider instance
+        and table generation.
+
+        """
+
+        def __init__(self):
+            self._root = Datasets.TreeNode(None)
+            self._currentPosition = self._root
+
+        def __getattr__(self, pathSegment):
+            """ Get the attribute """
+            current = self._root
+            segments = pathSegment.split('/')
+            for segment in segments:
+                if segment in current.children:
+                    current = current.children[segment]
+                else:
+                    return None
+            return current
+
+        def __call__(self, path):
+            segments = path.split('.')
+            if len(segments) < 2:
+                return None
+            obj = self.__getattr__('.'.join(segments[:-1]))
+            if obj is not None:
+                return obj.getTable(segments[-1])
+            return None
+
+        def insertProvider(self, path):
+            current = self._root
+            segments = path.split('/')
+            for segment in segments:
+                if segment not in current.children:
+                    current.children[segment] = Datasets.TreeNode(segment)
+                current = current.children[segment]
+
     def __init__(self, sparkSession, name=None, streaming=False):
         """ Constructor:
         :param sparkSession: Spark session to use
         :param name: name of dataset to search for
         :param streaming: if True, validdates that dataset supports streaming data
         """
-        assert name is not None, "Dataset name must be supplied"
-
         if sparkSession is None:
             sparkSession = SparkSingleton.getLocalInstance()
 
         self._sparkSession = sparkSession
         self._name = name
         self._streaming = streaming
+        self._providerDefinition = None
+
+    def _locateProvider(self, name):
+        """Locate the provider for the dataset from the registered providers using the name"""
+        assert name is not None, "Dataset name must be supplied"
 
         providers = self.getProviderDefinitions(name=name)
         assert providers is not None and len(providers) > 0, f"Dataset '{name}' not found"
 
         self._providerDefinition = providers[0]
 
-        if streaming:
+        if self._streaming:
             assert self._providerDefinition.supportsStreaming, f"Dataset '{name}' does not support streaming"
 
-    def get(self, table=None, rows=None, partitions=None, **kwargs):
+    def get(self, table=None, rows=None, partitions=None, autoSize=False, **kwargs):
+        """Get a table from the dataset
+        If the dataset supports multiple tables, the table may be specified in the `table` parameter.
+        If none is specified, the primary table is used.
+
+        :param table: name of table to retrieve
+        :param rows: number of rows to generate
+        :param partitions: number of partitions to use
+        :param autoSize: if True, automatically size the number of rows and partitions based on the dataset primary
+        table size and partitioning.If applied to a dataset with only a single table, this is ignored.
+        :param kwargs: additional keyword arguments to pass to the provider
+
+        If `rows` or `partitions` are not specified, default values are used.
+        """
+
+        if self._providerDefinition is None:
+            self._locateProvider(self._name)
+
         provider = self._providerDefinition.providerClass
         print(f" provider: {provider}")
         assert provider is not None and issubclass(provider, DatasetProvider), "Invalid provider class"
@@ -187,5 +299,14 @@ class Datasets:
             assert partitions is not None and partitions > 0, "Number of partitions not defined"
 
         tableDefn = providerInstance.getTable(self._sparkSession, tableName=table, rows=rows, partitions=partitions,
+                                              autoSize=autoSize,
                                               **kwargs)
         return tableDefn
+
+    def __getattr__(self, path):
+        #navigator = self.DatasetNavigator(self, self.name, path)
+
+        # TODO: register paths and providers for registered data sets with the navigator
+
+        # TODO: initiatlize navigator base
+        return None

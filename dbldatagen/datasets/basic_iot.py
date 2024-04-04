@@ -25,6 +25,7 @@ class BasicIOTProvider(DatasetProvider):
     ALLOWED_OPTIONS = ["devicePopulation", "begin", "end", "interval", "rows", "partitions", "tableName"]
 
     def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=-1,
+                 autoSize=False,
                  **options):
         import dbldatagen as dg  # import locally to avoid circular imports
 
