@@ -82,7 +82,8 @@ class TestDatasets:
         @dataset_definition
         class X1(DatasetProvider):
 
-            def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=4, autoSize=False, **options):
+            def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=4, autoSizePartitions=False,
+                         **options):
                 return mkTableSpec
 
         ds_definition = X1.getDatasetDefinition()
@@ -96,7 +97,8 @@ class TestDatasets:
 
         @dataset_definition(name="test/test", tables=["main"])
         class Y1(DatasetProvider):
-            def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=4, autoSize=False, **options):
+            def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=4, autoSizePartitions=False,
+                         **options):
                 return mkTableSpec
 
         ds_definition = Y1.getDatasetDefinition()
@@ -110,7 +112,8 @@ class TestDatasets:
     def test_decorators1a(self, mkTableSpec):
         @dataset_definition(name="test/test", tables=["main"])
         class Y1a(DatasetProvider):
-            def getTable(self,  sparkSession, *, tableName=None, rows=1000000, partitions=4, autoSize=False, **options):
+            def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=4, autoSizePartitions=False,
+                         **options):
                 return mkTableSpec
 
         ds_definition = Y1a.getDatasetDefinition()
@@ -126,7 +129,8 @@ class TestDatasets:
     def test_decorators1b(self, mkTableSpec):
         @dataset_definition
         class X1b(DatasetProvider):
-            def getTable(self,  sparkSession, *, tableName=None, rows=1000000, partitions=4, autoSize=False, **options):
+            def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=4, autoSizePartitions=False,
+                         **options):
                 return mkTableSpec
 
         ds_definition = X1b.getDatasetDefinition()
@@ -243,7 +247,8 @@ class TestDatasets:
     @pytest.fixture
     def dataset_provider(self):
         class MyDatasetProvider(DatasetProvider):
-            def getTable(self,  sparkSession, *, tableName=None, rows=1000000, partitions=4, autoSize=False, **options):
+            def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=4, autoSizePartitions=False,
+                         **options):
                 return mkTableSpec
 
         return MyDatasetProvider()

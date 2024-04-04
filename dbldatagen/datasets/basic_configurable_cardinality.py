@@ -13,11 +13,11 @@ class BasicConfigurableCardinalityProvider(DatasetProvider):
     MAX_LONG = 9223372036854775807
     ALLOWED_OPTIONS = ["random", "dummyValues", "rows", "partitions", "tableName"]
 
-    def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=-1, autoSize=False,
+    def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=-1, autoSizePartitions=False,
                  **options):
         import dbldatagen as dg  # pylint: disable=cyclic-import
 
-        if partitions < 0:
+        if partitions < 0 or partitions is None:
             partitions = self.autoComputePartitions(rows, 8)
 
         random = options.get("random", False)

@@ -117,14 +117,15 @@ class DatasetProvider:
         """
         return cls._registeredDatasets
 
-    def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=4, autoSize=False, **options):
+    def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=4, autoSizePartitions=False,
+                 **options):
         """Gets table for named table
 
         :param sparkSession: Spark session to use
         :param tableName: Name of table to provide
         :param rows: Number of rows requested
         :param partitions: Number of partitions requested
-        :param autoSize: Whether to automatically size the partitions from the number of rows
+        :param autoSizePartitions: Whether to automatically size the partitions from the number of rows
         :param options: Options passed to generate the table
         :return: DataGenerator for table if successful, throws error otherwise
 

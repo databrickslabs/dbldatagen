@@ -14,14 +14,14 @@ class JSONDeviceStatusProvider(DatasetProvider):
     ALLOWED_OPTIONS = ["random", "dummyValues", "rows", "partitions", "tableName"]
 
     def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=-1,
-                 autoSize=False,
+                 autoSizePartitions=False,
                  **options):
         import dbldatagen as dg
 
         generateRandom = options.get("random", False)
         dummyValues = options.get("dummyValues", 0)
 
-        if partitions < 0:
+        if partitions < 0 or partitions is None:
             partitions = self.autoComputePartitions(rows, 8)
 
         assert tableName is None or tableName == "primary", "Invalid table name"

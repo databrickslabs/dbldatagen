@@ -13,11 +13,11 @@ class MultiTableTelephonyProvider(DatasetProvider):
     ALLOWED_OPTIONS = ["random", "dummyValues", "rows", "partitions", "tableName"]
 
     def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=-1,
-                 autoSize=False,
+                 autoSizePartitions=False,
                  **options):
         import dbldatagen as dg
 
-        if partitions < 0:
+        if partitions < 0 or partitions is None:
             partitions = self.autoComputePartitions(rows, 8)
 
         random = options.get("random", False)

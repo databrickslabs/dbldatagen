@@ -294,12 +294,8 @@ class Datasets:
             rows = Datasets.DEFAULT_ROWS
             assert rows is not None, "Number of rows not defined"
 
-        if partitions is None or partitions == -1:
-            partitions = Datasets.DEFAULT_PARTITIONS
-            assert partitions is not None and partitions > 0, "Number of partitions not defined"
-
         tableDefn = providerInstance.getTable(self._sparkSession, tableName=table, rows=rows, partitions=partitions,
-                                              autoSize=autoSize,
+                                              autoSizePartitions=autoSize,
                                               **kwargs)
         return tableDefn
 
