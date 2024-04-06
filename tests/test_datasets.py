@@ -129,10 +129,10 @@ class TestDatasets:
         print("description\n", ds_definition.description)
 
         DatasetProvider.registerDataset(Y1a.getDatasetDefinition())
-        assert Y1a.getDatasetDefinition().name in DatasetProvider.getRegisteredDatasets().keys()
+        assert Y1a.getDatasetDefinition().name in DatasetProvider.getRegisteredDatasets()
 
         DatasetProvider.unregisterDataset(Y1a.getDatasetDefinition().name)
-        assert Y1a.getDatasetDefinition().name not in DatasetProvider.getRegisteredDatasets().keys()
+        assert Y1a.getDatasetDefinition().name not in DatasetProvider.getRegisteredDatasets()
 
     def test_decorators1b(self, mkTableSpec):
         @dataset_definition
@@ -153,10 +153,10 @@ class TestDatasets:
         print("description\n", ds_definition.description)
 
         DatasetProvider.registerDataset(X1b.getDatasetDefinition())
-        assert X1b.getDatasetDefinition().name in DatasetProvider.getRegisteredDatasets().keys()
+        assert X1b.getDatasetDefinition().name in DatasetProvider.getRegisteredDatasets()
 
         DatasetProvider.unregisterDataset(X1b.getDatasetDefinition().name)
-        assert X1b.getDatasetDefinition().name not in DatasetProvider.getRegisteredDatasets().keys()
+        assert X1b.getDatasetDefinition().name not in DatasetProvider.getRegisteredDatasets()
 
     @pytest.mark.parametrize("rows_requested, partitions_requested, random, dummy", [
         (50, 4, False, 0),
