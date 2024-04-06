@@ -21,7 +21,7 @@ class JSONDeviceStatusProvider(DatasetProvider):
         generateRandom = options.get("random", False)
         dummyValues = options.get("dummyValues", 0)
 
-        if partitions < 0 or partitions is None:
+        if partitions is None or partitions < 0:
             partitions = self.autoComputePartitions(rows, 8)
 
         assert tableName is None or tableName == "primary", "Invalid table name"

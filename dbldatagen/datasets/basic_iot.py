@@ -33,10 +33,8 @@ class BasicIOTProvider(DatasetProvider):
 
         assert tableName is None or tableName == "primary", "Invalid table name"
 
-        if partitions < 0 or partitions is None:
+        if partitions is None or partitions < 0:
             partitions = self.autoComputePartitions(rows, 8)
-
-        partitions_requested = partitions
 
         country_codes = ['CN', 'US', 'FR', 'CA', 'IN', 'JM', 'IE', 'PK', 'GB', 'IL', 'AU', 'SG',
                          'ES', 'GE', 'MX', 'ET', 'SA', 'LB', 'NL']
@@ -49,7 +47,7 @@ class BasicIOTProvider(DatasetProvider):
 
         testDataSpec = (
             dg.DataGenerator(sparkSession, name="device_data_set", rows=rows,
-                             partitions=partitions_requested,
+                             partitions=partitions,
                              randomSeedMethod='hash_fieldname')
 
             # we'll use hash of the base field to generate the ids to

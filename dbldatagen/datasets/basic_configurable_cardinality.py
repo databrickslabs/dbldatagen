@@ -17,7 +17,7 @@ class BasicConfigurableCardinalityProvider(DatasetProvider):
                  **options):
         import dbldatagen as dg  # pylint: disable=cyclic-import
 
-        if partitions < 0 or partitions is None:
+        if partitions is None or partitions < 0:
             partitions = self.autoComputePartitions(rows, 8)
 
         random = options.get("random", False)
@@ -26,7 +26,7 @@ class BasicConfigurableCardinalityProvider(DatasetProvider):
         assert tableName is None or tableName == "primary", "Invalid table name"
         df_spec = (
             dg.DataGenerator(sparkSession=sparkSession, name="test_data_set1", rows=rows,
-                             partitions=4, randomSeedMethod="hash_fieldname")
+                             partitions=partitions, randomSeedMethod="hash_fieldname")
             .withColumn("customer_id", "long", minValue=1000000, random=random)
             .withColumn("name", "string",
                         template=r'\w \w|\w \w \w', random=random)

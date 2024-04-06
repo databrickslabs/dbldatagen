@@ -16,7 +16,7 @@ class StreamingLateArrivingIOTProvider(DatasetProvider):
                  **options):
         import dbldatagen as dg
 
-        if partitions < 0 or partitions is None:
+        if partitions is None or partitions < 0:
             partitions = self.autoComputePartitions(rows, 8)
 
         generateRandom = options.get("random", False)

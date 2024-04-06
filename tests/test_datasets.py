@@ -255,7 +255,7 @@ class TestDatasets:
 
     def test_get_table_raises_not_implemented_error(self, dataset_provider):
         with pytest.raises(NotImplementedError):
-            dataset_provider.getTable(sparkSession=None)
+            DatasetProvider().getTable(sparkSession=None)
 
     def test_check_options_valid_options(self, dataset_provider):
         options = {"option1": "value1", "option2": "value2"}
