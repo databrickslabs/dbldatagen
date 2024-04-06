@@ -8,6 +8,8 @@ from dbldatagen.datasets import DatasetProvider, dataset_definition
 
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
+__MISSING__ = "MISSING_PARAM"
+
 
 @pytest.fixture(scope="class")
 def setupLogging():
@@ -89,8 +91,8 @@ class TestDatasets:
         ds_definition = X1.getDatasetDefinition()
         print("ds_definition", ds_definition)
         assert ds_definition.name == "providers/X1"
-        assert ds_definition.tables == ["primary"]
-        assert ds_definition.primaryTable == "primary"
+        assert ds_definition.tables == [DatasetProvider.DEFAULT_TABLE_NAME]
+        assert ds_definition.primaryTable == DatasetProvider.DEFAULT_TABLE_NAME
         assert ds_definition.summary is not None
         assert ds_definition.description is not None
         assert ds_definition.supportsStreaming is False
@@ -110,7 +112,7 @@ class TestDatasets:
         assert ds_definition.supportsStreaming is False
 
     def test_decorators1a(self, mkTableSpec):
-        @dataset_definition(name="test/test", tables=["main"])
+        @dataset_definition(name="test/test", tables=["main1"])
         class Y1a(DatasetProvider):
             def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=4, autoSizePartitions=False,
                          **options):
@@ -118,50 +120,84 @@ class TestDatasets:
 
         ds_definition = Y1a.getDatasetDefinition()
         assert ds_definition.name == "test/test"
-        assert ds_definition.tables == ["main"]
-        assert ds_definition.primaryTable == "main"
+        assert ds_definition.tables == ["main1"]
+        assert ds_definition.primaryTable == "main1"
         assert ds_definition.summary is not None
         assert ds_definition.description is not None
         assert ds_definition.supportsStreaming is False
 
         print("description\n", ds_definition.description)
 
+        DatasetProvider.registerDataset(Y1a.getDatasetDefinition())
+        assert Y1a.getDatasetDefinition().name in DatasetProvider.getRegisteredDatasets().keys()
+
+        DatasetProvider.unregisterDataset(Y1a.getDatasetDefinition().name)
+        assert Y1a.getDatasetDefinition().name not in DatasetProvider.getRegisteredDatasets().keys()
+
     def test_decorators1b(self, mkTableSpec):
         @dataset_definition
         class X1b(DatasetProvider):
-            def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=4, autoSizePartitions=False,
+            def getTable(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
                          **options):
                 return mkTableSpec
 
         ds_definition = X1b.getDatasetDefinition()
         assert ds_definition.name == "providers/X1b"
-        assert ds_definition.tables == ["primary"]
-        assert ds_definition.primaryTable == "primary"
+        assert ds_definition.tables == [DatasetProvider.DEFAULT_TABLE_NAME]
+        assert X1b.getDatasetTables() == [DatasetProvider.DEFAULT_TABLE_NAME]
+        assert ds_definition.primaryTable == DatasetProvider.DEFAULT_TABLE_NAME
         assert ds_definition.summary is not None
         assert ds_definition.description is not None
         assert ds_definition.supportsStreaming is False
 
         print("description\n", ds_definition.description)
 
-    def test_basic(self):
-        ds = dg.Datasets(spark, "basic/user").get()
-        assert ds is not None
-        df = ds.build()
-        assert df.count() == dg.Datasets.DEFAULT_ROWS
+        DatasetProvider.registerDataset(X1b.getDatasetDefinition())
+        assert X1b.getDatasetDefinition().name in DatasetProvider.getRegisteredDatasets().keys()
 
-    @pytest.mark.skip(reason="to be debugged")
-    def test_basic2(self):
-        ds = dg.Datasets(spark, "basic/user").get(dummyValues=5, random=True)
+        DatasetProvider.unregisterDataset(X1b.getDatasetDefinition().name)
+        assert X1b.getDatasetDefinition().name not in DatasetProvider.getRegisteredDatasets().keys()
+
+    @pytest.mark.parametrize("rows_requested, partitions_requested, random, dummy", [
+        (50, 4, False, 0),
+        (__MISSING__, __MISSING__, __MISSING__, __MISSING__),
+        (100, -1, False, 0),
+        (5000, __MISSING__, __MISSING__, 4),
+        (100, -1, True, 0),
+    ])
+    def test_basic(self, rows_requested, partitions_requested, random, dummy):
+
+        dict_params = {}
+
+        if rows_requested != __MISSING__:
+            dict_params["rows"] = rows_requested
+        if partitions_requested != __MISSING__:
+            dict_params["partitions"] = partitions_requested
+        if random != __MISSING__:
+            dict_params["random"] = random
+        if dummy != __MISSING__:
+            dict_params["dummyValues"] = dummy
+
+        ds = dg.Datasets(spark, "basic/user").get(**dict_params)
         assert ds is not None
         df = ds.build()
-        assert df.count() == dg.Datasets.DEFAULT_ROWS
-        df.show()
+
+        assert df.count() == (
+            DatasetProvider.DEFAULT_ROWS if rows_requested is __MISSING__ or rows_requested == -1 else rows_requested)
+
+        if dummy is not __MISSING__ and dummy is not None and dummy > 0:
+            assert "dummy_0" in df.columns
+
+        if random and random is not __MISSING__:
+            leadingRows = df.limit(100).collect()
+            customer_ids = [r.customer_id for r in leadingRows]
+            assert customer_ids != sorted(customer_ids)
 
     def test_basic_iot(self):
         ds = dg.Datasets(spark, "basic/iot").get()
         assert ds is not None
         df = ds.build()
-        assert df.count() == dg.Datasets.DEFAULT_ROWS
+        assert df.count() == DatasetProvider.DEFAULT_ROWS
         df.show()
 
     def test_listing(self):

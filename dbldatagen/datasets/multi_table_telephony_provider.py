@@ -12,10 +12,12 @@ class MultiTableTelephonyProvider(DatasetProvider):
     MAX_LONG = 9223372036854775807
     ALLOWED_OPTIONS = ["random", "dummyValues", "rows", "partitions", "tableName"]
 
-    def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=-1,
-                 autoSizePartitions=False,
+    def getTable(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
                  **options):
         import dbldatagen as dg
+
+        if rows is None or rows < 0:
+            rows = 100000
 
         if partitions is None or partitions < 0:
             partitions = self.autoComputePartitions(rows, 8)

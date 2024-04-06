@@ -46,9 +46,6 @@ class Datasets:
 
     """
 
-    DEFAULT_ROWS = 1000000
-    DEFAULT_PARTITIONS = 4
-
     _registered_providers = {}
 
     @staticmethod
@@ -262,19 +259,25 @@ class Datasets:
         if self._streaming:
             assert self._providerDefinition.supportsStreaming, f"Dataset '{name}' does not support streaming"
 
-    def get(self, table=None, rows=None, partitions=None, autoSize=False, **kwargs):
+    def get(self, table=None, rows=None, partitions=-1, **kwargs):
         """Get a table from the dataset
         If the dataset supports multiple tables, the table may be specified in the `table` parameter.
         If none is specified, the primary table is used.
 
         :param table: name of table to retrieve
-        :param rows: number of rows to generate
-        :param partitions: number of partitions to use
-        :param autoSize: if True, automatically size the number of rows and partitions based on the dataset primary
+        :param rows: number of rows to generate. if -1, provider should compute defaults.
+        :param partitions: number of partitions to use.If -1, the number of partitions is computed automatically
         table size and partitioning.If applied to a dataset with only a single table, this is ignored.
         :param kwargs: additional keyword arguments to pass to the provider
 
-        If `rows` or `partitions` are not specified, default values are used.
+        If `rows` or `partitions` are not specified, default values are supplied by the provider.
+
+        For multi-table datasets, the table name must be specified. For single table datasets, the table name may
+        be optionally supplied.
+
+        Additionally, for multi-table datasets, the table name must be one of the tables supported by the provider.
+        Default number of rows for multi-table datasets may differ - for example a 'customers' table may have a
+        100,000 rows while a 'sales' table may have 1,000,000 rows.
         """
 
         if self._providerDefinition is None:
@@ -290,12 +293,7 @@ class Datasets:
             table = self._providerDefinition.primaryTable
             assert table is not None, "Primary table not defined"
 
-        if rows is None:
-            rows = Datasets.DEFAULT_ROWS
-            assert rows is not None, "Number of rows not defined"
-
         tableDefn = providerInstance.getTable(self._sparkSession, tableName=table, rows=rows, partitions=partitions,
-                                              autoSizePartitions=autoSize,
                                               **kwargs)
         return tableDefn
 

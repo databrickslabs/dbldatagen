@@ -34,7 +34,10 @@ class DatasetProvider:
     By default, all DatasetProvider classes should support batch usage. If a dataset provider supports streaming usage,
     the flag `supportsStreaming` should be set to True in the decorator.
     """
-    DEFAULT_TABLE_NAME = "primary"
+    DEFAULT_TABLE_NAME = "main"
+    DEFAULT_ROWS = 100_000
+    DEFAULT_PARTITIONS = 4
+
     _DATASET_DEFINITION = None
 
     # the registered datasets will map from dataset names to a tuple of the dataset definition and the class
@@ -91,9 +94,6 @@ class DatasetProvider:
         assert datasetDefinition.name is not None, \
             "datasetDefinition must contain a name for the data set"
 
-        assert datasetDefinition.name is not None, \
-            "datasetDefinition must contain a name for the data set"
-
         assert issubclass(datasetDefinition.providerClass, cls), \
             "datasetClass must be a subclass of DatasetProvider"
 
@@ -117,7 +117,7 @@ class DatasetProvider:
         """
         return cls._registeredDatasets
 
-    def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=4, autoSizePartitions=False,
+    def getTable(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
                  **options):
         """Gets table for named table
 
@@ -162,7 +162,7 @@ class DatasetProvider:
 
         Implementors of standard datasets can chose to scale this value or use their own calculation.
         """
-        return max(4, int(math.log(rows / 350_000) * max(1, math.log(columns))))
+        return max(self.DEFAULT_PARTITIONS, int(math.log(rows / 350_000) * max(1, math.log(columns))))
 
     class DatasetDefinitionDecorator:
         """ Defines the predefined_dataset decorator
@@ -277,7 +277,8 @@ def dataset_definition(cls=None, *args, autoRegister=False, **kwargs):  # pylint
         """
         return DatasetProvider.DatasetDefinitionDecorator(inner_cls, *args, **kwargs).mkClass(autoRegister)
 
-    # handle the decorator syntax with no arguments
+    # handle the decorator syntax with no arguments - when there are no arguments, the only argument passed is an
+    # implicit class object
     if cls is not None:
         # handle decorator syntax with no arguments
         # when no arguments are provided to the decorator, the only argument passed is an implicit class object

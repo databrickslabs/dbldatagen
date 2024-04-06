@@ -24,14 +24,16 @@ class BasicIOTProvider(DatasetProvider):
     MAX_LONG = 9223372036854775807
     ALLOWED_OPTIONS = ["devicePopulation", "begin", "end", "interval", "rows", "partitions", "tableName"]
 
-    def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=-1,
-                 autoSizePartitions=False,
+    def getTable(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
                  **options):
         import dbldatagen as dg  # import locally to avoid circular imports
 
         device_population = options.get("devicePopulation", 100000)
 
-        assert tableName is None or tableName == "primary", "Invalid table name"
+        assert tableName is None or tableName == DatasetProvider.DEFAULT_TABLE_NAME, "Invalid table name"
+
+        if rows is None or rows < 0:
+            rows = 100000
 
         if partitions is None or partitions < 0:
             partitions = self.autoComputePartitions(rows, 8)
@@ -52,33 +54,33 @@ class BasicIOTProvider(DatasetProvider):
 
             # we'll use hash of the base field to generate the ids to
             # avoid a simple incrementing sequence
-            .withColumn("internal_device_id", LongType(), minValue=0x1000000000000,
+            .withColumn("internal_device_id", "long", minValue=0x1000000000000,
                         uniqueValues=device_population, omit=True, baseColumnType="hash")
 
             # note for format strings, we must use "%lx" not "%x" as the
             # underlying value is a long
-            .withColumn("device_id", StringType(), format="0x%013x",
+            .withColumn("device_id", "string", format="0x%013x",
                         baseColumn="internal_device_id")
 
             # the device / user attributes will be the same for the same device id
             # so lets use the internal device id as the base column for these attribute
-            .withColumn("country", StringType(), values=country_codes,
+            .withColumn("country", "string", values=country_codes,
                         weights=country_weights,
                         baseColumn="internal_device_id")
-            .withColumn("manufacturer", StringType(), values=manufacturers,
+            .withColumn("manufacturer", "string", values=manufacturers,
                         baseColumn="internal_device_id")
 
             # use omit = True if you don't want a column to appear in the final output
             # but just want to use it as part of generation of another column
-            .withColumn("line", StringType(), values=lines, baseColumn="manufacturer",
+            .withColumn("line", "string", values=lines, baseColumn="manufacturer",
                         baseColumnType="hash", omit=True)
             .withColumn("model_ser", IntegerType(), minValue=1, maxValue=11,
                         baseColumn="device_id",
                         baseColumnType="hash", omit=True)
 
-            .withColumn("model_line", StringType(), expr="concat(line, '#', model_ser)",
+            .withColumn("model_line", "string", expr="concat(line, '#', model_ser)",
                         baseColumn=["line", "model_ser"])
-            .withColumn("event_type", StringType(),
+            .withColumn("event_type", "string",
                         values=["activation", "deactivation", "plan change",
                                 "telecoms activity", "internet activity", "device error"],
                         random=True)
