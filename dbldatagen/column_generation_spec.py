@@ -1142,7 +1142,7 @@ class ColumnGenerationSpec(object):
             new_def = concat(new_def.astype(IntegerType()), lit(text_separator), lit(csuffix))
         return new_def
 
-    def _applyTextGenerationExpression(self, new_def, use_pandas_optimizations):
+    def _applyTextGenerationExpression(self, new_def, use_pandas_optimizations=True):
         """Apply text generation expression to column expression
 
         :param new_def : column definition being created
@@ -1153,6 +1153,9 @@ class ColumnGenerationSpec(object):
         # while it seems like this could use a shared instance, this does not work if initialized
         # in a class method
         tg = self.textGenerator
+
+        new_def = tg.prepareBaseValue(new_def)
+
         if use_pandas_optimizations:
             self.executionHistory.append(f".. text generation via pandas scalar udf `{tg}`")
             u_value_from_generator = pandas_udf(tg.pandasGenerateText,
