@@ -135,9 +135,9 @@ class TestDatasets:
         assert Y1a.getDatasetDefinition().name not in DatasetProvider.getRegisteredDatasets()
 
     def test_decorators1b(self, mkTableSpec):
-        @dataset_definition
+        @dataset_definition(description="a test description")
         class X1b(DatasetProvider):
-            def getTable(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
+            def getTable(self, sparkSession, *, tableName=None, rows=-1, partitions=-1, description="a test description",
                          **options):
                 return mkTableSpec
 
@@ -147,7 +147,7 @@ class TestDatasets:
         assert X1b.getDatasetTables() == [DatasetProvider.DEFAULT_TABLE_NAME]
         assert ds_definition.primaryTable == DatasetProvider.DEFAULT_TABLE_NAME
         assert ds_definition.summary is not None
-        assert ds_definition.description is not None
+        assert ds_definition.description == "a test description"
         assert ds_definition.supportsStreaming is False
 
         print("description\n", ds_definition.description)
@@ -157,6 +157,19 @@ class TestDatasets:
 
         DatasetProvider.unregisterDataset(X1b.getDatasetDefinition().name)
         assert X1b.getDatasetDefinition().name not in DatasetProvider.getRegisteredDatasets()
+
+    def test_invalid_decorator_use(self):
+        with pytest.raises(TypeError):
+            @dataset_definition
+            def foo(x):
+                return x
+
+    def test_invalid_decorator_use2(self):
+        with pytest.raises(TypeError):
+            def foo(x):
+                return x
+
+
 
     @pytest.mark.parametrize("rows_requested, partitions_requested, random, dummy", [
         (50, 4, False, 0),
