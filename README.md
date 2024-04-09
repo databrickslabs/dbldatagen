@@ -12,6 +12,7 @@
 [![PyPi package](https://img.shields.io/pypi/v/dbldatagen?color=green)](https://pypi.org/project/dbldatagen/)
 [![codecov](https://codecov.io/gh/databrickslabs/dbldatagen/branch/master/graph/badge.svg)](https://codecov.io/gh/databrickslabs/dbldatagen)
 [![PyPi downloads](https://img.shields.io/pypi/dm/dbldatagen?label=PyPi%20Downloads)](https://pypistats.org/packages/dbldatagen)
+[![lines of code](https://tokei.rs/b1/github/databrickslabs/dbldatagen)]([https://codecov.io/github/databrickslabs/dbldatagen](https://github.com/databrickslabs/dbldatagen))
 
 <!-- 
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/databrickslabs/dbldatagen.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/databrickslabs/dbldatagen/context:python)
@@ -63,7 +64,7 @@ details of use and many examples.
 
 Release notes and details of the latest changes for this specific release
 can be found in the GitHub repository
-[here](https://github.com/databrickslabs/dbldatagen/blob/release/v0.3.5/CHANGELOG.md)
+[here](https://github.com/databrickslabs/dbldatagen/blob/release/v0.3.6/CHANGELOG.md)
 
 # Installation
 
@@ -82,7 +83,7 @@ contains details of installation using alternative mechanisms.
 
 ## Compatibility 
 The Databricks Labs Data Generator framework can be used with Pyspark 3.1.2 and Python 3.8 or later. These are 
-compatible with the Databricks runtime 9.1 LTS and later releases. For full Unity Catalog support, 
+compatible with the Databricks runtime 10.4 LTS and later releases. For full Unity Catalog support, 
 we recommend using Databricks runtime 13.2 or later (Databricks 13.3 LTS or above preferred)
 
 For full library compatibility for a specific Databricks Spark release, see the Databricks 

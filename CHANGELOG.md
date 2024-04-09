@@ -18,6 +18,9 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 * Updated code to use default parallelism of 200 when using a shared Spark session
 * Updated code to use Spark's SQL function `element_at` instead of array indexing due to incompatibility
 
+### Notes
+* Ths version marks the changing minimum version of Databricks runtime to 10.4 LTS and later releases.
+* While there are no known incompatibilities with Databricks 9.1 LTS, we will not test against this release
 
 ### Version 0.3.5
 
