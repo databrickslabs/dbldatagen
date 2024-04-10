@@ -4,7 +4,8 @@ import pytest
 from pyspark.sql.types import IntegerType, StringType, FloatType
 
 import dbldatagen as dg
-from dbldatagen.constraints import SqlExpr, LiteralRelation, ChainedRelation, LiteralRange, RangedValues
+from dbldatagen.constraints import SqlExpr, LiteralRelation, ChainedRelation, LiteralRange, RangedValues, \
+    PositiveValues, NegativeValues
 
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
@@ -26,6 +27,7 @@ class TestConstraints:
                         .withColumn("code1", IntegerType(), unique_values=100)
                         .withColumn("code2", IntegerType(), min=1, max=200)
                         .withColumn("code3", IntegerType(), maxValue=10)
+                        .withColumn("positive_and_negative", IntegerType(), minValue=-100, maxValue=100)
                         .withColumn("code4", StringType(), values=['a', 'b', 'c'])
                         .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True)
                         .withColumn("code6", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
@@ -86,6 +88,30 @@ class TestConstraints:
         rowCount = testDataDF.count()
         assert rowCount == expectedRows
 
+    def testNegativeValues(self, generationSpec1):
+        testDataSpec = (generationSpec1
+                        .withConstraints([SqlExpr("id < 100"),
+                                          SqlExpr("id > 0")])
+                        .withConstraint(NegativeValues("positive_and_negative"))
+                        )
+
+        testDataDF = testDataSpec.build()
+
+        rowCount = testDataDF.count()
+        assert rowCount == 99
+
+    def testPositiveValues(self, generationSpec1):
+        testDataSpec = (generationSpec1
+                        .withConstraints([SqlExpr("id < 100"),
+                                          SqlExpr("id > 0")])
+                        .withConstraint(PositiveValues("positive_and_negative"))
+                        )
+
+        testDataDF = testDataSpec.build()
+
+        rowCount = testDataDF.count()
+        assert rowCount == 99
+
     def test_scalar_relation_bad(self, generationSpec1):
         with pytest.raises(ValueError):
             testDataSpec = (generationSpec1
@@ -131,12 +157,18 @@ class TestConstraints:
         rowCount = testDataDF.count()
         assert rowCount == expectedRows
 
-    def test_chained_relation_bad(self, generationSpec2):
+    @pytest.mark.parametrize("columns, operation",
+                             [
+                                 (["code3", "code2", "code1"], "<<<"),
+                                 (None, "<="),
+                                 (["code3"], ">"),
+                             ])
+    def test_chained_relation_bad(self, generationSpec2, columns, operation):
         with pytest.raises(ValueError):
             testDataSpec = (generationSpec2
                             .withConstraints([SqlExpr("id < 100"),
                                               SqlExpr("id > 0")])
-                            .withConstraint(ChainedRelation(["code3", "code2", "code1"], ">>>"))
+                            .withConstraint(ChainedRelation(columns, operation))
                             )
 
             testDataDF = testDataSpec.build()
