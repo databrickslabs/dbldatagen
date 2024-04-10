@@ -28,6 +28,7 @@ from .negative_values import NegativeValues
 from .positive_values import PositiveValues
 from .ranged_values_constraint import RangedValues
 from .sql_expr import SqlExpr
+from .unique_combinations import UniqueCombinations
 
 __all__ = ["chained_relation",
            "constraint",
@@ -35,4 +36,5 @@ __all__ = ["chained_relation",
            "literal_range_constraint",
            "literal_relation_constraint",
            "positive_values",
-           "ranged_values_constraint"]
+           "ranged_values_constraint",
+           "unique_combinations"]

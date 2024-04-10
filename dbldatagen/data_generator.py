@@ -13,6 +13,8 @@ from pyspark.sql.types import LongType, IntegerType, StringType, StructType, Str
 
 from ._version import _get_spark_version
 from .column_generation_spec import ColumnGenerationSpec
+from .constraints.constraint import Constraint
+from .constraints.sql_expr import SqlExpr
 from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, \
     DEFAULT_SEED_COLUMN, SPARK_RANGE_COLUMN, MIN_SPARK_VERSION, \
     OPTION_RANDOM, OPTION_RANDOM_SEED, OPTION_RANDOM_SEED_METHOD, \
@@ -21,9 +23,6 @@ from .html_utils import HtmlUtils
 from .schema_parser import SchemaParser
 from .spark_singleton import SparkSingleton
 from .utils import ensure, topologicalSort, DataGenError, deprecated, split_list_matching_condition
-from .constraints.constraint import Constraint
-from .constraints.sql_expr import SqlExpr
-
 
 _OLD_MIN_OPTION = 'min'
 _OLD_MAX_OPTION = 'max'
@@ -961,7 +960,7 @@ class DataGenerator:
 
         if asJson:
             output_expr = f"to_json({struct_expr})"
-            newDf = self.withColumn(colName, StringType(), expr=output_expr,  **kwargs)
+            newDf = self.withColumn(colName, StringType(), expr=output_expr, **kwargs)
         else:
             newDf = self.withColumn(colName, INFER_DATATYPE, expr=struct_expr, **kwargs)
 
@@ -1208,6 +1207,9 @@ class DataGenerator:
         generation. Depending on the type of the constraint, the constraint may also affect other aspects of the
         data generation
         """
+        assert constraint is not None, "Constraint cannot be empty"
+        assert isinstance(constraint, Constraint) or issubclass(constraint, Constraint), \
+            "Constraint must be an instance of, or an instance of a subclass of the Constraint class"
         self._constraints.append(constraint)
         return self
 
@@ -1221,6 +1223,13 @@ class DataGenerator:
         generation. Depending on the type of the constraint, the constraint may also affect other aspects of the
         data generation
         """
+        assert constraints is not None, "Constraints list cannot be empty"
+
+        for constraint in constraints:
+            assert constraint is not None, "Constraint cannot be empty"
+            assert isinstance(constraint, Constraint) or issubclass(constraint, Constraint), \
+                "Constraint must be an instance of, or an instance of a subclass of the Constraint class"
+
         self._constraints.extend(constraints)
         return self
 
@@ -1282,20 +1291,29 @@ class DataGenerator:
         """ Apply pre data generation constraints """
         if self._constraints is not None and len(self._constraints) > 0:
             for constraint in self._constraints:
-                assert isinstance(constraint, Constraint), "constraint should be of type Constraint"
+                assert isinstance(constraint, Constraint) or issubclass(constraint, Constraint), \
+                    "constraint should be of type Constraint"
                 constraint.prepareDataGenerator(self)
 
     def _applyPostGenerationConstraints(self, df):
-        """ Build and apply the constraint expressions as SQL filters"""
+        """ Build and apply the constraints using two mechanisms
+            - Apply transformations to dataframe
+            - Apply expressions as SQL filters using where clauses"""
         if self._constraints is not None and len(self._constraints) > 0:
+
+            for constraint in self._constraints:
+                df = constraint.transformDataframe(self, df)
+
             # get set of constraint expressions
-            constraint_expressions = [ constraint.filterExpression for constraint in self._constraints
-                                       if constraint.filterExpression is not None
-                                       ]
+            constraint_expressions = [constraint.filterExpression for constraint in self._constraints
+                                      if constraint.filterExpression is not None
+                                      ]
 
-            constraint_expression = Constraint.combineConstraintExpressions(constraint_expressions)
+            if constraint_expressions is not None and len(constraint_expressions) > 0:
+                constraint_expression = Constraint.combineConstraintExpressions(constraint_expressions)
 
-            df = df.where(constraint_expression)
+                # apply the filter
+                df = df.where(constraint_expression)
 
         return df
 

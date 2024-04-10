@@ -89,13 +89,16 @@ class Constraint(object):
         """
         return dataGenerator
 
-    def _transform_dataframe(self, dataGenerator, dataFrame):
+    def transformDataframe(self, dataGenerator, dataFrame):
         """ Transform the dataframe to make data conform to constraint if possible
 
            This method should not modify the dataGenerator - but may modify the dataframe
 
            :param dataGenerator: Data generation object that generated the dataframe
+           :param dataFrame: generated dataframe
            :return: modified or unmodified Spark dataframe
+
+           The default transformation returns the dataframe unmodified
 
         """
         return dataFrame

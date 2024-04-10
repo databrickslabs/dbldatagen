@@ -11,7 +11,6 @@ from .constraint import Constraint
 
 
 class LiteralRelation(Constraint):
-
     """LiteralRelation constraint
 
     Constrains one or more columns so that the columns have an a relationship to a constant value
@@ -20,6 +19,7 @@ class LiteralRelation(Constraint):
     :param relation: operator to check - should be one of <,> , =,>=,<=, ==, !=
     :param value: A literal value to to compare against
     """
+
     def __init__(self, columns, relation, value):
         Constraint.__init__(self)
         self._columns = self._columnsFromListOrString(columns)
