@@ -103,7 +103,6 @@ class Constraint(object):
         """
         return dataFrame
 
-
     def _generate_filter_expression(self):
         """ Generate a Pyspark expression that may be used for filtering"""
         return None
