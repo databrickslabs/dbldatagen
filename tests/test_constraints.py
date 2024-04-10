@@ -65,17 +65,26 @@ class TestConstraints:
         rowCount = testDataDF.count()
         assert rowCount == 99
 
-    def test_scalar_relation(self, generationSpec1):
+    @pytest.mark.parametrize("column, operation, literalValue, expectedRows",
+                             [
+                                 ("id", "<", 50, 49),
+                                 ("id", "<=", 50, 50),
+                                 ("id", ">", 50, 49),
+                                 ("id", ">=", 50, 50),
+                                 ("id", "==", 50, 1),
+                                 ("id", "!=", 50, 98),
+                             ])
+    def test_scalar_relation(self, generationSpec1, column, operation, literalValue, expectedRows):
         testDataSpec = (generationSpec1
                         .withConstraints([SqlExpr("id < 100"),
                                           SqlExpr("id > 0")])
-                        .withConstraint(LiteralRelation("id", "<", 50))
+                        .withConstraint(LiteralRelation(column, operation, literalValue))
                         )
 
         testDataDF = testDataSpec.build()
 
         rowCount = testDataDF.count()
-        assert rowCount == 49
+        assert rowCount == expectedRows
 
     def test_scalar_relation_bad(self, generationSpec1):
         with pytest.raises(ValueError):
@@ -103,53 +112,24 @@ class TestConstraints:
 
         return testDataSpec
 
-    def test_chained_relation(self, generationSpec2):
+    @pytest.mark.parametrize("columns, operation,  expectedRows",
+                             [
+                                 (["code1", "code2", "code3"], "<",  99),
+                                 (["code1", "code2", "code3"], "<=",  99),
+                                 (["code3", "code2", "code1"], ">", 99),
+                                 (["code3", "code2", "code1"], ">=", 99),
+                             ])
+    def test_chained_relation(self, generationSpec2, columns, operation, expectedRows):
         testDataSpec = (generationSpec2
                         .withConstraints([SqlExpr("id < 100"),
                                           SqlExpr("id > 0")])
-                        .withConstraint(ChainedRelation(["code1", "code2", "code3"], "<"))
+                        .withConstraint(ChainedRelation(columns, operation))
                         )
 
         testDataDF = testDataSpec.build()
 
         rowCount = testDataDF.count()
-        assert rowCount == 99
-
-    def test_chained_relation2(self, generationSpec2):
-        testDataSpec = (generationSpec2
-                        .withConstraints([SqlExpr("id < 100"),
-                                          SqlExpr("id > 0")])
-                        .withConstraint(ChainedRelation(["code1", "code2", "code3"], "<="))
-                        )
-
-        testDataDF = testDataSpec.build()
-
-        rowCount = testDataDF.count()
-        assert rowCount == 99
-
-    def test_chained_relation3(self, generationSpec2):
-        testDataSpec = (generationSpec2
-                        .withConstraints([SqlExpr("id < 100"),
-                                          SqlExpr("id > 0")])
-                        .withConstraint(ChainedRelation(["code3", "code2", "code1"], ">"))
-                        )
-
-        testDataDF = testDataSpec.build()
-
-        rowCount = testDataDF.count()
-        assert rowCount == 99
-
-    def test_chained_relation4(self, generationSpec2):
-        testDataSpec = (generationSpec2
-                        .withConstraints([SqlExpr("id < 100"),
-                                          SqlExpr("id > 0")])
-                        .withConstraint(ChainedRelation(["code3", "code2", "code1"], ">="))
-                        )
-
-        testDataDF = testDataSpec.build()
-
-        rowCount = testDataDF.count()
-        assert rowCount == 99
+        assert rowCount == expectedRows
 
     def test_chained_relation_bad(self, generationSpec2):
         with pytest.raises(ValueError):
@@ -164,17 +144,24 @@ class TestConstraints:
             rowCount = testDataDF.count()
             assert rowCount == 99
 
-    def test_literal_range(self, generationSpec2):
+    @pytest.mark.parametrize("column, minValue, maxValue, strictFlag,  expectedRows",
+                             [
+                                 ("id", 0, 100, True,  99),
+                                 ("id", 0, 100, False,  99),
+                                 ("id", 10, 20, True, 9),
+                                 ("id", 10, 20, False, 11),
+                             ])
+    def test_literal_range(self, generationSpec2, column, minValue, maxValue, strictFlag, expectedRows):
         testDataSpec = (generationSpec2
                         .withConstraints([SqlExpr("id < 100"),
                                           SqlExpr("id > 0")])
-                        .withConstraint(LiteralRange("id", 0, 100, strict=True))
+                        .withConstraint(LiteralRange(column, minValue, maxValue, strict=strictFlag))
                         )
 
         testDataDF = testDataSpec.build()
 
         rowCount = testDataDF.count()
-        assert rowCount == 99
+        assert rowCount == expectedRows
 
     def test_ranged_values(self, generationSpec2):
         testDataSpec = (generationSpec2
