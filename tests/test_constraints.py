@@ -88,11 +88,18 @@ class TestConstraints:
         rowCount = testDataDF.count()
         assert rowCount == expectedRows
 
-    def testNegativeValues(self, generationSpec1):
+    @pytest.mark.parametrize("columns, strictFlag,  expectedRows",
+                             [
+                                 ("positive_and_negative", True,  99),
+                                 ("positive_and_negative", False,  100),
+                                 ("positive_and_negative", "skip", 100),
+                             ])
+    def testNegativeValues(self, generationSpec1, columns, strictFlag, expectedRows):
         testDataSpec = (generationSpec1
                         .withConstraints([SqlExpr("id < 100"),
                                           SqlExpr("id > 0")])
-                        .withConstraint(NegativeValues("positive_and_negative"))
+                        .withConstraint(NegativeValues(columns, strict=strictFlag) if strictFlag != "skip"
+                                        else NegativeValues(columns))
                         )
 
         testDataDF = testDataSpec.build()
@@ -100,17 +107,24 @@ class TestConstraints:
         rowCount = testDataDF.count()
         assert rowCount == 99
 
-    def testPositiveValues(self, generationSpec1):
+    @pytest.mark.parametrize("columns, strictFlag,  expectedRows",
+                             [
+                                 ("positive_and_negative", True,  99),
+                                 ("positive_and_negative", False,  100),
+                                 ("positive_and_negative", "skip", 100),
+                             ])
+    def testPositiveValues(self, generationSpec1, columns, strictFlag, expectedRows):
         testDataSpec = (generationSpec1
-                        .withConstraints([SqlExpr("id < 100"),
+                        .withConstraints([SqlExpr("id < 200"),
                                           SqlExpr("id > 0")])
-                        .withConstraint(PositiveValues("positive_and_negative"))
+                        .withConstraint(PositiveValues(columns, strict=strictFlag) if strictFlag != "skip"
+                                        else PositiveValues(columns))
                         )
 
         testDataDF = testDataSpec.build()
 
         rowCount = testDataDF.count()
-        assert rowCount == 99
+        assert rowCount == expectedRows
 
     def test_scalar_relation_bad(self, generationSpec1):
         with pytest.raises(ValueError):

@@ -31,8 +31,8 @@ class PositiveValues(Constraint):
         """ Generate a filter expression that may be used for filtering"""
         expressions = [F.col(colname) for colname in self._columns]
         if self._strict:
-            filters = [col.isNotNull() & col > 0 for col in expressions]
+            filters = [col.isNotNull() & (col > 0) for col in expressions]
         else:
-            filters = [col.isNotNull() & col >= 0 for col in expressions]
+            filters = [col.isNotNull() & (col >= 0) for col in expressions]
 
         return self.combineConstraintExpressions(filters)
