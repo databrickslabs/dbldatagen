@@ -5,7 +5,7 @@ from pyspark.sql.types import IntegerType, StringType, FloatType
 
 import dbldatagen as dg
 from dbldatagen.constraints import SqlExpr, LiteralRelation, ChainedRelation, LiteralRange, RangedValues, \
-    PositiveValues, NegativeValues
+    PositiveValues, NegativeValues,UniqueCombinations
 
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
@@ -148,6 +148,7 @@ class TestConstraints:
                         .withColumn("code1", IntegerType(), min=1, max=100)
                         .withColumn("code2", IntegerType(), min=50, max=150)
                         .withColumn("code3", IntegerType(), min=100, max=200)
+                        .withColumn("code4", IntegerType(), min=1, max=300)
                         )
 
         return testDataSpec
@@ -187,8 +188,55 @@ class TestConstraints:
 
             testDataDF = testDataSpec.build()
 
-            rowCount = testDataDF.count()
-            assert rowCount == 99
+    def test_unique_combinations(self, generationSpec2):
+
+        validationDataSpec = generationSpec2.clone()
+        df = validationDataSpec.build()
+
+        validationCount = df.select('code1', 'code4').distinct().count()
+        validationCount2 = df.dropDuplicates(['code1', 'code4']).count()
+        print(validationCount, validationCount2)
+
+        testDataSpec = (generationSpec2
+                        .withConstraint(UniqueCombinations(["code1", "code4"]))
+                        )
+
+        testDataDF = testDataSpec.build()
+
+        rowCount = testDataDF.count()
+        assert rowCount == validationCount
+
+    @pytest.fixture()
+    def generationSpec3(self):
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
+                                         partitions=4)
+                        .withColumn("code1", IntegerType(), min=1, max=20)
+                        .withColumn("code2", IntegerType(), min=1, max=30)
+                        .withColumn("code3", IntegerType(), min=1, max=5)
+                        .withColumn("code4", IntegerType(), min=1, max=10)
+                        )
+
+        return testDataSpec
+
+    def test_unique_combinations2(self, generationSpec3):
+
+        validationDataSpec = generationSpec3.clone()
+        df = validationDataSpec.build()
+
+        validationCount = df.distinct().count()
+        validationCount2 = df.dropDuplicates().count()
+        print(validationCount, validationCount2)
+
+        testDataSpec = (generationSpec3
+                        .withConstraint(UniqueCombinations("*"))
+                        )
+
+        testDataDF = testDataSpec.build()
+
+        rowCount = testDataDF.count()
+        print("rowCount", rowCount)
+        assert rowCount == validationCount
+
 
     @pytest.mark.parametrize("column, minValue, maxValue, strictFlag,  expectedRows",
                              [

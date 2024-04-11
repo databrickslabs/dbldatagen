@@ -47,6 +47,9 @@ class ColumnSpecOptions(object):
     :param baseColumn: Either the string name of the base column, or a list of columns to use to
                         control data generation. The option ``baseColumns`` is an alias for ``baseColumn``.
 
+    :param baseColumnType: Determines how the value is derived from the base column. Possible values are 'auto',
+                           'hash', 'raw_values', 'values'
+
     :param values: List of discrete values for the colummn. Discrete values for the column can be strings, numbers
                    or constants conforming to type of column
 
