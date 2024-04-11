@@ -5,7 +5,7 @@ from pyspark.sql.types import IntegerType, StringType, FloatType
 
 import dbldatagen as dg
 from dbldatagen.constraints import SqlExpr, LiteralRelation, ChainedRelation, LiteralRange, RangedValues, \
-    PositiveValues, NegativeValues,UniqueCombinations
+    PositiveValues, NegativeValues, UniqueCombinations
 
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
@@ -90,8 +90,8 @@ class TestConstraints:
 
     @pytest.mark.parametrize("columns, strictFlag,  expectedRows",
                              [
-                                 ("positive_and_negative", True,  99),
-                                 ("positive_and_negative", False,  100),
+                                 ("positive_and_negative", True, 99),
+                                 ("positive_and_negative", False, 100),
                                  ("positive_and_negative", "skip", 100),
                              ])
     def testNegativeValues(self, generationSpec1, columns, strictFlag, expectedRows):
@@ -109,8 +109,8 @@ class TestConstraints:
 
     @pytest.mark.parametrize("columns, strictFlag,  expectedRows",
                              [
-                                 ("positive_and_negative", True,  99),
-                                 ("positive_and_negative", False,  100),
+                                 ("positive_and_negative", True, 99),
+                                 ("positive_and_negative", False, 100),
                                  ("positive_and_negative", "skip", 100),
                              ])
     def testPositiveValues(self, generationSpec1, columns, strictFlag, expectedRows):
@@ -155,8 +155,8 @@ class TestConstraints:
 
     @pytest.mark.parametrize("columns, operation,  expectedRows",
                              [
-                                 (["code1", "code2", "code3"], "<",  99),
-                                 (["code1", "code2", "code3"], "<=",  99),
+                                 (["code1", "code2", "code3"], "<", 99),
+                                 (["code1", "code2", "code3"], "<=", 99),
                                  (["code3", "code2", "code1"], ">", 99),
                                  (["code3", "code2", "code1"], ">=", 99),
                              ])
@@ -189,7 +189,6 @@ class TestConstraints:
             testDataDF = testDataSpec.build()
 
     def test_unique_combinations(self, generationSpec2):
-
         validationDataSpec = generationSpec2.clone()
         df = validationDataSpec.build()
 
@@ -219,7 +218,6 @@ class TestConstraints:
         return testDataSpec
 
     def test_unique_combinations2(self, generationSpec3):
-
         validationDataSpec = generationSpec3.clone()
         df = validationDataSpec.build()
 
@@ -237,11 +235,10 @@ class TestConstraints:
         print("rowCount", rowCount)
         assert rowCount == validationCount
 
-
     @pytest.mark.parametrize("column, minValue, maxValue, strictFlag,  expectedRows",
                              [
-                                 ("id", 0, 100, True,  99),
-                                 ("id", 0, 100, False,  99),
+                                 ("id", 0, 100, True, 99),
+                                 ("id", 0, 100, False, 99),
                                  ("id", 10, 20, True, 9),
                                  ("id", 10, 20, False, 11),
                              ])
