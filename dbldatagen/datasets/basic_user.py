@@ -19,6 +19,8 @@ class BasicUserProvider(DatasetProvider):
     As the data specification is a DataGenerator object, you can add further columns to the data set and
     add constraints (when the feature is available)
 
+    Need to document options
+
     """
     MAX_LONG = 9223372036854775807
     ALLOWED_OPTIONS = ["random", "dummyValues", "rows", "partitions", "tableName"]
