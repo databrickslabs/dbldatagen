@@ -137,7 +137,8 @@ class TestDatasets:
     def test_decorators1b(self, mkTableSpec):
         @dataset_definition(description="a test description")
         class X1b(DatasetProvider):
-            def getTable(self, sparkSession, *, tableName=None, rows=-1, partitions=-1, description="a test description",
+            def getTable(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
+                         description="a test description",
                          **options):
                 return mkTableSpec
 
@@ -161,15 +162,14 @@ class TestDatasets:
     def test_invalid_decorator_use(self):
         with pytest.raises(TypeError):
             @dataset_definition
-            def foo(x):
+            def my_function(x):
                 return x
 
     def test_invalid_decorator_use2(self):
         with pytest.raises(TypeError):
-            def foo(x):
+            @dataset_definition(name="test/bad_decorator1")
+            def my_function(x):
                 return x
-
-
 
     @pytest.mark.parametrize("rows_requested, partitions_requested, random, dummy", [
         (50, 4, False, 0),

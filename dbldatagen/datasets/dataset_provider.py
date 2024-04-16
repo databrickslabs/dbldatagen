@@ -213,17 +213,16 @@ class DatasetProvider:
             :return: Returns the target class object
             """
             if self._targetCls is not None:
-                print("type of target class", type(self._targetCls))
-                #if self._targetCls is not None and (isinstance(self._targetCls, DatasetProvider) or
+                # if self._targetCls is not None and (isinstance(self._targetCls, DatasetProvider) or
                 #                                    issubclass(self._targetCls, DatasetProvider)):
                 dataset_desc = DatasetProvider.DatasetDefinition(name=self._datasetName,
-                                                             tables=self._tables,
-                                                             primaryTable=self._primaryTable,
-                                                             summary=self._summary,
-                                                             description=self._description,
-                                                             supportsStreaming=self._supportsStreaming,
-                                                             providerClass=self._targetCls
-                                                             )
+                                                                 tables=self._tables,
+                                                                 primaryTable=self._primaryTable,
+                                                                 summary=self._summary,
+                                                                 description=self._description,
+                                                                 supportsStreaming=self._supportsStreaming,
+                                                                 providerClass=self._targetCls
+                                                                 )
                 setattr(self._targetCls, "_DATASET_DEFINITION", dataset_desc)
                 retval = self._targetCls
             else:
@@ -278,7 +277,12 @@ def dataset_definition(cls=None, *args, autoRegister=False, **kwargs):  # pylint
 
         :return: Returns the target class object
         """
-        return DatasetProvider.DatasetDefinitionDecorator(inner_cls, *args, **kwargs).mkClass(autoRegister)
+        try:
+            assert issubclass(inner_cls, DatasetProvider), \
+                f"Target class of decorator ({inner_cls}) must inherit from DataProvider"
+            return DatasetProvider.DatasetDefinitionDecorator(inner_cls, *args, **kwargs).mkClass(autoRegister)
+        except Exception as exc:
+            raise TypeError(f"Invalid decorator usage: {exc}") from exc
 
     # handle the decorator syntax with no arguments - when there are no arguments, the only argument passed is an
     # implicit class object
@@ -287,12 +291,10 @@ def dataset_definition(cls=None, *args, autoRegister=False, **kwargs):  # pylint
             # handle decorator syntax with no arguments
             # when no arguments are provided to the decorator, the only argument passed is an implicit class object
             assert issubclass(cls, DatasetProvider), f"Target class of decorator ({cls}) must inherit from DataProvider"
-            print("type of class",type(cls))
             return DatasetProvider.DatasetDefinitionDecorator(cls, *args, **kwargs).mkClass(autoRegister)
         else:
             # handle decorator syntax with arguments - here we simply return the inner wrapper function
             # and the subsequent call with arguments will apply the decorator to the target class
             return inner_wrapper
     except Exception as e:
-        raise TypeError(f"Invalid decorator usage: {e}")
-
+        raise TypeError(f"Invalid decorator usage: {e}") from e
