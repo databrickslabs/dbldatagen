@@ -27,7 +27,7 @@ class NegativeValues(Constraint):
         self._columns = self._columnsFromListOrString(columns)
         self._strict = strict
 
-    def _generate_filter_expression(self):
+    def _generateFilterExpression(self):
         expressions = [F.col(colname) for colname in self._columns]
         if self._strict:
             filters = [col.isNotNull() & (col < 0) for col in expressions]

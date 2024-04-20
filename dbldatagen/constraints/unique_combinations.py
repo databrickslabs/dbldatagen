@@ -60,3 +60,7 @@ class UniqueCombinations(Constraint):
             results = dataFrame.dropDuplicates(columnsToEvaluate)
 
         return results
+
+    def _generateFilterExpression(self):
+        """ Generate a SQL filter expression that may be used for filtering"""
+        return None  # no filter expression needed

@@ -29,7 +29,7 @@ class LiteralRelation(Constraint):
         if relation not in self.SUPPORTED_OPERATORS:
             raise ValueError(f"Parameter `relation` should be one of the operators :{self.SUPPORTED_OPERATORS}")
 
-    def _generate_filter_expression(self):
+    def _generateFilterExpression(self):
         expressions = [F.col(colname) for colname in self._columns]
         literalValue = F.lit(self._value)
         filters = [self._generate_relation_expression(col, self._relation, literalValue) for col in expressions]

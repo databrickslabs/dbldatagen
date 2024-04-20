@@ -5,6 +5,7 @@
 """
 This module defines the ChainedInequality class
 """
+from pyspark.sql import DataFrame
 import pyspark.sql.functions as F
 from .constraint import Constraint
 
@@ -42,7 +43,7 @@ class ChainedRelation(Constraint):
         if not isinstance(self._columns, list) or len(self._columns) <= 1:
             raise ValueError("ChainedRelation constraints must be defined across more than one column")
 
-    def _generate_filter_expression(self):
+    def _generateFilterExpression(self):
         """ Generated composite filter expression for chained set of filter expressions
 
         I.e if columns is ['a', 'b', 'c'] and relation is '<'

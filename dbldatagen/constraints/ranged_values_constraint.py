@@ -28,7 +28,7 @@ class RangedValues(Constraint):
         self._highValue = highValue
         self._strict = strict
 
-    def _generate_filter_expression(self):
+    def _generateFilterExpression(self):
         """ Generate a SQL filter expression that may be used for filtering"""
         expressions = [F.col(colname) for colname in self._columns]
         minValue = F.col(self._lowValue)
