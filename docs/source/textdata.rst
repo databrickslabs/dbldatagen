@@ -84,7 +84,7 @@ The following example illustrates its use:
        dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
                       partitions=4, randomSeedMethod="hash_fieldname")
        .withIdOutput()
-       .withColumnSpec("sample_text", text=dg.ILText(paragraphs=(1, 4),
+       .withColumn("sample_text", "string", text=dg.ILText(paragraphs=(1, 4),
                        sentences=(2, 6)))
     )
 
@@ -105,11 +105,11 @@ Here are some examples of its use to generate dummy email addresses, ip addresse
          dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
                           partitions=4, randomSeedMethod="hash_fieldname")
         .withIdOutput()
-        .withColumnSpec("email",
+        .withColumn("email", "string",
                         template=r'\w.\w@\w.com|\w@\w.co.u\k')
-        .withColumnSpec("ip_addr",
+        .withColumn("ip_addr", "string",
                          template=r'\n.\n.\n.\n')
-        .withColumnSpec("phone",
+        .withColumn("phone", "string",
                          template=r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd')
         )
 
@@ -170,6 +170,9 @@ It uses the following special chars:
 
           To use the ``escapeSpecialChars`` option, use the variant
           ``text=dg.TemplateGenerator(template=...), escapeSpecialChars=True``
+
+          The template generator allows specification of a custom word list also. This is a list of words that can be
+            used in the template generation. The default word list is the ipsum lorem word list.
 
 In all other cases, the char itself is used.
 
