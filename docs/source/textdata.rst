@@ -96,6 +96,13 @@ Using the general purpose text generator
 
 The ``template`` attribute allows specification of templated text generation.
 
+.. note ::
+   The ``template`` option is shorthand for ``text=dg.TemplateGenerator(template=...)``
+
+   This can be specified with different options covering how escapes are handled and customizing the word list
+   - see the `TemplateGenerator` documentation for more details.
+
+
 Here are some examples of its use to generate dummy email addresses, ip addressed and phone numbers
 
 .. code-block:: python
@@ -118,14 +125,8 @@ Here are some examples of its use to generate dummy email addresses, ip addresse
 
 The implementation of the template expansion uses the underlying `TemplateGenerator` class.
 
-.. note ::
-   The ``template`` option is shorthand for ``text=dg.TemplateGenerator(template=...)``
-
-   This can be specified in multiple modes - see the `TemplateGenerator` documentation for more details.
-
-
 TemplateGenerator options
----------------------------------------------
+-------------------------
 
 The template generator generates text from a template to allow for generation of synthetic credit card numbers,
 VINs, IBANs and many other structured codes.
@@ -154,6 +155,17 @@ It uses the following special chars:
     W         Insert a random uppercase word from the ipsum lorem word set. Always escaped
     ========  ======================================
 
+In all other cases, the char itself is used.
+
+The setting of the ``escapeSpecialChars`` determines how templates generate data.
+
+If set to False, then the template ``r"\\dr_\\v"`` will generate the values ``"dr_0"`` ... ``"dr_999"`` when applied
+to the values zero to 999. This conforms to earlier implementations for backwards compatibility.
+
+If set to True, then the template ``r"dr_\\v"`` will generate the values ``"dr_0"`` ... ``"dr_999"``
+when applied to the values zero to 999. This conforms to the preferred style going forward
+
+
 .. note::
           If escape is used and ``escapeSpecialChars`` is False, then the following
           char is assumed to have no special meaning.
@@ -165,23 +177,35 @@ It uses the following special chars:
 
           A special case exists for ``\\v`` - if immediately followed by a digit 0 - 9, the underlying base value
           is interpreted as an array of values and the nth element is retrieved where `n` is the digit specified.
-          
+
           The ``escapeSpecialChars`` is set to False by default for backwards compatibility.
 
           To use the ``escapeSpecialChars`` option, use the variant
           ``text=dg.TemplateGenerator(template=...), escapeSpecialChars=True``
 
-          The template generator allows specification of a custom word list also. This is a list of words that can be
-            used in the template generation. The default word list is the ipsum lorem word list.
 
-In all other cases, the char itself is used.
+Using a custom word list
+^^^^^^^^^^^^^^^^^^^^^^^^
 
-The setting of the ``escapeSpecialChars`` determines how templates generate data.
+The template generator allows specification of a custom word list also. This is a list of words that can be
+used in the template generation. The default word list is the `ipsum lorem` word list.
 
-If set to False, then the template ``r"\\dr_\\v"`` will generate the values ``"dr_0"`` ... ``"dr_999"`` when applied
-to the values zero to 999. This conforms to earlier implementations for backwards compatibility.
+While the `values` option allows for the specification of a list of categorical values, this is transmitted as part of
+the generated SQL. The use of the `TemplateGenerator` object with a custom word list allows for specification of much
+larger lists of possible values without the need to transmit them as part of the generated SQL.
 
-If set to True, then the template ``r"dr_\\v"`` will generate the values ``"dr_0"`` ... ``"dr_999"``
-when applied to the values zero to 999. This conforms to the preferred style going forward
 
+Other forms of text value lookup
+--------------------------------
+
+The use of the `values` option and the `template` option with a `TemplateGenerator` instance allow for generation of
+data when the range of possible values is known.
+
+But what about scenarios when the list of data is read from a different table or some other form of lookup?
+
+As the output of the data generation `build()` method is a regular PySpark DataFrame, it is possible to join the
+generated data with other data sources to generate the required data.
+
+In these cases, the generator can be specified to produce lookup keys that can be used to join with the
+other data sources.
 
