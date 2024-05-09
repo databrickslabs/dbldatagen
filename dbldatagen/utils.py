@@ -9,17 +9,24 @@ These are meant for internal use only
 """
 
 import functools
+import json
+import re
+import time
 import warnings
 from datetime import timedelta
-import re
+
+import jmespath
 
 
 def deprecated(message=""):
-    ''' Define a deprecated decorator without dependencies on 3rd party libraries
+    """
+    Define a deprecated decorator without dependencies on 3rd party libraries
 
     Note there is a 3rd party library called `deprecated` that provides this feature but goal is to only have
     dependencies on packages already used in the Databricks runtime
-    '''
+    """
+
+    # create closure around function that follows use of the decorator
 
     def deprecated_decorator(func):
         @functools.wraps(func)
@@ -75,6 +82,7 @@ def ensure(cond, msg="condition does not hold true"):
     :raises: `DataGenError` exception if condition does not hold true
     :returns: Does not return anything but raises exception if condition does not hold
     """
+
     def strip_margin(text):
         return re.sub(r'\n[ \t]*\|', '\n', text)
 
@@ -113,7 +121,13 @@ def topologicalSort(sources, initial_columns=None, flatten=True):
     :arg sources: list of ``(name, set(names of dependencies))`` pairs
     :arg initial_columns: force ``initial_columns`` to be computed first
     :arg flatten: if true, flatten output list
-    :returns: list of names in dependency order. If not flattened, result will be list of lists
+    :returns: list of names in dependency order separated into build phases
+
+    .. note::
+       The algorith will give preference to retaining order of inbound sequence
+       over modifying order to produce a lower number of build phases.
+
+       Overall the effect is that the input build order should be retained unless there are forward references
     """
     # generate a copy so that we can modify in place
     pending = [(name, set(deps)) for name, deps in sources]
@@ -124,27 +138,36 @@ def topologicalSort(sources, initial_columns=None, flatten=True):
         next_pending = []
         gen = []
         value_emitted = False
+        defer_emitted = False
         gen_provided = []
         for entry in pending:
             name, deps = entry
             deps.difference_update(provided)
             if deps:
                 next_pending.append((name, set(deps)))
+
+                # if dependencies will be satisfied by item emitted in this round, defer output
+                if not deps.difference(gen_provided):
+                    defer_emitted = True
+            elif defer_emitted:
+                next_pending.append((name, set(deps)))
             elif name in provided:
-                value_emitted |= True
+                value_emitted = True
             else:
                 gen.append(name)
                 gen_provided.append(name)
-                value_emitted |= True
+                value_emitted = True
         provided.extend(gen_provided)
         build_orders.append(gen)
+
         if not value_emitted:
-            raise ValueError("cyclic or missing dependency detected %r" % (next_pending,))
+            raise ValueError(f"cyclic or missing dependency detected [{next_pending}]")
 
         pending = next_pending
 
     if flatten:
-        return [item for sublist in build_orders for item in sublist]
+        flattened_list = [item for sublist in build_orders for item in sublist]
+        return flattened_list
     else:
         return build_orders
 
@@ -155,7 +178,7 @@ _WEEKS_PER_YEAR = 52
 
 
 def parse_time_interval(spec):
-    '''parse time interval from string'''
+    """parse time interval from string"""
     hours = 0
     minutes = 0
     weeks = 0
@@ -214,3 +237,126 @@ def parse_time_interval(spec):
     )
 
     return delta
+
+
+def strip_margins(s, marginChar):
+    """
+    Python equivalent of Scala stripMargins method
+    
+    Takes a string (potentially multiline) and strips all chars up and including the first occurrence of `marginChar`.
+    Used to control the formatting of generated text
+
+    `strip_margins("one\n    |two\n    |three", '|')`
+
+    will produce 
+    
+    ``
+    one 
+    two
+    three
+    ``
+
+    :param s: string to strip margins from
+    :param marginChar: character to strip 
+    :return: modified string
+    """
+    assert s is not None and type(s) is str
+    assert marginChar is not None and type(marginChar) is str
+
+    lines = s.split('\n')
+    revised_lines = []
+
+    for line in lines:
+        if marginChar in line:
+            revised_line = line[line.index(marginChar) + 1:]
+            revised_lines.append(revised_line)
+        else:
+            revised_lines.append(line)
+
+    return '\n'.join(revised_lines)
+
+
+def split_list_matching_condition(lst, cond):
+    """
+    Split a list on elements that match a condition
+
+    This will find all matches of a specific condition in the list and split the list into sub lists around the
+    element that matches this condition.
+
+    It will handle multiple matches performing splits on each match.
+
+    For example, the following code will produce the results below:
+
+    x = ['id', 'city_name', 'id', 'city_id', 'city_pop', 'id', 'city_id', 'city_pop','city_id', 'city_pop','id']
+    splitListOnCondition(x, lambda el: el == 'id')
+
+
+    Result:
+    `[['id'], ['city_name'], ['id'], ['city_id', 'city_pop'],
+      ['id'], ['city_id', 'city_pop', 'city_id', 'city_pop'], ['id']]`
+
+    :arg lst: list of items to perform condition matches against
+    :arg cond: lambda function or function taking single argument and returning True or False
+    :returns: list of sublists
+    """
+    retval = []
+
+    def match_condition(matchList, matchFn):
+        """Return first index of element of list matching condition"""
+        if matchList is None or len(matchList) == 0:
+            return -1
+
+        for i, matchValue in enumerate(matchList):
+            if matchFn(matchValue):
+                return i
+
+        return -1
+
+    if lst is None:
+        retval = lst
+    elif len(lst) == 1:
+        retval = [lst]
+    else:
+        ix = match_condition(lst, cond)
+        if ix != -1:
+            retval.extend(split_list_matching_condition(lst[0:ix], cond))
+            retval.append(lst[ix:ix + 1])
+            retval.extend(split_list_matching_condition(lst[ix + 1:], cond))
+        else:
+            retval = [lst]
+
+    # filter out empty lists
+    return [el for el in retval if el != []]
+
+
+def json_value_from_path(searchPath, jsonData, defaultValue):
+    """ Get JSON value from JSON data referenced by searchPath
+
+    searchPath should be a JSON path as supported by the `jmespath` package
+    (see https://jmespath.org/)
+
+    :param searchPath: A `jmespath` compatible JSON search path
+    :param jsonData: The json data to search (string representation of the JSON data)
+    :param defaultValue: The default value to be returned if the value was not found
+    :return: Returns the json value if present, otherwise returns the default value
+    """
+    assert searchPath is not None and len(searchPath) > 0, "search path cannot be empty"
+    assert jsonData is not None and len(jsonData) > 0, "JSON data cannot be empty"
+
+    jsonDict = json.loads(jsonData)
+
+    jsonValue = jmespath.search(searchPath, jsonDict)
+
+    if jsonValue is not None:
+        return jsonValue
+
+    return defaultValue
+
+
+def system_time_millis():
+    """ return system time as milliseconds since start of epoch
+
+    :return: system time millis as long
+    """
+    curr_time = round(time.time() / 1000)
+    return curr_time

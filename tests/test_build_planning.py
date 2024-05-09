@@ -1,4 +1,5 @@
-import unittest
+import logging
+import pytest
 
 from pyspark.sql.types import BooleanType, DateType
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, TimestampType, DecimalType
@@ -141,87 +142,412 @@ schema = StructType([
     StructField("isDeleted", BooleanType(), True)
 ])
 
-print("schema", schema)
-
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
 
+@pytest.fixture(scope="class")
+def setupLogging():
+    FORMAT = '%(asctime)-15s %(message)s'
+    logging.basicConfig(format=FORMAT)
+
+
 # Test manipulation and generation of test data for a large schema
-class TestBuildPlanning(unittest.TestCase):
+class TestBuildPlanning:
     testDataSpec = None
     dfTestData = None
     row_count = 100000
 
-    def setUp(self):
-        print("setting up")
-
-    @classmethod
-    def setUpClass(cls):
+    @pytest.fixture(scope="class")
+    def sampleDataSpec(self):
         sale_values = ['RETAIL', 'ONLINE', 'WHOLESALE', 'RETURN']
         sale_weights = [1, 5, 5, 1]
 
-        cls.testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=cls.row_count,
-                                             partitions=4)
-                            .withSchema(schema)
-                            .withIdOutput()
-                            .withColumnSpecs(patterns=".*_ID", match_types=StringType(), format="%010d",
-                                             minValue=1, maxValue=123,
-                                             step=1)
-                            .withColumnSpecs(patterns=".*_IDS", match_types=StringType(), format="%010d", minValue=1,
-                                             maxValue=100, step=1)
-                            #     .withColumnSpec("R3D3_CLUSTER_IDS", minValue=1, maxValue=100, step=1)
-                            .withColumnSpec("XYYZ_IDS", minValue=1, maxValue=123, step=1,
-                                            format="%05d")
-                            # .withColumnSpec("nstr4", percentNulls=0.1,
-                            # minValue=1, maxValue=9, step=2,  format="%04d")
-                            # example of IS_SALE
-                            .withColumnSpec("IS_S", values=sale_values, weights=sale_weights, random=True)
-                            # .withColumnSpec("nstr4", percentNulls=0.1,
-                            # minValue=1, maxValue=9, step=2,  format="%04d")
+        testDataspec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count, partitions=4)
+                        .withSchema(schema)
+                        .withIdOutput()
+                        .withColumnSpecs(patterns=".*_ID", match_types=StringType(), format="%010d",
+                                         minValue=1, maxValue=123,
+                                         step=1)
+                        .withColumnSpecs(patterns=".*_IDS", match_types="string", format="%010d", minValue=1,
+                                         maxValue=100, step=1)
+                        # .withColumnSpec("R3D3_CLUSTER_IDS", minValue=1, maxValue=100, step=1)
+                        .withColumnSpec("XYYZ_IDS", minValue=1, maxValue=123, step=1,
+                                        format="%05d")
+                        # .withColumnSpec("nstr4", percentNulls=0.1,
+                        # minValue=1, maxValue=9, step=2,  format="%04d")
+                        # example of IS_SALE
+                        .withColumnSpec("IS_S", values=sale_values, weights=sale_weights, random=True)
+                        # .withColumnSpec("nstr4", percentNulls=0.1,
+                        # minValue=1, maxValue=9, step=2,  format="%04d")
+                        )
 
-                            )
+        return testDataspec
 
+    @pytest.fixture()
+    def sampleDataSet(self, sampleDataSpec):
         print("Test generation plan")
         print("=============================")
-        cls.testDataSpec.explain()
+        sampleDataSpec.explain()
 
-        print("=============================")
-        print("")
-        cls.dfTestData = cls.testDataSpec.build()
+        df = sampleDataSpec.build()
 
-    def test_fieldnames_for_schema(self):
+        return df
+
+    def setup_log_capture(self, caplog_object):
+        """ set up log capture fixture
+
+        Sets up log capture fixture to only capture messages after setup and only
+        capture warnings and errors
+
+        """
+        caplog_object.set_level(logging.WARNING)
+
+        # clear messages from setup
+        caplog_object.clear()
+
+    def get_log_capture_warngings_and_errors(self, caplog_object, textFlag):
+        """
+        gets count of errors containing specified text
+
+        :param caplog_object: log capture object from fixture
+        :param textFlag: text to search for to include error or warning in count
+        :return: count of errors containg text specified in `textFlag`
+        """
+        seed_column_warnings_and_errors = 0
+        for r in caplog_object.records:
+            if (r.levelname in ["WARNING", "ERROR"]) and textFlag in r.message:
+                seed_column_warnings_and_errors += 1
+
+        return seed_column_warnings_and_errors
+
+    def test_fieldnames_for_schema(self, sampleDataSpec):
         """Test field names in data spec correspond with schema"""
-        fieldsFromGenerator = set(self.testDataSpec.getOutputColumnNames())
+        fieldsFromGenerator = set(sampleDataSpec.getOutputColumnNames())
 
         fieldsFromSchema = set([fld.name for fld in schema.fields])
 
         # output fields should be same + 'id' field
-        self.assertEqual(fieldsFromGenerator - fieldsFromSchema, set(['id']))
+        assert fieldsFromGenerator - fieldsFromSchema == set(['id'])
 
-    def test_explain(self):
-        self.testDataSpec.computeBuildPlan()
-        explain_results = self.testDataSpec.explain()
-        self.assertIsNotNone(explain_results)
+    def test_explain(self, sampleDataSpec):
+        sampleDataSpec.computeBuildPlan()
+        explain_results = sampleDataSpec.explain()
+        assert explain_results is not None
 
-    def test_explain_on_clone(self):
-        testDataSpec2 = self.testDataSpec.clone()
+    def test_explain_on_clone(self, sampleDataSpec):
+        testDataSpec2 = sampleDataSpec.clone()
         testDataSpec2.computeBuildPlan()
         explain_results = testDataSpec2.explain(suppressOutput=True)
 
-        self.assertIsNotNone(explain_results)
+        assert explain_results is not None
 
-# run the tests
-# if __name__ == '__main__':
-#  print("Trying to run tests")
-#  unittest.main(argv=['first-arg-is-ignored'],verbosity=2,exit=False)
+    def test_build_ordering_basic(self, sampleDataSpec):
+        build_order = sampleDataSpec.build_order
 
-# def runTests(suites):
-#    suite = unittest.TestSuite()
-#    result = unittest.TestResult()
-#    for testSuite in suites:
-#        suite.addTest(unittest.makeSuite(testSuite))
-#    runner = unittest.TextTestRunner()
-#    print(runner.run(suite))
+        # make sure that build order is list of lists
+        assert build_order is not None
+        assert isinstance(build_order, list)
 
+        for el in build_order:
+            assert isinstance(el, list)
 
-# runTests([TestBasicOperation])
+    def builtBefore(self, field1, field2, build_order):
+        """ check if field1 is built before field2"""
+
+        fieldsBuilt = []
+
+        for phase in build_order:
+            for el in phase:
+                if el == field1:
+                    return field2 in fieldsBuilt
+                fieldsBuilt.append(el)
+
+        return False
+
+    def builtInSeparatePhase(self, field1, field2, build_order):
+        """ check if field1 is built in separate phase to field2"""
+
+        fieldsBuilt = []
+
+        for phase in build_order:
+            for el in phase:
+                if el == field1:
+                    return field2 not in phase
+                fieldsBuilt.append(el)
+
+        return False
+
+    def test_build_ordering_explicit_dependency(self):
+        gen1 = dg.DataGenerator(sparkSession=spark, name="nested_schema", rows=1000, partitions=4,
+                                seedColumnName="_id") \
+            .withColumn("id", "long", minValue=1000000, uniqueValues=10000, random=True) \
+            .withColumn("city_name", "string", template=r"\w", random=True, omit=True) \
+            .withColumn("city_id", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city_pop", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city", "struct<name:string, id:long, population:long>",
+                        expr="named_struct('name', city_name, 'id', city_id, 'population', city_pop)",
+                        baseColumns=["city2"]) \
+            .withColumn("city2", "struct<name:string, id:long, population:long>",
+                        expr="named_struct('name', city_name, 'id', city_id, 'population', city_pop)",
+                        baseColumns=["city_pop"]) \
+            .withColumn("city_id2", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True,
+                        baseColumn="city_id")
+
+        build_order = gen1.build_order
+        logging.info(f"Build order {build_order}")
+
+        assert self.builtBefore("city_id", "city_name", build_order)
+        assert self.builtBefore("city", "city2", build_order)
+        assert self.builtBefore("city2", "city_pop", build_order)
+        assert self.builtBefore("city_id2", "city_id", build_order)
+
+        assert self.builtBefore("city", "city_name", build_order)
+        assert self.builtBefore("city", "city_id", build_order)
+        assert self.builtBefore("city", "city_pop", build_order)
+
+        assert self.builtInSeparatePhase("city", "city_name", build_order)
+        assert self.builtInSeparatePhase("city", "city_id", build_order)
+        assert self.builtInSeparatePhase("city", "city_pop", build_order)
+
+    def test_build_ordering_explicit_dependency2(self):
+        gen1 = dg.DataGenerator(sparkSession=spark, name="nested_schema", rows=1000, partitions=4,
+                                seedColumnName="_id") \
+            .withColumn("id", "long", minValue=1000000, uniqueValues=10000, random=True) \
+            .withColumn("city_name", "string", template=r"\w", random=True, omit=True) \
+            .withColumn("city_id", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city_pop", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city", "struct<name:string, id:long, population:long>",
+                        expr="named_struct('name', city_name, 'id', city_id, 'population', city_pop)",
+                        baseColumns=["city_name", "city_id", "city_pop"]) \
+            .withColumn("city2", "struct<name:string, id:long, population:long>",
+                        expr="city",
+                        baseColumns=["city"]) \
+            .withColumn("city_id2", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True,
+                        baseColumn="city_id")
+
+        build_order = gen1.build_order
+        logging.info(f"Build order {build_order}")
+
+        assert self.builtBefore("city", "city_name", build_order)
+        assert self.builtBefore("city", "city_id", build_order)
+        assert self.builtBefore("city", "city_pop", build_order)
+        assert self.builtInSeparatePhase("city", "city_name", build_order)
+        assert self.builtInSeparatePhase("city", "city_id", build_order)
+        assert self.builtInSeparatePhase("city", "city_pop", build_order)
+
+    def test_build_ordering_implicit_dependency(self):
+        gen1 = dg.DataGenerator(sparkSession=spark, name="nested_schema", rows=1000, partitions=4,
+                                seedColumnName="_id") \
+            .withColumn("id", "long", minValue=1000000, uniqueValues=10000, random=True) \
+            .withColumn("city_name", "string", template=r"\w", random=True, omit=True) \
+            .withColumn("city_id", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city_pop", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city", "struct<name:string, id:long, population:long>",
+                        expr="named_struct('name', city_name, 'id', city_id, 'population', city_pop)")
+
+        build_order = gen1.build_order
+        logging.info(f"Build order {build_order}")
+
+        assert self.builtBefore("city", "city_name", build_order)
+        assert self.builtBefore("city", "city_id", build_order)
+        assert self.builtBefore("city", "city_pop", build_order)
+        assert self.builtInSeparatePhase("city", "city_name", build_order), "fields should be built in separate phase"
+        assert self.builtInSeparatePhase("city", "city_id", build_order), "fields should be built in separate phase"
+        assert self.builtInSeparatePhase("city", "city_pop", build_order), "fields should be built in separate phase"
+
+    # TODO: build ordering should initially try and build in the order supplied but separate into phases
+
+    def test_build_ordering_implicit_dependency2(self):
+        DEVICE_STATES = ['RUNNING', 'IDLE', 'DOWN']
+        DEVICE_WEIGHTS = [10, 5, 1]
+        SITES = ['alpha', 'beta', 'gamma', 'delta', 'phi', 'mu', 'lambda']
+        AREAS = ['area 1', 'area 2', 'area 3', 'area 4', 'area 5']
+        LINES = ['line 1', 'line 2', 'line 3', 'line 4', 'line 5', 'line 6']
+        TAGS = ['statusCode', 'another notification 1', 'another notification 2', 'another notification 3']
+        NUM_LOCAL_DEVICES = 20
+
+        STARTING_DATETIME = "2022-06-01 01:00:00"
+        END_DATETIME = "2022-09-01 23:59:00"
+        EVENT_INTERVAL = "10 seconds"
+
+        gen1 = (
+            dg.DataGenerator(spark, rows=1000, partitions=4)
+            # can combine internal site id computation with value lookup but clearer to use a separate internal column
+            .withColumn("site", "string", values=SITES, random=True)
+            .withColumn("area", "string", values=AREAS, random=True, omit=True)
+            .withColumn("line", "string", values=LINES, random=True, omit=True)
+            .withColumn("local_device_id", "int", maxValue=NUM_LOCAL_DEVICES - 1, omit=True, random=True)
+
+            .withColumn("local_device", "string", prefix="device", baseColumn="local_device_id")
+
+            .withColumn("device_key", "string",
+                        expr="concat('/', site, '/', area, '/', line, '/', local_device)")
+
+            # used to compute the device id
+            .withColumn("internal_device_key", "long", expr="hash(site,  area,  line, local_device)",
+                        omit=True)
+
+            .withColumn("deviceId", "string", format="0x%013x",
+                        baseColumn="internal_device_key")
+
+            # tag name is name of device signal
+            .withColumn("tagName", "string", values=TAGS, random=True)
+
+            # tag value is state
+            .withColumn("tagValue", "string",
+                        values=DEVICE_STATES, weights=DEVICE_WEIGHTS,
+                        random=True)
+
+            .withColumn("tag_ts", "timestamp",
+                        begin=STARTING_DATETIME,
+                        end=END_DATETIME,
+                        interval=EVENT_INTERVAL,
+                        random=True)
+
+            .withColumn("event_date", "date", expr="to_date(tag_ts)")
+        )
+
+        build_order = gen1.build_order
+        logging.info(f"Build order {build_order}")
+
+        assert self.builtBefore("event_date", "tag_ts", build_order)
+        assert self.builtBefore("device_key", "site", build_order)
+        assert self.builtBefore("device_key", "area", build_order)
+        assert self.builtBefore("device_key", "line", build_order)
+        assert self.builtBefore("device_key", "local_device", build_order)
+        assert self.builtBefore("internal_device_key", "site", build_order)
+        assert self.builtBefore("internal_device_key", "area", build_order)
+        assert self.builtBefore("internal_device_key", "line", build_order)
+        assert self.builtBefore("internal_device_key", "local_device", build_order)
+        assert self.builtBefore("device_key", "site", build_order)
+        assert self.builtBefore("device_key", "area", build_order)
+        assert self.builtBefore("device_key", "line", build_order)
+        assert self.builtBefore("device_key", "local_device", build_order)
+
+        assert self.builtInSeparatePhase("tag_ts", "event_date", build_order)
+        assert self.builtInSeparatePhase("site", "device_key", build_order)
+        assert self.builtInSeparatePhase("area", "device_key", build_order)
+        assert self.builtInSeparatePhase("line", "device_key", build_order)
+        assert self.builtInSeparatePhase("local_device", "device_key", build_order)
+        assert self.builtInSeparatePhase("site", "internal_device_key", build_order)
+        assert self.builtInSeparatePhase("area", "internal_device_key", build_order)
+        assert self.builtInSeparatePhase("line", "internal_device_key", build_order)
+        assert self.builtInSeparatePhase("local_device", "internal_device_key", build_order)
+        assert self.builtInSeparatePhase("site", "device_key", build_order)
+        assert self.builtInSeparatePhase("area", "device_key", build_order)
+        assert self.builtInSeparatePhase("line", "device_key", build_order)
+        assert self.builtInSeparatePhase("local_device", "device_key", build_order)
+
+    def test_implicit_dependency3(self):
+        dataspec = (
+            dg.DataGenerator(spark, rows=1000, partitions=4)
+            .withColumn("name", percentNulls=0.01, template=r'\\w \\w|\\w a. \\w')
+            .withColumn("payment_instrument_type", values=['cash', 'cc', 'app'],
+                        random=True)
+            .withColumn("int_payment_instrument", "int", minValue=0000, maxValue=9999,
+                        baseColumn="name",
+                        baseColumnType="hash", omit=True)
+            .withColumn("payment_instrument",
+                        expr="format_number(int_payment_instrument, '**** ****** *####')")
+            .withColumn("email", template=r'\\w.\\w@\\w.com')
+            .withColumn("md5_payment_instrument",
+                        expr="md5(concat(payment_instrument_type, ':', payment_instrument))")
+        )
+
+        build_order = dataspec.build_order
+        logging.info(f"Build order {build_order}")
+
+        assert self.builtBefore("payment_instrument", "int_payment_instrument", build_order)
+        assert self.builtBefore("md5_payment_instrument", "payment_instrument", build_order)
+        assert self.builtBefore("md5_payment_instrument", "payment_instrument_type", build_order)
+
+        assert self.builtInSeparatePhase("int_payment_instrument", "payment_instrument", build_order)
+        assert self.builtInSeparatePhase("md5_payment_instrument", "payment_instrument", build_order)
+        assert self.builtInSeparatePhase("md5_payment_instrument", "payment_instrument_type", build_order)
+
+    def test_expr_attribute(self):
+        sql_expr = "named_struct('name', city_name, 'id', city_id, 'population', city_pop)"
+        gen1 = dg.DataGenerator(sparkSession=spark, name="nested_schema", rows=1000, partitions=4,
+                                seedColumnName="_id") \
+            .withColumn("id", "long", minValue=1000000, uniqueValues=10000, random=True) \
+            .withColumn("city_name", "string", template=r"\w", random=True, omit=True) \
+            .withColumn("city_id", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city_pop", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city", "struct<name:string, id:long, population:long>",
+                        expr=sql_expr)
+
+        columnSpec = gen1.getColumnSpec("city")
+
+        assert columnSpec.expr == sql_expr
+
+    def test_expr_identifier_with_spaces(self):
+        sql_expr = "named_struct('name', city_name, 'id', city_id, 'population', city_pop)"
+        gen1 = dg.DataGenerator(sparkSession=spark, name="nested_schema", rows=1000, partitions=4,
+                                seedColumnName="_id") \
+            .withColumn("id", "long", minValue=1000000, uniqueValues=10000, random=True) \
+            .withColumn("city_name", "string", template=r"\w", random=True, omit=True) \
+            .withColumn("city_id", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city_pop", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city 2", "struct<name:string, id:long, population:long>",
+                        expr=sql_expr)
+
+        columnSpec = gen1.getColumnSpec("city 2")
+
+        assert columnSpec.expr == sql_expr
+
+    def test_build_ordering_duplicate_names1(self):
+        gen1 = dg.DataGenerator(sparkSession=spark, name="nested_schema", rows=1000, partitions=4,
+                                seedColumnName="_id") \
+            .withColumn("id", "long", minValue=1000000, uniqueValues=10000, random=True) \
+            .withColumn("city_name", "long", minValue=1000000, uniqueValues=10000, random=True) \
+            .withColumn("city_name", "string", template=r"\w", random=True, omit=True) \
+            .withColumn("extra_field", "long", minValue=1000000, uniqueValues=10000, random=True) \
+            .withColumn("extra_field", "string", template=r"\w", random=True) \
+            .withColumn("city_id", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city_pop", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city", "struct<name:string, id:long, population:long>",
+                        expr="named_struct('name', city_name, 'id', city_id, 'population', city_pop)")
+
+        logging.info(f"Build order {gen1.build_order}")
+
+        df = gen1.build()
+
+        count = df.count()
+        assert count == 1000
+
+    def test_build_ordering_forward_ref(self, caplog):
+        # caplog fixture captures log content
+        self.setup_log_capture(caplog)
+
+        gen1 = dg.DataGenerator(sparkSession=spark, name="nested_schema", rows=1000, partitions=4,
+                                seedColumnName="_id") \
+            .withColumn("id", "long", minValue=1000000, uniqueValues=10000, random=True) \
+            .withColumn("city_name", "long", minValue=1000000, uniqueValues=10000, random=True) \
+            .withColumn("city_pop", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city", "struct<name:string, id:long, population:long>",
+                        expr="named_struct('name', city_name, 'id', city_id, 'population', city_pop)") \
+            .withColumn("city_id", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True)
+
+        logging.info(f"Build order {gen1.build_order}")
+
+        seed_column_warnings_and_errors = self.get_log_capture_warngings_and_errors(caplog, "forward references")
+        assert seed_column_warnings_and_errors >= 1, "Should not have error messages about forward references"
+
+    def test_build_ordering_duplicate_names2(self):
+        gen1 = dg.DataGenerator(sparkSession=spark, name="nested_schema", rows=1000, partitions=4,
+                                seedColumnName="_id") \
+            .withColumn("id", "long", minValue=1000000, uniqueValues=10000, random=True) \
+            .withColumn("city_name", "long", minValue=1000000, uniqueValues=10000, random=True) \
+            .withColumn("city_name", "string", template=r"\w", random=True, omit=True) \
+            .withColumn("city_id", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city_pop", "long", minValue=1000000, uniqueValues=10000, random=True, omit=True) \
+            .withColumn("city", "struct<name:string, id:long, population:long>",
+                        expr="named_struct('name', city_name, 'id', city_id, 'population', city_pop)",
+                        baseColumns=["city_name", "city_id", "city_pop"])
+
+        logging.info(f"Build order {gen1.build_order}")
+
+        df = gen1.build()
+
+        count = df.count()
+        assert count == 1000

@@ -1,9 +1,7 @@
-.. Test Data Generator documentation master file, created by
+.. Databricks Labs Data Generator documentation master file, created by
    sphinx-quickstart on Sun Jun 21 10:54:30 2020.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 
-Repeatable data generation
+Repeatable Data Generation
 ==========================
 
 One of the basic principles of the data generator is that all data can be generated multiple times and
@@ -185,46 +183,49 @@ device from event to event.
 
    lines = ['delta', 'xyzzy', 'lakehouse', 'gadget', 'droid']
 
-   testDataSpec = (dg.DataGenerator(spark, name="device_data_set", rows=data_rows,
-                                    partitions=partitions_requested,
-                                    randomSeedMethod='hash_fieldname')
-                   .withIdOutput()
-                   # we'll use hash of the base field to generate the ids to
-                   # avoid a simple incrementing sequence
-                   .withColumn("internal_device_id", LongType(), minValue=0x1000000000000,
-                               uniqueValues=device_population, omit=True, baseColumnType="hash")
+   testDataSpec = (
+       dg.DataGenerator(spark, name="device_data_set", rows=data_rows,
+                        partitions=partitions_requested,
+                        randomSeedMethod='hash_fieldname')
+       .withIdOutput()
+       # we'll use hash of the base field to generate the ids to
+       # avoid a simple incrementing sequence
+       .withColumn("internal_device_id", LongType(), minValue=0x1000000000000,
+                   uniqueValues=device_population, omit=True, baseColumnType="hash")
 
-                   # note for format strings, we must use "%lx" not "%x" as the
-                   # underlying value is a long
-                   .withColumn("device_id", StringType(), format="0x%013x",
-                               baseColumn="internal_device_id")
+       # note for format strings, we must use "%lx" not "%x" as the
+       # underlying value is a long
+       .withColumn("device_id", StringType(), format="0x%013x",
+                   baseColumn="internal_device_id")
 
-                   # the device / user attributes will be the same for the same device id
-                   # so lets use the internal device id as the base column for these attribute
-                   .withColumn("country", StringType(), values=country_codes,
-                               weights=country_weights,
-                               baseColumn="internal_device_id")
-                   .withColumn("manufacturer", StringType(), values=manufacturers,
-                               baseColumn="internal_device_id")
+       # the device / user attributes will be the same for the same device id
+       # so lets use the internal device id as the base column for these attribute
+       .withColumn("country", StringType(), values=country_codes,
+                   weights=country_weights,
+                   baseColumn="internal_device_id")
+       .withColumn("manufacturer", StringType(), values=manufacturers,
+                   baseColumn="internal_device_id")
 
-                   # use omit = True if you don't want a column to appear in the final output
-                   # but just want to use it as part of generation of another column
-                   .withColumn("line", StringType(), values=lines, baseColumn="manufacturer",
-                               baseColumnType="hash", omit=True)
-                   .withColumn("model_ser", IntegerType(), minValue=1, maxValue=11,
-                               baseColumn="device_id",
-                               baseColumnType="hash", omit=True)
+       # use omit = True if you don't want a column to appear in the final output
+       # but just want to use it as part of generation of another column
+       .withColumn("line", StringType(), values=lines, baseColumn="manufacturer",
+                   baseColumnType="hash", omit=True)
+       .withColumn("model_ser", IntegerType(), minValue=1, maxValue=11,
+                   baseColumn="device_id",
+                   baseColumnType="hash", omit=True)
 
-                   .withColumn("model_line", StringType(), expr="concat(line, '#', model_ser)",
-                               baseColumn=["line", "model_ser"])
-                   .withColumn("event_type", StringType(),
-                               values=["activation", "deactivation", "plan change",
-                                       "telecoms activity", "internet activity", "device error"],
-                               random=True)
-                   .withColumn("event_ts", "timestamp", begin="2020-01-01 01:00:00", end="2020-12-31 23:59:00",
-                               interval="1 minute", random=True)
+       .withColumn("model_line", StringType(), expr="concat(line, '#', model_ser)",
+                   baseColumn=["line", "model_ser"])
+       .withColumn("event_type", StringType(),
+                   values=["activation", "deactivation", "plan change",
+                           "telecoms activity", "internet activity", "device error"],
+                   random=True)
+       .withColumn("event_ts", "timestamp",
+                   begin="2020-01-01 01:00:00", end="2020-12-31 23:59:00",
+                   interval="1 minute",
+                   random=True)
 
-                   )
+       )
 
    dfTestData = testDataSpec.build()
 

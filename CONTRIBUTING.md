@@ -14,14 +14,15 @@ warrant that you have the legal authority to do so.
 # Building the code
 
 ## Package Dependencies
-See the contents of the file `python/require.txt` to see the Python package dependencies
+See the contents of the file `python/require.txt` to see the Python package dependencies. 
+Dependent packages are not installed automatically by the `dbldatagen` package.
 
 ## Python compatibility
 
-The code has been tested with Python 3.8.10 and later.
+The code has been tested with Python 3.8.12 and later.
 
-Older releases were tested with Python 3.7.5 but as of this release, it requires the Databricks runtime 9.1 LTS or later
-which relies on Python 3.8.10
+Older releases were tested with Python 3.7.5 but as of this release, it requires the Databricks 
+runtime 9.1 LTS or later. 
 
 ## Checking your code for common issues
 

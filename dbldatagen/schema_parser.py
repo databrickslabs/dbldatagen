@@ -6,8 +6,8 @@
 This file defines the `SchemaParser` class
 """
 
-import pyparsing as pp
 import re
+import pyparsing as pp
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
     TimestampType, DateType, DecimalType, ByteType, BinaryType, StructField, StructType, MapType, ArrayType
 
@@ -132,7 +132,7 @@ class SchemaParser(object):
                 pp.delimitedList(pp.Group(ident + pp.Optional(colon) + pp.Group(type_expr)))) + r_angle
 
             # try to capture invalid type name for better error reporting
-            invalid_type = pp.Word(pp.alphas, pp.alphanums+"_", as_keyword=True)
+            invalid_type = pp.Word(pp.alphas, pp.alphanums + "_", asKeyword=True)
 
             # use left recursion to handle nesting of types
             type_expr <<= pp.MatchFirst([primitive_type_keyword, array_expr, map_expr, struct_expr, invalid_type])
@@ -254,11 +254,74 @@ class SchemaParser(object):
         try:
             ast = parser.parseString(type_string)
         except Exception as e:
-            raise ValueError(f"Invalid type definition `{type_string}`",e) from e
+            raise ValueError(f"Invalid type definition `{type_string}`", e) from e
 
         type_construct = cls._parse_ast(ast)
 
         return type_construct
+
+    @classmethod
+    def _cleanseSQL(cls, sql_string):
+        """ Cleanse sql string removing string literals so that they are not considered as part of potential column
+            references
+        :param sql_string: String representation of SQL expression
+        :returns: cleansed string
+
+        Any strings identified are replaced with `' '`
+        """
+        assert sql_string is not None, "`sql_string` must be specified"
+
+        # skip over quoted identifiers even if they contain quotes
+        quoted_ident = pp.QuotedString(quoteChar="`", escQuote="``")
+        quoted_ident.setParseAction(lambda s, loc, toks: f"`{toks[0]}`")
+
+        stringForm1 = pp.Literal('r') + pp.QuotedString(quoteChar="'")
+        stringForm2 = pp.Literal('r') + pp.QuotedString(quoteChar='"')
+        stringForm3 = pp.QuotedString(quoteChar="'", escQuote=r"\'")
+        stringForm4 = pp.QuotedString(quoteChar='"', escQuote=r'\"')
+        stringForm = stringForm1 ^ stringForm2 ^ stringForm3 ^ stringForm4
+        stringForm.setParseAction(lambda s, loc, toks: "' '")
+
+        parser = quoted_ident ^ stringForm
+
+        transformed_string = parser.transformString(sql_string)
+
+        return transformed_string
+
+    @classmethod
+    def columnsReferencesFromSQLString(cls, sql_string, filterItems=None):
+        """ Generate a list of possible column references from a SQL string
+
+        This method finds all condidate references to SQL columnn ids in the string
+
+        To avoid the overhead of a full SQL parser, the implementation will simply look for possible field names
+
+        Further improvements may eliminate some common syntax but in current form, reserved words will
+        also be returned as possible column references.
+
+        So any uses of this must not assume that all possible references are valid column references
+
+        :param sql_string: String representation of SQL expression
+        :param filterItems: filter results to only results in items listed
+        :returns: list of possible column references
+        """
+        assert sql_string is not None, "`sql_string` must be specified"
+        assert filterItems is None or isinstance(filterItems, (list, set))
+
+        cleansed_sql_string = cls._cleanseSQL(sql_string)
+
+        ident = pp.Word(pp.alphas, pp.alphanums + "_") | pp.QuotedString(quoteChar="`", escQuote="``")
+        parser = ident
+
+        references = parser.searchString(cleansed_sql_string)
+
+        results = set([item for sublist in references for item in sublist])
+
+        if filterItems is not None:
+            filtered_results = results.intersection(set(filterItems))
+            return list(filtered_results)
+        else:
+            return list(results)
 
     @classmethod
     def parseCreateTable(cls, sparkSession, source_schema):
