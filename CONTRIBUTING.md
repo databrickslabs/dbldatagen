@@ -22,7 +22,8 @@ Dependent packages are not installed automatically by the `dbldatagen` package.
 The code has been tested with Python 3.8.12 and later.
 
 Older releases were tested with Python 3.7.5 but as of this release, it requires the Databricks 
-runtime 9.1 LTS or later. 
+runtime 10.4 LTS or later, and Python 3.8.10 or later. Due to limations in the runtimes available in 
+Github actions, testing is performed with Python 3.8.12.
 
 ## Checking your code for common issues
 
