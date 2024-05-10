@@ -132,19 +132,11 @@ There are two types of options:
      - if set to `True`, automatically generates a timestamp field if none present
 
 
-The type of the streaming source may be the fully qualified name of a custom streaming source, a built in streaming
-source such as `rate` or `rate-micro-batch`, or the name of a file format such as `parquet`, `delta`, or `csv`.
-
-File based data source support `csv`, `parquet` and `delta` format files or folders of files. Files or folders of
-files in `delta` format do not require specification of a schema as it is inferred from the underlying file.
-
-Files or folders of files in `csv` format require a schema.
+The type of the streaming source may be the fully qualified name of a custom streaming source, or a built in streaming
+source such as `rate` or `rate-micro-batch`.
 
 Any options that do not begin with the prefix `dbldatagen.` are passed through to the options method of the underlying
 based data frame.
-
-When a schema is specified for a file based source, the schema should only specify the schema of the fields in the
-underlying source, not for additional fields added by the data generation rules.
 
 .. note::
    Every streaming data source requires a field that can be designated as the seed field or `id` field.
@@ -227,7 +219,9 @@ data generation for.
        .withColumn("event_ts", "timestamp", expr="now()")
        )
 
-   dfTestDataStreaming = testDataSpec.build(withStreaming=True, options={'rowsPerSecond': 500})
+   dfTestDataStreaming = testDataSpec.build(withStreaming=True,
+                                            options={'rowsPerBatch': 500,
+                                                     'dbldatagen.streaming.source': 'rate-micro-batch' })
 
    # ... do something with your streaming source here
    display(dfTestDataStreaming)
