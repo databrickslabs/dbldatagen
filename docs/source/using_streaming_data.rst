@@ -219,9 +219,13 @@ data generation for.
        .withColumn("event_ts", "timestamp", expr="now()")
        )
 
-   dfTestDataStreaming = testDataSpec.build(withStreaming=True,
-                                            options={'rowsPerBatch': 500,
-                                                     'dbldatagen.streaming.source': 'rate-micro-batch' })
+   # note that by default, for a rate source, the timestamp starts with the current time
+   # but for `rate-micro-batch` it starts with start of the epoch (1/1/1970) unless
+   # a value for `startTimestamp` is provided
+   streamingOptions = {'rowsPerSecond': 500,
+                       'dbldatagen.streaming.source': 'rate-micro-batch',
+                       'startTimestamp': int(time.time() * 1000)}
+   dfTestDataStreaming = testDataSpec.build(withStreaming=True, options=streamingOptions)
 
    # ... do something with your streaming source here
    display(dfTestDataStreaming)
