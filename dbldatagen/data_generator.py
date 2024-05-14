@@ -28,6 +28,7 @@ _OLD_MAX_OPTION = 'max'
 _STREAMING_SOURCE_OPTION = "dbldatagen.streaming.source"
 _STREAMING_SCHEMA_OPTION = "dbldatagen.streaming.sourceSchema"
 _STREAMING_PATH_OPTION = "dbldatagen.streaming.sourcePath"
+_STREAMING_FORMAT_OPTION = "dbldatagen.streaming.sourceFormat"
 _STREAMING_TABLE_OPTION = "dbldatagen.streaming.sourceTable"
 _STREAMING_ID_FIELD_OPTION = "dbldatagen.streaming.sourceIdField"
 _STREAMING_TIMESTAMP_FIELD_OPTION = "dbldatagen.streaming.sourceTimestampField"
