@@ -3,6 +3,11 @@
 ## Change History
 All notable changes to the Databricks Labs Data Generator will be documented in this file.
 
+### Unreleased - intended to be version 0.4.0
+
+#### Changed
+* Updated minimum pyspark version to be 3.2.1, compatible with Databricks runtime 10.4 LTS or later
+
 ### Version 0.3.6
 
 #### Changed
