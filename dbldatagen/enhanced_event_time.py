@@ -8,24 +8,6 @@ This file defines the `EnhancedEventTime` class
 This defines helper methods for implementing enhanced event time
 """
 
-import logging
-
-
-from pyspark.sql.functions import col, pandas_udf
-from pyspark.sql.functions import lit, concat, rand, round as sql_round, array, expr, when, udf, \
-    format_string
-from pyspark.sql.types import FloatType, IntegerType, StringType, DoubleType, BooleanType, \
-    TimestampType, DataType, DateType
-
-from .column_spec_options import ColumnSpecOptions
-from .datagen_constants import RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, RANDOM_SEED_RANDOM
-from .daterange import DateRange
-from .distributions import Normal, DataDistribution
-from .nrange import NRange
-from .text_generators import TemplateGenerator
-from .utils import ensure, coalesce_values
-
-import dbldatagen as dg
 import dbldatagen.distributions as dist
 
 HASH_COMPUTE_METHOD = "hash"
@@ -36,7 +18,6 @@ COMPUTE_METHOD_VALID_VALUES = [HASH_COMPUTE_METHOD,
                                AUTO_COMPUTE_METHOD,
                                VALUES_COMPUTE_METHOD,
                                RAW_VALUES_COMPUTE_METHOD]
-
 
 
 class EnhancedEventTimeHelper(object):
@@ -87,8 +68,8 @@ class EnhancedEventTimeHelper(object):
 
         # determine timestamp for start of generation
         start_of_generation = \
-        dataspec.sparkSession.sql(f"select cast(now() as string) as start_timestamp").collect()[0][
-            'start_timestamp']
+            dataspec.sparkSession.sql("select cast(now() as string) as start_timestamp").collect()[0][
+                'start_timestamp']
 
         omitInterimColumns = not keepIntermediateColumns
 

@@ -7,6 +7,8 @@ This file defines the `DataGenError` and `DataGenerator` classes
 """
 import copy
 import logging
+import math
+import time
 import re
 
 from pyspark.sql.types import LongType, IntegerType, StringType, StructType, StructField, DataType
