@@ -7,6 +7,8 @@ Generating JSON and Structured Column Data
 This section explores generating JSON and structured column data. By structured columns,
 we mean columns that are some combination of `struct`, `array` and `map` of other types.
 
+*Note that some of the examples are code fragments for illustration purposes only.*
+
 Generating JSON data
 --------------------
 There are several methods for generating JSON data:
@@ -25,6 +27,7 @@ The following example illustrates the basic technique for generating JSON data f
 
    import dbldatagen as dg
 
+   device_population = 100000
 
    country_codes = ['CN', 'US', 'FR', 'CA', 'IN', 'JM', 'IE', 'PK', 'GB', 'IL', 'AU', 'SG',
                     'ES', 'GE', 'MX', 'ET', 'SA', 'LB', 'NL']
@@ -106,6 +109,7 @@ Note that in the current release, the `expr` attribute will override other colum
 
    import dbldatagen as dg
 
+   device_population = 100000
 
    country_codes = ['CN', 'US', 'FR', 'CA', 'IN', 'JM', 'IE', 'PK', 'GB', 'IL', 'AU', 'SG',
                     'ES', 'GE', 'MX', 'ET', 'SA', 'LB', 'NL']
@@ -221,6 +225,7 @@ functions such as `named_struct` and `to_json`.
 
    import dbldatagen as dg
 
+   device_population = 100000
 
    country_codes = ['CN', 'US', 'FR', 'CA', 'IN', 'JM', 'IE', 'PK', 'GB', 'IL', 'AU', 'SG',
                     'ES', 'GE', 'MX', 'ET', 'SA', 'LB', 'NL']
@@ -340,6 +345,25 @@ from the SQL expression passed using the ``expr`` parameter. This is only suppor
 populated.
 
 The following example illustrates this:
+
+.. code-block:: python
+
+   import dbldatagen as dg
+
+   column_count = 10
+   data_rows = 10 * 1000
+   df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows)
+                .withIdOutput()
+                .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
+                            numColumns=column_count, structType="array")
+                .withColumn("code1", "integer", minValue=100, maxValue=200)
+                .withColumn("code2", "integer", minValue=0, maxValue=10)
+                .withColumn("code3", "string", values=['one', 'two', 'three'])
+                .withColumn("code4", "string", values=['one', 'two', 'three'])
+                .withColumn("code5", dg.INFER_DATATYPE, expr="current_date()")
+                .withColumn("code6", dg.INFER_DATATYPE, expr="code1 + code2")
+                .withColumn("code7", dg.INFER_DATATYPE, expr="concat(code3, code4)")
+                )
 
 
 Using multi feature columns to generate arrays
