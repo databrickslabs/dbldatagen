@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>dbldatagen.text_generators module &mdash; Databricks Labs Data Generator 0.3.6post1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/tdg.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/clipboard.min.js"></script>
+        <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="dbldatagen.utils module" href="dbldatagen.utils.html" />
+    <link rel="prev" title="dbldatagen.text_generator_plugins module" href="dbldatagen.text_generator_plugins.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_from_existing_data.html">Generating synthetic data from existing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">The dbldatagen package API</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="dbldatagen.html">dbldatagen package</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.html#subpackages">Subpackages</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="dbldatagen.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.column_generation_spec.html">dbldatagen.column_generation_spec module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.column_spec_options.html">dbldatagen.column_spec_options module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.data_analyzer.html">dbldatagen.data_analyzer module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.data_generator.html">dbldatagen.data_generator module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.datagen_constants.html">dbldatagen.datagen_constants module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.datarange.html">dbldatagen.datarange module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.daterange.html">dbldatagen.daterange module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.function_builder.html">dbldatagen.function_builder module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.html_utils.html">dbldatagen.html_utils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.nrange.html">dbldatagen.nrange module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.schema_parser.html">dbldatagen.schema_parser module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.spark_singleton.html">dbldatagen.spark_singleton module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.text_generator_plugins.html">dbldatagen.text_generator_plugins module</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">dbldatagen.text_generators module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.utils.html">dbldatagen.utils module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.html#module-dbldatagen">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">dbldatagen</a></li>
+          <li class="breadcrumb-item"><a href="dbldatagen.html">dbldatagen package</a></li>
+      <li class="breadcrumb-item active">dbldatagen.text_generators module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/reference/api/dbldatagen.text_generators.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-dbldatagen.text_generators">
+<span id="dbldatagen-text-generators-module"></span><h1>dbldatagen.text_generators module<a class="headerlink" href="#module-dbldatagen.text_generators" title="Permalink to this heading"></a></h1>
+<p>This file defines various text generation classes and methods</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="dbldatagen.text_generators.ILText">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ILText</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">paragraphs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sentences</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">words</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extendedWordList</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#ILText"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generators.ILText" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dbldatagen.text_generators.TextGenerator" title="dbldatagen.text_generators.TextGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">TextGenerator</span></code></a></p>
+<p>Class to generate Ipsum Lorem text paragraphs, words and sentences</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>paragraphs</strong> – Number of paragraphs to generate. If tuple will generate random number in range</p></li>
+<li><p><strong>sentences</strong> – Number of sentences to generate. If tuple will generate random number in tuple range</p></li>
+<li><p><strong>words</strong> – Number of words per sentence to generate. If tuple, will generate random number in tuple range</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="dbldatagen.text_generators.ILText.classicGenerateText">
+<span class="sig-name descname"><span class="pre">classicGenerateText</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#ILText.classicGenerateText"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generators.ILText.classicGenerateText" title="Permalink to this definition"></a></dt>
+<dd><p>classic udf entry point for text generation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>v</strong> – base value to control generation of random numbers</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dbldatagen.text_generators.ILText.generateText">
+<span class="sig-name descname"><span class="pre">generateText</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">baseValues</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rowCount</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#ILText.generateText"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generators.ILText.generateText" title="Permalink to this definition"></a></dt>
+<dd><p>generate text for seed based on configuration parameters.</p>
+<p>As it uses numpy, repeatability is restricted depending on version of the runtime</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>baseValues</strong> – list or array-like list of baseValues</p></li>
+<li><p><strong>rowCount</strong> – number of rows</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>list or Pandas series of generated strings of same size as input seed</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dbldatagen.text_generators.ILText.pandasGenerateText">
+<span class="sig-name descname"><span class="pre">pandasGenerateText</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#ILText.pandasGenerateText"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generators.ILText.pandasGenerateText" title="Permalink to this definition"></a></dt>
+<dd><p>pandas udf entry point for text generation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>v</strong> – pandas series of base values for random text generation</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Pandas series of generated strings</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="dbldatagen.text_generators.TemplateGenerator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">TemplateGenerator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">template</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">escapeSpecialChars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extendedWordList</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#TemplateGenerator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generators.TemplateGenerator" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dbldatagen.text_generators.TextGenerator" title="dbldatagen.text_generators.TextGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">TextGenerator</span></code></a></p>
+<p>This class handles the generation of text from templates</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>template</strong> – template string to use in text generation</p></li>
+<li><p><strong>escapeSpecialChars</strong> – By default special chars in the template have special meaning if unescaped
+If set to true, then the special meaning requires escape char <code class="docutils literal notranslate"><span class="pre">\</span></code></p></li>
+<li><p><strong>extendedWordList</strong> – if provided, use specified word list instead of default word list</p></li>
+</ul>
+</dd>
+</dl>
+<p>The template generator generates text from a template to allow for generation of synthetic account card numbers,
+VINs, IBANs and many other structured codes.</p>
+<p>The base value is passed to the template generation and may be used in the generated text. The base value is the
+value the column would have if the template generation had not been applied.</p>
+<p>It uses the following special chars:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Chars</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">\</span></code></p></td>
+<td><p>Apply escape to next char.</p></td>
+</tr>
+<tr class="row-odd"><td><p>v0,v1,..v9</p></td>
+<td><p>Use base value as an array of values and substitute the <cite>nth</cite> element ( 0 .. 9). Always escaped.</p></td>
+</tr>
+<tr class="row-even"><td><p>x</p></td>
+<td><p>Insert a random lowercase hex digit</p></td>
+</tr>
+<tr class="row-odd"><td><p>X</p></td>
+<td><p>Insert an uppercase random hex digit</p></td>
+</tr>
+<tr class="row-even"><td><p>d</p></td>
+<td><p>Insert a random lowercase decimal digit</p></td>
+</tr>
+<tr class="row-odd"><td><p>D</p></td>
+<td><p>Insert an uppercase random decimal digit</p></td>
+</tr>
+<tr class="row-even"><td><p>a</p></td>
+<td><p>Insert a random lowercase alphabetical character</p></td>
+</tr>
+<tr class="row-odd"><td><p>A</p></td>
+<td><p>Insert a random uppercase alphabetical character</p></td>
+</tr>
+<tr class="row-even"><td><p>k</p></td>
+<td><p>Insert a random lowercase alphanumeric character</p></td>
+</tr>
+<tr class="row-odd"><td><p>K</p></td>
+<td><p>Insert a random uppercase alphanumeric character</p></td>
+</tr>
+<tr class="row-even"><td><p>n</p></td>
+<td><p>Insert a random number between 0 .. 255 inclusive. This option must always be escaped</p></td>
+</tr>
+<tr class="row-odd"><td><p>N</p></td>
+<td><p>Insert a random number between 0 .. 65535 inclusive. This option must always be escaped</p></td>
+</tr>
+<tr class="row-even"><td><p>w</p></td>
+<td><p>Insert a random lowercase word from the ipsum lorem word set. Always escaped</p></td>
+</tr>
+<tr class="row-odd"><td><p>W</p></td>
+<td><p>Insert a random uppercase word from the ipsum lorem word set. Always escaped</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If escape is used and`escapeSpecialChars` is False, then the following
+char is assumed to have no special meaning.</p>
+<p>If the <cite>escapeSpecialChars</cite> option is set to True, then the following char only has its special
+meaning when preceded by an escape.</p>
+<p>Some options must be always escaped for example  <code class="docutils literal notranslate"><span class="pre">\v</span></code>, <code class="docutils literal notranslate"><span class="pre">\n</span></code> and <code class="docutils literal notranslate"><span class="pre">\w</span></code>.</p>
+<p>A special case exists for <code class="docutils literal notranslate"><span class="pre">\v</span></code> - if immediately followed by a digit 0 - 9, the underlying base value
+is interpreted as an array of values and the nth element is retrieved where <cite>n</cite> is the digit specified.</p>
+</div>
+<p>In all other cases, the char itself is used.</p>
+<p>The setting of the <cite>escapeSpecialChars</cite> determines how templates generate data.</p>
+<p>If set to False, then the template <code class="docutils literal notranslate"><span class="pre">r&quot;\dr_\v&quot;</span></code> will generate the values <code class="docutils literal notranslate"><span class="pre">&quot;dr_0&quot;</span></code> … <code class="docutils literal notranslate"><span class="pre">&quot;dr_999&quot;</span></code> when applied
+to the values zero to 999. This conforms to earlier implementations for backwards compatibility.</p>
+<p>If set to True, then the template <code class="docutils literal notranslate"><span class="pre">r&quot;dr_\v&quot;</span></code> will generate the values <code class="docutils literal notranslate"><span class="pre">&quot;dr_0&quot;</span></code> … <code class="docutils literal notranslate"><span class="pre">&quot;dr_999&quot;</span></code>
+when applied to the values zero to 999. This conforms to the preferred style going forward</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="dbldatagen.text_generators.TemplateGenerator.classicGenerateText">
+<span class="sig-name descname"><span class="pre">classicGenerateText</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#TemplateGenerator.classicGenerateText"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generators.TemplateGenerator.classicGenerateText" title="Permalink to this definition"></a></dt>
+<dd><p>entry point to use for classic udfs</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dbldatagen.text_generators.TemplateGenerator.pandasGenerateText">
+<span class="sig-name descname"><span class="pre">pandasGenerateText</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#TemplateGenerator.pandasGenerateText"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generators.TemplateGenerator.pandasGenerateText" title="Permalink to this definition"></a></dt>
+<dd><p>entry point to use for pandas udfs</p>
+<p>Implementation uses vectorized implementation of process</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>v</strong> – Pandas series of values passed as base values</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Pandas series of expanded templates</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.text_generators.TemplateGenerator.templates">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">templates</span></span><a class="headerlink" href="#dbldatagen.text_generators.TemplateGenerator.templates" title="Permalink to this definition"></a></dt>
+<dd><p>Get effective templates for text generator</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="dbldatagen.text_generators.TextGenerator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">TextGenerator</span></span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#TextGenerator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generators.TextGenerator" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class for text generation classes</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="dbldatagen.text_generators.TextGenerator.compactNumpyTypeForValues">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">compactNumpyTypeForValues</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">listValues</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#TextGenerator.compactNumpyTypeForValues"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generators.TextGenerator.compactNumpyTypeForValues" title="Permalink to this definition"></a></dt>
+<dd><p>determine smallest numpy type to represent values</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>listValues</strong> – list or np.ndarray of values to get np.dtype for</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.dtype that is most compact representation for values provided</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dbldatagen.text_generators.TextGenerator.getAsTupleOrElse">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">getAsTupleOrElse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defaultValue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valueName</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#TextGenerator.getAsTupleOrElse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generators.TextGenerator.getAsTupleOrElse" title="Permalink to this definition"></a></dt>
+<dd><p>get value v as tuple or return default value</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>v</strong> – value to test</p></li>
+<li><p><strong>defaultValue</strong> – value to use as a default if value of <cite>v</cite> is None. Must be a tuple.</p></li>
+<li><p><strong>valueName</strong> – name of value for debugging and logging purposes</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>return <cite>v</cite> as tuple if not <cite>None</cite> or value of <cite>default_v</cite> if <cite>v</cite> is <cite>None</cite>. If <cite>v</cite> is a single
+value, returns the tuple (<cite>v</cite>, <cite>v</cite>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dbldatagen.text_generators.TextGenerator.getNPRandomGenerator">
+<span class="sig-name descname"><span class="pre">getNPRandomGenerator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">forceNewInstance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#TextGenerator.getNPRandomGenerator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generators.TextGenerator.getNPRandomGenerator" title="Permalink to this definition"></a></dt>
+<dd><p>Get numpy random number generator</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>returns random number generator initialized from previously supplied random seed</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="dbldatagen.text_generators.TextGenerator.randomSeed">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">randomSeed</span></span><a class="headerlink" href="#dbldatagen.text_generators.TextGenerator.randomSeed" title="Permalink to this definition"></a></dt>
+<dd><p>Get random seed for text generator</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dbldatagen.text_generators.TextGenerator.withRandomSeed">
+<span class="sig-name descname"><span class="pre">withRandomSeed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seed</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/text_generators.html#TextGenerator.withRandomSeed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.text_generators.TextGenerator.withRandomSeed" title="Permalink to this definition"></a></dt>
+<dd><p>Set the random seed for the text generator</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>seed</strong> – seed value to set</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>self</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="dbldatagen.text_generator_plugins.html" class="btn btn-neutral float-left" title="dbldatagen.text_generator_plugins module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="dbldatagen.utils.html" class="btn btn-neutral float-right" title="dbldatagen.utils module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generating Change Data Capture Data &mdash; Databricks Labs Data Generator 0.3.6post1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/tdg.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/clipboard.min.js"></script>
+        <script src="_static/copybutton.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Generating and Using Data with Multiple Tables" href="multi_table_data.html" />
+    <link rel="prev" title="Generating Synthetic Data from Existing Data or Schema (Experimental)" href="generating_from_existing_data.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_from_existing_data.html">Generating synthetic data from existing data</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Generating Change Data Capture (CDC) data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#creating-a-table-definition">Creating a table definition</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#creating-changes">Creating Changes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#merging-in-the-changes">Merging in the changes</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference/api/modules.html">The dbldatagen package API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Generating Change Data Capture Data</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/generating_cdc_data.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="generating-change-data-capture-data">
+<h1>Generating Change Data Capture Data<a class="headerlink" href="#generating-change-data-capture-data" title="Permalink to this heading"></a></h1>
+<p>This section explores some of the features for generating CDC style data - that is exploring the ability to
+generate a base data set and then apply changes such as updates to existing rows and
+new rows that will be inserts to the existing data</p>
+<p>See the section on repeatable data generation for the concepts that underpin the data generation.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>We’ll generate a customer table, and write out the data.</p>
+<p>Then we generate changes for the table and show merging them in.</p>
+<p>To start, we’ll specify some locations for our data:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">BASE_PATH</span> <span class="o">=</span> <span class="s1">&#39;/tmp/dbldatagen/cdc/&#39;</span>
+<span class="n">dbutils</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mkdirs</span><span class="p">(</span><span class="n">BASE_PATH</span><span class="p">)</span>
+
+<span class="n">customers1_location</span> <span class="o">=</span> <span class="n">BASE_PATH</span> <span class="o">+</span> <span class="s2">&quot;customers1&quot;</span>
+</pre></div>
+</div>
+<p>Lets generate 10 million customer style records.</p>
+<p>We’ll add a timestamp for when the row was generated and a memo field to mark what operation added it.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
+<span class="kn">import</span> <span class="nn">pyspark.sql.functions</span> <span class="k">as</span> <span class="nn">F</span>
+
+<span class="n">spark</span><span class="o">.</span><span class="n">catalog</span><span class="o">.</span><span class="n">clearCache</span><span class="p">()</span>
+<span class="n">shuffle_partitions_requested</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="n">partitions_requested</span> <span class="o">=</span> <span class="mi">32</span>
+<span class="n">data_rows</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="mi">1000</span> <span class="o">*</span> <span class="mi">1000</span>
+
+<span class="n">spark</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;spark.sql.shuffle.partitions&quot;</span><span class="p">,</span> <span class="n">shuffle_partitions_requested</span><span class="p">)</span>
+<span class="n">spark</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;spark.sql.execution.arrow.pyspark.enabled&quot;</span><span class="p">,</span> <span class="s2">&quot;true&quot;</span><span class="p">)</span>
+<span class="n">spark</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;spark.sql.execution.arrow.maxRecordsPerBatch&quot;</span><span class="p">,</span> <span class="mi">20000</span><span class="p">)</span>
+
+<span class="n">uniqueCustomers</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="mi">1000000</span>
+
+<span class="n">dataspec</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">dg</span><span class="o">.</span><span class="n">DataGenerator</span><span class="p">(</span><span class="n">spark</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">data_rows</span><span class="p">,</span> <span class="n">partitions</span><span class="o">=</span><span class="n">partitions_requested</span><span class="p">)</span>
+      <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;customer_id&quot;</span><span class="p">,</span><span class="s2">&quot;long&quot;</span><span class="p">,</span> <span class="n">uniqueValues</span><span class="o">=</span><span class="n">uniqueCustomers</span><span class="p">)</span>
+      <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="n">percentNulls</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">w </span><span class="se">\\</span><span class="s1">w|</span><span class="se">\\</span><span class="s1">w a. </span><span class="se">\\</span><span class="s1">w&#39;</span><span class="p">)</span>
+      <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;alias&quot;</span><span class="p">,</span> <span class="n">percentNulls</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">w </span><span class="se">\\</span><span class="s1">w|</span><span class="se">\\</span><span class="s1">w a. </span><span class="se">\\</span><span class="s1">w&#39;</span><span class="p">)</span>
+      <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;payment_instrument_type&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;paypal&#39;</span><span class="p">,</span> <span class="s1">&#39;Visa&#39;</span><span class="p">,</span> <span class="s1">&#39;Mastercard&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;American Express&#39;</span><span class="p">,</span> <span class="s1">&#39;discover&#39;</span><span class="p">,</span> <span class="s1">&#39;branded visa&#39;</span><span class="p">,</span> <span class="s1">&#39;branded mastercard&#39;</span><span class="p">],</span>
+                  <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="s2">&quot;normal&quot;</span><span class="p">)</span>
+      <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;int_payment_instrument&quot;</span><span class="p">,</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>  <span class="n">minValue</span><span class="o">=</span><span class="mi">0000</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="mi">9999</span><span class="p">,</span>
+                  <span class="n">baseColumn</span><span class="o">=</span><span class="s2">&quot;customer_id&quot;</span><span class="p">,</span> <span class="n">baseColumnType</span><span class="o">=</span><span class="s2">&quot;hash&quot;</span><span class="p">,</span> <span class="n">omit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+      <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;payment_instrument&quot;</span><span class="p">,</span>
+                  <span class="n">expr</span><span class="o">=</span><span class="s2">&quot;format_number(int_payment_instrument, &#39;**** ****** *####&#39;)&quot;</span><span class="p">,</span>
+                  <span class="n">baseColumn</span><span class="o">=</span><span class="s2">&quot;int_payment_instrument&quot;</span><span class="p">)</span>
+      <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;email&quot;</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">w.</span><span class="se">\\</span><span class="s1">w@</span><span class="se">\\</span><span class="s1">w.com|</span><span class="se">\\</span><span class="s1">w-</span><span class="se">\\</span><span class="s1">w@</span><span class="se">\\</span><span class="s1">w&#39;</span><span class="p">)</span>
+      <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;email2&quot;</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">w.</span><span class="se">\\</span><span class="s1">w@</span><span class="se">\\</span><span class="s1">w.com&#39;</span><span class="p">)</span>
+      <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;ip_address&quot;</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">n.</span><span class="se">\\</span><span class="s1">n.</span><span class="se">\\</span><span class="s1">n.</span><span class="se">\\</span><span class="s1">n&#39;</span><span class="p">)</span>
+      <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;md5_payment_instrument&quot;</span><span class="p">,</span>
+                  <span class="n">expr</span><span class="o">=</span><span class="s2">&quot;md5(concat(payment_instrument_type, &#39;:&#39;, payment_instrument))&quot;</span><span class="p">,</span>
+                  <span class="n">base_column</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;payment_instrument_type&#39;</span><span class="p">,</span> <span class="s1">&#39;payment_instrument&#39;</span><span class="p">])</span>
+      <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;customer_notes&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">dg</span><span class="o">.</span><span class="n">ILText</span><span class="p">(</span><span class="n">words</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">8</span><span class="p">)))</span>
+      <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;created_ts&quot;</span><span class="p">,</span> <span class="s2">&quot;timestamp&quot;</span><span class="p">,</span> <span class="n">expr</span><span class="o">=</span><span class="s2">&quot;now()&quot;</span><span class="p">)</span>
+      <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;modified_ts&quot;</span><span class="p">,</span> <span class="s2">&quot;timestamp&quot;</span><span class="p">,</span> <span class="n">expr</span><span class="o">=</span><span class="s2">&quot;now()&quot;</span><span class="p">)</span>
+      <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;memo&quot;</span><span class="p">,</span> <span class="n">expr</span><span class="o">=</span><span class="s2">&quot;&#39;original data&#39;&quot;</span><span class="p">)</span>
+      <span class="p">)</span>
+<span class="n">df1</span> <span class="o">=</span> <span class="n">dataspec</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+
+<span class="c1"># write table</span>
+
+<span class="n">df1</span><span class="o">.</span><span class="n">write</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;delta&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">customers1_location</span><span class="p">)</span>
+</pre></div>
+</div>
+<section id="creating-a-table-definition">
+<h3>Creating a table definition<a class="headerlink" href="#creating-a-table-definition" title="Permalink to this heading"></a></h3>
+<p>We can use the features of the data generator to script SQL definitions for table creation and merge
+statements.</p>
+<p>Lets create a table definition around our data. As we generate a SQL statement with an explicit location,
+the table is implicitly <code class="docutils literal notranslate"><span class="pre">external</span></code> and will not overwrite our data.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">customers1_location</span> <span class="o">=</span> <span class="n">BASE_PATH</span> <span class="o">+</span> <span class="s2">&quot;customers1&quot;</span>
+<span class="n">tableDefn</span><span class="o">=</span><span class="n">dataspec</span><span class="o">.</span><span class="n">scriptTable</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;customers1&quot;</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="n">customers1_location</span><span class="p">)</span>
+
+<span class="n">spark</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="n">tableDefn</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now lets explore the table layout:</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">sql</span>
+<span class="c1">-- lets check our table</span>
+
+<span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">customers1</span>
+</pre></div>
+</div>
+</section>
+<section id="creating-changes">
+<h3>Creating Changes<a class="headerlink" href="#creating-changes" title="Permalink to this heading"></a></h3>
+<p>Lets generate some changes.</p>
+<p>Here we want to generate a set of new rows, which we guarantee to be new by using customer ids greater than the maximum
+existing customer id.</p>
+<p>We will also generate a set of updates by sampling from the existing data and adding some modifications.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
+<span class="kn">import</span> <span class="nn">pyspark.sql.functions</span> <span class="k">as</span> <span class="nn">F</span>
+
+<span class="n">start_of_new_ids</span> <span class="o">=</span> <span class="n">df1</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="s1">&#39;customer_id&#39;</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">()[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">start_of_new_ids</span><span class="p">)</span>
+
+<span class="n">df1_inserts</span> <span class="o">=</span> <span class="p">(</span><span class="n">dataspec</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+        <span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s2">&quot;startingId&quot;</span><span class="p">,</span> <span class="n">start_of_new_ids</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">withRowCount</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">build</span><span class="p">()</span>
+        <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;memo&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">lit</span><span class="p">(</span><span class="s2">&quot;insert&quot;</span><span class="p">))</span>
+        <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;customer_id&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">expr</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;customer_id + </span><span class="si">{</span><span class="n">start_of_new_ids</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+              <span class="p">)</span>
+
+<span class="c1"># read the written data - if we simply recompute, timestamps of original will be lost</span>
+<span class="n">df_original</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">read</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;delta&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">customers1_location</span><span class="p">)</span>
+
+<span class="n">df1_updates</span> <span class="o">=</span> <span class="p">(</span><span class="n">df_original</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="mi">50</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;alias&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">lit</span><span class="p">(</span><span class="s1">&#39;modified alias&#39;</span><span class="p">))</span>
+        <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;modified_ts&quot;</span><span class="p">,</span><span class="n">F</span><span class="o">.</span><span class="n">expr</span><span class="p">(</span><span class="s1">&#39;now()&#39;</span><span class="p">))</span>
+        <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;memo&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">lit</span><span class="p">(</span><span class="s2">&quot;update&quot;</span><span class="p">)))</span>
+
+<span class="n">df_changes</span> <span class="o">=</span> <span class="n">df1_inserts</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">df1_updates</span><span class="p">)</span>
+
+<span class="c1"># randomize ordering</span>
+<span class="n">df_changes</span> <span class="o">=</span> <span class="p">(</span><span class="n">df_changes</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;order_rand&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">expr</span><span class="p">(</span><span class="s2">&quot;rand()&quot;</span><span class="p">))</span>
+              <span class="o">.</span><span class="n">orderBy</span><span class="p">(</span><span class="s2">&quot;order_rand&quot;</span><span class="p">)</span>
+              <span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;order_rand&quot;</span><span class="p">)</span>
+              <span class="p">)</span>
+
+
+<span class="n">display</span><span class="p">(</span><span class="n">df_changes</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="merging-in-the-changes">
+<h3>Merging in the changes<a class="headerlink" href="#merging-in-the-changes" title="Permalink to this heading"></a></h3>
+<p>We can script the merge statement in the data generator.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">updateColumns</span></code> argument, specifies which columns should be updated.
+The corresponding <code class="docutils literal notranslate"><span class="pre">updateColumnExprs</span></code> argument provides SQL expressions as overrides for the
+columns being updated. These do not have to provided - in which case the
+values of the columns from the source table will be used.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">df_changes</span><span class="o">.</span><span class="n">dropDuplicates</span><span class="p">([</span><span class="s2">&quot;customer_id&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">createOrReplaceTempView</span><span class="p">(</span><span class="s2">&quot;customers1_changes&quot;</span><span class="p">)</span>
+<span class="n">sqlStmt</span> <span class="o">=</span> <span class="n">dataspec</span><span class="o">.</span><span class="n">scriptMerge</span><span class="p">(</span><span class="n">tgtName</span><span class="o">=</span><span class="s2">&quot;customers1&quot;</span><span class="p">,</span> <span class="n">srcName</span><span class="o">=</span><span class="s2">&quot;customers1_changes&quot;</span><span class="p">,</span>
+                               <span class="n">joinExpr</span><span class="o">=</span><span class="s2">&quot;src.customer_id=tgt.customer_id&quot;</span><span class="p">,</span>
+                               <span class="n">updateColumns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;alias&quot;</span><span class="p">,</span> <span class="s2">&quot;memo&quot;</span><span class="p">,</span><span class="s2">&quot;modified_ts&quot;</span><span class="p">],</span>
+                               <span class="n">updateColumnExprs</span><span class="o">=</span><span class="p">[</span> <span class="p">(</span><span class="s2">&quot;memo&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;updated on merge&#39;&quot;</span><span class="p">),</span>
+                                                   <span class="p">(</span><span class="s2">&quot;modified_ts&quot;</span><span class="p">,</span> <span class="s2">&quot;now()&quot;</span><span class="p">)</span>
+                                                 <span class="p">])</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">sqlStmt</span><span class="p">)</span>
+<span class="n">spark</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="n">sqlStmt</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>That’s all that’s required to perform merges with the data generation framework.
+Note that these merge script statements can be used as part of a streaming merge implementation also.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="generating_from_existing_data.html" class="btn btn-neutral float-left" title="Generating Synthetic Data from Existing Data or Schema (Experimental)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="multi_table_data.html" class="btn btn-neutral float-right" title="Generating and Using Data with Multiple Tables" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

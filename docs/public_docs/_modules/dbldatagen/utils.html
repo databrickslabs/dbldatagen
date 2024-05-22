@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>dbldatagen.utils &mdash; Databricks Labs Data Generator 0.3.6post1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/tdg.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/clipboard.min.js"></script>
+        <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_from_existing_data.html">Generating synthetic data from existing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference/api/modules.html">The dbldatagen package API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">dbldatagen.utils</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for dbldatagen.utils</h1><div class="highlight"><pre>
+<span></span><span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="c1">#</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This file defines the `DataGenError` classes and utility functions</span>
+
+<span class="sd">These are meant for internal use only</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">timedelta</span>
+
+<span class="kn">import</span> <span class="nn">jmespath</span>
+
+
+<div class="viewcode-block" id="deprecated"><a class="viewcode-back" href="../../reference/api/dbldatagen.utils.html#dbldatagen.utils.deprecated">[docs]</a><span class="k">def</span> <span class="nf">deprecated</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Define a deprecated decorator without dependencies on 3rd party libraries</span>
+
+<span class="sd">    Note there is a 3rd party library called `deprecated` that provides this feature but goal is to only have</span>
+<span class="sd">    dependencies on packages already used in the Databricks runtime</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># create closure around function that follows use of the decorator</span>
+    <span class="k">def</span> <span class="nf">deprecated_decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">deprecated_func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">` is a deprecated function or method. </span><span class="se">\n</span><span class="si">{</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                          <span class="n">category</span><span class="o">=</span><span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">deprecated_func</span>
+
+    <span class="k">return</span> <span class="n">deprecated_decorator</span></div>
+
+
+<div class="viewcode-block" id="DataGenError"><a class="viewcode-back" href="../../reference/api/dbldatagen.utils.html#dbldatagen.utils.DataGenError">[docs]</a><span class="k">class</span> <span class="nc">DataGenError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exception class to represent data generation errors</span>
+
+<span class="sd">        :param msg: message related to error</span>
+<span class="sd">        :param baseException: underlying exception, if any that caused the issue</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">baseException</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; constructor</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_underlyingException</span> <span class="o">=</span> <span class="n">baseException</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_msg</span> <span class="o">=</span> <span class="n">msg</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;DataGenError(msg=&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_msg</span><span class="si">}</span><span class="s2">&#39;, baseException=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_underlyingException</span><span class="si">}</span><span class="s2">)&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;DataGenError(msg=&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_msg</span><span class="si">}</span><span class="s2">&#39;, baseException=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_underlyingException</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+
+
+<div class="viewcode-block" id="coalesce_values"><a class="viewcode-back" href="../../reference/api/dbldatagen.utils.html#dbldatagen.utils.coalesce_values">[docs]</a><span class="k">def</span> <span class="nf">coalesce_values</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;For a supplied list of arguments, returns the first argument that does not have the value `None`</span>
+
+<span class="sd">    :param args: variable list of arguments which are evaluated</span>
+<span class="sd">    :returns: First argument in list that evaluates to a non-`None` value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">x</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="ensure"><a class="viewcode-back" href="../../reference/api/dbldatagen.utils.html#dbldatagen.utils.ensure">[docs]</a><span class="k">def</span> <span class="nf">ensure</span><span class="p">(</span><span class="n">cond</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s2">&quot;condition does not hold true&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;ensure(cond, s) =&gt; throws Exception(s) if c is not true</span>
+
+<span class="sd">    :param cond: condition to test</span>
+<span class="sd">    :param msg: Message to add to exception if exception is raised</span>
+<span class="sd">    :raises: `DataGenError` exception if condition does not hold true</span>
+<span class="sd">    :returns: Does not return anything but raises exception if condition does not hold</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">strip_margin</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;\n[ \t]*\|&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">cond</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">DataGenError</span><span class="p">(</span><span class="n">strip_margin</span><span class="p">(</span><span class="n">msg</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="mkBoundsList"><a class="viewcode-back" href="../../reference/api/dbldatagen.utils.html#dbldatagen.utils.mkBoundsList">[docs]</a><span class="k">def</span> <span class="nf">mkBoundsList</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">default</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; make a bounds list from supplied parameter - otherwise use default</span>
+
+<span class="sd">        :param x: integer or list of 2 values that define bounds list</span>
+<span class="sd">        :param default: default value if X is `None`</span>
+<span class="sd">        :returns: list of form [x,y]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">retval</span> <span class="o">=</span> <span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="p">[</span><span class="n">default</span><span class="p">,</span> <span class="n">default</span><span class="p">])</span> <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">default</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span> <span class="k">else</span> <span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">default</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">retval</span>
+    <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="n">bounds_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">]</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">bounds_list</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;bounds list must be of length 2&quot;</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="n">bounds_list</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">bounds_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">bounds_list</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;bounds list must be of length 2&quot;</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="n">bounds_list</span></div>
+
+
+<div class="viewcode-block" id="topologicalSort"><a class="viewcode-back" href="../../reference/api/dbldatagen.utils.html#dbldatagen.utils.topologicalSort">[docs]</a><span class="k">def</span> <span class="nf">topologicalSort</span><span class="p">(</span><span class="n">sources</span><span class="p">,</span> <span class="n">initial_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">flatten</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Perform a topological sort over sources</span>
+
+<span class="sd">    Used to compute the column test data generation order of the column generation dependencies.</span>
+
+<span class="sd">    The column generation dependencies are based on the value of the `baseColumn` attribute for `withColumn` or</span>
+<span class="sd">    `withColumnSpec` statements in the data generator specification.</span>
+
+<span class="sd">    :arg sources: list of ``(name, set(names of dependencies))`` pairs</span>
+<span class="sd">    :arg initial_columns: force ``initial_columns`` to be computed first</span>
+<span class="sd">    :arg flatten: if true, flatten output list</span>
+<span class="sd">    :returns: list of names in dependency order separated into build phases</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">       The algorith will give preference to retaining order of inbound sequence</span>
+<span class="sd">       over modifying order to produce a lower number of build phases.</span>
+
+<span class="sd">       Overall the effect is that the input build order should be retained unless there are forward references</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># generate a copy so that we can modify in place</span>
+    <span class="n">pending</span> <span class="o">=</span> <span class="p">[(</span><span class="n">name</span><span class="p">,</span> <span class="nb">set</span><span class="p">(</span><span class="n">deps</span><span class="p">))</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">deps</span> <span class="ow">in</span> <span class="n">sources</span><span class="p">]</span>
+    <span class="n">provided</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">initial_columns</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">initial_columns</span><span class="p">[:]</span>
+    <span class="n">build_orders</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">initial_columns</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[</span><span class="n">initial_columns</span><span class="p">]</span>
+
+    <span class="k">while</span> <span class="n">pending</span><span class="p">:</span>
+        <span class="n">next_pending</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">gen</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">value_emitted</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">defer_emitted</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">gen_provided</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">pending</span><span class="p">:</span>
+            <span class="n">name</span><span class="p">,</span> <span class="n">deps</span> <span class="o">=</span> <span class="n">entry</span>
+            <span class="n">deps</span><span class="o">.</span><span class="n">difference_update</span><span class="p">(</span><span class="n">provided</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">deps</span><span class="p">:</span>
+                <span class="n">next_pending</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="nb">set</span><span class="p">(</span><span class="n">deps</span><span class="p">)))</span>
+
+                <span class="c1"># if dependencies will be satisfied by item emitted in this round, defer output</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">deps</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">gen_provided</span><span class="p">):</span>
+                    <span class="n">defer_emitted</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">elif</span> <span class="n">defer_emitted</span><span class="p">:</span>
+                <span class="n">next_pending</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="nb">set</span><span class="p">(</span><span class="n">deps</span><span class="p">)))</span>
+            <span class="k">elif</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">provided</span><span class="p">:</span>
+                <span class="n">value_emitted</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">gen</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                <span class="n">gen_provided</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                <span class="n">value_emitted</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">provided</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">gen_provided</span><span class="p">)</span>
+        <span class="n">build_orders</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gen</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">value_emitted</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;cyclic or missing dependency detected [</span><span class="si">{</span><span class="n">next_pending</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
+
+        <span class="n">pending</span> <span class="o">=</span> <span class="n">next_pending</span>
+
+    <span class="k">if</span> <span class="n">flatten</span><span class="p">:</span>
+        <span class="n">flattened_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span> <span class="k">for</span> <span class="n">sublist</span> <span class="ow">in</span> <span class="n">build_orders</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">sublist</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">flattened_list</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">build_orders</span></div>
+
+
+<span class="n">PATTERN_NAME_EQUALS_VALUE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(\w+)\s*\=\s*([0-9]+)&quot;</span><span class="p">)</span>
+<span class="n">PATTERN_VALUE_SPACE_NAME</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;([0-9]+)\s+(\w+)&quot;</span><span class="p">)</span>
+<span class="n">_WEEKS_PER_YEAR</span> <span class="o">=</span> <span class="mi">52</span>
+
+
+<div class="viewcode-block" id="parse_time_interval"><a class="viewcode-back" href="../../reference/api/dbldatagen.utils.html#dbldatagen.utils.parse_time_interval">[docs]</a><span class="k">def</span> <span class="nf">parse_time_interval</span><span class="p">(</span><span class="n">spec</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;parse time interval from string&quot;&quot;&quot;</span>
+    <span class="n">hours</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">minutes</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">weeks</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">microseconds</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">milliseconds</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">seconds</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">years</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">days</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">assert</span> <span class="n">spec</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Must have valid time interval specification&quot;</span>
+
+    <span class="c1"># get time specs such as 12 days, etc. Supported timespans are years, days, hours, minutes, seconds</span>
+    <span class="n">timespecs</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)]</span>
+
+    <span class="k">for</span> <span class="n">ts</span> <span class="ow">in</span> <span class="n">timespecs</span><span class="p">:</span>
+        <span class="c1"># allow both &#39;days=1&#39; and &#39;1 day&#39; syntax</span>
+        <span class="n">timespec_parts</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">PATTERN_NAME_EQUALS_VALUE</span><span class="p">,</span> <span class="n">ts</span><span class="p">)</span>
+        <span class="c1"># findall returns list of tuples</span>
+        <span class="k">if</span> <span class="n">timespec_parts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">timespec_parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">num_parts</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">timespec_parts</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">assert</span> <span class="n">num_parts</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;must have numeric specification and time element such as `12 hours` or `hours=12`&quot;</span>
+            <span class="n">time_value</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">timespec_parts</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">num_parts</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+            <span class="n">time_type</span> <span class="o">=</span> <span class="n">timespec_parts</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">timespec_parts</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">PATTERN_VALUE_SPACE_NAME</span><span class="p">,</span> <span class="n">ts</span><span class="p">)</span>
+            <span class="n">num_parts</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">timespec_parts</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">assert</span> <span class="n">num_parts</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;must have numeric specification and time element such as `12 hours` or `hours=12`&quot;</span>
+            <span class="n">time_value</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">timespec_parts</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">time_type</span> <span class="o">=</span> <span class="n">timespec_parts</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">num_parts</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">time_type</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;years&quot;</span><span class="p">,</span> <span class="s2">&quot;year&quot;</span><span class="p">]:</span>
+            <span class="n">years</span> <span class="o">=</span> <span class="n">time_value</span>
+        <span class="k">elif</span> <span class="n">time_type</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;weeks&quot;</span><span class="p">,</span> <span class="s2">&quot;weeks&quot;</span><span class="p">]:</span>
+            <span class="n">weeks</span> <span class="o">=</span> <span class="n">time_value</span>
+        <span class="k">elif</span> <span class="n">time_type</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;days&quot;</span><span class="p">,</span> <span class="s2">&quot;day&quot;</span><span class="p">]:</span>
+            <span class="n">days</span> <span class="o">=</span> <span class="n">time_value</span>
+        <span class="k">elif</span> <span class="n">time_type</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;hours&quot;</span><span class="p">,</span> <span class="s2">&quot;hour&quot;</span><span class="p">]:</span>
+            <span class="n">hours</span> <span class="o">=</span> <span class="n">time_value</span>
+        <span class="k">elif</span> <span class="n">time_type</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;minutes&quot;</span><span class="p">,</span> <span class="s2">&quot;minute&quot;</span><span class="p">]:</span>
+            <span class="n">minutes</span> <span class="o">=</span> <span class="n">time_value</span>
+        <span class="k">elif</span> <span class="n">time_type</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;seconds&quot;</span><span class="p">,</span> <span class="s2">&quot;second&quot;</span><span class="p">]:</span>
+            <span class="n">seconds</span> <span class="o">=</span> <span class="n">time_value</span>
+        <span class="k">elif</span> <span class="n">time_type</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;microseconds&quot;</span><span class="p">,</span> <span class="s2">&quot;microsecond&quot;</span><span class="p">]:</span>
+            <span class="n">microseconds</span> <span class="o">=</span> <span class="n">time_value</span>
+        <span class="k">elif</span> <span class="n">time_type</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;milliseconds&quot;</span><span class="p">,</span> <span class="s2">&quot;millisecond&quot;</span><span class="p">]:</span>
+            <span class="n">milliseconds</span> <span class="o">=</span> <span class="n">time_value</span>
+
+    <span class="n">delta</span> <span class="o">=</span> <span class="n">timedelta</span><span class="p">(</span>
+        <span class="n">days</span><span class="o">=</span><span class="n">days</span><span class="p">,</span>
+        <span class="n">seconds</span><span class="o">=</span><span class="n">seconds</span><span class="p">,</span>
+        <span class="n">microseconds</span><span class="o">=</span><span class="n">microseconds</span><span class="p">,</span>
+        <span class="n">milliseconds</span><span class="o">=</span><span class="n">milliseconds</span><span class="p">,</span>
+        <span class="n">minutes</span><span class="o">=</span><span class="n">minutes</span><span class="p">,</span>
+        <span class="n">hours</span><span class="o">=</span><span class="n">hours</span><span class="p">,</span>
+        <span class="n">weeks</span><span class="o">=</span><span class="n">weeks</span> <span class="o">+</span> <span class="p">(</span><span class="n">years</span> <span class="o">*</span> <span class="n">_WEEKS_PER_YEAR</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">delta</span></div>
+
+
+<div class="viewcode-block" id="strip_margins"><a class="viewcode-back" href="../../reference/api/dbldatagen.utils.html#dbldatagen.utils.strip_margins">[docs]</a><span class="k">def</span> <span class="nf">strip_margins</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">marginChar</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Python equivalent of Scala stripMargins method</span>
+<span class="sd">    </span>
+<span class="sd">    Takes a string (potentially multiline) and strips all chars up and including the first occurrence of `marginChar`.</span>
+<span class="sd">    Used to control the formatting of generated text</span>
+
+<span class="sd">    `strip_margins(&quot;one\n    |two\n    |three&quot;, &#39;|&#39;)`</span>
+
+<span class="sd">    will produce </span>
+<span class="sd">    </span>
+<span class="sd">    ``</span>
+<span class="sd">    one </span>
+<span class="sd">    two</span>
+<span class="sd">    three</span>
+<span class="sd">    ``</span>
+
+<span class="sd">    :param s: string to strip margins from</span>
+<span class="sd">    :param marginChar: character to strip </span>
+<span class="sd">    :return: modified string</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">s</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span>
+    <span class="k">assert</span> <span class="n">marginChar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">marginChar</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span>
+
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">revised_lines</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">marginChar</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+            <span class="n">revised_line</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">marginChar</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span>
+            <span class="n">revised_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">revised_line</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">revised_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">revised_lines</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="split_list_matching_condition"><a class="viewcode-back" href="../../reference/api/dbldatagen.utils.html#dbldatagen.utils.split_list_matching_condition">[docs]</a><span class="k">def</span> <span class="nf">split_list_matching_condition</span><span class="p">(</span><span class="n">lst</span><span class="p">,</span> <span class="n">cond</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Split a list on elements that match a condition</span>
+
+<span class="sd">    This will find all matches of a specific condition in the list and split the list into sub lists around the</span>
+<span class="sd">    element that matches this condition.</span>
+
+<span class="sd">    It will handle multiple matches performing splits on each match.</span>
+
+<span class="sd">    For example, the following code will produce the results below:</span>
+
+<span class="sd">    x = [&#39;id&#39;, &#39;city_name&#39;, &#39;id&#39;, &#39;city_id&#39;, &#39;city_pop&#39;, &#39;id&#39;, &#39;city_id&#39;, &#39;city_pop&#39;,&#39;city_id&#39;, &#39;city_pop&#39;,&#39;id&#39;]</span>
+<span class="sd">    splitListOnCondition(x, lambda el: el == &#39;id&#39;)</span>
+
+<span class="sd">    Result:</span>
+<span class="sd">    `[[&#39;id&#39;], [&#39;city_name&#39;], [&#39;id&#39;], [&#39;city_id&#39;, &#39;city_pop&#39;],</span>
+<span class="sd">      [&#39;id&#39;], [&#39;city_id&#39;, &#39;city_pop&#39;, &#39;city_id&#39;, &#39;city_pop&#39;], [&#39;id&#39;]]`</span>
+
+<span class="sd">    :arg lst: list of items to perform condition matches against</span>
+<span class="sd">    :arg cond: lambda function or function taking single argument and returning True or False</span>
+<span class="sd">    :returns: list of sublists</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">retval</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">match_condition</span><span class="p">(</span><span class="n">matchList</span><span class="p">,</span> <span class="n">matchFn</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return first index of element of list matching condition&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">matchList</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">matchList</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">matchValue</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">matchList</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">matchFn</span><span class="p">(</span><span class="n">matchValue</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">i</span>
+
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+
+    <span class="k">if</span> <span class="n">lst</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">retval</span> <span class="o">=</span> <span class="n">lst</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">lst</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">retval</span> <span class="o">=</span> <span class="p">[</span><span class="n">lst</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ix</span> <span class="o">=</span> <span class="n">match_condition</span><span class="p">(</span><span class="n">lst</span><span class="p">,</span> <span class="n">cond</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ix</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">retval</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">split_list_matching_condition</span><span class="p">(</span><span class="n">lst</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">ix</span><span class="p">],</span> <span class="n">cond</span><span class="p">))</span>
+            <span class="n">retval</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lst</span><span class="p">[</span><span class="n">ix</span><span class="p">:</span><span class="n">ix</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+            <span class="n">retval</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">split_list_matching_condition</span><span class="p">(</span><span class="n">lst</span><span class="p">[</span><span class="n">ix</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:],</span> <span class="n">cond</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">retval</span> <span class="o">=</span> <span class="p">[</span><span class="n">lst</span><span class="p">]</span>
+
+    <span class="c1"># filter out empty lists</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">el</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">retval</span> <span class="k">if</span> <span class="n">el</span> <span class="o">!=</span> <span class="p">[]]</span></div>
+
+
+<div class="viewcode-block" id="json_value_from_path"><a class="viewcode-back" href="../../reference/api/dbldatagen.utils.html#dbldatagen.utils.json_value_from_path">[docs]</a><span class="k">def</span> <span class="nf">json_value_from_path</span><span class="p">(</span><span class="n">searchPath</span><span class="p">,</span> <span class="n">jsonData</span><span class="p">,</span> <span class="n">defaultValue</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Get JSON value from JSON data referenced by searchPath</span>
+
+<span class="sd">    searchPath should be a JSON path as supported by the `jmespath` package</span>
+<span class="sd">    (see https://jmespath.org/)</span>
+
+<span class="sd">    :param searchPath: A `jmespath` compatible JSON search path</span>
+<span class="sd">    :param jsonData: The json data to search (string representation of the JSON data)</span>
+<span class="sd">    :param defaultValue: The default value to be returned if the value was not found</span>
+<span class="sd">    :return: Returns the json value if present, otherwise returns the default value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">searchPath</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">searchPath</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;search path cannot be empty&quot;</span>
+    <span class="k">assert</span> <span class="n">jsonData</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">jsonData</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;JSON data cannot be empty&quot;</span>
+
+    <span class="n">jsonDict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">jsonData</span><span class="p">)</span>
+
+    <span class="n">jsonValue</span> <span class="o">=</span> <span class="n">jmespath</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">searchPath</span><span class="p">,</span> <span class="n">jsonDict</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">jsonValue</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">jsonValue</span>
+
+    <span class="k">return</span> <span class="n">defaultValue</span></div>
+
+
+<div class="viewcode-block" id="system_time_millis"><a class="viewcode-back" href="../../reference/api/dbldatagen.utils.html#dbldatagen.utils.system_time_millis">[docs]</a><span class="k">def</span> <span class="nf">system_time_millis</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; return system time as milliseconds since start of epoch</span>
+
+<span class="sd">    :return: system time millis as long</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">curr_time</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">curr_time</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

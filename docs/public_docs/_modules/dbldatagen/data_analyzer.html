@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>dbldatagen.data_analyzer &mdash; Databricks Labs Data Generator 0.3.6post1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/tdg.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/clipboard.min.js"></script>
+        <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_from_existing_data.html">Generating synthetic data from existing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference/api/modules.html">The dbldatagen package API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">dbldatagen.data_analyzer</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for dbldatagen.data_analyzer</h1><div class="highlight"><pre>
+<span></span><span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="c1">#</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This module defines the ``DataAnalyzer`` class.</span>
+
+<span class="sd">This code is experimental and both APIs and code generated is liable to change in future versions.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">import</span> <span class="nn">pyspark.sql</span> <span class="k">as</span> <span class="nn">ssql</span>
+<span class="kn">from</span> <span class="nn">pyspark.sql.types</span> <span class="kn">import</span> <span class="n">LongType</span><span class="p">,</span> <span class="n">FloatType</span><span class="p">,</span> <span class="n">IntegerType</span><span class="p">,</span> <span class="n">StringType</span><span class="p">,</span> <span class="n">DoubleType</span><span class="p">,</span> <span class="n">BooleanType</span><span class="p">,</span> <span class="n">ShortType</span><span class="p">,</span> \
+    <span class="n">TimestampType</span><span class="p">,</span> <span class="n">DateType</span><span class="p">,</span> <span class="n">DecimalType</span><span class="p">,</span> <span class="n">ByteType</span><span class="p">,</span> <span class="n">BinaryType</span><span class="p">,</span> <span class="n">StructType</span><span class="p">,</span> <span class="n">ArrayType</span><span class="p">,</span> <span class="n">DataType</span>
+
+<span class="kn">from</span> <span class="nn">.spark_singleton</span> <span class="kn">import</span> <span class="n">SparkSingleton</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">strip_margins</span>
+
+<span class="n">SUMMARY_FIELD_NAME</span> <span class="o">=</span> <span class="s2">&quot;summary&quot;</span>
+<span class="n">SUMMARY_FIELD_NAME_RENAMED</span> <span class="o">=</span> <span class="s2">&quot;__summary__&quot;</span>
+<span class="n">DATA_SUMMARY_FIELD_NAME</span> <span class="o">=</span> <span class="s2">&quot;__data_summary__&quot;</span>
+
+
+<div class="viewcode-block" id="DataAnalyzer"><a class="viewcode-back" href="../../reference/api/dbldatagen.data_analyzer.html#dbldatagen.data_analyzer.DataAnalyzer">[docs]</a><span class="k">class</span> <span class="nc">DataAnalyzer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;This class is used to analyze an existing data set to assist in generating a test data set with similar</span>
+<span class="sd">    characteristics, and to generate code from existing schemas and data</span>
+
+<span class="sd">    :param df: Spark dataframe to analyze</span>
+<span class="sd">    :param sparkSession: Spark session instance to use when performing spark operations</span>
+<span class="sd">    :param debug: If True, additional debug information is logged</span>
+<span class="sd">    :param verbose: If True, additional information is logged</span>
+
+<span class="sd">    .. warning::</span>
+<span class="sd">       Experimental</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_DEFAULT_GENERATED_NAME</span> <span class="o">=</span> <span class="s2">&quot;synthetic_data&quot;</span>
+
+    <span class="n">_GENERATED_COMMENT</span> <span class="o">=</span> <span class="n">strip_margins</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                        |# Code snippet generated with Databricks Labs Data Generator (`dbldatagen`) DataAnalyzer class</span>
+<span class="s2">                        |# Install with `pip install dbldatagen` or in notebook with `%pip install dbldatagen`</span>
+<span class="s2">                        |# See the following resources for more details:</span>
+<span class="s2">                        |#</span>
+<span class="s2">                        |#   Getting Started - [https://databrickslabs.github.io/dbldatagen/public_docs/APIDOCS.html]</span>
+<span class="s2">                        |#   Github project - [https://github.com/databrickslabs/dbldatagen]</span>
+<span class="s2">                        |#&quot;&quot;&quot;</span><span class="p">,</span> <span class="s1">&#39;|&#39;</span><span class="p">)</span>
+
+    <span class="n">_GENERATED_FROM_SCHEMA_COMMENT</span> <span class="o">=</span> <span class="n">strip_margins</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                        |# Column definitions are stubs only - modify to generate correct data  </span>
+<span class="s2">                        |#&quot;&quot;&quot;</span><span class="p">,</span> <span class="s1">&#39;|&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sparkSession</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Constructor:</span>
+<span class="sd">        :param df: Dataframe to analyze</span>
+<span class="sd">        :param sparkSession: Spark session to use</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># set up logging</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">debug</span> <span class="o">=</span> <span class="n">debug</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_setupLogger</span><span class="p">()</span>
+
+        <span class="k">assert</span> <span class="n">df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;dataframe must be supplied&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_df</span> <span class="o">=</span> <span class="n">df</span>
+
+        <span class="k">if</span> <span class="n">sparkSession</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">sparkSession</span> <span class="o">=</span> <span class="n">SparkSingleton</span><span class="o">.</span><span class="n">getLocalInstance</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sparkSession</span> <span class="o">=</span> <span class="n">sparkSession</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dataSummary</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">_setupLogger</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set up logging</span>
+
+<span class="sd">        This will set the logger at warning, info or debug levels depending on the instance construction parameters</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;DataAnalyzer&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_displayRow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Display details for row&quot;&quot;&quot;</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">row_key_pairs</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">asDict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">row_key_pairs</span><span class="p">:</span>
+            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_addMeasureToSummary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measureName</span><span class="p">,</span> <span class="n">summaryExpr</span><span class="o">=</span><span class="s2">&quot;&#39;&#39;&quot;</span><span class="p">,</span> <span class="n">fieldExprs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dfData</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rowLimit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                             <span class="n">dfSummary</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Add a measure to the summary dataframe</span>
+
+<span class="sd">        :param measureName: Name of measure</span>
+<span class="sd">        :param summaryExpr: Summary expression</span>
+<span class="sd">        :param fieldExprs: list of field expressions (or generator)</span>
+<span class="sd">        :param dfData: Source data df - data being summarized</span>
+<span class="sd">        :param rowLimit: Number of rows to get for measure</span>
+<span class="sd">        :param dfSummary: Summary df</span>
+<span class="sd">        :return: dfSummary with new measure added</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">dfData</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;source data dataframe must be supplied&quot;</span>
+        <span class="k">assert</span> <span class="n">measureName</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">measureName</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;invalid measure name&quot;</span>
+
+        <span class="c1"># add measure name and measure summary</span>
+        <span class="n">exprs</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">measureName</span><span class="si">}</span><span class="s2">&#39; as measure_&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;string(</span><span class="si">{</span><span class="n">summaryExpr</span><span class="si">}</span><span class="s2">) as summary_&quot;</span><span class="p">]</span>
+
+        <span class="c1"># add measures for fields</span>
+        <span class="n">exprs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">fieldExprs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">dfSummary</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dfResult</span> <span class="o">=</span> <span class="n">dfSummary</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">dfData</span><span class="o">.</span><span class="n">selectExpr</span><span class="p">(</span><span class="o">*</span><span class="n">exprs</span><span class="p">)</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="n">rowLimit</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dfResult</span> <span class="o">=</span> <span class="n">dfData</span><span class="o">.</span><span class="n">selectExpr</span><span class="p">(</span><span class="o">*</span><span class="n">exprs</span><span class="p">)</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="n">rowLimit</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">dfResult</span>
+
+    <span class="k">def</span> <span class="nf">_get_dataframe_describe_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Get summary statistics for dataframe handling renaming of summary field if necessary&quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;schema&quot;</span><span class="p">,</span> <span class="n">df</span><span class="o">.</span><span class="n">schema</span><span class="p">)</span>
+
+        <span class="n">src_fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">fld</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">fld</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">fields</span><span class="p">]</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;src_fields&quot;</span><span class="p">,</span> <span class="n">src_fields</span><span class="p">)</span>
+        <span class="n">renamed_summary</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="c1"># get summary statistics handling the case where a field named &#39;summary&#39; exists</span>
+        <span class="c1"># if the `summary` field name exists, we&#39;ll rename it to avoid a conflict</span>
+        <span class="k">if</span> <span class="n">SUMMARY_FIELD_NAME</span> <span class="ow">in</span> <span class="n">src_fields</span><span class="p">:</span>
+            <span class="n">renamed_summary</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">withColumnRenamed</span><span class="p">(</span><span class="n">SUMMARY_FIELD_NAME</span><span class="p">,</span> <span class="n">SUMMARY_FIELD_NAME_RENAMED</span><span class="p">)</span>
+
+        <span class="c1"># The dataframe describe method produces a field named `summary`. We&#39;ll rename this to avoid conflict with</span>
+        <span class="c1"># any natural fields using the same name.</span>
+        <span class="n">summary_df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span><span class="o">.</span><span class="n">withColumnRenamed</span><span class="p">(</span><span class="n">SUMMARY_FIELD_NAME</span><span class="p">,</span> <span class="n">DATA_SUMMARY_FIELD_NAME</span><span class="p">)</span>
+
+        <span class="c1"># if we renamed a field called `summary` in the data, we&#39;ll rename it back.</span>
+        <span class="c1"># The data summary field produced by the describe method has already been renamed so there will be no conflict.</span>
+        <span class="k">if</span> <span class="n">renamed_summary</span><span class="p">:</span>
+            <span class="n">summary_df</span> <span class="o">=</span> <span class="n">summary_df</span><span class="o">.</span><span class="n">withColumnRenamed</span><span class="p">(</span><span class="n">SUMMARY_FIELD_NAME_RENAMED</span><span class="p">,</span> <span class="n">SUMMARY_FIELD_NAME</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">summary_df</span>
+
+<div class="viewcode-block" id="DataAnalyzer.summarizeToDF"><a class="viewcode-back" href="../../reference/api/dbldatagen.data_analyzer.html#dbldatagen.data_analyzer.DataAnalyzer.summarizeToDF">[docs]</a>    <span class="k">def</span> <span class="nf">summarizeToDF</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Generate summary analysis of data set as dataframe</span>
+
+<span class="sd">        :return: Summary results as dataframe</span>
+
+<span class="sd">        The resulting dataframe can be displayed with the ``display`` function in a notebook environment</span>
+<span class="sd">        or with the ``show`` method.</span>
+
+<span class="sd">        The output is also used in code generation  to generate more accurate code.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_df</span><span class="o">.</span><span class="n">cache</span><span class="p">()</span><span class="o">.</span><span class="n">createOrReplaceTempView</span><span class="p">(</span><span class="s2">&quot;data_analysis_summary&quot;</span><span class="p">)</span>
+
+        <span class="n">total_count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_df</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">*</span> <span class="mf">1.0</span>
+
+        <span class="n">dtypes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_df</span><span class="o">.</span><span class="n">dtypes</span>
+
+        <span class="c1"># schema information</span>
+        <span class="n">dfDataSummary</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_addMeasureToSummary</span><span class="p">(</span>
+            <span class="s1">&#39;schema&#39;</span><span class="p">,</span>
+            <span class="n">summaryExpr</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;to_json(named_struct(&#39;column_count&#39;, </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dtypes</span><span class="p">)</span><span class="si">}</span><span class="s2">))&quot;&quot;&quot;</span><span class="p">,</span>
+            <span class="n">fieldExprs</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">dtype</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39; as </span><span class="si">{</span><span class="n">dtype</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="n">dtypes</span><span class="p">],</span>
+            <span class="n">dfData</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_df</span><span class="p">)</span>
+
+        <span class="c1"># count</span>
+        <span class="n">dfDataSummary</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_addMeasureToSummary</span><span class="p">(</span>
+            <span class="s1">&#39;count&#39;</span><span class="p">,</span>
+            <span class="n">summaryExpr</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">total_count</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">fieldExprs</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;string(count(</span><span class="si">{</span><span class="n">dtype</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">)) as </span><span class="si">{</span><span class="n">dtype</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="n">dtypes</span><span class="p">],</span>
+            <span class="n">dfData</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_df</span><span class="p">,</span>
+            <span class="n">dfSummary</span><span class="o">=</span><span class="n">dfDataSummary</span><span class="p">)</span>
+
+        <span class="n">dfDataSummary</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_addMeasureToSummary</span><span class="p">(</span>
+            <span class="s1">&#39;null_probability&#39;</span><span class="p">,</span>
+            <span class="n">fieldExprs</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;string( round( (</span><span class="si">{</span><span class="n">total_count</span><span class="si">}</span><span class="s2"> - count(</span><span class="si">{</span><span class="n">dtype</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">)) /</span><span class="si">{</span><span class="n">total_count</span><span class="si">}</span><span class="s2">, 2)) as </span><span class="si">{</span><span class="n">dtype</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;&quot;&quot;</span>
+                        <span class="k">for</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="n">dtypes</span><span class="p">],</span>
+            <span class="n">dfData</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_df</span><span class="p">,</span>
+            <span class="n">dfSummary</span><span class="o">=</span><span class="n">dfDataSummary</span><span class="p">)</span>
+
+        <span class="c1"># distinct count</span>
+        <span class="n">dfDataSummary</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_addMeasureToSummary</span><span class="p">(</span>
+            <span class="s1">&#39;distinct_count&#39;</span><span class="p">,</span>
+            <span class="n">summaryExpr</span><span class="o">=</span><span class="s2">&quot;count(distinct *)&quot;</span><span class="p">,</span>
+            <span class="n">fieldExprs</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;string(count(distinct </span><span class="si">{</span><span class="n">dtype</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">)) as </span><span class="si">{</span><span class="n">dtype</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="n">dtypes</span><span class="p">],</span>
+            <span class="n">dfData</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_df</span><span class="p">,</span>
+            <span class="n">dfSummary</span><span class="o">=</span><span class="n">dfDataSummary</span><span class="p">)</span>
+
+        <span class="c1"># min</span>
+        <span class="n">dfDataSummary</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_addMeasureToSummary</span><span class="p">(</span>
+            <span class="s1">&#39;min&#39;</span><span class="p">,</span>
+            <span class="n">fieldExprs</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;string(min(</span><span class="si">{</span><span class="n">dtype</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">)) as </span><span class="si">{</span><span class="n">dtype</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="n">dtypes</span><span class="p">],</span>
+            <span class="n">dfData</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_df</span><span class="p">,</span>
+            <span class="n">dfSummary</span><span class="o">=</span><span class="n">dfDataSummary</span><span class="p">)</span>
+
+        <span class="n">dfDataSummary</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_addMeasureToSummary</span><span class="p">(</span>
+            <span class="s1">&#39;max&#39;</span><span class="p">,</span>
+            <span class="n">fieldExprs</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;string(max(</span><span class="si">{</span><span class="n">dtype</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">)) as </span><span class="si">{</span><span class="n">dtype</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="n">dtypes</span><span class="p">],</span>
+            <span class="n">dfData</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_df</span><span class="p">,</span>
+            <span class="n">dfSummary</span><span class="o">=</span><span class="n">dfDataSummary</span><span class="p">)</span>
+
+        <span class="n">descriptionDf</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_dataframe_describe_stats</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_df</span><span class="p">)</span>
+                         <span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">DATA_SUMMARY_FIELD_NAME</span><span class="si">}</span><span class="s2"> in (&#39;mean&#39;, &#39;stddev&#39;)&quot;</span><span class="p">))</span>
+        <span class="n">describeData</span> <span class="o">=</span> <span class="n">descriptionDf</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">describeData</span><span class="p">:</span>
+            <span class="n">measure</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">DATA_SUMMARY_FIELD_NAME</span><span class="p">]</span>
+
+            <span class="n">values</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="s1">&#39;&#39;</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">dtypes</span><span class="p">}</span>
+
+            <span class="n">row_key_pairs</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">asDict</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">k1</span> <span class="ow">in</span> <span class="n">row_key_pairs</span><span class="p">:</span>
+                <span class="n">values</span><span class="p">[</span><span class="n">k1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">k1</span><span class="p">])</span>
+
+            <span class="n">dfDataSummary</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_addMeasureToSummary</span><span class="p">(</span>
+                <span class="n">measure</span><span class="p">,</span>
+                <span class="n">fieldExprs</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">values</span><span class="p">[</span><span class="n">dtype</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="si">}</span><span class="s2">&#39;&quot;</span> <span class="k">for</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="n">dtypes</span><span class="p">],</span>
+                <span class="n">dfData</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_df</span><span class="p">,</span>
+                <span class="n">dfSummary</span><span class="o">=</span><span class="n">dfDataSummary</span><span class="p">)</span>
+
+        <span class="c1"># string characteristics for strings and string representation of other values</span>
+        <span class="n">dfDataSummary</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_addMeasureToSummary</span><span class="p">(</span>
+            <span class="s1">&#39;print_len_min&#39;</span><span class="p">,</span>
+            <span class="n">fieldExprs</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;min(length(string(</span><span class="si">{</span><span class="n">dtype</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">))) as </span><span class="si">{</span><span class="n">dtype</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="n">dtypes</span><span class="p">],</span>
+            <span class="n">dfData</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_df</span><span class="p">,</span>
+            <span class="n">dfSummary</span><span class="o">=</span><span class="n">dfDataSummary</span><span class="p">)</span>
+
+        <span class="n">dfDataSummary</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_addMeasureToSummary</span><span class="p">(</span>
+            <span class="s1">&#39;print_len_max&#39;</span><span class="p">,</span>
+            <span class="n">fieldExprs</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;max(length(string(</span><span class="si">{</span><span class="n">dtype</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">))) as </span><span class="si">{</span><span class="n">dtype</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="n">dtypes</span><span class="p">],</span>
+            <span class="n">dfData</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_df</span><span class="p">,</span>
+            <span class="n">dfSummary</span><span class="o">=</span><span class="n">dfDataSummary</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">dfDataSummary</span></div>
+
+<div class="viewcode-block" id="DataAnalyzer.summarize"><a class="viewcode-back" href="../../reference/api/dbldatagen.data_analyzer.html#dbldatagen.data_analyzer.DataAnalyzer.summarize">[docs]</a>    <span class="k">def</span> <span class="nf">summarize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">suppressOutput</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Generate summary analysis of data set and return / print summary results</span>
+
+<span class="sd">        :param suppressOutput:  If False, prints results to console also</span>
+<span class="sd">        :return: Summary results as string</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dfSummary</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">summarizeToDF</span><span class="p">()</span>
+
+        <span class="n">results</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;Data set summary&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;================&quot;</span>
+        <span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">dfSummary</span><span class="o">.</span><span class="n">collect</span><span class="p">():</span>
+            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_displayRow</span><span class="p">(</span><span class="n">r</span><span class="p">))</span>
+
+        <span class="n">summary</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">results</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">suppressOutput</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">summary</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">summary</span></div>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_valueFromSummary</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">dataSummary</span><span class="p">,</span> <span class="n">colName</span><span class="p">,</span> <span class="n">measure</span><span class="p">,</span> <span class="n">defaultValue</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Get value from data summary</span>
+
+<span class="sd">        :param dataSummary: Data summary to search, optional</span>
+<span class="sd">        :param colName: Column name of column to get value for</span>
+<span class="sd">        :param measure: Measure name of measure to get value for</span>
+<span class="sd">        :param defaultValue: Default value if any other argument is not specified or value could not be found in</span>
+<span class="sd">                             data summary</span>
+<span class="sd">        :return: Value from lookup or `defaultValue` if not found</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">dataSummary</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">colName</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">measure</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">measure</span> <span class="ow">in</span> <span class="n">dataSummary</span><span class="p">:</span>
+                <span class="n">measureValues</span> <span class="o">=</span> <span class="n">dataSummary</span><span class="p">[</span><span class="n">measure</span><span class="p">]</span>
+
+                <span class="k">if</span> <span class="n">colName</span> <span class="ow">in</span> <span class="n">measureValues</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">measureValues</span><span class="p">[</span><span class="n">colName</span><span class="p">]</span>
+
+        <span class="c1"># return default value if value could not be looked up or found</span>
+        <span class="k">return</span> <span class="n">defaultValue</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_generatorDefaultAttributesFromType</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">sqlType</span><span class="p">,</span> <span class="n">colName</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dataSummary</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sourceDf</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Generate default set of attributes for each data type</span>
+
+<span class="sd">        :param sqlType: Instance of `pyspark.sql.types.DataType`</span>
+<span class="sd">        :param colName: Name of column being generated</span>
+<span class="sd">        :param dataSummary: Map of maps of attributes from data summary, optional</span>
+<span class="sd">        :param sourceDf: Source dataframe to retrieve attributes of real data, optional</span>
+<span class="sd">        :return: Attribute string for supplied sqlType</span>
+
+<span class="sd">        When generating code from a schema, we have no data heuristics to determine how data should be generated,</span>
+<span class="sd">        so goal is to just generate code that produces some data.</span>
+
+<span class="sd">        Users are expected to modify the generated code to their needs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sqlType</span><span class="p">,</span> <span class="n">DataType</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">sqlType</span> <span class="o">==</span> <span class="n">StringType</span><span class="p">():</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;template=r&#39;</span><span class="se">\\\\</span><span class="s2">w&#39;&quot;&quot;&quot;</span>
+        <span class="k">elif</span> <span class="n">sqlType</span> <span class="ow">in</span> <span class="p">[</span><span class="n">IntegerType</span><span class="p">(),</span> <span class="n">LongType</span><span class="p">()]:</span>
+            <span class="n">minValue</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_valueFromSummary</span><span class="p">(</span><span class="n">dataSummary</span><span class="p">,</span> <span class="n">colName</span><span class="p">,</span> <span class="s2">&quot;min&quot;</span><span class="p">,</span> <span class="n">defaultValue</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">maxValue</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_valueFromSummary</span><span class="p">(</span><span class="n">dataSummary</span><span class="p">,</span> <span class="n">colName</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">,</span> <span class="n">defaultValue</span><span class="o">=</span><span class="mi">1000000</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;minValue=</span><span class="si">{</span><span class="n">minValue</span><span class="si">}</span><span class="s2">, maxValue=</span><span class="si">{</span><span class="n">maxValue</span><span class="si">}</span><span class="s2">&quot;&quot;&quot;</span>
+        <span class="k">elif</span> <span class="n">sqlType</span> <span class="o">==</span> <span class="n">ByteType</span><span class="p">():</span>
+            <span class="n">minValue</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_valueFromSummary</span><span class="p">(</span><span class="n">dataSummary</span><span class="p">,</span> <span class="n">colName</span><span class="p">,</span> <span class="s2">&quot;min&quot;</span><span class="p">,</span> <span class="n">defaultValue</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">maxValue</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_valueFromSummary</span><span class="p">(</span><span class="n">dataSummary</span><span class="p">,</span> <span class="n">colName</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">,</span> <span class="n">defaultValue</span><span class="o">=</span><span class="mi">127</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;minValue=</span><span class="si">{</span><span class="n">minValue</span><span class="si">}</span><span class="s2">, maxValue=</span><span class="si">{</span><span class="n">maxValue</span><span class="si">}</span><span class="s2">&quot;&quot;&quot;</span>
+        <span class="k">elif</span> <span class="n">sqlType</span> <span class="o">==</span> <span class="n">ShortType</span><span class="p">():</span>
+            <span class="n">minValue</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_valueFromSummary</span><span class="p">(</span><span class="n">dataSummary</span><span class="p">,</span> <span class="n">colName</span><span class="p">,</span> <span class="s2">&quot;min&quot;</span><span class="p">,</span> <span class="n">defaultValue</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">maxValue</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_valueFromSummary</span><span class="p">(</span><span class="n">dataSummary</span><span class="p">,</span> <span class="n">colName</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">,</span> <span class="n">defaultValue</span><span class="o">=</span><span class="mi">32767</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;minValue=</span><span class="si">{</span><span class="n">minValue</span><span class="si">}</span><span class="s2">, maxValue=</span><span class="si">{</span><span class="n">maxValue</span><span class="si">}</span><span class="s2">&quot;&quot;&quot;</span>
+        <span class="k">elif</span> <span class="n">sqlType</span> <span class="o">==</span> <span class="n">BooleanType</span><span class="p">():</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;expr=&#39;id % 2 = 1&#39;&quot;&quot;&quot;</span>
+        <span class="k">elif</span> <span class="n">sqlType</span> <span class="o">==</span> <span class="n">DateType</span><span class="p">():</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;expr=&#39;current_date()&#39;&quot;&quot;&quot;</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sqlType</span><span class="p">,</span> <span class="n">DecimalType</span><span class="p">):</span>
+            <span class="n">minValue</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_valueFromSummary</span><span class="p">(</span><span class="n">dataSummary</span><span class="p">,</span> <span class="n">colName</span><span class="p">,</span> <span class="s2">&quot;min&quot;</span><span class="p">,</span> <span class="n">defaultValue</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">maxValue</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_valueFromSummary</span><span class="p">(</span><span class="n">dataSummary</span><span class="p">,</span> <span class="n">colName</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">,</span> <span class="n">defaultValue</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;minValue=</span><span class="si">{</span><span class="n">minValue</span><span class="si">}</span><span class="s2">, maxValue=</span><span class="si">{</span><span class="n">maxValue</span><span class="si">}</span><span class="s2">&quot;&quot;&quot;</span>
+        <span class="k">elif</span> <span class="n">sqlType</span> <span class="ow">in</span> <span class="p">[</span><span class="n">FloatType</span><span class="p">(),</span> <span class="n">DoubleType</span><span class="p">()]:</span>
+            <span class="n">minValue</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_valueFromSummary</span><span class="p">(</span><span class="n">dataSummary</span><span class="p">,</span> <span class="n">colName</span><span class="p">,</span> <span class="s2">&quot;min&quot;</span><span class="p">,</span> <span class="n">defaultValue</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+            <span class="n">maxValue</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_valueFromSummary</span><span class="p">(</span><span class="n">dataSummary</span><span class="p">,</span> <span class="n">colName</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">,</span> <span class="n">defaultValue</span><span class="o">=</span><span class="mf">1000000.0</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;minValue=</span><span class="si">{</span><span class="n">minValue</span><span class="si">}</span><span class="s2">, maxValue=</span><span class="si">{</span><span class="n">maxValue</span><span class="si">}</span><span class="s2">, step=0.1&quot;&quot;&quot;</span>
+        <span class="k">elif</span> <span class="n">sqlType</span> <span class="o">==</span> <span class="n">TimestampType</span><span class="p">():</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;begin=&quot;2020-01-01 01:00:00&quot;, end=&quot;2020-12-31 23:59:00&quot;, interval=&quot;1 minute&quot; &quot;&quot;&quot;</span>
+        <span class="k">elif</span> <span class="n">sqlType</span> <span class="o">==</span> <span class="n">BinaryType</span><span class="p">():</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;expr=&quot;cast(&#39;dbldatagen generated synthetic data&#39; as binary)&quot; &quot;&quot;&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;expr=&#39;null&#39;&quot;&quot;&quot;</span>
+
+        <span class="n">percentNullsValue</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_valueFromSummary</span><span class="p">(</span><span class="n">dataSummary</span><span class="p">,</span> <span class="n">colName</span><span class="p">,</span> <span class="s2">&quot;null_probability&quot;</span><span class="p">,</span> <span class="n">defaultValue</span><span class="o">=</span><span class="mf">0.0</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">percentNullsValue</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">result</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;, percentNulls=</span><span class="si">{</span><span class="n">percentNullsValue</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_scriptDataGeneratorCode</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">schema</span><span class="p">,</span> <span class="n">dataSummary</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sourceDf</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">suppressOutput</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate outline data generator code from an existing dataframe</span>
+
+<span class="sd">        This will generate a data generator spec from an existing dataframe. The resulting code</span>
+<span class="sd">        can be used to generate a data generation specification.</span>
+
+<span class="sd">        Note at this point in time, the code generated is stub code only.</span>
+<span class="sd">        For most uses, it will require further modification - however it provides a starting point</span>
+<span class="sd">        for generation of the specification for a given data set.</span>
+
+<span class="sd">        The dataframe to be analyzed is the dataframe passed to the constructor of the DataAnalyzer object.</span>
+
+<span class="sd">        :param schema: Pyspark schema - i.e manually constructed StructType or return value from `dataframe.schema`</span>
+<span class="sd">        :param dataSummary: Map of maps of attributes from data summary, optional</span>
+<span class="sd">        :param sourceDf: Source dataframe to retrieve attributes of real data, optional</span>
+<span class="sd">        :param suppressOutput: Suppress printing of generated code if True</span>
+<span class="sd">        :param name: Optional name for data generator</span>
+<span class="sd">        :return: String containing skeleton code</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="n">StructType</span><span class="p">),</span> <span class="s2">&quot;expecting valid Pyspark Schema&quot;</span>
+
+        <span class="n">stmts</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_DEFAULT_GENERATED_NAME</span>
+
+        <span class="n">stmts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_GENERATED_COMMENT</span><span class="p">)</span>
+
+        <span class="n">stmts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;import dbldatagen as dg&quot;</span><span class="p">)</span>
+        <span class="n">stmts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;import pyspark.sql.types&quot;</span><span class="p">)</span>
+
+        <span class="n">stmts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_GENERATED_FROM_SCHEMA_COMMENT</span><span class="p">)</span>
+
+        <span class="n">stmts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">strip_margins</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;&quot;&quot;generation_spec = (</span>
+<span class="s2">                                    |    dg.DataGenerator(sparkSession=spark, </span>
+<span class="s2">                                    |                     name=&#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;, </span>
+<span class="s2">                                    |                     rows=100000,</span>
+<span class="s2">                                    |                     random=True,</span>
+<span class="s2">                                    |                     )&quot;&quot;&quot;</span><span class="p">,</span>
+            <span class="s1">&#39;|&#39;</span><span class="p">))</span>
+
+        <span class="n">indent</span> <span class="o">=</span> <span class="s2">&quot;    &quot;</span>
+        <span class="k">for</span> <span class="n">fld</span> <span class="ow">in</span> <span class="n">schema</span><span class="o">.</span><span class="n">fields</span><span class="p">:</span>
+            <span class="n">col_name</span> <span class="o">=</span> <span class="n">fld</span><span class="o">.</span><span class="n">name</span>
+            <span class="n">col_type</span> <span class="o">=</span> <span class="n">fld</span><span class="o">.</span><span class="n">dataType</span><span class="o">.</span><span class="n">simpleString</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fld</span><span class="o">.</span><span class="n">dataType</span><span class="p">,</span> <span class="n">ArrayType</span><span class="p">):</span>
+                <span class="n">col_type</span> <span class="o">=</span> <span class="n">fld</span><span class="o">.</span><span class="n">dataType</span><span class="o">.</span><span class="n">elementType</span><span class="o">.</span><span class="n">simpleString</span><span class="p">()</span>
+                <span class="n">field_attributes</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_generatorDefaultAttributesFromType</span><span class="p">(</span><span class="n">fld</span><span class="o">.</span><span class="n">dataType</span><span class="o">.</span><span class="n">elementType</span><span class="p">)</span>  <span class="c1"># no data look up</span>
+                <span class="n">array_attributes</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;structType=&#39;array&#39;, numFeatures=(2,6)&quot;&quot;&quot;</span>
+                <span class="n">name_and_type</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;&#39;</span><span class="si">{</span><span class="n">col_name</span><span class="si">}</span><span class="s2">&#39;, &#39;</span><span class="si">{</span><span class="n">col_type</span><span class="si">}</span><span class="s2">&#39;&quot;&quot;&quot;</span>
+                <span class="n">stmts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">indent</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;.withColumn(</span><span class="si">{</span><span class="n">name_and_type</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">field_attributes</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">array_attributes</span><span class="si">}</span><span class="s2">)&quot;&quot;&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">field_attributes</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_generatorDefaultAttributesFromType</span><span class="p">(</span><span class="n">fld</span><span class="o">.</span><span class="n">dataType</span><span class="p">,</span>
+                                                                           <span class="n">colName</span><span class="o">=</span><span class="n">col_name</span><span class="p">,</span>
+                                                                           <span class="n">dataSummary</span><span class="o">=</span><span class="n">dataSummary</span><span class="p">,</span>
+                                                                           <span class="n">sourceDf</span><span class="o">=</span><span class="n">sourceDf</span><span class="p">)</span>
+                <span class="n">stmts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">indent</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;.withColumn(&#39;</span><span class="si">{</span><span class="n">col_name</span><span class="si">}</span><span class="s2">&#39;, &#39;</span><span class="si">{</span><span class="n">col_type</span><span class="si">}</span><span class="s2">&#39;, </span><span class="si">{</span><span class="n">field_attributes</span><span class="si">}</span><span class="s2">)&quot;&quot;&quot;</span><span class="p">)</span>
+        <span class="n">stmts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">indent</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">suppressOutput</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">stmts</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">stmts</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DataAnalyzer.scriptDataGeneratorFromSchema"><a class="viewcode-back" href="../../reference/api/dbldatagen.data_analyzer.html#dbldatagen.data_analyzer.DataAnalyzer.scriptDataGeneratorFromSchema">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">scriptDataGeneratorFromSchema</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">schema</span><span class="p">,</span> <span class="n">suppressOutput</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate outline data generator code from an existing dataframe</span>
+
+<span class="sd">        This will generate a data generator spec from an existing dataframe. The resulting code</span>
+<span class="sd">        can be used to generate a data generation specification.</span>
+
+<span class="sd">        Note at this point in time, the code generated is stub code only.</span>
+<span class="sd">        For most uses, it will require further modification - however it provides a starting point</span>
+<span class="sd">        for generation of the specification for a given data set.</span>
+
+<span class="sd">        The dataframe to be analyzed is the dataframe passed to the constructor of the DataAnalyzer object.</span>
+
+<span class="sd">        :param schema: Pyspark schema - i.e manually constructed StructType or return value from `dataframe.schema`</span>
+<span class="sd">        :param suppressOutput: Suppress printing of generated code if True</span>
+<span class="sd">        :param name: Optional name for data generator</span>
+<span class="sd">        :return: String containing skeleton code</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_scriptDataGeneratorCode</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span>
+                                            <span class="n">suppressOutput</span><span class="o">=</span><span class="n">suppressOutput</span><span class="p">,</span>
+                                            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataAnalyzer.scriptDataGeneratorFromData"><a class="viewcode-back" href="../../reference/api/dbldatagen.data_analyzer.html#dbldatagen.data_analyzer.DataAnalyzer.scriptDataGeneratorFromData">[docs]</a>    <span class="k">def</span> <span class="nf">scriptDataGeneratorFromData</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">suppressOutput</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate outline data generator code from an existing dataframe</span>
+
+<span class="sd">        This will generate a data generator spec from an existing dataframe. The resulting code</span>
+<span class="sd">        can be used to generate a data generation specification.</span>
+
+<span class="sd">        Note at this point in time, the code generated is stub code only.</span>
+<span class="sd">        For most uses, it will require further modification - however it provides a starting point</span>
+<span class="sd">        for generation of the specification for a given data set</span>
+
+<span class="sd">        The dataframe to be analyzed is the Spark dataframe passed to the constructor of the DataAnalyzer object</span>
+
+<span class="sd">        :param suppressOutput: Suppress printing of generated code if True</span>
+<span class="sd">        :param name: Optional name for data generator</span>
+<span class="sd">        :return: String containing skeleton code</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_df</span><span class="p">,</span> <span class="n">ssql</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">strip_margins</span><span class="p">(</span>
+<span class="w">                </span><span class="sd">&quot;&quot;&quot;The parameter `sourceDf` should be a valid Pyspark dataframe.</span>
+<span class="sd">                   |Note this warning may false due to use of remote connection to a Spark cluster&quot;&quot;&quot;</span><span class="p">,</span>
+                <span class="s1">&#39;|&#39;</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dataSummary</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">df_summary</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">summarizeToDF</span><span class="p">()</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dataSummary</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df_summary</span><span class="o">.</span><span class="n">collect</span><span class="p">():</span>
+                <span class="n">row_key_pairs</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">asDict</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_dataSummary</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;measure_&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">row_key_pairs</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scriptDataGeneratorCode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_df</span><span class="o">.</span><span class="n">schema</span><span class="p">,</span>
+                                             <span class="n">suppressOutput</span><span class="o">=</span><span class="n">suppressOutput</span><span class="p">,</span>
+                                             <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                                             <span class="n">dataSummary</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_dataSummary</span><span class="p">,</span>
+                                             <span class="n">sourceDf</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_df</span><span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
