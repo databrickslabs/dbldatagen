@@ -134,7 +134,7 @@ class DataAnalyzer:
             renamed_summary = True
             df = df.withColumnRenamed(SUMMARY_FIELD_NAME, SUMMARY_FIELD_NAME_RENAMED)
 
-        # The dataframe describe method produces a field named `summary`. We'll rename this to conflict with
+        # The dataframe describe method produces a field named `summary`. We'll rename this to avoid conflict with
         # any natural fields using the same name.
         summary_df = df.describe().withColumnRenamed(SUMMARY_FIELD_NAME, DATA_SUMMARY_FIELD_NAME)
 
