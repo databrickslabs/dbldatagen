@@ -28,9 +28,9 @@ The following example illustrates generating data for specific ranges of values:
        dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
                       partitions=4, randomSeedMethod="hash_fieldname")
       .withIdOutput()
-      .withColumn("code3", StringType(), values=['online', 'offline', 'unknown'])
-      .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True, percentNulls=0.05)
-      .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+      .withColumn("code3", "string", values=['online', 'offline', 'unknown'])
+      .withColumn("code4", "string", values=['a', 'b', 'c'], random=True, percentNulls=0.05)
+      .withColumn("code5", "string", values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
    )
 
 Generating text from existing values
@@ -103,8 +103,6 @@ The ``template`` attribute allows specification of templated text generation.
    - see the `TemplateGenerator` documentation for more details.
 
 
-Here are some examples of its use to generate dummy email addresses, ip addressed and phone numbers
-
 .. code-block:: python
 
     import dbldatagen as dg
@@ -118,6 +116,10 @@ Here are some examples of its use to generate dummy email addresses, ip addresse
                          template=r'\n.\n.\n.\n')
         .withColumn("phone", "string",
                          template=r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd')
+
+        # the following implements the same pattern as for `phone` but using the `TemplateGenerator` class
+        .withColumn("phone2", "string",
+                         text=dg.TemplateGenerator(r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd'))
         )
 
     df = df_spec.build()
@@ -157,18 +159,25 @@ It uses the following special chars:
 
 In all other cases, the char itself is used.
 
-The setting of the ``escapeSpecialChars`` determines how templates generate data.
+The setting of the ``escapeSpecialChars`` determines how the template generate interprets the special chars.
 
-If set to False, then the template ``r"\\dr_\\v"`` will generate the values ``"dr_0"`` ... ``"dr_999"`` when applied
-to the values zero to 999. This conforms to earlier implementations for backwards compatibility.
+If set to False, which defaults to `False`, then the special char does not need to be escaped to have its special
+meaning. But the special char must be escaped to be treated as a literal char.
 
-If set to True, then the template ``r"dr_\\v"`` will generate the values ``"dr_0"`` ... ``"dr_999"``
-when applied to the values zero to 999. This conforms to the preferred style going forward
+So the template ``r"\dr_\v"`` will generate the values ``"dr_0"`` ... ``"dr_999"`` when used via the template option
+and applied to the values zero to 999.
+Here the the character `d` is escaped to avoid interpretation as a special character.
 
+If set to True, then the special char only has its special meaning when preceded by an escape.
+
+So the option `text=dg.TemplateGenerator(r'dr_\v', escapeSpecialChars=True)` will generate the values
+``"dr_0"`` ... ``"dr_999"`` when applied to the values zero to 999.
+
+This conforms to earlier implementations for backwards compatibility.
 
 .. note::
-          If escape is used and ``escapeSpecialChars`` is False, then the following
-          char is assumed to have no special meaning.
+          Setting the argument `escapeSpecialChars=False` means that the special char does not need to be escaped to
+          be treated as a special char. But it must be escaped to be treated as a literal char.
 
           If the ``escapeSpecialChars`` option is set to True, then the following char only has its special
           meaning when preceded by an escape.
@@ -181,7 +190,7 @@ when applied to the values zero to 999. This conforms to the preferred style goi
           The ``escapeSpecialChars`` is set to False by default for backwards compatibility.
 
           To use the ``escapeSpecialChars`` option, use the variant
-          ``text=dg.TemplateGenerator(template=...), escapeSpecialChars=True``
+          ``text=dg.TemplateGenerator(template=..., escapeSpecialChars=True)``
 
 
 Using a custom word list
@@ -194,6 +203,45 @@ While the `values` option allows for the specification of a list of categorical 
 the generated SQL. The use of the `TemplateGenerator` object with a custom word list allows for specification of much
 larger lists of possible values without the need to transmit them as part of the generated SQL.
 
+For example the following code snippet illustrates the use of a custom word list:
+
+.. code-block:: python
+
+    import dbldatagen as dg
+
+    names = ['alpha', 'beta', 'gamma', 'lambda', 'theta']
+
+    df_spec = (
+         dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
+                          partitions=4, randomSeedMethod="hash_fieldname")
+        .withIdOutput()
+        .withColumn("email", "string",
+                        template=r'\w.\w@\w.com|\w@\w.co.u\k')
+        .withColumn("ip_addr", "string",
+                         template=r'\n.\n.\n.\n')
+        .withColumn("phone", "string",
+                         template=r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd')
+
+        # implements the same pattern as for `phone` but using the `TemplateGenerator` class
+        .withColumn("phone2", "string",
+                         text=dg.TemplateGenerator(r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd'))
+
+        # uses a custom word list
+        .withColumn("name", "string",
+                         text=dg.TemplateGenerator(r'\w \w|\w \w \w|\w \a. \w',
+                                                   escapeSpecialChars=True,
+                                                   extendedWordList=names))
+        )
+
+    df = df_spec.build()
+    display(df)
+
+Here the `names` variable is a list of names that can be used in the template generation.
+
+While this is short list in this case, it could be a much larger list of names either
+specified as a literal, or read from another dataframe, file, table or produced from another source.
+
+As this is not transmitted as part of the generated SQL, it allows for much larger lists of possible values.
 
 Other forms of text value lookup
 --------------------------------
