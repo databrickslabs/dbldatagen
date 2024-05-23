@@ -1287,12 +1287,14 @@ class DataGenerator:
         self.buildPlanComputed = True
         return self
 
-    def _applyPreGenerationConstraints(self):
+    def _applyPreGenerationConstraints(self, withStreaming=False):
         """ Apply pre data generation constraints """
         if self._constraints is not None and len(self._constraints) > 0:
             for constraint in self._constraints:
                 assert isinstance(constraint, Constraint) or issubclass(constraint, Constraint), \
                     "constraint should be of type Constraint"
+                if constraint.supportsStreaming and withStreaming:
+                    raise RuntimeError(f"Constraint `{constraint}` does not support streaming data generation")
                 constraint.prepareDataGenerator(self)
 
     def _applyPostGenerationConstraints(self, df):

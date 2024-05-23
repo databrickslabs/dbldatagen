@@ -6,10 +6,10 @@
 This module defines the Negative class
 """
 import pyspark.sql.functions as F
-from .constraint import Constraint
+from .constraint import Constraint, NoPrepareTransformMixin
 
 
-class NegativeValues(Constraint):
+class NegativeValues(NoPrepareTransformMixin, Constraint):
     """ Negative Value constraints
 
     Applies constraint to ensure columns have negative values
@@ -23,7 +23,7 @@ class NegativeValues(Constraint):
     """
 
     def __init__(self, columns, strict=False):
-        Constraint.__init__(self)
+        super().__init__(supportsStreaming=True)
         self._columns = self._columnsFromListOrString(columns)
         self._strict = strict
 

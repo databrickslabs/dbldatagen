@@ -7,10 +7,10 @@ This module defines the ScalarRange class
 """
 import pyspark.sql.functions as F
 
-from .constraint import Constraint
+from .constraint import Constraint, NoPrepareTransformMixin
 
 
-class RangedValues(Constraint):
+class RangedValues(NoPrepareTransformMixin, Constraint):
     """ RangedValues Constraint object - validates that column value(s) are between 2 column values
 
     :param columns: Name of column or list of column names
@@ -22,7 +22,7 @@ class RangedValues(Constraint):
     """
 
     def __init__(self, columns, lowValue, highValue, strict=False):
-        Constraint.__init__(self)
+        super().__init__(supportsStreaming=True)
         self._columns = self._columnsFromListOrString(columns)
         self._lowValue = lowValue
         self._highValue = highValue

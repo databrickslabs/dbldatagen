@@ -7,10 +7,10 @@ This module defines the ChainedInequality class
 """
 from pyspark.sql import DataFrame
 import pyspark.sql.functions as F
-from .constraint import Constraint
+from .constraint import Constraint, NoPrepareTransformMixin
 
 
-class ChainedRelation(Constraint):
+class ChainedRelation(NoPrepareTransformMixin, Constraint):
     """ChainedRelation constraint
 
     Constrains one or more columns so that each column has a relationship to the next.
@@ -33,7 +33,7 @@ class ChainedRelation(Constraint):
         :param columns: List of columns across which to apply the relation
         :param relation: relation to test for
         """
-        Constraint.__init__(self)
+        super().__init__(supportsStreaming=True)
         self._relation = relation
         self._columns = self._columnsFromListOrString(columns)
 
@@ -62,7 +62,3 @@ class ChainedRelation(Constraint):
 
         # ... and combine them using logical `and` operation
         return self.combineConstraintExpressions(filters)
-
-    def _supportsStreaming(self):
-        """ Return True if the constraint supports streaming dataframes"""
-        return True

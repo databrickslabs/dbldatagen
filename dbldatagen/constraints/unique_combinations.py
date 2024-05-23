@@ -5,11 +5,10 @@
 """
 This module defines the Positive class
 """
-import pyspark.sql.functions as F
-from .constraint import Constraint
+from .constraint import Constraint, NoFilterMixin
 
 
-class UniqueCombinations(Constraint):
+class UniqueCombinations(NoFilterMixin, Constraint):
     """ Unique Combinations constraints
 
     Applies constraint to ensure columns have unique combinations - i.e the set of columns supplied only have
@@ -37,14 +36,34 @@ class UniqueCombinations(Constraint):
     """
 
     def __init__(self, columns=None):
-        Constraint.__init__(self)
+        super().__init__(supportsStreaming=False)
         if columns is not None and columns != "*":
             self._columns = self._columnsFromListOrString(columns)
         else:
             self._columns = None
 
+    def prepareDataGenerator(self, dataGenerator):
+        """ Prepare the data generator to generate data that matches the constraint
+
+           This method may modify the data generation rules to meet the constraint
+
+           :param dataGenerator: Data generation object that will generate the dataframe
+           :return: modified or unmodified data generator
+        """
+        return dataGenerator
+
     def transformDataframe(self, dataGenerator, dataFrame):
-        """ Generate a filter expression that may be used for filtering"""
+        """ Transform the dataframe to make data conform to constraint if possible
+
+           This method should not modify the dataGenerator - but may modify the dataframe
+
+           :param dataGenerator: Data generation object that generated the dataframe
+           :param dataFrame: generated dataframe
+           :return: modified or unmodified Spark dataframe
+
+           The default transformation returns the dataframe unmodified
+
+        """
         if self._columns is None:
             # if no columns are specified, then all columns that would appear in the final output are used
             # when determining duplicates
@@ -54,13 +73,6 @@ class UniqueCombinations(Constraint):
 
         # for batch processing, duplicate rows will be removed via drop duplicates
 
-        if dataFrame.isStreaming:
-            results = dataFrame.dropDuplicates(columnsToEvaluate)
-        else:
-            results = dataFrame.dropDuplicates(columnsToEvaluate)
+        results = dataFrame.dropDuplicates(columnsToEvaluate)
 
         return results
-
-    def _generateFilterExpression(self):
-        """ Generate a SQL filter expression that may be used for filtering"""
-        return None  # no filter expression needed

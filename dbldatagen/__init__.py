@@ -43,13 +43,11 @@ from .spark_singleton import SparkSingleton
 from .text_generators import TemplateGenerator, ILText, TextGenerator
 from .text_generator_plugins import PyfuncText, PyfuncTextFactory, FakerTextFactory, fakerText
 from .html_utils import HtmlUtils
-from .type_utils import optional_abstractmethod, check_optional_abstract_methods, is_optional_abstractmethod, \
-    get_optional_abstract_methods, abstract_with_optional_methods
 
 __all__ = ["data_generator", "data_analyzer", "schema_parser", "daterange", "nrange",
            "column_generation_spec", "utils", "function_builder",
            "spark_singleton", "text_generators", "datarange", "datagen_constants",
-           "text_generator_plugins", "html_utils", "type_utils"
+           "text_generator_plugins", "html_utils"
            ]
 
 

@@ -6,10 +6,10 @@
 This module defines the Positive class
 """
 import pyspark.sql.functions as F
-from .constraint import Constraint
+from .constraint import Constraint, NoPrepareTransformMixin
 
 
-class PositiveValues(Constraint):
+class PositiveValues(NoPrepareTransformMixin, Constraint):
     """ Positive Value constraints
 
     Applies constraint to ensure columns have positive values
@@ -23,7 +23,7 @@ class PositiveValues(Constraint):
     """
 
     def __init__(self, columns, strict=False):
-        Constraint.__init__(self)
+        super().__init__(supportsStreaming=True)
         self._columns = self._columnsFromListOrString(columns)
         self._strict = strict
 

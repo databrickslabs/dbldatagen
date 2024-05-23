@@ -8,12 +8,7 @@ This module defines the Constraint class
 import types
 from abc import ABC, abstractmethod
 
-# import optional_abstractmethod from type_utils
-# import check_optional_abstract_methods from type_utils
-from dbldatagen.type_utils import optional_abstractmethod, abstract_with_optional_methods
 
-
-@abstract_with_optional_methods
 class Constraint(ABC):
     """ Constraint object - base class for predefined and custom constraints
 
@@ -22,12 +17,13 @@ class Constraint(ABC):
     """
     SUPPORTED_OPERATORS = ["<", ">", ">=", "!=", "==", "=", "<=", "<>"]
 
-    def __init__(self):
+    def __init__(self, supportsStreaming=False):
         """
         Initialize the constraint object
         """
         self._filterExpression = None
         self._calculatedFilterExpression = False
+        self._supportsStreaming = supportsStreaming
 
     @staticmethod
     def _columnsFromListOrString(columns):
@@ -86,7 +82,78 @@ class Constraint(ABC):
         else:
             raise ValueError("Invalid list of constraint expressions")
 
-    @optional_abstractmethod
+    @abstractmethod
+    def prepareDataGenerator(self, dataGenerator):
+        """ Prepare the data generator to generate data that matches the constraint
+
+           This method may modify the data generation rules to meet the constraint
+
+           :param dataGenerator: Data generation object that will generate the dataframe
+           :return: modified or unmodified data generator
+        """
+        raise NotImplementedError("Method prepareDataGenerator must be implemented in derived class")
+
+    @abstractmethod
+    def transformDataframe(self, dataGenerator, dataFrame):
+        """ Transform the dataframe to make data conform to constraint if possible
+
+           This method should not modify the dataGenerator - but may modify the dataframe
+
+           :param dataGenerator: Data generation object that generated the dataframe
+           :param dataFrame: generated dataframe
+           :return: modified or unmodified Spark dataframe
+
+           The default transformation returns the dataframe unmodified
+
+        """
+        raise NotImplementedError("Method transformDataframe must be implemented in derived class")
+
+    @abstractmethod
+    def _generateFilterExpression(self):
+        """ Generate a Pyspark SQL expression that may be used for filtering"""
+        raise NotImplementedError("Method _generateFilterExpression must be implemented in derived class")
+
+    @property
+    def supportsStreaming(self):
+        """ Return True if the constraint supports streaming dataframes"""
+        return self._supportsStreaming
+
+    @property
+    def filterExpression(self):
+        """ Return the filter expression (as instance of type Column that evaluates to True or non-True)"""
+        if not self._calculatedFilterExpression:
+            self._filterExpression = self._generateFilterExpression()
+            self._calculatedFilterExpression = True
+        return self._filterExpression
+
+
+class NoFilterMixin:
+    """ Mixin class to indicate that constraint has no filter expression
+
+    Intended to be used in implementation of the concrete constraint classes.
+
+    Use of the mixin class is optional but when used with the Constraint class and multiple inheritance,
+    it will provide a default implementation of the _generateFilterExpression method that satisfies
+    the abstract method requirement of the Constraint class.
+
+    When using mixins, place the mixin class first in the list of base classes.
+    """
+    def _generateFilterExpression(self):
+        """ Generate a Pyspark SQL expression that may be used for filtering"""
+        return None
+
+
+class NoPrepareTransformMixin:
+    """ Mixin class to indicate that constraint has no filter expression
+
+    Intended to be used in implementation of the concrete constraint classes.
+
+    Use of the mixin class is optional but when used with the Constraint class and multiple inheritance,
+    it will provide a default implementation of the `prepareDataGenerator` and `transformeDataFrame` methods
+    that satisfies the abstract method requirements of the Constraint class.
+
+    When using mixins, place the mixin class first in the list of base classes.
+    """
     def prepareDataGenerator(self, dataGenerator):
         """ Prepare the data generator to generate data that matches the constraint
 
@@ -97,7 +164,6 @@ class Constraint(ABC):
         """
         return dataGenerator
 
-    @optional_abstractmethod
     def transformDataframe(self, dataGenerator, dataFrame):
         """ Transform the dataframe to make data conform to constraint if possible
 
@@ -111,22 +177,3 @@ class Constraint(ABC):
 
         """
         return dataFrame
-
-    @abstractmethod
-    def _generateFilterExpression(self):
-        """ Generate a Pyspark expression that may be used for filtering"""
-        return None
-
-    @property
-    @abstractmethod
-    def _supportsStreaming(self):
-        """ Return True if the constraint supports streaming dataframes"""
-        return False
-
-    @property
-    def filterExpression(self):
-        """ Return the filter expression (as instance of type Column that evaluates to True or non-True)"""
-        if not self._calculatedFilterExpression:
-            self._filterExpression = self._generateFilterExpression()
-            self._calculatedFilterExpression = True
-        return self._filterExpression

@@ -7,10 +7,10 @@ This module defines the SqlExpr class
 """
 import pyspark.sql.functions as F
 
-from .constraint import Constraint
+from .constraint import Constraint, NoPrepareTransformMixin
 
 
-class SqlExpr(Constraint):
+class SqlExpr(NoPrepareTransformMixin, Constraint):
     """ SQL Expression Constraint object
 
     This class represents a constraint that is modelled using a SQL expression
@@ -20,7 +20,7 @@ class SqlExpr(Constraint):
     """
 
     def __init__(self, expr: str):
-        Constraint.__init__(self)
+        super().__init__(supportsStreaming=True)
         assert expr is not None, "Expression must be a valid SQL string"
         assert isinstance(expr, str) and len(expr.strip()) > 0, "Expression must be a valid SQL string"
         self._expr = expr

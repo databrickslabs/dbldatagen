@@ -7,10 +7,10 @@ This module defines the ScalarInequality class
 """
 import pyspark.sql.functions as F
 
-from .constraint import Constraint
+from .constraint import Constraint, NoPrepareTransformMixin
 
 
-class LiteralRelation(Constraint):
+class LiteralRelation(NoPrepareTransformMixin, Constraint):
     """LiteralRelation constraint
 
     Constrains one or more columns so that the columns have an a relationship to a constant value
@@ -21,7 +21,7 @@ class LiteralRelation(Constraint):
     """
 
     def __init__(self, columns, relation, value):
-        Constraint.__init__(self)
+        super().__init__(supportsStreaming=True)
         self._columns = self._columnsFromListOrString(columns)
         self._relation = relation
         self._value = value
