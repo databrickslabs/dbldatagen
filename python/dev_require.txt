@@ -3,9 +3,9 @@
 numpy==1.22.0
 pandas==1.2.4
 pickleshare==0.7.5
-py4j==0.10.9
+py4j>=0.10.9.3
 pyarrow==4.0.1
-pyspark>=3.1.3
+pyspark>=3.2.1
 python-dateutil==2.8.1
 six==1.15.0
 pyparsing==2.4.7

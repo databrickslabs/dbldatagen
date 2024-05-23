@@ -7,6 +7,8 @@ This file defines the `DataGenError` and `DataGenerator` classes
 """
 import copy
 import logging
+import math
+import time
 import re
 
 from pyspark.sql.types import LongType, IntegerType, StringType, StructType, StructField, DataType
@@ -25,7 +27,32 @@ from .utils import ensure, topologicalSort, DataGenError, deprecated, split_list
 _OLD_MIN_OPTION = 'min'
 _OLD_MAX_OPTION = 'max'
 
+_STREAMING_SOURCE_OPTION = "dbldatagen.streaming.source"
+_STREAMING_SCHEMA_OPTION = "dbldatagen.streaming.sourceSchema"
+_STREAMING_PATH_OPTION = "dbldatagen.streaming.sourcePath"
+_STREAMING_FORMAT_OPTION = "dbldatagen.streaming.sourceFormat"
+_STREAMING_TABLE_OPTION = "dbldatagen.streaming.sourceTable"
+_STREAMING_ID_FIELD_OPTION = "dbldatagen.streaming.sourceIdField"
+_STREAMING_TIMESTAMP_FIELD_OPTION = "dbldatagen.streaming.sourceTimestampField"
+_STREAMING_GEN_TIMESTAMP_OPTION = "dbldatagen.streaming.generateTimestamp"
+_STREAMING_USE_SOURCE_FIELDS = "dbldatagen.streaming.sourceFields"
+_BUILD_OPTION_PREFIX = "dbldatagen."
+
 _STREAMING_TIMESTAMP_COLUMN = "_source_timestamp"
+
+_STREAMING_SOURCE_RATE = "rate"
+_STREAMING_SOURCE_RATE_MICRO_BATCH = "rate-micro-batch"
+_STREAMING_SOURCE_NUM_PARTITIONS = "numPartitions"
+_STREAMING_SOURCE_ROWS_PER_BATCH = "rowsPerBatch"
+_STREAMING_SOURCE_ROWS_PER_SECOND = "rowsPerSecond"
+_STREAM_SOURCE_START_TIMESTAMP = "startTimestamp"
+
+_STREAMING_SOURCE_TEXT = "text"
+_STREAMING_SOURCE_PARQUET = "parquet"
+_STREAMING_SOURCE_CSV = "csv"
+_STREAMING_SOURCE_JSON = "json"
+_STREAMING_SOURCE_ORC = "ord"
+_STREAMING_SOURCE_DELTA = "delta"
 
 
 class DataGenerator:
@@ -53,6 +80,11 @@ class DataGenerator:
 
     Note: in a shared spark session, the sparkContext is not available, so the default parallelism is set to 200.
     We recommend passing an explicit value for `partitions` in this case.
+
+    Note that the number of partitions requested is not guaranteed to be supplied when generating
+    a streaming data set using a streaming source that generates a different number of partitions.
+    However for most batch use cases, the requested number of partitions will be generated.
+
     """
 
     # class vars
@@ -955,7 +987,7 @@ class DataGenerator:
 
         if asJson:
             output_expr = f"to_json({struct_expr})"
-            newDf = self.withColumn(colName, StringType(), expr=output_expr,  **kwargs)
+            newDf = self.withColumn(colName, StringType(), expr=output_expr, **kwargs)
         else:
             newDf = self.withColumn(colName, INFER_DATATYPE, expr=struct_expr, **kwargs)
 
@@ -1044,6 +1076,7 @@ class DataGenerator:
 
         end_id = self._rowCount + startId
         id_partitions = self.partitions if self.partitions is not None else 4
+        build_options, passthrough_options, unsupported_options = self._parseBuildOptions(options)
 
         if not streaming:
             status = f"Generating data frame with ids from {startId} to {end_id} with {id_partitions} partitions"
@@ -1232,6 +1265,76 @@ class DataGenerator:
 
         self.buildPlanComputed = True
         return self
+
+    def _parseBuildOptions(self, options):
+        """ Parse build options
+        Parse build options into tuple of dictionaries - (datagen options, passthrough options, unsupported options)
+        where
+        - `datagen options` is dictionary of options to be interpreted by the data generator
+        - `passthrough options` is dictionary of options to be passed through to the underlying base dataframe
+        - `supported options` is dictionary of options that are not supported
+        :param options:  Dict of options to control generating of data
+        :returns: tuple of options dictionaries - (datagen_options, passthrough_options, unsupported options)
+        """
+        passthrough_options = {}
+        unsupported_options = {}
+        datagen_options = {}
+
+        supported_options = [_STREAMING_SOURCE_OPTION,
+                             _STREAMING_SCHEMA_OPTION,
+                             _STREAMING_PATH_OPTION,
+                             _STREAMING_TABLE_OPTION,
+                             _STREAMING_ID_FIELD_OPTION,
+                             _STREAMING_TIMESTAMP_FIELD_OPTION,
+                             _STREAMING_GEN_TIMESTAMP_OPTION,
+                             _STREAMING_USE_SOURCE_FIELDS
+                             ]
+
+        if options is not None:
+            for k, v in options.items():
+                if isinstance(k, str):
+                    if k.startswith(_BUILD_OPTION_PREFIX):
+                        if k in supported_options:
+                            datagen_options[k] = v
+                        else:
+                            unsupported_options[k] = v
+                    else:
+                        passthrough_options[k] = v
+                else:
+                    unsupported_options[k] = v
+
+        # add defaults
+
+        return datagen_options, passthrough_options, unsupported_options
+
+    def _applyStreamingDefaults(self, build_options, passthrough_options):
+        """ Apply default options for streaming data generation"""
+        assert build_options is not None
+        assert passthrough_options is not None
+
+        # default to `rate` streaming source
+        if _STREAMING_SOURCE_OPTION not in build_options:
+            build_options[_STREAMING_SOURCE_OPTION] = _STREAMING_SOURCE_RATE
+
+        # setup `numPartitions` if not specified
+        if build_options[_STREAMING_SOURCE_OPTION] in [_STREAMING_SOURCE_RATE, _STREAMING_SOURCE_RATE_MICRO_BATCH]:
+            if _STREAMING_SOURCE_NUM_PARTITIONS not in passthrough_options:
+                passthrough_options[_STREAMING_SOURCE_NUM_PARTITIONS] = self.partitions
+
+        # set up rows per batch if not specified
+        if build_options[_STREAMING_SOURCE_OPTION] == _STREAMING_SOURCE_RATE:
+            if _STREAMING_SOURCE_ROWS_PER_SECOND not in passthrough_options:
+                passthrough_options[_STREAMING_SOURCE_ROWS_PER_SECOND] = 1
+
+        if build_options[_STREAMING_SOURCE_OPTION] == _STREAMING_SOURCE_RATE_MICRO_BATCH:
+            if _STREAMING_SOURCE_ROWS_PER_BATCH not in passthrough_options:
+                passthrough_options[_STREAMING_SOURCE_ROWS_PER_BATCH] = 1
+            if _STREAM_SOURCE_START_TIMESTAMP not in passthrough_options:
+                currentTs = math.floor(time.mktime(time.localtime())) * 1000
+                passthrough_options[_STREAM_SOURCE_START_TIMESTAMP] = currentTs
+
+        if build_options[_STREAMING_SOURCE_OPTION] == _STREAMING_SOURCE_TEXT:
+            self.logger.warning("Use of the `text` format may not work due to lack of type support")
 
     def build(self, withTempView=False, withView=False, withStreaming=False, options=None):
         """ build the test data set from the column definitions and return a dataframe for it

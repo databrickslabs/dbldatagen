@@ -28,7 +28,7 @@ As it is installable via `%pip install`, it can also be incorporated in environm
    Using data distributions <DISTRIBUTIONS>
    Options for column specification <options_and_features>
    Generating repeatable data <repeatable_data_generation>
-   Using streaming data <using_streaming_data>
+   Producing synthetic streaming data <using_streaming_data>
    Generating JSON and structured column data <generating_json_data>
    Generating synthetic data from existing data <generating_from_existing_data>
    Generating Change Data Capture (CDC) data <generating_cdc_data>
