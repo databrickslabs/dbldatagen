@@ -3,12 +3,19 @@
 ## Change History
 All notable changes to the Databricks Labs Data Generator will be documented in this file.
 
+<<<<<<< feature_streaming_040824
 ### Unreleased - next release is intended to be v0.4.0
 
 #### Changed
 * Minimum spark version is PySpark 3.2.1 0 which is the minimum version for Databricks Runtime 10.4 LTS
 * Changed parsing of build options for data generator to support use of custom streaming
 * Documentation updates in support of new features such as streaming, complex structures etc
+=======
+### Unreleased
+
+#### Changed
+* Updated documentation for generating text data.
+>>>>>>> master
 
 
 ### Version 0.3.6 Post 1
@@ -30,6 +37,7 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 ### Notes
 * Ths version marks the changing minimum version of Databricks runtime to 10.4 LTS and later releases.
 * While there are no known incompatibilities with Databricks 9.1 LTS, we will not test against this release
+
 
 ### Version 0.3.5
 
