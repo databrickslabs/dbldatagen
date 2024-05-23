@@ -107,3 +107,9 @@ class TestGenerationFromData:
         df = analyzer.summarizeToDF()
 
         df.show()
+
+    def test_df_containing_summary(self):
+        df = spark.range(10).withColumnRenamed("id", "summary")
+        summary_df = dg.DataAnalyzer(sparkSession=spark, df=df).summarizeToDF()
+
+        assert summary_df.count() == 10

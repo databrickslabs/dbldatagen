@@ -11,6 +11,16 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 ### Added
 * Added classes for constraints on the data generation via new package `dbldatagen.constraints`
 
+
+### Version 0.3.6 Post 1
+
+#### Changed
+* Updated docs for complex data types / JSON to correct code examples
+* Updated license file in public docs
+
+#### Fixed 
+* Fixed scenario where `DataAnalyzer` is used on dataframe containing a column named `summary`
+
 ### Version 0.3.6
 
 #### Changed
@@ -22,6 +32,7 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 * Ths version marks the changing minimum version of Databricks runtime to 10.4 LTS and later releases.
 * While there are no known incompatibilities with Databricks 9.1 LTS, we will not test against this release
 
+
 ### Version 0.3.5
 
 #### Changed
@@ -29,6 +40,7 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 * Allow use of inferred types on `withColumn` method when `expr` attribute is used
 * Added ``withStructColumn`` method to allow simplified generation of struct and JSON columns
 * Modified pipfile to use newer version of package specifications
+
 
 ### Version 0.3.4 Post 3
 
@@ -40,7 +52,6 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 ### Fixed
 * Fix for use of values in columns of type array, map and struct 
 * Fix for generation of arrays via `numFeatures` and `structType` attributes when numFeatures has value of 1
-
 
 ### Version 0.3.4 Post 1
 
@@ -113,6 +124,7 @@ Thanks to Marvin Schenkel for the contribution
 #### Notes
 * column definitions for map, struct or array must use `expr` attribute to initialize field. Defaults to `NULL`
 
+
 ### Version 0.3.0
 
 #### Changes
@@ -123,6 +135,7 @@ Thanks to Marvin Schenkel for the contribution
 * Modified dependencies to base release on package versions used by Databricks Runtime 9.1 LTS
 * Updated to Spark 3.2.1 or later
 * Unit test updates - migration from `unittest` to `pytest` for many tests
+
 
 ### Version 0.2.1
 
@@ -146,7 +159,6 @@ Thanks to Marvin Schenkel for the contribution
 * added text generation plugin support for python functions and 3rd party libraries
 * Use of data generator to generate static and streaming data sources in Databricks Delta Live Tables
 * added support for install from PyPi
-
 
 ### General Requirements
 
