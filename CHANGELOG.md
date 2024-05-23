@@ -5,11 +5,17 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 
 ### Unreleased
 
+<<<<<<< feature_constraints
 ### Changed
 * Modified data generator to allow specification of constraints to the data generation process
 
 ### Added
 * Added classes for constraints on the data generation via new package `dbldatagen.constraints`
+=======
+#### Changed
+* Updated documentation for generating text data.
+
+>>>>>>> master
 
 ### Version 0.3.6 Post 1
 
@@ -31,6 +37,7 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 ### Notes
 * Ths version marks the changing minimum version of Databricks runtime to 10.4 LTS and later releases.
 * While there are no known incompatibilities with Databricks 9.1 LTS, we will not test against this release
+
 
 ### Version 0.3.5
 
