@@ -8,6 +8,16 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 #### Changed
 * Updated minimum pyspark version to be 3.2.1, compatible with Databricks runtime 10.4 LTS or later
 
+
+### Version 0.3.6 Post 1
+
+#### Changed
+* Updated docs for complex data types / JSON to correct code examples
+* Updated license file in public docs
+
+#### Fixed 
+* Fixed scenario where `DataAnalyzer` is used on dataframe containing a column named `summary`
+
 ### Version 0.3.6
 
 #### Changed
