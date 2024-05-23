@@ -7,14 +7,18 @@ This module defines the ``DataAnalyzer`` class.
 
 This code is experimental and both APIs and code generated is liable to change in future versions.
 """
+import logging
+
+import pyspark.sql as ssql
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
     TimestampType, DateType, DecimalType, ByteType, BinaryType, StructType, ArrayType, DataType
 
-import pyspark.sql as ssql
-import pyspark.sql.functions as F
-
-from .utils import strip_margins
 from .spark_singleton import SparkSingleton
+from .utils import strip_margins
+
+SUMMARY_FIELD_NAME = "summary"
+SUMMARY_FIELD_NAME_RENAMED = "__summary__"
+DATA_SUMMARY_FIELD_NAME = "__data_summary__"
 
 
 class DataAnalyzer:
@@ -23,6 +27,8 @@ class DataAnalyzer:
 
     :param df: Spark dataframe to analyze
     :param sparkSession: Spark session instance to use when performing spark operations
+    :param debug: If True, additional debug information is logged
+    :param verbose: If True, additional information is logged
 
     .. warning::
        Experimental
@@ -43,11 +49,17 @@ class DataAnalyzer:
                         |# Column definitions are stubs only - modify to generate correct data  
                         |#""", '|')
 
-    def __init__(self, df=None, sparkSession=None):
+    def __init__(self, df=None, sparkSession=None, debug=False, verbose=False):
         """ Constructor:
         :param df: Dataframe to analyze
         :param sparkSession: Spark session to use
         """
+        # set up logging
+        self.verbose = verbose
+        self.debug = debug
+
+        self._setupLogger()
+
         assert df is not None, "dataframe must be supplied"
 
         self._df = df
@@ -57,6 +69,19 @@ class DataAnalyzer:
 
         self._sparkSession = sparkSession
         self._dataSummary = None
+
+    def _setupLogger(self):
+        """Set up logging
+
+        This will set the logger at warning, info or debug levels depending on the instance construction parameters
+        """
+        self.logger = logging.getLogger("DataAnalyzer")
+        if self.debug:
+            self.logger.setLevel(logging.DEBUG)
+        elif self.verbose:
+            self.logger.setLevel(logging.INFO)
+        else:
+            self.logger.setLevel(logging.WARNING)
 
     def _displayRow(self, row):
         """Display details for row"""
@@ -94,6 +119,31 @@ class DataAnalyzer:
             dfResult = dfData.selectExpr(*exprs).limit(rowLimit)
 
         return dfResult
+
+    def _get_dataframe_describe_stats(self, df):
+        """ Get summary statistics for dataframe handling renaming of summary field if necessary"""
+        print("schema", df.schema)
+
+        src_fields = [fld.name for fld in df.schema.fields]
+        print("src_fields", src_fields)
+        renamed_summary = False
+
+        # get summary statistics handling the case where a field named 'summary' exists
+        # if the `summary` field name exists, we'll rename it to avoid a conflict
+        if SUMMARY_FIELD_NAME in src_fields:
+            renamed_summary = True
+            df = df.withColumnRenamed(SUMMARY_FIELD_NAME, SUMMARY_FIELD_NAME_RENAMED)
+
+        # The dataframe describe method produces a field named `summary`. We'll rename this to avoid conflict with
+        # any natural fields using the same name.
+        summary_df = df.describe().withColumnRenamed(SUMMARY_FIELD_NAME, DATA_SUMMARY_FIELD_NAME)
+
+        # if we renamed a field called `summary` in the data, we'll rename it back.
+        # The data summary field produced by the describe method has already been renamed so there will be no conflict.
+        if renamed_summary:
+            summary_df = summary_df.withColumnRenamed(SUMMARY_FIELD_NAME_RENAMED, SUMMARY_FIELD_NAME)
+
+        return summary_df
 
     def summarizeToDF(self):
         """ Generate summary analysis of data set as dataframe
@@ -154,11 +204,12 @@ class DataAnalyzer:
             dfData=self._df,
             dfSummary=dfDataSummary)
 
-        descriptionDf = self._df.describe().where("summary in ('mean', 'stddev')")
+        descriptionDf = (self._get_dataframe_describe_stats(self._df)
+                         .where(f"{DATA_SUMMARY_FIELD_NAME} in ('mean', 'stddev')"))
         describeData = descriptionDf.collect()
 
         for row in describeData:
-            measure = row['summary']
+            measure = row[DATA_SUMMARY_FIELD_NAME]
 
             values = {k[0]: '' for k in dtypes}
 
@@ -401,7 +452,12 @@ class DataAnalyzer:
 
         """
         assert self._df is not None
-        assert type(self._df) is ssql.DataFrame, "sourceDf must be a valid Pyspark dataframe"
+
+        if not isinstance(self._df, ssql.DataFrame):
+            self.logger.warning(strip_margins(
+                """The parameter `sourceDf` should be a valid Pyspark dataframe.
+                   |Note this warning may false due to use of remote connection to a Spark cluster""",
+                '|'))
 
         if self._dataSummary is None:
             df_summary = self.summarizeToDF()

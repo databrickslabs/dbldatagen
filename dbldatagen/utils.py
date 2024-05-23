@@ -27,7 +27,6 @@ def deprecated(message=""):
     """
 
     # create closure around function that follows use of the decorator
-
     def deprecated_decorator(func):
         @functools.wraps(func)
         def deprecated_func(*args, **kwargs):
@@ -289,7 +288,6 @@ def split_list_matching_condition(lst, cond):
 
     x = ['id', 'city_name', 'id', 'city_id', 'city_pop', 'id', 'city_id', 'city_pop','city_id', 'city_pop','id']
     splitListOnCondition(x, lambda el: el == 'id')
-
 
     Result:
     `[['id'], ['city_name'], ['id'], ['city_id', 'city_pop'],
