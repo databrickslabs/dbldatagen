@@ -20,9 +20,8 @@ Some data distributions are scaled to the [0,1] interval as part of their data g
 and no further scaling is needed.
 """
 import copy
-
-import numpy as np
 import pyspark.sql.functions as F
+import numpy as np
 
 
 class DataDistribution(object):
