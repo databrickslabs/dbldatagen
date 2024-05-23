@@ -10,6 +10,16 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 * Changed parsing of build options for data generator to support use of custom streaming
 * Documentation updates in support of new features such as streaming, complex structures etc
 
+
+### Version 0.3.6 Post 1
+
+#### Changed
+* Updated docs for complex data types / JSON to correct code examples
+* Updated license file in public docs
+
+#### Fixed 
+* Fixed scenario where `DataAnalyzer` is used on dataframe containing a column named `summary`
+
 ### Version 0.3.6
 
 #### Changed
