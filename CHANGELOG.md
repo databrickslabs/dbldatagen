@@ -8,6 +8,17 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 #### Changed
 * Updated documentation for generating text data.
 
+
+### Version 0.3.6 Post 1
+
+#### Changed
+* Updated docs for complex data types / JSON to correct code examples
+* Updated license file in public docs
+
+#### Fixed 
+* Fixed scenario where `DataAnalyzer` is used on dataframe containing a column named `summary`
+
+
 ### Version 0.3.6
 
 #### Changed
@@ -18,6 +29,7 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 ### Notes
 * Ths version marks the changing minimum version of Databricks runtime to 10.4 LTS and later releases.
 * While there are no known incompatibilities with Databricks 9.1 LTS, we will not test against this release
+
 
 ### Version 0.3.5
 
