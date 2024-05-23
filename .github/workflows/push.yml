@@ -58,3 +58,5 @@ jobs:
           verbose: true
           token: ${{ secrets.CODECOV_TOKEN }}
           name: dbldatagen
+          files: ./coverage.xml
+
