@@ -55,7 +55,6 @@ jobs:
       - name: Publish test coverage to coverage site
         uses: codecov/codecov-action@v4
         with:
-          verbose: true
           token: ${{ secrets.CODECOV_TOKEN }}
           name: dbldatagen
           files: ./coverage.xml
