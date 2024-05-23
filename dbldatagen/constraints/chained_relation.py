@@ -62,3 +62,7 @@ class ChainedRelation(Constraint):
 
         # ... and combine them using logical `and` operation
         return self.combineConstraintExpressions(filters)
+
+    def _supportsStreaming(self):
+        """ Return True if the constraint supports streaming dataframes"""
+        return True

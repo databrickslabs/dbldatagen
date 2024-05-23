@@ -118,6 +118,12 @@ class Constraint(ABC):
         return None
 
     @property
+    @abstractmethod
+    def _supportsStreaming(self):
+        """ Return True if the constraint supports streaming dataframes"""
+        return False
+
+    @property
     def filterExpression(self):
         """ Return the filter expression (as instance of type Column that evaluates to True or non-True)"""
         if not self._calculatedFilterExpression:
