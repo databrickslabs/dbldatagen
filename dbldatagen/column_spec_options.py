@@ -47,9 +47,6 @@ class ColumnSpecOptions(object):
     :param baseColumn: Either the string name of the base column, or a list of columns to use to
                         control data generation. The option ``baseColumns`` is an alias for ``baseColumn``.
 
-    :param baseColumnType: Determines how the value is derived from the base column. Possible values are 'auto',
-                           'hash', 'raw_values', 'values'
-
     :param values: List of discrete values for the colummn. Discrete values for the column can be strings, numbers
                    or constants conforming to type of column
 
@@ -107,29 +104,6 @@ class ColumnSpecOptions(object):
     :param distribution: Distribution for random number. Ignored if column is not random.
 
     :param escapeSpecialChars: if True, require escape for all special chars in template
-
-    When a column's value is derived from the value of another column, the `baseColumn` and `baseColumnType` options
-    can be used to control how the value is derived. The `baseColumn` option can be used to specify the name of the
-    base column, and the `baseColumnType` option can be used to specify how the value is derived from the base column.
-
-    The following values are permitted for the `baseColumnType` option:
-
-    - 'auto': Automatically determine the base column type based on the column type of the base column.
-    - 'hash': Use a hash of the base column(s) value to derive the value of the new column.
-    - 'raw_values': Use the raw values of the base column to derive the value of the new column.
-    - 'values': Use the values of the base column to derive the value of the new column.
-
-    The `baseColumn` option can be used to specify the name of the base column. If the `baseColumn` option is not
-    specified, the value of the new column will be derived from the seed or `id` column.
-
-    The `baseColumnType` option is optional. If it is not specified, the value of the new column will be derived
-    based on the column type of the base column.
-
-    The derivation from `raw_values` differs from `values` in that the `raw_values` option will use the raw values
-    of the base column to derive the value of the new column, while the `values` option will use the values of the
-    base column to derive the value of the new column after scaling to the range or implied range of the new column.
-
-    For example a column with four categorical values , 'A', 'B', 'C', 'D' has an implied range of 0 .. 3.
 
     .. note::
         If the `dataRange` parameter is specified as well as the `minValue`, `maxValue` or `step`,
