@@ -105,7 +105,8 @@ dev-test-with-html-report:
 
 test: buildenv
 	@echo "$(OK_COLOR)=> Running unit tests$(NO_COLOR)"
-	pipenv run pytest tests/ --cov $(PACKAGE_NAME)  --cov-report=xml
+	#pipenv run pytest tests/ --cov $(PACKAGE_NAME)  --cov-report=xml
+	pipenv run pytest tests/ --cov $(PACKAGE_NAME)
 
 test-with-html-report: buildenv
 	@echo "$(OK_COLOR)=> Running unit tests with HTML test coverage report$(NO_COLOR)"

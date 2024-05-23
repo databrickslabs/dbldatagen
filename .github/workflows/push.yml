@@ -55,6 +55,4 @@ jobs:
       - name: Publish test coverage to coverage site
         uses: codecov/codecov-action@v1
         with:
-          files: ./coverage.xml
-          name: dbldatagen
           verbose: true
