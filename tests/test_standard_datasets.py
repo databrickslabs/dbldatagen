@@ -27,7 +27,7 @@ def mkTableSpec():
     return dataspec
 
 
-class TestDatasets:
+class TestStandardDatasetsFramework:
 
     def setup_log_capture(self, caplog_object):
         """ set up log capture fixture
