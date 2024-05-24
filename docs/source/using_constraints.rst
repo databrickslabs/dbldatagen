@@ -83,3 +83,9 @@ order timestamp.
    df1 = dataspec.build()
 
 
+Limitations
+-----------
+The `UniqueCombinations` constraint is not supported on streaming dataframes.
+
+A similar effect can be achieved on a streaming dataframe with `dropDuplicates` but the choice of watermark,
+triggers, and other options may have a significant impact on performance and the effectiveness of the deduplication.

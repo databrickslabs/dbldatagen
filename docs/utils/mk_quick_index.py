@@ -317,9 +317,13 @@ def main(dirToSearch, outputPath):
 
         processDirectory(outputFile, Path(f"{PROJECT_PATH}"))
 
-        writeUnderlined(outputFile, f"The ``{PACKAGE_NAME}.distributions`` package", underline="_")
+        # Add entries here for subpackages
+        writeUnderlined(outputFile, f"The ``{PACKAGE_NAME}.constraints`` package", underline="_")
+        processDirectory(outputFile, Path(f"{PROJECT_PATH}/constraints"), subpackage="constraints")
 
+        writeUnderlined(outputFile, f"The ``{PACKAGE_NAME}.distributions`` package", underline="_")
         processDirectory(outputFile, Path(f"{PROJECT_PATH}/distributions"), subpackage="distributions")
+
 
 
 if __name__ == '__main__':

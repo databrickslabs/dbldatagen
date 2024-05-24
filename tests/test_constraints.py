@@ -93,6 +93,13 @@ class TestConstraints:
         else:
             assert combinedConstraintExpression is None
 
+    def test_constraint_filter_expression_cache(self):
+        # check that the filter expression is the same for multiple calls
+        constraint = SqlExpr("id < 100")
+        filterExpression = constraint.filterExpression
+        filterExpression2 = constraint.filterExpression
+        assert filterExpression is filterExpression2
+
     @pytest.mark.parametrize("column, operation, literalValue, expectedRows",
                              [
                                  ("id", "<", 50, 49),
