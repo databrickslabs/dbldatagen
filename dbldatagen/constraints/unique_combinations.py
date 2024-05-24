@@ -17,6 +17,9 @@ class UniqueCombinations(NoFilterMixin, Constraint):
     :param columns: string column name or list of column names as strings.If no columns are specified, all output
                     columns will be considered when dropping duplicate combinations.
 
+    if the columns are not specified, or the column name of '*' is used,
+    all columns that would be present in the final output are considered.
+
     Essentially applies the constraint that the named columns have unique values for each combination of columns.
 
     The uniqueness constraint may apply to columns that are omitted - i.e not part of the final output.

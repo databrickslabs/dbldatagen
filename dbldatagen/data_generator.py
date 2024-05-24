@@ -1307,15 +1307,13 @@ class DataGenerator:
                 df = constraint.transformDataframe(self, df)
 
             # get set of constraint expressions
-            constraint_expressions = [constraint.filterExpression for constraint in self._constraints
-                                      if constraint.filterExpression is not None
-                                      ]
+            constraint_expressions = [constraint.filterExpression for constraint in self._constraints]
+            combined_constraint_expression = Constraint.mkCombinedConstraintExpression(constraint_expressions)
 
-            if constraint_expressions is not None and len(constraint_expressions) > 0:
-                constraint_expression = Constraint.combineConstraintExpressions(constraint_expressions)
-
-                # apply the filter
-                df = df.where(constraint_expression)
+            # apply the filter
+            if combined_constraint_expression is not None:
+                self.executionHistory.append(f"Applying constraint expression: {combined_constraint_expression}")
+                df = df.where(combined_constraint_expression)
 
         return df
 

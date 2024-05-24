@@ -34,4 +34,4 @@ class NegativeValues(NoPrepareTransformMixin, Constraint):
         else:
             filters = [col.isNotNull() & (col <= 0) for col in expressions]
 
-        return self.combineConstraintExpressions(filters)
+        return self.mkCombinedConstraintExpression(filters)

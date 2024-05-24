@@ -34,4 +34,4 @@ class LiteralRelation(NoPrepareTransformMixin, Constraint):
         literalValue = F.lit(self._value)
         filters = [self._generate_relation_expression(col, self._relation, literalValue) for col in expressions]
 
-        return self.combineConstraintExpressions(filters)
+        return self.mkCombinedConstraintExpression(filters)

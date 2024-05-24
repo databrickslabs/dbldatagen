@@ -41,4 +41,4 @@ class RangedValues(NoPrepareTransformMixin, Constraint):
             filters = [column_expr.between(minValue, maxValue) for column_expr in expressions]
 
         # ... and combine them using logical `and` operation
-        return self.combineConstraintExpressions(filters)
+        return self.mkCombinedConstraintExpression(filters)

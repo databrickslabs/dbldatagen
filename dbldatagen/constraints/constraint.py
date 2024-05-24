@@ -7,6 +7,7 @@ This module defines the Constraint class
 """
 import types
 from abc import ABC, abstractmethod
+from pyspark.sql import Column
 
 
 class Constraint(ABC):
@@ -63,24 +64,30 @@ class Constraint(ABC):
             raise ValueError(f"Unsupported relation type '{relation}")
 
     @staticmethod
-    def combineConstraintExpressions(constraintExpressions):
-        """ Combine constraint expressions
+    def mkCombinedConstraintExpression(constraintExpressions):
+        """ Generate a SQL expression that combines multiple constraints using AND
 
-        :param constraintExpressions: list of constraint expressions
-        :return: combined constraint expression
+        :param constraintExpressions: list of Pyspark SQL Column constraint expression objects
+        :return: combined constraint expression as Pyspark SQL Column object (or None if no valid expressions)
+
         """
         assert constraintExpressions is not None and isinstance(constraintExpressions, list), \
-            "Constraint expressions must be a list of constraint expressions"
+            "Constraints must be a list of Pyspark SQL Column instances"
 
-        if len(constraintExpressions) > 0:
-            constraint_expression = constraintExpressions[0]
+        assert all(expr is None or isinstance(expr, Column) for expr in constraintExpressions), \
+            "Constraint expressions must be Pyspark SQL columns or None"
 
-            for additional_constraint in constraintExpressions[1:]:
-                constraint_expression = constraint_expression & additional_constraint
+        valid_constraint_expressions = [expr for expr in constraintExpressions if expr is not None]
 
-            return constraint_expression
+        if len(valid_constraint_expressions) > 0:
+            combined_constraint_expression = valid_constraint_expressions[0]
+
+            for additional_constraint in valid_constraint_expressions[1:]:
+                combined_constraint_expression = combined_constraint_expression & additional_constraint
+
+            return combined_constraint_expression
         else:
-            raise ValueError("Invalid list of constraint expressions")
+            return None
 
     @abstractmethod
     def prepareDataGenerator(self, dataGenerator):

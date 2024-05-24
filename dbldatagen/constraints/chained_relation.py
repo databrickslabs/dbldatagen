@@ -24,15 +24,10 @@ class ChainedRelation(NoPrepareTransformMixin, Constraint):
 
     Relations supported include <, <=, >=, >, !=, ==
 
-    :param columns: column name or list of column names
+    :param columns: column name or list of column names as string or list of strings
     :param relation: operator to check - should be one of <,> , =,>=,<=, ==, !=
     """
     def __init__(self, columns, relation):
-        """
-
-        :param columns: List of columns across which to apply the relation
-        :param relation: relation to test for
-        """
         super().__init__(supportsStreaming=True)
         self._relation = relation
         self._columns = self._columnsFromListOrString(columns)
@@ -61,4 +56,4 @@ class ChainedRelation(NoPrepareTransformMixin, Constraint):
             filters.append(self._generate_relation_expression(expressions[ix - 1], self._relation, expressions[ix]))
 
         # ... and combine them using logical `and` operation
-        return self.combineConstraintExpressions(filters)
+        return self.mkCombinedConstraintExpression(filters)

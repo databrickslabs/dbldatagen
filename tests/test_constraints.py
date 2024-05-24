@@ -5,7 +5,7 @@ from pyspark.sql.types import IntegerType, StringType, FloatType
 
 import dbldatagen as dg
 from dbldatagen.constraints import SqlExpr, LiteralRelation, ChainedRelation, LiteralRange, RangedValues, \
-    PositiveValues, NegativeValues, UniqueCombinations
+    PositiveValues, NegativeValues, UniqueCombinations, Constraint
 
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
@@ -66,6 +66,23 @@ class TestConstraints:
 
         rowCount = testDataDF.count()
         assert rowCount == 99
+
+    @pytest.mark.parametrize("constraints,producesExpression",
+                             [
+                                 ([SqlExpr("id < 100"), SqlExpr("id > 0")], True),
+                                 ([UniqueCombinations()], False),
+                                 ([UniqueCombinations("*")], False),
+                                 ([UniqueCombinations(["a", "b"])], False),
+                             ])
+    def test_combine_constraints(self, constraints, producesExpression):
+        constraintExpressions = [c.filterExpression for c in constraints]
+
+        combinedConstraintExpression = Constraint.mkCombinedConstraintExpression(constraintExpressions)
+
+        if producesExpression:
+            assert combinedConstraintExpression is not None
+        else:
+            assert combinedConstraintExpression is None
 
     @pytest.mark.parametrize("column, operation, literalValue, expectedRows",
                              [
