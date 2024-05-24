@@ -22,9 +22,10 @@ and no further scaling is needed.
 import copy
 import pyspark.sql.functions as F
 import numpy as np
+import types
+from abc import ABC, abstractmethod
 
-
-class DataDistribution(object):
+class DataDistribution(ABC):
     """ Base class for all distributions"""
     def __init__(self):
         self._rounding = False
@@ -47,6 +48,7 @@ class DataDistribution(object):
 
         return rng
 
+    @abstractmethod
     def generateNormalizedDistributionSample(self):
         """ Generate sample of data for distribution
 

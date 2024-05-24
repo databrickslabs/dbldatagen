@@ -1,41 +1,31 @@
 import datetime
-import unittest
 
 import pyspark.sql.functions as F
 import pyspark.sql as psql
 import pandas as pd
 import numpy as np
+import pytest
 
 import dbldatagen as dg
 import dbldatagen.distributions as dist
 
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
+
 desired_weights = [9, 1, 1, 1]
 
 
-class TestDistributions(unittest.TestCase):
+class TestDistributions:
+    TESTDATA_ROWS = 10000
 
-    @classmethod
-    def setUpClass(cls):
-        cls.rows = 10000
+    @pytest.fixture
+    def basicDistributionInstance(self):
+        class BasicDistribution(dist.DataDistribution):
 
-        # will have implied column `id` for ordinal of row
-        cls.testdata_generator = (
-            dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=cls.rows, partitions=4)
-            .withIdOutput()  # id column will be emitted in the output
-            .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
-            .withColumn("code4", "integer", minValue=1, maxValue=40, step=1, random=True)
-            .withColumn("sector_status_desc", "string", minValue=1, maxValue=200, step=1,
-                        prefix='status', random=True)
-            .withColumn("tech", "string", values=["GSM", "LTE", "UMTS", "UNKNOWN"],
-                        weights=desired_weights,
-                        random=True)
-        )
-        cls.testdata_generator.build().cache().createOrReplaceTempView("testdata")
+            def generateNormalizedDistributionSample(self):
+                return super().generateNormalizedDistributionSample()
 
-        # change to test build process
-        print("inside setupClass")
+        return BasicDistribution()
 
     @classmethod
     def unique_timestamp_seconds(cls):
@@ -74,7 +64,7 @@ class TestDistributions(unittest.TestCase):
         print("actual percentages", percentages)
         print("desired percentages", desired_percentages)
 
-        self.assertEqual(len(percentages), len(desired_percentages))
+        assert len(percentages), len(desired_percentages)
 
         # check that values are close
         for x, y in zip(percentages, desired_percentages):
@@ -84,51 +74,51 @@ class TestDistributions(unittest.TestCase):
         base_dist = dist.DataDistribution()
         self.assertTrue(base_dist is not None)
 
-    def test_basic_np_rng(self):
-        base_dist = dist.DataDistribution()
+    def test_basic_np_rng(self, basicDistributionInstance):
+        base_dist = basicDistributionInstance
 
         # check for random number generator
         rng_random = base_dist.get_np_random_generator(-1)
-        self.assertIsNotNone(rng_random)
+        assert rng_random is not None
         random_val = rng_random.random()
-        self.assertIsNotNone(random_val)
-        self.assertIsInstance(random_val, float)
+        assert random_val is not None
+        assert isinstance(random_val, float)
 
         rng_fixed = base_dist.get_np_random_generator(42)
-        self.assertIsNotNone(rng_random)
+        assert rng_random is not None
         random_val2 = rng_fixed.random()
-        self.assertIsNotNone(random_val2)
-        self.assertIsInstance(random_val2, float)
+        assert random_val2 is not None
+        assert isinstance(random_val2, float)
 
-    def test_basic_np_basic_normal(self):
-        base_dist = dist.DataDistribution()
+    def test_basic_np_basic_normal(self, basicDistributionInstance):
+        base_dist = basicDistributionInstance
 
         # check for random number generator
         rnd_expr = base_dist.generateNormalizedDistributionSample()
-        self.assertIsNotNone(rnd_expr)
-        self.assertIsInstance(rnd_expr, psql.Column)
+        assert rnd_expr is not None
+        assert isinstance(rnd_expr, psql.Column)
 
         rnd_expr2 = base_dist.withRandomSeed(42).generateNormalizedDistributionSample()
-        self.assertIsNotNone(rnd_expr2)
-        self.assertIsInstance(rnd_expr2, psql.Column)
+        assert rnd_expr2 is not None
+        assert isinstance(rnd_expr2, psql.Column)
 
     def test_basic_normal_distribution(self):
         normal_dist = dist.Normal(mean=0.0, stddev=1.0)
-        self.assertIsNotNone(normal_dist)
+        assert normal_dist is not None
         print(normal_dist)
 
         normal_dist2 = normal_dist.withRandomSeed(42)
 
-        self.assertEqual(normal_dist2.randomSeed, 42)
+        assert normal_dist2.randomSeed == 42
         print(normal_dist2)
 
         normal_dist3 = normal_dist2.withRounding(True)
-        self.assertTrue(normal_dist3.rounding)
+        assert normal_dist3.rounding is not None
 
     def test_simple_normal_distribution(self):
         # will have implied column `id` for ordinal of row
         normal_data_generator = (
-            dg.DataGenerator(sparkSession=spark, rows=self.rows, partitions=4)
+            dg.DataGenerator(sparkSession=spark, rows=self.TESTDATA_ROWS, partitions=4)
             .withIdOutput()  # id column will be emitted in the output
             .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
             .withColumn("code4", "integer", minValue=1, maxValue=40, step=1, random=True, distribution="normal")
@@ -148,13 +138,13 @@ class TestDistributions(unittest.TestCase):
 
         summary_data = df_summary_general.collect()[0]
 
-        self.assertEqual(summary_data['min_c4'], 1)
-        self.assertEqual(summary_data['max_c4'], 40)
+        assert summary_data['min_c4'] == 1
+        assert summary_data['max_c4'] == 40
 
     def test_normal_distribution(self):
         # will have implied column `id` for ordinal of row
         normal_data_generator = (
-            dg.DataGenerator(sparkSession=spark, rows=self.rows, partitions=4)
+            dg.DataGenerator(sparkSession=spark, rows=self.TESTDATA_ROWS, partitions=4)
             .withIdOutput()  # id column will be emitted in the output
             .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
             .withColumn("code4", "integer", minValue=1, maxValue=40, step=1, random=True,
@@ -175,13 +165,13 @@ class TestDistributions(unittest.TestCase):
 
         summary_data = df_summary_general.collect()[0]
 
-        self.assertEqual(summary_data['min_c4'], 1)
-        self.assertEqual(summary_data['max_c4'], 40)
+        assert summary_data['min_c4'] == 1
+        assert summary_data['max_c4'] == 40
 
     def test_normal_distribution_seeded1(self):
         # will have implied column `id` for ordinal of row
         normal_data_generator = (
-            dg.DataGenerator(sparkSession=spark, rows=self.rows, partitions=4, seed=42)
+            dg.DataGenerator(sparkSession=spark, rows=self.TESTDATA_ROWS, partitions=4, seed=42)
             .withIdOutput()  # id column will be emitted in the output
             .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
             .withColumn("code4", "integer", minValue=1, maxValue=40, step=1, random=True,
@@ -202,13 +192,13 @@ class TestDistributions(unittest.TestCase):
 
         summary_data = df_summary_general.collect()[0]
 
-        self.assertEqual(summary_data['min_c4'], 1)
-        self.assertEqual(summary_data['max_c4'], 40)
+        assert summary_data['min_c4'] == 1
+        assert summary_data['max_c4'] == 40
 
     def test_normal_distribution_seeded2(self):
         # will have implied column `id` for ordinal of row
         normal_data_generator = (
-            dg.DataGenerator(sparkSession=spark, rows=self.rows, partitions=4,
+            dg.DataGenerator(sparkSession=spark, rows=self.TESTDATA_ROWS, partitions=4,
                              seed=42, seedMethod="hash_fieldname")
             .withIdOutput()  # id column will be emitted in the output
             .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
@@ -230,8 +220,8 @@ class TestDistributions(unittest.TestCase):
 
         summary_data = df_summary_general.collect()[0]
 
-        self.assertEqual(summary_data['min_c4'], 1)
-        self.assertEqual(summary_data['max_c4'], 40)
+        assert summary_data['min_c4'] == 1
+        assert summary_data['max_c4'] == 40
 
     def test_normal_generation_func(self):
         dist_instance = dist.Normal(20.0, 1.0)  # instance of normal distribution
@@ -243,28 +233,28 @@ class TestDistributions(unittest.TestCase):
         seeds = pd.Series(np.full(data_size, 42, dtype=np.int32))
         results = dist_instance.normal_func(means, std_deviations, seeds)
 
-        self.assertTrue(len(results) == len(means))
+        assert len(results) == len(means)
 
         # get normalized mean and stddev
         s1 = np.std(results)
         m1 = np.mean(results)
         print(m1, s1)
 
-        self.assertAlmostEqual(s1, 0.2, delta=0.1)
-        self.assertAlmostEqual(m1, 0.5, delta=0.1)
+        assert s1 == pytest.approx(0.2, abs=0.1)
+        assert m1 == pytest.approx(0.5, abs=0.1)
 
         seeds2 = pd.Series(np.full(data_size, -1, dtype=np.int32))
         results2 = dist_instance.normal_func(means, std_deviations, seeds2)
         s2 = np.std(results2)
         m2 = np.mean(results2)
 
-        self.assertAlmostEqual(s2, 0.2, delta=0.1)
-        self.assertAlmostEqual(m2, 0.5, delta=0.1)
+        assert s2 == pytest.approx(0.2, abs=0.1)
+        assert m2 == pytest.approx(0.5, abs=0.1)
 
     def test_gamma_distribution(self):
         # will have implied column `id` for ordinal of row
         gamma_data_generator = (
-            dg.DataGenerator(sparkSession=spark, rows=self.rows, partitions=4)
+            dg.DataGenerator(sparkSession=spark, rows=self.TESTDATA_ROWS, partitions=4)
             .withIdOutput()  # id column will be emitted in the output
             .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
             .withColumn("code4", "integer", minValue=1, maxValue=40, step=1, random=True,
@@ -285,8 +275,8 @@ class TestDistributions(unittest.TestCase):
 
         summary_data = df_summary_general.collect()[0]
 
-        self.assertEqual(summary_data['min_c4'], 1)
-        self.assertEqual(summary_data['max_c4'], 40)
+        assert summary_data['min_c4'] == 1
+        assert summary_data['max_c4'] == 40
 
     def test_gamma_generation_func(self):
         dist_instance = dist.Gamma(0.5, 0.5)  # instance of exponential distribution with sc
@@ -298,28 +288,28 @@ class TestDistributions(unittest.TestCase):
         seeds = pd.Series(np.full(data_size, 42, dtype=np.int32))
         results = dist_instance.gamma_func(shapes, scales, seeds)
 
-        self.assertTrue(len(results) == len(scales))
+        assert len(results) == len(scales)
 
         # get normalized mean and stddev
         s1 = np.std(results)
         m1 = np.mean(results)
         print(m1, s1)
 
-        self.assertAlmostEqual(s1, 0.075, delta=0.05)
-        self.assertAlmostEqual(m1, 0.055, delta=0.05)
+        assert s1 == pytest.approx(0.075, abs=0.05)
+        assert m1 == pytest.approx(0.055, abs=0.05)
 
         seeds2 = pd.Series(np.full(data_size, -1, dtype=np.int32))
         results2 = dist_instance.gamma_func(shapes, scales, seeds2)
         s2 = np.std(results2)
         m2 = np.mean(results2)
 
-        self.assertAlmostEqual(s2, 0.075, delta=0.05)
-        self.assertAlmostEqual(m2, 0.055, delta=0.05)
+        assert s2 == pytest.approx(0.075, abs=0.05)
+        assert m2 == pytest.approx(0.055, abs=0.05)
 
     def test_beta_distribution(self):
         # will have implied column `id` for ordinal of row
         beta_data_generator = (
-            dg.DataGenerator(sparkSession=spark, rows=self.rows, partitions=4)
+            dg.DataGenerator(sparkSession=spark, rows=self.TESTDATA_ROWS, partitions=4)
             .withIdOutput()  # id column will be emitted in the output
             .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
             .withColumn("code4", "integer", minValue=1, maxValue=40, step=1, random=True,
@@ -340,8 +330,8 @@ class TestDistributions(unittest.TestCase):
 
         summary_data = df_summary_general.collect()[0]
 
-        self.assertEqual(summary_data['min_c4'], 1)
-        self.assertEqual(summary_data['max_c4'], 40)
+        assert summary_data['min_c4'] == 1
+        assert summary_data['max_c4'] == 40
 
     def test_beta_generation_func(self):
         dist_instance = dist.Beta(0.5, 0.5)  # instance of beta distribution
@@ -353,27 +343,27 @@ class TestDistributions(unittest.TestCase):
         seeds = pd.Series(np.full(data_size, 42, dtype=np.int32))
         results = dist_instance.beta_func(alphas, betas, seeds)
 
-        self.assertTrue(len(results) == len(alphas))
+        assert len(results) == len(alphas)
 
         # get normalized mean and stddev
         s1 = np.std(results)
         m1 = np.mean(results)
 
-        self.assertAlmostEqual(s1, 0.35, delta=0.1)
-        self.assertAlmostEqual(m1, 0.5, delta=0.1)
+        assert s1 == pytest.approx(0.35, abs=0.1)
+        assert m1 == pytest.approx(0.5, abs=0.1)
 
         seeds2 = pd.Series(np.full(data_size, -1, dtype=np.int32))
         results2 = dist_instance.beta_func(alphas, betas, seeds2)
         s2 = np.std(results2)
         m2 = np.mean(results2)
 
-        self.assertAlmostEqual(s2, 0.35, delta=0.1)
-        self.assertAlmostEqual(m2, 0.5, delta=0.1)
+        assert s2 == pytest.approx(0.35, abs=0.1)
+        assert m2 == pytest.approx(0.5, abs=0.1)
 
     def test_exponential_distribution(self):
         # will have implied column `id` for ordinal of row
         exponential_data_generator = (
-            dg.DataGenerator(sparkSession=spark, rows=self.rows, partitions=4)
+            dg.DataGenerator(sparkSession=spark, rows=self.TESTDATA_ROWS, partitions=4)
             .withIdOutput()  # id column will be emitted in the output
             .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
             .withColumn("code4", "integer", minValue=1, maxValue=40, step=1, random=True,
@@ -394,8 +384,8 @@ class TestDistributions(unittest.TestCase):
 
         summary_data = df_summary_general.collect()[0]
 
-        self.assertEqual(summary_data['min_c4'], 1)
-        self.assertEqual(summary_data['max_c4'], 40)
+        assert summary_data['min_c4'] == 1
+        assert summary_data['max_c4'] == 40
 
     def test_exponential_generation_func(self):
         dist_instance = dist.Exponential(0.5)  # instance of exponential distribution with sc
@@ -406,35 +396,19 @@ class TestDistributions(unittest.TestCase):
         seeds = pd.Series(np.full(data_size, 42, dtype=np.int32))
         results = dist_instance.exponential_func(scales, seeds)
 
-        self.assertTrue(len(results) == len(scales))
+        assert len(results) == len(scales)
 
         # get normalized mean and stddev
         s1 = np.std(results)
         m1 = np.mean(results)
 
-        self.assertAlmostEqual(s1, 0.10, delta=0.05)
-        self.assertAlmostEqual(m1, 0.10, delta=0.05)
+        assert s1 == pytest.approx(0.10, abs=0.05)
+        assert m1 == pytest.approx(0.10, abs=0.05)
 
         seeds2 = pd.Series(np.full(data_size, -1, dtype=np.int32))
         results2 = dist_instance.exponential_func(scales, seeds2)
         s2 = np.std(results2)
         m2 = np.mean(results2)
 
-        self.assertAlmostEqual(s2, 0.10, delta=0.05)
-        self.assertAlmostEqual(m2, 0.10, delta=0.05)
-
-# run the tests
-# if __name__ == '__main__':
-#  print("Trying to run tests")
-#  unittest.main(argv=['first-arg-is-ignored'],verbosity=2,exit=False)
-
-# def runTests(suites):
-#     suite = unittest.TestSuite()
-#     result = unittest.TestResult()
-#     for testSuite in suites:
-#         suite.addTest(unittest.makeSuite(testSuite))
-#     runner = unittest.TextTestRunner()
-#     print(runner.run(suite))
-#
-#
-# runTests([TestWeights])
+        assert s2 == pytest.approx(0.10, abs=0.05)
+        assert m2 == pytest.approx(0.10, abs=0.05)
