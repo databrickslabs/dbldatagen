@@ -20,13 +20,15 @@ Some data distributions are scaled to the [0,1] interval as part of their data g
 and no further scaling is needed.
 """
 import copy
-import pyspark.sql.functions as F
-import numpy as np
-import types
 from abc import ABC, abstractmethod
+
+import numpy as np
+import pyspark.sql.functions as F
+
 
 class DataDistribution(ABC):
     """ Base class for all distributions"""
+
     def __init__(self):
         self._rounding = False
         self._randomSeed = None
@@ -38,8 +40,8 @@ class DataDistribution(ABC):
         :param random_seed: Numeric random seed to use. If < 0, then no random
         :return:
         """
-        assert random_seed is None or type(random_seed) in [ np.int32, np.int64, int],\
-               f"`randomSeed` must be int or int-like not {type(random_seed)}"
+        assert random_seed is None or type(random_seed) in [np.int32, np.int64, int], \
+            f"`randomSeed` must be int or int-like not {type(random_seed)}"
         from numpy.random import default_rng
         if random_seed not in (-1, -1.0):
             rng = default_rng(random_seed)
@@ -57,7 +59,7 @@ class DataDistribution(ABC):
         if self.randomSeed == -1 or self.randomSeed is None:
             newDef = F.expr("rand()")
         else:
-            assert type(self.randomSeed) in [int, float],  "random seed should be numeric"
+            assert type(self.randomSeed) in [int, float], "random seed should be numeric"
             newDef = F.expr(f"rand({self.randomSeed})")
         return newDef
 

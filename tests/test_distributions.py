@@ -22,7 +22,7 @@ class TestDistributions:
     def basicDistributionInstance(self):
         class BasicDistribution(dist.DataDistribution):
 
-            def generateNormalizedDistributionSample(self):
+            def generateNormalizedDistributionSample(self):  # pylint: disable=useless-parent-delegation
                 return super().generateNormalizedDistributionSample()
 
         return BasicDistribution()
@@ -58,47 +58,40 @@ class TestDistributions:
 
         return value_count_pairs
 
-    def assertPercentagesEqual(self, percentages, desired_percentages):
-        assert percentages is not None and desired_percentages is not None
+    def test_valid_basic_distribution(self, basicDistributionInstance):
+        assert basicDistributionInstance is not None
 
-        print("actual percentages", percentages)
-        print("desired percentages", desired_percentages)
+    def test_bad_distribution_inheritance(self, basicDistributionInstance):
+        # define a bad derived class (due to lack of abstract methods) to test enforcement
+        with pytest.raises(TypeError):
+            class MyDistribution(dist.DataDistribution):
+                def dummyMethod(self):
+                    pass
 
-        assert len(percentages), len(desired_percentages)
-
-        # check that values are close
-        for x, y in zip(percentages, desired_percentages):
-            self.assertAlmostEqual(x, y, delta=float(x) / 5.0)
-
-    def no_basic_distribution(self):
-        base_dist = dist.DataDistribution()
-        self.assertTrue(base_dist is not None)
+            myDistribution = MyDistribution()  # pylint: disable=abstract-class-instantiated
+            assert myDistribution is not None
 
     def test_basic_np_rng(self, basicDistributionInstance):
-        base_dist = basicDistributionInstance
-
         # check for random number generator
-        rng_random = base_dist.get_np_random_generator(-1)
+        rng_random = basicDistributionInstance.get_np_random_generator(-1)
         assert rng_random is not None
         random_val = rng_random.random()
         assert random_val is not None
         assert isinstance(random_val, float)
 
-        rng_fixed = base_dist.get_np_random_generator(42)
+        rng_fixed = basicDistributionInstance.get_np_random_generator(42)
         assert rng_random is not None
         random_val2 = rng_fixed.random()
         assert random_val2 is not None
         assert isinstance(random_val2, float)
 
     def test_basic_np_basic_normal(self, basicDistributionInstance):
-        base_dist = basicDistributionInstance
-
         # check for random number generator
-        rnd_expr = base_dist.generateNormalizedDistributionSample()
+        rnd_expr = basicDistributionInstance.generateNormalizedDistributionSample()
         assert rnd_expr is not None
         assert isinstance(rnd_expr, psql.Column)
 
-        rnd_expr2 = base_dist.withRandomSeed(42).generateNormalizedDistributionSample()
+        rnd_expr2 = basicDistributionInstance.withRandomSeed(42).generateNormalizedDistributionSample()
         assert rnd_expr2 is not None
         assert isinstance(rnd_expr2, psql.Column)
 

@@ -7,6 +7,8 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 
 #### Changed
 * Updated documentation for generating text data.
+* Modified data distribiutions to use abstract base classes
+* migrated data distribution tests to use `pytest`
 
 
 ### Version 0.3.6 Post 1
