@@ -287,14 +287,19 @@ class TestConstraints:
         rowCount = testDataDF.count()
         assert rowCount == expectedRows
 
-    def test_ranged_values(self, generationSpec2):
+    @pytest.mark.parametrize("strictSetting, expectedRows",
+                             [
+                                 (True, 99),
+                                 (False, 99)
+                             ])
+    def test_ranged_values(self, generationSpec2, strictSetting, expectedRows):
         testDataSpec = (generationSpec2
                         .withConstraints([SqlExpr("id < 100"),
                                           SqlExpr("id > 0")])
-                        .withConstraint(RangedValues("code2", "code1", "code3", strict=True))
+                        .withConstraint(RangedValues("code2", "code1", "code3", strict=strictSetting))
                         )
 
         testDataDF = testDataSpec.build()
 
         rowCount = testDataDF.count()
-        assert rowCount == 99
+        assert rowCount == expectedRows
