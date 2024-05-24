@@ -1293,7 +1293,7 @@ class DataGenerator:
             for constraint in self._constraints:
                 assert isinstance(constraint, Constraint) or issubclass(constraint, Constraint), \
                     "constraint should be of type Constraint"
-                if constraint.supportsStreaming and withStreaming:
+                if withStreaming and not constraint.supportsStreaming:
                     raise RuntimeError(f"Constraint `{constraint}` does not support streaming data generation")
                 constraint.prepareDataGenerator(self)
 
@@ -1337,7 +1337,7 @@ class DataGenerator:
         self.logger.debug("starting build ... withStreaming [%s]", withStreaming)
         self.executionHistory = []
 
-        self._applyPreGenerationConstraints()
+        self._applyPreGenerationConstraints(withStreaming=withStreaming)
         self.computeBuildPlan()
 
         output_columns = self.getOutputColumnNames()

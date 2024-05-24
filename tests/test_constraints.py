@@ -67,6 +67,15 @@ class TestConstraints:
         rowCount = testDataDF.count()
         assert rowCount == 99
 
+    def test_streaming_exception(self, generationSpec1):
+        with pytest.raises(RuntimeError):
+            testDataSpec = (generationSpec1
+                            .withConstraint(UniqueCombinations(["code1", "code2"]))
+                            )
+
+            testDataDF = testDataSpec.build(withStreaming=True)
+            assert testDataDF is not None
+
     @pytest.mark.parametrize("constraints,producesExpression",
                              [
                                  ([SqlExpr("id < 100"), SqlExpr("id > 0")], True),
