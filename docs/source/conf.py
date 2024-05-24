@@ -24,7 +24,7 @@ sys.path.insert(0, os.path.abspath(f"{PACKAGE_DIR}/distributions"))
 # -- Project information -----------------------------------------------------
 
 project = 'Databricks Labs Data Generator'
-copyright = '2022, Databricks Inc'
+copyright = '2022 - 2024, Databricks Inc'
 author = 'Databricks Inc'
 
 # The full version, including alpha/beta/rc tags
