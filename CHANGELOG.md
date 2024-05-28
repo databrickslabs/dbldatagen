@@ -5,8 +5,12 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 
 ### Unreleased
 
-#### Changed
+### Changed
+* Modified data generator to allow specification of constraints to the data generation process
 * Updated documentation for generating text data.
+
+### Added
+* Added classes for constraints on the data generation via new package `dbldatagen.constraints`
 
 
 ### Version 0.3.6 Post 1

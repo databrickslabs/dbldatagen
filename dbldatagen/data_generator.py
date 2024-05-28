@@ -13,6 +13,8 @@ from pyspark.sql.types import LongType, IntegerType, StringType, StructType, Str
 
 from ._version import _get_spark_version
 from .column_generation_spec import ColumnGenerationSpec
+from .constraints.constraint import Constraint
+from .constraints.sql_expr import SqlExpr
 from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, \
     DEFAULT_SEED_COLUMN, SPARK_RANGE_COLUMN, MIN_SPARK_VERSION, \
     OPTION_RANDOM, OPTION_RANDOM_SEED, OPTION_RANDOM_SEED_METHOD, \
@@ -83,6 +85,9 @@ class DataGenerator:
         self._setupLogger()
         self._seedColumnName = seedColumnName
         self._outputStreamingFields = False
+
+        self._generationModel = None
+        self._constraints = []
 
         if seedColumnName != DEFAULT_SEED_COLUMN:
             self.logger.info(f"Using '{self._seedColumnName}' for seed column in place of '{DEFAULT_SEED_COLUMN}")
@@ -955,7 +960,7 @@ class DataGenerator:
 
         if asJson:
             output_expr = f"to_json({struct_expr})"
-            newDf = self.withColumn(colName, StringType(), expr=output_expr,  **kwargs)
+            newDf = self.withColumn(colName, StringType(), expr=output_expr, **kwargs)
         else:
             newDf = self.withColumn(colName, INFER_DATATYPE, expr=struct_expr, **kwargs)
 
@@ -1192,6 +1197,55 @@ class DataGenerator:
         """
         return [self._columnSpecsByName[colspec].datatype for colspec in columns]
 
+    def withConstraint(self, constraint):
+        """Add a constraint to control the data generation
+
+        :param constraint: a constraint object to apply to the data generation
+        :returns: reference to the dataa generator spec allowing calls to be chained
+
+        Note: Irrespective of where the constraint has been added, the constraints are applied at the end of the data
+        generation. Depending on the type of the constraint, the constraint may also affect other aspects of the
+        data generation
+        """
+        assert constraint is not None, "Constraint cannot be empty"
+        assert isinstance(constraint, Constraint) or issubclass(constraint, Constraint), \
+            "Constraint must be an instance of, or an instance of a subclass of the Constraint class"
+        self._constraints.append(constraint)
+        return self
+
+    def withConstraints(self, constraints):
+        """Add a constraint to control the data generation
+
+        :param constraints: a list of constraint objects to apply to the data generation
+        :returns: reference to the dataa generator spec allowing calls to be chained
+
+        Note: Irrespective of where the constraint has been added, the constraints are applied at the end of the data
+        generation. Depending on the type of the constraint, the constraint may also affect other aspects of the
+        data generation
+        """
+        assert constraints is not None, "Constraints list cannot be empty"
+
+        for constraint in constraints:
+            assert constraint is not None, "Constraint cannot be empty"
+            assert isinstance(constraint, Constraint) or issubclass(constraint, Constraint), \
+                "Constraint must be an instance of, or an instance of a subclass of the Constraint class"
+
+        self._constraints.extend(constraints)
+        return self
+
+    def withSqlConstraint(self, sqlExpression: str):
+        """ Add a sql expression as a constraint
+
+        :param sqlExpression: SQL expression for constraint. Rows will be returned where SQL expression evaluates true
+        :return:
+
+        Note in the current implementation, this may be equivalent to adding where clauses to the generated dataframe
+        but in future releases, this may be optimized to affect the underlying data generation so that constraints
+        are satisfied more efficiently.
+        """
+        self.withConstraint(SqlExpr(sqlExpression))
+        return self
+
     def computeBuildPlan(self):
         """ prepare for building by computing a pseudo build plan
 
@@ -1233,6 +1287,36 @@ class DataGenerator:
         self.buildPlanComputed = True
         return self
 
+    def _applyPreGenerationConstraints(self, withStreaming=False):
+        """ Apply pre data generation constraints """
+        if self._constraints is not None and len(self._constraints) > 0:
+            for constraint in self._constraints:
+                assert isinstance(constraint, Constraint) or issubclass(constraint, Constraint), \
+                    "constraint should be of type Constraint"
+                if withStreaming and not constraint.supportsStreaming:
+                    raise RuntimeError(f"Constraint `{constraint}` does not support streaming data generation")
+                constraint.prepareDataGenerator(self)
+
+    def _applyPostGenerationConstraints(self, df):
+        """ Build and apply the constraints using two mechanisms
+            - Apply transformations to dataframe
+            - Apply expressions as SQL filters using where clauses"""
+        if self._constraints is not None and len(self._constraints) > 0:
+
+            for constraint in self._constraints:
+                df = constraint.transformDataframe(self, df)
+
+            # get set of constraint expressions
+            constraint_expressions = [constraint.filterExpression for constraint in self._constraints]
+            combined_constraint_expression = Constraint.mkCombinedConstraintExpression(constraint_expressions)
+
+            # apply the filter
+            if combined_constraint_expression is not None:
+                self.executionHistory.append(f"Applying constraint expression: {combined_constraint_expression}")
+                df = df.where(combined_constraint_expression)
+
+        return df
+
     def build(self, withTempView=False, withView=False, withStreaming=False, options=None):
         """ build the test data set from the column definitions and return a dataframe for it
 
@@ -1252,6 +1336,8 @@ class DataGenerator:
         """
         self.logger.debug("starting build ... withStreaming [%s]", withStreaming)
         self.executionHistory = []
+
+        self._applyPreGenerationConstraints(withStreaming=withStreaming)
         self.computeBuildPlan()
 
         output_columns = self.getOutputColumnNames()
@@ -1267,6 +1353,9 @@ class DataGenerator:
 
         # build columns
         df1 = self._buildColumnExpressionsWithSelects(df1)
+
+        # apply post generation constraints
+        df1 = self._applyPostGenerationConstraints(df1)
 
         df1 = df1.select(*self.getOutputColumnNames())
         self.executionHistory.append(f"selecting columns: {self.getOutputColumnNames()}")
