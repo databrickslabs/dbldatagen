@@ -28,6 +28,42 @@ def mkTableSpec():
 
 
 class TestStandardDatasetsFramework:
+    @dataset_definition(name="test/test_batch", summary="Test Data Set1", autoRegister=True, supportsStreaming=False)
+    class TestDatasetBatch(DatasetProvider):
+        def __init__(self):
+            pass
+
+        def getTable(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
+                     **options):
+            import dbldatagen as dg
+            ds = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
+                                   seedMethod='hash_fieldname')
+                  .withColumn("code1", "int", min=100, max=200)
+                  .withColumn("code2", "int", min=0, max=10)
+                  .withColumn("code3", "string", values=['a', 'b', 'c'])
+                  .withColumn("code4", "string", values=['a', 'b', 'c'], random=True)
+                  .withColumn("code5", "string", values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+                  )
+            return ds
+
+    @dataset_definition(name="test/test_streaming", summary="Test Data Set2", autoRegister=True,
+                        supportsStreaming=True)
+    class TestDatasetStreaming(DatasetProvider):
+        def __init__(self):
+            pass
+
+        def getTable(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
+                     **options):
+            import dbldatagen as dg
+            ds = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
+                                   seedMethod='hash_fieldname')
+                  .withColumn("code1", "int", min=100, max=200)
+                  .withColumn("code2", "int", min=0, max=10)
+                  .withColumn("code3", "string", values=['a', 'b', 'c'])
+                  .withColumn("code4", "string", values=['a', 'b', 'c'], random=True)
+                  .withColumn("code5", "string", values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+                  )
+            return ds
 
     def setup_log_capture(self, caplog_object):
         """ set up log capture fixture
@@ -41,7 +77,7 @@ class TestStandardDatasetsFramework:
         # clear messages from setup
         caplog_object.clear()
 
-    def get_log_capture_warngings_and_errors(self, caplog_object, searchText=None):
+    def get_log_capture_warnings_and_errors(self, caplog_object, searchText=None):
         """
         gets count of errors containing specified text
 
@@ -295,8 +331,8 @@ class TestStandardDatasetsFramework:
 
         return MyDatasetProvider()
 
-    def test_get_table_raises_not_implemented_error(self, dataset_provider):
-        with pytest.raises(NotImplementedError):
+    def test_get_table_raises_type_error(self, dataset_provider):
+        with pytest.raises(TypeError):
             DatasetProvider().getTable(sparkSession=None)
 
     def test_check_options_valid_options(self, dataset_provider):

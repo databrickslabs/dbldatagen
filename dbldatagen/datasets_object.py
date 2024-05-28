@@ -252,12 +252,14 @@ class Datasets:
         assert name is not None, "Dataset name must be supplied"
 
         providers = self.getProviderDefinitions(name=name)
-        assert providers is not None and len(providers) > 0, f"Dataset '{name}' not found"
+        if providers is None or len(providers) == 0:
+            raise ValueError(f"Dataset '{name}' not found")
 
         self._providerDefinition = providers[0]
 
         if self._streaming:
-            assert self._providerDefinition.supportsStreaming, f"Dataset '{name}' does not support streaming"
+            if not self._providerDefinition.supportsStreaming:
+                raise ValueError(f"Dataset '{name}' does not support streaming")
 
     def get(self, table=None, rows=None, partitions=-1, **kwargs):
         """Get a table from the dataset

@@ -8,10 +8,11 @@ This file defines the DatasetProvider class
 from __future__ import annotations  # needed when using dataclasses in Python 3.8 with type of `list[str]`
 
 import math
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 
-class DatasetProvider:
+class DatasetProvider(ABC):
     """
     The DatasetProvider class acts as a base class for all dataset providers
 
@@ -32,7 +33,7 @@ class DatasetProvider:
     Registration can be done manually or automatically by setting the `autoRegister` flag in the decorator to True.
 
     By default, all DatasetProvider classes should support batch usage. If a dataset provider supports streaming usage,
-    the flag `supportsStreaming` should be set to True in the decorator.
+    the flag `supportsStreaming` should be set to `True` in the decorator.
     """
     DEFAULT_TABLE_NAME = "main"
     DEFAULT_ROWS = 100_000
@@ -117,6 +118,7 @@ class DatasetProvider:
         """
         return cls._registeredDatasets
 
+    @abstractmethod
     def getTable(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
                  **options):
         """Gets table for named table
