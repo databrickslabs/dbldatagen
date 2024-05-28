@@ -10,15 +10,19 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-from dbldatagen import *
-from dbldatagen.distributions import *
 import os
 import sys
 
 PACKAGE_DIR = "../../dbldatagen"
 
 sys.path.insert(0, os.path.abspath(f"{PACKAGE_DIR}"))
+sys.path.insert(0, os.path.abspath(f"{PACKAGE_DIR}/constraints"))
 sys.path.insert(0, os.path.abspath(f"{PACKAGE_DIR}/distributions"))
+
+from dbldatagen import *
+from dbldatagen.distributions import *
+from dbldatagen.constraints import *
+
 
 
 # -- Project information -----------------------------------------------------
