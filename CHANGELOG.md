@@ -7,6 +7,11 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 
 #### Changed
 * Updated minimum pyspark version to be 3.2.1, compatible with Databricks runtime 10.4 LTS or later
+* Modified data generator to allow specification of constraints to the data generation process
+* Updated documentation for generating text data.
+
+### Added
+* Added classes for constraints on the data generation via new package `dbldatagen.constraints`
 
 
 ### Version 0.3.6 Post 1
@@ -28,6 +33,7 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 ### Notes
 * Ths version marks the changing minimum version of Databricks runtime to 10.4 LTS and later releases.
 * While there are no known incompatibilities with Databricks 9.1 LTS, we will not test against this release
+
 
 ### Version 0.3.5
 

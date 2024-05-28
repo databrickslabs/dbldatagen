@@ -28,9 +28,9 @@ The following example illustrates generating data for specific ranges of values:
        dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
                       partitions=4, randomSeedMethod="hash_fieldname")
       .withIdOutput()
-      .withColumn("code3", StringType(), values=['online', 'offline', 'unknown'])
-      .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True, percentNulls=0.05)
-      .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+      .withColumn("code3", "string", values=['online', 'offline', 'unknown'])
+      .withColumn("code4", "string", values=['a', 'b', 'c'], random=True, percentNulls=0.05)
+      .withColumn("code5", "string", values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
    )
 
 Generating text from existing values
@@ -84,7 +84,7 @@ The following example illustrates its use:
        dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
                       partitions=4, randomSeedMethod="hash_fieldname")
        .withIdOutput()
-       .withColumnSpec("sample_text", text=dg.ILText(paragraphs=(1, 4),
+       .withColumn("sample_text", "string", text=dg.ILText(paragraphs=(1, 4),
                        sentences=(2, 6)))
     )
 
@@ -96,7 +96,12 @@ Using the general purpose text generator
 
 The ``template`` attribute allows specification of templated text generation.
 
-Here are some examples of its use to generate dummy email addresses, ip addressed and phone numbers
+.. note ::
+   The ``template`` option is shorthand for ``text=dg.TemplateGenerator(template=...)``
+
+   This can be specified with different options covering how escapes are handled and customizing the word list
+   - see the `TemplateGenerator` documentation for more details.
+
 
 .. code-block:: python
 
@@ -105,12 +110,16 @@ Here are some examples of its use to generate dummy email addresses, ip addresse
          dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
                           partitions=4, randomSeedMethod="hash_fieldname")
         .withIdOutput()
-        .withColumnSpec("email",
+        .withColumn("email", "string",
                         template=r'\w.\w@\w.com|\w@\w.co.u\k')
-        .withColumnSpec("ip_addr",
+        .withColumn("ip_addr", "string",
                          template=r'\n.\n.\n.\n')
-        .withColumnSpec("phone",
+        .withColumn("phone", "string",
                          template=r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd')
+
+        # the following implements the same pattern as for `phone` but using the `TemplateGenerator` class
+        .withColumn("phone2", "string",
+                         text=dg.TemplateGenerator(r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd'))
         )
 
     df = df_spec.build()
@@ -118,14 +127,8 @@ Here are some examples of its use to generate dummy email addresses, ip addresse
 
 The implementation of the template expansion uses the underlying `TemplateGenerator` class.
 
-.. note ::
-   The ``template`` option is shorthand for ``text=dg.TemplateGenerator(template=...)``
-
-   This can be specified in multiple modes - see the `TemplateGenerator` documentation for more details.
-
-
 TemplateGenerator options
----------------------------------------------
+-------------------------
 
 The template generator generates text from a template to allow for generation of synthetic credit card numbers,
 VINs, IBANs and many other structured codes.
@@ -154,9 +157,27 @@ It uses the following special chars:
     W         Insert a random uppercase word from the ipsum lorem word set. Always escaped
     ========  ======================================
 
+In all other cases, the char itself is used.
+
+The setting of the ``escapeSpecialChars`` determines how the template generate interprets the special chars.
+
+If set to False, which defaults to `False`, then the special char does not need to be escaped to have its special
+meaning. But the special char must be escaped to be treated as a literal char.
+
+So the template ``r"\dr_\v"`` will generate the values ``"dr_0"`` ... ``"dr_999"`` when used via the template option
+and applied to the values zero to 999.
+Here the the character `d` is escaped to avoid interpretation as a special character.
+
+If set to True, then the special char only has its special meaning when preceded by an escape.
+
+So the option `text=dg.TemplateGenerator(r'dr_\v', escapeSpecialChars=True)` will generate the values
+``"dr_0"`` ... ``"dr_999"`` when applied to the values zero to 999.
+
+This conforms to earlier implementations for backwards compatibility.
+
 .. note::
-          If escape is used and ``escapeSpecialChars`` is False, then the following
-          char is assumed to have no special meaning.
+          Setting the argument `escapeSpecialChars=False` means that the special char does not need to be escaped to
+          be treated as a special char. But it must be escaped to be treated as a literal char.
 
           If the ``escapeSpecialChars`` option is set to True, then the following char only has its special
           meaning when preceded by an escape.
@@ -165,20 +186,74 @@ It uses the following special chars:
 
           A special case exists for ``\\v`` - if immediately followed by a digit 0 - 9, the underlying base value
           is interpreted as an array of values and the nth element is retrieved where `n` is the digit specified.
-          
+
           The ``escapeSpecialChars`` is set to False by default for backwards compatibility.
 
           To use the ``escapeSpecialChars`` option, use the variant
-          ``text=dg.TemplateGenerator(template=...), escapeSpecialChars=True``
+          ``text=dg.TemplateGenerator(template=..., escapeSpecialChars=True)``
 
-In all other cases, the char itself is used.
 
-The setting of the ``escapeSpecialChars`` determines how templates generate data.
+Using a custom word list
+^^^^^^^^^^^^^^^^^^^^^^^^
 
-If set to False, then the template ``r"\\dr_\\v"`` will generate the values ``"dr_0"`` ... ``"dr_999"`` when applied
-to the values zero to 999. This conforms to earlier implementations for backwards compatibility.
+The template generator allows specification of a custom word list also. This is a list of words that can be
+used in the template generation. The default word list is the `ipsum lorem` word list.
 
-If set to True, then the template ``r"dr_\\v"`` will generate the values ``"dr_0"`` ... ``"dr_999"``
-when applied to the values zero to 999. This conforms to the preferred style going forward
+While the `values` option allows for the specification of a list of categorical values, this is transmitted as part of
+the generated SQL. The use of the `TemplateGenerator` object with a custom word list allows for specification of much
+larger lists of possible values without the need to transmit them as part of the generated SQL.
 
+For example the following code snippet illustrates the use of a custom word list:
+
+.. code-block:: python
+
+    import dbldatagen as dg
+
+    names = ['alpha', 'beta', 'gamma', 'lambda', 'theta']
+
+    df_spec = (
+         dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=100000,
+                          partitions=4, randomSeedMethod="hash_fieldname")
+        .withIdOutput()
+        .withColumn("email", "string",
+                        template=r'\w.\w@\w.com|\w@\w.co.u\k')
+        .withColumn("ip_addr", "string",
+                         template=r'\n.\n.\n.\n')
+        .withColumn("phone", "string",
+                         template=r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd')
+
+        # implements the same pattern as for `phone` but using the `TemplateGenerator` class
+        .withColumn("phone2", "string",
+                         text=dg.TemplateGenerator(r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd'))
+
+        # uses a custom word list
+        .withColumn("name", "string",
+                         text=dg.TemplateGenerator(r'\w \w|\w \w \w|\w \a. \w',
+                                                   escapeSpecialChars=True,
+                                                   extendedWordList=names))
+        )
+
+    df = df_spec.build()
+    display(df)
+
+Here the `names` variable is a list of names that can be used in the template generation.
+
+While this is short list in this case, it could be a much larger list of names either
+specified as a literal, or read from another dataframe, file, table or produced from another source.
+
+As this is not transmitted as part of the generated SQL, it allows for much larger lists of possible values.
+
+Other forms of text value lookup
+--------------------------------
+
+The use of the `values` option and the `template` option with a `TemplateGenerator` instance allow for generation of
+data when the range of possible values is known.
+
+But what about scenarios when the list of data is read from a different table or some other form of lookup?
+
+As the output of the data generation `build()` method is a regular PySpark DataFrame, it is possible to join the
+generated data with other data sources to generate the required data.
+
+In these cases, the generator can be specified to produce lookup keys that can be used to join with the
+other data sources.
 
