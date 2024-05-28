@@ -35,7 +35,6 @@ class TestStandardDatasetsFramework:
 
         def getTable(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
                      **options):
-            import dbldatagen as dg
             ds = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
                                    seedMethod='hash_fieldname')
                   .withColumn("code1", "int", min=100, max=200)
@@ -54,7 +53,6 @@ class TestStandardDatasetsFramework:
 
         def getTable(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
                      **options):
-            import dbldatagen as dg
             ds = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
                                    seedMethod='hash_fieldname')
                   .withColumn("code1", "int", min=100, max=200)
@@ -333,7 +331,7 @@ class TestStandardDatasetsFramework:
 
     def test_get_table_raises_type_error(self, dataset_provider):
         with pytest.raises(TypeError):
-            DatasetProvider().getTable(sparkSession=None)
+            DatasetProvider().getTable(sparkSession=None)  # pylint: disable=abstract-class-instantiated
 
     def test_check_options_valid_options(self, dataset_provider):
         options = {"option1": "value1", "option2": "value2"}
