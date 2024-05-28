@@ -42,7 +42,8 @@ setuptools.setup(
         "Documentation": "https://databrickslabs.github.io/dbldatagen/public_docs/index.html"
 },
     packages=['dbldatagen',
-              'dbldatagen.distributions'
+              'dbldatagen.distributions',
+              'dbldatagen.constraints'
               ],
     license="Databricks License",
     classifiers=[

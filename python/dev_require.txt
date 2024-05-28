@@ -23,7 +23,7 @@ prospector
 black
 
 # The following packages are only required for building documentation and are not required at runtime
-sphinx==5.0.0
+sphinx==7.0.0
 sphinx_rtd_theme
 nbsphinx
 numpydoc==0.8
