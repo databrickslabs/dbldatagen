@@ -79,19 +79,30 @@ class DatasetProvider(ABC):
         return datasetDefinition.tables
 
     @classmethod
-    def registerDataset(cls, datasetDefinition):
+    def registerDataset(cls, datasetProvider):
         """ Register the dataset with the given name
 
-        :param datasetDefinition: Dataset definition object
+        :param datasetProvider: Dataset provider class
         :return: None
 
-        The dataset definition object should be an instance of the DatasetDefinition class. It will be populated by
-        the decorator and should contain the name of the dataset, the list of tables provided by the dataset,
+        The dataset provider argument should be a subclass of the DatasetProvider class.
+
+        It will retrieve the DatasetDefinition populated during creation by the decorator
+        and should contain the name of the dataset, the list of tables provided by the dataset,
         the primary table, a summary of the dataset, a detailed description of the dataset,
         whether the dataset supports streaming, and the provider class.
         """
+        if datasetProvider is None:
+            raise ValueError("Valid dataset provider not supplied")
+
+        print("dataset provider", datasetProvider)
+        if not isinstance(datasetProvider, type) or not issubclass(datasetProvider, cls):
+            raise ValueError(f"Supplied dataset provider {datasetProvider} is not a valid subclass of DatasetProvider")
+
+        datasetDefinition = datasetProvider.getDatasetDefinition()
+
         assert isinstance(datasetDefinition, cls.DatasetDefinition), \
-            "datasetDefinition must be an instance of DatasetDefinition"
+            "retrieved datasetDefinition must be an instance of DatasetDefinition"
 
         assert datasetDefinition.name is not None, \
             "datasetDefinition must contain a name for the data set"
@@ -243,7 +254,7 @@ class DatasetProvider(ABC):
                 raise TypeError("Decorator must be applied to a class")
 
             if autoRegister:
-                DatasetProvider.registerDataset(dataset_desc)
+                DatasetProvider.registerDataset(self._targetCls)
 
             return retval
 

@@ -162,7 +162,7 @@ class TestStandardDatasetsFramework:
 
         print("description\n", ds_definition.description)
 
-        DatasetProvider.registerDataset(Y1a.getDatasetDefinition())
+        DatasetProvider.registerDataset(Y1a)
         assert Y1a.getDatasetDefinition().name in DatasetProvider.getRegisteredDatasets()
 
         DatasetProvider.unregisterDataset(Y1a.getDatasetDefinition().name)
@@ -187,11 +187,25 @@ class TestStandardDatasetsFramework:
 
         print("description\n", ds_definition.description)
 
-        DatasetProvider.registerDataset(X1b.getDatasetDefinition())
+        DatasetProvider.registerDataset(X1b)
         assert X1b.getDatasetDefinition().name in DatasetProvider.getRegisteredDatasets()
 
         DatasetProvider.unregisterDataset(X1b.getDatasetDefinition().name)
         assert X1b.getDatasetDefinition().name not in DatasetProvider.getRegisteredDatasets()
+
+    def test_bad_registration(self, mkTableSpec):
+        @dataset_definition(description="a test description")
+        class X1b(DatasetProvider):
+            def getTable(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
+                         description="a test description",
+                         **options):
+                return mkTableSpec
+
+        with pytest.raises(ValueError):
+            DatasetProvider.registerDataset(None)
+
+        with pytest.raises(ValueError):
+            DatasetProvider.registerDataset(X1b.getDatasetDefinition())
 
     def test_invalid_decorator_use(self):
         with pytest.raises(TypeError):
@@ -256,8 +270,8 @@ class TestStandardDatasetsFramework:
         # caplog fixture captures log content
         # self.setup_log_capture(caplog)
 
-        print("listing datasets matching 'basic.*'")
-        dg.Datasets.list(pattern="basic.*")
+        print("listing datasets matching 'test.*'")
+        dg.Datasets.list(pattern="test.*")
         print("done listing datasets")
 
         # check that there are no warnings or errors due to use of the overridden seed column
