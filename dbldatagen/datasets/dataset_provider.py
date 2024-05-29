@@ -39,6 +39,7 @@ class DatasetProvider(ABC):
     DEFAULT_ROWS = 100_000
     DEFAULT_PARTITIONS = 4
 
+    # the associated decorator will populate this with an instance of the `DatasetDefinition` class
     _DATASET_DEFINITION = None
 
     # the registered datasets will map from dataset names to a tuple of the dataset definition and the class
@@ -181,18 +182,28 @@ class DatasetProvider(ABC):
         def __init__(self, cls=None, *, name=None, tables=None, primaryTable=None, summary=None, description=None,
                      supportsStreaming=False):
             self._targetCls = cls
+
+            # compute the data set provider name if not provided.
+            # default name will be "providers/{classname}"
             self._datasetName = name if name is not None else f"providers/{cls.__name__}"
 
+            # compute list of tables if not provided
             self._tables = tables if tables is not None else [DatasetProvider.DEFAULT_TABLE_NAME]
+
+            # compute the primary table if not provided
             self._primaryTable = primaryTable if primaryTable is not None else self._tables[0]
 
+            # compute the summary if not provided
             self._summary = summary if summary is not None else f"Dataset implemented by '{str(cls)}'"
 
+            # compute the description if not provided
+            # the default description will be the decorator target class's doc string
             if description is not None:
                 self._description = description
             elif cls.__doc__ is not None and len(cls.__doc__.strip()) > 0:
                 self._description = cls.__doc__
             else:
+                # if theres no doc string, then compute a more detailed description for the class
                 generated_description = [
                     f"The datasetProvider '{cls.__name__}' provides a data spec for the '{self._datasetName}' dataset",
                     "",  # empty line
@@ -210,7 +221,8 @@ class DatasetProvider(ABC):
         def mkClass(self, autoRegister=False):
             """ make the modified class for the Data Provider
 
-            Applies the decorator args to class
+            Applies the decorator args as a metadata object on the class.
+            This is done at the class level as there is no instance of the target class at this point.
 
             :return: Returns the target class object
             """

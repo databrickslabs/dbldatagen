@@ -46,43 +46,6 @@ class Datasets:
 
     """
 
-    _registered_providers = {}
-
-    @staticmethod
-    def getGlobalSparkSession():
-
-        def get_global_variable(ctx_globals, varname, typeCheck):
-            """Get a global variable if available and optionally matches specific type or is subclass of type
-
-            :param varname: name of variable to check for
-            :param typeCheck: type to check against
-            :returns: the variable if variable is available, otherwise None
-            """
-            assert varname is not None and len(varname) > 0, "Variable name must be specified"
-            assert typeCheck is not None, "typeCheck type must be specified"
-
-            try:
-                if varname in ctx_globals:
-                    candidate_var = ctx_globals[varname]
-                    if candidate_var is not None and \
-                            (type(candidate_var) == typeCheck) or issubclass(type(candidate_var), typeCheck):
-                        return candidate_var
-                    else:
-                        return None
-                return None
-            except ValueError:
-                return None
-
-        import inspect
-        current = inspect.currentframe()
-
-        while current is not None:
-            fn = get_global_variable(current.f_globals, "spark", typeCheck=SparkSession)
-            if fn is not None:
-                return fn
-            current = current.f_back
-        return None
-
     @classmethod
     def registerProvider(cls, providerType):
         """Register a provider with the datasets class.
