@@ -112,14 +112,13 @@ class TestStandardDatasetProviders:
         assert dataset_definition1.supportsStreaming is True
         assert dataset_definition1.providerClass == DatasetProvider
 
-
-    #@pytest.mark.parametrize("rows, columns, expected_partitions", [
+    # @pytest.mark.parametrize("rows, columns, expected_partitions", [
     #    (1000000, 10, 4),
     #    (5000000, 100, 12),
     #    (100, 2, 4),
     #    (1000_000_000, 10, 18),
     #    (5000_000_000, 30, 32)
-    #])
-    #def test_auto_compute_partitions(self, dataset_provider, rows, columns, expected_partitions):
+    # ])
+    # def test_auto_compute_partitions(self, dataset_provider, rows, columns, expected_partitions):
     #    partitions = dataset_provider.autoComputePartitions(rows, columns)
     #    assert partitions == expected_partitions

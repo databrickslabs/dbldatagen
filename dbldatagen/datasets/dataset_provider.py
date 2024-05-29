@@ -22,7 +22,7 @@ class DatasetProvider(ABC):
 
     If no table name is specified, it defaults to a table name of `primary`
 
-    Note that the DatasetDefinitionDecorator inner class will be used as a decorator to subclasses of this and
+    Note that the DatasetDecoratorUtils inner class will be used as a decorator to subclasses of this and
     will overwrite the constants _DATASET_NAME, _DATASET_TABLES, _DATASET_DESCRIPTION, _DATASET_SUMMARY and
     _DATASET_SUPPORTS_STREAMING
 
@@ -178,7 +178,7 @@ class DatasetProvider(ABC):
         """
         return max(self.DEFAULT_PARTITIONS, int(math.log(rows / 350_000) * max(1, math.log(columns))))
 
-    class DatasetDefinitionDecorator:
+    class DatasetDecoratorUtils:
         """ Defines the predefined_dataset decorator
 
             :param cls: target class to apply decorator to
@@ -269,14 +269,14 @@ def dataset_definition(cls=None, *args, autoRegister=False, **kwargs):  # pylint
     :param args: positional args
     :param autoRegister: whether to automatically register the dataset
     :param kwargs: keyword args
-    :return: either instance of DatasetDefinitionDecorator or function which will produce instance of this when called
+    :return: either instance of DatasetDecoratorUtils or function which will produce instance of this when called
 
     This function is intended to be used as a decorator.
 
     When applied without arguments, it will return a nested
-    wrapper function which will take the subsequent class object and apply the DatasetDefinitionDecorator to it.
+    wrapper function which will take the subsequent class object and apply the DatasetDecoratorUtils to it.
 
-    When applied with arguments, the arguments will be applied to the construct of the DatasetDefinitionDecorator.
+    When applied with arguments, the arguments will be applied to the construct of the DatasetDecoratorUtils.
 
     This allows for the use of either syntax for decorators
     ```
@@ -305,7 +305,7 @@ def dataset_definition(cls=None, *args, autoRegister=False, **kwargs):  # pylint
         try:
             assert issubclass(inner_cls, DatasetProvider), \
                 f"Target class of decorator ({inner_cls}) must inherit from DataProvider"
-            return DatasetProvider.DatasetDefinitionDecorator(inner_cls, *args, **kwargs).mkClass(autoRegister)
+            return DatasetProvider.DatasetDecoratorUtils(inner_cls, *args, **kwargs).mkClass(autoRegister)
         except Exception as exc:
             raise TypeError(f"Invalid decorator usage: {exc}") from exc
 
@@ -316,7 +316,7 @@ def dataset_definition(cls=None, *args, autoRegister=False, **kwargs):  # pylint
             # handle decorator syntax with no arguments
             # when no arguments are provided to the decorator, the only argument passed is an implicit class object
             assert issubclass(cls, DatasetProvider), f"Target class of decorator ({cls}) must inherit from DataProvider"
-            return DatasetProvider.DatasetDefinitionDecorator(cls, *args, **kwargs).mkClass(autoRegister)
+            return DatasetProvider.DatasetDecoratorUtils(cls, *args, **kwargs).mkClass(autoRegister)
         else:
             # handle decorator syntax with arguments - here we simply return the inner wrapper function
             # and the subsequent call with arguments will apply the decorator to the target class
