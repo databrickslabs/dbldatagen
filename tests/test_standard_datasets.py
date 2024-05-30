@@ -28,10 +28,30 @@ def mkTableSpec():
 
 
 class TestStandardDatasetsFramework:
-    @dataset_definition(name="test/test_batch", summary="Test Data Set1", autoRegister=True, supportsStreaming=False)
+    @dataset_definition(name="test_providers/test_batch", summary="Test Data Set1", autoRegister=True,
+                        tables=["green", "yellow", "red"], supportsStreaming=False)
     class TestDatasetBatch(DatasetProvider):
         def __init__(self):
             pass
+
+        lastTableRetrieved = None
+        lastOptionsUsed = None
+        lastRowsRequested = None
+        lastPartitionsRequested = None
+
+        @classmethod
+        def clearRecordedArgs(cls):
+            cls.lastTableRetrieved = None
+            cls.lastOptionsUsed = None
+            cls.lastRowsRequested = None
+            cls.lastPartitionsRequested = None
+
+        @classmethod
+        def recordArgs(cls, *, table, options, rows, partitions):
+            cls.lastTableRetrieved = table
+            cls.lastOptionsUsed = options
+            cls.lastRowsRequested = rows
+            cls.lastPartitionsRequested = partitions
 
         def getTable(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
                      **options):
@@ -101,6 +121,12 @@ class TestStandardDatasetsFramework:
             supportsStreaming=True,
             providerClass=DatasetProvider
         )
+
+    @pytest.mark.skip(reason="disabled for now")
+    def test_datasets_bad_table_name(self):
+        with pytest.raises(ValueError):
+            ds = dg.Datasets(spark, name="test_providers/test_batch").get(table="blue")
+            assert ds is not None
 
     def test_dataset_definition_attributes(self, dataset_definition1):
         assert dataset_definition1.name == "test_dataset"
@@ -206,6 +232,10 @@ class TestStandardDatasetsFramework:
 
         with pytest.raises(ValueError):
             DatasetProvider.registerDataset(X1b.getDatasetDefinition())
+
+        with pytest.raises(ValueError):
+            DatasetProvider.registerDataset(X1b)
+            DatasetProvider.registerDataset(X1b)
 
     def test_invalid_decorator_use(self):
         with pytest.raises(TypeError):

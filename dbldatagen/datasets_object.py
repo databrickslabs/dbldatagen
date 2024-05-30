@@ -216,7 +216,7 @@ class Datasets:
 
         providers = self.getProviderDefinitions(name=name)
         if providers is None or len(providers) == 0:
-            raise ValueError(f"Dataset '{name}' not found")
+            raise ValueError(f"Dataset provider for '{name}' could not be found")
 
         self._providerDefinition = providers[0]
 
@@ -250,6 +250,8 @@ class Datasets:
 
         provider = self._providerDefinition.providerClass
         print(f" provider: {provider}")
+        if provider is None or not issubclass(provider, DatasetProvider):
+            raise ValueError()
         assert provider is not None and issubclass(provider, DatasetProvider), "Invalid provider class"
 
         providerInstance = provider()

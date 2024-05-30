@@ -95,7 +95,6 @@ class DatasetProvider(ABC):
         if datasetProvider is None:
             raise ValueError("Valid dataset provider not supplied")
 
-        print("dataset provider", datasetProvider)
         if not isinstance(datasetProvider, type) or not issubclass(datasetProvider, cls):
             raise ValueError(f"Supplied dataset provider {datasetProvider} is not a valid subclass of DatasetProvider")
 
@@ -110,6 +109,9 @@ class DatasetProvider(ABC):
         assert issubclass(datasetDefinition.providerClass, cls), \
             "datasetClass must be a subclass of DatasetProvider"
 
+        if datasetDefinition.name in cls._registeredDatasets:
+            raise ValueError(f"Dataset provider is already registered for name `{datasetDefinition.name}`")
+
         cls._registeredDatasets[datasetDefinition.name] = datasetDefinition
 
     @classmethod
@@ -119,8 +121,10 @@ class DatasetProvider(ABC):
         :param name: Name of the dataset to unregister
         """
         assert name is not None and len(name.strip()) > 0, "name must be provided and not empty"
-        assert name in cls._registeredDatasets, f"Dataset '{name}' not found in registered datasets"
-        del cls._registeredDatasets[name]
+
+        # remove name from registered datasets if its already registered
+        if name in cls._registeredDatasets:
+            del cls._registeredDatasets[name]
 
     @classmethod
     def getRegisteredDatasets(cls):

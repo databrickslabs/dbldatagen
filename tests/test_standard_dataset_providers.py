@@ -29,10 +29,29 @@ def mkTableSpec():
 
 class TestStandardDatasetProviders:
     @dataset_definition(name="test_providers/test_batch", summary="Test Data Set1", autoRegister=True,
-                        supportsStreaming=False)
+                        tables=["green", "yellow", "red"], supportsStreaming=False)
     class TestDatasetBatch(DatasetProvider):
         def __init__(self):
             pass
+
+        lastTableRetrieved = None
+        lastOptionsUsed = None
+        lastRowsRequested = None
+        lastPartitionsRequested = None
+
+        @classmethod
+        def clearRecordedArgs(cls):
+            cls.lastTableRetrieved = None
+            cls.lastOptionsUsed = None
+            cls.lastRowsRequested = None
+            cls.lastPartitionsRequested = None
+
+        @classmethod
+        def recordArgs(cls, *, table, options, rows, partitions ):
+            cls.lastTableRetrieved = table
+            cls.lastOptionsUsed = options
+            cls.lastRowsRequested = rows
+            cls.lastPartitionsRequested = partitions
 
         def getTable(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
                      **options):
@@ -63,33 +82,6 @@ class TestStandardDatasetProviders:
                   .withColumn("code5", "string", values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
                   )
             return ds
-
-    def setup_log_capture(self, caplog_object):
-        """ set up log capture fixture
-
-        Sets up log capture fixture to only capture messages after setup and only
-        capture warnings and errors
-
-        """
-        caplog_object.set_level(logging.WARNING)
-
-        # clear messages from setup
-        caplog_object.clear()
-
-    def get_log_capture_warnings_and_errors(self, caplog_object, searchText=None):
-        """
-        gets count of errors containing specified text
-
-        :param caplog_object: log capture object from fixture
-        :param searchText: text to search for to include error or warning in count
-        :return: count of errors containg text specified in `textFlag`
-        """
-        seed_column_warnings_and_errors = 0
-        for r in caplog_object.records:
-            if (r.levelname in ["WARNING", "ERROR"]) and (searchText is None) or (searchText in r.message):
-                seed_column_warnings_and_errors += 1
-
-        return seed_column_warnings_and_errors
 
     @pytest.fixture
     def dataset_definition1(self):
