@@ -10,6 +10,7 @@ from __future__ import annotations  # needed when using dataclasses in Python 3.
 import math
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+import functools
 
 
 class DatasetProvider(ABC):
@@ -46,6 +47,10 @@ class DatasetProvider(ABC):
     # the implementation for dataset listing and describe will be driven by this
     _registeredDatasets = {}
 
+    # _registeredDatasetsVersion will contain a computed version number which is updated on new dataset
+    # registration or when dataset provider is unregistered
+    registeredDatasetsVersion = 0
+
     @dataclass
     class DatasetDefinition:
         """ Dataset Definition class - stores the attributes related to the dataset for use by the implementation
@@ -64,6 +69,18 @@ class DatasetProvider(ABC):
         providerClass: type
 
     @classmethod
+    def isValidDataProviderType(cls, candidateDataProvider):
+        """Check if object is a valid data provider type
+
+        :param candidateDataProvider: potential Dataset provider class
+        :return: True if valid DatasetProvider type, False otherwise
+
+        """
+        return (candidateDataProvider is not None and
+                isinstance(candidateDataProvider, type) and
+                issubclass(candidateDataProvider, cls))
+
+    @classmethod
     def getDatasetDefinition(cls):
         """ Get the dataset definition for the class """
         return cls._DATASET_DEFINITION
@@ -80,7 +97,7 @@ class DatasetProvider(ABC):
 
     @classmethod
     def registerDataset(cls, datasetProvider):
-        """ Register the dataset with the given name
+        """ Register the dataset provider type using metadata defined in the dataset provider
 
         :param datasetProvider: Dataset provider class
         :return: None
@@ -95,7 +112,7 @@ class DatasetProvider(ABC):
         if datasetProvider is None:
             raise ValueError("Valid dataset provider not supplied")
 
-        if not isinstance(datasetProvider, type) or not issubclass(datasetProvider, cls):
+        if not cls.isValidDataProviderType(datasetProvider):
             raise ValueError(f"Supplied dataset provider {datasetProvider} is not a valid subclass of DatasetProvider")
 
         datasetDefinition = datasetProvider.getDatasetDefinition()
@@ -113,6 +130,7 @@ class DatasetProvider(ABC):
             raise ValueError(f"Dataset provider is already registered for name `{datasetDefinition.name}`")
 
         cls._registeredDatasets[datasetDefinition.name] = datasetDefinition
+        cls.registeredDatasetsVersion = cls.registeredDatasetsVersion + 1
 
     @classmethod
     def unregisterDataset(cls, name):
@@ -125,6 +143,7 @@ class DatasetProvider(ABC):
         # remove name from registered datasets if its already registered
         if name in cls._registeredDatasets:
             del cls._registeredDatasets[name]
+            cls.registeredDatasetsVersion = cls.registeredDatasetsVersion + 1
 
     @classmethod
     def getRegisteredDatasets(cls):
@@ -133,6 +152,14 @@ class DatasetProvider(ABC):
         :return:  A dictionary of registered datasets
         """
         return cls._registeredDatasets
+
+    @classmethod
+    def getRegisteredDatasetsVersion(cls):
+        """
+        Get the registered datasets version indicator
+        :return:  A dictionary of registered datasets
+        """
+        return cls._registeredDatasetsVersion
 
     @abstractmethod
     def getTable(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
@@ -152,6 +179,33 @@ class DatasetProvider(ABC):
         and columns using the `autoComputePartitions` method.
         """
         raise NotImplementedError("Base data provider does not provide any tables!")
+
+    @staticmethod
+    def allowed_options(options=None):
+        """ Decorator to enforce allowed options
+
+            Used to document and enforce what options are allowed for each dataset provider implementation
+            If the signature of the getTable method changes, change the DEFAULT_OPTIONS constant to include options
+            that are always allowed
+        """
+
+        DEFAULT_OPTIONS = ["sparkSession", "tableName", "rows", "partitions"]
+
+        def decorator(func):
+            @functools.wraps(func)
+            def wrapper(*args, **kwargs):
+                bad_options = [ keyword_arg for keyword_arg in kwargs.value
+                                if keyword_arg not in DEFAULT_OPTIONS and keyword_arg not in options]
+
+                if len(bad_options) > 0:
+                    errorMessage = f"""The following options are unsupported by provider: [{",".join(bad_options)}]"""
+                    raise ValueError(errorMessage)
+
+                print(f"wrapped function {options} {kwargs}")
+                return func(*args, **kwargs)
+
+            return wrapper
+        return decorator
 
     def checkOptions(self, options, allowedOptions):
         """ Check that options are valid
@@ -307,7 +361,7 @@ def dataset_definition(cls=None, *args, autoRegister=False, **kwargs):  # pylint
         :return: Returns the target class object
         """
         try:
-            assert issubclass(inner_cls, DatasetProvider), \
+            assert DatasetProvider.isValidDataProviderType(inner_cls), \
                 f"Target class of decorator ({inner_cls}) must inherit from DataProvider"
             return DatasetProvider.DatasetDecoratorUtils(inner_cls, *args, **kwargs).mkClass(autoRegister)
         except Exception as exc:
@@ -319,7 +373,8 @@ def dataset_definition(cls=None, *args, autoRegister=False, **kwargs):  # pylint
         if cls is not None:
             # handle decorator syntax with no arguments
             # when no arguments are provided to the decorator, the only argument passed is an implicit class object
-            assert issubclass(cls, DatasetProvider), f"Target class of decorator ({cls}) must inherit from DataProvider"
+            assert DatasetProvider.isValidDataProviderType(cls), \
+                f"Target class of decorator ({cls}) must inherit from DataProvider"
             return DatasetProvider.DatasetDecoratorUtils(cls, *args, **kwargs).mkClass(autoRegister)
         else:
             # handle decorator syntax with arguments - here we simply return the inner wrapper function

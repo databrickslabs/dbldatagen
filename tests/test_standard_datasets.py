@@ -28,6 +28,8 @@ def mkTableSpec():
 
 
 class TestStandardDatasetsFramework:
+    # Define some dummy providers - we will use these to check if they are found by
+    # the listing and describe methods etc.
     @dataset_definition(name="test_providers/test_batch", summary="Test Data Set1", autoRegister=True,
                         tables=["green", "yellow", "red"], supportsStreaming=False)
     class TestDatasetBatch(DatasetProvider):
@@ -65,7 +67,7 @@ class TestStandardDatasetsFramework:
                   )
             return ds
 
-    @dataset_definition(name="test/test_streaming", summary="Test Data Set2", autoRegister=True,
+    @dataset_definition(name="test_providers/test_streaming", summary="Test Data Set2", autoRegister=True,
                         supportsStreaming=True)
     class TestDatasetStreaming(DatasetProvider):
         def __init__(self):
@@ -111,6 +113,10 @@ class TestStandardDatasetsFramework:
         return seed_column_warnings_and_errors
 
     @pytest.fixture
+    def getPrintOutput(self, capsys):
+        return capsys.readouterr().out
+
+    @pytest.fixture
     def dataset_definition1(self):
         return DatasetProvider.DatasetDefinition(
             name="test_dataset",
@@ -122,11 +128,30 @@ class TestStandardDatasetsFramework:
             providerClass=DatasetProvider
         )
 
-    @pytest.mark.skip(reason="disabled for now")
+    # @pytest.mark.skip(reason="disabled for now")
     def test_datasets_bad_table_name(self):
         with pytest.raises(ValueError):
             ds = dg.Datasets(spark, name="test_providers/test_batch").get(table="blue")
             assert ds is not None
+
+    def test_different_retrieval_mechanisms_simple(self):
+        testSpec1 = dg.Datasets("test_providers/test_batch").get(table="yellow")
+        assert testSpec1 is not None
+
+        testSpec2 = dg.Datasets("test_providers/test_batch").get(rows=10)
+        assert testSpec2 is not None
+
+    def test_different_retrieval_mechanisms_alt1(self):
+        testSpec3 = dg.Datasets("test_providers/test_batch").yellow()
+        assert testSpec3 is not None
+
+    def test_different_retrieval_mechanisms_alt2(self):
+        testSpec4 = dg.Datasets("test_providers").test_batch.yellow()
+        assert testSpec4 is not None
+
+    def test_different_retrieval_mechanisms_alt3(self):
+        testSpec5 = dg.Datasets("test_providers").test_batch()
+        assert testSpec5 is not None
 
     def test_dataset_definition_attributes(self, dataset_definition1):
         assert dataset_definition1.name == "test_dataset"
@@ -249,14 +274,14 @@ class TestStandardDatasetsFramework:
             def my_function(x):
                 return x
 
-    @pytest.mark.parametrize("rows_requested, partitions_requested, random, dummy", [
-        (50, 4, False, 0),
-        (__MISSING__, __MISSING__, __MISSING__, __MISSING__),
-        (100, -1, False, 0),
-        (5000, __MISSING__, __MISSING__, 4),
-        (100, -1, True, 0),
+    @pytest.mark.parametrize("providerName, rows_requested, partitions_requested, random, dummy", [
+        ("basic/user", 50, 4, False, 0),
+        ("basic/user", __MISSING__, __MISSING__, __MISSING__, __MISSING__),
+        ("basic/user", 100, -1, False, 0),
+        ("basic/user", 5000, __MISSING__, __MISSING__, 4),
+        ("basic/user", 100, -1, True, 0),
     ])
-    def test_basic(self, rows_requested, partitions_requested, random, dummy):
+    def test_basic_table_retrieval(self, providerName, rows_requested, partitions_requested, random, dummy):
 
         dict_params = {}
 
@@ -269,8 +294,12 @@ class TestStandardDatasetsFramework:
         if dummy != __MISSING__:
             dict_params["dummyValues"] = dummy
 
-        ds = dg.Datasets(spark, "basic/user").get(**dict_params)
-        assert ds is not None
+        print("retrieving dataset for options", dict_params)
+
+        ds = dg.Datasets(spark, providerName).get(**dict_params)
+        assert ds is not None, f"""expected to get dataset specification for provider `{providerName}`
+                                   with options: {dict_params} 
+                                """
         df = ds.build()
 
         assert df.count() == (
@@ -284,29 +313,27 @@ class TestStandardDatasetsFramework:
             customer_ids = [r.customer_id for r in leadingRows]
             assert customer_ids != sorted(customer_ids)
 
-    def test_listing(self):
-        # caplog fixture captures log content
-        # self.setup_log_capture(caplog)
-
+    @pytest.mark.parametrize("providerClass, pattern",
+                             [(TestDatasetBatch, __MISSING__),
+                              (TestDatasetBatch, "test.*"),
+                              (TestDatasetBatch, "test_providers/test_batch")])
+    def test_listing(self, providerClass, pattern, capsys):
         print("listing datasets")
-        dg.Datasets.list()
+
+        if pattern == __MISSING__:
+            dg.Datasets.list()
+        else:
+            dg.Datasets.list(pattern=pattern)
+
         print("done listing datasets")
 
-        # check that there are no warnings or errors due to use of the overridden seed column
-        # seed_column_warnings_and_errors = self.get_log_capture_warngings_and_errors(caplog, "listing")
-        # assert seed_column_warnings_and_errors == 0, "Should not have error messages about seed column"
+        captured = capsys.readouterr().out
+        print("Actual captured output:", captured)
 
-    def test_listing2(self):
-        # caplog fixture captures log content
-        # self.setup_log_capture(caplog)
-
-        print("listing datasets matching 'test.*'")
-        dg.Datasets.list(pattern="test.*")
-        print("done listing datasets")
-
-        # check that there are no warnings or errors due to use of the overridden seed column
-        # seed_column_warnings_and_errors = self.get_log_capture_warngings_and_errors(caplog, "listing")
-        # assert seed_column_warnings_and_errors == 0, "Should not have error messages about seed column"
+        # check for the name of provider and the summary description:
+        providerMetadata = providerClass.getDatasetDefinition()
+        assert providerMetadata.name in captured, "Should have found provider name in the output"
+        assert providerMetadata.summary in captured, "Should have found provider summary in output"
 
     def test_describe_basic_usr(self):
         # caplog fixture captures log content

@@ -44,8 +44,9 @@ class BasicUserProvider(DatasetProvider):
 
         assert tableName is None or tableName == DatasetProvider.DEFAULT_TABLE_NAME, "Invalid table name"
         df_spec = (
-            dg.DataGenerator(sparkSession=sparkSession, name="test_data_set1", rows=rows,
-                             partitions=partitions, randomSeedMethod="hash_fieldname")
+            dg.DataGenerator(sparkSession=sparkSession, rows=rows,
+                             partitions=partitions,
+                             randomSeedMethod="hash_fieldname")
             .withColumn("customer_id", "long", minValue=1000000, maxValue=self.MAX_LONG, random=generateRandom)
             .withColumn("name", "string",
                         template=r'\w \w|\w \w \w', random=generateRandom)
