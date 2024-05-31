@@ -22,8 +22,8 @@ class TestDistributions:
     def basicDistributionInstance(self):
         class BasicDistribution(dist.DataDistribution):
 
-            def generateNormalizedDistributionSample(self):  # pylint: disable=useless-parent-delegation
-                return super().generateNormalizedDistributionSample()
+            def generateNormalizedDistributionSample(self):
+                return F.expr("rand()")
 
         return BasicDistribution()
 

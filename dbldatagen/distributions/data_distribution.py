@@ -55,13 +55,12 @@ class DataDistribution(ABC):
         """ Generate sample of data for distribution
 
         :return: random samples from distribution scaled to values between 0 and 1
+
+        Note implementors should provide implementation for this,
+
+        Return value is expected to be a Pyspark SQL column expression such as F.expr("rand()")
         """
-        if self.randomSeed == -1 or self.randomSeed is None:
-            newDef = F.expr("rand()")
-        else:
-            assert type(self.randomSeed) in [int, float], "random seed should be numeric"
-            newDef = F.expr(f"rand({self.randomSeed})")
-        return newDef
+        pass
 
     def withRounding(self, rounding):
         """ Create copy of object and set the rounding attribute
