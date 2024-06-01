@@ -32,7 +32,7 @@ class TestStandardDatasetsFramework:
     # the listing and describe methods etc.
     @dataset_definition(name="test_providers/test_batch", summary="Test Data Set1", autoRegister=True,
                         tables=["green", "yellow", "red"], supportsStreaming=False)
-    class TestDatasetBatch(DatasetProvider):
+    class SampleDatasetProviderBatch(DatasetProvider):
         def __init__(self):
             pass
 
@@ -69,7 +69,7 @@ class TestStandardDatasetsFramework:
 
     @dataset_definition(name="test_providers/test_streaming", summary="Test Data Set2", autoRegister=True,
                         supportsStreaming=True)
-    class TestDatasetStreaming(DatasetProvider):
+    class SampleDatasetProviderStreaming(DatasetProvider):
         def __init__(self):
             pass
 
@@ -315,9 +315,9 @@ class TestStandardDatasetsFramework:
             assert customer_ids != sorted(customer_ids)
 
     @pytest.mark.parametrize("providerClass, pattern",
-                             [(TestDatasetBatch, __MISSING__),
-                              (TestDatasetBatch, "test.*"),
-                              (TestDatasetBatch, "test_providers/test_batch")])
+                             [(SampleDatasetProviderBatch, __MISSING__),
+                              (SampleDatasetProviderBatch, "test.*"),
+                              (SampleDatasetProviderBatch, "test_providers/test_batch")])
     def test_listing(self, providerClass, pattern, capsys):
         print("listing datasets")
 
