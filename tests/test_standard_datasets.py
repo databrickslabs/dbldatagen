@@ -222,9 +222,11 @@ class TestStandardDatasetsFramework:
 
         DatasetProvider.registerDataset(Y1a)
         assert Y1a.getDatasetDefinition().name in DatasetProvider.getRegisteredDatasets()
+        assert Y1a.getDatasetTables() is not None
 
         DatasetProvider.unregisterDataset(Y1a.getDatasetDefinition().name)
         assert Y1a.getDatasetDefinition().name not in DatasetProvider.getRegisteredDatasets()
+        assert Y1a.getDatasetTables() is not None
 
     def test_decorators1b(self, mkTableSpec):
         @dataset_definition(description="a test description")
@@ -373,6 +375,9 @@ class TestStandardDatasetsFramework:
         options = {"option1": "value1", "option2": "value2"}
         allowed_options = ["option1", "option2"]
         dataset_provider.checkOptions(options, allowed_options)  # This should not raise an exception
+
+        # check that dataset provider without decorator still supports getDatasetTables
+        assert dataset_provider.getDatasetTables() is not None
 
     def test_check_options_invalid_options(self, dataset_provider):
         options = {"option1": "value1", "option2": "value2"}

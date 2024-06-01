@@ -34,9 +34,6 @@ class BasicUserProvider(DatasetProvider):
         generateRandom = options.get("random", False)
         dummyValues = options.get("dummyValues", 0)
 
-        if rows is None or rows < 0:
-            rows = DatasetProvider.DEFAULT_ROWS
-
         if partitions is None or partitions < 0:
             partitions = self.autoComputePartitions(rows, self.COLUMN_COUNT + dummyValues)
 
