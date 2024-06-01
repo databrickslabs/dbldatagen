@@ -1,7 +1,7 @@
 from .dataset_provider import DatasetProvider, dataset_definition
 
 
-@dataset_definition(name="multi-table/telephony", summary="Multi-table telephony dataset", supportsStreaming=True,
+@dataset_definition(name="multi_table/telephony", summary="Multi-table telephony dataset", supportsStreaming=True,
                     autoRegister=True, tables=["plans", "customers", "calls", "messages", "data_usage", "billing"])
 class MultiTableTelephonyProvider(DatasetProvider):
     """ Basic User Data Set

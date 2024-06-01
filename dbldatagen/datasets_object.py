@@ -16,13 +16,12 @@ manipulation can be performed before generation of actual data.
 """
 
 from __future__ import annotations  # needed when using dataclasses in Python 3.8 with subscripts
+
 import re
 
 from dbldatagen.datasets.dataset_provider import DatasetProvider
 from .spark_singleton import SparkSingleton
 from .utils import strip_margins
-from dataclasses import dataclass
-from typing import Optional
 
 
 class Datasets:
@@ -143,43 +142,67 @@ class Datasets:
         self._providerDefinition = None
 
         # build navigator for datasets
+        self._datasetsVersion = DatasetProvider.registeredDatasetsVersion
+        self._navigator = None
 
     def getNavigator(self):
+        latestVersion = DatasetProvider.registeredDatasetsVersion
+        if self._datasetsVersion != latestVersion or not self._navigator:
+            # create a navigator object to support x.y.z notation
+            root = self.NavigatorNode(self)
 
+            providersMap = DatasetProvider.getRegisteredDatasets()
 
-    def _get(self, *, providerName, tableName, rowsRequested, partitionsRequested, **kwargs):
+            for providerName, providerDefn in providersMap.items():
+                tables = providerDefn.providerClass.getDatasetTables()
+
+                #root.addEntry(self, providerName, None)
+
+                for table in tables:
+                    root.addEntry(self, providerName, table)
+            self._navigator = root
+            self._datasetsVersion = latestVersion
+
+        return self._navigator
+
+    def _getProviderDefinition(self, providerName, supportsStreaming=False):
         assert providerName is not None and len(providerName), "Dataset provider name must be supplied"
 
         providers = self.getProviderDefinitions(name=providerName, supportsStreaming=self._streamingRequired)
         if not providers:
             raise ValueError(f"Dataset provider for '{providerName}' could not be found")
 
-        self._providerDefinition = providers[0]
+        providerDefn = providers[0]
 
-        if self._streamingRequired:
-            if not self._providerDefinition.supportsStreaming:
+        if supportsStreaming:
+            if not providerDefn.supportsStreaming:
                 raise ValueError(f"Dataset '{providerName}' does not support streaming")
 
-        assert datasetProvider is not None and DatasetProvider.isValidDataProviderType(datasetProvider), \
-            "Expecting valid dataset provider"
+        return providerDefn
+
+    def _get(self, *, providerName, tableName, rows=-1, partitions=-1, **kwargs):
+        providerDefinition = self._getProviderDefinition(providerName, supportsStreaming=self._streamingRequired)
 
         if tableName is None:
-            table = self._providerDefinition.primaryTable
-            assert table is not None, "Primary table not defined"
+            tableName = providerDefinition.primaryTable
+            assert tableName is not None, "Primary table not defined"
 
-        assert tableName and len(tableName.strip() > 0), "Expecting valid table name"
+        providerClass = providerDefinition.providerClass
 
-        if datasetProvider is None or not DatasetProvider.isValidDataProviderType(datasetProvider):
+        if providerClass is None or not DatasetProvider.isValidDataProviderType(providerClass):
             raise ValueError(f"Dataset provider could not be found for name {self._name}")
 
-        providerInstance = datasetProvider()
+        providerInstance = providerClass()
 
-        tableDefn = providerInstance.getTable(self._sparkSession, tableName=tableName, rows=rowsRequested,
-                                              partitions=partitionsRequested,
+        if rows is None or rows < 0:
+            rows = DatasetProvider.DEFAULT_ROWS
+
+        tableDefn = providerInstance.getTable(self._sparkSession, tableName=tableName, rows=rows,
+                                              partitions=partitions,
                                               **kwargs)
         return tableDefn
 
-    def get(self, table=None, rows=None, partitions=-1, **kwargs):
+    def get(self, table=None, rows=-1, partitions=-1, **kwargs):
         """Get a table from the dataset
         If the dataset supports multiple tables, the table may be specified in the `table` parameter.
         If none is specified, the primary table is used.
@@ -200,45 +223,26 @@ class Datasets:
         100,000 rows while a 'sales' table may have 1,000,000 rows.
         """
 
-        if self._providerDefinition is None:
-            self._locateProvider(self._name, supportsStreaming=self._streamingRequired)
-
-        provider = self._providerDefinition.providerClass
-        print(f" provider: {provider}")
-
-        return self._get(provider)
+        return self._get(providerName=self._name, tableName=table, rows=rows, partitions=partitions,
+                         **kwargs)
 
     def __getattr__(self, path):
-        # navigator = self.DatasetNavigator(self, self.name, path)
+        assert path is not None, "path should be non-empty"
 
-        # TODO: register paths and providers for registered data sets with the navigator
+        navigator = self.getNavigator()
 
-        # TODO: initiatlize navigator base
-        return None
+        if self._name:
+            navigator = navigator.find(self._name)
 
+            if navigator:
+                navigator = navigator.find(path)
 
-###
-    class TreeNode:
-        """"Tree node class for DatasetNavigator tree"""
+        if not navigator:
+            raise ValueError(f"Could not find registered provider for path: {path}")
 
-        def __init__(self, nodeName, providerClass=None):
-            assert nodeName is not None and len(nodeName.strip()) > 0, "Node name must be specified"
-            self._nodeName = nodeName
-            self._providerClass = providerClass  # provider class for provider
-            self.children = {}  # dictionary of children
+        return navigator
 
-        def __str__(self):
-            return f"Node: {self._nodeName}"
-
-        @property
-        def nodeName(self):
-            return self._nodeName
-
-        @property
-        def providerClass(self):
-            return self._providerClass
-
-    class DatasetNavigator:
+    class NavigatorNode:
         """Dataset Navigator class for navigating datasets
 
         This class is used to navigate datasets and their tables via dotted notation.
@@ -257,118 +261,79 @@ class Datasets:
 
         """
 
-        def __init__(self):
-            self._root = Datasets.TreeNode(None)
-            self._currentPosition = self._root
+        def __init__(self, datasets, providerName=None, tableName=None, location=None):
+            """ Initialization for node
 
-        def __getattr__(self, pathSegment):
-            """ Get the attribute """
-            current = self._root
-            segments = pathSegment.split('/')
-            for segment in segments:
-                if segment in current.children:
-                    current = current.children[segment]
-                else:
-                    return None
-            return current
+            :param datasets: instance of datasets object
+            :param providerName: provider name for node
+            :param tableName: table name for node
+            :param location: location for node - used in error reporting
+            """
+            self._datasets = datasets
+            self._children = None
+            self._providerName = providerName
+            self._tableName = tableName
+            self._location = location  # expected to be a list of the attributes used to navigate to the node
 
-        def __call__(self, path):
-            segments = path.split('.')
-            if len(segments) < 2:
-                return None
-            obj = self.__getattr__('.'.join(segments[:-1]))
-            if obj is not None:
-                return obj.getTable(segments[-1])
-            return None
+        def __repr__(self):
+            return f"Node: (datasets: {self._datasets}, provider: {self._providerName}, loc: {self._location} )"
 
-        def insertProvider(self, path):
-            current = self._root
-            segments = path.split('/')
-            for segment in segments:
-                if segment not in current.children:
-                    current.children[segment] = Datasets.TreeNode(segment)
-                current = current.children[segment]
+        def _addEntry(self, datasets, steps, providerName, tableName):
 
-
-####
-
-    @dataclass
-    class DatasetNavigator:
-        """Dataset Navigator class for navigating datasets
-
-        This class is used to navigate datasets and their tables via dotted notation.
-
-        Ie X.dataset_grouping.dataset.table where X is an intance of the dataset navigator.
-
-        The navigator is initialized with a set of paths and objects (usually providers) that are registered with the
-        DatasetProvider class.
-
-        When accessed via dotted notation, the navigator will use the pathSegment to locate the provider and create it.
-
-        Any remaining pathSegment traversed will be used to locate the table within the provider.
-
-        Overall, this just provides a syntactic layering over the creation of the provider instance
-        and table generation.
-
-        """
-        children: Optional[dict[str, 'DatasetNavigator']] = None
-        providerName: Optional[str] = None
-        tableName: Optional[str] = None
-        location: Optional[list[str]] = None
-
-        def _addEntry(self, steps, providerName, tableName):
             results = self
             if steps is None or len(steps) == 0:
-                self.tableName = tableName
-                self.providerName = providerName
+                self._tableName = tableName
+                self._providerName = providerName
             else:
-                new_location = self.location + [steps[0]] if self.location is not None else [steps[0]]
-                if self.children is None:  # no children exist
-                    self.children = {steps[0]: Node(location=new_location)._addEntry(steps[1:], providerName, tableName)}
-                elif steps[0] in self.children:  # step is in the child dictionary
-                    self.children[steps[0]]._addEntry(steps[1:], providerName, tableName)
+                new_location = self._location + [steps[0]] if self._location is not None else [steps[0]]
+                if self._children is None:  # no children exist
+                    newNode = datasets.NavigatorNode(datasets, location=new_location)
+                    self._children = {steps[0]: newNode._addEntry(datasets, steps[1:], providerName, tableName)}
+                elif steps[0] in self._children:  # step is in the child dictionary
+                    self._children[steps[0]]._addEntry(datasets, steps[1:], providerName, tableName)
                 else:  # step is not in the child dictionary
-                    self.children[steps[0]] = Node(location=new_location)._addEntry(steps[1:], providerName, tableName)
+                    newNode = datasets.NavigatorNode(datasets, location=new_location)
+                    self._children[steps[0]] = newNode._addEntry(datasets, steps[1:], providerName, tableName)
 
             return results
 
-        def addEntry(self, provider_name, table_name):
-            provider_steps = [x.strip() for x in provider_name.split("/") if x is not None and len(x) > 0]
+        def addEntry(self, datasets, providerName, tableName):
+            provider_steps = [x.strip() for x in providerName.split("/") if x is not None and len(x) > 0]
 
-            self._addEntry(provider_steps, provider_name, table_name)
+            self._addEntry(datasets, provider_steps, providerName, tableName)
 
-            if table_name is not None:
-                provider_steps.append(table_name)
-                self._addEntry(provider_steps, provider_name, table_name)
+            # add an entry allowing navigation of the form `Datasets("basic").user()` with addition of table name
+            if tableName is not None:
+                provider_steps.append(tableName)
+                self._addEntry(datasets, provider_steps, providerName, tableName)
 
-        def find(self, step):
-            if self.children is not None and step in self.children:
-                return self.children[step]
-            return None
+        def find(self, attributePath):
+            provider_steps = [x.strip() for x in attributePath.split("/") if x is not None and len(x) > 0]
+
+            node = self
+            for step in provider_steps:
+                if node._children is not None and step in node._children:
+                    node = node._children[step]
+                else:
+                    node = None
+            return node
 
         def isFinal(self):
-            return self.providerName is not None
+            return self._providerName is not None
 
         def __getattr__(self, path):
             node = self.find(path)
 
             if node is None:
-                location_path = ".".join(self.location) + "." + path
+                location_path = ".".join(self._location) + "." + path
                 raise ValueError(f"Provider / table not found {path} in sequence `{location_path}`")
             return node
 
-        def __call__(self, **kwargs):
-            print(self.providerName, kwargs)
-            return self.isFinal()
+        def __call__(self, *args, **kwargs):
+            if not self.isFinal():
+                raise ValueError(f"Cant resolve provider / table name for sequence {self._location}")
 
-
-#root = DatasetNavigator()
-
-#for (provider, tables) in examples:
-#    for tableName in tables:
-#        root.addEntry(provider, tableName)
-#    root.addEntry(provider, None)
-
-# import pprint
-# pprint.pprint(root, indent=4)
-#print(root.basic.user(rows=4))
+            if self._tableName is not None:
+                return self._datasets._get(*args, providerName=self._providerName, tableName=self._tableName, **kwargs)
+            else:
+                return self._datasets._get(*args, providerName=self._providerName, **kwargs)

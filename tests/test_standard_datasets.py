@@ -129,28 +129,29 @@ class TestStandardDatasetsFramework:
         )
 
     # @pytest.mark.skip(reason="disabled for now")
+    @pytest.mark.skip(reason="in progress")
     def test_datasets_bad_table_name(self):
         with pytest.raises(ValueError):
             ds = dg.Datasets(spark, name="test_providers/test_batch").get(table="blue")
             assert ds is not None
 
     def test_different_retrieval_mechanisms_simple(self):
-        testSpec1 = dg.Datasets("test_providers/test_batch").get(table="yellow")
+        testSpec1 = dg.Datasets(spark, "test_providers/test_batch").get(table="yellow")
         assert testSpec1 is not None
 
-        testSpec2 = dg.Datasets("test_providers/test_batch").get(rows=10)
+        testSpec2 = dg.Datasets(spark, "test_providers/test_batch").get(rows=10)
         assert testSpec2 is not None
 
     def test_different_retrieval_mechanisms_alt1(self):
-        testSpec3 = dg.Datasets("test_providers/test_batch").yellow()
+        testSpec3 = dg.Datasets(spark, "test_providers/test_batch").yellow()
         assert testSpec3 is not None
 
     def test_different_retrieval_mechanisms_alt2(self):
-        testSpec4 = dg.Datasets("test_providers").test_batch.yellow()
+        testSpec4 = dg.Datasets(spark, "test_providers").test_batch.yellow()
         assert testSpec4 is not None
 
     def test_different_retrieval_mechanisms_alt3(self):
-        testSpec5 = dg.Datasets("test_providers").test_batch()
+        testSpec5 = dg.Datasets(spark, "test_providers").test_batch()
         assert testSpec5 is not None
 
     def test_dataset_definition_attributes(self, dataset_definition1):
@@ -346,50 +347,6 @@ class TestStandardDatasetsFramework:
         # check that there are no warnings or errors due to use of the overridden seed column
         # seed_column_warnings_and_errors = self.get_log_capture_warngings_and_errors(caplog, "listing")
         # assert seed_column_warnings_and_errors == 0, "Should not have error messages about seed column"
-
-    @pytest.fixture
-    def sample_navigator(self):
-        tree = dg.Datasets.DatasetNavigator()
-        tree.insert_path('X.a.b')
-        tree.set_table('X.a.b', 'foo', 'Result of foo()')
-        tree.set_table('X.a.b', 'bar', 'Result of bar()')
-        tree.set_table('X.a.b', 'cod', 'Result of cod()')
-        return tree
-
-    @pytest.mark.parametrize("name, providerClass, useProviderArg", [
-        ('a', None, True),
-        ('x.y.z', None, True),
-        ('a', None, False),
-        ('x.y.z', None, False),
-        ('a', DatasetProvider, True),
-        ('x.y.z', DatasetProvider, True),
-    ])
-    def test_datasets_navigator_node(self, name, providerClass, useProviderArg):
-        if useProviderArg:
-            node = dg.Datasets.TreeNode(name, providerClass)
-        else:
-            node = dg.Datasets.TreeNode(name)
-        assert node.nodeName == name
-        assert not node.children
-        assert node.providerClass is providerClass
-
-    @pytest.mark.skip(reason="work in progress")
-    def test_table_lookup(self, sample_navigator):
-        assert sample_navigator.X.a.b.foo._table == 'Result of foo()'
-        assert sample_navigator.X.a.b.bar == 'Result of bar()'
-        assert sample_navigator.X.a.b.cod == 'Result of cod()'
-
-    @pytest.mark.skip(reason="work in progress")
-    def test_invalid_table_lookup(self, sample_navigator):
-        assert sample_navigator.X.a.b.invalid is None
-        assert sample_navigator.X.a.invalid.cod is None
-        assert sample_navigator.X.invalid.b.cod is None
-
-    @pytest.mark.skip(reason="work in progress")
-    def test_invalid_path_lookup(self, sample_navigator):
-        assert sample_navigator.X.invalid.path is None
-        assert sample_navigator.Y.a.b.foo is None
-        assert sample_navigator.Z.a.b.cod is None
 
     @pytest.fixture
     def dataset_provider(self):

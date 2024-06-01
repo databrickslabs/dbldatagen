@@ -40,12 +40,12 @@ class DatasetProvider(ABC):
     DEFAULT_ROWS = 100_000
     DEFAULT_PARTITIONS = 4
 
-    # the associated decorator will populate this with an instance of the `DatasetDefinition` class
+    # Note: the associated decorator will populate this with an instance of the `DatasetDefinition` class
     _DATASET_DEFINITION = None
 
     # the registered datasets will map from dataset names to a tuple of the dataset definition and the class
     # the implementation for dataset listing and describe will be driven by this
-    _registeredDatasets = {}
+    _registeredDatasetsMetadata = {}
 
     # _registeredDatasetsVersion will contain a computed version number which is updated on new dataset
     # registration or when dataset provider is unregistered
@@ -126,10 +126,10 @@ class DatasetProvider(ABC):
         assert issubclass(datasetDefinition.providerClass, cls), \
             "datasetClass must be a subclass of DatasetProvider"
 
-        if datasetDefinition.name in cls._registeredDatasets:
+        if datasetDefinition.name in cls._registeredDatasetsMetadata:
             raise ValueError(f"Dataset provider is already registered for name `{datasetDefinition.name}`")
 
-        cls._registeredDatasets[datasetDefinition.name] = datasetDefinition
+        cls._registeredDatasetsMetadata[datasetDefinition.name] = datasetDefinition
         cls.registeredDatasetsVersion = cls.registeredDatasetsVersion + 1
 
     @classmethod
@@ -141,17 +141,17 @@ class DatasetProvider(ABC):
         assert name is not None and len(name.strip()) > 0, "name must be provided and not empty"
 
         # remove name from registered datasets if its already registered
-        if name in cls._registeredDatasets:
-            del cls._registeredDatasets[name]
+        if name in cls._registeredDatasetsMetadata:
+            del cls._registeredDatasetsMetadata[name]
             cls.registeredDatasetsVersion = cls.registeredDatasetsVersion + 1
 
     @classmethod
     def getRegisteredDatasets(cls):
         """
-        Get the registered datasets
-        :return:  A dictionary of registered datasets
+        Get the registered dataset definitions
+        :return:  A dictionary of registered datasets metadata objects
         """
-        return cls._registeredDatasets
+        return cls._registeredDatasetsMetadata
 
     @classmethod
     def getRegisteredDatasetsVersion(cls):
@@ -201,7 +201,6 @@ class DatasetProvider(ABC):
                     errorMessage = f"""The following options are unsupported by provider: [{",".join(bad_options)}]"""
                     raise ValueError(errorMessage)
 
-                print(f"wrapped function {options} {kwargs}")
                 return func(*args, **kwargs)
 
             return wrapper
