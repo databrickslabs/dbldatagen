@@ -1,7 +1,7 @@
 from .dataset_provider import DatasetProvider, dataset_definition
 
 
-@dataset_definition(name="basic/user", summary="Basic User Data Set", autoRegister=True)
+@dataset_definition(name="basic/user", summary="Basic User Data Set", autoRegister=True, supportsStreaming=True)
 class BasicUserProvider(DatasetProvider):
     """
     Basic User Data Set
@@ -11,7 +11,7 @@ class BasicUserProvider(DatasetProvider):
 
     It takes the following optins when retrieving the table:
         - random: if True, generates random data
-        - dummyValues: number of dummy value columns to generate (to widen row size if necessary)
+        - dummyValues: number of additional dummy value columns to generate (to widen row size if necessary)
         - rows : number of rows to generate. Default is 100000
         - partitions: number of partitions to use. If -1, it will be computed based on the number of rows
         -
@@ -19,19 +19,17 @@ class BasicUserProvider(DatasetProvider):
     As the data specification is a DataGenerator object, you can add further columns to the data set and
     add constraints (when the feature is available)
 
-    Need to document options
+    Note that this datset does not use any features that would prevent it from being used as a source for a
+    streaming dataframe, and so the flag `supportsStreaming` is set to True.
 
     """
     MAX_LONG = 9223372036854775807
-    ALLOWED_OPTIONS = ["random", "dummyValues", "rows", "partitions", "tableName"]
     COLUMN_COUNT = 5
 
-    def getTable(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
-                 **options):
+    @DatasetProvider.allowed_options(options=["random", "dummyValues"])
+    def getTableDataGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
+                              **options):
         import dbldatagen as dg
-
-        for key, value in options.items():
-            assert key in self.ALLOWED_OPTIONS, f"Invalid option {key}"
 
         generateRandom = options.get("random", False)
         dummyValues = options.get("dummyValues", 0)

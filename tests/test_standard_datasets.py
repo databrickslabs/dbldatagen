@@ -11,12 +11,6 @@ spark = dg.SparkSingleton.getLocalInstance("unit tests")
 __MISSING__ = "MISSING_PARAM"
 
 
-@pytest.fixture(scope="class")
-def setupLogging():
-    FORMAT = '%(asctime)-15s %(message)s'
-    logging.basicConfig(format=FORMAT)
-
-
 @pytest.fixture
 def mkTableSpec():
     dataspec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
@@ -55,8 +49,8 @@ class TestStandardDatasetsFramework:
             cls.lastRowsRequested = rows
             cls.lastPartitionsRequested = partitions
 
-        def getTable(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
-                     **options):
+        def getTableDataGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
+                                  **options):
             ds = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
                                    seedMethod='hash_fieldname')
                   .withColumn("code1", "int", min=100, max=200)
@@ -73,8 +67,8 @@ class TestStandardDatasetsFramework:
         def __init__(self):
             pass
 
-        def getTable(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
-                     **options):
+        def getTableDataGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
+                                  **options):
             ds = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
                                    seedMethod='hash_fieldname')
                   .withColumn("code1", "int", min=100, max=200)
@@ -135,6 +129,12 @@ class TestStandardDatasetsFramework:
             ds = dg.Datasets(spark, name="test_providers/test_batch").get(table="blue")
             assert ds is not None
 
+    def test_datasets_bad_decorator_usage(self):
+        with pytest.raises(TypeError):
+            @dataset_definition(name="test_providers/badly_applied_decorator", summary="Bad Usage", autoRegister=True)
+            def by_two(x):
+                return x * 2
+
     def test_different_retrieval_mechanisms_simple(self):
         testSpec1 = dg.Datasets(spark, "test_providers/test_batch").get(table="yellow")
         assert testSpec1 is not None
@@ -170,8 +170,9 @@ class TestStandardDatasetsFramework:
         @dataset_definition
         class X1(DatasetProvider):
 
-            def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=4, autoSizePartitions=False,
-                         **options):
+            def getTableDataGenerator(self, sparkSession, *, tableName=None, rows=1000000, partitions=4,
+                                      autoSizePartitions=False,
+                                      **options):
                 return mkTableSpec
 
         ds_definition = X1.getDatasetDefinition()
@@ -183,10 +184,13 @@ class TestStandardDatasetsFramework:
         assert ds_definition.description is not None
         assert ds_definition.supportsStreaming is False
 
+        assert X1.getDatasetTables() is not None, "should have default table set"
+
         @dataset_definition(name="test/test", tables=["main"])
         class Y1(DatasetProvider):
-            def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=4, autoSizePartitions=False,
-                         **options):
+            def getTableDataGenerator(self, sparkSession, *, tableName=None, rows=1000000, partitions=4,
+                                      autoSizePartitions=False,
+                                      **options):
                 return mkTableSpec
 
         ds_definition = Y1.getDatasetDefinition()
@@ -196,12 +200,14 @@ class TestStandardDatasetsFramework:
         assert ds_definition.summary is not None
         assert ds_definition.description is not None
         assert ds_definition.supportsStreaming is False
+        assert Y1.getDatasetTables() is not None, "should have default table set"
 
     def test_decorators1a(self, mkTableSpec):
         @dataset_definition(name="test/test", tables=["main1"])
         class Y1a(DatasetProvider):
-            def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=4, autoSizePartitions=False,
-                         **options):
+            def getTableDataGenerator(self, sparkSession, *, tableName=None, rows=1000000, partitions=4,
+                                      autoSizePartitions=False,
+                                      **options):
                 return mkTableSpec
 
         ds_definition = Y1a.getDatasetDefinition()
@@ -223,9 +229,9 @@ class TestStandardDatasetsFramework:
     def test_decorators1b(self, mkTableSpec):
         @dataset_definition(description="a test description")
         class X1b(DatasetProvider):
-            def getTable(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
-                         description="a test description",
-                         **options):
+            def getTableDataGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
+                                      description="a test description",
+                                      **options):
                 return mkTableSpec
 
         ds_definition = X1b.getDatasetDefinition()
@@ -239,18 +245,26 @@ class TestStandardDatasetsFramework:
 
         print("description\n", ds_definition.description)
 
+        registeredDatasetsVersion = DatasetProvider.registeredDatasetsVersion
+
         DatasetProvider.registerDataset(X1b)
         assert X1b.getDatasetDefinition().name in DatasetProvider.getRegisteredDatasets()
+
+        registeredDatasetsVersion2 = DatasetProvider.registeredDatasetsVersion
+        assert registeredDatasetsVersion2 != registeredDatasetsVersion
 
         DatasetProvider.unregisterDataset(X1b.getDatasetDefinition().name)
         assert X1b.getDatasetDefinition().name not in DatasetProvider.getRegisteredDatasets()
 
+        registeredDatasetsVersion3 = DatasetProvider.registeredDatasetsVersion
+        assert registeredDatasetsVersion3 != registeredDatasetsVersion2
+
     def test_bad_registration(self, mkTableSpec):
         @dataset_definition(description="a test description")
         class X1b(DatasetProvider):
-            def getTable(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
-                         description="a test description",
-                         **options):
+            def getTableDataGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
+                                      description="a test description",
+                                      **options):
                 return mkTableSpec
 
         with pytest.raises(ValueError):
@@ -337,29 +351,23 @@ class TestStandardDatasetsFramework:
         assert providerMetadata.summary in captured, "Should have found provider summary in output"
 
     def test_describe_basic_usr(self):
-        # caplog fixture captures log content
-        # self.setup_log_capture(caplog)
-
         print("listing datasets")
         dg.Datasets.describe("basic/user")
         print("done listing datasets")
 
-        # check that there are no warnings or errors due to use of the overridden seed column
-        # seed_column_warnings_and_errors = self.get_log_capture_warngings_and_errors(caplog, "listing")
-        # assert seed_column_warnings_and_errors == 0, "Should not have error messages about seed column"
-
     @pytest.fixture
     def dataset_provider(self):
         class MyDatasetProvider(DatasetProvider):
-            def getTable(self, sparkSession, *, tableName=None, rows=1000000, partitions=4, autoSizePartitions=False,
-                         **options):
+            def getTableDataGenerator(self, sparkSession, *, tableName=None, rows=1000000, partitions=4,
+                                      autoSizePartitions=False,
+                                      **options):
                 return mkTableSpec
 
         return MyDatasetProvider()
 
     def test_get_table_raises_type_error(self, dataset_provider):
         with pytest.raises(TypeError):
-            DatasetProvider().getTable(sparkSession=None)  # pylint: disable=abstract-class-instantiated
+            DatasetProvider().getTableDataGenerator(sparkSession=None)  # pylint: disable=abstract-class-instantiated
 
     def test_check_options_valid_options(self, dataset_provider):
         options = {"option1": "value1", "option2": "value2"}

@@ -197,9 +197,9 @@ class Datasets:
         if rows is None or rows < 0:
             rows = DatasetProvider.DEFAULT_ROWS
 
-        tableDefn = providerInstance.getTable(self._sparkSession, tableName=tableName, rows=rows,
-                                              partitions=partitions,
-                                              **kwargs)
+        tableDefn = providerInstance.getTableDataGenerator(self._sparkSession, tableName=tableName, rows=rows,
+                                                           partitions=partitions,
+                                                           **kwargs)
         return tableDefn
 
     def get(self, table=None, rows=-1, partitions=-1, **kwargs):

@@ -7,10 +7,10 @@ This file defines the DatasetProvider class
 """
 from __future__ import annotations  # needed when using dataclasses in Python 3.8 with type of `list[str]`
 
+import functools
 import math
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-import functools
 
 
 class DatasetProvider(ABC):
@@ -19,9 +19,20 @@ class DatasetProvider(ABC):
 
     Implementors should override name,summary, description etc using the `dataset_definition` decorator.
     Subclasses should not require the constructor to take any arguments - arguments for the dataset should be
-    passed to the getTable method.
+    passed to the getTableDataGenerator method.
 
-    If no table name is specified, it defaults to a table name of `primary`
+    If no table name is specified, it defaults to a table name corresponding to the `DEFAULT_TABLE_NAME` constant.
+
+    Dataset providers that produce multiple tables or need to explicitly name the table should list which tables are
+    provided and what the primary table to be retrieved would be if no table name is specified.
+
+    The intent of the `supportsStreaming` flag is mark a dataset as being streaming compatible. It does not require
+    specific streaming support - only to note that the dataset provider does not have any operations that would
+    be disallowed or very inefficient for a streaming dataframe.
+
+    Examples of operations that might prevent a dataframe from being used in streaming include:
+    - use of some types of windowing expressions
+    - use of drop duplicates (not disallowed but can only be applied efficiently at the streaming microbatch level)
 
     Note that the DatasetDecoratorUtils inner class will be used as a decorator to subclasses of this and
     will overwrite the constants _DATASET_NAME, _DATASET_TABLES, _DATASET_DESCRIPTION, _DATASET_SUMMARY and
@@ -162,9 +173,9 @@ class DatasetProvider(ABC):
         return cls._registeredDatasetsVersion
 
     @abstractmethod
-    def getTable(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
-                 **options):
-        """Gets table for named table
+    def getTableDataGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
+                              **options):
+        """Gets data generation instance that will produce table for named table
 
         :param sparkSession: Spark session to use
         :param tableName: Name of table to provide
@@ -172,11 +183,15 @@ class DatasetProvider(ABC):
         :param partitions: Number of partitions requested
         :param autoSizePartitions: Whether to automatically size the partitions from the number of rows
         :param options: Options passed to generate the table
-        :return: DataGenerator for table if successful, throws error otherwise
+        :return: DataGenerator instance to generate table if successful, throws error otherwise
 
         Implementors of the individual data providers are responsible for sizing partitions for the datasets based
-        on the number of rows and columns. The number of partitions should be computed based on the number of rows
+        on the number of rows and columns. The number of partitions can be computed based on the number of rows
         and columns using the `autoComputePartitions` method.
+
+        The Datasets object that serves as the entru point to the standard datasets will provide a default number of
+        rows if none are provided.
+
         """
         raise NotImplementedError("Base data provider does not provide any tables!")
 
@@ -185,17 +200,16 @@ class DatasetProvider(ABC):
         """ Decorator to enforce allowed options
 
             Used to document and enforce what options are allowed for each dataset provider implementation
-            If the signature of the getTable method changes, change the DEFAULT_OPTIONS constant to include options
-            that are always allowed
+            If the signature of the getTableDataGenerator method changes, change the DEFAULT_OPTIONS constant
+            to include options that are always allowed
         """
-
         DEFAULT_OPTIONS = ["sparkSession", "tableName", "rows", "partitions"]
 
         def decorator(func):
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
-                bad_options = [ keyword_arg for keyword_arg in kwargs.value
-                                if keyword_arg not in DEFAULT_OPTIONS and keyword_arg not in options]
+                bad_options = [keyword_arg for keyword_arg in kwargs
+                               if keyword_arg not in DEFAULT_OPTIONS and keyword_arg not in options]
 
                 if len(bad_options) > 0:
                     errorMessage = f"""The following options are unsupported by provider: [{",".join(bad_options)}]"""
@@ -204,6 +218,7 @@ class DatasetProvider(ABC):
                 return func(*args, **kwargs)
 
             return wrapper
+
         return decorator
 
     def checkOptions(self, options, allowedOptions):
