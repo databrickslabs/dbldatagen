@@ -4,7 +4,7 @@ import pytest
 from pyspark.sql.types import IntegerType
 
 import dbldatagen as dg
-from dbldatagen.datasets import DatasetProvider, dataset_definition
+from dbldatagen.datasets import DatasetProvider
 
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
@@ -67,4 +67,3 @@ class TestStandardDatasetProviders:
             leadingRows = df.limit(100).collect()
             customer_ids = [r.customer_id for r in leadingRows]
             assert customer_ids != sorted(customer_ids)
-
