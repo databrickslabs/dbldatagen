@@ -42,6 +42,9 @@ class DatasetProvider(ABC):
     (at least to be discoverable and creatable via the Datasets object). This is done by calling the
     `registerDataset` method with the dataset definition and the class object.
 
+    The Dataset provider is responsible for determining what the default number of rows should be when the
+    caller passes None or -1 as the default parameter.
+
     Registration can be done manually or automatically by setting the `autoRegister` flag in the decorator to True.
 
     By default, all DatasetProvider classes should support batch usage. If a dataset provider supports streaming usage,

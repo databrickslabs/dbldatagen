@@ -194,9 +194,6 @@ class Datasets:
 
         providerInstance = providerClass()
 
-        if rows is None or rows < 0:
-            rows = DatasetProvider.DEFAULT_ROWS
-
         tableDefn = providerInstance.getTableDataGenerator(self._sparkSession, tableName=tableName, rows=rows,
                                                            partitions=partitions,
                                                            **kwargs)

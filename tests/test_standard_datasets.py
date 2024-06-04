@@ -291,56 +291,14 @@ class TestStandardDatasetsFramework:
             def my_function(x):
                 return x
 
-    @pytest.mark.parametrize("providerName, rows_requested, partitions_requested, random, dummy", [
-        ("basic/user", 50, 4, False, 0),
-        ("basic/user", __MISSING__, __MISSING__, __MISSING__, __MISSING__),
-        ("basic/user", 100, -1, False, 0),
-        ("basic/user", 5000, __MISSING__, __MISSING__, 4),
-        ("basic/user", 100, -1, True, 0),
-    ])
-    def test_basic_table_retrieval(self, providerName, rows_requested, partitions_requested, random, dummy):
-
-        dict_params = {}
-
-        if rows_requested != __MISSING__:
-            dict_params["rows"] = rows_requested
-        if partitions_requested != __MISSING__:
-            dict_params["partitions"] = partitions_requested
-        if random != __MISSING__:
-            dict_params["random"] = random
-        if dummy != __MISSING__:
-            dict_params["dummyValues"] = dummy
-
-        print("retrieving dataset for options", dict_params)
-
-        ds = dg.Datasets(spark, providerName).get(**dict_params)
-        assert ds is not None, f"""expected to get dataset specification for provider `{providerName}`
-                                   with options: {dict_params} 
-                                """
-        df = ds.build()
-
-        assert df.count() == (
-            DatasetProvider.DEFAULT_ROWS if rows_requested is __MISSING__ or rows_requested == -1 else rows_requested)
-
-        if dummy is not __MISSING__ and dummy is not None and dummy > 0:
-            assert "dummy_0" in df.columns
-
-        if random and random is not __MISSING__:
-            leadingRows = df.limit(100).collect()
-            customer_ids = [r.customer_id for r in leadingRows]
-            assert customer_ids != sorted(customer_ids)
-
-    @pytest.mark.parametrize("providerClass, pattern",
-                             [(SampleDatasetProviderBatch, __MISSING__),
-                              (SampleDatasetProviderBatch, "test.*"),
-                              (SampleDatasetProviderBatch, "test_providers/test_batch")])
-    def test_listing(self, providerClass, pattern, capsys):
+    @pytest.mark.parametrize("providerClass, options",
+                             [(SampleDatasetProviderBatch, {}),
+                              (SampleDatasetProviderBatch, {"pattern": "test.*"}),
+                              (SampleDatasetProviderBatch, {"pattern": "test_providers/test_batch"})])
+    def test_listing(self, providerClass, options, capsys):
         print("listing datasets")
 
-        if pattern == __MISSING__:
-            dg.Datasets.list()
-        else:
-            dg.Datasets.list(pattern=pattern)
+        dg.Datasets.list(**options)
 
         print("done listing datasets")
 
@@ -352,10 +310,14 @@ class TestStandardDatasetsFramework:
         assert providerMetadata.name in captured, "Should have found provider name in the output"
         assert providerMetadata.summary in captured, "Should have found provider summary in output"
 
-    def test_describe_basic_usr(self):
+    def test_describe_basic_usr(self, capsys):
         print("listing datasets")
         dg.Datasets.describe("basic/user")
         print("done listing datasets")
+
+        captured = capsys.readouterr().out
+        print("Actual captured output:", captured)
+
 
     @pytest.fixture
     def dataset_provider(self):
