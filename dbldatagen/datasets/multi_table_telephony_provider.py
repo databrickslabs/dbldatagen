@@ -325,5 +325,3 @@ class MultiTableTelephonyProvider(DatasetProvider):
             """)
 
             return df_invoices
-        else:
-            raise ValueError(f"Unknown table or dataset `{tableName}`!")

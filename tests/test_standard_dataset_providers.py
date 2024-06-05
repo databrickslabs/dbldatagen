@@ -38,8 +38,12 @@ class TestStandardDatasetProviders:
         ("multi_table/telephony", {"rows": 5000, "dummyValues": 4}),
         ("multi_table/telephony", {"rows": 100, "partitions": -1, "random": True}),
         ("multi_table/telephony", {"table": 'plans', "numPlans": 100}),
+        ("multi_table/telephony", {"table": 'plans'}),
         ("multi_table/telephony", {"table": 'customers', "numPlans": 100, "numCustomers": 1000}),
+        ("multi_table/telephony", {"table": 'customers'}),
         ("multi_table/telephony", {"table": 'deviceEvents', "numPlans": 100, "numCustomers": 1000}),
+        ("multi_table/telephony", {"table": 'deviceEvents'),
+        ("multi_table/telephony", {"table": 'deviceEvents', "numDays": 10}),
     ])
     def test_multi_table_retrieval(self, providerName, providerOptions):
         ds = dg.Datasets(spark, providerName).get(**providerOptions)
