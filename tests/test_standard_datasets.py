@@ -102,6 +102,16 @@ class TestStandardDatasetsFramework:
             ds = dg.Datasets(spark, name="test_providers/test_batch").get(table="blue")
             assert ds is not None
 
+    def test_datasets_unsupported_streaming(self):
+        with pytest.raises(ValueError):
+            ds = dg.Datasets(spark, name="test_providers/test_batch", streaming=True).get()
+            assert ds is not None
+
+    def test_datasets_unsupported_provider(self):
+        with pytest.raises(ValueError):
+            ds = dg.Datasets(spark, name="test_providers/unknown_provider").get()
+            assert ds is not None
+
     def test_datasets_bad_option(self):
         with pytest.raises(ValueError):
             ds = dg.Datasets(spark, name="test_providers/test_batch").get(badOption=True)

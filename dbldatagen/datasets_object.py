@@ -166,27 +166,23 @@ class Datasets:
 
         return self._navigator
 
-    def _getProviderDefinition(self, providerName, supportsStreaming=False):
+    def _getProviderInstanceAndMetadata(self, providerName, supportsStreaming):
         assert providerName is not None and len(providerName), "Dataset provider name must be supplied"
 
-        providers = self.getProviderDefinitions(name=providerName, supportsStreaming=self._streamingRequired)
+        providers = self.getProviderDefinitions(name=providerName, supportsStreaming=supportsStreaming)
         if not providers:
             raise ValueError(f"Dataset provider for '{providerName}' could not be found")
 
-        providerDefn = providers[0]
+        providerDefinition = providers[0]
 
         if supportsStreaming:
-            if not providerDefn.supportsStreaming:
+            if not providerDefinition.supportsStreaming:
                 raise ValueError(f"Dataset '{providerName}' does not support streaming")
 
-        return providerDefn
-
-    def _getProviderInstanceAndMetadata(self, providerName, supportsStreaming):
-        providerDefinition = self._getProviderDefinition(providerName, supportsStreaming=supportsStreaming)
         providerClass = providerDefinition.providerClass
 
-        if providerClass is None or not DatasetProvider.isValidDataProviderType(providerClass):
-            raise ValueError(f"Dataset provider could not be found for name {self._name}")
+        assert providerClass is not None and DatasetProvider.isValidDataProviderType(providerClass), \
+            f"Dataset provider incorrectly configured for name {self._name}"
 
         providerInstance = providerClass()
 
