@@ -273,6 +273,10 @@ class Datasets:
         Additionally, for multi-table datasets, the table name must be one of the tables supported by the provider.
         Default number of rows for multi-table datasets may differ - for example a 'customers' table may have a
         100,000 rows while a 'sales' table may have 1,000,000 rows.
+
+        .. note ::
+
+           This method may also be invoked via the aliased names - `getSupportingDataset` and `getCombinedDataset`
         """
 
         return self._getSupportingTable(providerName=self._name, tableName=table, rows=rows, partitions=partitions,
@@ -280,10 +284,10 @@ class Datasets:
 
     # aliases
 
-    """Alias for `getAssociatedDataset`"""
+    # Alias for `getAssociatedDataset`
     getSupportingDataset = getAssociatedDataset
 
-    """Alias for `getAssociatedDataset`"""
+    # Alias for `getAssociatedDataset`
     getCombinedDataset = getAssociatedDataset
 
     def __getattr__(self, path):

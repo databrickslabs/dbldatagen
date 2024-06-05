@@ -144,7 +144,7 @@ class MultiTableTelephonyProvider(DatasetProvider):
         elif tableName == "customers":
             return self.getCustomers(sparkSession, rows=rows, partitions=partitions, numCustomers=numCustomers,
                                      generateRandom=generateRandom, numPlans=numPlans, dummyValues=dummyValues)
-        elif tableName =="events":
+        elif tableName == "events":
             pass
         elif tableName == "invoices":
             pass

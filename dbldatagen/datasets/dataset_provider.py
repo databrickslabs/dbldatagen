@@ -277,6 +277,14 @@ class DatasetProvider(ABC):
         """
         return max(self.DEFAULT_PARTITIONS, int(math.log(rows / 350_000) * max(1, math.log(columns))))
 
+    class NoAssociatedDatasetsMixin:
+        """ Use this mixin to provide default implementation for data provider when it does not provide
+            any associated datasets
+        """
+        def getAssociatedDataset(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
+                                 **options):
+            raise NotImplementedError("Data provider does not produce any associated datasets!")
+
     class DatasetDecoratorUtils:
         """ Defines the predefined_dataset decorator
 
@@ -288,7 +296,6 @@ class DatasetProvider(ABC):
             :param description: Detailed description of the class. If None, will use the target class doc string
             :param associatedDatasets: list of associated datasets produced by the dataset provider
             :param supportsStreaming: Whether data set can be used in streaming scenarios
-
 
         """
 
@@ -309,6 +316,10 @@ class DatasetProvider(ABC):
             # compute the summary if not provided
             self._summary = summary if summary is not None else f"Dataset implemented by '{str(cls)}'"
 
+            self._supportsStreaming = supportsStreaming
+
+            self._associatedDatasets = associatedDatasets if associatedDatasets is not None else []
+
             # compute the description if not provided
             # the default description will be the decorator target class's doc string
             if description is not None:
@@ -322,14 +333,16 @@ class DatasetProvider(ABC):
                     "",  # empty line
                     f"Summary: {self._summary}"
                     "",  # empty line
-                    f"Tables provided: {', '.join(self._tables)}",
+                    f"Tables generators provided: {', '.join(self._tables)}",
                     "",  # empty line
                     f"Primary table: {self._primaryTable}",
                     ""  # empty line
+                    f"Associated datasets provided: {', '.join(self._associatedDatasets)}",
+                    "",  # empty line
+                    f"Supports Streaming: {self._supportsStreaming}",
+                    "",  # empty line
                 ]
                 self._description = "\n".join(generated_description)
-
-            self._supportsStreaming = supportsStreaming
 
         def mkClass(self, autoRegister=False):
             """ make the modified class for the Data Provider
@@ -348,7 +361,8 @@ class DatasetProvider(ABC):
                                                                  summary=self._summary,
                                                                  description=self._description,
                                                                  supportsStreaming=self._supportsStreaming,
-                                                                 providerClass=self._targetCls
+                                                                 providerClass=self._targetCls,
+                                                                 associatedDatasets=self._associatedDatasets
                                                                  )
                 setattr(self._targetCls, "_DATASET_DEFINITION", dataset_desc)
                 retval = self._targetCls

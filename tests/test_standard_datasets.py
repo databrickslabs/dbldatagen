@@ -26,7 +26,7 @@ class TestStandardDatasetsFramework:
     # the listing and describe methods etc.
     @dataset_definition(name="test_providers/test_batch", summary="Test Data Set1", autoRegister=True,
                         tables=["green", "yellow", "red"], supportsStreaming=False)
-    class SampleDatasetProviderBatch(DatasetProvider):
+    class SampleDatasetProviderBatch(DatasetProvider.NoAssociatedDatasetsMixin, DatasetProvider):
         def __init__(self):
             pass
 
@@ -119,7 +119,8 @@ class TestStandardDatasetsFramework:
             summary="Summary of the test dataset",
             description="Description of the test dataset",
             supportsStreaming=True,
-            providerClass=DatasetProvider
+            providerClass=DatasetProvider,
+            associatedDatasets=None
         )
 
     # @pytest.mark.skip(reason="disabled for now")
@@ -162,17 +163,16 @@ class TestStandardDatasetsFramework:
         assert dataset_definition1.description == "Description of the test dataset"
         assert dataset_definition1.supportsStreaming is True
         assert dataset_definition1.providerClass == DatasetProvider
+        assert not dataset_definition1.associatedDatasets
 
     def test_decorators1(self, mkTableSpec):
         import sys
         print("sys.versioninfo", sys.version_info)
 
         @dataset_definition
-        class X1(DatasetProvider):
+        class X1(DatasetProvider.NoAssociatedDatasetsMixin, DatasetProvider):
 
-            def getTableGenerator(self, sparkSession, *, tableName=None, rows=1000000, partitions=4,
-                                  autoSizePartitions=False,
-                                  **options):
+            def getTableGenerator(self, sparkSession, *, tableName=None, rows=1000000, partitions=4, **options):
                 return mkTableSpec
 
         ds_definition = X1.getDatasetDefinition()
@@ -187,10 +187,8 @@ class TestStandardDatasetsFramework:
         assert X1.getDatasetTables() is not None, "should have default table set"
 
         @dataset_definition(name="test/test", tables=["main"])
-        class Y1(DatasetProvider):
-            def getTableGenerator(self, sparkSession, *, tableName=None, rows=1000000, partitions=4,
-                                  autoSizePartitions=False,
-                                  **options):
+        class Y1(DatasetProvider.NoAssociatedDatasetsMixin, DatasetProvider):
+            def getTableGenerator(self, sparkSession, *, tableName=None, rows=1000000, partitions=4, **options):
                 return mkTableSpec
 
         ds_definition = Y1.getDatasetDefinition()
@@ -318,10 +316,9 @@ class TestStandardDatasetsFramework:
         captured = capsys.readouterr().out
         print("Actual captured output:", captured)
 
-
     @pytest.fixture
     def dataset_provider(self):
-        class MyDatasetProvider(DatasetProvider):
+        class MyDatasetProvider(DatasetProvider.NoAssociatedDatasetsMixin, DatasetProvider):
             def getTableGenerator(self, sparkSession, *, tableName=None, rows=1000000, partitions=4,
                                   autoSizePartitions=False,
                                   **options):

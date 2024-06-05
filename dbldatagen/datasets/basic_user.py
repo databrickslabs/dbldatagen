@@ -2,7 +2,7 @@ from .dataset_provider import DatasetProvider, dataset_definition
 
 
 @dataset_definition(name="basic/user", summary="Basic User Data Set", autoRegister=True, supportsStreaming=True)
-class BasicUserProvider(DatasetProvider):
+class BasicUserProvider(DatasetProvider.NoAssociatedDatasetsMixin, DatasetProvider):
     """
     Basic User Data Set
     ===================
@@ -62,7 +62,3 @@ class BasicUserProvider(DatasetProvider):
                                          minValue=1, maxValue=self.MAX_LONG)
 
         return df_spec
-
-    def getAssociatedDataset(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
-                             **options):
-        raise NotImplementedError("Base/user data provider does not produce any supporting tables!")
