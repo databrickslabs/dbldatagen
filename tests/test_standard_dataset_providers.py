@@ -42,7 +42,7 @@ class TestStandardDatasetProviders:
         ("multi_table/telephony", {"table": 'customers', "numPlans": 100, "numCustomers": 1000}),
         ("multi_table/telephony", {"table": 'customers'}),
         ("multi_table/telephony", {"table": 'deviceEvents', "numPlans": 100, "numCustomers": 1000}),
-        ("multi_table/telephony", {"table": 'deviceEvents'),
+        ("multi_table/telephony", {"table": 'deviceEvents'}),
         ("multi_table/telephony", {"table": 'deviceEvents', "numDays": 10}),
     ])
     def test_multi_table_retrieval(self, providerName, providerOptions):
