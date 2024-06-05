@@ -188,9 +188,6 @@ class Datasets:
         if providerClass is None or not DatasetProvider.isValidDataProviderType(providerClass):
             raise ValueError(f"Dataset provider could not be found for name {self._name}")
 
-        if providerClass is None or not DatasetProvider.isValidDataProviderType(providerClass):
-            raise ValueError(f"Dataset provider could not be found for name {self._name}")
-
         providerInstance = providerClass()
 
         return providerInstance, providerDefinition

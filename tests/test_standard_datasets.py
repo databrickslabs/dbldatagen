@@ -1,6 +1,3 @@
-import logging
-from abc import ABC
-
 import pytest
 from pyspark.sql.types import IntegerType
 
@@ -65,7 +62,7 @@ class TestStandardDatasetsFramework:
                   )
             if dummyValues > 0:
                 ds = ds.withColumn("dummy", "long", random=True, numColumns=dummyValues,
-                                             minValue=1, maxValue=self.MAX_LONG)
+                                   minValue=1, maxValue=self.MAX_LONG)
 
             return ds
 
@@ -277,7 +274,10 @@ class TestStandardDatasetsFramework:
     @pytest.mark.parametrize("providerClass, options",
                              [(SampleDatasetProviderBatch, {}),
                               (SampleDatasetProviderBatch, {"pattern": "test.*"}),
-                              (SampleDatasetProviderBatch, {"pattern": "test_providers/test_batch"})])
+                              (SampleDatasetProviderBatch, {"pattern": "test_providers/test_batch"}),
+                              (SampleDatasetProviderBatch, {"supportsStreaming": False}),
+                              (SampleDatasetProviderStreaming, {"supportsStreaming": True})
+                              ])
     def test_listing(self, providerClass, options, capsys):
         print("listing datasets")
 
