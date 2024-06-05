@@ -146,7 +146,7 @@ class Datasets:
         self._datasetsVersion = DatasetProvider.getRegisteredDatasetsVersion()
         self._navigator = None
 
-    def getNavigator(self):
+    def _getNavigator(self):
         latestVersion = DatasetProvider.getRegisteredDatasetsVersion()
         if self._datasetsVersion != latestVersion or not self._navigator:
             # create a navigator object to support x.y.z notation
@@ -171,13 +171,9 @@ class Datasets:
 
         providers = self.getProviderDefinitions(name=providerName, supportsStreaming=supportsStreaming)
         if not providers:
-            raise ValueError(f"Dataset provider for '{providerName}' could not be found")
+            raise ValueError(f"Dataset provider for '{providerName}' could not be found matching criteria")
 
         providerDefinition = providers[0]
-
-        if supportsStreaming:
-            if not providerDefinition.supportsStreaming:
-                raise ValueError(f"Dataset '{providerName}' does not support streaming")
 
         providerClass = providerDefinition.providerClass
 
@@ -238,8 +234,7 @@ class Datasets:
         providerInstance, providerDefinition = \
             self._getProviderInstanceAndMetadata(providerName, supportsStreaming=self._streamingRequired)
 
-        if tableName is None:
-            raise ValueError("Name of associated dataset must be provided")
+        assert tableName is not None and len(tableName.strip()) > 0, "Data set name must be provided"
 
         if tableName not in providerDefinition.associatedDatasets:
             raise ValueError(f"Dataset `{tableName}` not a recognized dataset option")
@@ -249,7 +244,7 @@ class Datasets:
                                                                   **kwargs)
         return dfSupportingTable
 
-    def getAssociatedDataset(self, table=None, rows=-1, partitions=-1, **kwargs):
+    def getAssociatedDataset(self, *, table, rows=-1, partitions=-1, **kwargs):
         """Get a table generator from the dataset provider
 
         These are DataGenerator instances that can be used to generate the data.
@@ -278,7 +273,6 @@ class Datasets:
 
            This method may also be invoked via the aliased names - `getSupportingDataset` and `getCombinedDataset`
         """
-
         return self._getSupportingTable(providerName=self._name, tableName=table, rows=rows, partitions=partitions,
                                         **kwargs)
 
@@ -295,16 +289,19 @@ class Datasets:
     def __getattr__(self, path):
         assert path is not None, "path should be non-empty"
 
-        navigator = self.getNavigator()
+        navigator = self._getNavigator()
 
         if self._name:
             navigator = navigator.find(self._name)
+            error_path = f"{self._name}/{path}"
+        else:
+            error_path = path
 
-            if navigator:
-                navigator = navigator.find(path)
+        if navigator:
+            navigator = navigator.find(path)
 
         if not navigator:
-            raise ValueError(f"Could not find registered provider for path: {path}")
+            raise ValueError(f"Could not find registered provider for path: {error_path}")
 
         return navigator
 

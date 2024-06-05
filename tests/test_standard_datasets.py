@@ -68,7 +68,7 @@ class TestStandardDatasetsFramework:
 
     @dataset_definition(name="test_providers/test_streaming", summary="Test Data Set2", autoRegister=True,
                         supportsStreaming=True)
-    class SampleDatasetProviderStreaming(DatasetProvider):
+    class SampleDatasetProviderStreaming(DatasetProvider.NoAssociatedDatasetsMixin, DatasetProvider):
         def __init__(self):
             pass
 
@@ -127,6 +127,26 @@ class TestStandardDatasetsFramework:
             @dataset_definition(name="test_providers/badly_applied_decorator", summary="Bad Usage", autoRegister=True)
             def by_two(x):
                 return x * 2
+
+    def test_datasets_bad_navigator_usage1(self):
+        with pytest.raises(ValueError):
+            ds = dg.Datasets(spark, name="test_providers").unknown()
+            assert ds is not None
+
+    def test_datasets_bad_navigator_usage2(self):
+        with pytest.raises(ValueError):
+            ds = dg.Datasets(spark, name="test_providers").test_batch.unknown()
+            assert ds is not None
+
+    def test_datasets_bad_navigator_usage3(self):
+        with pytest.raises(ValueError):
+            ds = dg.Datasets(spark, name="test_providers/test_batch").unknown()
+            assert ds is not None
+
+    def test_datasets_bad_navigator_usage4(self):
+        with pytest.raises(ValueError):
+            ds = dg.Datasets(spark).test_providers.test_batch.unknown()
+            assert ds is not None
 
     def test_different_retrieval_mechanisms_simple(self):
         testSpec1 = dg.Datasets(spark, "test_providers/test_batch").get(table="yellow")
@@ -194,7 +214,7 @@ class TestStandardDatasetsFramework:
 
     def test_decorators1a(self, mkTableSpec):
         @dataset_definition(name="test/test", tables=["main1"])
-        class Y1a(DatasetProvider):
+        class Y1a(DatasetProvider.NoAssociatedDatasetsMixin, DatasetProvider):
             def getTableGenerator(self, sparkSession, *, tableName=None, rows=1000000, partitions=4,
                                   autoSizePartitions=False,
                                   **options):
@@ -220,7 +240,7 @@ class TestStandardDatasetsFramework:
 
     def test_decorators1b(self, mkTableSpec):
         @dataset_definition(description="a test description")
-        class X1b(DatasetProvider):
+        class X1b(DatasetProvider.NoAssociatedDatasetsMixin, DatasetProvider):
             def getTableGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
                                   description="a test description",
                                   **options):
