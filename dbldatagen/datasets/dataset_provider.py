@@ -19,7 +19,7 @@ class DatasetProvider(ABC):
 
     Implementors should override name,summary, description etc using the `dataset_definition` decorator.
     Subclasses should not require the constructor to take any arguments - arguments for the dataset should be
-    passed to the getTableDataGenerator method.
+    passed to the getTableGenerator method.
 
     If no table name is specified, it defaults to a table name corresponding to the `DEFAULT_TABLE_NAME` constant.
 
@@ -73,6 +73,9 @@ class DatasetProvider(ABC):
         This stores the name of the dataset (e.g. `basic/user`), the list of tables provided by the dataset,
         the primary table, a summary of the dataset, a detailed description of the dataset, whether the dataset
         supports streaming, and the provider class.
+
+        It also allows specification of supporting tables which are tables computed from existing dataframes
+        that can be provided by the dataset provider
         """
         name: str
         tables: list[str]
@@ -81,6 +84,7 @@ class DatasetProvider(ABC):
         description: str
         supportsStreaming: bool
         providerClass: type
+        associatedDatasets: list[str]
 
     @classmethod
     def isValidDataProviderType(cls, candidateDataProvider):
@@ -176,8 +180,8 @@ class DatasetProvider(ABC):
         return cls._registeredDatasetsVersion
 
     @abstractmethod
-    def getTableDataGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
-                              **options):
+    def getTableGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
+                          **options):
         """Gets data generation instance that will produce table for named table
 
         :param sparkSession: Spark session to use
@@ -192,18 +196,38 @@ class DatasetProvider(ABC):
         on the number of rows and columns. The number of partitions can be computed based on the number of rows
         and columns using the `autoComputePartitions` method.
 
-        The Datasets object that serves as the entru point to the standard datasets will provide a default number of
-        rows if none are provided.
+        """
+        raise NotImplementedError("Base data provider does not provide any table generation specifications!")
+
+    @abstractmethod
+    def getAssociatedDataset(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
+                             **options):
+        """
+        Gets associated datasets that are used in conjunction with the provider datasets.
+        These may be associated lookup tables, tables that execute benchmarks or exercise key features as part of
+        their use
+
+        :param sparkSession: Spark session to use
+        :param tableName: Name of table to provide
+        :param rows: Number of rows requested
+        :param partitions: Number of partitions requested
+        :param autoSizePartitions: Whether to automatically size the partitions from the number of rows
+        :param options: Options passed to generate the table
+        :return: DataGenerator instance to generate table if successful, throws error otherwise
+
+        Implementors of the individual data providers are responsible for sizing partitions for the datasets based
+        on the number of rows and columns. The number of partitions can be computed based on the number of rows
+        and columns using the `autoComputePartitions` method.
 
         """
-        raise NotImplementedError("Base data provider does not provide any tables!")
+        raise NotImplementedError("Base data provider does not produce any supporting tables!")
 
     @staticmethod
     def allowed_options(options=None):
         """ Decorator to enforce allowed options
 
             Used to document and enforce what options are allowed for each dataset provider implementation
-            If the signature of the getTableDataGenerator method changes, change the DEFAULT_OPTIONS constant
+            If the signature of the getTableGenerator method changes, change the DEFAULT_OPTIONS constant
             to include options that are always allowed
         """
         DEFAULT_OPTIONS = ["sparkSession", "tableName", "rows", "partitions"]
@@ -258,15 +282,18 @@ class DatasetProvider(ABC):
 
             :param cls: target class to apply decorator to
             :param name: name of the dataset
-            :param tables: list of tables provided by the dataset, if None, will default to [ DEFAULT_TABLE_NAME ]
+            :param tables: list of tables produced by the dataset provider, if None, defaults to [ DEFAULT_TABLE_NAME ]
             :param primaryTable: primary table provided by dataset. Defaults to first table of table list
             :param summary: Summary information for the dataset. If None, will be derived from target class name
             :param description: Detailed description of the class. If None, will use the target class doc string
+            :param associatedDatasets: list of associated datasets produced by the dataset provider
             :param supportsStreaming: Whether data set can be used in streaming scenarios
+
+
         """
 
         def __init__(self, cls=None, *, name=None, tables=None, primaryTable=None, summary=None, description=None,
-                     supportsStreaming=False):
+                     associatedDatasets=None, supportsStreaming=False):
             self._targetCls = cls
 
             # compute the data set provider name if not provided.

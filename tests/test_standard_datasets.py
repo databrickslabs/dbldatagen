@@ -49,8 +49,8 @@ class TestStandardDatasetsFramework:
             cls.lastRowsRequested = rows
             cls.lastPartitionsRequested = partitions
 
-        def getTableDataGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
-                                  **options):
+        def getTableGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
+                              **options):
             ds = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
                                    seedMethod='hash_fieldname')
                   .withColumn("code1", "int", min=100, max=200)
@@ -67,8 +67,8 @@ class TestStandardDatasetsFramework:
         def __init__(self):
             pass
 
-        def getTableDataGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
-                                  **options):
+        def getTableGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
+                              **options):
             ds = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
                                    seedMethod='hash_fieldname')
                   .withColumn("code1", "int", min=100, max=200)
@@ -170,9 +170,9 @@ class TestStandardDatasetsFramework:
         @dataset_definition
         class X1(DatasetProvider):
 
-            def getTableDataGenerator(self, sparkSession, *, tableName=None, rows=1000000, partitions=4,
-                                      autoSizePartitions=False,
-                                      **options):
+            def getTableGenerator(self, sparkSession, *, tableName=None, rows=1000000, partitions=4,
+                                  autoSizePartitions=False,
+                                  **options):
                 return mkTableSpec
 
         ds_definition = X1.getDatasetDefinition()
@@ -188,9 +188,9 @@ class TestStandardDatasetsFramework:
 
         @dataset_definition(name="test/test", tables=["main"])
         class Y1(DatasetProvider):
-            def getTableDataGenerator(self, sparkSession, *, tableName=None, rows=1000000, partitions=4,
-                                      autoSizePartitions=False,
-                                      **options):
+            def getTableGenerator(self, sparkSession, *, tableName=None, rows=1000000, partitions=4,
+                                  autoSizePartitions=False,
+                                  **options):
                 return mkTableSpec
 
         ds_definition = Y1.getDatasetDefinition()
@@ -205,9 +205,9 @@ class TestStandardDatasetsFramework:
     def test_decorators1a(self, mkTableSpec):
         @dataset_definition(name="test/test", tables=["main1"])
         class Y1a(DatasetProvider):
-            def getTableDataGenerator(self, sparkSession, *, tableName=None, rows=1000000, partitions=4,
-                                      autoSizePartitions=False,
-                                      **options):
+            def getTableGenerator(self, sparkSession, *, tableName=None, rows=1000000, partitions=4,
+                                  autoSizePartitions=False,
+                                  **options):
                 return mkTableSpec
 
         ds_definition = Y1a.getDatasetDefinition()
@@ -231,9 +231,9 @@ class TestStandardDatasetsFramework:
     def test_decorators1b(self, mkTableSpec):
         @dataset_definition(description="a test description")
         class X1b(DatasetProvider):
-            def getTableDataGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
-                                      description="a test description",
-                                      **options):
+            def getTableGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
+                                  description="a test description",
+                                  **options):
                 return mkTableSpec
 
         ds_definition = X1b.getDatasetDefinition()
@@ -264,9 +264,9 @@ class TestStandardDatasetsFramework:
     def test_bad_registration(self, mkTableSpec):
         @dataset_definition(description="a test description")
         class X1b(DatasetProvider):
-            def getTableDataGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
-                                      description="a test description",
-                                      **options):
+            def getTableGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
+                                  description="a test description",
+                                  **options):
                 return mkTableSpec
 
         with pytest.raises(ValueError):
@@ -322,16 +322,16 @@ class TestStandardDatasetsFramework:
     @pytest.fixture
     def dataset_provider(self):
         class MyDatasetProvider(DatasetProvider):
-            def getTableDataGenerator(self, sparkSession, *, tableName=None, rows=1000000, partitions=4,
-                                      autoSizePartitions=False,
-                                      **options):
+            def getTableGenerator(self, sparkSession, *, tableName=None, rows=1000000, partitions=4,
+                                  autoSizePartitions=False,
+                                  **options):
                 return mkTableSpec
 
         return MyDatasetProvider()
 
     def test_get_table_raises_type_error(self, dataset_provider):
         with pytest.raises(TypeError):
-            DatasetProvider().getTableDataGenerator(sparkSession=None)  # pylint: disable=abstract-class-instantiated
+            DatasetProvider().getTableGenerator(sparkSession=None)  # pylint: disable=abstract-class-instantiated
 
     def test_check_options_valid_options(self, dataset_provider):
         options = {"option1": "value1", "option2": "value2"}

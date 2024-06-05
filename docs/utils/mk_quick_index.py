@@ -337,6 +337,5 @@ def main(dirToSearch, outputPath):
         processDirectory(outputFile, Path(f"{PROJECT_PATH}/distributions"), subpackage="distributions")
 
 
-
 if __name__ == '__main__':
     main(sys.argv[1], sys.argv[2])

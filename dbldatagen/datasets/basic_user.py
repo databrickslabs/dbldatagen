@@ -27,8 +27,8 @@ class BasicUserProvider(DatasetProvider):
     COLUMN_COUNT = 5
 
     @DatasetProvider.allowed_options(options=["random", "dummyValues"])
-    def getTableDataGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
-                              **options):
+    def getTableGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
+                          **options):
         import dbldatagen as dg
 
         generateRandom = options.get("random", False)
@@ -62,3 +62,7 @@ class BasicUserProvider(DatasetProvider):
                                          minValue=1, maxValue=self.MAX_LONG)
 
         return df_spec
+
+    def getAssociatedDataset(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
+                             **options):
+        raise NotImplementedError("Base/user data provider does not produce any supporting tables!")

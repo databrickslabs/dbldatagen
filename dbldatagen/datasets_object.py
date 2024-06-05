@@ -156,7 +156,7 @@ class Datasets:
             for providerName, providerDefn in providersMap.items():
                 tables = providerDefn.providerClass.getDatasetTables()
 
-                #root.addEntry(self, providerName, None)
+                # root.addEntry(self, providerName, None)
 
                 for table in tables:
                     root.addEntry(self, providerName, table)
@@ -180,27 +180,41 @@ class Datasets:
 
         return providerDefn
 
-    def _get(self, *, providerName, tableName, rows=-1, partitions=-1, **kwargs):
-        providerDefinition = self._getProviderDefinition(providerName, supportsStreaming=self._streamingRequired)
-
-        if tableName is None:
-            tableName = providerDefinition.primaryTable
-            assert tableName is not None, "Primary table not defined"
-
+    def _getProviderInstanceAndMetadata(self, providerName, supportsStreaming):
+        providerDefinition = self._getProviderDefinition(providerName, supportsStreaming=supportsStreaming)
         providerClass = providerDefinition.providerClass
+
+        if providerClass is None or not DatasetProvider.isValidDataProviderType(providerClass):
+            raise ValueError(f"Dataset provider could not be found for name {self._name}")
 
         if providerClass is None or not DatasetProvider.isValidDataProviderType(providerClass):
             raise ValueError(f"Dataset provider could not be found for name {self._name}")
 
         providerInstance = providerClass()
 
-        tableDefn = providerInstance.getTableDataGenerator(self._sparkSession, tableName=tableName, rows=rows,
-                                                           partitions=partitions,
-                                                           **kwargs)
+        return providerInstance, providerDefinition
+
+    def _get(self, *, providerName, tableName, rows=-1, partitions=-1, **kwargs):
+
+        providerInstance, providerDefinition = \
+            self._getProviderInstanceAndMetadata(providerName, supportsStreaming=self._streamingRequired)
+
+        if tableName is None:
+            tableName = providerDefinition.primaryTable
+            assert tableName is not None, "Primary table not defined"
+
+        tableDefn = providerInstance.getTableGenerator(self._sparkSession, tableName=tableName, rows=rows,
+                                                       partitions=partitions,
+                                                       **kwargs)
         return tableDefn
 
     def get(self, table=None, rows=-1, partitions=-1, **kwargs):
-        """Get a table from the dataset
+        """Get a table generator from the dataset provider
+
+        These are DataGenerator instances that can be used to generate the data.
+        The dataset providers also optionally can provide supporting tables which are computed tables based on
+        parameters. These are retrieved using the `getAssociatedDataset` method
+
         If the dataset supports multiple tables, the table may be specified in the `table` parameter.
         If none is specified, the primary table is used.
 
@@ -222,6 +236,55 @@ class Datasets:
 
         return self._get(providerName=self._name, tableName=table, rows=rows, partitions=partitions,
                          **kwargs)
+
+    def _getSupportingTable(self, *, providerName, tableName, rows=-1, partitions=-1, **kwargs):
+        providerInstance, providerDefinition = \
+            self._getProviderInstanceAndMetadata(providerName, supportsStreaming=self._streamingRequired)
+
+        if tableName is None:
+            raise ValueError("Name of supporting table must be provided")
+
+        dfSupportingTable = providerInstance.getAssociatedDataset(self._sparkSession, tableName=tableName, rows=rows,
+                                                                  partitions=partitions,
+                                                                  **kwargs)
+        return dfSupportingTable
+
+    def getAssociatedDataset(self, table=None, rows=-1, partitions=-1, **kwargs):
+        """Get a table generator from the dataset provider
+
+        These are DataGenerator instances that can be used to generate the data.
+        The dataset providers also optionally can provide supporting tables which are computed tables based on
+        parameters. These are retrieved using the `getAssociatedDataset` method
+
+        If the dataset supports multiple tables, the table may be specified in the `table` parameter.
+        If none is specified, the primary table is used.
+
+        :param table: name of table to retrieve
+        :param rows: number of rows to generate. if -1, provider should compute defaults.
+        :param partitions: number of partitions to use.If -1, the number of partitions is computed automatically
+        table size and partitioning.If applied to a dataset with only a single table, this is ignored.
+        :param kwargs: additional keyword arguments to pass to the provider
+
+        If `rows` or `partitions` are not specified, default values are supplied by the provider.
+
+        For multi-table datasets, the table name must be specified. For single table datasets, the table name may
+        be optionally supplied.
+
+        Additionally, for multi-table datasets, the table name must be one of the tables supported by the provider.
+        Default number of rows for multi-table datasets may differ - for example a 'customers' table may have a
+        100,000 rows while a 'sales' table may have 1,000,000 rows.
+        """
+
+        return self._getSupportingTable(providerName=self._name, tableName=table, rows=rows, partitions=partitions,
+                                        **kwargs)
+
+    # aliases
+
+    """Alias for `getAssociatedDataset`"""
+    getSupportingDataset = getAssociatedDataset
+
+    """Alias for `getAssociatedDataset`"""
+    getCombinedDataset = getAssociatedDataset
 
     def __getattr__(self, path):
         assert path is not None, "path should be non-empty"

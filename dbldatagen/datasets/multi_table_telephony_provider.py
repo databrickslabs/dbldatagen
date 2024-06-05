@@ -2,7 +2,8 @@ from .dataset_provider import DatasetProvider, dataset_definition
 
 
 @dataset_definition(name="multi_table/telephony", summary="Multi-table telephony dataset", supportsStreaming=True,
-                    autoRegister=True, tables=["plans", "customers", "calls", "messages", "data_usage", "billing"])
+                    autoRegister=True,
+                    tables=["plans", "customers", "calls", "messages", "data_usage", "billing"])
 class MultiTableTelephonyProvider(DatasetProvider):
     """ Telephony multi-table example from documentation
 
@@ -81,7 +82,7 @@ class MultiTableTelephonyProvider(DatasetProvider):
         )
         return plan_dataspec
 
-    def getCustomers(self, sparkSession, *, rows, partitions, generateRandom, numCustomers, numPlans,dummyValues):
+    def getCustomers(self, sparkSession, *, rows, partitions, generateRandom, numCustomers, numPlans, dummyValues):
         import dbldatagen as dg
 
         if numCustomers is None or numCustomers < 0:
@@ -123,7 +124,7 @@ class MultiTableTelephonyProvider(DatasetProvider):
         return customer_dataspec
 
     @DatasetProvider.allowed_options(options=["random", "numPlans", "numCustomers", "dummyValues"])
-    def getTableDataGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1, **options):
+    def getTableGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1, **options):
 
         if rows is None or rows < 0:
             rows = 100000
@@ -143,3 +144,11 @@ class MultiTableTelephonyProvider(DatasetProvider):
         elif tableName == "customers":
             return self.getCustomers(sparkSession, rows=rows, partitions=partitions, numCustomers=numCustomers,
                                      generateRandom=generateRandom, numPlans=numPlans, dummyValues=dummyValues)
+        elif tableName =="events":
+            pass
+        elif tableName == "invoices":
+            pass
+
+    def getAssociatedDataset(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
+                             **options):
+        raise NotImplementedError("Base/user data provider does not produce any supporting tables!")
