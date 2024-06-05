@@ -50,16 +50,23 @@ class TestStandardDatasetsFramework:
             cls.lastRowsRequested = rows
             cls.lastPartitionsRequested = partitions
 
+        @DatasetProvider.allowed_options(options=["random", "dummyValues"])
         def getTableGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
                               **options):
-            ds = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
-                                   seedMethod='hash_fieldname')
+            generateRandom = options.get("random", True)
+            dummyValues = options.get("dummyValues", 0)
+
+            ds = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, seedMethod='hash_fieldname')
                   .withColumn("code1", "int", min=100, max=200)
                   .withColumn("code2", "int", min=0, max=10)
                   .withColumn("code3", "string", values=['a', 'b', 'c'])
-                  .withColumn("code4", "string", values=['a', 'b', 'c'], random=True)
+                  .withColumn("code4", "string", values=['a', 'b', 'c'], random=generateRandom)
                   .withColumn("code5", "string", values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
                   )
+            if dummyValues > 0:
+                ds = ds.withColumn("dummy", "long", random=True, numColumns=dummyValues,
+                                             minValue=1, maxValue=self.MAX_LONG)
+
             return ds
 
     @dataset_definition(name="test_providers/test_streaming", summary="Test Data Set2", autoRegister=True,
@@ -80,37 +87,6 @@ class TestStandardDatasetsFramework:
                   )
             return ds
 
-    def setup_log_capture(self, caplog_object):
-        """ set up log capture fixture
-
-        Sets up log capture fixture to only capture messages after setup and only
-        capture warnings and errors
-
-        """
-        caplog_object.set_level(logging.WARNING)
-
-        # clear messages from setup
-        caplog_object.clear()
-
-    def get_log_capture_warnings_and_errors(self, caplog_object, searchText=None):
-        """
-        gets count of errors containing specified text
-
-        :param caplog_object: log capture object from fixture
-        :param searchText: text to search for to include error or warning in count
-        :return: count of errors containg text specified in `textFlag`
-        """
-        seed_column_warnings_and_errors = 0
-        for r in caplog_object.records:
-            if (r.levelname in ["WARNING", "ERROR"]) and (searchText is None) or (searchText in r.message):
-                seed_column_warnings_and_errors += 1
-
-        return seed_column_warnings_and_errors
-
-    @pytest.fixture
-    def getPrintOutput(self, capsys):
-        return capsys.readouterr().out
-
     @pytest.fixture
     def dataset_definition1(self):
         return DatasetProvider.DatasetDefinition(
@@ -124,11 +100,19 @@ class TestStandardDatasetsFramework:
             associatedDatasets=None
         )
 
-    # @pytest.mark.skip(reason="disabled for now")
-    @pytest.mark.skip(reason="in progress")
     def test_datasets_bad_table_name(self):
         with pytest.raises(ValueError):
             ds = dg.Datasets(spark, name="test_providers/test_batch").get(table="blue")
+            assert ds is not None
+
+    def test_datasets_bad_option(self):
+        with pytest.raises(ValueError):
+            ds = dg.Datasets(spark, name="test_providers/test_batch").get(badOption=True)
+            assert ds is not None
+
+    def test_datasets_bad_associated_dataset_name(self):
+        with pytest.raises(ValueError):
+            ds = dg.Datasets(spark, name="test_providers/test_batch").getAssociatedDataset(table="blue")
             assert ds is not None
 
     def test_datasets_bad_decorator_usage(self):
@@ -246,18 +230,18 @@ class TestStandardDatasetsFramework:
 
         print("description\n", ds_definition.description)
 
-        registeredDatasetsVersion = DatasetProvider.registeredDatasetsVersion
+        registeredDatasetsVersion = DatasetProvider.getRegisteredDatasetsVersion()
 
         DatasetProvider.registerDataset(X1b)
         assert X1b.getDatasetDefinition().name in DatasetProvider.getRegisteredDatasets()
 
-        registeredDatasetsVersion2 = DatasetProvider.registeredDatasetsVersion
+        registeredDatasetsVersion2 = DatasetProvider.getRegisteredDatasetsVersion()
         assert registeredDatasetsVersion2 != registeredDatasetsVersion
 
         DatasetProvider.unregisterDataset(X1b.getDatasetDefinition().name)
         assert X1b.getDatasetDefinition().name not in DatasetProvider.getRegisteredDatasets()
 
-        registeredDatasetsVersion3 = DatasetProvider.registeredDatasetsVersion
+        registeredDatasetsVersion3 = DatasetProvider.getRegisteredDatasetsVersion()
         assert registeredDatasetsVersion3 != registeredDatasetsVersion2
 
     def test_bad_registration(self, mkTableSpec):

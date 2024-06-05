@@ -63,7 +63,7 @@ class DatasetProvider(ABC):
 
     # _registeredDatasetsVersion will contain a computed version number which is updated on new dataset
     # registration or when dataset provider is unregistered
-    registeredDatasetsVersion = 0
+    _registeredDatasetsVersion = 0
 
     @dataclass
     class DatasetDefinition:
@@ -148,7 +148,7 @@ class DatasetProvider(ABC):
             raise ValueError(f"Dataset provider is already registered for name `{datasetDefinition.name}`")
 
         cls._registeredDatasetsMetadata[datasetDefinition.name] = datasetDefinition
-        cls.registeredDatasetsVersion = cls.registeredDatasetsVersion + 1
+        cls._registeredDatasetsVersion = cls._registeredDatasetsVersion + 1
 
     @classmethod
     def unregisterDataset(cls, name):
@@ -161,7 +161,7 @@ class DatasetProvider(ABC):
         # remove name from registered datasets if its already registered
         if name in cls._registeredDatasetsMetadata:
             del cls._registeredDatasetsMetadata[name]
-            cls.registeredDatasetsVersion = cls.registeredDatasetsVersion + 1
+            cls._registeredDatasetsVersion = cls._registeredDatasetsVersion + 1
 
     @classmethod
     def getRegisteredDatasets(cls):

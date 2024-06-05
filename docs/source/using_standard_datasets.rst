@@ -117,13 +117,20 @@ This can be useful for benchmarking of joins.
 
 .. code-block:: python
 
-   import dbldatagen as df
+   import dbldatagen as dg
+
    multiTableDS = dg.Datasets(spark, "multi_table/telephony")
-   options = { "numPlans": 50, "numCustomers": 100 }
+   options = {"numPlans": 50, "numCustomers": 100}
+
    dfPlans = multiTableDS.get(table="plans", **options).build()
    dfCustomers = multiTableDS.get(table="customers", **options).build()
-   dfDevices = multiTableDS.get(table="devices", **options).build()
-   display(df)
+   dfDeviceEvents = multiTableDS.get(table="deviceEvents", **options).build()
+
+   dfInvoices = multiTableDS.getSummaryDataset(table="invoices",
+                                              plans=dfPlans,
+                                              customers=dfCustomers,
+                                              deviceEvents=dfDeviceEvents)
+   display(dfInvoices)
 
 
 
@@ -138,6 +145,7 @@ To implement a dataset provider, you need to create a class that extends the `Da
 the `getTableGenerator` and `getAssociatedDataset` methods.
 
 The simplest way to declare the needed metadata is to use the `@dataset_provider` decorator.
+Use the option `autoRegister=True` to automatically register the dataset provider with the standard dataset mechanism.
 
 See the `BasicUserProvider` and `MultiTableTelephonyProvider` dataset provider implementations in the datasets
 package for examples.
@@ -148,4 +156,5 @@ package for examples.
    `getAssociatedDataset` methods.
 
    The `get` method is provided by the `Datasets` class and should not be overridden.
+
    All of the aliased methods are mapped automatically to the `getAssociatedDataset` method.

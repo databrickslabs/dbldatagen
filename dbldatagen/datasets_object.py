@@ -115,8 +115,9 @@ class Datasets:
                         | Dataset Name: {providerDef.name}
                         | Summary: {providerDef.summary}
                         | Supports Streaming: {providerDef.supportsStreaming}
-                        | Provides Tables: {providerDef.tables}
+                        | Provides Table Generators: {providerDef.tables}
                         | Primary Table: {providerDef.primaryTable}
+                        | Associated Datasets: {providerDef.associatedDatasets}
                       |"""
 
         print(f"The dataset '{providerDef.name}' is described as follows:")
@@ -142,11 +143,11 @@ class Datasets:
         self._providerDefinition = None
 
         # build navigator for datasets
-        self._datasetsVersion = DatasetProvider.registeredDatasetsVersion
+        self._datasetsVersion = DatasetProvider.getRegisteredDatasetsVersion()
         self._navigator = None
 
     def getNavigator(self):
-        latestVersion = DatasetProvider.registeredDatasetsVersion
+        latestVersion = DatasetProvider.getRegisteredDatasetsVersion()
         if self._datasetsVersion != latestVersion or not self._navigator:
             # create a navigator object to support x.y.z notation
             root = self.NavigatorNode(self)
