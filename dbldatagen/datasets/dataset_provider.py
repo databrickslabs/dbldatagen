@@ -277,7 +277,7 @@ class DatasetProvider(ABC):
         """
         return max(self.DEFAULT_PARTITIONS, int(math.log(rows / 350_000) * max(1, math.log(columns))))
 
-    class NoAssociatedDatasetsMixin:
+    class NoAssociatedDatasetsMixin(ABC):
         """ Use this mixin to provide default implementation for data provider when it does not provide
             any associated datasets
         """

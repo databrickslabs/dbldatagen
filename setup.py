@@ -1,10 +1,10 @@
 """A setuptools based setup module
 """
-import setuptools
 import re
+import setuptools
 
-START_TAG=r"^\s*\<\!--.*exclude\s+package.*--\>\s*$"
-END_TAG=r"^\s*\<\!--.*end\s+exclude\s+package.*--\>\s*$"
+START_TAG = r"^\s*\<\!--.*exclude\s+package.*--\>\s*$"
+END_TAG = r"^\s*\<\!--.*end\s+exclude\s+package.*--\>\s*$"
 
 with open("README.md", "r") as fh:
     # exclude lines from readme that dont apply to publication in package
@@ -18,7 +18,7 @@ with open("README.md", "r") as fh:
             marked = True
         if not marked:
             modified_description_lines.append(line)
-        if  re.match(END_TAG, line):
+        if re.match(END_TAG, line):
             marked = False
 
     long_description = "\n".join(modified_description_lines)
@@ -40,11 +40,12 @@ setuptools.setup(
     project_urls={
         "Databricks Labs": "https://www.databricks.com/learn/labs",
         "Documentation": "https://databrickslabs.github.io/dbldatagen/public_docs/index.html"
-},
+    },
+    # order of package declarations is important so do not re-order
     packages=['dbldatagen',
-              'dbldatagen.constraints'
-              'dbldatagen.datasets',
-              'dbldatagen.distributions'
+              'dbldatagen.distributions',
+              'dbldatagen.constraints',
+              'dbldatagen.datasets'
               ],
     license="Databricks License",
     classifiers=[

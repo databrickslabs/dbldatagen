@@ -17,7 +17,13 @@ PACKAGE_DIR = "../../dbldatagen"
 
 sys.path.insert(0, os.path.abspath(f"{PACKAGE_DIR}"))
 sys.path.insert(0, os.path.abspath(f"{PACKAGE_DIR}/constraints"))
+sys.path.insert(0, os.path.abspath(f"{PACKAGE_DIR}/datasets"))
 sys.path.insert(0, os.path.abspath(f"{PACKAGE_DIR}/distributions"))
+
+from dbldatagen import *
+from dbldatagen.distributions import *
+from dbldatagen.constraints import *
+from dbldatagen.datasets import *
 
 # -- Project information -----------------------------------------------------
 

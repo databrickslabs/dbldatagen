@@ -203,6 +203,9 @@ class Datasets:
             tableName = providerDefinition.primaryTable
             assert tableName is not None, "Primary table not defined"
 
+        if tableName not in providerDefinition.tables:
+            raise ValueError(f"Table `{tableName}` not a recognized table option")
+
         tableDefn = providerInstance.getTableGenerator(self._sparkSession, tableName=tableName, rows=rows,
                                                        partitions=partitions,
                                                        **kwargs)
@@ -242,7 +245,10 @@ class Datasets:
             self._getProviderInstanceAndMetadata(providerName, supportsStreaming=self._streamingRequired)
 
         if tableName is None:
-            raise ValueError("Name of supporting table must be provided")
+            raise ValueError("Name of associated dataset must be provided")
+
+        if tableName not in providerDefinition.associatedDatasets:
+            raise ValueError(f"Dataset `{tableName}` not a recognized dataset option")
 
         dfSupportingTable = providerInstance.getAssociatedDataset(self._sparkSession, tableName=tableName, rows=rows,
                                                                   partitions=partitions,
@@ -289,6 +295,8 @@ class Datasets:
 
     # Alias for `getAssociatedDataset`
     getCombinedDataset = getAssociatedDataset
+    getSummaryDataset = getAssociatedDataset
+    getEnrichedDataset = getAssociatedDataset
 
     def __getattr__(self, path):
         assert path is not None, "path should be non-empty"

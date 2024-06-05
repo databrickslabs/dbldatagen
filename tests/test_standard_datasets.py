@@ -1,4 +1,5 @@
 import logging
+from abc import ABC
 
 import pytest
 from pyspark.sql.types import IntegerType

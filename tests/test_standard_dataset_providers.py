@@ -37,6 +37,9 @@ class TestStandardDatasetProviders:
         ("multi_table/telephony", {"rows": 100, "partitions": -1, "random": False}),
         ("multi_table/telephony", {"rows": 5000, "dummyValues": 4}),
         ("multi_table/telephony", {"rows": 100, "partitions": -1, "random": True}),
+        ("multi_table/telephony", {"table": 'plans', "numPlans": 100}),
+        ("multi_table/telephony", {"table": 'customers', "numPlans": 100, "numCustomers": 1000}),
+        ("multi_table/telephony", {"table": 'deviceEvents', "numPlans": 100, "numCustomers": 1000}),
     ])
     def test_multi_table_retrieval(self, providerName, providerOptions):
         ds = dg.Datasets(spark, providerName).get(**providerOptions)
@@ -46,3 +49,18 @@ class TestStandardDatasetProviders:
         df = ds.build()
 
         assert df.limit(100).count() >= 0
+
+    def test_full_multitable_sequence(self):
+        multiTableDS = dg.Datasets(spark, "multi_table/telephony")
+        options = {"numPlans": 50, "numCustomers": 100}
+        dfPlans = multiTableDS.get(table="plans", **options).build()
+        dfCustomers = multiTableDS.get(table="customers", **options).build()
+        dfDeviceEvents = multiTableDS.get(table="deviceEvents", **options).build()
+        dfInvoices = multiTableDS.getSummaryDataset(table="invoices", plans=dfPlans,
+                                                    customers=dfCustomers,
+                                                    deviceEvents=dfDeviceEvents)
+
+        assert dfInvoices is not None
+        assert dfInvoices.count() >= 0
+
+        assert dfInvoices
