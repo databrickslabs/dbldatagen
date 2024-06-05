@@ -9,6 +9,7 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 #### Changed
 * Updated docs for complex data types / JSON to correct code examples
 * Updated license file in public docs
+* Updated latest_release branch to reflect latest release
 
 #### Fixed 
 * Fixed scenario where `DataAnalyzer` is used on dataframe containing a column named `summary`
