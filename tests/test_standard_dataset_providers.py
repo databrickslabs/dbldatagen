@@ -12,14 +12,14 @@ class TestStandardDatasetProviders:
         ("basic/geometries", 
             {"rows": 50, "partitions": 4, "random": False, "geometryType": "point", "maxVertices": 1}),
         ("basic/geometries", 
-            {"rows": 100, "partitions": -1, "random": False, "geometryType": "point", "maxVertices": 2}),
+            {"rows": 100, "partitions": -1, "random": False, "geometryType": "point", "maxVertices": 1}),
         ("basic/geometries", 
             {"rows": -1, "partitions": 4, "random": True, "geometryType": "point"}),
         ("basic/geometries", {}),
         ("basic/geometries", 
             {"rows": 5000, "partitions": -1, "random": True, "geometryType": "lineString"}),
         ("basic/geometries", 
-            {"rows": -1, "partitions": -1, "random": False,  "geometryType": "lineString", "maxVertices": 1}),
+            {"rows": -1, "partitions": -1, "random": False,  "geometryType": "lineString", "maxVertices": 2}),
         ("basic/geometries", 
             {"rows": -1, "partitions": 4, "random": True,  "geometryType": "lineString", "maxVertices": 2}),
         ("basic/geometries", 
@@ -27,7 +27,7 @@ class TestStandardDatasetProviders:
         ("basic/geometries", 
             {"rows": 5000, "partitions": -1, "random": False, "geometryType": "polygon"}),
         ("basic/geometries", 
-            {"rows": -1, "partitions": -1, "random": True,  "geometryType": "polygon", "maxVertices": 2}),
+            {"rows": -1, "partitions": -1, "random": True,  "geometryType": "polygon", "maxVertices": 3}),
         ("basic/geometries", 
             {"rows": -1, "partitions": 4, "random": True,  "geometryType": "polygon", "maxVertices": 3}),
         ("basic/geometries", 
@@ -82,6 +82,7 @@ class TestStandardDatasetProviders:
 
         df = ds.build()
         assert df.count() >= 0
+        
         startTimestamp = (
             "2024-01-01" if "startTimestamp" not in providerOptions else providerOptions["startTimestamp"]
         )
