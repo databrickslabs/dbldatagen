@@ -28,17 +28,19 @@ class BenchmarkGroupByProvider(DatasetProvider.NoAssociatedDatasetsMixin, Datase
 
     """
     MAX_LONG = 9223372036854775807
+    DEFAULT_NUM_GROUPS = 100
+    DEFAULT_PCT_NULLS = 0.0
     COLUMN_COUNT = 12
     ALLOWED_OPTIONS = ["groups", "percentNulls", "rows", "partitions", "tableName", "random"]
 
     @DatasetProvider.allowed_options(options=ALLOWED_OPTIONS)
-    def getTableGenerator(self, sparkSession, *, tableName=None, rows=1000000, partitions=-1,
+    def getTableGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
                  **options):
         import dbldatagen as dg
 
         generateRandom = options.get("random", False)
-        groups = options.get("groups", int(rows / 1000))
-        percentNulls = options.get("percentNulls", 0.0)
+        groups = options.get("groups", self.DEFAULT_NUM_GROUPS)
+        percentNulls = options.get("percentNulls", self.DEFAULT_PCT_NULLS)
 
         assert tableName is None or tableName == DatasetProvider.DEFAULT_TABLE_NAME, "Invalid table name"
         if rows is None or rows < 0:
