@@ -201,13 +201,12 @@ class TestStandardDatasetProviders:
         df = ds.build()
 
         assert df.count() >= 0
-
-        random = providerOptions.get("random", None)
-        if random:
+        
+        if 'random' in providerOptions and providerOptions['random']:
             print("")
             leadingRows = df.limit(100).collect()
-            ids = [r.customer_id for r in leadingRows]
-            assert ids != sorted(ids)
+            customer_ids = [r.customer_id for r in leadingRows]
+            assert customer_ids != sorted(customer_ids)
 
     # BENCHMARK GROUPBY tests:
     @pytest.mark.parametrize("providerName, providerOptions", [
