@@ -77,6 +77,19 @@ class TestStandardDatasetProviders:
         ("basic/process_historian", 
             {"rows": 100, "partitions": -1, "random": True, "numDevices": 100, "numPlants": 10,
             "numTags": 5, "startTimestamp": "2020-01-01 00:00:00", "endTimestamp": "2020-04-01 00:00:00"}),
+        ("basic/process_historian",
+            {"rows": 100, "partitions": -1, "random": True, "numDevices": 100, "numPlants": 10,
+            "numTags": 5, "startTimestamp": "2020-01-01 00:00:00", "endTimestamp": "2020-04-01 00:00:00",
+            "dataQualityRatios": {"pctQuestionable": 0.1, "pctAnnotated": 0.05, "pctSubstituded": 0.12}}),
+        ("basic/process_historian",
+            {"rows": 100, "partitions": -1, "random": True, "numDevices": 100, "numPlants": 10,
+            "numTags": 5, "startTimestamp": "2020-01-01 00:00:00", "endTimestamp": "2020-04-01 00:00:00",
+            "dataQualityRatios": {"pctQuestionable": 0.1, "pctSubstituded": 0.12}}),
+        ("basic/process_historian",
+            {"rows": 100, "partitions": -1, "random": True, "numDevices": 100, "numPlants": 10,
+            "numTags": 5, "startTimestamp": "2020-01-01 00:00:00", "endTimestamp": "2020-04-01 00:00:00",
+            "dataQualityRatios": {"pctAnnotated": 0.05}}),
+
     ])
     def test_basic_process_historian_retrieval(self, providerName, providerOptions):
         ds = dg.Datasets(spark, providerName).get(**providerOptions)
@@ -125,7 +138,19 @@ class TestStandardDatasetProviders:
              "endTimestamp": "2020-04-01 00:00:00", "maxLat": 45.0, "minLon": -93.0, "generateWkt": False}),
         ("basic/telematics", 
             {"rows": -1, "partitions": -1, "random": False, "numDevices": 100, "startTimestamp": "2020-01-01 00:00:00",
-            "endTimestamp": "2020-04-01 00:00:00", "minLat": 45.0, "maxLon": -93.0, "generateWkt": False}),
+            "endTimestamp": "2020-04-01 00:00:00", "minLat": 45.0, "generateWkt": False}),
+        ("basic/telematics",
+            {"rows": -1, "partitions": -1, "random": False, "numDevices": 100, "startTimestamp": "2020-01-01 00:00:00",
+            "endTimestamp": "2020-04-01 00:00:00", "minLat": -120.0, "generateWkt": False}),
+        ("basic/telematics",
+            {"rows": -1, "partitions": -1, "random": False, "numDevices": 100, "startTimestamp": "2020-01-01 00:00:00",
+            "endTimestamp": "2020-04-01 00:00:00", "maxLat": -120.0,"generateWkt": False}),
+        ("basic/telematics",
+            {"rows": -1, "partitions": -1, "random": False, "numDevices": 100, "startTimestamp": "2020-01-01 00:00:00",
+            "endTimestamp": "2020-04-01 00:00:00", "minLon": 190.0, "generateWkt": False}),
+        ("basic/telematics",
+            {"rows": -1, "partitions": -1, "random": False, "numDevices": 100, "startTimestamp": "2020-01-01 00:00:00",
+            "endTimestamp": "2020-04-01 00:00:00", "maxLon": 190.0, "generateWkt": False}),
     ])
     def test_basic_telematics_retrieval(self, providerName, providerOptions):
         ds = dg.Datasets(spark, providerName).get(**providerOptions)

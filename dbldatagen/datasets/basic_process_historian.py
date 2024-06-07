@@ -91,17 +91,17 @@ class BasicProcessHistorianProvider(DatasetProvider.NoAssociatedDatasetsMixin, D
         )
         # Add the data quality columns if they were provided
         if dataQualityRatios is not None:
-            if "pctQuestionable" in dataQualityRatios.keys():
+            if "pctQuestionable" in dataQualityRatios:
                 testDataSpec = testDataSpec.withColumn(
                     "is_questionable", "boolean",
                     expr=f"rand() < {dataQualityRatios['pctQuestionable']}"
                 )
-            if "pctSubstituted" in dataQualityRatios.keys():
+            if "pctSubstituted" in dataQualityRatios:
                 testDataSpec = testDataSpec.withColumn(
                     "is_substituted", "boolean",
                     expr=f"rand() < {dataQualityRatios['pctSubstituted']}"
                 )
-            if "pctAnnotated" in dataQualityRatios.keys():
+            if "pctAnnotated" in dataQualityRatios:
                 testDataSpec = testDataSpec.withColumn(
                     "is_annotated", "boolean",
                     expr=f"rand() < {dataQualityRatios['pctAnnotated']}"
