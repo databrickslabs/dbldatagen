@@ -58,6 +58,7 @@ class BasicTelematicsProvider(DatasetProvider.NoAssociatedDatasetsMixin, Dataset
     def getTableGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
                  **options):
         import dbldatagen as dg
+        import warnings as w
 
         generateRandom = options.get("random", False)
         numDevices = options.get("numDevices", self.DEFAULT_NUM_DEVICES)
@@ -76,23 +77,34 @@ class BasicTelematicsProvider(DatasetProvider.NoAssociatedDatasetsMixin, Dataset
             partitions = self.autoComputePartitions(rows, self.COLUMN_COUNT)
         if minLat < -90.0:
             minLat = -90.0
-            raise UserWarning("Received an invalid minLat value; Setting to -90.0")
+            w.warn("Received an invalid minLat value; Setting to -90.0")
+        if minLat > 90.0:
+            minLat = 89.0
+            w.warn("Recieved an invalid minLat value; Setting to 89.0")
+        if maxLat < -90:
+            maxLat = -89.0
+            w.warn("Recieved an invalid maxLat value; Setting to -89.0")
         if maxLat > 90.0:
             maxLat = 90.0
-            raise UserWarning("Received an invalid maxLat value; Setting to 90.0")
-        if minLat > maxLat:
-            (minLat, maxLat) = (maxLat, minLat)
-            raise UserWarning("Received minLat > maxLat; Swapping values")
+            w.warn("Received an invalid maxLat value; Setting to 90.0")
         if minLon < -180.0:
             minLon = -180.0
-            raise UserWarning("Received an invalid minLat value; Setting to -180.0")
+            w.warn("Received an invalid minLon value; Setting to -180.0")
+        if minLon > 180.0:
+            minLon = 179.0
+            w.warn("Received an invalid minLon value; Setting to 179.0")
+        if maxLon < -180.0:
+            maxLon = -179.0
+            w.warn("Received an invalid maxLon value; Setting to -179.0")
         if maxLon > 180.0:
             maxLon = 180.0
-            raise UserWarning("Received an invalid maxLat value; Setting to 180.0")
+            w.warn("Received an invalid maxLon value; Setting to 180.0")
         if minLon > maxLon:
             (minLon, maxLon) = (maxLon, minLon)
-            raise UserWarning("Received minLon > maxLon; Swapping values")
-
+            w.warn("Received minLon > maxLon; Swapping values")
+        if minLat > maxLat:
+            (minLat, maxLat) = (maxLat, minLat)
+            w.warn("Received minLat > maxLat; Swapping values")
         df_spec = (
              dg.DataGenerator(sparkSession=sparkSession, rows=rows,
                               partitions=partitions, randomSeedMethod="hash_fieldname")
@@ -100,14 +112,18 @@ class BasicTelematicsProvider(DatasetProvider.NoAssociatedDatasetsMixin, Dataset
                             uniqueValues=numDevices, random=generateRandom)
             .withColumn("ts", "timestamp", begin=startTimestamp, end=endTimestamp, 
                             interval="1 second", random=generateRandom)
-            .withColumn("base_lat", "float", minValue=minLat, maxValue=maxLat, step=0.5, 
+            .withColumn("base_lat", "float", minValue=minLat, maxValue=maxLat, step=0.5,
                             baseColumn='device_id', omit=True)
-            .withColumn("base_lon", "float", minValue=minLon, maxValue=maxLon, step=0.5, 
+            .withColumn("base_lon", "float", minValue=minLon, maxValue=maxLon, step=0.5,
                             baseColumn='device_id', omit=True)
-            .withColumn("unv_lat", "float", expr='base_lat + (0.5-rand())*1e-3', omit=True)
-            .withColumn("unv_lon", "float", expr='base_lon + (0.5-rand())*1e-3', omit=True)
-            .withColumn("lat", "float", expr="CASE WHEN abs(unv_lat) > 90.0 THEN sign(unv_lat)*90.0 ELSE unv_lat END")
-            .withColumn("lon", "float", expr="CASE WHEN abs(unv_lon) > 180.0 THEN sign(unv_lat)*180.0 ELSE unv_lat END")
+            .withColumn("unv_lat", "float", expr="base_lat + (0.5-format_number(rand(), 3))*1e-3", omit=True)
+            .withColumn("unv_lon", "float", expr="base_lon + (0.5-format_number(rand(), 3))*1e-3", omit=True)
+            .withColumn("lat", "float", expr=f"""CASE WHEN unv_lat > {maxLat} THEN {maxLat} 
+                ELSE CASE WHEN unv_lat < {minLat} THEN {minLat} 
+                ELSE unv_lat END END""")
+            .withColumn("lon", "float", expr=f"""CASE WHEN unv_lon > {maxLon} THEN {maxLon} 
+                ELSE CASE WHEN unv_lon < {minLon} THEN {minLon} 
+                ELSE unv_lon END END""")
             .withColumn("heading", "integer", minValue=0, maxValue=359, step=1, random=generateRandom)
             .withColumn("wkt", "string", expr="concat('POINT(', lon, ' ', lat, ')')", omit=not generateWkt)
         )
