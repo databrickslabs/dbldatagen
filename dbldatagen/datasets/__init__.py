@@ -11,5 +11,6 @@ __all__ = ["dataset_provider",
            "basic_process_historian",
            "basic_telematics",
            "basic_user",
-           "benchmark_groupby"
+           "benchmark_groupby",
+           "multi_table_telephony_provider"
            ]
