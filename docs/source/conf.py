@@ -17,23 +17,22 @@ PACKAGE_DIR = "../../dbldatagen"
 
 sys.path.insert(0, os.path.abspath(f"{PACKAGE_DIR}"))
 sys.path.insert(0, os.path.abspath(f"{PACKAGE_DIR}/constraints"))
+sys.path.insert(0, os.path.abspath(f"{PACKAGE_DIR}/datasets"))
 sys.path.insert(0, os.path.abspath(f"{PACKAGE_DIR}/distributions"))
 
 from dbldatagen import *
 from dbldatagen.distributions import *
 from dbldatagen.constraints import *
-
-
+from dbldatagen.datasets import *
 
 # -- Project information -----------------------------------------------------
 
 project = 'Databricks Labs Data Generator'
-copyright = '2022, Databricks Inc'
+copyright = '2022 - 2024, Databricks Inc'
 author = 'Databricks Inc'
 
 # The full version, including alpha/beta/rc tags
 release = "0.4.0"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpversion
-
 
 # -- General configuration ---------------------------------------------------
 
@@ -44,9 +43,9 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',  # enable sphinx to parse NumPy and Google style doc strings
-    #'sphinx.ext.autosummary',
+    # 'sphinx.ext.autosummary',
     'sphinx.ext.viewcode',  # add links to source code
-    #'numpydoc',  # handle NumPy documentation formatted docstrings. Needs to install
+    # 'numpydoc',  # handle NumPy documentation formatted docstrings. Needs to install
     'recommonmark',  # allow including Commonmark markdown in sources
     'sphinx_rtd_theme',
     'sphinx_copybutton'
@@ -104,7 +103,7 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-#html_logo = "../tdg-logo-medium.png"
+# html_logo = "../tdg-logo-medium.png"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -115,19 +114,18 @@ html_css_files = [
     'css/tdg.css'
 ]
 
-#html_sidebars={
+# html_sidebars={
 #    '**' : [ 'globaltoc.html']
-#}
+# }
 
-html_theme_options= {
-    "display_version" : False
-#    "navbar_links": [
-#        ("Databricks Labs", "https://github.com/databrickslabs", True)
-#        ]
+html_theme_options = {
+    "display_version": False
+    #    "navbar_links": [
+    #        ("Databricks Labs", "https://github.com/databrickslabs", True)
+    #        ]
 }
 
-numpydoc_show_class_members=True
-numpydoc_show_inherited_class_members=False
-numpydoc_class_members_toctree=False
-numpydoc_attributes_as_param_list=True
-
+numpydoc_show_class_members = True
+numpydoc_show_inherited_class_members = False
+numpydoc_class_members_toctree = False
+numpydoc_attributes_as_param_list = True

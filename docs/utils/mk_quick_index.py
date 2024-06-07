@@ -27,6 +27,10 @@ SOURCE_FILES = {
                      "grouping": "main classes"},
     "daterange.py": {"briefDesc": "Date and time ranges",
                      "grouping": "main classes"},
+
+    "datasets_object.py": {"briefDesc": "Entry point for standard datasets",
+                           "grouping": "main classes"},
+
     "nrange.py": {"briefDesc": "Numeric ranges",
                   "grouping": "main classes"},
     "text_generators.py": {"briefDesc": "Text data generation",
@@ -57,6 +61,12 @@ SOURCE_FILES = {
     "exponential_distribution.py": {"briefDesc": "Exponential data distribution related code",
                                     "grouping": "data distribution"},
 
+    "basic_user.py": {"briefDesc": "Provider for `basic/user` standard dataset",
+                "grouping": "Standard datasets"},
+    "dataset_provider.py": {"briefDesc": "Base class for standard dataset providers",
+                             "grouping": "Standard datasets"},
+    "multi_table_telephony_provider.py": {"briefDesc": "Provider for `multi-table/telephony` standard dataset",
+                               "grouping": "Standard datasets"},
     "constraint.py": {"briefDesc": "Constraint related code",
                 "grouping": "data generation constraints"},
     "chained_relation.py": {"briefDesc": "ChainedInequality constraint related code",
@@ -314,16 +324,17 @@ def main(dirToSearch, outputPath):
         includeTemplate(outputFile)
 
         writeUnderlined(outputFile, f"The ``{PACKAGE_NAME}`` package", underline="_")
-
         processDirectory(outputFile, Path(f"{PROJECT_PATH}"))
 
         # Add entries here for subpackages
         writeUnderlined(outputFile, f"The ``{PACKAGE_NAME}.constraints`` package", underline="_")
         processDirectory(outputFile, Path(f"{PROJECT_PATH}/constraints"), subpackage="constraints")
 
+        writeUnderlined(outputFile, f"The ``{PACKAGE_NAME}.datasets`` package", underline="_")
+        processDirectory(outputFile, Path(f"{PROJECT_PATH}/datasets"), subpackage="datasets")
+
         writeUnderlined(outputFile, f"The ``{PACKAGE_NAME}.distributions`` package", underline="_")
         processDirectory(outputFile, Path(f"{PROJECT_PATH}/distributions"), subpackage="distributions")
-
 
 
 if __name__ == '__main__':

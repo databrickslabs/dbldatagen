@@ -1,17 +1,21 @@
-# Databricks Labs Data Generator Release Notes
+# Databricks Labs Synthetic Data Generator Release Notes
 
 ## Change History
 All notable changes to the Databricks Labs Data Generator will be documented in this file.
 
-### Unreleased - intended to be version 0.4.0
+### Version 0.4.0
 
 #### Changed
 * Updated minimum pyspark version to be 3.2.1, compatible with Databricks runtime 10.4 LTS or later
 * Modified data generator to allow specification of constraints to the data generation process
 * Updated documentation for generating text data.
+* Modified data distribiutions to use abstract base classes
+* migrated data distribution tests to use `pytest`
+* Additional standard datasets
 
-### Added
+#### Added
 * Added classes for constraints on the data generation via new package `dbldatagen.constraints`
+* Added support for standard data sets via the new package `dbldatagen.datasets`
 
 
 ### Version 0.3.6 Post 1
