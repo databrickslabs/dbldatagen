@@ -144,7 +144,7 @@ class TestStandardDatasetProviders:
             "endTimestamp": "2020-04-01 00:00:00", "minLat": -120.0, "generateWkt": False}),
         ("basic/telematics",
             {"rows": -1, "partitions": -1, "random": False, "numDevices": 100, "startTimestamp": "2020-01-01 00:00:00",
-            "endTimestamp": "2020-04-01 00:00:00", "maxLat": -120.0,"generateWkt": False}),
+            "endTimestamp": "2020-04-01 00:00:00", "maxLat": -120.0, "generateWkt": False}),
         ("basic/telematics",
             {"rows": -1, "partitions": -1, "random": False, "numDevices": 100, "startTimestamp": "2020-01-01 00:00:00",
             "endTimestamp": "2020-04-01 00:00:00", "minLon": 190.0, "generateWkt": False}),
