@@ -1,18 +1,19 @@
-# Databricks Labs Data Generator Release Notes
+# Databricks Labs Synthetic Data Generator Release Notes
 
 ## Change History
 All notable changes to the Databricks Labs Data Generator will be documented in this file.
 
 ### Unreleased
 
-### Changed
+#### Changed
 * Modified data generator to allow specification of constraints to the data generation process
 * Updated documentation for generating text data.
 * Modified data distribiutions to use abstract base classes
 * migrated data distribution tests to use `pytest`
 
-### Added
+#### Added
 * Added classes for constraints on the data generation via new package `dbldatagen.constraints`
+* Added support for standard data sets via the new package `dbldatagen.datasets`
 
 
 ### Version 0.3.6 Post 1
@@ -23,7 +24,6 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 
 #### Fixed 
 * Fixed scenario where `DataAnalyzer` is used on dataframe containing a column named `summary`
-
 
 ### Version 0.3.6
 

@@ -30,6 +30,7 @@ The Databricks Labs Data Generator is a Python Library that can be used in sever
 2. Generate a synthetic data set [for an existing Spark SQL schema.](#creating-data-set-with-pre-existing-schema) 
 3. Generate a synthetic data set adding columns according to the specifiers provided
 4. Start with an existing schema and add columns along with specifications as to how values are generated
+5. Use a standard dataset to create a synthetic dataset with minimal effort
 
 The data generator includes the following features:
 
@@ -47,12 +48,13 @@ and [formatting on string columns](textdata)
 * Support for use within Databricks Delta Live Tables pipelines
 * Support for code generation from existing schema or Spark dataframe to synthesize data
 * Support for Unity Catalog enabled clusters 
+* Support for pluggable standard datasets for quick generation of synthetic data
 
 ## Databricks environment compatibility
 
 Dbldatagen is compatible with the following Databricks runtime environments:
-* Databricks runtime 9.1 LTS and above (13.3 LTS or above is recommended)
-* Databricks ML runtime 9.1 LTS and above (13.3 LTS or above is recommended)
+* Databricks runtime 10.4 LTS and above (13.3 LTS or above is recommended)
+* Databricks ML runtime 10.4 LTS and above (13.3 LTS or above is recommended)
 * Databricks Delta Live Tables runtime
 
 Unity Catalog cluster modes `Single User` and `No Isolation Shared` are supported in Databricks runtime 9.1 LTS and 
@@ -138,7 +140,10 @@ Creating the data set is performed by creating a definition for your dataset via
 specifies the rules that control data generation. 
 
 Once the `DataGenerator` specification is created, you use the `build` method to generate a Spark dataframe for the 
-data
+data.
+
+The library also provides a number of standard predefined data sets that can be used as a starting point for generating
+your synthetic data.
 
 ## Creating simple synthetic data sets
 
@@ -157,6 +162,9 @@ schema should be generated
 > name will succeed but potentially cause errors later.
 >
 > When adding a column spec for an existing column, it is not necessary to define the type.
+
+The standard dataset mechanism defines several pre-defined data generation specifications which you can further
+customize for your use case.
 
 ### Create a data set without pre-existing schemas
 
