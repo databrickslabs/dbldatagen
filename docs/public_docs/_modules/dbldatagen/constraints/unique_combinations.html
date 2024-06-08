@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>dbldatagen.constraints.unique_combinations &mdash; Databricks Labs Data Generator 0.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/tdg.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../_static/clipboard.min.js"></script>
+        <script src="../../../_static/copybutton.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../using_standard_datasets.html">Using standard datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../using_constraints.html">Using constraints to control data generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generating_from_existing_data.html">Generating synthetic data from existing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/api/modules.html">The dbldatagen package API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">dbldatagen.constraints.unique_combinations</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for dbldatagen.constraints.unique_combinations</h1><div class="highlight"><pre>
+<span></span><span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="c1">#</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This module defines the Positive class</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">.constraint</span> <span class="kn">import</span> <span class="n">Constraint</span><span class="p">,</span> <span class="n">NoFilterMixin</span>
+
+
+<div class="viewcode-block" id="UniqueCombinations"><a class="viewcode-back" href="../../../reference/api/dbldatagen.constraints.unique_combinations.html#dbldatagen.constraints.unique_combinations.UniqueCombinations">[docs]</a><span class="k">class</span> <span class="nc">UniqueCombinations</span><span class="p">(</span><span class="n">NoFilterMixin</span><span class="p">,</span> <span class="n">Constraint</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Unique Combinations constraints</span>
+
+<span class="sd">    Applies constraint to ensure columns have unique combinations - i.e the set of columns supplied only have</span>
+<span class="sd">    one combination of each set of values</span>
+
+<span class="sd">    :param columns: string column name or list of column names as strings.If no columns are specified, all output</span>
+<span class="sd">                    columns will be considered when dropping duplicate combinations.</span>
+
+<span class="sd">    if the columns are not specified, or the column name of &#39;*&#39; is used,</span>
+<span class="sd">    all columns that would be present in the final output are considered.</span>
+
+<span class="sd">    Essentially applies the constraint that the named columns have unique values for each combination of columns.</span>
+
+<span class="sd">    The uniqueness constraint may apply to columns that are omitted - i.e not part of the final output.</span>
+<span class="sd">    If no column or column list is supplied, all columns that would be present in the final output are considered.</span>
+
+<span class="sd">    This is useful to enforce unique ids, unique keys etc.</span>
+
+<span class="sd">    ..Note: When applied to streaming dataframe, it will perform any deduplication only within a batch.</span>
+
+<span class="sd">            If stateful operation is needed, where duplicates are eliminated across the entire stream,</span>
+<span class="sd">            it is recommended to use a watermark and apply deduplication logic to the dataframe</span>
+<span class="sd">            produced by the `build()` method.</span>
+
+<span class="sd">            For high volume streaming dataframes, this may consume substantial resources when maintaining state - hence</span>
+<span class="sd">            deduplication will only be performed within a batch.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">supportsStreaming</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">columns</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">columns</span> <span class="o">!=</span> <span class="s2">&quot;*&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_columnsFromListOrString</span><span class="p">(</span><span class="n">columns</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="UniqueCombinations.prepareDataGenerator"><a class="viewcode-back" href="../../../reference/api/dbldatagen.constraints.unique_combinations.html#dbldatagen.constraints.unique_combinations.UniqueCombinations.prepareDataGenerator">[docs]</a>    <span class="k">def</span> <span class="nf">prepareDataGenerator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataGenerator</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Prepare the data generator to generate data that matches the constraint</span>
+
+<span class="sd">           This method may modify the data generation rules to meet the constraint</span>
+
+<span class="sd">           :param dataGenerator: Data generation object that will generate the dataframe</span>
+<span class="sd">           :return: modified or unmodified data generator</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">dataGenerator</span></div>
+
+<div class="viewcode-block" id="UniqueCombinations.transformDataframe"><a class="viewcode-back" href="../../../reference/api/dbldatagen.constraints.unique_combinations.html#dbldatagen.constraints.unique_combinations.UniqueCombinations.transformDataframe">[docs]</a>    <span class="k">def</span> <span class="nf">transformDataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataGenerator</span><span class="p">,</span> <span class="n">dataFrame</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Transform the dataframe to make data conform to constraint if possible</span>
+
+<span class="sd">           This method should not modify the dataGenerator - but may modify the dataframe</span>
+
+<span class="sd">           :param dataGenerator: Data generation object that generated the dataframe</span>
+<span class="sd">           :param dataFrame: generated dataframe</span>
+<span class="sd">           :return: modified or unmodified Spark dataframe</span>
+
+<span class="sd">           The default transformation returns the dataframe unmodified</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># if no columns are specified, then all columns that would appear in the final output are used</span>
+            <span class="c1"># when determining duplicates</span>
+            <span class="n">columnsToEvaluate</span> <span class="o">=</span> <span class="n">dataGenerator</span><span class="o">.</span><span class="n">getOutputColumnNames</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">columnsToEvaluate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span>
+
+        <span class="c1"># for batch processing, duplicate rows will be removed via drop duplicates</span>
+
+        <span class="n">results</span> <span class="o">=</span> <span class="n">dataFrame</span><span class="o">.</span><span class="n">dropDuplicates</span><span class="p">(</span><span class="n">columnsToEvaluate</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">results</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022 - 2024, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

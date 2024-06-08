@@ -1,0 +1,7 @@
+dbldatagen.datasets.multi\_table\_telephony\_provider module
+============================================================
+
+.. automodule:: dbldatagen.datasets.multi_table_telephony_provider
+   :members:
+   :undoc-members:
+   :show-inheritance:

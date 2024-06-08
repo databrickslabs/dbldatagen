@@ -1,0 +1,26 @@
+dbldatagen.constraints package
+==============================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   dbldatagen.constraints.chained_relation
+   dbldatagen.constraints.constraint
+   dbldatagen.constraints.literal_range_constraint
+   dbldatagen.constraints.literal_relation_constraint
+   dbldatagen.constraints.negative_values
+   dbldatagen.constraints.positive_values
+   dbldatagen.constraints.ranged_values_constraint
+   dbldatagen.constraints.sql_expr
+   dbldatagen.constraints.unique_combinations
+
+Module contents
+---------------
+
+.. automodule:: dbldatagen.constraints
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,7 @@
+dbldatagen.datasets.benchmark\_groupby module
+=============================================
+
+.. automodule:: dbldatagen.datasets.benchmark_groupby
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>dbldatagen.datasets.benchmark_groupby &mdash; Databricks Labs Data Generator 0.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/tdg.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../_static/clipboard.min.js"></script>
+        <script src="../../../_static/copybutton.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../using_standard_datasets.html">Using standard datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../using_constraints.html">Using constraints to control data generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generating_from_existing_data.html">Generating synthetic data from existing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/api/modules.html">The dbldatagen package API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">dbldatagen.datasets.benchmark_groupby</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for dbldatagen.datasets.benchmark_groupby</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">.dataset_provider</span> <span class="kn">import</span> <span class="n">DatasetProvider</span><span class="p">,</span> <span class="n">dataset_definition</span>
+
+
+<div class="viewcode-block" id="BenchmarkGroupByProvider"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.benchmark_groupby.html#dbldatagen.datasets.benchmark_groupby.BenchmarkGroupByProvider">[docs]</a><span class="nd">@dataset_definition</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;benchmark/groupby&quot;</span><span class="p">,</span>
+                    <span class="n">summary</span><span class="o">=</span><span class="s2">&quot;Benchmarking dataset for GROUP BY queries in various database systems&quot;</span><span class="p">,</span>
+                    <span class="n">autoRegister</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">supportsStreaming</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">BenchmarkGroupByProvider</span><span class="p">(</span><span class="n">DatasetProvider</span><span class="o">.</span><span class="n">NoAssociatedDatasetsMixin</span><span class="p">,</span> <span class="n">DatasetProvider</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Grouping Benchmark Dataset</span>
+<span class="sd">    ==========================</span>
+
+<span class="sd">    This is a benchmarking dataset for evaluating groupBy operations on columns of different type and</span>
+<span class="sd">    cardinality.</span>
+
+<span class="sd">    It takes the following options when retrieving the table:</span>
+<span class="sd">        - random: if True, generates random data</span>
+<span class="sd">        - rows : number of rows to generate</span>
+<span class="sd">        - partitions: number of partitions to use</span>
+<span class="sd">        - groups: number of groups within the dataset</span>
+<span class="sd">        - percentNulls: percentage of nulls within the non-base columns</span>
+
+<span class="sd">    As the data specification is a DataGenerator object, you can add further columns to the data set and</span>
+<span class="sd">    add constraints (when the feature is available)</span>
+
+<span class="sd">    Note that this datset does not use any features that would prevent it from being used as a source for a</span>
+<span class="sd">    streaming dataframe, and so the flag `supportsStreaming` is set to True.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">MAX_LONG</span> <span class="o">=</span> <span class="mi">9223372036854775807</span>
+    <span class="n">DEFAULT_NUM_GROUPS</span> <span class="o">=</span> <span class="mi">100</span>
+    <span class="n">DEFAULT_PCT_NULLS</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">COLUMN_COUNT</span> <span class="o">=</span> <span class="mi">12</span>
+    <span class="n">ALLOWED_OPTIONS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;groups&quot;</span><span class="p">,</span> <span class="s2">&quot;percentNulls&quot;</span><span class="p">,</span> <span class="s2">&quot;rows&quot;</span><span class="p">,</span> <span class="s2">&quot;partitions&quot;</span><span class="p">,</span> <span class="s2">&quot;tableName&quot;</span><span class="p">,</span> <span class="s2">&quot;random&quot;</span><span class="p">]</span>
+
+<div class="viewcode-block" id="BenchmarkGroupByProvider.getTableGenerator"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.benchmark_groupby.html#dbldatagen.datasets.benchmark_groupby.BenchmarkGroupByProvider.getTableGenerator">[docs]</a>    <span class="nd">@DatasetProvider</span><span class="o">.</span><span class="n">allowed_options</span><span class="p">(</span><span class="n">options</span><span class="o">=</span><span class="n">ALLOWED_OPTIONS</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">getTableGenerator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sparkSession</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">tableName</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rows</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">partitions</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+                 <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
+        <span class="kn">import</span> <span class="nn">warnings</span> <span class="k">as</span> <span class="nn">w</span>
+
+        <span class="n">generateRandom</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;random&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">groups</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;groups&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_NUM_GROUPS</span><span class="p">)</span>
+        <span class="n">percentNulls</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;percentNulls&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_PCT_NULLS</span><span class="p">)</span>
+
+        <span class="k">assert</span> <span class="n">tableName</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">tableName</span> <span class="o">==</span> <span class="n">DatasetProvider</span><span class="o">.</span><span class="n">DEFAULT_TABLE_NAME</span><span class="p">,</span> <span class="s2">&quot;Invalid table name&quot;</span>
+        <span class="k">if</span> <span class="n">rows</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">rows</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="n">DatasetProvider</span><span class="o">.</span><span class="n">DEFAULT_ROWS</span>
+        <span class="k">if</span> <span class="n">partitions</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">partitions</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">partitions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">autoComputePartitions</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">COLUMN_COUNT</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">groups</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">groups</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;groups must be a value of type &#39;int&#39;&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+        <span class="k">if</span> <span class="n">groups</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">groups</span> <span class="o">=</span> <span class="mi">100</span>
+            <span class="n">w</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Received an invalid groups value; Setting to </span><span class="si">{</span><span class="n">groups</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">rows</span> <span class="o">&lt;</span> <span class="n">groups</span><span class="p">:</span>
+            <span class="n">groups</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">rows</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">)</span>
+            <span class="n">w</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Received more groups than rows; Setting the number of groups to </span><span class="si">{</span><span class="n">groups</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">percentNulls</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="n">percentNulls</span> <span class="o">=</span> <span class="mf">1.0</span>
+            <span class="n">w</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Received a percentNulls value &gt; 1; Setting to </span><span class="si">{</span><span class="n">percentNulls</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">percentNulls</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="n">percentNulls</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">w</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Received a percentNulls value &lt; 1; Setting to </span><span class="si">{</span><span class="n">percentNulls</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">assert</span> <span class="n">tableName</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">tableName</span> <span class="o">==</span> <span class="n">DatasetProvider</span><span class="o">.</span><span class="n">DEFAULT_TABLE_NAME</span><span class="p">,</span> <span class="s2">&quot;Invalid table name&quot;</span>
+        <span class="n">df_spec</span> <span class="o">=</span> <span class="p">(</span>
+             <span class="n">dg</span><span class="o">.</span><span class="n">DataGenerator</span><span class="p">(</span><span class="n">sparkSession</span><span class="o">=</span><span class="n">sparkSession</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">rows</span><span class="p">,</span>
+                              <span class="n">partitions</span><span class="o">=</span><span class="n">partitions</span><span class="p">,</span>
+                              <span class="n">randomSeedMethod</span><span class="o">=</span><span class="s2">&quot;hash_fieldname&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;base1&quot;</span><span class="p">,</span> <span class="s2">&quot;integer&quot;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span>
+                            <span class="n">uniqueValues</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="n">generateRandom</span><span class="p">,</span> <span class="n">omit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;base2&quot;</span><span class="p">,</span> <span class="s2">&quot;integer&quot;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span>
+                            <span class="n">uniqueValues</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="n">generateRandom</span><span class="p">,</span> <span class="n">omit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;base3&quot;</span><span class="p">,</span> <span class="s2">&quot;integer&quot;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">rows</span> <span class="o">/</span> <span class="n">groups</span><span class="p">)),</span>
+                            <span class="n">uniqueValues</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">rows</span> <span class="o">/</span> <span class="n">groups</span><span class="p">)),</span>  <span class="n">random</span><span class="o">=</span><span class="n">generateRandom</span><span class="p">,</span> <span class="n">omit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;id1&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="n">baseColumn</span><span class="o">=</span><span class="s2">&quot;base1&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;id</span><span class="si">%03d</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">percentNulls</span><span class="o">=</span><span class="n">percentNulls</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;id2&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="n">baseColumn</span><span class="o">=</span><span class="s2">&quot;base2&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;id</span><span class="si">%03d</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">percentNulls</span><span class="o">=</span><span class="n">percentNulls</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;id3&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="n">baseColumn</span><span class="o">=</span><span class="s2">&quot;base3&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;id</span><span class="si">%010d</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">percentNulls</span><span class="o">=</span><span class="n">percentNulls</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;id4&quot;</span><span class="p">,</span> <span class="s2">&quot;integer&quot;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="n">generateRandom</span><span class="p">,</span> <span class="n">percentNulls</span><span class="o">=</span><span class="n">percentNulls</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;id5&quot;</span><span class="p">,</span> <span class="s2">&quot;integer&quot;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="n">generateRandom</span><span class="p">,</span> <span class="n">percentNulls</span><span class="o">=</span><span class="n">percentNulls</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;id6&quot;</span><span class="p">,</span> <span class="s2">&quot;integer&quot;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">rows</span> <span class="o">/</span> <span class="n">groups</span><span class="p">)),</span> <span class="n">random</span><span class="o">=</span><span class="n">generateRandom</span><span class="p">,</span>
+                            <span class="n">percentNulls</span><span class="o">=</span><span class="n">percentNulls</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;v1&quot;</span><span class="p">,</span> <span class="s2">&quot;integer&quot;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="n">generateRandom</span><span class="p">,</span> <span class="n">percentNulls</span><span class="o">=</span><span class="n">percentNulls</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;v2&quot;</span><span class="p">,</span> <span class="s2">&quot;integer&quot;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="n">generateRandom</span><span class="p">,</span> <span class="n">percentNulls</span><span class="o">=</span><span class="n">percentNulls</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;v3&quot;</span><span class="p">,</span> <span class="s2">&quot;decimal(9,6)&quot;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="mf">100.0</span><span class="p">,</span>
+                            <span class="n">step</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="n">generateRandom</span><span class="p">,</span> <span class="n">percentNulls</span><span class="o">=</span><span class="n">percentNulls</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">df_spec</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022 - 2024, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

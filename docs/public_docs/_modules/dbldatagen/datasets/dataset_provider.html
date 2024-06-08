@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>dbldatagen.datasets.dataset_provider &mdash; Databricks Labs Data Generator 0.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/tdg.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../_static/clipboard.min.js"></script>
+        <script src="../../../_static/copybutton.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../using_standard_datasets.html">Using standard datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../using_constraints.html">Using constraints to control data generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generating_from_existing_data.html">Generating synthetic data from existing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/api/modules.html">The dbldatagen package API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">dbldatagen.datasets.dataset_provider</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for dbldatagen.datasets.dataset_provider</h1><div class="highlight"><pre>
+<span></span><span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="c1">#</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This file defines the DatasetProvider class</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>  <span class="c1"># needed when using dataclasses in Python 3.8 with type of `list[str]`</span>
+
+<span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+
+
+<div class="viewcode-block" id="DatasetProvider"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider">[docs]</a><span class="k">class</span> <span class="nc">DatasetProvider</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The DatasetProvider class acts as a base class for all dataset providers</span>
+
+<span class="sd">    Implementors should override name,summary, description etc using the `dataset_definition` decorator.</span>
+<span class="sd">    Subclasses should not require the constructor to take any arguments - arguments for the dataset should be</span>
+<span class="sd">    passed to the getTableGenerator method.</span>
+
+<span class="sd">    If no table name is specified, it defaults to a table name corresponding to the `DEFAULT_TABLE_NAME` constant.</span>
+
+<span class="sd">    Dataset providers that produce multiple tables or need to explicitly name the table should list which tables are</span>
+<span class="sd">    provided and what the primary table to be retrieved would be if no table name is specified.</span>
+
+<span class="sd">    The intent of the `supportsStreaming` flag is mark a dataset as being streaming compatible. It does not require</span>
+<span class="sd">    specific streaming support - only to note that the dataset provider does not have any operations that would</span>
+<span class="sd">    be disallowed or very inefficient for a streaming dataframe.</span>
+
+<span class="sd">    Examples of operations that might prevent a dataframe from being used in streaming include:</span>
+<span class="sd">    - use of some types of windowing expressions</span>
+<span class="sd">    - use of drop duplicates (not disallowed but can only be applied efficiently at the streaming microbatch level)</span>
+
+<span class="sd">    Note that the DatasetDecoratorUtils inner class will be used as a decorator to subclasses of this and</span>
+<span class="sd">    will overwrite the constants _DATASET_NAME, _DATASET_TABLES, _DATASET_DESCRIPTION, _DATASET_SUMMARY and</span>
+<span class="sd">    _DATASET_SUPPORTS_STREAMING</span>
+
+<span class="sd">    Derived DatasetProvider classes need to be registered with the DatasetProvider class to be used in the system</span>
+<span class="sd">    (at least to be discoverable and creatable via the Datasets object). This is done by calling the</span>
+<span class="sd">    `registerDataset` method with the dataset definition and the class object.</span>
+
+<span class="sd">    The Dataset provider is responsible for determining what the default number of rows should be when the</span>
+<span class="sd">    caller passes None or -1 as the default parameter.</span>
+
+<span class="sd">    Registration can be done manually or automatically by setting the `autoRegister` flag in the decorator to True.</span>
+
+<span class="sd">    By default, all DatasetProvider classes should support batch usage. If a dataset provider supports streaming usage,</span>
+<span class="sd">    the flag `supportsStreaming` should be set to `True` in the decorator.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">DEFAULT_TABLE_NAME</span> <span class="o">=</span> <span class="s2">&quot;main&quot;</span>
+    <span class="n">DEFAULT_ROWS</span> <span class="o">=</span> <span class="mi">100_000</span>
+    <span class="n">DEFAULT_PARTITIONS</span> <span class="o">=</span> <span class="mi">4</span>
+
+    <span class="c1"># Note: the associated decorator will populate this with an instance of the `DatasetDefinition` class</span>
+    <span class="n">_DATASET_DEFINITION</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1"># the registered datasets will map from dataset names to a tuple of the dataset definition and the class</span>
+    <span class="c1"># the implementation for dataset listing and describe will be driven by this</span>
+    <span class="n">_registeredDatasetsMetadata</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c1"># _registeredDatasetsVersion will contain a computed version number which is updated on new dataset</span>
+    <span class="c1"># registration or when dataset provider is unregistered</span>
+    <span class="n">_registeredDatasetsVersion</span> <span class="o">=</span> <span class="mi">0</span>
+
+<div class="viewcode-block" id="DatasetProvider.DatasetDefinition"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.DatasetDefinition">[docs]</a>    <span class="nd">@dataclass</span>
+    <span class="k">class</span> <span class="nc">DatasetDefinition</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Dataset Definition class - stores the attributes related to the dataset for use by the implementation</span>
+<span class="sd">        of the decorator.</span>
+
+<span class="sd">        This stores the name of the dataset (e.g. `basic/user`), the list of tables provided by the dataset,</span>
+<span class="sd">        the primary table, a summary of the dataset, a detailed description of the dataset, whether the dataset</span>
+<span class="sd">        supports streaming, and the provider class.</span>
+
+<span class="sd">        It also allows specification of supporting tables which are tables computed from existing dataframes</span>
+<span class="sd">        that can be provided by the dataset provider</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+        <span class="n">tables</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+        <span class="n">primaryTable</span><span class="p">:</span> <span class="nb">str</span>
+        <span class="n">summary</span><span class="p">:</span> <span class="nb">str</span>
+        <span class="n">description</span><span class="p">:</span> <span class="nb">str</span>
+        <span class="n">supportsStreaming</span><span class="p">:</span> <span class="nb">bool</span>
+        <span class="n">providerClass</span><span class="p">:</span> <span class="nb">type</span>
+        <span class="n">associatedDatasets</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="DatasetProvider.isValidDataProviderType"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.isValidDataProviderType">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">isValidDataProviderType</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">candidateDataProvider</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if object is a valid data provider type</span>
+
+<span class="sd">        :param candidateDataProvider: potential Dataset provider class</span>
+<span class="sd">        :return: True if valid DatasetProvider type, False otherwise</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">candidateDataProvider</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span>
+                <span class="nb">isinstance</span><span class="p">(</span><span class="n">candidateDataProvider</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span>
+                <span class="nb">issubclass</span><span class="p">(</span><span class="n">candidateDataProvider</span><span class="p">,</span> <span class="bp">cls</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="DatasetProvider.getDatasetDefinition"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.getDatasetDefinition">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">getDatasetDefinition</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Get the dataset definition for the class &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_DATASET_DEFINITION</span></div>
+
+<div class="viewcode-block" id="DatasetProvider.getDatasetTables"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.getDatasetTables">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">getDatasetTables</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Get the dataset tables list for the class &quot;&quot;&quot;</span>
+        <span class="n">datasetDefinition</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">getDatasetDefinition</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">datasetDefinition</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">datasetDefinition</span><span class="o">.</span><span class="n">tables</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="bp">cls</span><span class="o">.</span><span class="n">DEFAULT_TABLE_NAME</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">datasetDefinition</span><span class="o">.</span><span class="n">tables</span></div>
+
+<div class="viewcode-block" id="DatasetProvider.registerDataset"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.registerDataset">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">registerDataset</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">datasetProvider</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Register the dataset provider type using metadata defined in the dataset provider</span>
+
+<span class="sd">        :param datasetProvider: Dataset provider class</span>
+<span class="sd">        :return: None</span>
+
+<span class="sd">        The dataset provider argument should be a subclass of the DatasetProvider class.</span>
+
+<span class="sd">        It will retrieve the DatasetDefinition populated during creation by the decorator</span>
+<span class="sd">        and should contain the name of the dataset, the list of tables provided by the dataset,</span>
+<span class="sd">        the primary table, a summary of the dataset, a detailed description of the dataset,</span>
+<span class="sd">        whether the dataset supports streaming, and the provider class.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">datasetProvider</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Valid dataset provider not supplied&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">isValidDataProviderType</span><span class="p">(</span><span class="n">datasetProvider</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Supplied dataset provider </span><span class="si">{</span><span class="n">datasetProvider</span><span class="si">}</span><span class="s2"> is not a valid subclass of DatasetProvider&quot;</span><span class="p">)</span>
+
+        <span class="n">datasetDefinition</span> <span class="o">=</span> <span class="n">datasetProvider</span><span class="o">.</span><span class="n">getDatasetDefinition</span><span class="p">()</span>
+
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">datasetDefinition</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">DatasetDefinition</span><span class="p">),</span> \
+            <span class="s2">&quot;retrieved datasetDefinition must be an instance of DatasetDefinition&quot;</span>
+
+        <span class="k">assert</span> <span class="n">datasetDefinition</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> \
+            <span class="s2">&quot;datasetDefinition must contain a name for the data set&quot;</span>
+
+        <span class="k">assert</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">datasetDefinition</span><span class="o">.</span><span class="n">providerClass</span><span class="p">,</span> <span class="bp">cls</span><span class="p">),</span> \
+            <span class="s2">&quot;datasetClass must be a subclass of DatasetProvider&quot;</span>
+
+        <span class="k">if</span> <span class="n">datasetDefinition</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_registeredDatasetsMetadata</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dataset provider is already registered for name `</span><span class="si">{</span><span class="n">datasetDefinition</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">)</span>
+
+        <span class="bp">cls</span><span class="o">.</span><span class="n">_registeredDatasetsMetadata</span><span class="p">[</span><span class="n">datasetDefinition</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">datasetDefinition</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">_registeredDatasetsVersion</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_registeredDatasetsVersion</span> <span class="o">+</span> <span class="mi">1</span></div>
+
+<div class="viewcode-block" id="DatasetProvider.unregisterDataset"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.unregisterDataset">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">unregisterDataset</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Unregister the dataset with the specified name</span>
+
+<span class="sd">        :param name: Name of the dataset to unregister</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;name must be provided and not empty&quot;</span>
+
+        <span class="c1"># remove name from registered datasets if its already registered</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_registeredDatasetsMetadata</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_registeredDatasetsMetadata</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_registeredDatasetsVersion</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_registeredDatasetsVersion</span> <span class="o">+</span> <span class="mi">1</span></div>
+
+<div class="viewcode-block" id="DatasetProvider.getRegisteredDatasets"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.getRegisteredDatasets">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">getRegisteredDatasets</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the registered dataset definitions</span>
+<span class="sd">        :return:  A dictionary of registered datasets metadata objects</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_registeredDatasetsMetadata</span></div>
+
+<div class="viewcode-block" id="DatasetProvider.getRegisteredDatasetsVersion"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.getRegisteredDatasetsVersion">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">getRegisteredDatasetsVersion</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the registered datasets version indicator</span>
+<span class="sd">        :return:  A dictionary of registered datasets</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_registeredDatasetsVersion</span></div>
+
+<div class="viewcode-block" id="DatasetProvider.getTableGenerator"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.getTableGenerator">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">getTableGenerator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sparkSession</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">tableName</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rows</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">partitions</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+                          <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Gets data generation instance that will produce table for named table</span>
+
+<span class="sd">        :param sparkSession: Spark session to use</span>
+<span class="sd">        :param tableName: Name of table to provide</span>
+<span class="sd">        :param rows: Number of rows requested</span>
+<span class="sd">        :param partitions: Number of partitions requested</span>
+<span class="sd">        :param autoSizePartitions: Whether to automatically size the partitions from the number of rows</span>
+<span class="sd">        :param options: Options passed to generate the table</span>
+<span class="sd">        :return: DataGenerator instance to generate table if successful, throws error otherwise</span>
+
+<span class="sd">        Implementors of the individual data providers are responsible for sizing partitions for the datasets based</span>
+<span class="sd">        on the number of rows and columns. The number of partitions can be computed based on the number of rows</span>
+<span class="sd">        and columns using the `autoComputePartitions` method.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Base data provider does not provide any table generation specifications!&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DatasetProvider.getAssociatedDataset"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.getAssociatedDataset">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">getAssociatedDataset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sparkSession</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">tableName</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rows</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">partitions</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+                             <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets associated datasets that are used in conjunction with the provider datasets.</span>
+<span class="sd">        These may be associated lookup tables, tables that execute benchmarks or exercise key features as part of</span>
+<span class="sd">        their use</span>
+
+<span class="sd">        :param sparkSession: Spark session to use</span>
+<span class="sd">        :param tableName: Name of table to provide</span>
+<span class="sd">        :param rows: Number of rows requested</span>
+<span class="sd">        :param partitions: Number of partitions requested</span>
+<span class="sd">        :param autoSizePartitions: Whether to automatically size the partitions from the number of rows</span>
+<span class="sd">        :param options: Options passed to generate the table</span>
+<span class="sd">        :return: DataGenerator instance to generate table if successful, throws error otherwise</span>
+
+<span class="sd">        Implementors of the individual data providers are responsible for sizing partitions for the datasets based</span>
+<span class="sd">        on the number of rows and columns. The number of partitions can be computed based on the number of rows</span>
+<span class="sd">        and columns using the `autoComputePartitions` method.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Base data provider does not produce any supporting tables!&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DatasetProvider.allowed_options"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.allowed_options">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">allowed_options</span><span class="p">(</span><span class="n">options</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Decorator to enforce allowed options</span>
+
+<span class="sd">            Used to document and enforce what options are allowed for each dataset provider implementation</span>
+<span class="sd">            If the signature of the getTableGenerator method changes, change the DEFAULT_OPTIONS constant</span>
+<span class="sd">            to include options that are always allowed</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">DEFAULT_OPTIONS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;sparkSession&quot;</span><span class="p">,</span> <span class="s2">&quot;tableName&quot;</span><span class="p">,</span> <span class="s2">&quot;rows&quot;</span><span class="p">,</span> <span class="s2">&quot;partitions&quot;</span><span class="p">]</span>
+
+        <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+            <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+            <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+                <span class="n">bad_options</span> <span class="o">=</span> <span class="p">[</span><span class="n">keyword_arg</span> <span class="k">for</span> <span class="n">keyword_arg</span> <span class="ow">in</span> <span class="n">kwargs</span>
+                               <span class="k">if</span> <span class="n">keyword_arg</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">DEFAULT_OPTIONS</span> <span class="ow">and</span> <span class="n">keyword_arg</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">options</span><span class="p">]</span>
+
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bad_options</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">errorMessage</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;The following options are unsupported by provider: [</span><span class="si">{</span><span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bad_options</span><span class="p">)</span><span class="si">}</span><span class="s2">]&quot;&quot;&quot;</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">errorMessage</span><span class="p">)</span>
+
+                <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">wrapper</span>
+
+        <span class="k">return</span> <span class="n">decorator</span></div>
+
+<div class="viewcode-block" id="DatasetProvider.checkOptions"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.checkOptions">[docs]</a>    <span class="k">def</span> <span class="nf">checkOptions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">allowedOptions</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Check that options are valid</span>
+
+<span class="sd">        :param options: options to check as dict</span>
+<span class="sd">        :param allowedOptions: allowed options as list of strings</span>
+<span class="sd">        :return: self</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">options</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">assert</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">allowedOptions</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Invalid option &#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="DatasetProvider.autoComputePartitions"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.autoComputePartitions">[docs]</a>    <span class="k">def</span> <span class="nf">autoComputePartitions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Compute the number of partitions based on rows and columns</span>
+
+<span class="sd">        :param rows: number of rows</span>
+<span class="sd">        :param columns: number of columns</span>
+<span class="sd">        :return: number of partitions</span>
+
+<span class="sd">        The equations is based on the number of rows and columns. It will produce 4 partitions as a minimum with</span>
+<span class="sd">        12 partitions with 5,000,000 rows and 100 columns.</span>
+
+<span class="sd">        For very large tables such as 1 billion rows and 10 columns, it will produce 18 partitions and increase</span>
+<span class="sd">        logarithmically with the number of rows and columns.</span>
+
+<span class="sd">        Implementors of standard datasets can chose to scale this value or use their own calculation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_PARTITIONS</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">rows</span> <span class="o">/</span> <span class="mi">350_000</span><span class="p">)</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">columns</span><span class="p">))))</span></div>
+
+<div class="viewcode-block" id="DatasetProvider.NoAssociatedDatasetsMixin"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.NoAssociatedDatasetsMixin">[docs]</a>    <span class="k">class</span> <span class="nc">NoAssociatedDatasetsMixin</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Use this mixin to provide default implementation for data provider when it does not provide</span>
+<span class="sd">            any associated datasets</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="DatasetProvider.NoAssociatedDatasetsMixin.getAssociatedDataset"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.NoAssociatedDatasetsMixin.getAssociatedDataset">[docs]</a>        <span class="k">def</span> <span class="nf">getAssociatedDataset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sparkSession</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">tableName</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rows</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">partitions</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+                                 <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Data provider does not produce any associated datasets!&quot;</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="DatasetProvider.DatasetDecoratorUtils"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.DatasetDecoratorUtils">[docs]</a>    <span class="k">class</span> <span class="nc">DatasetDecoratorUtils</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Defines the predefined_dataset decorator</span>
+
+<span class="sd">            :param cls: target class to apply decorator to</span>
+<span class="sd">            :param name: name of the dataset</span>
+<span class="sd">            :param tables: list of tables produced by the dataset provider, if None, defaults to [ DEFAULT_TABLE_NAME ]</span>
+<span class="sd">            :param primaryTable: primary table provided by dataset. Defaults to first table of table list</span>
+<span class="sd">            :param summary: Summary information for the dataset. If None, will be derived from target class name</span>
+<span class="sd">            :param description: Detailed description of the class. If None, will use the target class doc string</span>
+<span class="sd">            :param associatedDatasets: list of associated datasets produced by the dataset provider</span>
+<span class="sd">            :param supportsStreaming: Whether data set can be used in streaming scenarios</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tables</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">primaryTable</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">summary</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                     <span class="n">associatedDatasets</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">supportsStreaming</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_targetCls</span> <span class="o">=</span> <span class="bp">cls</span>
+
+            <span class="c1"># compute the data set provider name if not provided.</span>
+            <span class="c1"># default name will be &quot;providers/{classname}&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_datasetName</span> <span class="o">=</span> <span class="n">name</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;providers/</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span>
+
+            <span class="c1"># compute list of tables if not provided</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_tables</span> <span class="o">=</span> <span class="n">tables</span> <span class="k">if</span> <span class="n">tables</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[</span><span class="n">DatasetProvider</span><span class="o">.</span><span class="n">DEFAULT_TABLE_NAME</span><span class="p">]</span>
+
+            <span class="c1"># compute the primary table if not provided</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_primaryTable</span> <span class="o">=</span> <span class="n">primaryTable</span> <span class="k">if</span> <span class="n">primaryTable</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tables</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="c1"># compute the summary if not provided</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_summary</span> <span class="o">=</span> <span class="n">summary</span> <span class="k">if</span> <span class="n">summary</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;Dataset implemented by &#39;</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_supportsStreaming</span> <span class="o">=</span> <span class="n">supportsStreaming</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_associatedDatasets</span> <span class="o">=</span> <span class="n">associatedDatasets</span> <span class="k">if</span> <span class="n">associatedDatasets</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
+
+            <span class="c1"># compute the description if not provided</span>
+            <span class="c1"># the default description will be the decorator target class&#39;s doc string</span>
+            <span class="k">if</span> <span class="n">description</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_description</span> <span class="o">=</span> <span class="n">description</span>
+            <span class="k">elif</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__doc__</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__doc__</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_description</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__doc__</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># if theres no doc string, then compute a more detailed description for the class</span>
+                <span class="n">generated_description</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="sa">f</span><span class="s2">&quot;The datasetProvider &#39;</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; provides a data spec for the &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_datasetName</span><span class="si">}</span><span class="s2">&#39; dataset&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;&quot;</span><span class="p">,</span>  <span class="c1"># empty line</span>
+                    <span class="sa">f</span><span class="s2">&quot;Summary: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_summary</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;&quot;</span><span class="p">,</span>  <span class="c1"># empty line</span>
+                    <span class="sa">f</span><span class="s2">&quot;Tables generators provided: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_tables</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;&quot;</span><span class="p">,</span>  <span class="c1"># empty line</span>
+                    <span class="sa">f</span><span class="s2">&quot;Primary table: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_primaryTable</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;&quot;</span>  <span class="c1"># empty line</span>
+                    <span class="sa">f</span><span class="s2">&quot;Associated datasets provided: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_associatedDatasets</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;&quot;</span><span class="p">,</span>  <span class="c1"># empty line</span>
+                    <span class="sa">f</span><span class="s2">&quot;Supports Streaming: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_supportsStreaming</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;&quot;</span><span class="p">,</span>  <span class="c1"># empty line</span>
+                <span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_description</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">generated_description</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DatasetProvider.DatasetDecoratorUtils.mkClass"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.DatasetDecoratorUtils.mkClass">[docs]</a>        <span class="k">def</span> <span class="nf">mkClass</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">autoRegister</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot; make the modified class for the Data Provider</span>
+
+<span class="sd">            Applies the decorator args as a metadata object on the class.</span>
+<span class="sd">            This is done at the class level as there is no instance of the target class at this point.</span>
+
+<span class="sd">            :return: Returns the target class object</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_targetCls</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># if self._targetCls is not None and (isinstance(self._targetCls, DatasetProvider) or</span>
+                <span class="c1">#                                    issubclass(self._targetCls, DatasetProvider)):</span>
+                <span class="n">dataset_desc</span> <span class="o">=</span> <span class="n">DatasetProvider</span><span class="o">.</span><span class="n">DatasetDefinition</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_datasetName</span><span class="p">,</span>
+                                                                 <span class="n">tables</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_tables</span><span class="p">,</span>
+                                                                 <span class="n">primaryTable</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_primaryTable</span><span class="p">,</span>
+                                                                 <span class="n">summary</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_summary</span><span class="p">,</span>
+                                                                 <span class="n">description</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_description</span><span class="p">,</span>
+                                                                 <span class="n">supportsStreaming</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_supportsStreaming</span><span class="p">,</span>
+                                                                 <span class="n">providerClass</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_targetCls</span><span class="p">,</span>
+                                                                 <span class="n">associatedDatasets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_associatedDatasets</span>
+                                                                 <span class="p">)</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_targetCls</span><span class="p">,</span> <span class="s2">&quot;_DATASET_DEFINITION&quot;</span><span class="p">,</span> <span class="n">dataset_desc</span><span class="p">)</span>
+                <span class="n">retval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_targetCls</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Decorator must be applied to a class&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">autoRegister</span><span class="p">:</span>
+                <span class="n">DatasetProvider</span><span class="o">.</span><span class="n">registerDataset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_targetCls</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">retval</span></div></div></div>
+
+
+<div class="viewcode-block" id="dataset_definition"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.dataset_definition">[docs]</a><span class="k">def</span> <span class="nf">dataset_definition</span><span class="p">(</span><span class="bp">cls</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">autoRegister</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>  <span class="c1"># pylint: disable=keyword-arg-before-vararg</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; decorator to define standard dataset definition</span>
+
+<span class="sd">    This is intended to be applied classes derived from DatasetProvider to simplify the implementation</span>
+<span class="sd">    of the predefined datasets.</span>
+
+<span class="sd">    :param cls: class object for subclass of DatasetProvider</span>
+<span class="sd">    :param args: positional args</span>
+<span class="sd">    :param autoRegister: whether to automatically register the dataset</span>
+<span class="sd">    :param kwargs: keyword args</span>
+<span class="sd">    :return: either instance of DatasetDecoratorUtils or function which will produce instance of this when called</span>
+
+<span class="sd">    This function is intended to be used as a decorator.</span>
+
+<span class="sd">    When applied without arguments, it will return a nested</span>
+<span class="sd">    wrapper function which will take the subsequent class object and apply the DatasetDecoratorUtils to it.</span>
+
+<span class="sd">    When applied with arguments, the arguments will be applied to the construct of the DatasetDecoratorUtils.</span>
+
+<span class="sd">    This allows for the use of either syntax for decorators</span>
+<span class="sd">    ```</span>
+<span class="sd">    @dataset_definition</span>
+<span class="sd">    class X(DatasetProvider)</span>
+<span class="sd">    ```</span>
+<span class="sd">    or</span>
+
+<span class="sd">    ```</span>
+<span class="sd">    @dataset_definition(name=&quot;basic/basic&quot;, tables=[&quot;primary&quot;])</span>
+<span class="sd">    class X(DatasetProvider)</span>
+<span class="sd">    ```</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">inner_wrapper</span><span class="p">(</span><span class="n">inner_cls</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">inner_args</span><span class="p">,</span> <span class="o">**</span><span class="n">inner_kwargs</span><span class="p">):</span>  <span class="c1"># pylint: disable=keyword-arg-before-vararg</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; The inner wrapper function is used to handle the case where the decorator is used with arguments.</span>
+<span class="sd">        It defers the application of the decorator to the target class until the target class is available.</span>
+
+<span class="sd">        :param inner_cls: inner class object</span>
+<span class="sd">        :param inner_args: inner args</span>
+<span class="sd">        :param inner_kwargs: inner keyword args</span>
+
+<span class="sd">        :return: Returns the target class object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">DatasetProvider</span><span class="o">.</span><span class="n">isValidDataProviderType</span><span class="p">(</span><span class="n">inner_cls</span><span class="p">),</span> \
+                <span class="sa">f</span><span class="s2">&quot;Target class of decorator (</span><span class="si">{</span><span class="n">inner_cls</span><span class="si">}</span><span class="s2">) must inherit from DataProvider&quot;</span>
+            <span class="k">return</span> <span class="n">DatasetProvider</span><span class="o">.</span><span class="n">DatasetDecoratorUtils</span><span class="p">(</span><span class="n">inner_cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">mkClass</span><span class="p">(</span><span class="n">autoRegister</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid decorator usage: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">exc</span>
+
+    <span class="c1"># handle the decorator syntax with no arguments - when there are no arguments, the only argument passed is an</span>
+    <span class="c1"># implicit class object</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># handle decorator syntax with no arguments</span>
+            <span class="c1"># when no arguments are provided to the decorator, the only argument passed is an implicit class object</span>
+            <span class="k">assert</span> <span class="n">DatasetProvider</span><span class="o">.</span><span class="n">isValidDataProviderType</span><span class="p">(</span><span class="bp">cls</span><span class="p">),</span> \
+                <span class="sa">f</span><span class="s2">&quot;Target class of decorator (</span><span class="si">{</span><span class="bp">cls</span><span class="si">}</span><span class="s2">) must inherit from DataProvider&quot;</span>
+            <span class="k">return</span> <span class="n">DatasetProvider</span><span class="o">.</span><span class="n">DatasetDecoratorUtils</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">mkClass</span><span class="p">(</span><span class="n">autoRegister</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># handle decorator syntax with arguments - here we simply return the inner wrapper function</span>
+            <span class="c1"># and the subsequent call with arguments will apply the decorator to the target class</span>
+            <span class="k">return</span> <span class="n">inner_wrapper</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid decorator usage: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022 - 2024, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

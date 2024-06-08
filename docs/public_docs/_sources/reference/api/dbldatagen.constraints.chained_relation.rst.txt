@@ -1,0 +1,7 @@
+dbldatagen.constraints.chained\_relation module
+===============================================
+
+.. automodule:: dbldatagen.constraints.chained_relation
+   :members:
+   :undoc-members:
+   :show-inheritance:

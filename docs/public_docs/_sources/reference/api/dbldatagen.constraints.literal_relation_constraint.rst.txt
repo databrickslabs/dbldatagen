@@ -1,0 +1,7 @@
+dbldatagen.constraints.literal\_relation\_constraint module
+===========================================================
+
+.. automodule:: dbldatagen.constraints.literal_relation_constraint
+   :members:
+   :undoc-members:
+   :show-inheritance:

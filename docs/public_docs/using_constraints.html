@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Using Constraints to control data generation &mdash; Databricks Labs Data Generator 0.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/tdg.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/clipboard.min.js"></script>
+        <script src="_static/copybutton.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Using Streaming Data" href="using_streaming_data.html" />
+    <link rel="prev" title="Repeatable Data Generation" href="repeatable_data_generation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_standard_datasets.html">Using standard datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Using constraints to control data generation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#how-constraints-are-implemented">How constraints are implemented</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example">Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#limitations">Limitations</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_from_existing_data.html">Generating synthetic data from existing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference/api/modules.html">The dbldatagen package API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Using Constraints to control data generation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/using_constraints.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="using-constraints-to-control-data-generation">
+<h1>Using Constraints to control data generation<a class="headerlink" href="#using-constraints-to-control-data-generation" title="Permalink to this heading"></a></h1>
+<p>You can use the <cite>constraints</cite> subpackage to limit the data generated to only data that satisfies specific conditions.</p>
+<p>While similar effects can be achieved by applying <cite>where</cite> clauses to the generated dataframe, the Constraints objects
+may use a variety of effects to satisfy the constraint, including filtering, modifying the data generation strategy
+or transforming the generated data.</p>
+<p>Any statistical distribution applied to the data generation through the use of objects in the <cite>distributions</cite>
+subpackage, or implicitly through the use of weights or other means, are only applied <strong>before</strong> the application
+of constraints.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When using constraints, the <cite>number of rows</cite> parameter applied to the data generation specification
+determines the number of rows generated <strong>before</strong> constraints are applied.</p>
+<p>Due to the possible filtering effects of constraints, the number of rows actually produced may be less, or even zero
+if there are no rows that satisfy the constraints.</p>
+</div>
+<section id="how-constraints-are-implemented">
+<h2>How constraints are implemented<a class="headerlink" href="#how-constraints-are-implemented" title="Permalink to this heading"></a></h2>
+<img alt="_images/generating_data_from_spec.png" src="_images/generating_data_from_spec.png" />
+<p>Constraints are implemented in the following ways:</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>The data generation specification may be modified to generate data that conforms more closely with the constraints</dt><dd><ul>
+<li><p>This may modify the internal column definitions</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>The Spark data frame columns may be transformed to conform with constraints</dt><dd><ul>
+<li><p>This may impact conformance with statistical distributions</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>The Spark data frame may be filtered (using <cite>where</cite> clauses) to conform with the constraints</dt><dd><ul>
+<li><p>This may reduce the final row count from the requested row count (or even completely filter all data)</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Generally speaking, the SQL expression constraints will be implemented purely using filtering whereas other
+constraints may use modification of the data generation spec and / or transformation.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>These modifications will be performed in-place on the the data generation specification. If the same
+data generation specification is being used to generate multiple data sets but with different constraints,
+it should be cloned before applying constraints.</p>
+</div>
+<p>The full documentation for the constraints can be found in the API documentation for the <cite>constraints</cite> subpackage.</p>
+</section>
+<section id="example">
+<h2>Example<a class="headerlink" href="#example" title="Permalink to this heading"></a></h2>
+<p>We’ll use a simplified customer purchase order to show constraints.</p>
+<p>For this dataset, customers with randomly generated names and email addresses will have orders represented by a
+product_sku code, an order_ts timestamp and a shipping_ts which may be null.</p>
+<p>While the example is somewhat contrived, as you could achieve resulting dataset more efficiently by computing
+a random shipping delay, we can use a constraint to discard any rows where the shipping timestamp is earlier than the
+order timestamp.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
+
+<span class="n">data_rows</span> <span class="o">=</span> <span class="mi">10000000</span>
+
+<span class="n">dataspec</span> <span class="o">=</span> <span class="n">dg</span><span class="o">.</span><span class="n">DataGenerator</span><span class="p">(</span><span class="n">spark</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="mi">10000000</span><span class="p">,</span> <span class="n">partitions</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+
+<span class="n">dataspec</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">dataspec</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">w </span><span class="se">\\</span><span class="s2">w|</span><span class="se">\\</span><span class="s2">w a. </span><span class="se">\\</span><span class="s2">w&quot;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span>
+        <span class="s2">&quot;product_sku&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="mi">1000000</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="mi">1000000</span> <span class="o">+</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;dr&quot;</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;email&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">w.</span><span class="se">\\</span><span class="s2">w@</span><span class="se">\\</span><span class="s2">w.com&quot;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;qty_ordered&quot;</span><span class="p">,</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="s2">&quot;normal&quot;</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;unit_price&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="mf">30.0</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="s2">&quot;normal&quot;</span><span class="p">,</span>
+                <span class="n">baseColumn</span><span class="o">=</span><span class="s2">&quot;product_sku&quot;</span><span class="p">,</span> <span class="n">baseColumnType</span><span class="o">=</span><span class="s2">&quot;hash&quot;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;order_ts&quot;</span><span class="p">,</span> <span class="s2">&quot;timestamp&quot;</span><span class="p">,</span> <span class="n">begin</span><span class="o">=</span><span class="s2">&quot;2020-01-01 01:00:00&quot;</span><span class="p">,</span>
+                <span class="n">end</span><span class="o">=</span><span class="s2">&quot;2020-12-31 23:59:00&quot;</span><span class="p">,</span>
+                <span class="n">interval</span><span class="o">=</span><span class="s2">&quot;1 minute&quot;</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="kc">True</span> <span class="p">)</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;shipping_ts&quot;</span><span class="p">,</span> <span class="s2">&quot;timestamp&quot;</span><span class="p">,</span> <span class="n">begin</span><span class="o">=</span><span class="s2">&quot;2020-01-05 01:00:00&quot;</span><span class="p">,</span>
+                <span class="n">end</span><span class="o">=</span><span class="s2">&quot;2020-12-31 23:59:00&quot;</span><span class="p">,</span>
+                <span class="n">interval</span><span class="o">=</span><span class="s2">&quot;1 minute&quot;</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">percentNulls</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">withSqlConstraint</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="n">shipping_ts</span> <span class="ow">is</span> <span class="n">null</span> <span class="ow">or</span> <span class="n">shipping_ts</span> <span class="o">&gt;</span> <span class="n">order_ts</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="n">df1</span> <span class="o">=</span> <span class="n">dataspec</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="limitations">
+<h2>Limitations<a class="headerlink" href="#limitations" title="Permalink to this heading"></a></h2>
+<p>The <cite>UniqueCombinations</cite> constraint is not supported on streaming dataframes.</p>
+<p>A similar effect can be achieved on a streaming dataframe with <cite>dropDuplicates</cite> but the choice of watermark,
+triggers, and other options may have a significant impact on performance and the effectiveness of the deduplication.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="repeatable_data_generation.html" class="btn btn-neutral float-left" title="Repeatable Data Generation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="using_streaming_data.html" class="btn btn-neutral float-right" title="Using Streaming Data" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022 - 2024, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

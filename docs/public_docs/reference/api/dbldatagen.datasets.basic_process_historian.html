@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>dbldatagen.datasets.basic_process_historian module &mdash; Databricks Labs Data Generator 0.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/tdg.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+        <script src="../../_static/clipboard.min.js"></script>
+        <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="dbldatagen.datasets.basic_telematics module" href="dbldatagen.datasets.basic_telematics.html" />
+    <link rel="prev" title="dbldatagen.datasets.basic_geometries module" href="dbldatagen.datasets.basic_geometries.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using_standard_datasets.html">Using standard datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using_constraints.html">Using constraints to control data generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_from_existing_data.html">Generating synthetic data from existing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">The dbldatagen package API</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="dbldatagen.html">dbldatagen package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="dbldatagen.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.constraints.html">dbldatagen.constraints package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="dbldatagen.datasets.html">dbldatagen.datasets package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.distributions.html">dbldatagen.distributions package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.html#module-dbldatagen">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">dbldatagen</a></li>
+          <li class="breadcrumb-item"><a href="dbldatagen.html">dbldatagen package</a></li>
+          <li class="breadcrumb-item"><a href="dbldatagen.datasets.html">dbldatagen.datasets package</a></li>
+      <li class="breadcrumb-item active">dbldatagen.datasets.basic_process_historian module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/reference/api/dbldatagen.datasets.basic_process_historian.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-dbldatagen.datasets.basic_process_historian">
+<span id="dbldatagen-datasets-basic-process-historian-module"></span><h1>dbldatagen.datasets.basic_process_historian module<a class="headerlink" href="#module-dbldatagen.datasets.basic_process_historian" title="Permalink to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">BasicProcessHistorianProvider</span></span><a class="reference internal" href="../../_modules/dbldatagen/datasets/basic_process_historian.html#BasicProcessHistorianProvider"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.NoAssociatedDatasetsMixin" title="dbldatagen.datasets.dataset_provider.DatasetProvider.NoAssociatedDatasetsMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">NoAssociatedDatasetsMixin</span></code></a>, <a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider" title="dbldatagen.datasets.dataset_provider.DatasetProvider"><code class="xref py py-class docutils literal notranslate"><span class="pre">DatasetProvider</span></code></a></p>
+<section id="basic-process-historian-dataset">
+<h2>Basic Process Historian Dataset<a class="headerlink" href="#basic-process-historian-dataset" title="Permalink to this heading"></a></h2>
+<p>This is a basic process historian data set with fields like plant ID, device ID, tag name, timestamp,
+value, and units of measure.</p>
+<dl class="simple">
+<dt>It takes the following options when retrieving the table:</dt><dd><ul class="simple">
+<li><p>random: if True, generates random data</p></li>
+<li><p>rows : number of rows to generate</p></li>
+<li><p>partitions: number of partitions to use</p></li>
+<li><p>numDevices: number of unique device IDs</p></li>
+<li><p>numPlants: number of unique plant IDs</p></li>
+<li><p>numTags: number of unique tag names</p></li>
+<li><p>startTimestamp: earliest timestamp for IOT time series data</p></li>
+<li><p>endTimestamp: latest timestamp for IOT time series data</p></li>
+<li><dl class="simple">
+<dt>dataQualityRatios: dictionary with <cite>pctQuestionable</cite>, <cite>pctSubstituted</cite>, and <cite>pctAnnotated</cite></dt><dd><p>values corresponding to the percentage of values to be marked <cite>is_questionable</cite>, <cite>is_substituted</cite>,
+or <cite>is_annotated</cite>, respectively</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+<p>As the data specification is a DataGenerator object, you can add further columns to the data set and
+add constraints (when the feature is available)</p>
+<p>Note that this datset does not use any features that would prevent it from being used as a source for a
+streaming dataframe, and so the flag <cite>supportsStreaming</cite> is set to True.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.ALLOWED_OPTIONS">
+<span class="sig-name descname"><span class="pre">ALLOWED_OPTIONS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['numDevices',</span> <span class="pre">'numPlants',</span> <span class="pre">'numTags',</span> <span class="pre">'startTimestamp',</span> <span class="pre">'endTimestamp',</span> <span class="pre">'dataQualityRatios',</span> <span class="pre">'random']</span></em><a class="headerlink" href="#dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.ALLOWED_OPTIONS" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.COLUMN_COUNT">
+<span class="sig-name descname"><span class="pre">COLUMN_COUNT</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">10</span></em><a class="headerlink" href="#dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.COLUMN_COUNT" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.DEFAULT_END_TIMESTAMP">
+<span class="sig-name descname"><span class="pre">DEFAULT_END_TIMESTAMP</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'2024-02-01</span> <span class="pre">00:00:00'</span></em><a class="headerlink" href="#dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.DEFAULT_END_TIMESTAMP" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.DEFAULT_NUM_DEVICES">
+<span class="sig-name descname"><span class="pre">DEFAULT_NUM_DEVICES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">10000</span></em><a class="headerlink" href="#dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.DEFAULT_NUM_DEVICES" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.DEFAULT_NUM_PLANTS">
+<span class="sig-name descname"><span class="pre">DEFAULT_NUM_PLANTS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">100</span></em><a class="headerlink" href="#dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.DEFAULT_NUM_PLANTS" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.DEFAULT_NUM_TAGS">
+<span class="sig-name descname"><span class="pre">DEFAULT_NUM_TAGS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">10</span></em><a class="headerlink" href="#dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.DEFAULT_NUM_TAGS" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.DEFAULT_START_TIMESTAMP">
+<span class="sig-name descname"><span class="pre">DEFAULT_START_TIMESTAMP</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'2024-01-01</span> <span class="pre">00:00:00'</span></em><a class="headerlink" href="#dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.DEFAULT_START_TIMESTAMP" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.MAX_DEVICE_ID">
+<span class="sig-name descname"><span class="pre">MAX_DEVICE_ID</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">9223372036854775807</span></em><a class="headerlink" href="#dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.MAX_DEVICE_ID" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.MAX_PROPERTY_VALUE">
+<span class="sig-name descname"><span class="pre">MAX_PROPERTY_VALUE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">60.0</span></em><a class="headerlink" href="#dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.MAX_PROPERTY_VALUE" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.MIN_DEVICE_ID">
+<span class="sig-name descname"><span class="pre">MIN_DEVICE_ID</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4294967296</span></em><a class="headerlink" href="#dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.MIN_DEVICE_ID" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.MIN_PROPERTY_VALUE">
+<span class="sig-name descname"><span class="pre">MIN_PROPERTY_VALUE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">50.0</span></em><a class="headerlink" href="#dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.MIN_PROPERTY_VALUE" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.getTableGenerator">
+<span class="sig-name descname"><span class="pre">getTableGenerator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sparkSession</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tableName</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rows</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partitions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/datasets/basic_process_historian.html#BasicProcessHistorianProvider.getTableGenerator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.getTableGenerator" title="Permalink to this definition"></a></dt>
+<dd><p>Gets data generation instance that will produce table for named table</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sparkSession</strong> – Spark session to use</p></li>
+<li><p><strong>tableName</strong> – Name of table to provide</p></li>
+<li><p><strong>rows</strong> – Number of rows requested</p></li>
+<li><p><strong>partitions</strong> – Number of partitions requested</p></li>
+<li><p><strong>autoSizePartitions</strong> – Whether to automatically size the partitions from the number of rows</p></li>
+<li><p><strong>options</strong> – Options passed to generate the table</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataGenerator instance to generate table if successful, throws error otherwise</p>
+</dd>
+</dl>
+<p>Implementors of the individual data providers are responsible for sizing partitions for the datasets based
+on the number of rows and columns. The number of partitions can be computed based on the number of rows
+and columns using the <cite>autoComputePartitions</cite> method.</p>
+</dd></dl>
+
+</section>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="dbldatagen.datasets.basic_geometries.html" class="btn btn-neutral float-left" title="dbldatagen.datasets.basic_geometries module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="dbldatagen.datasets.basic_telematics.html" class="btn btn-neutral float-right" title="dbldatagen.datasets.basic_telematics module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022 - 2024, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

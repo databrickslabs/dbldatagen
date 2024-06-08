@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>dbldatagen.datasets.multi_table_telephony_provider module &mdash; Databricks Labs Data Generator 0.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/tdg.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+        <script src="../../_static/clipboard.min.js"></script>
+        <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="dbldatagen.distributions package" href="dbldatagen.distributions.html" />
+    <link rel="prev" title="dbldatagen.datasets.dataset_provider module" href="dbldatagen.datasets.dataset_provider.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using_standard_datasets.html">Using standard datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using_constraints.html">Using constraints to control data generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_from_existing_data.html">Generating synthetic data from existing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">The dbldatagen package API</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="dbldatagen.html">dbldatagen package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="dbldatagen.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.constraints.html">dbldatagen.constraints package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="dbldatagen.datasets.html">dbldatagen.datasets package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.distributions.html">dbldatagen.distributions package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.html#module-dbldatagen">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">dbldatagen</a></li>
+          <li class="breadcrumb-item"><a href="dbldatagen.html">dbldatagen package</a></li>
+          <li class="breadcrumb-item"><a href="dbldatagen.datasets.html">dbldatagen.datasets package</a></li>
+      <li class="breadcrumb-item active">dbldatagen.datasets.multi_table_telephony_provider module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/reference/api/dbldatagen.datasets.multi_table_telephony_provider.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-dbldatagen.datasets.multi_table_telephony_provider">
+<span id="dbldatagen-datasets-multi-table-telephony-provider-module"></span><h1>dbldatagen.datasets.multi_table_telephony_provider module<a class="headerlink" href="#module-dbldatagen.datasets.multi_table_telephony_provider" title="Permalink to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultiTableTelephonyProvider</span></span><a class="reference internal" href="../../_modules/dbldatagen/datasets/multi_table_telephony_provider.html#MultiTableTelephonyProvider"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider" title="dbldatagen.datasets.dataset_provider.DatasetProvider"><code class="xref py py-class docutils literal notranslate"><span class="pre">DatasetProvider</span></code></a></p>
+<p>Telephony multi-table example from documentation</p>
+<p>See [<a class="reference external" href="https://databrickslabs.github.io/dbldatagen/public_docs/multi_table_data.html">https://databrickslabs.github.io/dbldatagen/public_docs/multi_table_data.html</a>]</p>
+<p>It generates one of several possible tables on each call</p>
+<p>plans - which model telephony calling plans
+customers - which model cellular customers
+device_events - which are used to model device events like calls and text messages</p>
+<p>Once the above tables have been computed, you can retrieve the combined tables for invoices
+using <cite>Datasets(…).getCombinedTable(“invoices”)</cite></p>
+<p>The following combined tables are available:
+invoices - computed from a join of the other tables to compute number of texts etc.</p>
+<p>While real world billing is different from this in with unlimited messaging etc, or prices per bands of usage,
+this simplified pricing model is useful in many scenarios where a dataset produced from the join of other
+datasets is needed.</p>
+<p>It can be used to tune join performance, or in many other benchmarking and testing applications.</p>
+<p>The following options are supported:
+- random - whether data is random or from each row’s seed value
+- numPlans - number of unique plans
+- numCustomers - number of unique customers
+- averageEventsPerDay - number of telephony events per customer per day
+- numDays - number of days to spread events over
+- dummyValues - number of dummy values to widen the tables</p>
+<p>When requesting the <cite>plans</cite> table, the <cite>numPlans</cite> parameter will determine the number of unique plans.
+The <cite>numCustomers</cite> parameter will determine the number of customers
+For device events, the number of customers * the average number of events per day * the number of days will
+determine the number of device events possible.</p>
+<p>While it is possible to specify the number of rows explicitly when getting each table generator, the default will
+be to compute the number of rows from these.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.CUSTOMER_MIN_VALUE">
+<span class="sig-name descname"><span class="pre">CUSTOMER_MIN_VALUE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1000</span></em><a class="headerlink" href="#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.CUSTOMER_MIN_VALUE" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.DEFAULT_AVG_EVENTS_PER_CUSTOMER">
+<span class="sig-name descname"><span class="pre">DEFAULT_AVG_EVENTS_PER_CUSTOMER</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">50</span></em><a class="headerlink" href="#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.DEFAULT_AVG_EVENTS_PER_CUSTOMER" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.DEFAULT_NUM_CUSTOMERS">
+<span class="sig-name descname"><span class="pre">DEFAULT_NUM_CUSTOMERS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">50000</span></em><a class="headerlink" href="#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.DEFAULT_NUM_CUSTOMERS" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.DEFAULT_NUM_DAYS">
+<span class="sig-name descname"><span class="pre">DEFAULT_NUM_DAYS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">31</span></em><a class="headerlink" href="#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.DEFAULT_NUM_DAYS" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.DEFAULT_NUM_PLANS">
+<span class="sig-name descname"><span class="pre">DEFAULT_NUM_PLANS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">20</span></em><a class="headerlink" href="#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.DEFAULT_NUM_PLANS" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.DEVICE_MIN_VALUE">
+<span class="sig-name descname"><span class="pre">DEVICE_MIN_VALUE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1000000000</span></em><a class="headerlink" href="#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.DEVICE_MIN_VALUE" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.MAX_LONG">
+<span class="sig-name descname"><span class="pre">MAX_LONG</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">9223372036854775807</span></em><a class="headerlink" href="#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.MAX_LONG" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.PLAN_MIN_VALUE">
+<span class="sig-name descname"><span class="pre">PLAN_MIN_VALUE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">100</span></em><a class="headerlink" href="#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.PLAN_MIN_VALUE" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.SUBSCRIBER_NUM_MIN_VALUE">
+<span class="sig-name descname"><span class="pre">SUBSCRIBER_NUM_MIN_VALUE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1000000000</span></em><a class="headerlink" href="#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.SUBSCRIBER_NUM_MIN_VALUE" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.getAssociatedDataset">
+<span class="sig-name descname"><span class="pre">getAssociatedDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sparkSession</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tableName</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rows</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partitions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/datasets/multi_table_telephony_provider.html#MultiTableTelephonyProvider.getAssociatedDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.getAssociatedDataset" title="Permalink to this definition"></a></dt>
+<dd><p>Gets associated datasets that are used in conjunction with the provider datasets.
+These may be associated lookup tables, tables that execute benchmarks or exercise key features as part of
+their use</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sparkSession</strong> – Spark session to use</p></li>
+<li><p><strong>tableName</strong> – Name of table to provide</p></li>
+<li><p><strong>rows</strong> – Number of rows requested</p></li>
+<li><p><strong>partitions</strong> – Number of partitions requested</p></li>
+<li><p><strong>autoSizePartitions</strong> – Whether to automatically size the partitions from the number of rows</p></li>
+<li><p><strong>options</strong> – Options passed to generate the table</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataGenerator instance to generate table if successful, throws error otherwise</p>
+</dd>
+</dl>
+<p>Implementors of the individual data providers are responsible for sizing partitions for the datasets based
+on the number of rows and columns. The number of partitions can be computed based on the number of rows
+and columns using the <cite>autoComputePartitions</cite> method.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.getCustomers">
+<span class="sig-name descname"><span class="pre">getCustomers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sparkSession</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rows</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partitions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generateRandom</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">numCustomers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">numPlans</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dummyValues</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/datasets/multi_table_telephony_provider.html#MultiTableTelephonyProvider.getCustomers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.getCustomers" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.getDeviceEvents">
+<span class="sig-name descname"><span class="pre">getDeviceEvents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sparkSession</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rows</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partitions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generateRandom</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">numCustomers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">numDays</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dummyValues</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">averageEventsPerCustomer</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/datasets/multi_table_telephony_provider.html#MultiTableTelephonyProvider.getDeviceEvents"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.getDeviceEvents" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.getPlans">
+<span class="sig-name descname"><span class="pre">getPlans</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sparkSession</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rows</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partitions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generateRandom</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">numPlans</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dummyValues</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/datasets/multi_table_telephony_provider.html#MultiTableTelephonyProvider.getPlans"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.getPlans" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.getTableGenerator">
+<span class="sig-name descname"><span class="pre">getTableGenerator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sparkSession</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tableName</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rows</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partitions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/dbldatagen/datasets/multi_table_telephony_provider.html#MultiTableTelephonyProvider.getTableGenerator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.getTableGenerator" title="Permalink to this definition"></a></dt>
+<dd><p>Gets data generation instance that will produce table for named table</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sparkSession</strong> – Spark session to use</p></li>
+<li><p><strong>tableName</strong> – Name of table to provide</p></li>
+<li><p><strong>rows</strong> – Number of rows requested</p></li>
+<li><p><strong>partitions</strong> – Number of partitions requested</p></li>
+<li><p><strong>autoSizePartitions</strong> – Whether to automatically size the partitions from the number of rows</p></li>
+<li><p><strong>options</strong> – Options passed to generate the table</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataGenerator instance to generate table if successful, throws error otherwise</p>
+</dd>
+</dl>
+<p>Implementors of the individual data providers are responsible for sizing partitions for the datasets based
+on the number of rows and columns. The number of partitions can be computed based on the number of rows
+and columns using the <cite>autoComputePartitions</cite> method.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="dbldatagen.datasets.dataset_provider.html" class="btn btn-neutral float-left" title="dbldatagen.datasets.dataset_provider module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="dbldatagen.distributions.html" class="btn btn-neutral float-right" title="dbldatagen.distributions package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022 - 2024, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

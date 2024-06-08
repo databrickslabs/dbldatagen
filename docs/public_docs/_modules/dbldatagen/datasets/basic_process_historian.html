@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>dbldatagen.datasets.basic_process_historian &mdash; Databricks Labs Data Generator 0.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/tdg.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../_static/clipboard.min.js"></script>
+        <script src="../../../_static/copybutton.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../using_standard_datasets.html">Using standard datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../using_constraints.html">Using constraints to control data generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generating_from_existing_data.html">Generating synthetic data from existing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/api/modules.html">The dbldatagen package API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">dbldatagen.datasets.basic_process_historian</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for dbldatagen.datasets.basic_process_historian</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">.dataset_provider</span> <span class="kn">import</span> <span class="n">DatasetProvider</span><span class="p">,</span> <span class="n">dataset_definition</span>
+
+
+<div class="viewcode-block" id="BasicProcessHistorianProvider"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.basic_process_historian.html#dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider">[docs]</a><span class="nd">@dataset_definition</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;basic/process_historian&quot;</span><span class="p">,</span>
+                    <span class="n">summary</span><span class="o">=</span><span class="s2">&quot;Basic Historian Data for Process Manufacturing&quot;</span><span class="p">,</span>
+                    <span class="n">autoRegister</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">supportsStreaming</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">BasicProcessHistorianProvider</span><span class="p">(</span><span class="n">DatasetProvider</span><span class="o">.</span><span class="n">NoAssociatedDatasetsMixin</span><span class="p">,</span> <span class="n">DatasetProvider</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Basic Process Historian Dataset</span>
+<span class="sd">    ===============================</span>
+
+<span class="sd">    This is a basic process historian data set with fields like plant ID, device ID, tag name, timestamp,</span>
+<span class="sd">    value, and units of measure.</span>
+
+<span class="sd">    It takes the following options when retrieving the table:</span>
+<span class="sd">        - random: if True, generates random data</span>
+<span class="sd">        - rows : number of rows to generate</span>
+<span class="sd">        - partitions: number of partitions to use</span>
+<span class="sd">        - numDevices: number of unique device IDs</span>
+<span class="sd">        - numPlants: number of unique plant IDs</span>
+<span class="sd">        - numTags: number of unique tag names</span>
+<span class="sd">        - startTimestamp: earliest timestamp for IOT time series data</span>
+<span class="sd">        - endTimestamp: latest timestamp for IOT time series data</span>
+<span class="sd">        - dataQualityRatios: dictionary with `pctQuestionable`, `pctSubstituted`, and `pctAnnotated`</span>
+<span class="sd">            values corresponding to the percentage of values to be marked `is_questionable`, `is_substituted`,</span>
+<span class="sd">            or `is_annotated`, respectively</span>
+
+<span class="sd">    As the data specification is a DataGenerator object, you can add further columns to the data set and</span>
+<span class="sd">    add constraints (when the feature is available)</span>
+
+<span class="sd">    Note that this datset does not use any features that would prevent it from being used as a source for a</span>
+<span class="sd">    streaming dataframe, and so the flag `supportsStreaming` is set to True.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">MIN_DEVICE_ID</span> <span class="o">=</span> <span class="mh">0x100000000</span>
+    <span class="n">MAX_DEVICE_ID</span> <span class="o">=</span> <span class="mi">9223372036854775807</span>
+    <span class="n">MIN_PROPERTY_VALUE</span> <span class="o">=</span> <span class="mf">50.0</span>
+    <span class="n">MAX_PROPERTY_VALUE</span> <span class="o">=</span> <span class="mf">60.0</span>
+    <span class="n">DEFAULT_NUM_DEVICES</span> <span class="o">=</span> <span class="mi">10000</span>
+    <span class="n">DEFAULT_NUM_PLANTS</span> <span class="o">=</span> <span class="mi">100</span>
+    <span class="n">DEFAULT_NUM_TAGS</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="n">DEFAULT_START_TIMESTAMP</span> <span class="o">=</span> <span class="s2">&quot;2024-01-01 00:00:00&quot;</span>
+    <span class="n">DEFAULT_END_TIMESTAMP</span> <span class="o">=</span> <span class="s2">&quot;2024-02-01 00:00:00&quot;</span>
+    <span class="n">COLUMN_COUNT</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="n">ALLOWED_OPTIONS</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;numDevices&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;numPlants&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;numTags&quot;</span><span class="p">,</span> 
+        <span class="s2">&quot;startTimestamp&quot;</span><span class="p">,</span> 
+        <span class="s2">&quot;endTimestamp&quot;</span><span class="p">,</span> 
+        <span class="s2">&quot;dataQualityRatios&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;random&quot;</span>
+    <span class="p">]</span>
+
+<div class="viewcode-block" id="BasicProcessHistorianProvider.getTableGenerator"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.basic_process_historian.html#dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.getTableGenerator">[docs]</a>    <span class="nd">@DatasetProvider</span><span class="o">.</span><span class="n">allowed_options</span><span class="p">(</span><span class="n">options</span><span class="o">=</span><span class="n">ALLOWED_OPTIONS</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">getTableGenerator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sparkSession</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">tableName</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rows</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">partitions</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>  <span class="c1"># import locally to avoid circular imports</span>
+        <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+        <span class="n">generateRandom</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;random&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">numDevices</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;numDevices&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_NUM_DEVICES</span><span class="p">)</span>
+        <span class="n">numPlants</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;numPlants&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_NUM_PLANTS</span><span class="p">)</span>
+        <span class="n">numTags</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;numTags&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_NUM_TAGS</span><span class="p">)</span>
+        <span class="n">startTimestamp</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;startTimestamp&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_START_TIMESTAMP</span><span class="p">)</span>
+        <span class="n">endTimestamp</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;endTimestamp&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_END_TIMESTAMP</span><span class="p">)</span>
+        <span class="n">dataQualityRatios</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dataQualityRatios&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="k">assert</span> <span class="n">tableName</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">tableName</span> <span class="o">==</span> <span class="n">DatasetProvider</span><span class="o">.</span><span class="n">DEFAULT_TABLE_NAME</span><span class="p">,</span> <span class="s2">&quot;Invalid table name&quot;</span>
+        <span class="k">if</span> <span class="n">rows</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">rows</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="n">DatasetProvider</span><span class="o">.</span><span class="n">DEFAULT_ROWS</span>
+        <span class="k">if</span> <span class="n">partitions</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">partitions</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">partitions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">autoComputePartitions</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">COLUMN_COUNT</span><span class="p">)</span>
+
+        <span class="n">tag_names</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;HEX-</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">j</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">numTags</span><span class="p">))))</span><span class="si">}</span><span class="s2">_INLET_TMP&quot;</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">numTags</span><span class="p">)]</span>
+        <span class="n">plant_ids</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;PLANT-</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">j</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">numPlants</span><span class="p">))))</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">numPlants</span><span class="p">)]</span>
+        <span class="n">testDataSpec</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">dg</span><span class="o">.</span><span class="n">DataGenerator</span><span class="p">(</span><span class="n">sparkSession</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;process_historian_data&quot;</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">rows</span><span class="p">,</span>
+                             <span class="n">partitions</span><span class="o">=</span><span class="n">partitions</span><span class="p">,</span>
+                             <span class="n">randomSeedMethod</span><span class="o">=</span><span class="s2">&quot;hash_fieldname&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;internal_device_id&quot;</span><span class="p">,</span> <span class="s2">&quot;long&quot;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">MIN_DEVICE_ID</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">MAX_DEVICE_ID</span><span class="p">,</span>
+                            <span class="n">uniqueValues</span><span class="o">=</span><span class="n">numDevices</span><span class="p">,</span> <span class="n">omit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">baseColumnType</span><span class="o">=</span><span class="s2">&quot;hash&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;device_id&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;0x</span><span class="si">%09x</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">baseColumn</span><span class="o">=</span><span class="s2">&quot;internal_device_id&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;plant_id&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">plant_ids</span><span class="p">,</span> <span class="n">baseColumn</span><span class="o">=</span><span class="s2">&quot;internal_device_id&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;tag_name&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">tag_names</span><span class="p">,</span> <span class="n">baseColumn</span><span class="o">=</span><span class="s2">&quot;internal_device_id&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;ts&quot;</span><span class="p">,</span> <span class="s2">&quot;timestamp&quot;</span><span class="p">,</span> <span class="n">begin</span><span class="o">=</span><span class="n">startTimestamp</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">endTimestamp</span><span class="p">,</span> 
+                            <span class="n">interval</span><span class="o">=</span><span class="s2">&quot;1 second&quot;</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="n">generateRandom</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">MIN_PROPERTY_VALUE</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">MAX_PROPERTY_VALUE</span><span class="p">,</span>
+                             <span class="n">step</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="n">generateRandom</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;engineering_units&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="n">expr</span><span class="o">=</span><span class="s2">&quot;&#39;Deg.F&#39;&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="c1"># Add the data quality columns if they were provided</span>
+        <span class="k">if</span> <span class="n">dataQualityRatios</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">&quot;pctQuestionable&quot;</span> <span class="ow">in</span> <span class="n">dataQualityRatios</span><span class="p">:</span>
+                <span class="n">testDataSpec</span> <span class="o">=</span> <span class="n">testDataSpec</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span>
+                    <span class="s2">&quot;is_questionable&quot;</span><span class="p">,</span> <span class="s2">&quot;boolean&quot;</span><span class="p">,</span>
+                    <span class="n">expr</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;rand() &lt; </span><span class="si">{</span><span class="n">dataQualityRatios</span><span class="p">[</span><span class="s1">&#39;pctQuestionable&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;pctSubstituted&quot;</span> <span class="ow">in</span> <span class="n">dataQualityRatios</span><span class="p">:</span>
+                <span class="n">testDataSpec</span> <span class="o">=</span> <span class="n">testDataSpec</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span>
+                    <span class="s2">&quot;is_substituted&quot;</span><span class="p">,</span> <span class="s2">&quot;boolean&quot;</span><span class="p">,</span>
+                    <span class="n">expr</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;rand() &lt; </span><span class="si">{</span><span class="n">dataQualityRatios</span><span class="p">[</span><span class="s1">&#39;pctSubstituted&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;pctAnnotated&quot;</span> <span class="ow">in</span> <span class="n">dataQualityRatios</span><span class="p">:</span>
+                <span class="n">testDataSpec</span> <span class="o">=</span> <span class="n">testDataSpec</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span>
+                    <span class="s2">&quot;is_annotated&quot;</span><span class="p">,</span> <span class="s2">&quot;boolean&quot;</span><span class="p">,</span>
+                    <span class="n">expr</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;rand() &lt; </span><span class="si">{</span><span class="n">dataQualityRatios</span><span class="p">[</span><span class="s1">&#39;pctAnnotated&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">testDataSpec</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022 - 2024, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

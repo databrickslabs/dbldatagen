@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quick and easy dataset generation with Standard Datasets (Experimental) &mdash; Databricks Labs Data Generator 0.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/tdg.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/clipboard.min.js"></script>
+        <script src="_static/copybutton.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Understanding and Using Data Ranges" href="DATARANGES.html" />
+    <link rel="prev" title="Generating Column Data" href="generating_column_data.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Using standard datasets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#simple-use">Simple use</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#customizing-rows-and-partitions">Customizing rows and partitions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#passing-additional-options">Passing additional options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#listing-available-datasets">Listing available datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#getting-details-of-a-dataset">Getting details of a dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#multi-table-use">Multi-table use</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#notes-for-developers">Notes for developers</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_constraints.html">Using constraints to control data generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_from_existing_data.html">Generating synthetic data from existing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference/api/modules.html">The dbldatagen package API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Quick and easy dataset generation with Standard Datasets (Experimental)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/using_standard_datasets.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="quick-and-easy-dataset-generation-with-standard-datasets-experimental">
+<h1>Quick and easy dataset generation with Standard Datasets (Experimental)<a class="headerlink" href="#quick-and-easy-dataset-generation-with-standard-datasets-experimental" title="Permalink to this heading"></a></h1>
+<p>The standard dataset mechanism is a new pluggable framework for generation of data generation patterns using
+predefined data set definitions.</p>
+<p>Standard datasets are provided by the registration of dataset provider classes with the standard dataset mechanism.
+These classes provide a mechanism for generating data frames with a data generation pattern (and optionally, a
+specific schema).</p>
+<dl class="simple">
+<dt>They can provide:</dt><dd><ul class="simple">
+<li><p>Preconfigured data generator instances that will produce data once the <cite>build()</cite> method is called.
+These data generation specifications are produced via invoking the <cite>Datasets.get()</cite> method.</p></li>
+<li><p>Associated tables or datasets that will produce prebuilt dataframes that can be used in conjunction with the
+preconfigured data generation instances. The are produced via invoking the <cite>Datasets.getAssociatedDataset()</cite>
+method.</p></li>
+<li><p>Multiple named tables generators and associated datasets.</p></li>
+</ul>
+</dd>
+</dl>
+<p>The overall goal is to allow provision of pre-canned definitions for data analysis and ML use cases such as
+benchmarks, datasets needed to explore common optimizations and architectural patterns, datasets needed for
+open competition style problems and to provide a convenient starting point for data generation.</p>
+<p>As the main <cite>Datasets.get()</cite> mechanism produces a Data Generator object, it can be further customized through
+addition of further columns, constraints, or modification of existing columns.</p>
+<p>The role of the associated datasets can vary - they may provide lookup data to be used in conjunction with the
+data generation instances produced, they may run a benchmark or validation over other datasets passed as parameters, or
+provide summary derived data from the data produced by the data generation instances.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In keeping with the varied roles of the associated datasets, the associated datasets may be retrieved using one of
+several methods to get the dataframes in a way that is self descriptive. The methods are:</p>
+<blockquote>
+<div><blockquote>
+<div><ul class="simple">
+<li><p><cite>Datasets.getAssociatedDataset()</cite> - returns a dataframe based on the supplied parameters and provider logic</p></li>
+<li><p><cite>Datasets.getSupportingDataset()</cite> - alias for <cite>Datasets.getAssociatedDataset()</cite></p></li>
+<li><p><cite>Datasets.getCombinedDataset()</cite> - alias for <cite>Datasets.getAssociatedDataset()</cite></p></li>
+<li><p><cite>Datasets.getEnrichedDataset()</cite> - alias for <cite>Datasets.getAssociatedDataset()</cite></p></li>
+<li><p><cite>Datasets.getSummaryDataset()</cite> - alias for <cite>Datasets.getAssociatedDataset()</cite></p></li>
+</ul>
+</div></blockquote>
+<p>The method names are intended to be self descriptive and to provide a clear indication of the role of the associated
+usage, but they are all aliases of <cite>getAssociatedDataset()</cite> and can be used interchangeably.</p>
+</div></blockquote>
+</div>
+<p>The standard datasets are also self documenting so that you can dynamically see what standard datasets are available,
+find further details of datasets and their data.</p>
+<section id="simple-use">
+<h2>Simple use<a class="headerlink" href="#simple-use" title="Permalink to this heading"></a></h2>
+<p>For the simplest use, you can simply select a standard dataset and generate a data frame from it.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">df</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">dg</span><span class="o">.</span><span class="n">Datasets</span><span class="p">(</span><span class="n">spark</span><span class="p">,</span> <span class="s2">&quot;basic/user&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+<span class="n">display</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In this case, the provider determines a default number of rows and partitions to generate.</p>
+</section>
+<section id="customizing-rows-and-partitions">
+<h2>Customizing rows and partitions<a class="headerlink" href="#customizing-rows-and-partitions" title="Permalink to this heading"></a></h2>
+<p>You can pass arguments such as <cite>rows</cite> and <cite>partitions</cite> to the <cite>get()</cite> method to customize the number of rows and
+partitions in the generated data frame.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">dg</span><span class="o">.</span><span class="n">Datasets</span><span class="p">(</span><span class="n">spark</span><span class="p">,</span> <span class="s2">&quot;basic/user&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">rows</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">partitions</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+<span class="n">display</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>These options are supported by all standard datasets.</p>
+</section>
+<section id="passing-additional-options">
+<h2>Passing additional options<a class="headerlink" href="#passing-additional-options" title="Permalink to this heading"></a></h2>
+<p>Specific dataset providers may support additional options that can be passed to the <cite>get()</cite> method.</p>
+<p>For example the <cite>basic/user</cite> dataset supports the <cite>dummyValues</cite> option to specify the number of dummy values to
+generate when a wider rows size is needed.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">dg</span><span class="o">.</span><span class="n">Datasets</span><span class="p">(</span><span class="n">spark</span><span class="p">,</span> <span class="s2">&quot;basic/user&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">rows</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">partitions</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">dummyValues</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+<span class="n">display</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="listing-available-datasets">
+<h2>Listing available datasets<a class="headerlink" href="#listing-available-datasets" title="Permalink to this heading"></a></h2>
+<p>The <cite>Datasets</cite> class provides a method <cite>list()</cite> that can be used to list the available datasets.</p>
+<p>The following example lists available datasets that start with the prefix <cite>basic</cite> and support streaming usage.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
+<span class="n">dg</span><span class="o">.</span><span class="n">Datasets</span><span class="o">.</span><span class="n">list</span><span class="p">(</span><span class="n">pattern</span><span class="o">=</span><span class="s2">&quot;basic.*&quot;</span><span class="p">,</span> <span class="n">supportsStreaming</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="getting-details-of-a-dataset">
+<h2>Getting details of a dataset<a class="headerlink" href="#getting-details-of-a-dataset" title="Permalink to this heading"></a></h2>
+<p>The <cite>Datasets</cite> class provides a method <cite>describe()</cite> that can be used to describe a particular dataset.
+The following example describes the <cite>basic/user</cite> dataset.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
+<span class="n">dg</span><span class="o">.</span><span class="n">Datasets</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s2">&quot;basic/user&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="multi-table-use">
+<h2>Multi-table use<a class="headerlink" href="#multi-table-use" title="Permalink to this heading"></a></h2>
+<p>You can use the multi-table provider capabilities to generate multiple datasets that can then be used in collaboratively
+to generate data for common architectural patterns.</p>
+<p>The following example gets the datasets and joins them as described in the multi-table section of the documentation.
+This can be useful for benchmarking of joins.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
+
+<span class="n">multiTableDS</span> <span class="o">=</span> <span class="n">dg</span><span class="o">.</span><span class="n">Datasets</span><span class="p">(</span><span class="n">spark</span><span class="p">,</span> <span class="s2">&quot;multi_table/telephony&quot;</span><span class="p">)</span>
+<span class="n">options</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;numPlans&quot;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span> <span class="s2">&quot;numCustomers&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">}</span>
+
+<span class="n">dfPlans</span> <span class="o">=</span> <span class="n">multiTableDS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">table</span><span class="o">=</span><span class="s2">&quot;plans&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+<span class="n">dfCustomers</span> <span class="o">=</span> <span class="n">multiTableDS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">table</span><span class="o">=</span><span class="s2">&quot;customers&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+<span class="n">dfDeviceEvents</span> <span class="o">=</span> <span class="n">multiTableDS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">table</span><span class="o">=</span><span class="s2">&quot;deviceEvents&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+
+<span class="n">dfInvoices</span> <span class="o">=</span> <span class="n">multiTableDS</span><span class="o">.</span><span class="n">getSummaryDataset</span><span class="p">(</span><span class="n">table</span><span class="o">=</span><span class="s2">&quot;invoices&quot;</span><span class="p">,</span>
+                                           <span class="n">plans</span><span class="o">=</span><span class="n">dfPlans</span><span class="p">,</span>
+                                           <span class="n">customers</span><span class="o">=</span><span class="n">dfCustomers</span><span class="p">,</span>
+                                           <span class="n">deviceEvents</span><span class="o">=</span><span class="n">dfDeviceEvents</span><span class="p">)</span>
+<span class="n">display</span><span class="p">(</span><span class="n">dfInvoices</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="notes-for-developers">
+<h2>Notes for developers<a class="headerlink" href="#notes-for-developers" title="Permalink to this heading"></a></h2>
+<p>To implement a dataset provider, you need to create a class that extends the <cite>DatasetProvider</cite> class and implements
+the <cite>getTableGenerator</cite> and <cite>getAssociatedDataset</cite> methods.</p>
+<p>The simplest way to declare the needed metadata is to use the <cite>&#64;dataset_provider</cite> decorator.
+Use the option <cite>autoRegister=True</cite> to automatically register the dataset provider with the standard dataset mechanism.</p>
+<p>See the <cite>BasicUserProvider</cite> and <cite>MultiTableTelephonyProvider</cite> dataset provider implementations in the datasets
+package for examples.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Implementing a dataset provider only requires implementing the <cite>getTableGenerator</cite> and
+<cite>getAssociatedDataset</cite> methods.</p>
+<p>The <cite>get</cite> method is provided by the <cite>Datasets</cite> class and should not be overridden.</p>
+<p>All of the aliased methods are mapped automatically to the <cite>getAssociatedDataset</cite> method.</p>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="generating_column_data.html" class="btn btn-neutral float-left" title="Generating Column Data" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="DATARANGES.html" class="btn btn-neutral float-right" title="Understanding and Using Data Ranges" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022 - 2024, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

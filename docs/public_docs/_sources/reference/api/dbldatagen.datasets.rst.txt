@@ -1,0 +1,24 @@
+dbldatagen.datasets package
+===========================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   dbldatagen.datasets.basic_geometries
+   dbldatagen.datasets.basic_process_historian
+   dbldatagen.datasets.basic_telematics
+   dbldatagen.datasets.basic_user
+   dbldatagen.datasets.benchmark_groupby
+   dbldatagen.datasets.dataset_provider
+   dbldatagen.datasets.multi_table_telephony_provider
+
+Module contents
+---------------
+
+.. automodule:: dbldatagen.datasets
+   :members:
+   :undoc-members:
+   :show-inheritance:

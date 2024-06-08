@@ -1,0 +1,7 @@
+dbldatagen.datasets\_object module
+==================================
+
+.. automodule:: dbldatagen.datasets_object
+   :members:
+   :undoc-members:
+   :show-inheritance:

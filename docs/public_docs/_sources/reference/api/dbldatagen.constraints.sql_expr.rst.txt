@@ -1,0 +1,7 @@
+dbldatagen.constraints.sql\_expr module
+=======================================
+
+.. automodule:: dbldatagen.constraints.sql_expr
+   :members:
+   :undoc-members:
+   :show-inheritance:

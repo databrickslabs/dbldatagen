@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>dbldatagen.html_utils &mdash; Databricks Labs Data Generator 0.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/tdg.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+        <script src="../../_static/clipboard.min.js"></script>
+        <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using_standard_datasets.html">Using standard datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using_constraints.html">Using constraints to control data generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_from_existing_data.html">Generating synthetic data from existing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference/api/modules.html">The dbldatagen package API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">dbldatagen.html_utils</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for dbldatagen.html_utils</h1><div class="highlight"><pre>
+<span></span><span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="c1">#</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This file defines the `HtmlUtils` classes and utility functions</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">system_time_millis</span>
+
+
+<div class="viewcode-block" id="HtmlUtils"><a class="viewcode-back" href="../../reference/api/dbldatagen.html_utils.html#dbldatagen.html_utils.HtmlUtils">[docs]</a><span class="k">class</span> <span class="nc">HtmlUtils</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Utility class for formatting code as HTML and other notebook related formatting</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<div class="viewcode-block" id="HtmlUtils.formatCodeAsHtml"><a class="viewcode-back" href="../../reference/api/dbldatagen.html_utils.html#dbldatagen.html_utils.HtmlUtils.formatCodeAsHtml">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">formatCodeAsHtml</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">codeText</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Formats supplied code as Html suitable for use with notebook ``displayHTML``</span>
+
+<span class="sd">        :param codeText: Code to be wrapped in html section</span>
+<span class="sd">        :return: Html string</span>
+
+<span class="sd">        This will wrap the code with a html section using html ``pre`` and ``code`` tags.</span>
+
+<span class="sd">        It adds a copy text to clipboard button to enable users to easily copy the code to the clipboard.</span>
+
+<span class="sd">        It does not reformat code so supplied code should be preformatted into lines.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            As the notebook environment uses IFrames in rendering html within ``displayHtml``, it cannot use</span>
+<span class="sd">            the newer ``navigator`` based functionality as this is blocked for cross domain IFrames by default.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ts</span> <span class="o">=</span> <span class="n">system_time_millis</span><span class="p">()</span>
+
+        <span class="n">formattedCode</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">            &lt;h3&gt;Generated Code&lt;/h3&gt;</span>
+<span class="s2">            &lt;div style=&quot;outline: 1px dashed blue;&quot;&gt;&lt;p &gt;&lt;pre&gt;&lt;code id=&quot;generated_code_</span><span class="si">{</span><span class="n">ts</span><span class="si">}</span><span class="s2">&quot;&gt; </span>
+<span class="s2">              </span><span class="si">{</span><span class="n">codeText</span><span class="si">}</span>
+<span class="s2">            &lt;/code&gt;&lt;/pre&gt;&lt;/p&gt;&lt;/br&gt;</span>
+<span class="s2">            &lt;/div&gt;</span>
+<span class="s2">            &lt;p&gt;&lt;button type=&quot;button&quot; onclick=&quot;dbldatagen_copy_code_to_clipboard()&quot;&gt;Copy code to clipboard!&lt;/button&gt; &lt;/p&gt;</span>
+<span class="s2">            &lt;script&gt;</span>
+<span class="s2">            function dbldatagen_copy_code_to_clipboard() </span><span class="se">{{</span>
+<span class="s2">               try </span><span class="se">{{</span>
+<span class="s2">                 var r = document.createRange();</span>
+<span class="s2">                 r.selectNode(document.getElementById(&quot;generated_code_</span><span class="si">{</span><span class="n">ts</span><span class="si">}</span><span class="s2">&quot;));</span>
+<span class="s2">                 window.getSelection().removeAllRanges();</span>
+<span class="s2">                 window.getSelection().addRange(r);</span>
+<span class="s2">                 document.execCommand(&#39;copy&#39;);</span>
+<span class="s2">                 window.getSelection().removeAllRanges();</span>
+<span class="s2">               </span><span class="se">}}</span>
+<span class="s2">               catch </span><span class="se">{{</span>
+<span class="s2">                 console.error(&quot;copy to clipboard failed&quot;)</span>
+<span class="s2">               </span><span class="se">}}</span>
+<span class="s2">            </span><span class="se">}}</span>
+<span class="s2">        &lt;/script&gt;</span>
+<span class="s2">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">formattedCode</span></div>
+
+<div class="viewcode-block" id="HtmlUtils.formatTextAsHtml"><a class="viewcode-back" href="../../reference/api/dbldatagen.html_utils.html#dbldatagen.html_utils.HtmlUtils.formatTextAsHtml">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">formatTextAsHtml</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">textContent</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Output&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Formats supplied text as Html suitable for use with notebook ``displayHTML``</span>
+
+<span class="sd">        :param textContent: Text to be wrapped in html section</span>
+<span class="sd">        :param title: Title text to be used</span>
+<span class="sd">        :return: Html string</span>
+
+<span class="sd">        This will wrap the text content with with Html formatting</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ts</span> <span class="o">=</span> <span class="n">system_time_millis</span><span class="p">()</span>
+        <span class="n">formattedContent</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">            &lt;h3&gt;</span><span class="si">{</span><span class="n">title</span><span class="si">}</span><span class="s2">&lt;/h3&gt;</span>
+<span class="s2">            &lt;div style=&quot;outline: 1px dashed blue;&quot;&gt;&lt;p &gt;&lt;pre id=&quot;generated_content_</span><span class="si">{</span><span class="n">ts</span><span class="si">}</span><span class="s2">&quot;&gt; </span>
+<span class="s2">              </span><span class="si">{</span><span class="n">textContent</span><span class="si">}</span>
+<span class="s2">            &lt;/pre&gt;&lt;/p&gt;&lt;/br&gt;</span>
+<span class="s2">            &lt;/div&gt;</span>
+<span class="s2">            &lt;p&gt;&lt;button type=&quot;button&quot; onclick=&quot;dbldatagen_copy_to_clipboard()&quot;&gt;Copy output to clipboard!&lt;/button&gt;&lt;/p&gt;</span>
+<span class="s2">            &lt;script&gt;</span>
+<span class="s2">            function dbldatagen_copy_to_clipboard() </span><span class="se">{{</span>
+<span class="s2">               try </span><span class="se">{{</span>
+<span class="s2">                 var r = document.createRange();</span>
+<span class="s2">                 r.selectNode(document.getElementById(&quot;generated_content_</span><span class="si">{</span><span class="n">ts</span><span class="si">}</span><span class="s2">&quot;));</span>
+<span class="s2">                 window.getSelection().removeAllRanges();</span>
+<span class="s2">                 window.getSelection().addRange(r);</span>
+<span class="s2">                 document.execCommand(&#39;copy&#39;);</span>
+<span class="s2">                 window.getSelection().removeAllRanges();</span>
+<span class="s2">               </span><span class="se">}}</span>
+<span class="s2">               catch </span><span class="se">{{</span>
+<span class="s2">                 console.error(&quot;copy to clipboard failed&quot;)</span>
+<span class="s2">               </span><span class="se">}}</span>
+<span class="s2">            </span><span class="se">}}</span>
+<span class="s2">        &lt;/script&gt;</span>
+<span class="s2">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">formattedContent</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022 - 2024, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

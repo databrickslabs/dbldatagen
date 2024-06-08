@@ -1,0 +1,7 @@
+dbldatagen.datasets.basic\_user module
+======================================
+
+.. automodule:: dbldatagen.datasets.basic_user
+   :members:
+   :undoc-members:
+   :show-inheritance:

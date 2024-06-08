@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Troubleshooting &mdash; Databricks Labs Data Generator 0.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/tdg.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/clipboard.min.js"></script>
+        <script src="_static/copybutton.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Quick API Index" href="relnotes/quickindex.html" />
+    <link rel="prev" title="Using the Data Generator with Delta Live Tables" href="using_delta_live_tables.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_standard_datasets.html">Using standard datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_constraints.html">Using constraints to control data generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_from_existing_data.html">Generating synthetic data from existing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Troubleshooting data generation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#tools-and-aids-to-troubleshooting">Tools and aids to troubleshooting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#use-of-the-datagenerator-explain-method">Use of the datagenerator <cite>explain</cite> method</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#operational-message-logging">Operational message logging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#examining-log-outputs">Examining log outputs</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#common-issues-and-resolution">Common issues and resolution</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#attempting-to-add-a-column-named-id">Attempting to add a column named <cite>id</cite></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#attempting-to-compute-column-before-dependent-columns-are-computed">Attempting to compute column before dependent columns are computed</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference/api/modules.html">The dbldatagen package API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Troubleshooting</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/troubleshooting.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="troubleshooting">
+<h1>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this heading"></a></h1>
+<section id="tools-and-aids-to-troubleshooting">
+<h2>Tools and aids to troubleshooting<a class="headerlink" href="#tools-and-aids-to-troubleshooting" title="Permalink to this heading"></a></h2>
+<section id="use-of-the-datagenerator-explain-method">
+<h3>Use of the datagenerator <cite>explain</cite> method<a class="headerlink" href="#use-of-the-datagenerator-explain-method" title="Permalink to this heading"></a></h3>
+<p>To aid in debugging data generation issues, you may use the <cite>explain</cite> method of the
+data generator class to produce a synopsis of how the data will be generated.</p>
+<p>If run after the <cite>build</cite> method was invoked, the output will include an execution history explaining how the
+data was generated.</p>
+<p>See:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference internal" href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator.explain" title="dbldatagen.data_generator.DataGenerator.explain"><code class="xref py py-data docutils literal notranslate"><span class="pre">explain</span></code></a></p></li>
+</ul>
+</div></blockquote>
+<p>You may also configure the data generator to produce more verbose output when building the
+dataspec and the resulting data set.</p>
+<p>To do this, set the <code class="docutils literal notranslate"><span class="pre">verbose</span></code> option to <code class="docutils literal notranslate"><span class="pre">True</span></code> when creating the dataspec.</p>
+<p>Additionally, setting the <code class="docutils literal notranslate"><span class="pre">debug</span></code> option to <code class="docutils literal notranslate"><span class="pre">True</span></code> will produce additional debug level output.
+These correspond to the <code class="docutils literal notranslate"><span class="pre">info</span></code> and <code class="docutils literal notranslate"><span class="pre">debug</span></code> log levels of the internal messages.</p>
+<p>For example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
+<span class="kn">import</span> <span class="nn">pyspark.sql.functions</span> <span class="k">as</span> <span class="nn">F</span>
+
+<span class="n">data_rows</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="mi">1000</span> <span class="o">*</span> <span class="mi">1000</span>
+
+<span class="n">uniqueCustomers</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="mi">1000000</span>
+
+<span class="n">dataspec</span> <span class="o">=</span> <span class="p">(</span><span class="n">dg</span><span class="o">.</span><span class="n">DataGenerator</span><span class="p">(</span><span class="n">spark</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">data_rows</span><span class="p">,</span> <span class="n">partitions</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+               <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;customer_id&quot;</span><span class="p">,</span><span class="s2">&quot;long&quot;</span><span class="p">,</span> <span class="n">uniqueValues</span><span class="o">=</span><span class="n">uniqueCustomers</span><span class="p">)</span>
+               <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;city&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;\w&quot;</span><span class="p">)</span>
+               <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;\w \w|\w \w \w&quot;</span><span class="p">)</span>
+               <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;email&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;\w@\w.com|\w@\w.org|\w.\w@\w.com&quot;</span><span class="p">)</span>
+               <span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">dataspec</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+
+<span class="n">display</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>   <span class="n">df1</span> <span class="o">=</span> <span class="n">dataspec</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+</pre></div>
+</div>
+<dl class="simple">
+<dt>See:</dt><dd><ul class="simple">
+<li><p><a class="reference internal" href="reference/api/dbldatagen.data_generator.html#dbldatagen.data_generator.DataGenerator" title="dbldatagen.data_generator.DataGenerator"><code class="xref py py-data docutils literal notranslate"><span class="pre">DataGenerator</span></code></a></p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="operational-message-logging">
+<h3>Operational message logging<a class="headerlink" href="#operational-message-logging" title="Permalink to this heading"></a></h3>
+<aside class="sidebar">
+<p class="sidebar-title">Logging</p>
+<p>Warning, error and info messages are available via standard logging capabilities.</p>
+</aside>
+<p>By default the data generation process output produce error and warning messages via the
+Python <cite>logging</cite> module.</p>
+<p>In addition, the operation of the data generation process will record messages related to how
+the data is being or was generated to an internal explain log during the execution of the <cite>build</cite> method.</p>
+<p>So essentially the <cite>explain</cite> method displays the contents of the explain log from the last <cite>build</cite> invocation.
+If <cite>build</cite> has not yet been run, it will display the explain logging messages from the build planning process.</p>
+<p>Regular logging messages are generated using the standard logger.</p>
+<p>You can display additional logging messages by specifying the <cite>verbose</cite> option during creation of the <cite>DataGenerator</cite>
+instance.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Building planning performs pre-build tasks such as computing the order in which columns need to be generated.
+Build planning messages are available via the <cite>explain</cite> method</p>
+</div>
+</section>
+<section id="examining-log-outputs">
+<h3>Examining log outputs<a class="headerlink" href="#examining-log-outputs" title="Permalink to this heading"></a></h3>
+<p>Logging outputs will be displayed automatically when using the data generator in a Databricks notebook environment</p>
+</section>
+</section>
+<section id="common-issues-and-resolution">
+<h2>Common issues and resolution<a class="headerlink" href="#common-issues-and-resolution" title="Permalink to this heading"></a></h2>
+<section id="attempting-to-add-a-column-named-id">
+<h3>Attempting to add a column named <cite>id</cite><a class="headerlink" href="#attempting-to-add-a-column-named-id" title="Permalink to this heading"></a></h3>
+<aside class="sidebar">
+<p class="sidebar-title">Customizing seed column</p>
+<p>Use the <cite>seedColumnName</cite> attribute when creating <cite>DataGenerator</cite> instance to
+customize the seed column name.</p>
+</aside>
+<p>By default, the data generator reserves the column named <cite>id</cite> to act as the seed column for other columns in the
+data generation spec. However you may need to use the name <cite>id</cite> may be used for a specific column definition in the
+generated data which differs from the default seed column in operation.</p>
+<p>In this case, you may customize the name of the seed column to an alternative name via the <cite>seedColumnName</cite> parameter
+to the construction of the <cite>DataGenerator</cite> instance</p>
+<p>The following code shows its use:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
+<span class="kn">import</span> <span class="nn">pyspark.sql.functions</span> <span class="k">as</span> <span class="nn">F</span>
+
+<span class="n">data_rows</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="mi">1000</span> <span class="o">*</span> <span class="mi">1000</span>
+
+<span class="n">uniqueCustomers</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="mi">1000000</span>
+
+<span class="n">dataspec</span> <span class="o">=</span> <span class="p">(</span><span class="n">dg</span><span class="o">.</span><span class="n">DataGenerator</span><span class="p">(</span><span class="n">spark</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">data_rows</span><span class="p">,</span> <span class="n">partitions</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">seedColumnName</span><span class="o">=</span><span class="s1">&#39;_id&#39;</span><span class="p">)</span>
+               <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span><span class="s2">&quot;long&quot;</span><span class="p">,</span> <span class="n">uniqueValues</span><span class="o">=</span><span class="n">uniqueCustomers</span><span class="p">)</span>
+               <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;city&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;\w&quot;</span><span class="p">)</span>
+               <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;\w \w|\w \w \w&quot;</span><span class="p">)</span>
+               <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;email&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;\w@\w.com|\w@\w.org|\w.\w@\w.com&quot;</span><span class="p">)</span>
+               <span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">dataspec</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+
+<span class="n">display</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="attempting-to-compute-column-before-dependent-columns-are-computed">
+<h3>Attempting to compute column before dependent columns are computed<a class="headerlink" href="#attempting-to-compute-column-before-dependent-columns-are-computed" title="Permalink to this heading"></a></h3>
+<p>By default, the value for a column is computed based on some transformation of the seed column (named <cite>id</cite> by default).
+You can use other columns as the seed column for a given column via the <cite>baseColumn</cite> attribute - which takes either
+the name of column as a string or a Python list of column names, if the column is dependent on multiple columns.</p>
+<aside class="sidebar">
+<p class="sidebar-title">Column build ordering</p>
+<p>Column build order is optimized for best performance during data generation.
+To ensure columns are computed in correct order, use the <cite>baseColumn</cite> attribute.</p>
+</aside>
+<p>Use of the <cite>expr</cite> attribute (which allows for the use of arbitrary SQL expressions) can also create dependencies on
+other columns.</p>
+<p>If a column depends on other columns through referencing them in the body of the expression specified in the <cite>expr</cite>
+attribute, it is necessary to ensure that the columns on which the expression depends are computed first.
+Use the <cite>baseColumn</cite> attribute to ensure that dependent columns are computed first. The <cite>baseColumn</cite> attribute
+may specify either a string that names the column on which the current column depends or a list of column names
+specified as a list of strings.</p>
+<p>For example, the following code has dependencies in some of the <cite>expr</cite> SQL expressions on earlier columns.
+In these cases, we use the <cite>baseColumn</cite> attribute to ensure the correct column build order.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
+
+
+<span class="n">country_codes</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;CN&#39;</span><span class="p">,</span> <span class="s1">&#39;US&#39;</span><span class="p">,</span> <span class="s1">&#39;FR&#39;</span><span class="p">,</span> <span class="s1">&#39;CA&#39;</span><span class="p">,</span> <span class="s1">&#39;IN&#39;</span><span class="p">,</span> <span class="s1">&#39;JM&#39;</span><span class="p">,</span> <span class="s1">&#39;IE&#39;</span><span class="p">,</span> <span class="s1">&#39;PK&#39;</span><span class="p">,</span> <span class="s1">&#39;GB&#39;</span><span class="p">,</span> <span class="s1">&#39;IL&#39;</span><span class="p">,</span> <span class="s1">&#39;AU&#39;</span><span class="p">,</span> <span class="s1">&#39;SG&#39;</span><span class="p">,</span>
+                 <span class="s1">&#39;ES&#39;</span><span class="p">,</span> <span class="s1">&#39;GE&#39;</span><span class="p">,</span> <span class="s1">&#39;MX&#39;</span><span class="p">,</span> <span class="s1">&#39;ET&#39;</span><span class="p">,</span> <span class="s1">&#39;SA&#39;</span><span class="p">,</span> <span class="s1">&#39;LB&#39;</span><span class="p">,</span> <span class="s1">&#39;NL&#39;</span><span class="p">]</span>
+<span class="n">country_weights</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1300</span><span class="p">,</span> <span class="mi">365</span><span class="p">,</span> <span class="mi">67</span><span class="p">,</span> <span class="mi">38</span><span class="p">,</span> <span class="mi">1300</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">212</span><span class="p">,</span> <span class="mi">67</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">47</span><span class="p">,</span> <span class="mi">83</span><span class="p">,</span> <span class="mi">126</span><span class="p">,</span> <span class="mi">109</span><span class="p">,</span> <span class="mi">58</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span>
+                   <span class="mi">17</span><span class="p">]</span>
+
+<span class="n">device_population</span> <span class="o">=</span> <span class="mi">100000</span>
+
+<span class="n">manufacturers</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Delta corp&#39;</span><span class="p">,</span> <span class="s1">&#39;Xyzzy Inc.&#39;</span><span class="p">,</span> <span class="s1">&#39;Lakehouse Ltd&#39;</span><span class="p">,</span> <span class="s1">&#39;Acme Corp&#39;</span><span class="p">,</span> <span class="s1">&#39;Embanks Devices&#39;</span><span class="p">]</span>
+
+<span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;delta&#39;</span><span class="p">,</span> <span class="s1">&#39;xyzzy&#39;</span><span class="p">,</span> <span class="s1">&#39;lakehouse&#39;</span><span class="p">,</span> <span class="s1">&#39;gadget&#39;</span><span class="p">,</span> <span class="s1">&#39;droid&#39;</span><span class="p">]</span>
+
+<span class="n">testDataSpec</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">dg</span><span class="o">.</span><span class="n">DataGenerator</span><span class="p">(</span><span class="n">spark</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;device_data_set&quot;</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="mi">1000000</span><span class="p">,</span>
+                     <span class="n">partitions</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+                     <span class="n">randomSeedMethod</span><span class="o">=</span><span class="s1">&#39;hash_fieldname&#39;</span><span class="p">)</span>
+    <span class="c1"># we&#39;ll use hash of the base field to generate the ids to</span>
+    <span class="c1"># avoid a simple incrementing sequence</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;internal_device_id&quot;</span><span class="p">,</span> <span class="s2">&quot;long&quot;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="mh">0x1000000000000</span><span class="p">,</span>
+                <span class="n">uniqueValues</span><span class="o">=</span><span class="n">device_population</span><span class="p">,</span> <span class="n">omit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">baseColumnType</span><span class="o">=</span><span class="s2">&quot;hash&quot;</span><span class="p">)</span>
+
+    <span class="c1"># note for format strings, we must use &quot;%lx&quot; not &quot;%x&quot; as the</span>
+    <span class="c1"># underlying value is a long</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;device_id&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;0x</span><span class="si">%013x</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">baseColumn</span><span class="o">=</span><span class="s2">&quot;internal_device_id&quot;</span><span class="p">)</span>
+
+    <span class="c1"># the device / user attributes will be the same for the same device id</span>
+    <span class="c1"># so lets use the internal device id as the base column for these attribute</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;country&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">country_codes</span><span class="p">,</span>
+                <span class="n">weights</span><span class="o">=</span><span class="n">country_weights</span><span class="p">,</span>
+                <span class="n">baseColumn</span><span class="o">=</span><span class="s2">&quot;internal_device_id&quot;</span><span class="p">)</span>
+
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;manufacturer&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">manufacturers</span><span class="p">,</span>
+                <span class="n">baseColumn</span><span class="o">=</span><span class="s2">&quot;internal_device_id&quot;</span><span class="p">,</span> <span class="n">omit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;line&quot;</span><span class="p">,</span> <span class="n">StringType</span><span class="p">(),</span> <span class="n">values</span><span class="o">=</span><span class="n">lines</span><span class="p">,</span> <span class="n">baseColumn</span><span class="o">=</span><span class="s2">&quot;manufacturer&quot;</span><span class="p">,</span>
+                <span class="n">baseColumnType</span><span class="o">=</span><span class="s2">&quot;hash&quot;</span><span class="p">,</span> <span class="n">omit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># note use of baseColumn to control column build ordering</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;manufacturer_info&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+                 <span class="n">expr</span><span class="o">=</span><span class="s2">&quot;to_json(named_struct(&#39;line&#39;, line, &#39;manufacturer&#39;, manufacturer))&quot;</span><span class="p">,</span>
+                <span class="n">baseColumn</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;line&quot;</span><span class="p">,</span> <span class="s2">&quot;manufacturer&quot;</span><span class="p">]</span>
+               <span class="p">)</span>
+
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;event_type&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+                <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;activation&quot;</span><span class="p">,</span> <span class="s2">&quot;deactivation&quot;</span><span class="p">,</span> <span class="s2">&quot;plan change&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;telecoms activity&quot;</span><span class="p">,</span> <span class="s2">&quot;internet activity&quot;</span><span class="p">,</span> <span class="s2">&quot;device error&quot;</span><span class="p">],</span>
+                <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">omit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;event_ts&quot;</span><span class="p">,</span> <span class="s2">&quot;timestamp&quot;</span><span class="p">,</span>
+                <span class="n">begin</span><span class="o">=</span><span class="s2">&quot;2020-01-01 01:00:00&quot;</span><span class="p">,</span>
+                <span class="n">end</span><span class="o">=</span><span class="s2">&quot;2020-12-31 23:59:00&quot;</span><span class="p">,</span>
+                <span class="n">interval</span><span class="o">=</span><span class="s2">&quot;1 minute&quot;</span><span class="p">,</span>
+                <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">omit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># note use of baseColumn to control column build ordering</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;event_info&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+                 <span class="n">expr</span><span class="o">=</span><span class="s2">&quot;to_json(named_struct(&#39;event_type&#39;, event_type, &#39;event_ts&#39;, event_ts))&quot;</span><span class="p">,</span>
+                 <span class="n">baseColumn</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;event_type&quot;</span><span class="p">,</span> <span class="s2">&quot;event_ts&quot;</span><span class="p">])</span>
+    <span class="p">)</span>
+
+<span class="n">dfTestData</span> <span class="o">=</span> <span class="n">testDataSpec</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+
+<span class="n">display</span><span class="p">(</span><span class="n">dfTestData</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="using_delta_live_tables.html" class="btn btn-neutral float-left" title="Using the Data Generator with Delta Live Tables" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="relnotes/quickindex.html" class="btn btn-neutral float-right" title="Quick API Index" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022 - 2024, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>dbldatagen.constraints.constraint &mdash; Databricks Labs Data Generator 0.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/tdg.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../_static/clipboard.min.js"></script>
+        <script src="../../../_static/copybutton.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../using_standard_datasets.html">Using standard datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../using_constraints.html">Using constraints to control data generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generating_from_existing_data.html">Generating synthetic data from existing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/api/modules.html">The dbldatagen package API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">dbldatagen.constraints.constraint</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for dbldatagen.constraints.constraint</h1><div class="highlight"><pre>
+<span></span><span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="c1">#</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This module defines the Constraint class</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">types</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">pyspark.sql</span> <span class="kn">import</span> <span class="n">Column</span>
+
+
+<div class="viewcode-block" id="Constraint"><a class="viewcode-back" href="../../../reference/api/dbldatagen.constraints.constraint.html#dbldatagen.constraints.constraint.Constraint">[docs]</a><span class="k">class</span> <span class="nc">Constraint</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Constraint object - base class for predefined and custom constraints</span>
+
+<span class="sd">    This class is meant for internal use only.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">SUPPORTED_OPERATORS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;&lt;&quot;</span><span class="p">,</span> <span class="s2">&quot;&gt;&quot;</span><span class="p">,</span> <span class="s2">&quot;&gt;=&quot;</span><span class="p">,</span> <span class="s2">&quot;!=&quot;</span><span class="p">,</span> <span class="s2">&quot;==&quot;</span><span class="p">,</span> <span class="s2">&quot;=&quot;</span><span class="p">,</span> <span class="s2">&quot;&lt;=&quot;</span><span class="p">,</span> <span class="s2">&quot;&lt;&gt;&quot;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">supportsStreaming</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the constraint object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filterExpression</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calculatedFilterExpression</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_supportsStreaming</span> <span class="o">=</span> <span class="n">supportsStreaming</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_columnsFromListOrString</span><span class="p">(</span><span class="n">columns</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Get columns as  list of columns from string of list-like</span>
+
+<span class="sd">        :param columns: string or list of strings representing column names</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">columns</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">columns</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">columns</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">set</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">GeneratorType</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">columns</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Columns must be a string or list of strings&quot;</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_generate_relation_expression</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="n">relation</span><span class="p">,</span> <span class="n">valueExpression</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Generate comparison expression</span>
+
+<span class="sd">        :param column: Column to generate comparison against</span>
+<span class="sd">        :param relation: relation to implement</span>
+<span class="sd">        :param valueExpression: expression to compare to</span>
+<span class="sd">        :return: relation expression as variation of Pyspark SQL columns</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">relation</span> <span class="o">==</span> <span class="s2">&quot;&gt;&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">column</span> <span class="o">&gt;</span> <span class="n">valueExpression</span>
+        <span class="k">elif</span> <span class="n">relation</span> <span class="o">==</span> <span class="s2">&quot;&gt;=&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">column</span> <span class="o">&gt;=</span> <span class="n">valueExpression</span>
+        <span class="k">elif</span> <span class="n">relation</span> <span class="o">==</span> <span class="s2">&quot;&lt;&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">column</span> <span class="o">&lt;</span> <span class="n">valueExpression</span>
+        <span class="k">elif</span> <span class="n">relation</span> <span class="o">==</span> <span class="s2">&quot;&lt;=&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">column</span> <span class="o">&lt;=</span> <span class="n">valueExpression</span>
+        <span class="k">elif</span> <span class="n">relation</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;!=&quot;</span><span class="p">,</span> <span class="s2">&quot;&lt;&gt;&quot;</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="n">column</span> <span class="o">!=</span> <span class="n">valueExpression</span>
+        <span class="k">elif</span> <span class="n">relation</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;=&quot;</span><span class="p">,</span> <span class="s2">&quot;==&quot;</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="n">column</span> <span class="o">==</span> <span class="n">valueExpression</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported relation type &#39;</span><span class="si">{</span><span class="n">relation</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Constraint.mkCombinedConstraintExpression"><a class="viewcode-back" href="../../../reference/api/dbldatagen.constraints.constraint.html#dbldatagen.constraints.constraint.Constraint.mkCombinedConstraintExpression">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">mkCombinedConstraintExpression</span><span class="p">(</span><span class="n">constraintExpressions</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Generate a SQL expression that combines multiple constraints using AND</span>
+
+<span class="sd">        :param constraintExpressions: list of Pyspark SQL Column constraint expression objects</span>
+<span class="sd">        :return: combined constraint expression as Pyspark SQL Column object (or None if no valid expressions)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">constraintExpressions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">constraintExpressions</span><span class="p">,</span> <span class="nb">list</span><span class="p">),</span> \
+            <span class="s2">&quot;Constraints must be a list of Pyspark SQL Column instances&quot;</span>
+
+        <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">expr</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">Column</span><span class="p">)</span> <span class="k">for</span> <span class="n">expr</span> <span class="ow">in</span> <span class="n">constraintExpressions</span><span class="p">),</span> \
+            <span class="s2">&quot;Constraint expressions must be Pyspark SQL columns or None&quot;</span>
+
+        <span class="n">valid_constraint_expressions</span> <span class="o">=</span> <span class="p">[</span><span class="n">expr</span> <span class="k">for</span> <span class="n">expr</span> <span class="ow">in</span> <span class="n">constraintExpressions</span> <span class="k">if</span> <span class="n">expr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">valid_constraint_expressions</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">combined_constraint_expression</span> <span class="o">=</span> <span class="n">valid_constraint_expressions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="k">for</span> <span class="n">additional_constraint</span> <span class="ow">in</span> <span class="n">valid_constraint_expressions</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+                <span class="n">combined_constraint_expression</span> <span class="o">=</span> <span class="n">combined_constraint_expression</span> <span class="o">&amp;</span> <span class="n">additional_constraint</span>
+
+            <span class="k">return</span> <span class="n">combined_constraint_expression</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="Constraint.prepareDataGenerator"><a class="viewcode-back" href="../../../reference/api/dbldatagen.constraints.constraint.html#dbldatagen.constraints.constraint.Constraint.prepareDataGenerator">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">prepareDataGenerator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataGenerator</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Prepare the data generator to generate data that matches the constraint</span>
+
+<span class="sd">           This method may modify the data generation rules to meet the constraint</span>
+
+<span class="sd">           :param dataGenerator: Data generation object that will generate the dataframe</span>
+<span class="sd">           :return: modified or unmodified data generator</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Method prepareDataGenerator must be implemented in derived class&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Constraint.transformDataframe"><a class="viewcode-back" href="../../../reference/api/dbldatagen.constraints.constraint.html#dbldatagen.constraints.constraint.Constraint.transformDataframe">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">transformDataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataGenerator</span><span class="p">,</span> <span class="n">dataFrame</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Transform the dataframe to make data conform to constraint if possible</span>
+
+<span class="sd">           This method should not modify the dataGenerator - but may modify the dataframe</span>
+
+<span class="sd">           :param dataGenerator: Data generation object that generated the dataframe</span>
+<span class="sd">           :param dataFrame: generated dataframe</span>
+<span class="sd">           :return: modified or unmodified Spark dataframe</span>
+
+<span class="sd">           The default transformation returns the dataframe unmodified</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Method transformDataframe must be implemented in derived class&quot;</span><span class="p">)</span></div>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">_generateFilterExpression</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Generate a Pyspark SQL expression that may be used for filtering&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Method _generateFilterExpression must be implemented in derived class&quot;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">supportsStreaming</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Return True if the constraint supports streaming dataframes&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_supportsStreaming</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">filterExpression</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Return the filter expression (as instance of type Column that evaluates to True or non-True)&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculatedFilterExpression</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_filterExpression</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generateFilterExpression</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_calculatedFilterExpression</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filterExpression</span></div>
+
+
+<div class="viewcode-block" id="NoFilterMixin"><a class="viewcode-back" href="../../../reference/api/dbldatagen.constraints.constraint.html#dbldatagen.constraints.constraint.NoFilterMixin">[docs]</a><span class="k">class</span> <span class="nc">NoFilterMixin</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Mixin class to indicate that constraint has no filter expression</span>
+
+<span class="sd">    Intended to be used in implementation of the concrete constraint classes.</span>
+
+<span class="sd">    Use of the mixin class is optional but when used with the Constraint class and multiple inheritance,</span>
+<span class="sd">    it will provide a default implementation of the _generateFilterExpression method that satisfies</span>
+<span class="sd">    the abstract method requirement of the Constraint class.</span>
+
+<span class="sd">    When using mixins, place the mixin class first in the list of base classes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">_generateFilterExpression</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Generate a Pyspark SQL expression that may be used for filtering&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="NoPrepareTransformMixin"><a class="viewcode-back" href="../../../reference/api/dbldatagen.constraints.constraint.html#dbldatagen.constraints.constraint.NoPrepareTransformMixin">[docs]</a><span class="k">class</span> <span class="nc">NoPrepareTransformMixin</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Mixin class to indicate that constraint has no filter expression</span>
+
+<span class="sd">    Intended to be used in implementation of the concrete constraint classes.</span>
+
+<span class="sd">    Use of the mixin class is optional but when used with the Constraint class and multiple inheritance,</span>
+<span class="sd">    it will provide a default implementation of the `prepareDataGenerator` and `transformeDataFrame` methods</span>
+<span class="sd">    that satisfies the abstract method requirements of the Constraint class.</span>
+
+<span class="sd">    When using mixins, place the mixin class first in the list of base classes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="NoPrepareTransformMixin.prepareDataGenerator"><a class="viewcode-back" href="../../../reference/api/dbldatagen.constraints.constraint.html#dbldatagen.constraints.constraint.NoPrepareTransformMixin.prepareDataGenerator">[docs]</a>    <span class="k">def</span> <span class="nf">prepareDataGenerator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataGenerator</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Prepare the data generator to generate data that matches the constraint</span>
+
+<span class="sd">           This method may modify the data generation rules to meet the constraint</span>
+
+<span class="sd">           :param dataGenerator: Data generation object that will generate the dataframe</span>
+<span class="sd">           :return: modified or unmodified data generator</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">dataGenerator</span></div>
+
+<div class="viewcode-block" id="NoPrepareTransformMixin.transformDataframe"><a class="viewcode-back" href="../../../reference/api/dbldatagen.constraints.constraint.html#dbldatagen.constraints.constraint.NoPrepareTransformMixin.transformDataframe">[docs]</a>    <span class="k">def</span> <span class="nf">transformDataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataGenerator</span><span class="p">,</span> <span class="n">dataFrame</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Transform the dataframe to make data conform to constraint if possible</span>
+
+<span class="sd">           This method should not modify the dataGenerator - but may modify the dataframe</span>
+
+<span class="sd">           :param dataGenerator: Data generation object that generated the dataframe</span>
+<span class="sd">           :param dataFrame: generated dataframe</span>
+<span class="sd">           :return: modified or unmodified Spark dataframe</span>
+
+<span class="sd">           The default transformation returns the dataframe unmodified</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">dataFrame</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022 - 2024, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

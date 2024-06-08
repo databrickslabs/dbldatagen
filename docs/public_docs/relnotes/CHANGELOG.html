@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Databricks Labs Synthetic Data Generator Release Notes &mdash; Databricks Labs Data Generator 0.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/tdg.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+        <script src="../_static/clipboard.min.js"></script>
+        <script src="../_static/copybutton.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Dependencies for the Data Generator framework" href="requirements.html" />
+    <link rel="prev" title="Contributing to the Databricks Labs Data Generator" href="CONTRIBUTING.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../using_standard_datasets.html">Using standard datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../using_constraints.html">Using constraints to control data generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generating_from_existing_data.html">Generating synthetic data from existing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="quickindex.html">Quick API index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/api/modules.html">The dbldatagen package API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Change log</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#change-history">Change History</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#version-0-4-0">Version 0.4.0</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#changed">Changed</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#added">Added</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#version-0-3-6-post-1">Version 0.3.6 Post 1</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id1">Changed</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fixed">Fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#version-0-3-6">Version 0.3.6</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id2">Changed</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#notes">Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#version-0-3-5">Version 0.3.5</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id3">Changed</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#version-0-3-4-post-3">Version 0.3.4 Post 3</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">Changed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#version-0-3-4-post-2">Version 0.3.4 Post 2</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">Fixed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#version-0-3-4-post-1">Version 0.3.4 Post 1</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">Fixed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#acknowledgements">Acknowledgements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#version-0-3-4">Version 0.3.4</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id7">Changed</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id8">Added</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#version-0-3-3post2">Version 0.3.3post2</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id9">Changed</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id10">Fixed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id11">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#version-0-3-2">Version 0.3.2</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id12">Changed</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id13">Fixed</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id14">Added</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id15">Notes</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#version-0-3-1">Version 0.3.1</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id16">Changed</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id17">Fixed</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id18">Added</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id19">Notes</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#version-0-3-0">Version 0.3.0</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#changes">Changes</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#version-0-2-1">Version 0.2.1</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#features">Features</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#general-requirements">General Requirements</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Databricks Labs Synthetic Data Generator Release Notes</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/relnotes/CHANGELOG.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="databricks-labs-synthetic-data-generator-release-notes">
+<h1>Databricks Labs Synthetic Data Generator Release Notes<a class="headerlink" href="#databricks-labs-synthetic-data-generator-release-notes" title="Permalink to this heading"></a></h1>
+<section id="change-history">
+<h2>Change History<a class="headerlink" href="#change-history" title="Permalink to this heading"></a></h2>
+<p>All notable changes to the Databricks Labs Data Generator will be documented in this file.</p>
+<section id="version-0-4-0">
+<h3>Version 0.4.0<a class="headerlink" href="#version-0-4-0" title="Permalink to this heading"></a></h3>
+<section id="changed">
+<h4>Changed<a class="headerlink" href="#changed" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p>Updated minimum pyspark version to be 3.2.1, compatible with Databricks runtime 10.4 LTS or later</p></li>
+<li><p>Modified data generator to allow specification of constraints to the data generation process</p></li>
+<li><p>Updated documentation for generating text data.</p></li>
+<li><p>Modified data distribiutions to use abstract base classes</p></li>
+<li><p>migrated data distribution tests to use <code class="docutils literal notranslate"><span class="pre">pytest</span></code></p></li>
+<li><p>Additional standard datasets</p></li>
+</ul>
+</section>
+<section id="added">
+<h4>Added<a class="headerlink" href="#added" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p>Added classes for constraints on the data generation via new package <code class="docutils literal notranslate"><span class="pre">dbldatagen.constraints</span></code></p></li>
+<li><p>Added support for standard data sets via the new package <code class="docutils literal notranslate"><span class="pre">dbldatagen.datasets</span></code></p></li>
+</ul>
+</section>
+</section>
+<section id="version-0-3-6-post-1">
+<h3>Version 0.3.6 Post 1<a class="headerlink" href="#version-0-3-6-post-1" title="Permalink to this heading"></a></h3>
+<section id="id1">
+<h4>Changed<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p>Updated docs for complex data types / JSON to correct code examples</p></li>
+<li><p>Updated license file in public docs</p></li>
+</ul>
+</section>
+<section id="fixed">
+<h4>Fixed<a class="headerlink" href="#fixed" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p>Fixed scenario where <code class="docutils literal notranslate"><span class="pre">DataAnalyzer</span></code> is used on dataframe containing a column named <code class="docutils literal notranslate"><span class="pre">summary</span></code></p></li>
+</ul>
+</section>
+</section>
+<section id="version-0-3-6">
+<h3>Version 0.3.6<a class="headerlink" href="#version-0-3-6" title="Permalink to this heading"></a></h3>
+<section id="id2">
+<h4>Changed<a class="headerlink" href="#id2" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p>Updated readme to include details on which versions of Databricks runtime support Unity Catalog <code class="docutils literal notranslate"><span class="pre">shared</span></code> access mode.</p></li>
+<li><p>Updated code to use default parallelism of 200 when using a shared Spark session</p></li>
+<li><p>Updated code to use Spark’s SQL function <code class="docutils literal notranslate"><span class="pre">element_at</span></code> instead of array indexing due to incompatibility</p></li>
+</ul>
+</section>
+</section>
+<section id="notes">
+<h3>Notes<a class="headerlink" href="#notes" title="Permalink to this heading"></a></h3>
+<ul class="simple">
+<li><p>Ths version marks the changing minimum version of Databricks runtime to 10.4 LTS and later releases.</p></li>
+<li><p>While there are no known incompatibilities with Databricks 9.1 LTS, we will not test against this release</p></li>
+</ul>
+</section>
+<section id="version-0-3-5">
+<h3>Version 0.3.5<a class="headerlink" href="#version-0-3-5" title="Permalink to this heading"></a></h3>
+<section id="id3">
+<h4>Changed<a class="headerlink" href="#id3" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p>Added formatting of generated code as Html for script methods</p></li>
+<li><p>Allow use of inferred types on <code class="docutils literal notranslate"><span class="pre">withColumn</span></code> method when <code class="docutils literal notranslate"><span class="pre">expr</span></code> attribute is used</p></li>
+<li><p>Added <code class="docutils literal notranslate"><span class="pre">withStructColumn</span></code> method to allow simplified generation of struct and JSON columns</p></li>
+<li><p>Modified pipfile to use newer version of package specifications</p></li>
+</ul>
+</section>
+</section>
+<section id="version-0-3-4-post-3">
+<h3>Version 0.3.4 Post 3<a class="headerlink" href="#version-0-3-4-post-3" title="Permalink to this heading"></a></h3>
+</section>
+<section id="id4">
+<h3>Changed<a class="headerlink" href="#id4" title="Permalink to this heading"></a></h3>
+<ul class="simple">
+<li><p>Build now uses Python 3.8.12. Updated build process to reflect that.</p></li>
+</ul>
+</section>
+<section id="version-0-3-4-post-2">
+<h3>Version 0.3.4 Post 2<a class="headerlink" href="#version-0-3-4-post-2" title="Permalink to this heading"></a></h3>
+</section>
+<section id="id5">
+<h3>Fixed<a class="headerlink" href="#id5" title="Permalink to this heading"></a></h3>
+<ul class="simple">
+<li><p>Fix for use of values in columns of type array, map and struct</p></li>
+<li><p>Fix for generation of arrays via <code class="docutils literal notranslate"><span class="pre">numFeatures</span></code> and <code class="docutils literal notranslate"><span class="pre">structType</span></code> attributes when numFeatures has value of 1</p></li>
+</ul>
+</section>
+<section id="version-0-3-4-post-1">
+<h3>Version 0.3.4 Post 1<a class="headerlink" href="#version-0-3-4-post-1" title="Permalink to this heading"></a></h3>
+</section>
+<section id="id6">
+<h3>Fixed<a class="headerlink" href="#id6" title="Permalink to this heading"></a></h3>
+<ul class="simple">
+<li><p>Fix for use and configuration of root logger</p></li>
+</ul>
+</section>
+<section id="acknowledgements">
+<h3>Acknowledgements<a class="headerlink" href="#acknowledgements" title="Permalink to this heading"></a></h3>
+<p>Thanks to Marvin Schenkel for the contribution</p>
+</section>
+<section id="version-0-3-4">
+<h3>Version 0.3.4<a class="headerlink" href="#version-0-3-4" title="Permalink to this heading"></a></h3>
+<section id="id7">
+<h4>Changed<a class="headerlink" href="#id7" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p>Modified option to allow for range when specifying <code class="docutils literal notranslate"><span class="pre">numFeatures</span></code> with <code class="docutils literal notranslate"><span class="pre">structType='array'</span></code> to allow generation
+of varying number of columns</p></li>
+<li><p>When generating multi-column or array valued columns, compute random seed with different name for each column</p></li>
+<li><p>Additional build ordering enhancements to reduce circumstances where explicit base column must be specified</p></li>
+</ul>
+</section>
+<section id="id8">
+<h4>Added<a class="headerlink" href="#id8" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p>Scripting of data generation code from schema (Experimental)</p></li>
+<li><p>Scripting of data generation code from dataframe (Experimental)</p></li>
+<li><p>Added top level <code class="docutils literal notranslate"><span class="pre">random</span></code> attribute to data generator specification constructor</p></li>
+</ul>
+</section>
+</section>
+<section id="version-0-3-3post2">
+<h3>Version 0.3.3post2<a class="headerlink" href="#version-0-3-3post2" title="Permalink to this heading"></a></h3>
+<section id="id9">
+<h4>Changed<a class="headerlink" href="#id9" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p>Fixed use of logger in _version.py and in spark_singleton.py</p></li>
+<li><p>Fixed template issues</p></li>
+<li><p>Document reformatting and updates, related code comment changes</p></li>
+</ul>
+</section>
+</section>
+<section id="id10">
+<h3>Fixed<a class="headerlink" href="#id10" title="Permalink to this heading"></a></h3>
+<ul class="simple">
+<li><p>Apply pandas optimizations when generating multiple columns using same <code class="docutils literal notranslate"><span class="pre">withColumn</span></code> or <code class="docutils literal notranslate"><span class="pre">withColumnSpec</span></code></p></li>
+</ul>
+</section>
+<section id="id11">
+<h3>Added<a class="headerlink" href="#id11" title="Permalink to this heading"></a></h3>
+<ul class="simple">
+<li><p>Added use of prospector to build process to validate common code issues</p></li>
+</ul>
+</section>
+<section id="version-0-3-2">
+<h3>Version 0.3.2<a class="headerlink" href="#version-0-3-2" title="Permalink to this heading"></a></h3>
+<section id="id12">
+<h4>Changed<a class="headerlink" href="#id12" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p>Adjusted column build phase separation (i.e which select statement is used to build columns) so that a
+column with a SQL expression can refer to previously created columns without use of a <code class="docutils literal notranslate"><span class="pre">baseColumn</span></code> attribute</p></li>
+<li><p>Changed build labelling to comply with PEP440</p></li>
+</ul>
+</section>
+<section id="id13">
+<h4>Fixed<a class="headerlink" href="#id13" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p>Fixed compatibility of build with older versions of runtime that rely on <code class="docutils literal notranslate"><span class="pre">pyparsing</span></code> version 2.4.7</p></li>
+</ul>
+</section>
+<section id="id14">
+<h4>Added<a class="headerlink" href="#id14" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p>Parsing of SQL expressions to determine column dependencies</p></li>
+</ul>
+</section>
+<section id="id15">
+<h4>Notes<a class="headerlink" href="#id15" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p>The enhancements to build ordering does not change actual order of column building -
+but adjusts which phase columns are built in</p></li>
+</ul>
+</section>
+</section>
+<section id="version-0-3-1">
+<h3>Version 0.3.1<a class="headerlink" href="#version-0-3-1" title="Permalink to this heading"></a></h3>
+<section id="id16">
+<h4>Changed<a class="headerlink" href="#id16" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p>Refactoring of template text generation for better performance via vectorized implementation</p></li>
+<li><p>Additional migration of tests to use of <code class="docutils literal notranslate"><span class="pre">pytest</span></code></p></li>
+</ul>
+</section>
+<section id="id17">
+<h4>Fixed<a class="headerlink" href="#id17" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p>added type parsing support for binary and constructs such as <code class="docutils literal notranslate"><span class="pre">nvarchar(10)</span></code></p></li>
+<li><p>Fixed error occurring when schema contains map, array or struct.</p></li>
+</ul>
+</section>
+<section id="id18">
+<h4>Added<a class="headerlink" href="#id18" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p>Ability to change name of seed column to custom name (defaults to <code class="docutils literal notranslate"><span class="pre">id</span></code>)</p></li>
+<li><p>Added type parsing support for structs, maps and arrays and combinations of the above</p></li>
+</ul>
+</section>
+<section id="id19">
+<h4>Notes<a class="headerlink" href="#id19" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p>column definitions for map, struct or array must use <code class="docutils literal notranslate"><span class="pre">expr</span></code> attribute to initialize field. Defaults to <code class="docutils literal notranslate"><span class="pre">NULL</span></code></p></li>
+</ul>
+</section>
+</section>
+<section id="version-0-3-0">
+<h3>Version 0.3.0<a class="headerlink" href="#version-0-3-0" title="Permalink to this heading"></a></h3>
+<section id="changes">
+<h4>Changes<a class="headerlink" href="#changes" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p>Validation for use in Delta Live Tables</p></li>
+<li><p>Documentation updates</p></li>
+<li><p>Minor bug fixes</p></li>
+<li><p>Changes to build and release process to improve performance</p></li>
+<li><p>Modified dependencies to base release on package versions used by Databricks Runtime 9.1 LTS</p></li>
+<li><p>Updated to Spark 3.2.1 or later</p></li>
+<li><p>Unit test updates - migration from <code class="docutils literal notranslate"><span class="pre">unittest</span></code> to <code class="docutils literal notranslate"><span class="pre">pytest</span></code> for many tests</p></li>
+</ul>
+</section>
+</section>
+<section id="version-0-2-1">
+<h3>Version 0.2.1<a class="headerlink" href="#version-0-2-1" title="Permalink to this heading"></a></h3>
+<section id="features">
+<h4>Features<a class="headerlink" href="#features" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p>Uses pipenv for main build process</p></li>
+<li><p>Supports Conda based development build process</p></li>
+<li><p>Uses <code class="docutils literal notranslate"><span class="pre">pytest-cov</span></code> to track unit test coverage</p></li>
+<li><p>Added HTML help - use <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">docs</span></code> to create it</p></li>
+<li><p>Added support for weights with non-random columns</p></li>
+<li><p>Added support for generation of streaming data sets</p></li>
+<li><p>Added support for multiple dependent base columns</p></li>
+<li><p>Added support for scripting of table create statements</p></li>
+<li><p>Resolved many PEP8 style issues</p></li>
+<li><p>Resolved / triaged prospector / pylint issues</p></li>
+<li><p>Changed help to RTD scheme and added additional help content</p></li>
+<li><p>moved docs to docs folder</p></li>
+<li><p>added support for specific distributions</p></li>
+<li><p>renamed packaging to <code class="docutils literal notranslate"><span class="pre">dbldatagen</span></code></p></li>
+<li><p>Releases now available at https://github.com/databrickslabs/dbldatagen/releases</p></li>
+<li><p>code tidy up and rename of options</p></li>
+<li><p>added text generation plugin support for python functions and 3rd party libraries</p></li>
+<li><p>Use of data generator to generate static and streaming data sources in Databricks Delta Live Tables</p></li>
+<li><p>added support for install from PyPi</p></li>
+</ul>
+</section>
+</section>
+<section id="general-requirements">
+<h3>General Requirements<a class="headerlink" href="#general-requirements" title="Permalink to this heading"></a></h3>
+<p>See the contents of the file <code class="docutils literal notranslate"><span class="pre">python/require.txt</span></code> to see the Python package dependencies</p>
+<p>The code for the Databricks Data Generator has the following dependencies</p>
+<ul class="simple">
+<li><p>Requires Databricks runtime 9.1 LTS or later</p></li>
+<li><p>Requires Spark 3.1.2 or later</p></li>
+<li><p>Requires Python 3.8.10 or later</p></li>
+</ul>
+<p>While the data generator framework does not require all libraries used by the runtimes, where a library from
+the Databricks runtime is used, it will use the version found in the Databricks runtime for 9.1 LTS or later.
+You can use older versions of the Databricks Labs Data Generator by referring to that explicit version.</p>
+<p>The recommended method to install the package is to use <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span></code> in your notebook to install the package from
+PyPi</p>
+<p>For example:</p>
+<p><code class="docutils literal notranslate"><span class="pre">%pip</span> <span class="pre">install</span> <span class="pre">dbldatagen</span></code></p>
+<p>To use an older DB runtime version in your notebook, you can use the following code in your notebook:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>%pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/databrickslabs/dbldatagen@dbr_7_3_LTS_compat
+</pre></div>
+</div>
+<p>See the <a class="reference external" href="https://docs.databricks.com/release-notes/runtime/releases.html">Databricks runtime release notes</a>
+for the full list of dependencies used by the Databricks runtime.</p>
+<p>This can be found at : https://docs.databricks.com/release-notes/runtime/releases.html</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="CONTRIBUTING.html" class="btn btn-neutral float-left" title="Contributing to the Databricks Labs Data Generator" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="requirements.html" class="btn btn-neutral float-right" title="Dependencies for the Data Generator framework" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022 - 2024, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

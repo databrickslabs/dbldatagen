@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generating Synthetic Data from Existing Data or Schema (Experimental) &mdash; Databricks Labs Data Generator 0.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/tdg.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/clipboard.min.js"></script>
+        <script src="_static/copybutton.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Generating Change Data Capture Data" href="generating_cdc_data.html" />
+    <link rel="prev" title="Generating JSON and Structured Column Data" href="generating_json_data.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_standard_datasets.html">Using standard datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_constraints.html">Using constraints to control data generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Generating synthetic data from existing data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#analyzing-the-data-to-be-synthesized">Analyzing the data to be synthesized</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#generating-code-to-produce-the-synthetic-data-set">Generating code to produce the synthetic data set</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference/api/modules.html">The dbldatagen package API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Generating Synthetic Data from Existing Data or Schema (Experimental)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/generating_from_existing_data.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="generating-synthetic-data-from-existing-data-or-schema-experimental">
+<h1>Generating Synthetic Data from Existing Data or Schema (Experimental)<a class="headerlink" href="#generating-synthetic-data-from-existing-data-or-schema-experimental" title="Permalink to this heading"></a></h1>
+<p>A common scenario for generating synthetic data is to be able to generate a synthetic data version of an
+existing data set.</p>
+<p>The process often progresses along the following steps:</p>
+<ul class="simple">
+<li><p>Analyze your existing data set to determine distribution, values, skew etc of the data</p></li>
+<li><p>Generate synthetic data to mirror existing data set</p></li>
+<li><p>More advanced use cases may include use of an ML model trained on the original data for adjudicating whether
+the synthetic data conforms under specific criteria to the original data set</p></li>
+</ul>
+<p>The Databricks Labs Data Generator provides the DataAnalyzer class to assist with this process.</p>
+<p>For more information, see <a class="reference internal" href="reference/api/dbldatagen.data_analyzer.html#dbldatagen.data_analyzer.DataAnalyzer" title="dbldatagen.data_analyzer.DataAnalyzer"><code class="xref py py-data docutils literal notranslate"><span class="pre">DataAnalyzer</span></code></a></p>
+<section id="analyzing-the-data-to-be-synthesized">
+<h2>Analyzing the data to be synthesized<a class="headerlink" href="#analyzing-the-data-to-be-synthesized" title="Permalink to this heading"></a></h2>
+<p>You can use the <code class="docutils literal notranslate"><span class="pre">summarizeToDF()</span></code> method to generate a summary analysis of a dataframe.</p>
+<p>Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
+
+<span class="n">dfSource</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">read</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;parquet&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;/tmp/your/source/dataset&quot;</span><span class="p">)</span>
+
+<span class="n">analyzer</span> <span class="o">=</span> <span class="n">dg</span><span class="o">.</span><span class="n">DataAnalyzer</span><span class="p">(</span><span class="n">sparkSession</span><span class="o">=</span><span class="n">spark</span><span class="p">,</span> <span class="n">df</span><span class="o">=</span><span class="n">dfSource</span><span class="p">)</span>
+
+<span class="n">display</span><span class="p">(</span><span class="n">analyzer</span><span class="o">.</span><span class="n">summarizeToDF</span><span class="p">())</span>
+</pre></div>
+</div>
+</section>
+<section id="generating-code-to-produce-the-synthetic-data-set">
+<h2>Generating code to produce the synthetic data set<a class="headerlink" href="#generating-code-to-produce-the-synthetic-data-set" title="Permalink to this heading"></a></h2>
+<p>You can use the methods <code class="docutils literal notranslate"><span class="pre">scriptDataGeneratorFromSchema</span></code> and the <code class="docutils literal notranslate"><span class="pre">scriptDataGeneratorFromData</span></code> to generate code
+from an existing schema or Spark dataframe respectively.</p>
+<p>For example, the following code will generate code to synthesize data from an existing schema.</p>
+<p>The generated code is intended to be stub code and will need to be modified to match your desired data layout.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
+
+<span class="n">dfSource</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">read</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;parquet&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;/tmp/your/source/dataset&quot;</span><span class="p">)</span>
+
+<span class="n">code</span> <span class="o">=</span>  <span class="n">dg</span><span class="o">.</span><span class="n">DataAnalyzer</span><span class="o">.</span><span class="n">scriptDataGeneratorFromSchema</span><span class="p">(</span><span class="n">dfSource</span><span class="o">.</span><span class="n">schema</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This might produce the following output:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
+
+<span class="c1"># Column definitions are stubs only - modify to generate correct data</span>
+<span class="n">generation_spec</span> <span class="o">=</span> <span class="p">(</span>
+     <span class="n">dg</span><span class="o">.</span><span class="n">DataGenerator</span><span class="p">(</span><span class="n">sparkSession</span><span class="o">=</span><span class="n">spark</span><span class="p">,</span>
+                      <span class="n">name</span><span class="o">=</span><span class="s1">&#39;synthetic_data&#39;</span><span class="p">,</span>
+                      <span class="n">rows</span><span class="o">=</span><span class="mi">100000</span><span class="p">,</span>
+                      <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                      <span class="p">)</span>
+     <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s1">&#39;asin&#39;</span><span class="p">,</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">w&#39;</span><span class="p">)</span>
+     <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s1">&#39;brand&#39;</span><span class="p">,</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">w&#39;</span><span class="p">)</span>
+     <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s1">&#39;helpful&#39;</span><span class="p">,</span> <span class="s1">&#39;bigint&#39;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="mi">1000000</span><span class="p">,</span>
+                 <span class="n">structType</span><span class="o">=</span><span class="s1">&#39;array&#39;</span><span class="p">,</span>
+                 <span class="n">numFeatures</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+     <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s1">&#39;img&#39;</span><span class="p">,</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">w&#39;</span><span class="p">)</span>
+     <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s1">&#39;price&#39;</span><span class="p">,</span> <span class="s1">&#39;double&#39;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="mf">1000000.0</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+     <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s1">&#39;rating&#39;</span><span class="p">,</span> <span class="s1">&#39;double&#39;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="mf">1000000.0</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+     <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s1">&#39;review&#39;</span><span class="p">,</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">w&#39;</span><span class="p">)</span>
+     <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;bigint&#39;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="mi">1000000</span><span class="p">)</span>
+     <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s1">&#39;title&#39;</span><span class="p">,</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">w&#39;</span><span class="p">)</span>
+     <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">w&#39;</span><span class="p">)</span>
+     <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s1">&#39;event_ts&#39;</span><span class="p">,</span> <span class="s1">&#39;timestamp&#39;</span><span class="p">,</span>
+                 <span class="n">begin</span><span class="o">=</span><span class="s2">&quot;2020-01-01 01:00:00&quot;</span><span class="p">,</span>
+                 <span class="n">end</span><span class="o">=</span><span class="s2">&quot;2020-12-31 23:59:00&quot;</span><span class="p">,</span>
+                 <span class="n">interval</span><span class="o">=</span><span class="s2">&quot;1 minute&quot;</span> <span class="p">)</span>
+     <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s1">&#39;r_value&#39;</span><span class="p">,</span> <span class="s1">&#39;float&#39;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="mf">1000000.0</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+                 <span class="n">structType</span><span class="o">=</span><span class="s1">&#39;array&#39;</span><span class="p">,</span>
+                 <span class="n">numFeatures</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+     <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s1">&#39;tf_flag&#39;</span><span class="p">,</span> <span class="s1">&#39;boolean&#39;</span><span class="p">,</span> <span class="n">expr</span><span class="o">=</span><span class="s1">&#39;id % 2 = 1&#39;</span><span class="p">)</span>
+     <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s1">&#39;short_value&#39;</span><span class="p">,</span> <span class="s1">&#39;smallint&#39;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="mi">32767</span><span class="p">)</span>
+     <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s1">&#39;byte_value&#39;</span><span class="p">,</span> <span class="s1">&#39;tinyint&#39;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="mi">127</span><span class="p">)</span>
+     <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s1">&#39;decimal_value&#39;</span><span class="p">,</span> <span class="s1">&#39;decimal(10,2)&#39;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+     <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s1">&#39;decimal_value&#39;</span><span class="p">,</span> <span class="s1">&#39;decimal(10,2)&#39;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+     <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s1">&#39;date_value&#39;</span><span class="p">,</span> <span class="s1">&#39;date&#39;</span><span class="p">,</span> <span class="n">expr</span><span class="o">=</span><span class="s1">&#39;current_date()&#39;</span><span class="p">)</span>
+     <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s1">&#39;binary_value&#39;</span><span class="p">,</span> <span class="s1">&#39;binary&#39;</span><span class="p">,</span>
+                 <span class="n">expr</span><span class="o">=</span><span class="s2">&quot;cast(&#39;dbldatagen generated synthetic data&#39; as binary)&quot;</span> <span class="p">)</span>
+ <span class="p">)</span>
+</pre></div>
+</div>
+<p>When generating code from a schema, the code generation process does not have information about the data attributes
+and so the generated code just illustrates some typical generation expressions.</p>
+<p>If we supply a source data frame to the generation process, the data analyzer instance will use information derived
+from the summary data analysis to refine attributes in the generated code to match the source data better.</p>
+<p>As this is still in the experimental stages, the refinement will continue to evolve over coming versions.</p>
+<blockquote>
+<div><div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Note the both of the generate code methods will print the generated code to the output. If you just
+want the generated code as a string, set the <code class="docutils literal notranslate"><span class="pre">suppressOutput</span></code> parameter of the methods to True.</p>
+</div>
+</div></blockquote>
+<p>For example, the following code will generate synthetic data generation code from a source dataframe.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
+
+<span class="n">dfSource</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">read</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;parquet&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;/tmp/your/source/dataset&quot;</span><span class="p">)</span>
+
+<span class="n">analyzer</span> <span class="o">=</span> <span class="n">dg</span><span class="o">.</span><span class="n">DataAnalyzer</span><span class="p">(</span><span class="n">sparkSession</span><span class="o">=</span><span class="n">spark</span><span class="p">,</span> <span class="n">df</span><span class="o">=</span><span class="n">df_source_data</span><span class="p">)</span>
+
+<span class="n">generatedCode</span> <span class="o">=</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">scriptDataGeneratorFromData</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="generating_json_data.html" class="btn btn-neutral float-left" title="Generating JSON and Structured Column Data" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="generating_cdc_data.html" class="btn btn-neutral float-right" title="Generating Change Data Capture Data" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022 - 2024, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

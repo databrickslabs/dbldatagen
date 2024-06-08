@@ -1,0 +1,7 @@
+dbldatagen.datasets.basic\_telematics module
+============================================
+
+.. automodule:: dbldatagen.datasets.basic_telematics
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Understanding and Using Data Ranges &mdash; Databricks Labs Data Generator 0.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/tdg.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/clipboard.min.js"></script>
+        <script src="_static/copybutton.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Generating and Manipulating Text Data" href="textdata.html" />
+    <link rel="prev" title="Quick and easy dataset generation with Standard Datasets (Experimental)" href="using_standard_datasets.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_standard_datasets.html">Using standard datasets</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Using data ranges</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#precedence-rules-for-constraining-the-range-of-values">Precedence rules for constraining the range of values</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#handling-of-dates-and-timestamps">Handling of dates and timestamps</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#examples">Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#recommendations">Recommendations</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_constraints.html">Using constraints to control data generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_from_existing_data.html">Generating synthetic data from existing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference/api/modules.html">The dbldatagen package API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Understanding and Using Data Ranges</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/DATARANGES.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="understanding-and-using-data-ranges">
+<h1>Understanding and Using Data Ranges<a class="headerlink" href="#understanding-and-using-data-ranges" title="Permalink to this heading"></a></h1>
+<p>The data generator uses data ranges to constrain the values for generated data.</p>
+<p>By default, the data is only constrained to the range of the fields data type.</p>
+<p>Additionally, unless the <code class="docutils literal notranslate"><span class="pre">percentNulls</span></code> option is used, the value <code class="docutils literal notranslate"><span class="pre">null</span></code> will not be generated for a field value.</p>
+<p>The range of values for the generated data may be controlled in the following ways:</p>
+<ul class="simple">
+<li><p>Specifying the <code class="docutils literal notranslate"><span class="pre">uniqueValues</span></code> option to control the unique values for a column</p></li>
+<li><p>Specifying the <code class="docutils literal notranslate"><span class="pre">minValue</span></code>, <code class="docutils literal notranslate"><span class="pre">maxValue</span></code> and <code class="docutils literal notranslate"><span class="pre">step</span></code> options for a column</p></li>
+<li><p>Specifying the <code class="docutils literal notranslate"><span class="pre">begin</span></code>, <code class="docutils literal notranslate"><span class="pre">end</span></code> and <code class="docutils literal notranslate"><span class="pre">interval</span></code> options for data and timestamp valued columns</p></li>
+<li><p>Specifying an explicit set of values via the <code class="docutils literal notranslate"><span class="pre">values</span></code> option</p></li>
+<li><p>Using a specific range object for a column</p></li>
+</ul>
+<blockquote>
+<div><p>Each of the mechanisms for constraining the range of values determines the possible range of values
+for a given column. It does not guarantee that all values will be generated.</p>
+</div></blockquote>
+<p>The set of actual values generated will be further constrained by the possible values of the underlying seed column.
+For example if a column is specified to have 10 possible values but the seed column only generates two values
+and random value generation is not used, then there will only be two values generated.</p>
+<p>Here is an example illustrating use of some of the range constraints</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
+<span class="kn">from</span> <span class="nn">pyspark.sql.types</span> <span class="kn">import</span> <span class="n">IntegerType</span><span class="p">,</span> <span class="n">StringType</span>
+
+<span class="n">row_count</span><span class="o">=</span><span class="mi">1000</span> <span class="o">*</span> <span class="mi">100</span>
+<span class="n">testDataSpec</span> <span class="o">=</span> <span class="p">(</span>
+   <span class="n">dg</span><span class="o">.</span><span class="n">DataGenerator</span><span class="p">(</span><span class="n">spark</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;test_data_set1&quot;</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">row_count</span><span class="p">,</span>
+                    <span class="n">partitions</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">randomSeedMethod</span><span class="o">=</span><span class="s1">&#39;hash_fieldname&#39;</span><span class="p">)</span>
+   <span class="o">.</span><span class="n">withIdOutput</span><span class="p">()</span>
+   <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;purchase_id&quot;</span><span class="p">,</span> <span class="n">IntegerType</span><span class="p">(),</span> <span class="n">minValue</span><span class="o">=</span><span class="mi">1000000</span><span class="p">,</span> 
+                <span class="n">maxValue</span><span class="o">=</span><span class="mi">2000000</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+   <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;product_code&quot;</span><span class="p">,</span> <span class="n">IntegerType</span><span class="p">(),</span> <span class="n">uniqueValues</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+   <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;in_stock&quot;</span><span class="p">,</span> <span class="n">StringType</span><span class="p">(),</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;yes&#39;</span><span class="p">,</span> <span class="s1">&#39;no&#39;</span><span class="p">,</span> <span class="s1">&#39;unknown&#39;</span><span class="p">])</span>
+   <span class="p">)</span>
+
+<span class="n">dfTestData</span> <span class="o">=</span> <span class="n">testDataSpec</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+</pre></div>
+</div>
+<section id="precedence-rules-for-constraining-the-range-of-values">
+<h2>Precedence rules for constraining the range of values<a class="headerlink" href="#precedence-rules-for-constraining-the-range-of-values" title="Permalink to this heading"></a></h2>
+<p>Some of the options can lead to conflicting information about the range of possible values.</p>
+<p>Our general philosophy is to try and generate data where possible - so if conflicting range constraints are specified,
+we may reduce the range</p>
+<p>The following rules apply to any ranged data specifications:</p>
+<ul class="simple">
+<li><p>if the <code class="docutils literal notranslate"><span class="pre">uniqueValues</span></code> option is used, its combined with the any range options to produce the effective range.
+The number of unique values is given highest priority, but the interval, start and end of the values tries to take
+into account any range options specified. If the range does not allow for sufficient unique values to be generated,
+the number of unique values is reduced.</p></li>
+<li><p>if <code class="docutils literal notranslate"><span class="pre">values</span></code> are specified, the implied range is the set of values for column. Any other range options are ignored</p></li>
+<li><p>If both a range object is specified and any of the options for <code class="docutils literal notranslate"><span class="pre">begin</span></code>, <code class="docutils literal notranslate"><span class="pre">end</span></code> , <code class="docutils literal notranslate"><span class="pre">interval</span></code> are specified,
+the relevant value in the range object is used</p></li>
+<li><p>If both a range object is specified and any of the options for <code class="docutils literal notranslate"><span class="pre">minValue</span></code>, <code class="docutils literal notranslate"><span class="pre">maxValue</span></code> , <code class="docutils literal notranslate"><span class="pre">step</span></code> are specified,
+the relevant value in the range object is used</p></li>
+<li><p>if the range of values conflicts with the underlying data type, the data type values take precedence. For example
+a Boolean field with the range 1 .. 9 will be rescaled to the range 0 .. 1 and still produce both <code class="docutils literal notranslate"><span class="pre">True</span></code> and <code class="docutils literal notranslate"><span class="pre">False</span></code>
+values</p></li>
+</ul>
+<section id="handling-of-dates-and-timestamps">
+<h3>Handling of dates and timestamps<a class="headerlink" href="#handling-of-dates-and-timestamps" title="Permalink to this heading"></a></h3>
+<p>For dates and timestamps, if a number of unique values is specified, these will be generated starting from the start
+date time and incremented according to the interval. So if a date ranges is specified for a year with an interval of 7
+days but only 10 unique values, the max value will be the starting date or time + 10 weeks</p>
+<p>If the date range is specified and no interval is specified, but a number of unique values is specified, then
+the interval will be computed to evenly space the values if possible.</p>
+<p>If no interval is specified, the default interval of 1 day will be used for dates and 1 minute will be used for
+timestamps unless other criteria force a different interval criteria.</p>
+<p>As part of the overall goals for the Databricks Labs data generator is to be able to generate repeatable data sets,
+if no starting datetime is specified for date time ranges, we will use the first day of the previous year as
+the starting date. At the time of writing, this will be 2020/1/1</p>
+<p>If no start date and no end date is specified, then we will use a default end date of the last day of the previous year.
+At the time of writing, this will be 2020/12/31</p>
+<p>if starting and ending dates are specified, we will not produce dates or timestamps outside of these, but the number of
+unique values may be reduced, if there are insufficient values in the range.</p>
+<section id="examples">
+<h4>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h4>
+<p>Here is an example illustrating use of simple date range constraints. In this case, we are only specifying that
+we will have 300 unique dates. Note that we are not making <code class="docutils literal notranslate"><span class="pre">purchase_id</span></code> random to ensure unique values for every row</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
+<span class="kn">from</span> <span class="nn">pyspark.sql.types</span> <span class="kn">import</span> <span class="n">IntegerType</span>
+
+<span class="n">row_count</span><span class="o">=</span><span class="mi">1000</span> <span class="o">*</span> <span class="mi">100</span>
+<span class="n">testDataSpec</span> <span class="o">=</span> <span class="p">(</span>
+      <span class="n">dg</span><span class="o">.</span><span class="n">DataGenerator</span><span class="p">(</span><span class="n">spark</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;test_data_set1&quot;</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">row_count</span><span class="p">,</span>
+                       <span class="n">partitions</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">randomSeedMethod</span><span class="o">=</span><span class="s1">&#39;hash_fieldname&#39;</span><span class="p">,</span> 
+                       <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+      <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;purchase_id&quot;</span><span class="p">,</span> <span class="n">IntegerType</span><span class="p">(),</span> <span class="n">minValue</span><span class="o">=</span><span class="mi">1000000</span><span class="p">,</span> 
+                     <span class="n">maxValue</span><span class="o">=</span><span class="mi">2000000</span><span class="p">)</span>
+      <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;product_code&quot;</span><span class="p">,</span> <span class="n">IntegerType</span><span class="p">(),</span> <span class="n">uniqueValues</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span> 
+                     <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+      <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;purchase_date&quot;</span><span class="p">,</span> <span class="s2">&quot;date&quot;</span><span class="p">,</span> <span class="n">uniqueValues</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> 
+                     <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+      <span class="p">)</span>
+
+<span class="n">dfTestData</span> <span class="o">=</span> <span class="n">testDataSpec</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>In the following example, we will simulate returns and ensure the return date is after the purchase date.</p>
+<p>Here we specify an explicit date range and add a random number of days for the return.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
+<span class="kn">from</span> <span class="nn">pyspark.sql.types</span> <span class="kn">import</span> <span class="n">IntegerType</span>
+
+<span class="n">row_count</span> <span class="o">=</span> <span class="mi">1000</span> <span class="o">*</span> <span class="mi">100</span>
+<span class="n">testDataSpec</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">dg</span><span class="o">.</span><span class="n">DataGenerator</span><span class="p">(</span> <span class="n">spark</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;test_data_set1&quot;</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">row_count</span><span class="p">,</span> <span class="n">partitions</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> 
+                      <span class="n">randomSeedMethod</span><span class="o">=</span><span class="s2">&quot;hash_fieldname&quot;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="p">)</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;purchase_id&quot;</span><span class="p">,</span> <span class="n">IntegerType</span><span class="p">(),</span> <span class="n">minValue</span><span class="o">=</span><span class="mi">1000000</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="mi">2000000</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;product_code&quot;</span><span class="p">,</span> <span class="n">IntegerType</span><span class="p">(),</span> <span class="n">uniqueValues</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span>
+        <span class="s2">&quot;purchase_date&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;date&quot;</span><span class="p">,</span>
+        <span class="n">data_range</span><span class="o">=</span><span class="n">dg</span><span class="o">.</span><span class="n">DateRange</span><span class="p">(</span><span class="s2">&quot;2017-10-01 00:00:00&quot;</span><span class="p">,</span> <span class="s2">&quot;2018-10-06 11:55:00&quot;</span><span class="p">,</span> <span class="s2">&quot;days=3&quot;</span><span class="p">),</span>
+        <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span>
+        <span class="s2">&quot;return_date&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;date&quot;</span><span class="p">,</span>
+        <span class="n">expr</span><span class="o">=</span><span class="s2">&quot;date_add(purchase_date, cast(floor(rand() * 100 + 1) as int))&quot;</span><span class="p">,</span>
+        <span class="n">baseColumn</span><span class="o">=</span><span class="s2">&quot;purchase_date&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+<span class="n">dfTestData</span> <span class="o">=</span> <span class="n">testDataSpec</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="recommendations">
+<h3>Recommendations<a class="headerlink" href="#recommendations" title="Permalink to this heading"></a></h3>
+<p>While we will try to generate data where possible, for dates and times, we recommend explicitly specifying a
+start and end date time.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="using_standard_datasets.html" class="btn btn-neutral float-left" title="Quick and easy dataset generation with Standard Datasets (Experimental)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="textdata.html" class="btn btn-neutral float-right" title="Generating and Manipulating Text Data" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022 - 2024, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

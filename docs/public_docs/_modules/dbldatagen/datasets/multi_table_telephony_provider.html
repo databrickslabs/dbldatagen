@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>dbldatagen.datasets.multi_table_telephony_provider &mdash; Databricks Labs Data Generator 0.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/tdg.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../_static/clipboard.min.js"></script>
+        <script src="../../../_static/copybutton.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../using_standard_datasets.html">Using standard datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../using_constraints.html">Using constraints to control data generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generating_from_existing_data.html">Generating synthetic data from existing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/api/modules.html">The dbldatagen package API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">dbldatagen.datasets.multi_table_telephony_provider</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for dbldatagen.datasets.multi_table_telephony_provider</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">.dataset_provider</span> <span class="kn">import</span> <span class="n">DatasetProvider</span><span class="p">,</span> <span class="n">dataset_definition</span>
+
+
+<div class="viewcode-block" id="MultiTableTelephonyProvider"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.multi_table_telephony_provider.html#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider">[docs]</a><span class="nd">@dataset_definition</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;multi_table/telephony&quot;</span><span class="p">,</span> <span class="n">summary</span><span class="o">=</span><span class="s2">&quot;Multi-table telephony dataset&quot;</span><span class="p">,</span> <span class="n">supportsStreaming</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">autoRegister</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">tables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;plans&quot;</span><span class="p">,</span> <span class="s2">&quot;customers&quot;</span><span class="p">,</span> <span class="s2">&quot;deviceEvents&quot;</span><span class="p">],</span>
+                    <span class="n">associatedDatasets</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;invoices&quot;</span><span class="p">])</span>
+<span class="k">class</span> <span class="nc">MultiTableTelephonyProvider</span><span class="p">(</span><span class="n">DatasetProvider</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Telephony multi-table example from documentation</span>
+
+<span class="sd">    See [https://databrickslabs.github.io/dbldatagen/public_docs/multi_table_data.html]</span>
+
+<span class="sd">    It generates one of several possible tables on each call</span>
+
+<span class="sd">    plans - which model telephony calling plans</span>
+<span class="sd">    customers - which model cellular customers</span>
+<span class="sd">    device_events - which are used to model device events like calls and text messages</span>
+
+<span class="sd">    Once the above tables have been computed, you can retrieve the combined tables for invoices</span>
+<span class="sd">    using `Datasets(...).getCombinedTable(&quot;invoices&quot;)`</span>
+
+<span class="sd">    The following combined tables are available:</span>
+<span class="sd">    invoices - computed from a join of the other tables to compute number of texts etc.</span>
+
+<span class="sd">    While real world billing is different from this in with unlimited messaging etc, or prices per bands of usage,</span>
+<span class="sd">    this simplified pricing model is useful in many scenarios where a dataset produced from the join of other</span>
+<span class="sd">    datasets is needed.</span>
+
+<span class="sd">    It can be used to tune join performance, or in many other benchmarking and testing applications.</span>
+
+<span class="sd">    The following options are supported:</span>
+<span class="sd">    - random - whether data is random or from each row&#39;s seed value</span>
+<span class="sd">    - numPlans - number of unique plans</span>
+<span class="sd">    - numCustomers - number of unique customers</span>
+<span class="sd">    - averageEventsPerDay - number of telephony events per customer per day</span>
+<span class="sd">    - numDays - number of days to spread events over</span>
+<span class="sd">    - dummyValues - number of dummy values to widen the tables</span>
+
+<span class="sd">    When requesting the `plans` table, the `numPlans` parameter will determine the number of unique plans.</span>
+<span class="sd">    The `numCustomers` parameter will determine the number of customers</span>
+<span class="sd">    For device events, the number of customers * the average number of events per day * the number of days will</span>
+<span class="sd">    determine the number of device events possible.</span>
+
+<span class="sd">    While it is possible to specify the number of rows explicitly when getting each table generator, the default will</span>
+<span class="sd">    be to compute the number of rows from these.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">MAX_LONG</span> <span class="o">=</span> <span class="mi">9223372036854775807</span>
+    <span class="n">PLAN_MIN_VALUE</span> <span class="o">=</span> <span class="mi">100</span>
+    <span class="n">DEFAULT_NUM_PLANS</span> <span class="o">=</span> <span class="mi">20</span>
+    <span class="n">DEFAULT_NUM_CUSTOMERS</span> <span class="o">=</span> <span class="mi">50_000</span>
+    <span class="n">CUSTOMER_MIN_VALUE</span> <span class="o">=</span> <span class="mi">1000</span>
+    <span class="n">DEVICE_MIN_VALUE</span> <span class="o">=</span> <span class="mi">1000000000</span>
+    <span class="n">SUBSCRIBER_NUM_MIN_VALUE</span> <span class="o">=</span> <span class="mi">1000000000</span>
+    <span class="n">DEFAULT_NUM_DAYS</span> <span class="o">=</span> <span class="mi">31</span>
+    <span class="n">DEFAULT_AVG_EVENTS_PER_CUSTOMER</span> <span class="o">=</span> <span class="mi">50</span>
+
+<div class="viewcode-block" id="MultiTableTelephonyProvider.getPlans"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.multi_table_telephony_provider.html#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.getPlans">[docs]</a>    <span class="k">def</span> <span class="nf">getPlans</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sparkSession</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">partitions</span><span class="p">,</span> <span class="n">generateRandom</span><span class="p">,</span> <span class="n">numPlans</span><span class="p">,</span> <span class="n">dummyValues</span><span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
+
+        <span class="k">if</span> <span class="n">numPlans</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">numPlans</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">numPlans</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_NUM_PLANS</span>
+
+        <span class="k">if</span> <span class="n">rows</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">rows</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="n">numPlans</span>
+
+        <span class="k">if</span> <span class="n">partitions</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">partitions</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">partitions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">autoComputePartitions</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="mi">9</span> <span class="o">+</span> <span class="n">dummyValues</span><span class="p">)</span>
+
+        <span class="n">plan_dataspec</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">dg</span><span class="o">.</span><span class="n">DataGenerator</span><span class="p">(</span><span class="n">sparkSession</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">rows</span><span class="p">,</span> <span class="n">partitions</span><span class="o">=</span><span class="n">partitions</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;plan_id&quot;</span><span class="p">,</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">PLAN_MIN_VALUE</span><span class="p">,</span> <span class="n">uniqueValues</span><span class="o">=</span><span class="n">numPlans</span><span class="p">)</span>
+            <span class="c1"># use plan_id as root value</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;plan_name&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;plan&quot;</span><span class="p">,</span> <span class="n">baseColumn</span><span class="o">=</span><span class="s2">&quot;plan_id&quot;</span><span class="p">)</span>
+
+            <span class="c1"># note default step is 1 so you must specify a step for small number ranges,</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;cost_per_mb&quot;</span><span class="p">,</span> <span class="s2">&quot;decimal(5,3)&quot;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="mf">0.005</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="mf">0.050</span><span class="p">,</span>
+                        <span class="n">step</span><span class="o">=</span><span class="mf">0.005</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="n">generateRandom</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;cost_per_message&quot;</span><span class="p">,</span> <span class="s2">&quot;decimal(5,3)&quot;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="mf">0.02</span><span class="p">,</span>
+                        <span class="n">step</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="n">generateRandom</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;cost_per_minute&quot;</span><span class="p">,</span> <span class="s2">&quot;decimal(5,3)&quot;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
+                        <span class="n">step</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="n">generateRandom</span><span class="p">)</span>
+
+            <span class="c1"># we&#39;re modelling long distance and international prices simplistically -</span>
+            <span class="c1"># each is a multiplier thats applied to base rate</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;ld_multiplier&quot;</span><span class="p">,</span> <span class="s2">&quot;decimal(5,3)&quot;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+                        <span class="n">random</span><span class="o">=</span><span class="n">generateRandom</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="s2">&quot;normal&quot;</span><span class="p">,</span> <span class="n">omit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;ld_cost_per_minute&quot;</span><span class="p">,</span> <span class="s2">&quot;decimal(5,3)&quot;</span><span class="p">,</span>
+                        <span class="n">expr</span><span class="o">=</span><span class="s2">&quot;cost_per_minute * ld_multiplier&quot;</span><span class="p">,</span>
+                        <span class="n">baseColumns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;cost_per_minute&#39;</span><span class="p">,</span> <span class="s1">&#39;ld_multiplier&#39;</span><span class="p">])</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;intl_multiplier&quot;</span><span class="p">,</span> <span class="s2">&quot;decimal(5,3)&quot;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+                        <span class="n">random</span><span class="o">=</span><span class="n">generateRandom</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="s2">&quot;normal&quot;</span><span class="p">,</span> <span class="n">omit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;intl_cost_per_minute&quot;</span><span class="p">,</span> <span class="s2">&quot;decimal(5,3)&quot;</span><span class="p">,</span>
+                        <span class="n">expr</span><span class="o">=</span><span class="s2">&quot;cost_per_minute * intl_multiplier&quot;</span><span class="p">,</span>
+                        <span class="n">baseColumns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;cost_per_minute&#39;</span><span class="p">,</span> <span class="s1">&#39;intl_multiplier&#39;</span><span class="p">])</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">dummyValues</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">plan_dataspec</span> <span class="o">=</span> <span class="n">plan_dataspec</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;dummy&quot;</span><span class="p">,</span> <span class="s2">&quot;long&quot;</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">numColumns</span><span class="o">=</span><span class="n">dummyValues</span><span class="p">,</span>
+                                                     <span class="n">minValue</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">MAX_LONG</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">plan_dataspec</span></div>
+
+<div class="viewcode-block" id="MultiTableTelephonyProvider.getCustomers"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.multi_table_telephony_provider.html#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.getCustomers">[docs]</a>    <span class="k">def</span> <span class="nf">getCustomers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sparkSession</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">partitions</span><span class="p">,</span> <span class="n">generateRandom</span><span class="p">,</span> <span class="n">numCustomers</span><span class="p">,</span> <span class="n">numPlans</span><span class="p">,</span> <span class="n">dummyValues</span><span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
+
+        <span class="k">if</span> <span class="n">numCustomers</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">numCustomers</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">numCustomers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_NUM_CUSTOMERS</span>
+
+        <span class="k">if</span> <span class="n">rows</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">rows</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="n">numCustomers</span>
+
+        <span class="k">if</span> <span class="n">partitions</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">partitions</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">partitions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">autoComputePartitions</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="mi">6</span> <span class="o">+</span> <span class="n">dummyValues</span><span class="p">)</span>
+
+        <span class="n">customer_dataspec</span> <span class="o">=</span> <span class="p">(</span><span class="n">dg</span><span class="o">.</span><span class="n">DataGenerator</span><span class="p">(</span><span class="n">sparkSession</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">rows</span><span class="p">,</span> <span class="n">partitions</span><span class="o">=</span><span class="n">partitions</span><span class="p">)</span>
+                             <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;customer_id&quot;</span><span class="p">,</span> <span class="s2">&quot;decimal(10)&quot;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">CUSTOMER_MIN_VALUE</span><span class="p">,</span>
+                                         <span class="n">uniqueValues</span><span class="o">=</span><span class="n">numCustomers</span><span class="p">)</span>
+                             <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;customer_name&quot;</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">w </span><span class="se">\\</span><span class="s2">w|</span><span class="se">\\</span><span class="s2">w a. </span><span class="se">\\</span><span class="s2">w&quot;</span><span class="p">)</span>
+
+                             <span class="c1"># use the following for a simple sequence</span>
+                             <span class="c1"># .withColumn(&quot;device_id&quot;,&quot;decimal(10)&quot;, minValue=DEVICE_MIN_VALUE,</span>
+                             <span class="c1">#              uniqueValues=UNIQUE_CUSTOMERS)</span>
+
+                             <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;device_id&quot;</span><span class="p">,</span> <span class="s2">&quot;decimal(10)&quot;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">DEVICE_MIN_VALUE</span><span class="p">,</span>
+                                         <span class="n">baseColumn</span><span class="o">=</span><span class="s2">&quot;customer_id&quot;</span><span class="p">,</span> <span class="n">baseColumnType</span><span class="o">=</span><span class="s2">&quot;hash&quot;</span><span class="p">)</span>
+
+                             <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;phone_number&quot;</span><span class="p">,</span> <span class="s2">&quot;decimal(10)&quot;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">SUBSCRIBER_NUM_MIN_VALUE</span><span class="p">,</span>
+                                         <span class="n">baseColumn</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;customer_id&quot;</span><span class="p">,</span> <span class="s2">&quot;customer_name&quot;</span><span class="p">],</span> <span class="n">baseColumnType</span><span class="o">=</span><span class="s2">&quot;hash&quot;</span><span class="p">)</span>
+
+                             <span class="c1"># for email, we&#39;ll just use the formatted phone number</span>
+                             <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;email&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;subscriber_</span><span class="si">%s</span><span class="s2">@myoperator.com&quot;</span><span class="p">,</span>
+                                         <span class="n">baseColumn</span><span class="o">=</span><span class="s2">&quot;phone_number&quot;</span><span class="p">)</span>
+                             <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;plan&quot;</span><span class="p">,</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">PLAN_MIN_VALUE</span><span class="p">,</span> <span class="n">uniqueValues</span><span class="o">=</span><span class="n">numPlans</span><span class="p">,</span>
+                                         <span class="n">random</span><span class="o">=</span><span class="n">generateRandom</span><span class="p">)</span>
+                             <span class="o">.</span><span class="n">withConstraint</span><span class="p">(</span><span class="n">dg</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">UniqueCombinations</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;device_id&quot;</span><span class="p">]))</span>
+                             <span class="o">.</span><span class="n">withConstraint</span><span class="p">(</span><span class="n">dg</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">UniqueCombinations</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;phone_number&quot;</span><span class="p">]))</span>
+                             <span class="p">)</span>
+        <span class="k">if</span> <span class="n">dummyValues</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">customer_dataspec</span> <span class="o">=</span> <span class="n">customer_dataspec</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;dummy&quot;</span><span class="p">,</span> <span class="s2">&quot;long&quot;</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">numColumns</span><span class="o">=</span><span class="n">dummyValues</span><span class="p">,</span>
+                                                             <span class="n">minValue</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">MAX_LONG</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">customer_dataspec</span></div>
+
+<div class="viewcode-block" id="MultiTableTelephonyProvider.getDeviceEvents"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.multi_table_telephony_provider.html#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.getDeviceEvents">[docs]</a>    <span class="k">def</span> <span class="nf">getDeviceEvents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sparkSession</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">partitions</span><span class="p">,</span> <span class="n">generateRandom</span><span class="p">,</span> <span class="n">numCustomers</span><span class="p">,</span> <span class="n">numDays</span><span class="p">,</span> <span class="n">dummyValues</span><span class="p">,</span>
+                        <span class="n">averageEventsPerCustomer</span><span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">dbldatagen</span> <span class="k">as</span> <span class="nn">dg</span>
+
+        <span class="n">MB_100</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">*</span> <span class="mi">1000</span> <span class="o">*</span> <span class="mi">1000</span>
+        <span class="n">K_1</span> <span class="o">=</span> <span class="mi">1000</span>
+
+        <span class="k">if</span> <span class="n">rows</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">rows</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="n">averageEventsPerCustomer</span> <span class="o">*</span> <span class="n">numCustomers</span> <span class="o">*</span> <span class="n">numDays</span>
+
+        <span class="k">if</span> <span class="n">partitions</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">partitions</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">partitions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">autoComputePartitions</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="mi">8</span> <span class="o">+</span> <span class="n">dummyValues</span><span class="p">)</span>
+
+        <span class="c1"># use random seed method of &#39;hash_fieldname&#39; for better spread - default in later builds</span>
+        <span class="n">events_dataspec</span> <span class="o">=</span> <span class="p">(</span><span class="n">dg</span><span class="o">.</span><span class="n">DataGenerator</span><span class="p">(</span><span class="n">sparkSession</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">rows</span><span class="p">,</span> <span class="n">partitions</span><span class="o">=</span><span class="n">partitions</span><span class="p">,</span>
+                                            <span class="n">randomSeed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">randomSeedMethod</span><span class="o">=</span><span class="s2">&quot;hash_fieldname&quot;</span><span class="p">)</span>
+                           <span class="c1"># use same logic as per customers dataset to ensure matching keys</span>
+                           <span class="c1"># but make them random</span>
+                           <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;device_id_base&quot;</span><span class="p">,</span> <span class="s2">&quot;decimal(10)&quot;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">CUSTOMER_MIN_VALUE</span><span class="p">,</span>
+                                       <span class="n">uniqueValues</span><span class="o">=</span><span class="n">numCustomers</span><span class="p">,</span>
+                                       <span class="n">random</span><span class="o">=</span><span class="n">generateRandom</span><span class="p">,</span> <span class="n">omit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                           <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;device_id&quot;</span><span class="p">,</span> <span class="s2">&quot;decimal(10)&quot;</span><span class="p">,</span> <span class="n">minValue</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">DEVICE_MIN_VALUE</span><span class="p">,</span>
+                                       <span class="n">baseColumn</span><span class="o">=</span><span class="s2">&quot;device_id_base&quot;</span><span class="p">,</span> <span class="n">baseColumnType</span><span class="o">=</span><span class="s2">&quot;hash&quot;</span><span class="p">)</span>
+
+                           <span class="c1"># use specific random seed to get better spread of values</span>
+                           <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;event_type&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+                                       <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;sms&quot;</span><span class="p">,</span> <span class="s2">&quot;internet&quot;</span><span class="p">,</span> <span class="s2">&quot;local call&quot;</span><span class="p">,</span> <span class="s2">&quot;ld call&quot;</span><span class="p">,</span> <span class="s2">&quot;intl call&quot;</span><span class="p">],</span>
+                                       <span class="n">weights</span><span class="o">=</span><span class="p">[</span><span class="mi">50</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="n">random</span><span class="o">=</span><span class="n">generateRandom</span><span class="p">)</span>
+
+                           <span class="c1"># use Gamma distribution for skew towards short calls</span>
+                           <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;base_minutes&quot;</span><span class="p">,</span> <span class="s2">&quot;decimal(7,2)&quot;</span><span class="p">,</span>
+                                       <span class="n">minValue</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="mf">100.0</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+                                       <span class="n">distribution</span><span class="o">=</span><span class="n">dg</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">Gamma</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mf">2.0</span><span class="p">),</span>
+                                       <span class="n">random</span><span class="o">=</span><span class="n">generateRandom</span><span class="p">,</span> <span class="n">omit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+                           <span class="c1"># use Gamma distribution for skew towards short transfers</span>
+                           <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;base_bytes_transferred&quot;</span><span class="p">,</span> <span class="s2">&quot;decimal(12)&quot;</span><span class="p">,</span>
+                                       <span class="n">minValue</span><span class="o">=</span><span class="n">K_1</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="n">MB_100</span><span class="p">,</span>
+                                       <span class="n">distribution</span><span class="o">=</span><span class="n">dg</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">Gamma</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="mf">0.75</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mf">2.0</span><span class="p">),</span>
+                                       <span class="n">random</span><span class="o">=</span><span class="n">generateRandom</span><span class="p">,</span> <span class="n">omit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+                           <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;minutes&quot;</span><span class="p">,</span> <span class="s2">&quot;decimal(7,2)&quot;</span><span class="p">,</span>
+                                       <span class="n">baseColumn</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;event_type&quot;</span><span class="p">,</span> <span class="s2">&quot;base_minutes&quot;</span><span class="p">],</span>
+                                       <span class="n">expr</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                                      case when event_type in (&quot;local call&quot;, &quot;ld call&quot;, &quot;intl call&quot;)</span>
+<span class="s2">                                          then base_minutes</span>
+<span class="s2">                                          else 0</span>
+<span class="s2">                                      end</span>
+<span class="s2">                                       &quot;&quot;&quot;</span><span class="p">)</span>
+                           <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;bytes_transferred&quot;</span><span class="p">,</span> <span class="s2">&quot;decimal(12)&quot;</span><span class="p">,</span>
+                                       <span class="n">baseColumn</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;event_type&quot;</span><span class="p">,</span> <span class="s2">&quot;base_bytes_transferred&quot;</span><span class="p">],</span>
+                                       <span class="n">expr</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                                      case when event_type = &quot;internet&quot;</span>
+<span class="s2">                                           then base_bytes_transferred</span>
+<span class="s2">                                           else 0</span>
+<span class="s2">                                      end</span>
+<span class="s2">                                       &quot;&quot;&quot;</span><span class="p">)</span>
+
+                           <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;event_ts&quot;</span><span class="p">,</span> <span class="s2">&quot;timestamp&quot;</span><span class="p">,</span>
+                                       <span class="n">data_range</span><span class="o">=</span><span class="n">dg</span><span class="o">.</span><span class="n">DateRange</span><span class="p">(</span><span class="s2">&quot;2020-07-01 00:00:00&quot;</span><span class="p">,</span>
+                                                               <span class="s2">&quot;2020-07-31 11:59:59&quot;</span><span class="p">,</span>
+                                                               <span class="s2">&quot;seconds=1&quot;</span><span class="p">),</span>
+                                       <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+                           <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">dummyValues</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">events_dataspec</span> <span class="o">=</span> <span class="n">events_dataspec</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;dummy&quot;</span><span class="p">,</span> <span class="s2">&quot;long&quot;</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">numColumns</span><span class="o">=</span><span class="n">dummyValues</span><span class="p">,</span>
+                                                         <span class="n">minValue</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">maxValue</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">MAX_LONG</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">events_dataspec</span></div>
+
+<div class="viewcode-block" id="MultiTableTelephonyProvider.getTableGenerator"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.multi_table_telephony_provider.html#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.getTableGenerator">[docs]</a>    <span class="nd">@DatasetProvider</span><span class="o">.</span><span class="n">allowed_options</span><span class="p">(</span><span class="n">options</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;random&quot;</span><span class="p">,</span> <span class="s2">&quot;numPlans&quot;</span><span class="p">,</span> <span class="s2">&quot;numCustomers&quot;</span><span class="p">,</span> <span class="s2">&quot;dummyValues&quot;</span><span class="p">,</span> <span class="s2">&quot;numDays&quot;</span><span class="p">,</span>
+                                              <span class="s2">&quot;averageEventsPerCustomer&quot;</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">getTableGenerator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sparkSession</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">tableName</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rows</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">partitions</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+        <span class="n">generateRandom</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;random&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">numPlans</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;numPlans&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_NUM_PLANS</span><span class="p">)</span>
+        <span class="n">numCustomers</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;numCustomers&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_NUM_CUSTOMERS</span><span class="p">)</span>
+        <span class="n">numDays</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;numDays&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_NUM_DAYS</span><span class="p">)</span>
+        <span class="n">dummyValues</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dummyValues&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">averageEventsPerCustomer</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;averageEventsPerCustomer&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_AVG_EVENTS_PER_CUSTOMER</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">tableName</span> <span class="o">==</span> <span class="s2">&quot;plans&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">getPlans</span><span class="p">(</span><span class="n">sparkSession</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">rows</span><span class="p">,</span> <span class="n">partitions</span><span class="o">=</span><span class="n">partitions</span><span class="p">,</span> <span class="n">numPlans</span><span class="o">=</span><span class="n">numPlans</span><span class="p">,</span>
+                                 <span class="n">generateRandom</span><span class="o">=</span><span class="n">generateRandom</span><span class="p">,</span> <span class="n">dummyValues</span><span class="o">=</span><span class="n">dummyValues</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">tableName</span> <span class="o">==</span> <span class="s2">&quot;customers&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">getCustomers</span><span class="p">(</span><span class="n">sparkSession</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">rows</span><span class="p">,</span> <span class="n">partitions</span><span class="o">=</span><span class="n">partitions</span><span class="p">,</span> <span class="n">numCustomers</span><span class="o">=</span><span class="n">numCustomers</span><span class="p">,</span>
+                                     <span class="n">generateRandom</span><span class="o">=</span><span class="n">generateRandom</span><span class="p">,</span> <span class="n">numPlans</span><span class="o">=</span><span class="n">numPlans</span><span class="p">,</span> <span class="n">dummyValues</span><span class="o">=</span><span class="n">dummyValues</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">tableName</span> <span class="o">==</span> <span class="s2">&quot;deviceEvents&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">getDeviceEvents</span><span class="p">(</span><span class="n">sparkSession</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">rows</span><span class="p">,</span> <span class="n">partitions</span><span class="o">=</span><span class="n">partitions</span><span class="p">,</span> <span class="n">generateRandom</span><span class="o">=</span><span class="n">generateRandom</span><span class="p">,</span>
+                                        <span class="n">numCustomers</span><span class="o">=</span><span class="n">numCustomers</span><span class="p">,</span> <span class="n">numDays</span><span class="o">=</span><span class="n">numDays</span><span class="p">,</span> <span class="n">dummyValues</span><span class="o">=</span><span class="n">dummyValues</span><span class="p">,</span>
+                                        <span class="n">averageEventsPerCustomer</span><span class="o">=</span><span class="n">averageEventsPerCustomer</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MultiTableTelephonyProvider.getAssociatedDataset"><a class="viewcode-back" href="../../../reference/api/dbldatagen.datasets.multi_table_telephony_provider.html#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.getAssociatedDataset">[docs]</a>    <span class="nd">@DatasetProvider</span><span class="o">.</span><span class="n">allowed_options</span><span class="p">(</span><span class="n">options</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;plans&quot;</span><span class="p">,</span> <span class="s2">&quot;customers&quot;</span><span class="p">,</span> <span class="s2">&quot;deviceEvents&quot;</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">getAssociatedDataset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sparkSession</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">tableName</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rows</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">partitions</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+                             <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">pyspark.sql</span> <span class="kn">import</span> <span class="n">DataFrame</span>
+        <span class="kn">import</span> <span class="nn">pyspark.sql.functions</span> <span class="k">as</span> <span class="nn">F</span>
+
+        <span class="n">dfPlans</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;plans&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">dfPlans</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">dfPlans</span><span class="p">),</span> <span class="n">DataFrame</span><span class="p">),</span> \
+            <span class="s2">&quot;Option `plans` should be a dataframe of plan records&quot;</span>
+
+        <span class="n">dfCustomers</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;customers&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">dfCustomers</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">dfCustomers</span><span class="p">),</span> <span class="n">DataFrame</span><span class="p">),</span> \
+            <span class="s2">&quot;Option `customers` should be dataframe of customer records&quot;</span>
+
+        <span class="n">dfDeviceEvents</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;deviceEvents&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">dfDeviceEvents</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">dfDeviceEvents</span><span class="p">),</span> <span class="n">DataFrame</span><span class="p">),</span> \
+            <span class="s2">&quot;Option `device_events` should be dataframe of device_event records&quot;</span>
+
+        <span class="k">if</span> <span class="n">tableName</span> <span class="o">==</span> <span class="s2">&quot;invoices&quot;</span><span class="p">:</span>
+            <span class="n">df_customer_pricing</span> <span class="o">=</span> <span class="n">dfCustomers</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dfPlans</span><span class="p">,</span> <span class="n">dfPlans</span><span class="o">.</span><span class="n">plan_id</span> <span class="o">==</span> <span class="n">dfCustomers</span><span class="o">.</span><span class="n">plan</span><span class="p">)</span>
+
+            <span class="c1"># let&#39;s compute the summary minutes messages and bytes transferred</span>
+            <span class="n">df_enriched_events</span> <span class="o">=</span> <span class="p">(</span><span class="n">dfDeviceEvents</span>
+                                  <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;message_count&quot;</span><span class="p">,</span>
+                                              <span class="n">F</span><span class="o">.</span><span class="n">expr</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;case</span>
+<span class="s2">                                                           when event_type=&#39;sms&#39; then 1</span>
+<span class="s2">                                                                                 else 0 end&quot;&quot;&quot;</span><span class="p">))</span>
+                                  <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;ld_minutes&quot;</span><span class="p">,</span>
+                                              <span class="n">F</span><span class="o">.</span><span class="n">expr</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;case</span>
+<span class="s2">                                                           when event_type=&#39;ld call&#39;</span>
+<span class="s2">                                                           then cast(ceil(minutes) as decimal(18,3))</span>
+<span class="s2">                                                           else 0.0 end&quot;&quot;&quot;</span><span class="p">))</span>
+                                  <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;local_minutes&quot;</span><span class="p">,</span>
+                                              <span class="n">F</span><span class="o">.</span><span class="n">expr</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;case when event_type=&#39;local call&#39;</span>
+<span class="s2">                                                             then cast(ceil(minutes) as decimal(18,3))</span>
+<span class="s2">                                                             else 0.0 end&quot;&quot;&quot;</span><span class="p">))</span>
+                                  <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;intl_minutes&quot;</span><span class="p">,</span>
+                                              <span class="n">F</span><span class="o">.</span><span class="n">expr</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;case when event_type=&#39;intl call&#39;</span>
+<span class="s2">                                                        then cast(ceil(minutes) as decimal(18,3))</span>
+<span class="s2">                                                        else 0.0 end&quot;&quot;&quot;</span><span class="p">))</span>
+                                  <span class="p">)</span>
+
+            <span class="n">df_enriched_events</span><span class="o">.</span><span class="n">createOrReplaceTempView</span><span class="p">(</span><span class="s2">&quot;mtp_telephony_events&quot;</span><span class="p">)</span>
+
+            <span class="c1"># compute summary activity</span>
+            <span class="n">df_summary</span> <span class="o">=</span> <span class="n">sparkSession</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;select device_id,</span>
+<span class="s2">                                             round(sum(bytes_transferred) / 1000000.0, 3) as total_mb,</span>
+<span class="s2">                                             sum(message_count) as total_messages,</span>
+<span class="s2">                                             sum(ld_minutes) as total_ld_minutes,</span>
+<span class="s2">                                             sum(local_minutes) as total_local_minutes,</span>
+<span class="s2">                                             sum(intl_minutes) as total_intl_minutes,</span>
+<span class="s2">                                             count(device_id) as event_count</span>
+<span class="s2">                                             from mtp_telephony_events</span>
+<span class="s2">                                             group by device_id</span>
+
+<span class="s2">            &quot;&quot;&quot;</span><span class="p">)</span>
+
+            <span class="n">df_summary</span><span class="o">.</span><span class="n">createOrReplaceTempView</span><span class="p">(</span><span class="s2">&quot;mtp_event_summary&quot;</span><span class="p">)</span>
+
+            <span class="n">df_customer_summary</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">df_customer_pricing</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">df_summary</span><span class="p">,</span>
+                                         <span class="n">df_customer_pricing</span><span class="o">.</span><span class="n">device_id</span> <span class="o">==</span> <span class="n">df_summary</span><span class="o">.</span><span class="n">device_id</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">createOrReplaceTempView</span><span class="p">(</span><span class="s2">&quot;mtp_customer_summary&quot;</span><span class="p">))</span>
+
+            <span class="n">df_invoices</span> <span class="o">=</span> <span class="n">sparkSession</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                                 select *,</span>
+<span class="s2">                                    internet_cost + sms_cost + ld_cost + local_cost + intl_cost</span>
+<span class="s2">                                      as total_invoice</span>
+<span class="s2">                                    from</span>
+<span class="s2">                                      (select customer_id, customer_name,</span>
+<span class="s2">                                              phone_number, email, plan_name,</span>
+<span class="s2">                                              cast(round(total_mb * cost_per_mb, 2) as decimal(18,3))</span>
+<span class="s2">                                                  as internet_cost,</span>
+<span class="s2">                                              cast(round(total_ld_minutes * ld_cost_per_minute, 2)</span>
+<span class="s2">                                                   as decimal(18,2))</span>
+<span class="s2">                                                as ld_cost,</span>
+<span class="s2">                                              cast(round(total_local_minutes * cost_per_minute, 2)</span>
+<span class="s2">                                                   as decimal(18,2))</span>
+<span class="s2">                                                as local_cost,</span>
+<span class="s2">                                              cast(round(total_intl_minutes * intl_cost_per_minute, 2)</span>
+<span class="s2">                                                   as decimal(18,2))</span>
+<span class="s2">                                                as intl_cost,</span>
+<span class="s2">                                              cast(round(total_messages * cost_per_message, 2)</span>
+<span class="s2">                                                   as decimal(18,2))</span>
+<span class="s2">                                                as sms_cost</span>
+<span class="s2">                                       from mtp_customer_summary)</span>
+
+<span class="s2">            &quot;&quot;&quot;</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">df_invoices</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022 - 2024, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

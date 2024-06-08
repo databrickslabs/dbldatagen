@@ -1,0 +1,7 @@
+dbldatagen.datasets.basic\_process\_historian module
+====================================================
+
+.. automodule:: dbldatagen.datasets.basic_process_historian
+   :members:
+   :undoc-members:
+   :show-inheritance:

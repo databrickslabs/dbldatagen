@@ -1,0 +1,7 @@
+dbldatagen.constraints.constraint module
+========================================
+
+.. automodule:: dbldatagen.constraints.constraint
+   :members:
+   :undoc-members:
+   :show-inheritance:

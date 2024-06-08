@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>dbldatagen.datasets package &mdash; Databricks Labs Data Generator 0.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/tdg.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+        <script src="../../_static/clipboard.min.js"></script>
+        <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="dbldatagen.datasets.basic_geometries module" href="dbldatagen.datasets.basic_geometries.html" />
+    <link rel="prev" title="dbldatagen.constraints.unique_combinations module" href="dbldatagen.constraints.unique_combinations.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Databricks Labs Data Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../APIDOCS.html">Get Started Here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation_notes.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_column_data.html">Generating column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using_standard_datasets.html">Using standard datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DATARANGES.html">Using data ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../textdata.html">Generating text data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DISTRIBUTIONS.html">Using data distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../options_and_features.html">Options for column specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../repeatable_data_generation.html">Repeatable Data Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../repeatable_data_generation.html#revisiting-the-iot-data-example">Revisiting the IOT data example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using_constraints.html">Using constraints to control data generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using_streaming_data.html">Using streaming data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_json_data.html">Generating JSON and structured column data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_from_existing_data.html">Generating synthetic data from existing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generating_cdc_data.html">Generating Change Data Capture (CDC) data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../multi_table_data.html">Using multiple tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../extending_text_generation.html">Extending text generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using_delta_live_tables.html">Use with Delta Live Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting data generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/quickindex.html">Quick API index</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">The dbldatagen package API</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="dbldatagen.html">dbldatagen package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="dbldatagen.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.constraints.html">dbldatagen.constraints package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">dbldatagen.datasets package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.distributions.html">dbldatagen.distributions package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.html#module-dbldatagen">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html">Contributing to the Databricks Labs Data Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#building-the-code">Building the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#using-the-databricks-labs-data-generator">Using the Databricks Labs data generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CONTRIBUTING.html#coding-style">Coding Style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/CHANGELOG.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../relnotes/requirements.html">Build requirements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">License</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Databricks Labs Data Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">dbldatagen</a></li>
+          <li class="breadcrumb-item"><a href="dbldatagen.html">dbldatagen package</a></li>
+      <li class="breadcrumb-item active">dbldatagen.datasets package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/reference/api/dbldatagen.datasets.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="dbldatagen-datasets-package">
+<h1>dbldatagen.datasets package<a class="headerlink" href="#dbldatagen-datasets-package" title="Permalink to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="dbldatagen.datasets.basic_geometries.html">dbldatagen.datasets.basic_geometries module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dbldatagen.datasets.basic_geometries.html#dbldatagen.datasets.basic_geometries.BasicGeometriesProvider"><code class="docutils literal notranslate"><span class="pre">BasicGeometriesProvider</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_geometries.html#dbldatagen.datasets.basic_geometries.BasicGeometriesProvider.ALLOWED_OPTIONS"><code class="docutils literal notranslate"><span class="pre">BasicGeometriesProvider.ALLOWED_OPTIONS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_geometries.html#dbldatagen.datasets.basic_geometries.BasicGeometriesProvider.COLUMN_COUNT"><code class="docutils literal notranslate"><span class="pre">BasicGeometriesProvider.COLUMN_COUNT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_geometries.html#dbldatagen.datasets.basic_geometries.BasicGeometriesProvider.MAX_LOCATION_ID"><code class="docutils literal notranslate"><span class="pre">BasicGeometriesProvider.MAX_LOCATION_ID</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_geometries.html#dbldatagen.datasets.basic_geometries.BasicGeometriesProvider.MIN_LOCATION_ID"><code class="docutils literal notranslate"><span class="pre">BasicGeometriesProvider.MIN_LOCATION_ID</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_geometries.html#dbldatagen.datasets.basic_geometries.BasicGeometriesProvider.getTableGenerator"><code class="docutils literal notranslate"><span class="pre">BasicGeometriesProvider.getTableGenerator()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dbldatagen.datasets.basic_process_historian.html">dbldatagen.datasets.basic_process_historian module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dbldatagen.datasets.basic_process_historian.html#dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider"><code class="docutils literal notranslate"><span class="pre">BasicProcessHistorianProvider</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_process_historian.html#dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.ALLOWED_OPTIONS"><code class="docutils literal notranslate"><span class="pre">BasicProcessHistorianProvider.ALLOWED_OPTIONS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_process_historian.html#dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.COLUMN_COUNT"><code class="docutils literal notranslate"><span class="pre">BasicProcessHistorianProvider.COLUMN_COUNT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_process_historian.html#dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.DEFAULT_END_TIMESTAMP"><code class="docutils literal notranslate"><span class="pre">BasicProcessHistorianProvider.DEFAULT_END_TIMESTAMP</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_process_historian.html#dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.DEFAULT_NUM_DEVICES"><code class="docutils literal notranslate"><span class="pre">BasicProcessHistorianProvider.DEFAULT_NUM_DEVICES</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_process_historian.html#dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.DEFAULT_NUM_PLANTS"><code class="docutils literal notranslate"><span class="pre">BasicProcessHistorianProvider.DEFAULT_NUM_PLANTS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_process_historian.html#dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.DEFAULT_NUM_TAGS"><code class="docutils literal notranslate"><span class="pre">BasicProcessHistorianProvider.DEFAULT_NUM_TAGS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_process_historian.html#dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.DEFAULT_START_TIMESTAMP"><code class="docutils literal notranslate"><span class="pre">BasicProcessHistorianProvider.DEFAULT_START_TIMESTAMP</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_process_historian.html#dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.MAX_DEVICE_ID"><code class="docutils literal notranslate"><span class="pre">BasicProcessHistorianProvider.MAX_DEVICE_ID</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_process_historian.html#dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.MAX_PROPERTY_VALUE"><code class="docutils literal notranslate"><span class="pre">BasicProcessHistorianProvider.MAX_PROPERTY_VALUE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_process_historian.html#dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.MIN_DEVICE_ID"><code class="docutils literal notranslate"><span class="pre">BasicProcessHistorianProvider.MIN_DEVICE_ID</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_process_historian.html#dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.MIN_PROPERTY_VALUE"><code class="docutils literal notranslate"><span class="pre">BasicProcessHistorianProvider.MIN_PROPERTY_VALUE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_process_historian.html#dbldatagen.datasets.basic_process_historian.BasicProcessHistorianProvider.getTableGenerator"><code class="docutils literal notranslate"><span class="pre">BasicProcessHistorianProvider.getTableGenerator()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dbldatagen.datasets.basic_telematics.html">dbldatagen.datasets.basic_telematics module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dbldatagen.datasets.basic_telematics.html#dbldatagen.datasets.basic_telematics.BasicTelematicsProvider"><code class="docutils literal notranslate"><span class="pre">BasicTelematicsProvider</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_telematics.html#dbldatagen.datasets.basic_telematics.BasicTelematicsProvider.ALLOWED_OPTIONS"><code class="docutils literal notranslate"><span class="pre">BasicTelematicsProvider.ALLOWED_OPTIONS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_telematics.html#dbldatagen.datasets.basic_telematics.BasicTelematicsProvider.COLUMN_COUNT"><code class="docutils literal notranslate"><span class="pre">BasicTelematicsProvider.COLUMN_COUNT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_telematics.html#dbldatagen.datasets.basic_telematics.BasicTelematicsProvider.DEFAULT_END_TIMESTAMP"><code class="docutils literal notranslate"><span class="pre">BasicTelematicsProvider.DEFAULT_END_TIMESTAMP</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_telematics.html#dbldatagen.datasets.basic_telematics.BasicTelematicsProvider.DEFAULT_MAX_LAT"><code class="docutils literal notranslate"><span class="pre">BasicTelematicsProvider.DEFAULT_MAX_LAT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_telematics.html#dbldatagen.datasets.basic_telematics.BasicTelematicsProvider.DEFAULT_MAX_LON"><code class="docutils literal notranslate"><span class="pre">BasicTelematicsProvider.DEFAULT_MAX_LON</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_telematics.html#dbldatagen.datasets.basic_telematics.BasicTelematicsProvider.DEFAULT_MIN_LAT"><code class="docutils literal notranslate"><span class="pre">BasicTelematicsProvider.DEFAULT_MIN_LAT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_telematics.html#dbldatagen.datasets.basic_telematics.BasicTelematicsProvider.DEFAULT_MIN_LON"><code class="docutils literal notranslate"><span class="pre">BasicTelematicsProvider.DEFAULT_MIN_LON</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_telematics.html#dbldatagen.datasets.basic_telematics.BasicTelematicsProvider.DEFAULT_NUM_DEVICES"><code class="docutils literal notranslate"><span class="pre">BasicTelematicsProvider.DEFAULT_NUM_DEVICES</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_telematics.html#dbldatagen.datasets.basic_telematics.BasicTelematicsProvider.DEFAULT_START_TIMESTAMP"><code class="docutils literal notranslate"><span class="pre">BasicTelematicsProvider.DEFAULT_START_TIMESTAMP</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_telematics.html#dbldatagen.datasets.basic_telematics.BasicTelematicsProvider.MAX_DEVICE_ID"><code class="docutils literal notranslate"><span class="pre">BasicTelematicsProvider.MAX_DEVICE_ID</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_telematics.html#dbldatagen.datasets.basic_telematics.BasicTelematicsProvider.MIN_DEVICE_ID"><code class="docutils literal notranslate"><span class="pre">BasicTelematicsProvider.MIN_DEVICE_ID</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_telematics.html#dbldatagen.datasets.basic_telematics.BasicTelematicsProvider.getTableGenerator"><code class="docutils literal notranslate"><span class="pre">BasicTelematicsProvider.getTableGenerator()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dbldatagen.datasets.basic_user.html">dbldatagen.datasets.basic_user module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dbldatagen.datasets.basic_user.html#dbldatagen.datasets.basic_user.BasicUserProvider"><code class="docutils literal notranslate"><span class="pre">BasicUserProvider</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_user.html#dbldatagen.datasets.basic_user.BasicUserProvider.COLUMN_COUNT"><code class="docutils literal notranslate"><span class="pre">BasicUserProvider.COLUMN_COUNT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_user.html#dbldatagen.datasets.basic_user.BasicUserProvider.MAX_LONG"><code class="docutils literal notranslate"><span class="pre">BasicUserProvider.MAX_LONG</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.basic_user.html#dbldatagen.datasets.basic_user.BasicUserProvider.getTableGenerator"><code class="docutils literal notranslate"><span class="pre">BasicUserProvider.getTableGenerator()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dbldatagen.datasets.benchmark_groupby.html">dbldatagen.datasets.benchmark_groupby module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dbldatagen.datasets.benchmark_groupby.html#dbldatagen.datasets.benchmark_groupby.BenchmarkGroupByProvider"><code class="docutils literal notranslate"><span class="pre">BenchmarkGroupByProvider</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.benchmark_groupby.html#dbldatagen.datasets.benchmark_groupby.BenchmarkGroupByProvider.ALLOWED_OPTIONS"><code class="docutils literal notranslate"><span class="pre">BenchmarkGroupByProvider.ALLOWED_OPTIONS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.benchmark_groupby.html#dbldatagen.datasets.benchmark_groupby.BenchmarkGroupByProvider.COLUMN_COUNT"><code class="docutils literal notranslate"><span class="pre">BenchmarkGroupByProvider.COLUMN_COUNT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.benchmark_groupby.html#dbldatagen.datasets.benchmark_groupby.BenchmarkGroupByProvider.DEFAULT_NUM_GROUPS"><code class="docutils literal notranslate"><span class="pre">BenchmarkGroupByProvider.DEFAULT_NUM_GROUPS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.benchmark_groupby.html#dbldatagen.datasets.benchmark_groupby.BenchmarkGroupByProvider.DEFAULT_PCT_NULLS"><code class="docutils literal notranslate"><span class="pre">BenchmarkGroupByProvider.DEFAULT_PCT_NULLS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.benchmark_groupby.html#dbldatagen.datasets.benchmark_groupby.BenchmarkGroupByProvider.MAX_LONG"><code class="docutils literal notranslate"><span class="pre">BenchmarkGroupByProvider.MAX_LONG</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.benchmark_groupby.html#dbldatagen.datasets.benchmark_groupby.BenchmarkGroupByProvider.getTableGenerator"><code class="docutils literal notranslate"><span class="pre">BenchmarkGroupByProvider.getTableGenerator()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html">dbldatagen.datasets.dataset_provider module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider"><code class="docutils literal notranslate"><span class="pre">DatasetProvider</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.DEFAULT_PARTITIONS"><code class="docutils literal notranslate"><span class="pre">DatasetProvider.DEFAULT_PARTITIONS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.DEFAULT_ROWS"><code class="docutils literal notranslate"><span class="pre">DatasetProvider.DEFAULT_ROWS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.DEFAULT_TABLE_NAME"><code class="docutils literal notranslate"><span class="pre">DatasetProvider.DEFAULT_TABLE_NAME</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.DatasetDecoratorUtils"><code class="docutils literal notranslate"><span class="pre">DatasetProvider.DatasetDecoratorUtils</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.DatasetDecoratorUtils.mkClass"><code class="docutils literal notranslate"><span class="pre">DatasetProvider.DatasetDecoratorUtils.mkClass()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.DatasetDefinition"><code class="docutils literal notranslate"><span class="pre">DatasetProvider.DatasetDefinition</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.DatasetDefinition.associatedDatasets"><code class="docutils literal notranslate"><span class="pre">DatasetProvider.DatasetDefinition.associatedDatasets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.DatasetDefinition.description"><code class="docutils literal notranslate"><span class="pre">DatasetProvider.DatasetDefinition.description</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.DatasetDefinition.name"><code class="docutils literal notranslate"><span class="pre">DatasetProvider.DatasetDefinition.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.DatasetDefinition.primaryTable"><code class="docutils literal notranslate"><span class="pre">DatasetProvider.DatasetDefinition.primaryTable</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.DatasetDefinition.providerClass"><code class="docutils literal notranslate"><span class="pre">DatasetProvider.DatasetDefinition.providerClass</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.DatasetDefinition.summary"><code class="docutils literal notranslate"><span class="pre">DatasetProvider.DatasetDefinition.summary</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.DatasetDefinition.supportsStreaming"><code class="docutils literal notranslate"><span class="pre">DatasetProvider.DatasetDefinition.supportsStreaming</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.DatasetDefinition.tables"><code class="docutils literal notranslate"><span class="pre">DatasetProvider.DatasetDefinition.tables</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.NoAssociatedDatasetsMixin"><code class="docutils literal notranslate"><span class="pre">DatasetProvider.NoAssociatedDatasetsMixin</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.NoAssociatedDatasetsMixin.getAssociatedDataset"><code class="docutils literal notranslate"><span class="pre">DatasetProvider.NoAssociatedDatasetsMixin.getAssociatedDataset()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.allowed_options"><code class="docutils literal notranslate"><span class="pre">DatasetProvider.allowed_options()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.autoComputePartitions"><code class="docutils literal notranslate"><span class="pre">DatasetProvider.autoComputePartitions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.checkOptions"><code class="docutils literal notranslate"><span class="pre">DatasetProvider.checkOptions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.getAssociatedDataset"><code class="docutils literal notranslate"><span class="pre">DatasetProvider.getAssociatedDataset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.getDatasetDefinition"><code class="docutils literal notranslate"><span class="pre">DatasetProvider.getDatasetDefinition()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.getDatasetTables"><code class="docutils literal notranslate"><span class="pre">DatasetProvider.getDatasetTables()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.getRegisteredDatasets"><code class="docutils literal notranslate"><span class="pre">DatasetProvider.getRegisteredDatasets()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.getRegisteredDatasetsVersion"><code class="docutils literal notranslate"><span class="pre">DatasetProvider.getRegisteredDatasetsVersion()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.getTableGenerator"><code class="docutils literal notranslate"><span class="pre">DatasetProvider.getTableGenerator()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.isValidDataProviderType"><code class="docutils literal notranslate"><span class="pre">DatasetProvider.isValidDataProviderType()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.registerDataset"><code class="docutils literal notranslate"><span class="pre">DatasetProvider.registerDataset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.DatasetProvider.unregisterDataset"><code class="docutils literal notranslate"><span class="pre">DatasetProvider.unregisterDataset()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="dbldatagen.datasets.dataset_provider.html#dbldatagen.datasets.dataset_provider.dataset_definition"><code class="docutils literal notranslate"><span class="pre">dataset_definition()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dbldatagen.datasets.multi_table_telephony_provider.html">dbldatagen.datasets.multi_table_telephony_provider module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dbldatagen.datasets.multi_table_telephony_provider.html#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider"><code class="docutils literal notranslate"><span class="pre">MultiTableTelephonyProvider</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.multi_table_telephony_provider.html#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.CUSTOMER_MIN_VALUE"><code class="docutils literal notranslate"><span class="pre">MultiTableTelephonyProvider.CUSTOMER_MIN_VALUE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.multi_table_telephony_provider.html#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.DEFAULT_AVG_EVENTS_PER_CUSTOMER"><code class="docutils literal notranslate"><span class="pre">MultiTableTelephonyProvider.DEFAULT_AVG_EVENTS_PER_CUSTOMER</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.multi_table_telephony_provider.html#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.DEFAULT_NUM_CUSTOMERS"><code class="docutils literal notranslate"><span class="pre">MultiTableTelephonyProvider.DEFAULT_NUM_CUSTOMERS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.multi_table_telephony_provider.html#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.DEFAULT_NUM_DAYS"><code class="docutils literal notranslate"><span class="pre">MultiTableTelephonyProvider.DEFAULT_NUM_DAYS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.multi_table_telephony_provider.html#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.DEFAULT_NUM_PLANS"><code class="docutils literal notranslate"><span class="pre">MultiTableTelephonyProvider.DEFAULT_NUM_PLANS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.multi_table_telephony_provider.html#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.DEVICE_MIN_VALUE"><code class="docutils literal notranslate"><span class="pre">MultiTableTelephonyProvider.DEVICE_MIN_VALUE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.multi_table_telephony_provider.html#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.MAX_LONG"><code class="docutils literal notranslate"><span class="pre">MultiTableTelephonyProvider.MAX_LONG</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.multi_table_telephony_provider.html#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.PLAN_MIN_VALUE"><code class="docutils literal notranslate"><span class="pre">MultiTableTelephonyProvider.PLAN_MIN_VALUE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.multi_table_telephony_provider.html#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.SUBSCRIBER_NUM_MIN_VALUE"><code class="docutils literal notranslate"><span class="pre">MultiTableTelephonyProvider.SUBSCRIBER_NUM_MIN_VALUE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.multi_table_telephony_provider.html#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.getAssociatedDataset"><code class="docutils literal notranslate"><span class="pre">MultiTableTelephonyProvider.getAssociatedDataset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.multi_table_telephony_provider.html#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.getCustomers"><code class="docutils literal notranslate"><span class="pre">MultiTableTelephonyProvider.getCustomers()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.multi_table_telephony_provider.html#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.getDeviceEvents"><code class="docutils literal notranslate"><span class="pre">MultiTableTelephonyProvider.getDeviceEvents()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.multi_table_telephony_provider.html#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.getPlans"><code class="docutils literal notranslate"><span class="pre">MultiTableTelephonyProvider.getPlans()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbldatagen.datasets.multi_table_telephony_provider.html#dbldatagen.datasets.multi_table_telephony_provider.MultiTableTelephonyProvider.getTableGenerator"><code class="docutils literal notranslate"><span class="pre">MultiTableTelephonyProvider.getTableGenerator()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="module-dbldatagen.datasets">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-dbldatagen.datasets" title="Permalink to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="dbldatagen.constraints.unique_combinations.html" class="btn btn-neutral float-left" title="dbldatagen.constraints.unique_combinations module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="dbldatagen.datasets.basic_geometries.html" class="btn btn-neutral float-right" title="dbldatagen.datasets.basic_geometries module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022 - 2024, Databricks Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
