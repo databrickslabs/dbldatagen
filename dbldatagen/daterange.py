@@ -26,6 +26,48 @@ class DateRange(DataRange):
                      the `datetime_format` string
     :param datetime_format: format for conversion of strings to datetime objects
 
+    The `begin` and `end` parameters can be either string representations of a timestamp or Python `datetime`
+    instances.
+
+    The following example shows initializing the date range from strings:
+
+    .. code-block:: python
+
+       import dbldatagen as dg
+
+       testDataSpec = (
+           dg.DataGenerator( spark, name="testdata1", rows=1000, partitions=4)
+           .withColumn("txn_date", "date", random=True,
+                       data_range=dg.DateRange("2023-10-01 00:00:00",
+                                               "2023-10-06 11:55:00",
+                                               "days=3"))
+        )
+
+    The following example initializes the date range using Python `datetime` instances:
+
+
+    .. code-block:: python
+
+       import dbldatagen as dg
+       from datetime import datetime, timezone
+
+       startingTime = (datetime.fromisoformat("2023-10-01T00:00:00")
+                       .replace(tzinfo=timezone.utc))
+       endingTime = (datetime.fromisoformat("2023-10-06T11:55:00")
+                       .replace(tzinfo=timezone.utc))
+
+       testDataSpec = (
+         dg.DataGenerator( spark, name="dataset1", rows=1000, partitions=4)
+            .withColumn("txn_date", "timestamp", random=True,
+                        data_range=dg.DateRange(startingTime, endingTime, "days=3"))
+       )
+
+
+    .. note ::
+       The `start` and `end` parameters should be configured the same with respect to timezone specifiers.
+       If the `start` parameter is a datetime instance with a timezone specifier, then the `end` parameter should be
+       configured similarly.
+
     """
 
     DEFAULT_UTC_TS_FORMAT = "%Y-%m-%d %H:%M:%S"
