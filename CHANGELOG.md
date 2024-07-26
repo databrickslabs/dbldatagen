@@ -3,6 +3,12 @@
 ## Change History
 All notable changes to the Databricks Labs Data Generator will be documented in this file.
 
+### Version 0.4.0 Hotfix 1
+
+#### Fixed
+* Fixed issue with running on serverless environment
+
+
 ### Version 0.4.0
 
 #### Changed
