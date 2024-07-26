@@ -226,12 +226,21 @@ class DataGenerator:
         self.logger.info("Spark version: %s", self.sparkSession.version)
         if str(self.sparkSession.version).startswith("3"):
             self.logger.info("Using spark 3.x")
-            self.sparkSession.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
+            try:
+                self.sparkSession.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
+            except Exception:  # pylint: disable=broad-exception-caught
+                pass
         else:
-            self.sparkSession.conf.set("spark.sql.execution.arrow.enabled", "true")
+            try:
+                self.sparkSession.conf.set("spark.sql.execution.arrow.enabled", "true")
+            except Exception:  # pylint: disable=broad-exception-caught
+                pass
 
         if self._batchSize is not None:
-            self.sparkSession.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", self._batchSize)
+            try:
+                self.sparkSession.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", self._batchSize)
+            except Exception:  # pylint: disable=broad-exception-caught
+                pass
 
     def _setupLogger(self):
         """Set up logging
