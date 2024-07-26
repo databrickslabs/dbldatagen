@@ -9,12 +9,24 @@ This module defines the `NRange` class used to specify data ranges
 import math
 
 from pyspark.sql.types import LongType, FloatType, IntegerType, DoubleType, ShortType, \
-    ByteType
+    ByteType, DecimalType
 
 from .datarange import DataRange
 
 _OLD_MIN_OPTION = 'min'
 _OLD_MAX_OPTION = 'max'
+_MIN_BYTE_VALUE = -(2**4 - 1)
+_MAX_BYTE_VALUE = (2**4 - 1)
+_MIN_SHORT_VALUE = -(2**8 - 1)
+_MAX_SHORT_VALUE = (2**8 - 1)
+_MIN_INT_VALUE = -(2**16 - 1)
+_MAX_INT_VALUE = (2**16 - 1)
+_MIN_LONG_VALUE = -(2**32 - 1)
+_MAX_LONG_VALUE = (2**32 - 1)
+_MIN_FLOAT_VALUE = -3.402e38
+_MAX_FLOAT_VALUE = 3.402e38
+_MIN_DOUBLE_VALUE = -1.79769e308
+_MAX_DOUBLE_VALUE = 1.79769e308
 
 
 class NRange(DataRange):
@@ -83,13 +95,47 @@ class NRange(DataRange):
         :param ctype: Spark SQL type instance to adjust range for
         :returns: No return value - executes for effect only
         """
-        if ctype.typeName() == 'decimal':
+        if type(ctype) is DecimalType:
             if self.minValue is None:
                 self.minValue = 0.0
             if self.maxValue is None:
                 self.maxValue = math.pow(10, ctype.precision - ctype.scale) - 1.0
-            if self.step is None:
-                self.step = 1.0
+
+        if type(ctype) is FloatType:
+            if self.minValue is None:
+                self.minValue = _MIN_FLOAT_VALUE
+            if self.maxValue is None:
+                self.maxValue = _MAX_FLOAT_VALUE
+
+        if type(ctype) is DoubleType:
+            if self.minValue is None:
+                self.minValue = _MIN_DOUBLE_VALUE
+            if self.maxValue is None:
+                self.maxValue = _MAX_DOUBLE_VALUE
+
+        if type(ctype) is ByteType:
+            if self.minValue is None:
+                self.minValue = _MIN_BYTE_VALUE
+            if self.maxValue is None:
+                self.maxValue = _MAX_BYTE_VALUE
+
+        if type(ctype) is ShortType:
+            if self.minValue is None:
+                self.minValue = _MIN_SHORT_VALUE
+            if self.maxValue is None:
+                self.maxValue = _MAX_SHORT_VALUE
+
+        if type(ctype) is IntegerType:
+            if self.minValue is None:
+                self.minValue = _MIN_INT_VALUE
+            if self.maxValue is None:
+                self.maxValue = _MAX_INT_VALUE
+
+        if type(ctype) is LongType:
+            if self.minValue is None:
+                self.minValue = _MIN_LONG_VALUE
+            if self.maxValue is None:
+                self.maxValue = _MAX_LONG_VALUE
 
         if type(ctype) is ShortType and self.maxValue is not None:
             assert self.maxValue <= 65536, "`maxValue` must be in range of short"
