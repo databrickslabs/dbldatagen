@@ -695,6 +695,36 @@ class TestQuickTests:
         rowCount = nullRowsDF.count()
         assert rowCount == 0
 
+    @pytest.mark.parametrize("columnSpecOptions", [
+        {"dataType": "byte", "minValue": 1, "maxValue": None},
+        {"dataType": "byte", "minValue": None, "maxValue": 10},
+        {"dataType": "short", "minValue": 1, "maxValue": None},
+        {"dataType": "short", "minValue": None, "maxValue": 100},
+        {"dataType": "integer", "minValue": 1, "maxValue": None},
+        {"dataType": "integer", "minValue": None, "maxValue": 100},
+        {"dataType": "long", "minValue": 1, "maxValue": None},
+        {"dataType": "long", "minValue": None, "maxValue": 100},
+        {"dataType": "float", "minValue": 1.0, "maxValue": None},
+        {"dataType": "float", "minValue": None, "maxValue": 100.0},
+        {"dataType": "double", "minValue": 1, "maxValue": None},
+        {"dataType": "double", "minValue": None, "maxValue": 100.0}
+    ])
+    def test_random_generation_without_range_values(self, columnSpecOptions):
+        dataType = columnSpecOptions.get("dataType", None)
+        minValue = columnSpecOptions.get("minValue", None)
+        maxValue = columnSpecOptions.get("maxValue", None)
+        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="randomGenerationWithoutRangeValues", rows=100,
+                                         partitions=4)
+                        .withIdOutput()
+                        # default column type is string
+                        .withColumn("randCol", colType=dataType, minValue=minValue, maxValue=maxValue, random=True)
+                        )
+
+        df = testDataSpec.build(withTempView=True)
+        sortedDf = df.orderBy("randCol")
+        sortedVals = sortedDf.select("randCol").collect()
+        assert sortedVals != df.select("randCol").collect()
+
     def test_version_info(self):
         # test access to version info without explicit import
         print("Data generator version", dg.__version__)
