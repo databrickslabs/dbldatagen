@@ -1,7 +1,7 @@
-import pytest
 from datetime import date
-import dbldatagen as dg
 from contextlib import nullcontext as does_not_raise
+import pytest
+import dbldatagen as dg
 
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
@@ -322,6 +322,92 @@ class TestStandardDatasetProviders:
             vals = [r.v3 for r in leadingRows]
             assert vals != sorted(vals)
 
+    # MULTI-TABLE SALES ORDER tests:
+    @pytest.mark.parametrize("providerName, providerOptions, expectation", [
+        ("multi_table/sales_order", {"rows": 50, "partitions": 4}, does_not_raise()),
+        ("multi_table/sales_order", {"rows": -1, "partitions": 4}, does_not_raise()),
+        ("multi_table/sales_order", {}, does_not_raise()),
+        ("multi_table/sales_order", {"rows": 100, "partitions": -1}, does_not_raise()),
+        ("multi_table/sales_order", {"rows": 5000, "dummyValues": 4}, does_not_raise()),
+        ("multi_table/sales_order", {"rows": 100, "partitions": -1}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "customers", "numCustomers": 100}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "customers", "numCustomers": -1}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "customers", "rows": -1}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "customers", "rows": -1, "partitions": -1}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "carriers", "numCarriers": 50}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "carriers", "numCarriers": -1, "dummyValues": 2}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "carriers", "numCustomers": 100}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "carriers", "rows": -1}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "carriers", "rows": -1, "partitions": -1}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "catalog_items", "numCatalogItems": -1,
+                                     "dummyValues": 5}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "catalog_items", "numCatalogItems": 100,
+                                     "numCustomers": 1000}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "catalog_items", "rows": -1}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "catalog_items", "rows": -1, "partitions": -1}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "base_orders", "rows": -1}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "base_orders", "rows": -1, "partitions": -1}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "base_orders", "numOrders": -1, "numCustomers": -1, "startDate": None,
+                                     "endDate": None}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "base_orders", "numOrders": 1000, "numCustomers": 10,
+                                     "dummyValues": 2}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "base_order_line_items", "rows": -1}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "base_order_line_items", "rows": -1, "partitions": -1}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "base_order_line_items", "numOrders": 1000,
+                                     "dummyValues": 5}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "base_order_line_items", "numOrders": -1, "numCatalogItems": -1,
+                                     "lineItemsPerOrder": -1}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "base_order_shipments", "rows": -1}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "base_order_shipments", "rows": -1, "partitions": -1}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "base_order_shipments", "numOrders": 1000,
+                                     "numCarriers": 10}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "base_order_shipments", "numOrders": -1, "numCarriers": -1,
+                                     "dummyValues": 2}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "base_invoices", "rows": -1}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "base_invoices", "rows": -1, "partitions": -1}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "base_invoices", "numOrders": 1000,
+                                     "numCustomers": 10}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "base_invoices", "numOrders": -1, "dummyValues": 2}, does_not_raise()),
+        ("multi_table/sales_order", {"table": "invalid_table_name"}, pytest.raises(ValueError))
+    ])
+    def test_multi_table_sales_order_retrieval(self, providerName, providerOptions, expectation):
+        with expectation:
+            ds = dg.Datasets(spark, providerName).get(**providerOptions)
+            assert ds is not None, f"""expected to get dataset specification for provider `{providerName}`
+                                       with options: {providerOptions} 
+                                    """
+            df = ds.build()
+            assert df.limit(100).count() >= 0
+
+    def test_full_multitable_sales_order_sequence(self):
+        multiTableDataSet = dg.Datasets(spark, "multi_table/sales_order")
+        options = {"numCustomers": 100, "numOrders": 1000, "numCarriers": 10, "numCatalogItems": 100,
+                   "startDate": "2024-01-01", "endDate": "2024-12-31", "lineItemsPerOrder": 3}
+        dfCustomers = multiTableDataSet.get(table="customers", **options).build()
+        dfCarriers = multiTableDataSet.get(table="carriers", **options).build()
+        dfCatalogItems = multiTableDataSet.get(table="catalog_items", **options).build()
+        dfBaseOrders = multiTableDataSet.get(table="base_orders", **options).build()
+        dfBaseOrderLineItems = multiTableDataSet.get(table="base_order_line_items", **options).build()
+        dfBaseOrderShipments = multiTableDataSet.get(table="base_order_shipments", **options).build()
+        dfBaseInvoices = multiTableDataSet.get(table="base_invoices", **options).build()
+
+        tables = ["orders", "order_line_items", "order_shipments", "invoices"]
+        for table in tables:
+            df = multiTableDataSet.getSummaryDataset(
+                table=table,
+                customers=dfCustomers,
+                carriers=dfCarriers,
+                catalogItems=dfCatalogItems,
+                baseOrders=dfBaseOrders,
+                baseOrderLineItems=dfBaseOrderLineItems,
+                baseOrderShipments=dfBaseOrderShipments,
+                baseInvoices=dfBaseInvoices
+            )
+
+            assert df is not None
+            assert df.count() >= 0
+            assert df
+
     # MULTI-TABLE TELEPHONY tests:
     @pytest.mark.parametrize("providerName, providerOptions", [
         ("multi_table/telephony", {"rows": 50, "partitions": 4, "random": False}),
@@ -332,6 +418,7 @@ class TestStandardDatasetProviders:
         ("multi_table/telephony", {"rows": 100, "partitions": -1, "random": True}),
         ("multi_table/telephony", {"table": 'plans', "numPlans": 100}),
         ("multi_table/telephony", {"table": 'plans'}),
+        ("multi_table/telephony", {"table": 'customers', "numPlans": 100, "numCustomers": 1000}),
         ("multi_table/telephony", {"table": 'customers', "numPlans": 100, "numCustomers": 1000}),
         ("multi_table/telephony", {"table": 'customers'}),
         ("multi_table/telephony", {"table": 'deviceEvents', "numPlans": 100, "numCustomers": 1000}),
