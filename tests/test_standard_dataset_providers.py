@@ -1,6 +1,7 @@
 import pytest
-
+from datetime import date
 import dbldatagen as dg
+from contextlib import nullcontext as does_not_raise
 
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
@@ -111,6 +112,61 @@ class TestStandardDatasetProviders:
             leadingRows = df.limit(100).collect()
             ids = [r.device_id for r in leadingRows]
             assert ids != sorted(ids)
+
+    # BASIC STOCK TICKER tests:
+    @pytest.mark.parametrize("providerName, providerOptions, expectation", [
+        ("basic/stock_ticker",
+         {"rows": 50, "partitions": 4, "numSymbols": 5, "startDate": "2024-01-01"}, does_not_raise()),
+        ("basic/stock_ticker",
+         {"rows": 100, "partitions": -1, "numSymbols": 5, "startDate": "2024-01-01"}, does_not_raise()),
+        ("basic/stock_ticker",
+         {"rows": -1, "partitions": 4, "numSymbols": 10, "startDate": "2024-01-01"}, does_not_raise()),
+        ("basic/stock_ticker", {}, does_not_raise()),
+        ("basic/stock_ticker",
+         {"rows": 5000, "partitions": -1, "numSymbols": 50, "startDate": "2024-01-01"}, does_not_raise()),
+        ("basic/stock_ticker",
+         {"rows": 5000, "partitions": 4, "numSymbols": 50}, does_not_raise()),
+        ("basic/stock_ticker",
+         {"rows": 5000, "partitions": 4, "startDate": "2024-01-01"}, does_not_raise()),
+        ("basic/stock_ticker",
+         {"rows": 5000, "partitions": 4, "numSymbols": 100, "startDate": "2024-01-01"}, does_not_raise()),
+        ("basic/stock_ticker",
+         {"rows": 1000, "partitions": -1, "numSymbols": 100, "startDate": "2025-01-01"}, does_not_raise()),
+        ("basic/stock_ticker",
+         {"rows": 1000, "partitions": -1, "numSymbols": 10, "startDate": "2020-01-01"}, does_not_raise()),
+        ("basic/stock_ticker",
+         {"rows": 50, "partitions": 2, "numSymbols": 0, "startDate": "2020-06-04"}, pytest.raises(ValueError)),
+        ("basic/stock_ticker",
+         {"rows": 500, "numSymbols": 12, "startDate": "2025-06-04"}, does_not_raise()),
+        ("basic/stock_ticker",
+         {"rows": 10, "partitions": 1, "numSymbols": -1, "startDate": "2009-01-02"}, pytest.raises(ValueError)),
+        ("basic/stock_ticker",
+         {"partitions": 2, "numSymbols": 20, "startDate": "2021-01-01"}, does_not_raise()),
+        ("basic/stock_ticker",
+         {"rows": 50, "partitions": 2, "numSymbols": 2}, does_not_raise()),
+    ])
+    def test_basic_stock_ticker_retrieval(self, providerName, providerOptions, expectation):
+        with expectation:
+            ds = dg.Datasets(spark, providerName).get(**providerOptions)
+            assert ds is not None
+            df = ds.build()
+            assert df.count() >= 0
+
+            if "numSymbols" in providerOptions:
+                assert df.selectExpr("symbol").distinct().count() == providerOptions.get("numSymbols")
+
+            if "startDate" in providerOptions:
+                assert df.selectExpr("min(post_date) as min_post_date") \
+                            .collect()[0] \
+                            .asDict()["min_post_date"] == date.fromisoformat(providerOptions.get("startDate"))
+
+            assert df.where("""open < 0.0 
+                            or close < 0.0 
+                            or high < 0.0 
+                            or low < 0.0 
+                            or adj_close < 0.0""").count() == 0
+
+            assert df.where("high < low").count() == 0
 
     # BASIC TELEMATICS tests:
     @pytest.mark.parametrize("providerName, providerOptions", [
