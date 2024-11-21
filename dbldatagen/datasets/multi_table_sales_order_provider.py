@@ -523,9 +523,9 @@ class MultiTableSalesOrderProvider(DatasetProvider):
 
         if tableName == "order_shipments":
             return (
-               dfBaseOrderShipments.alias("a")
-               .join(dfBaseOrders.alias("b"), on="order_id")
-               .selectExpr(
+                dfBaseOrderShipments.alias("a")
+                .join(dfBaseOrders.alias("b"), on="order_id")
+                .selectExpr(
                     "a.order_shipment_id",
                     "a.order_id",
                     "a.carrier_id",
@@ -551,14 +551,14 @@ class MultiTableSalesOrderProvider(DatasetProvider):
                             "a.units as units")
                 .selectExpr("order_id", "order_line_item_id", "unit_price * units as total_price")
                 .groupBy("order_id")
-                .agg(F.count("order_line_item_id").alias("num_line_items"),F.sum("total_price").alias("order_total"))
+                .agg(F.count("order_line_item_id").alias("num_line_items"), F.sum("total_price").alias("order_total"))
             )
             return (
-               dfBaseInvoices.alias("a")
-               .join(dfBaseOrders.alias("b"), on="order_id")
-               .join(dfCustomers.alias("c"), on="customer_id")
-               .join(dfOrderTotals.alias("d"), on="order_id")
-               .selectExpr(
+                dfBaseInvoices.alias("a")
+                .join(dfBaseOrders.alias("b"), on="order_id")
+                .join(dfCustomers.alias("c"), on="customer_id")
+                .join(dfOrderTotals.alias("d"), on="order_id")
+                .selectExpr(
                     "a.invoice_id",
                     "a.order_id",
                     "b.purchase_order_number",
