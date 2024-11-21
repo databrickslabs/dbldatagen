@@ -1,7 +1,7 @@
-import pytest
 from datetime import date
-import dbldatagen as dg
 from contextlib import nullcontext as does_not_raise
+import pytest
+import dbldatagen as dg
 
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
