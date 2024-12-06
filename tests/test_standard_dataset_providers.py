@@ -9,56 +9,62 @@ spark = dg.SparkSingleton.getLocalInstance("unit tests")
 class TestStandardDatasetProviders:
     
     # BASIC GEOMETRIES tests:
-    @pytest.mark.parametrize("providerName, providerOptions", [
-        ("basic/geometries", 
-            {"rows": 50, "partitions": 4, "random": False, "geometryType": "point", "maxVertices": 1}),
-        ("basic/geometries", 
-            {"rows": 100, "partitions": -1, "random": False, "geometryType": "point", "maxVertices": 2}),
-        ("basic/geometries", 
-            {"rows": -1, "partitions": 4, "random": True, "geometryType": "point"}),
-        ("basic/geometries", {}),
-        ("basic/geometries", 
-            {"rows": 5000, "partitions": -1, "random": True, "geometryType": "lineString"}),
-        ("basic/geometries", 
-            {"rows": -1, "partitions": -1, "random": False,  "geometryType": "lineString", "maxVertices": 2}),
-        ("basic/geometries", 
-            {"rows": -1, "partitions": 4, "random": True,  "geometryType": "lineString", "maxVertices": 1}),
-        ("basic/geometries", 
-            {"rows": 5000, "partitions": 4, "geometryType": "lineString", "maxVertices": 2}),
-        ("basic/geometries", 
-            {"rows": 5000, "partitions": -1, "random": False, "geometryType": "polygon"}),
-        ("basic/geometries", 
-            {"rows": -1, "partitions": -1, "random": True,  "geometryType": "polygon", "maxVertices": 3}),
-        ("basic/geometries", 
-            {"rows": -1, "partitions": 4, "random": True,  "geometryType": "polygon", "maxVertices": 2}),
-        ("basic/geometries", 
-            {"rows": 5000, "partitions": 4, "geometryType": "polygon", "maxVertices": 5}),
+    @pytest.mark.parametrize("providerName, providerOptions, expectation", [
+        ("basic/geometries", {}, does_not_raise()),
+        ("basic/geometries", {"rows": 50, "partitions": 4, "random": False,
+                              "geometryType": "point", "maxVertices": 1}, does_not_raise()),
+        ("basic/geometries", {"rows": 100, "partitions": -1, "random": False,
+                              "geometryType": "point", "maxVertices": 2}, does_not_raise()),
+        ("basic/geometries", {"rows": -1, "partitions": 4, "random": True,
+                              "geometryType": "point"}, does_not_raise()),
+        ("basic/geometries", {"rows": 5000, "partitions": -1, "random": True,
+                              "geometryType": "lineString"}, does_not_raise()),
+        ("basic/geometries", {"rows": -1, "partitions": -1, "random": False,
+                              "geometryType": "lineString", "maxVertices": 2}, does_not_raise()),
+        ("basic/geometries", {"rows": -1, "partitions": 4, "random": True,
+                              "geometryType": "lineString", "maxVertices": 1}, does_not_raise()),
+        ("basic/geometries", {"rows": 5000, "partitions": 4,
+                              "geometryType": "lineString", "maxVertices": 2}, does_not_raise()),
+        ("basic/geometries", {"rows": 5000, "partitions": -1, "random": False,
+                              "geometryType": "polygon"}, does_not_raise()),
+        ("basic/geometries", {"rows": -1, "partitions": -1, "random": True,
+                              "geometryType": "polygon", "maxVertices": 3}, does_not_raise()),
+        ("basic/geometries", {"rows": -1, "partitions": 4, "random": True,
+                              "geometryType": "polygon", "maxVertices": 2}, does_not_raise()),
+        ("basic/geometries", {"rows": 5000, "partitions": 4,
+                              "geometryType": "polygon", "maxVertices": 5}, does_not_raise()),
+        ("basic/geometries",
+            {"rows": 5000, "partitions": 4, "geometryType": "polygon", "minLatitude": 45.0,
+             "maxLatitude": 50.0, "minLongitude": -85.0, "maxLongitude": -75.0}, does_not_raise()),
+        ("basic/geometries",
+            {"rows": -1, "partitions": -1, "geometryType": "multipolygon"}, pytest.raises(ValueError))
     ])
-    def test_basic_geometries_retrieval(self, providerName, providerOptions):
-        ds = dg.Datasets(spark, providerName).get(**providerOptions)
-        assert ds is not None
+    def test_basic_geometries_retrieval(self, providerName, providerOptions, expectation):
+        with expectation:
+            ds = dg.Datasets(spark, providerName).get(**providerOptions)
+            assert ds is not None
 
-        df = ds.build()
-        assert df.count() >= 0
-        assert "wkt" in df.columns
+            df = ds.build()
+            assert df.count() >= 0
+            assert "wkt" in df.columns
 
-        geometryType = providerOptions.get("geometryType", None)
-        row = df.first().asDict()
-        if geometryType == "point" or geometryType is None:
-            assert "POINT" in row["wkt"]
+            geometryType = providerOptions.get("geometryType", None)
+            row = df.first().asDict()
+            if geometryType == "point" or geometryType is None:
+                assert "POINT" in row["wkt"]
 
-        if geometryType == "lineString":
-            assert "LINESTRING" in row["wkt"]
+            if geometryType == "lineString":
+                assert "LINESTRING" in row["wkt"]
 
-        if geometryType == "polygon":
-            assert "POLYGON" in row["wkt"]
+            if geometryType == "polygon":
+                assert "POLYGON" in row["wkt"]
 
-        random = providerOptions.get("random", None)
-        if random:
-            print("")
-            leadingRows = df.limit(100).collect()
-            ids = [r.location_id for r in leadingRows]
-            assert ids != sorted(ids)
+            random = providerOptions.get("random", None)
+            if random:
+                print("")
+                leadingRows = df.limit(100).collect()
+                ids = [r.location_id for r in leadingRows]
+                assert ids != sorted(ids)
 
     # BASIC PROCESS HISTORIAN tests:
     @pytest.mark.parametrize("providerName, providerOptions", [

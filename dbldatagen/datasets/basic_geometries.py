@@ -29,10 +29,18 @@ class BasicGeometriesProvider(DatasetProvider.NoAssociatedDatasetsMixin, Dataset
     """
     MIN_LOCATION_ID = 1000000
     MAX_LOCATION_ID = 9223372036854775807
+    DEFAULT_MIN_LAT = -90.0
+    DEFAULT_MAX_LAT = 90.0
+    DEFAULT_MIN_LON = -180.0
+    DEFAULT_MAX_LON = 180.0
     COLUMN_COUNT = 2
     ALLOWED_OPTIONS = [
         "geometryType",
         "maxVertices",
+        "minLatitude",
+        "maxLatitude",
+        "minLongitude",
+        "maxLongitude",
         "random"
     ]
 
@@ -45,6 +53,10 @@ class BasicGeometriesProvider(DatasetProvider.NoAssociatedDatasetsMixin, Dataset
         generateRandom = options.get("random", False)
         geometryType = options.get("geometryType", "point")
         maxVertices = options.get("maxVertices", 1 if geometryType == "point" else 3)
+        minLatitude = options.get("minLatitude", self.DEFAULT_MIN_LAT)
+        maxLatitude = options.get("maxLatitude", self.DEFAULT_MAX_LAT)
+        minLongitude = options.get("minLongitude", self.DEFAULT_MIN_LON)
+        maxLongitude = options.get("maxLongitude", self.DEFAULT_MAX_LON)
 
         assert tableName is None or tableName == DatasetProvider.DEFAULT_TABLE_NAME, "Invalid table name"
         if rows is None or rows < 0:
@@ -62,9 +74,9 @@ class BasicGeometriesProvider(DatasetProvider.NoAssociatedDatasetsMixin, Dataset
             if maxVertices > 1:
                 w.warn('Ignoring property maxVertices for point geometries')
             df_spec = (
-                df_spec.withColumn("lat", "float", minValue=-90.0, maxValue=90.0,
+                df_spec.withColumn("lat", "float", minValue=minLatitude, maxValue=maxLatitude,
                                    step=1e-5, random=generateRandom, omit=True)
-                .withColumn("lon", "float", minValue=-180.0, maxValue=180.0,
+                .withColumn("lon", "float", minValue=minLongitude, maxValue=maxLongitude,
                             step=1e-5, random=generateRandom, omit=True)
                 .withColumn("wkt", "string", expr="concat('POINT(', lon, ' ', lat, ')')")
             )
@@ -75,9 +87,9 @@ class BasicGeometriesProvider(DatasetProvider.NoAssociatedDatasetsMixin, Dataset
             j = 0
             while j < maxVertices:
                 df_spec = (
-                    df_spec.withColumn(f"lat_{j}", "float", minValue=-90.0, maxValue=90.0,
+                    df_spec.withColumn(f"lat_{j}", "float", minValue=minLatitude, maxValue=maxLatitude,
                                        step=1e-5, random=generateRandom, omit=True)
-                        .withColumn(f"lon_{j}", "float", minValue=-180.0, maxValue=180.0,
+                        .withColumn(f"lon_{j}", "float", minValue=minLongitude, maxValue=maxLongitude,
                                         step=1e-5, random=generateRandom, omit=True)
                 )
                 j = j + 1
@@ -93,9 +105,9 @@ class BasicGeometriesProvider(DatasetProvider.NoAssociatedDatasetsMixin, Dataset
             j = 0
             while j < maxVertices:
                 df_spec = (
-                    df_spec.withColumn(f"lat_{j}", "float", minValue=-90.0, maxValue=90.0,
+                    df_spec.withColumn(f"lat_{j}", "float", minValue=minLatitude, maxValue=maxLatitude,
                                         step=1e-5, random=generateRandom, omit=True)
-                        .withColumn(f"lon_{j}", "float", minValue=-180.0, maxValue=180.0,
+                        .withColumn(f"lon_{j}", "float", minValue=minLongitude, maxValue=maxLongitude,
                                         step=1e-5, random=generateRandom, omit=True)
                 )
                 j = j + 1
