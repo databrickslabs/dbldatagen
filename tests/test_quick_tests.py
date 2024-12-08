@@ -1,7 +1,11 @@
 from datetime import timedelta, datetime
 
 import pytest
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, DateType
+from pyspark.sql.types import (
+    StructType, StructField, IntegerType, StringType, FloatType, DateType, DecimalType, DoubleType, ByteType,
+    ShortType, LongType
+)
+
 
 import dbldatagen as dg
 from dbldatagen import DataGenerator
@@ -402,6 +406,28 @@ class TestQuickTests:
 
         rowCount = formattedDF.count()
         assert rowCount == 1000
+
+    def test_missing_range_values(self):
+        column_types = [FloatType(), DoubleType(), ByteType(), ShortType(), IntegerType(), LongType()]
+        for column_type in column_types:
+            range_no_min = NRange(maxValue=1.0)
+            range_no_max = NRange(minValue=0.0)
+            range_no_min.adjustForColumnDatatype(column_type)
+            assert range_no_min.min == NRange._getNumericDataTypeRange(column_type)[0]
+            assert range_no_min.step == 1
+            range_no_max.adjustForColumnDatatype(column_type)
+            assert range_no_max.max == NRange._getNumericDataTypeRange(column_type)[1]
+            assert range_no_max.step == 1
+
+    def test_range_with_until(self):
+        range_until = NRange(step=2, until=100)
+        range_until.adjustForColumnDatatype(IntegerType())
+        assert range_until.minValue == 0
+        assert range_until.maxValue == 101
+
+    def test_empty_range(self):
+        empty_range = NRange()
+        assert empty_range.isEmpty()
 
     def test_reversed_ranges(self):
         testDataSpec = (dg.DataGenerator(sparkSession=spark, name="ranged_data", rows=100000,

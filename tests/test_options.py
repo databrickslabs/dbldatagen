@@ -218,6 +218,25 @@ class TestUseOfOptions:
         colSpec3 = ds.getColumnSpec("code3")
         assert colSpec3.random is True
 
+    def test_random3(self):
+        # will have implied column `id` for ordinal of row
+        ds = (
+            dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=500, partitions=1, random=True)
+            .withIdOutput()
+            .withColumn("val1", "decimal(5,2)", maxValue=20.0, step=0.01, random=True)
+            .withColumn("val2", "float", maxValue=20.0, random=True)
+            .withColumn("val3", "double", maxValue=20.0, random=True)
+            .withColumn("val4", "byte", maxValue=15, random=True)
+            .withColumn("val5", "short", maxValue=31, random=True)
+            .withColumn("val6", "integer", maxValue=63, random=True)
+            .withColumn("val7", "long", maxValue=127, random=True)
+        )
+
+        df = ds.build()
+        cols = ["val1", "val2", "val3", "val4", "val5", "val6", "val7"]
+        for col in cols:
+            assert df.collect() != df.orderBy(col).collect(), f"Random values were not generated for {col}"
+
     def test_random_multiple_columns(self):
         # will have implied column `id` for ordinal of row
         ds = (
