@@ -60,4 +60,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           name: dbldatagen
+          verbose: true
           files: ./coverage.xml
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
