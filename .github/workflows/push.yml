@@ -45,6 +45,9 @@ jobs:
       - name: Install dependencies
         run: pipenv install --dev
 
+      - name: Install Coverage
+        run: pip install coverage
+
       - name: Lint
         run: |
           pipenv run prospector --profile prospector.yaml
