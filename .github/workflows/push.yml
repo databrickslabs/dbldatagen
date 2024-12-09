@@ -53,9 +53,8 @@ jobs:
         run: make test
 
       - name: Publish test coverage to coverage site
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           name: dbldatagen
           files: ./coverage.xml
-
