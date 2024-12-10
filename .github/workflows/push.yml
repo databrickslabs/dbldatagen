@@ -62,5 +62,3 @@ jobs:
           name: dbldatagen
           verbose: true
           files: ./coverage.xml
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
