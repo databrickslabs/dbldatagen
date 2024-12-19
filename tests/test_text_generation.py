@@ -1,9 +1,9 @@
 import re
-import pytest
-import pandas as pd
-import numpy as np
 
+import numpy as np
+import pandas as pd
 import pyspark.sql.functions as F
+import pytest
 from pyspark.sql.types import BooleanType, DateType
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, TimestampType
 
@@ -44,9 +44,13 @@ class TestTextGeneration:
     row_count = 100000
     partitions_requested = 4
 
+    class TestTextGenerator(TextGenerator):
+        def pandasGenerateText(self, v):  # pylint: disable=useless-parent-delegation
+            return super().pandasGenerateText(v)
+
     def test_text_generator_basics(self):
         # test the random humber generator
-        tg1 = TextGenerator()
+        tg1 = self.TestTextGenerator()
 
         # test the repr
         desc = repr(tg1)
