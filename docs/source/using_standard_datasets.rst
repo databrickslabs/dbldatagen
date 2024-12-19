@@ -53,7 +53,7 @@ For the simplest use, you can simply select a standard dataset and generate a da
 
 .. code-block:: python
 
-   import dbldatagen as df
+   import dbldatagen as dg
    df = dg.Datasets(spark, "basic/user").get().build()
    display(df)
 
