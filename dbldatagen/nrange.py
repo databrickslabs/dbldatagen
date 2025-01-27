@@ -9,7 +9,7 @@ This module defines the `NRange` class used to specify data ranges
 import math
 
 from pyspark.sql.types import LongType, FloatType, IntegerType, DoubleType, ShortType, \
-    ByteType
+    ByteType, DecimalType
 
 from .datarange import DataRange
 
@@ -83,13 +83,12 @@ class NRange(DataRange):
         :param ctype: Spark SQL type instance to adjust range for
         :returns: No return value - executes for effect only
         """
-        if ctype.typeName() == 'decimal':
+        numeric_types = [DecimalType, FloatType, DoubleType, ByteType, ShortType, IntegerType, LongType]
+        if type(ctype) in numeric_types:
             if self.minValue is None:
-                self.minValue = 0.0
+                self.minValue = NRange._getNumericDataTypeRange(ctype)[0]
             if self.maxValue is None:
-                self.maxValue = math.pow(10, ctype.precision - ctype.scale) - 1.0
-            if self.step is None:
-                self.step = 1.0
+                self.maxValue = NRange._getNumericDataTypeRange(ctype)[1]
 
         if type(ctype) is ShortType and self.maxValue is not None:
             assert self.maxValue <= 65536, "`maxValue` must be in range of short"
@@ -145,7 +144,8 @@ class NRange(DataRange):
         # return maximum scale of components
         return max(smin, smax, sstep)
 
-    def _precision_and_scale(self, x):
+    @staticmethod
+    def _precision_and_scale(x):
         max_digits = 14
         int_part = int(abs(x))
         magnitude = 1 if int_part == 0 else int(math.log10(int_part)) + 1
@@ -158,3 +158,17 @@ class NRange(DataRange):
             frac_digits /= 10
         scale = int(math.log10(frac_digits))
         return (magnitude + scale, scale)
+
+    @staticmethod
+    def _getNumericDataTypeRange(ctype):
+        value_ranges = {
+            ByteType: (0, (2 ** 4 - 1)),
+            ShortType: (0, (2 ** 8 - 1)),
+            IntegerType: (0, (2 ** 16 - 1)),
+            LongType: (0, (2 ** 32 - 1)),
+            FloatType: (0.0, 3.402e38),
+            DoubleType: (0.0, 1.79769e308)
+        }
+        if type(ctype) is DecimalType:
+            return 0.0, math.pow(10, ctype.precision - ctype.scale) - 1.0
+        return value_ranges.get(type(ctype), None)
