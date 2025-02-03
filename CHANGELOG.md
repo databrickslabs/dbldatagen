@@ -10,6 +10,9 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 * Added min and max latitude and longitude options for the basic geometries dataset provider
 * Added default max values for numeric data types
 
+### Version DO_NOT_MERGE
+* Added a test change to the changelog
+
 ### Version 0.4.0 Hotfix 1
 
 #### Fixed
