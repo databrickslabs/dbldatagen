@@ -1,6 +1,8 @@
 from datetime import timedelta, datetime
 
 import pytest
+import json
+import yaml
 from pyspark.sql.types import (
     StructType, StructField, IntegerType, StringType, FloatType, DateType, DecimalType, DoubleType, ByteType,
     ShortType, LongType
@@ -8,7 +10,7 @@ from pyspark.sql.types import (
 
 
 import dbldatagen as dg
-from dbldatagen import DataGenerator
+from dbldatagen import DataGenerator, ColumnGenerationSpec
 from dbldatagen import NRange, DateRange
 
 schema = StructType([
@@ -754,3 +756,61 @@ class TestQuickTests:
     def test_version_info(self):
         # test access to version info without explicit import
         print("Data generator version", dg.__version__)
+
+    def test_multi_column_generation(self):
+        column_specs = [
+            {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100},
+            {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0},
+            {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": True}
+        ]
+        df_from_dicts = dg.DataGenerator(rows=100, partitions=1).withColumns(column_specs).build()
+        assert df_from_dicts.columns == ["col1", "col2", "col3"]
+
+    def test_generation_from_dictionary(self):
+        dg_spec = {
+            "name": "test_data_generator",
+            "rows": 1000,
+            "partitions": 10,
+            "randomSeedMethod": "fixed",
+            "randomSeed": 42,
+            "random": True
+        }
+        gen_from_dict = DataGenerator.fromDict(dg_spec)
+        assert gen_from_dict.name == dg_spec.get("name")
+        assert gen_from_dict.rowCount == dg_spec.get("rows")
+        assert gen_from_dict.partitions == dg_spec.get("partitions")
+        assert gen_from_dict.random == dg_spec.get("random")
+        assert gen_from_dict.randomSeed == dg_spec.get("randomSeed")
+
+    def test_generation_from_file(self):
+        path = "tests/files/test_generator_spec.json"
+        with open(path, "r") as f:
+            options = json.load(f)
+            gen_options = options.get("generator")
+            gen_from_json = DataGenerator.fromFile(path)
+            assert gen_from_json.name == gen_options.get("name")
+            assert gen_from_json.rowCount == gen_options.get("rows")
+            assert gen_from_json.partitions == gen_options.get("partitions")
+            assert gen_from_json.random == gen_options.get("random")
+            assert gen_from_json.randomSeed == gen_options.get("randomSeed")
+
+            df_from_json = gen_from_json.build()
+            assert df_from_json.columns == ["col1", "col2", "col3"]
+
+        path = "tests/files/test_generator_spec.yml"
+        with open(path, "r") as f:
+            options = yaml.safe_load(f)
+            gen_options = options.get("generator")
+            gen_from_yaml = DataGenerator.fromFile(path)
+            assert gen_from_yaml.name == gen_options.get("name")
+            assert gen_from_yaml.rowCount == gen_options.get("rows")
+            assert gen_from_yaml.partitions == gen_options.get("partitions")
+            assert gen_from_yaml.random == gen_options.get("random")
+            assert gen_from_yaml.randomSeed == gen_options.get("randomSeed")
+
+            df_from_json = gen_from_json.build()
+            assert df_from_json.columns == ["col1", "col2", "col3"]
+
+        path = "tests/files/test_generator_spec.txt"
+        with pytest.raises(ValueError):
+            DataGenerator.fromFile(path)  # Loading from .txt should raise a ValueError

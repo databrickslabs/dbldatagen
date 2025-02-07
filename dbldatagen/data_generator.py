@@ -6,9 +6,11 @@
 This file defines the `DataGenError` and `DataGenerator` classes
 """
 import copy
+import json
 import logging
 import re
 
+import yaml
 from pyspark.sql.types import LongType, IntegerType, StringType, StructType, StructField, DataType
 
 from ._version import _get_spark_version
@@ -869,6 +871,17 @@ class DataGenerator:
         self._inferredSchemaFields.append(StructField(colName, newColumn.datatype, nullable))
         return self
 
+    def withColumns(self, columns):
+        """ Adds a set of columns to the synthetic generation specification.
+
+            :param columns: A list of column generation specifications as dictionaries
+            :returns:       A modified in-place instance of a data generator allowing for chaining of calls
+                            following a builder pattern
+        """
+        for column in columns:
+            self.withColumn(**column)
+        return self
+
     def _mkSqlStructFromList(self, fields):
         """
         Create a SQL struct expression from a list of fields
@@ -1604,3 +1617,51 @@ class DataGenerator:
             result = HtmlUtils.formatCodeAsHtml(results)
 
         return result
+
+    @staticmethod
+    def fromDict(options):
+        """ Creates a data generator from a dictionary of options.
+
+            :param options: Dictionary with data generator options (e.g. "name", "rows")
+            :return: A data generator with the specified options
+        """
+        return DataGenerator(**options)
+
+    @staticmethod
+    def fromFile(path):
+        """ Creates a data generator from options loaded from a JSON or YAML file.
+
+            :param path: File path to a JSON or YAML file containing data generation options
+            :return: A data generator with the specified options
+        """
+        if path.endswith("yml") or path.endswith("yaml"):
+            return DataGenerator.fromYaml(path)
+        if path.endswith("json"):
+            return DataGenerator.fromJson(path)
+        raise ValueError("File type must be '.json' or '.yml'")
+
+    @staticmethod
+    def fromJson(path):
+        """ Creates a data generator from options loaded from a JSON file.
+
+            :param path: File path to a JSON file containing data generation options
+            :return: A data generator with the specified options
+        """
+        with open(path, "r", encoding="utf-8") as f:
+            options = json.load(f)
+            generator = options.get("generator")
+            columns = options.get("columns", None)
+            return DataGenerator.fromDict(generator).withColumns(columns)
+
+    @staticmethod
+    def fromYaml(path):
+        """ Creates a data generator from options loaded from a YAML file.
+
+            :param path: File path to a YAML file containing data generation options
+            :return: A data generator with the specified options
+        """
+        with open(path, "r", encoding="utf-8") as f:
+            options = yaml.safe_load(f)
+            generator = options.get("generator")
+            columns = options.get("columns")
+            return DataGenerator.fromDict(generator).withColumns(columns)
