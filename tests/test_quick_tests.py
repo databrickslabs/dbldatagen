@@ -1,7 +1,6 @@
 from datetime import timedelta, datetime
-
-import pytest
 import json
+import pytest
 import yaml
 from pyspark.sql.types import (
     StructType, StructField, IntegerType, StringType, FloatType, DateType, DecimalType, DoubleType, ByteType,
@@ -784,7 +783,7 @@ class TestQuickTests:
 
     def test_generation_from_file(self):
         path = "tests/files/test_generator_spec.json"
-        with open(path, "r") as f:
+        with open(path, "r", encoding="utf-8") as f:
             options = json.load(f)
             gen_options = options.get("generator")
             gen_from_json = DataGenerator.fromFile(path)
@@ -798,7 +797,7 @@ class TestQuickTests:
             assert df_from_json.columns == ["col1", "col2", "col3"]
 
         path = "tests/files/test_generator_spec.yml"
-        with open(path, "r") as f:
+        with open(path, "r", encoding="utf-8") as f:
             options = yaml.safe_load(f)
             gen_options = options.get("generator")
             gen_from_yaml = DataGenerator.fromFile(path)

@@ -8,8 +8,8 @@
       "random": true
   },
   "columns": [
-      {"colName": "col1", "colType": "int", "min": 0, "max": 100},
-      {"colName": "col2", "colType": "float", "min": 0.0, "max": 100.0},
+      {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 1000},
+      {"colName": "col2", "colType": "float", "minValue": -10.0, "maxValue": 10.0},
       {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": true}
   ]
 }

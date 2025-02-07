@@ -128,6 +128,12 @@ representing the column - for example "email_0", "email_1" etc.
 If you specify the attribute ``structType="array"``, the multiple columns will be combined into a single array valued
 column.
 
+Generating columns from Python dictionaries
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can generate columns from Python dictionaries using ``withColumns(column_options)``. Each dictionary should contain
+keys which match the ``withColumn`` arguments (e.g. ``"colName"``, ``"colType"``).
+
 Generating random values
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
