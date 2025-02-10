@@ -27,6 +27,9 @@ jobs:
       #     restore-keys: |
       #       ${{ runner.os }}-go-
 
+      - name: Check Java version
+        run: java -version
+
       - name: Set up Python 3.8
         uses: actions/setup-python@v5
         with:
