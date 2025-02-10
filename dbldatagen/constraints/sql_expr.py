@@ -28,3 +28,12 @@ class SqlExpr(NoPrepareTransformMixin, Constraint):
     def _generateFilterExpression(self):
         """ Generate a SQL filter expression that may be used for filtering"""
         return F.expr(self._expr)
+
+    def toDict(self):
+        """ Returns a Python dictionary representation of a Constraint.
+            :return: Python dictionary representing the constraint
+        """
+        return {
+            "type": self.__class__.__name__,
+            "expr": self._expr
+        }

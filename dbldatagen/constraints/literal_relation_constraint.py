@@ -35,3 +35,14 @@ class LiteralRelation(NoPrepareTransformMixin, Constraint):
         filters = [self._generate_relation_expression(col, self._relation, literalValue) for col in expressions]
 
         return self.mkCombinedConstraintExpression(filters)
+
+    def toDict(self):
+        """ Returns a Python dictionary representation of a Constraint.
+            :return: Python dictionary representing the constraint
+        """
+        return {
+            "type": self.__class__.__name__,
+            "columns": self._columns,
+            "relation": self._relation,
+            "value": self._value
+        }
