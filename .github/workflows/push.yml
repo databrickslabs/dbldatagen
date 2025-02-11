@@ -27,11 +27,10 @@ jobs:
       #     restore-keys: |
       #       ${{ runner.os }}-go-
 
-      - name: Check Java version
-        run: java -version
-
-      - name: Set up Java 8
-        run: sudo update-alternatives --config java
+      - name: Set Java 8
+        run: |
+          sudo update-alternatives --set java /usr/lib/jvm/temurin-8-jdk-amd64/bin/java
+          java -version
 
       - name: Set up Python 3.8
         uses: actions/setup-python@v5
