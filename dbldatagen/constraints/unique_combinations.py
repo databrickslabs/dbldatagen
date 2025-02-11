@@ -79,3 +79,12 @@ class UniqueCombinations(NoFilterMixin, Constraint):
         results = dataFrame.dropDuplicates(columnsToEvaluate)
 
         return results
+
+    def toDict(self):
+        """ Returns a Python dictionary representation of a Constraint.
+            :return: Python dictionary representing the constraint
+        """
+        return {
+            "type": self.__class__.__name__,
+            "columns": self._columns
+        }

@@ -182,3 +182,48 @@ This has several implications:
   SQL expression.
   To enforce the dependency, you must use the `baseColumn` attribute to indicate the dependency.
 
+Creating data generation specs from files
+-----------------------------------------
+
+``DataGenerator.fromFile("file_path")`` will return a ``DataGenerator`` with ``ColumnGenerationSpecs`` from definitions
+in a JSON or YAML file. Use the ``"generator"`` key to specify ``DataGenerator`` options and the ``"columns"`` key to
+specify ``ColumnGenerationSpec`` options.
+
+**JSON Example:**
+
+.. code-block:: JSON
+   {
+     "generator": {
+         "name": "test_data_generator",
+         "rows": 1000,
+         "partitions": 10
+     },
+     "columns": [
+         {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100},
+         {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0},
+         {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": true}
+     ]
+   }
+
+**YAML Example:**
+.. code-block:: YAML
+generator:
+  name: test_data_generator
+  rows: 1000
+  partitions: 10
+columns:
+  - colName: col1
+    colType: int
+    minValue: 0
+    maxValue: 1000
+  - colName: col2
+    colType: float
+    minValue: -10.0
+    maxValue: 10.0
+  - colName: col3
+    colType: string
+    values:
+      - a
+      - b
+      - c
+    random: true

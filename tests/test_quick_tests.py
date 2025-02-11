@@ -1,6 +1,7 @@
 from datetime import timedelta, datetime
-
+import json
 import pytest
+import yaml
 from pyspark.sql.types import (
     StructType, StructField, IntegerType, StringType, FloatType, DateType, DecimalType, DoubleType, ByteType,
     ShortType, LongType
@@ -10,6 +11,7 @@ from pyspark.sql.types import (
 import dbldatagen as dg
 from dbldatagen import DataGenerator
 from dbldatagen import NRange, DateRange
+from dbldatagen.constraints import PositiveValues
 
 schema = StructType([
     StructField("site_id", IntegerType(), True),
@@ -754,3 +756,102 @@ class TestQuickTests:
     def test_version_info(self):
         # test access to version info without explicit import
         print("Data generator version", dg.__version__)
+
+    def test_multi_column_generation(self):
+        column_specs = [
+            {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100},
+            {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0},
+            {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": True}
+        ]
+        df_from_dicts = dg.DataGenerator(rows=100, partitions=1).withColumnDefinitions(column_specs).build()
+        assert df_from_dicts.columns == ["col1", "col2", "col3"]
+
+    def test_generation_from_dictionary(self):
+        dg_spec = {
+            "name": "test_data_generator",
+            "rows": 1000,
+            "partitions": 10,
+            "randomSeedMethod": "fixed",
+            "randomSeed": 42,
+            "random": True
+        }
+        gen_from_dict = DataGenerator.fromDict({"generator": dg_spec})
+        assert gen_from_dict.name == dg_spec.get("name")
+        assert gen_from_dict.rowCount == dg_spec.get("rows")
+        assert gen_from_dict.partitions == dg_spec.get("partitions")
+        assert gen_from_dict.random == dg_spec.get("random")
+        assert gen_from_dict.randomSeed == dg_spec.get("randomSeed")
+
+    def test_to_dict(self):
+        gen = (
+            dg.DataGenerator(rows=1000, name="test_data_generator", partitions=1)
+            .withColumn("val1", "int", minValue=0, maxValue=100, step=1, random=True)
+            .withConstraint(PositiveValues(columns=["val1"], strict=True))
+        )
+        gen_dict = gen.toDict()
+        assert gen_dict["generator"]["rows"] == 1000
+        assert gen_dict["generator"]["name"] == "test_data_generator"
+        assert gen_dict["generator"]["partitions"] == 1
+
+        column = gen_dict["columns"][1]
+        assert column["colName"] == "val1"
+        assert column["colType"] == "int"
+        assert column["minValue"] == 0
+        assert column["maxValue"] == 100
+        assert column["step"] == 1
+        assert column["random"]
+
+        constraint = gen_dict["constraints"][0]
+        assert constraint["type"] == "PositiveValues"
+        assert constraint["columns"] == ["val1"]
+        assert constraint["strict"]
+
+    def test_to_json(self):
+        gen = (
+            dg.DataGenerator(rows=1000, name="test_data_generator", partitions=1)
+            .withColumn("val1", "int", minValue=0, maxValue=100, step=1, random=True)
+            .withConstraint(PositiveValues(columns=["val1"], strict=True))
+        )
+        gen_json = gen.toJson()
+        gen_dict = json.loads(gen_json)
+        assert gen_dict["generator"]["rows"] == 1000
+        assert gen_dict["generator"]["name"] == "test_data_generator"
+        assert gen_dict["generator"]["partitions"] == 1
+
+        column = gen_dict["columns"][1]
+        assert column["colName"] == "val1"
+        assert column["colType"] == "int"
+        assert column["minValue"] == 0
+        assert column["maxValue"] == 100
+        assert column["step"] == 1
+        assert column["random"]
+
+        constraint = gen_dict["constraints"][0]
+        assert constraint["type"] == "PositiveValues"
+        assert constraint["columns"] == ["val1"]
+        assert constraint["strict"]
+
+    def test_to_yaml(self):
+        gen = (
+            dg.DataGenerator(rows=1000, name="test_data_generator", partitions=1)
+            .withColumn("val1", "int", minValue=0, maxValue=100, step=1, random=True)
+            .withConstraint(PositiveValues(columns=["val1"], strict=True))
+        )
+        gen_yaml = gen.toYaml()
+        gen_dict = yaml.safe_load(gen_yaml)
+        assert gen_dict["generator"]["rows"] == 1000
+        assert gen_dict["generator"]["name"] == "test_data_generator"
+        assert gen_dict["generator"]["partitions"] == 1
+
+        column = gen_dict["columns"][1]
+        assert column["colName"] == "val1"
+        assert column["colType"] == "int"
+        assert column["minValue"] == 0
+        assert column["maxValue"] == 100
+        assert column["step"] == 1
+        assert column["random"]
+
+        constraint = gen_dict["constraints"][0]
+        assert constraint["type"] == "PositiveValues"
+        assert constraint["columns"] == ["val1"]
+        assert constraint["strict"]

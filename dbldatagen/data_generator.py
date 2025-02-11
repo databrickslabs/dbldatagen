@@ -6,9 +6,11 @@
 This file defines the `DataGenError` and `DataGenerator` classes
 """
 import copy
+import json
 import logging
 import re
 
+import yaml
 from pyspark.sql.types import LongType, IntegerType, StringType, StructType, StructField, DataType
 
 from ._version import _get_spark_version
@@ -869,6 +871,17 @@ class DataGenerator:
         self._inferredSchemaFields.append(StructField(colName, newColumn.datatype, nullable))
         return self
 
+    def withColumnDefinitions(self, columns):
+        """ Adds a set of columns to the synthetic generation specification.
+
+            :param columns: A list of column generation specifications as dictionaries
+            :returns:       A modified in-place instance of a data generator allowing for chaining of calls
+                            following a builder pattern
+        """
+        for column in columns:
+            self.withColumn(**column)
+        return self
+
     def _mkSqlStructFromList(self, fields):
         """
         Create a SQL struct expression from a list of fields
@@ -1206,6 +1219,12 @@ class DataGenerator:
         """
         return [self._columnSpecsByName[colspec].datatype for colspec in columns]
 
+    def getColumnGenerationSpecs(self):
+        return self._allColumnSpecs
+
+    def getConstraints(self):
+        return self._constraints
+
     def withConstraint(self, constraint):
         """Add a constraint to control the data generation
 
@@ -1253,6 +1272,17 @@ class DataGenerator:
         are satisfied more efficiently.
         """
         self.withConstraint(SqlExpr(sqlExpression))
+        return self
+
+    def withConstraintDefinitions(self, constraints):
+        """ Adds a set of constraints to the synthetic generation specification.
+
+            :param constraints: A list of constraints as dictionaries
+            :returns:       A modified in-place instance of a data generator allowing for chaining of calls
+                            following a builder pattern
+        """
+        for c in constraints:
+            self.withConstraint(Constraint.fromDict(c))
         return self
 
     def computeBuildPlan(self):
@@ -1604,3 +1634,66 @@ class DataGenerator:
             result = HtmlUtils.formatCodeAsHtml(results)
 
         return result
+
+    @staticmethod
+    def fromDict(options):
+        """ Creates a data generator from a dictionary of options.
+            :param options: Dictionary with data generator options (e.g. "name", "rows")
+            :return: A data generator with the specified options
+        """
+        generator = options["generator"]
+        columns = options.get("columns", [])
+        constraints = options.get("constraints", [])
+        return (
+            DataGenerator(**generator)
+            .withColumnDefinitions(columns)
+            .withConstraintDefinitions(constraints)
+        )
+
+    def toDict(self):
+        """ Creates a dictionary from a DataGenerator.
+            :return: A dictionary representation of the DataGenerator
+        """
+        generator = {
+            "name": self.name,
+            "rows": self.rowCount,
+            "partitions": self.partitions,
+            "random": self.random,
+            "randomSeed": self.randomSeed,
+            "startingId": self.starting_id,
+        }
+        return {
+            "generator": generator,
+            "columns": [column.toDict() for column in self.getColumnGenerationSpecs()],
+            "constraints": [constraint.toDict() for constraint in self.getConstraints()]
+        }
+
+    @staticmethod
+    def fromJson(options):
+        """ Creates a data generator from a JSON string.
+            :param options: A JSON string containing data generation options
+            :return: A data generator with the specified options
+        """
+        options = json.loads(options)
+        return DataGenerator.fromDict(options)
+
+    def toJson(self):
+        """ Returns the JSON string representation of a data generator.
+            :return: A JSON string representation of the DataGenerator
+        """
+        return json.dumps(self.toDict())
+
+    @staticmethod
+    def fromYaml(options):
+        """ Creates a data generator from a YAML string.
+            :param options: A YAML string containing data generation options
+            :return: A data generator with the specified options
+        """
+        options = yaml.safe_load(options)
+        return DataGenerator.fromDict(options)
+
+    def toYaml(self):
+        """ Returns the YAML string representation of a data generator.
+            :return: A YAML string representation of the DataGenerator
+        """
+        return yaml.dump(self.toDict())

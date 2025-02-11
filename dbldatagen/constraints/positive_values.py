@@ -36,3 +36,13 @@ class PositiveValues(NoPrepareTransformMixin, Constraint):
             filters = [col.isNotNull() & (col >= 0) for col in expressions]
 
         return self.mkCombinedConstraintExpression(filters)
+
+    def toDict(self):
+        """ Returns a Python dictionary representation of a Constraint.
+            :return: Python dictionary representing the constraint
+        """
+        return {
+            "type": self.__class__.__name__,
+            "columns": self._columns,
+            "strict": self._strict
+        }

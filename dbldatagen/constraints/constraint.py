@@ -133,6 +133,26 @@ class Constraint(ABC):
             self._calculatedFilterExpression = True
         return self._filterExpression
 
+    @classmethod
+    def fromDict(cls, constraint):
+        """ Creates a Constraint from a Python dictionary.
+            :param constraint: Constraint definition as a Python dictionary
+            :return: Constraint object
+        """
+        inner_obj = constraint.copy()
+        constraint_type = inner_obj.pop("type")
+        for c in cls.__subclasses__():
+            if c.__name__ == constraint_type:
+                return c(**inner_obj)
+        raise ValueError(f"Unknown constraint type: {constraint_type}")
+
+    @abstractmethod
+    def toDict(self):
+        """ Returns a Python dictionary representation of a Constraint.
+            :return: Python dictionary representing the constraint
+        """
+        raise NotImplementedError("Method toDict must be implemented in derived class")
+
 
 class NoFilterMixin:
     """ Mixin class to indicate that constraint has no filter expression

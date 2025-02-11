@@ -71,6 +71,10 @@ prep-doc-release:
 # Tests
 test: export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 
+test: export SPARK_MASTER_HOST='localhost'
+
+test: export SPARK_LOCAL_IP=127.0.0.1
+
 dev-test: export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 
 dev-test: export SPARK_MASTER_HOST='localhost'

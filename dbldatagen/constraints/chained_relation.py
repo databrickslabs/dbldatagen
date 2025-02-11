@@ -57,3 +57,13 @@ class ChainedRelation(NoPrepareTransformMixin, Constraint):
 
         # ... and combine them using logical `and` operation
         return self.mkCombinedConstraintExpression(filters)
+
+    def toDict(self):
+        """ Returns a Python dictionary representation of a Constraint.
+            :return: Python dictionary representing the constraint
+        """
+        return {
+            "type": self.__class__.__name__,
+            "columns": self._columns,
+            "relation": self._relation
+        }

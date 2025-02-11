@@ -119,7 +119,7 @@ class ColumnGenerationSpec(object):
             if EXPR_OPTION not in kwargs:
                 raise ValueError("Column generation spec must have `expr` attribute specified if datatype is inferred")
 
-        elif type(colType) == str:
+        elif isinstance(colType, str):
             colType = SchemaParser.columnTypeFromString(colType)
 
         assert isinstance(colType, DataType), f"colType `{colType}` is not instance of DataType"
@@ -1300,3 +1300,22 @@ class ColumnGenerationSpec(object):
                     retval = F.slice(retval, F.lit(1), F.expr(expr_str))
 
         return retval
+
+    def toDict(self):
+        """ Creates a dictionary from a ColumnGenerationSpec.
+            :return: A dictionary representation of the ColumnGenerationSpec
+        """
+        return {
+            "colName": self.name,
+            "colType": self.datatype.simpleString(),
+            "minValue": self.min,
+            "maxValue": self.max,
+            "step": self.step,
+            "values": self.values,
+            "expr": self.expr,
+            "prefix": self.prefix,
+            "random": self.random,
+            "nullable": self.nullable,
+            "omit": self.omit,
+            "implicit": self.implicit
+        }

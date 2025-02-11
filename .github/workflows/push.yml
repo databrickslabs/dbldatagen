@@ -9,7 +9,7 @@ on:
 jobs:
   tests:
     # Ubuntu latest no longer installs Python 3.9 by default so install it
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,6 +26,12 @@ jobs:
       #     key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
       #     restore-keys: |
       #       ${{ runner.os }}-go-
+
+      - name: Set Java 8
+        run: |
+          sudo update-alternatives --set java /usr/lib/jvm/temurin-8-jdk-amd64/bin/java
+          java -version
+          sudo update-alternatives --config java
 
       - name: Set up Python 3.8
         uses: actions/setup-python@v5
@@ -50,7 +56,9 @@ jobs:
           pipenv run prospector --profile prospector.yaml
 
       - name: Run tests
-        run: make test
+        run: |
+          java -version
+          make test
 
       - name: Publish test coverage to coverage site
         uses: codecov/codecov-action@v4
