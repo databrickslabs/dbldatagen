@@ -3,6 +3,11 @@
 ## Change History
 All notable changes to the Databricks Labs Data Generator will be documented in this file.
 
+### unreleased
+
+#### Fixed 
+* Updated build scripts to use Ubuntu 22.04 to correspond to environment in Databricks runtime
+
 ### Version 0.4.0 Hotfix 2
 
 #### Fixed
