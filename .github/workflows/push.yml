@@ -51,9 +51,6 @@ jobs:
       - name: Install dependencies
         run: pipenv install --dev
 
-      - name: Check Java version
-        run:
-
       - name: Lint
         run: |
           pipenv run prospector --profile prospector.yaml
