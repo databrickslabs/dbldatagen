@@ -56,7 +56,9 @@ jobs:
           pipenv run prospector --profile prospector.yaml
 
       - name: Run tests
-        run: make test
+        run: |
+          java -version
+          make test
 
       - name: Publish test coverage to coverage site
         uses: codecov/codecov-action@v4
