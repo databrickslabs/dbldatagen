@@ -31,6 +31,7 @@ jobs:
         run: |
           sudo update-alternatives --set java /usr/lib/jvm/temurin-8-jdk-amd64/bin/java
           java -version
+          sudo update-alternatives --config java
 
       - name: Set up Python 3.8
         uses: actions/setup-python@v5
@@ -49,6 +50,9 @@ jobs:
 
       - name: Install dependencies
         run: pipenv install --dev
+
+      - name: Check Java version
+        run:
 
       - name: Lint
         run: |
