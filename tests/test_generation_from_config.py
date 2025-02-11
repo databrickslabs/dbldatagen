@@ -9,17 +9,17 @@ spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
 class TestGenerationFromConfig:
     @pytest.mark.parametrize("expectation, columns", [
-            (does_not_raise(), [
-                {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100},
-                {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0},
-                {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": True}
-            ]),
-            (does_not_raise(), [
-                {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100, "step": 2, "random": True},
-                {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0, "step": 1.5},
-                {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": True}
-            ]),
-        ])
+        (does_not_raise(), [
+            {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100},
+            {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0},
+            {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": True}
+        ]),
+        (does_not_raise(), [
+            {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100, "step": 2, "random": True},
+            {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0, "step": 1.5},
+            {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": True}
+        ]),
+    ])
     def test_column_definitions_from_dict(self, columns, expectation):
         with expectation:
             # Test the options set on the ColumnGenerationSpecs:
@@ -81,51 +81,51 @@ class TestGenerationFromConfig:
                 assert constraint in constraint_specs
 
     @pytest.mark.parametrize("expectation, options", [
-            (does_not_raise(),
-             {"generator": {"name": "test_generator", "rows": 1000},
-              "columns": [
-                {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100},
-                {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0},
-                {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": True}]
-              }),
-            (does_not_raise(),
-             {"generator": {"name": "test_generator", "rows": 10000, "randomSeed": 42},
-              "columns": [
-                {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100, "step": 2, "random": True},
-                {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0, "step": 1.5},
-                {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": True}]
-              }),
-            (does_not_raise(),
-             {"generator": {"name": "test_generator", "rows": 10000, "randomSeed": 42},
-              "columns": [
-                {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100, "step": 2, "random": True},
-                {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0, "step": 1.5},
-                {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": True}],
-              "constraints": [
-                {"type": "LiteralRange", "columns": ["col1"], "lowValue": -1000, "highValue": 1000, "strict": True},
-                {"type": "PositiveValues", "columns": ["col1", "col2"], "strict": True},
-                {"type": "SqlExpr", "expr": "col1 > 0"},
-                {"type": "LiteralRelation", "columns": ["col2"], "relation": "<>", "value": "0"}]
-              }),
-            (pytest.raises(KeyError),  # Testing a dictionary missing a "generator" object
-             {"columns": [
-                {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100, "step": 2, "random": True},
-                {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0, "step": 1.5},
-                {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": True}]
-              }),
-            (pytest.raises(ValueError),  # Testing an invalid "type" value
-             {"generator": {"name": "test_generator", "rows": 10000, "randomSeed": 42},
-              "columns": [
-                {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100, "step": 2, "random": True},
-                {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0, "step": 1.5},
-                {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": True}],
-              "constraints": [
-                {"type": "LiteralRange", "columns": ["col1"], "lowValue": -1000, "highValue": 1000, "strict": True},
-                {"type": "PositiveValues", "columns": ["col1", "col2"], "strict": True},
-                {"type": "SqlExpr", "expr": "col1 > 0"},
-                {"type": "Equivalent", "columns": ["col2"], "value": 0}]
-              }),
-        ])
+        (does_not_raise(),
+         {"generator": {"name": "test_generator", "rows": 1000},
+          "columns": [
+              {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100},
+              {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0},
+              {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": True}]
+          }),
+        (does_not_raise(),
+         {"generator": {"name": "test_generator", "rows": 10000, "randomSeed": 42},
+          "columns": [
+              {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100, "step": 2, "random": True},
+              {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0, "step": 1.5},
+              {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": True}]
+          }),
+        (does_not_raise(),
+         {"generator": {"name": "test_generator", "rows": 10000, "randomSeed": 42},
+          "columns": [
+              {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100, "step": 2, "random": True},
+              {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0, "step": 1.5},
+              {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": True}],
+          "constraints": [
+              {"type": "LiteralRange", "columns": ["col1"], "lowValue": -1000, "highValue": 1000, "strict": True},
+              {"type": "PositiveValues", "columns": ["col1", "col2"], "strict": True},
+              {"type": "SqlExpr", "expr": "col1 > 0"},
+              {"type": "LiteralRelation", "columns": ["col2"], "relation": "<>", "value": "0"}]
+          }),
+        (pytest.raises(KeyError),  # Testing a dictionary missing a "generator" object
+         {"columns": [
+             {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100, "step": 2, "random": True},
+             {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0, "step": 1.5},
+             {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": True}]
+         }),
+        (pytest.raises(ValueError),  # Testing an invalid "type" value
+         {"generator": {"name": "test_generator", "rows": 10000, "randomSeed": 42},
+          "columns": [
+              {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100, "step": 2, "random": True},
+              {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0, "step": 1.5},
+              {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": True}],
+          "constraints": [
+              {"type": "LiteralRange", "columns": ["col1"], "lowValue": -1000, "highValue": 1000, "strict": True},
+              {"type": "PositiveValues", "columns": ["col1", "col2"], "strict": True},
+              {"type": "SqlExpr", "expr": "col1 > 0"},
+              {"type": "Equivalent", "columns": ["col2"], "value": 0}]
+          }),
+    ])
     def test_generator_from_dict(self, options, expectation):
         with expectation:
             # Test the options set on the DataGenerator:
@@ -152,51 +152,51 @@ class TestGenerationFromConfig:
             assert df_from_dicts.columns == ["col1", "col2", "col3"]
 
     @pytest.mark.parametrize("expectation, json_options", [
-            (does_not_raise(),
-             '''{"generator": {"name": "test_generator", "rows": 1000},
-              "columns": [
-                {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100},
-                {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0},
-                {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": true}]
-              }'''),
-            (does_not_raise(),
-             '''{"generator": {"name": "test_generator", "rows": 10000, "randomSeed": 42},
+        (does_not_raise(),
+         '''{"generator": {"name": "test_generator", "rows": 1000},
+          "columns": [
+            {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100},
+            {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0},
+            {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": true}]
+          }'''),
+        (does_not_raise(),
+         '''{"generator": {"name": "test_generator", "rows": 10000, "randomSeed": 42},
+          "columns": [
+            {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100, "step": 2, "random": true},
+            {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0, "step": 1.5},
+            {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": true}]
+          }'''),
+        (does_not_raise(),
+         '''{"generator": {"name": "test_generator", "rows": 10000, "randomSeed": 42},
               "columns": [
                 {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100, "step": 2, "random": true},
                 {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0, "step": 1.5},
-                {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": true}]
-              }'''),
-            (does_not_raise(),
-             '''{"generator": {"name": "test_generator", "rows": 10000, "randomSeed": 42},
-                  "columns": [
-                    {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100, "step": 2, "random": true},
-                    {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0, "step": 1.5},
-                    {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": true}],
-                  "constraints": [
-                    {"type": "LiteralRange", "columns": ["col1"], "lowValue": -1000, "highValue": 1000, "strict": true},
-                    {"type": "PositiveValues", "columns": ["col1", "col2"], "strict": true},
-                    {"type": "SqlExpr", "expr": "col1 > 0"},
-                    {"type": "LiteralRelation", "columns": ["col2"], "relation": "<>", "value": 0}]
-                  }'''),
-            (pytest.raises(KeyError),  # Testing a JSON object missing the "generator" key
-             '''{"columns": [
-                {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100, "step": 2, "random": true},
-                {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0, "step": 1.5},
-                {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": true}]
-              }'''),
-            (pytest.raises(ValueError),  # Testing an invalid "type" value
-             '''{"generator": {"name": "test_generator", "rows": 10000, "randomSeed": 42},
-              "columns": [
-                  {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100, "step": 2, "random": true},
-                  {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0, "step": 1.5},
-                  {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": true}],
+                {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": true}],
               "constraints": [
-                  {"type": "LiteralRange", "columns": ["col1"], "lowValue": -1000, "highValue": 1000, "strict": true},
-                  {"type": "PositiveValues", "columns": ["col1", "col2"], "strict": true},
-                  {"type": "SqlExpr", "expr": "col1 > 0"},
-                  {"type": "Equivalent", "columns": ["col2"], "value": 0}]
+                {"type": "LiteralRange", "columns": ["col1"], "lowValue": -1000, "highValue": 1000, "strict": true},
+                {"type": "PositiveValues", "columns": ["col1", "col2"], "strict": true},
+                {"type": "SqlExpr", "expr": "col1 > 0"},
+                {"type": "LiteralRelation", "columns": ["col2"], "relation": "<>", "value": 0}]
               }'''),
-        ])
+        (pytest.raises(KeyError),  # Testing a JSON object missing the "generator" key
+         '''{"columns": [
+            {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100, "step": 2, "random": true},
+            {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0, "step": 1.5},
+            {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": true}]
+          }'''),
+        (pytest.raises(ValueError),  # Testing an invalid "type" value
+         '''{"generator": {"name": "test_generator", "rows": 10000, "randomSeed": 42},
+          "columns": [
+              {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100, "step": 2, "random": true},
+              {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0, "step": 1.5},
+              {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": true}],
+          "constraints": [
+              {"type": "LiteralRange", "columns": ["col1"], "lowValue": -1000, "highValue": 1000, "strict": true},
+              {"type": "PositiveValues", "columns": ["col1", "col2"], "strict": true},
+              {"type": "SqlExpr", "expr": "col1 > 0"},
+              {"type": "Equivalent", "columns": ["col2"], "value": 0}]
+          }'''),
+    ])
     def test_generator_from_json(self, json_options, expectation):
         options = json.loads(json_options)
         with expectation:
@@ -224,158 +224,158 @@ class TestGenerationFromConfig:
             assert df_from_dicts.columns == ["col1", "col2", "col3"]
 
     @pytest.mark.parametrize("expectation, yaml_options", [
-            (does_not_raise(),
-             '''---
-                generator:
-                  name: test_generator
-                  rows: 10000
-                  randomSeed: 42
-                columns:
-                - colName: col1
-                  colType: int
-                  minValue: 0
-                  maxValue: 100
-                  step: 2
-                  random: true
-                - colName: col2
-                  colType: float
-                  minValue: 0
-                  maxValue: 100
-                  step: 1.5
-                - colName: col3
-                  colType: string
-                  values:
-                  - a
-                  - b
-                  - c
-                  random: true'''),
-            (does_not_raise(),
-             '''---
-                generator:
-                  name: test_generator
-                  rows: 1000
-                columns:
-                - colName: col1
-                  colType: int
-                  minValue: 0
-                  maxValue: 100
-                - colName: col2
-                  colType: float
-                  minValue: 0
-                  maxValue: 100
-                - colName: col3
-                  colType: string
-                  values:
-                  - a
-                  - b
-                  - c
-                  random: true'''),
-            (does_not_raise(),
-             '''---
-                generator:
-                  name: test_generator
-                  rows: 10000
-                  randomSeed: 42
-                columns:
-                - colName: col1
-                  colType: int
-                  minValue: 0
-                  maxValue: 100
-                  step: 2
-                  random: true
-                - colName: col2
-                  colType: float
-                  minValue: 0
-                  maxValue: 100
-                  step: 1.5
-                - colName: col3
-                  colType: string
-                  values:
-                  - a
-                  - b
-                  - c
-                  random: true
-                constraints:
-                - type: LiteralRange
-                  columns:
-                  - col1
-                  lowValue: -1000
-                  highValue: 1000
-                  strict: true
-                - type: PositiveValues
-                  columns:
-                  - col1
-                  - col2
-                  strict: true
-                - type: SqlExpr
-                  expr: col1 > 0
-                - type: LiteralRelation
-                  columns:
-                  - col2
-                  relation: "<>"
-                  value: 0'''),
-            (pytest.raises(KeyError),  # Testing a YAML object missing the "generator" key
-             '''---
-                columns:
-                - colName: col1
-                  colType: int
-                  minValue: 0
-                  maxValue: 100
-                - colName: col2
-                  colType: float
-                  minValue: 0
-                  maxValue: 100
-                - colName: col3
-                  colType: string
-                  values:
-                  - a
-                  - b
-                  - c
-                  random: true'''),
-            (pytest.raises(ValueError),  # Testing an invalid "type" value
-             '''---
-                generator:
-                  name: test_generator
-                  rows: 10000
-                  randomSeed: 42
-                columns:
-                - colName: col1
-                  colType: int
-                  minValue: 0
-                  maxValue: 100
-                  step: 2
-                  random: true
-                - colName: col2
-                  colType: float
-                  minValue: 0
-                  maxValue: 100
-                  step: 1.5
-                - colName: col3
-                  colType: string
-                  values:
-                  - a
-                  - b
-                  - c
-                  random: true
-                constraints:
-                - type: LiteralRange
-                  columns:
-                  - col1
-                  lowValue: -1000
-                  highValue: 1000
-                  strict: true
-                - type: PositiveValues
-                  columns:
-                  - col1
-                  - col2
-                  strict: true
-                - type: SqlExpr
-                  expr: col1 > 0
-                - type: Equivalent
-                  columns:
-                  - col2
-                  value: 0''')
-        ])
+        (does_not_raise(),
+         '''---
+            generator:
+              name: test_generator
+              rows: 10000
+              randomSeed: 42
+            columns:
+            - colName: col1
+              colType: int
+              minValue: 0
+              maxValue: 100
+              step: 2
+              random: true
+            - colName: col2
+              colType: float
+              minValue: 0
+              maxValue: 100
+              step: 1.5
+            - colName: col3
+              colType: string
+              values:
+              - a
+              - b
+              - c
+              random: true'''),
+        (does_not_raise(),
+         '''---
+            generator:
+              name: test_generator
+              rows: 1000
+            columns:
+            - colName: col1
+              colType: int
+              minValue: 0
+              maxValue: 100
+            - colName: col2
+              colType: float
+              minValue: 0
+              maxValue: 100
+            - colName: col3
+              colType: string
+              values:
+              - a
+              - b
+              - c
+              random: true'''),
+        (does_not_raise(),
+         '''---
+            generator:
+              name: test_generator
+              rows: 10000
+              randomSeed: 42
+            columns:
+            - colName: col1
+              colType: int
+              minValue: 0
+              maxValue: 100
+              step: 2
+              random: true
+            - colName: col2
+              colType: float
+              minValue: 0
+              maxValue: 100
+              step: 1.5
+            - colName: col3
+              colType: string
+              values:
+              - a
+              - b
+              - c
+              random: true
+            constraints:
+            - type: LiteralRange
+              columns:
+              - col1
+              lowValue: -1000
+              highValue: 1000
+              strict: true
+            - type: PositiveValues
+              columns:
+              - col1
+              - col2
+              strict: true
+            - type: SqlExpr
+              expr: col1 > 0
+            - type: LiteralRelation
+              columns:
+              - col2
+              relation: "<>"
+              value: 0'''),
+        (pytest.raises(KeyError),  # Testing a YAML object missing the "generator" key
+         '''---
+            columns:
+            - colName: col1
+              colType: int
+              minValue: 0
+              maxValue: 100
+            - colName: col2
+              colType: float
+              minValue: 0
+              maxValue: 100
+            - colName: col3
+              colType: string
+              values:
+              - a
+              - b
+              - c
+              random: true'''),
+        (pytest.raises(ValueError),  # Testing an invalid "type" value
+         '''---
+            generator:
+              name: test_generator
+              rows: 10000
+              randomSeed: 42
+            columns:
+            - colName: col1
+              colType: int
+              minValue: 0
+              maxValue: 100
+              step: 2
+              random: true
+            - colName: col2
+              colType: float
+              minValue: 0
+              maxValue: 100
+              step: 1.5
+            - colName: col3
+              colType: string
+              values:
+              - a
+              - b
+              - c
+              random: true
+            constraints:
+            - type: LiteralRange
+              columns:
+              - col1
+              lowValue: -1000
+              highValue: 1000
+              strict: true
+            - type: PositiveValues
+              columns:
+              - col1
+              - col2
+              strict: true
+            - type: SqlExpr
+              expr: col1 > 0
+            - type: Equivalent
+              columns:
+              - col2
+              value: 0''')
+    ])
     def test_generator_from_yaml(self, yaml_options, expectation):
         options = yaml.safe_load(yaml_options)
         with expectation:
