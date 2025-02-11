@@ -112,7 +112,7 @@ class TestGenerationFromConfig:
              {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100, "step": 2, "random": True},
              {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0, "step": 1.5},
              {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": True}]
-         }),
+          }),
         (pytest.raises(ValueError),  # Testing an invalid "type" value
          {"generator": {"name": "test_generator", "rows": 10000, "randomSeed": 42},
           "columns": [
