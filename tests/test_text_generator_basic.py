@@ -1,7 +1,8 @@
 import re
-import pytest
+
 import numpy as np
 import pandas as pd
+import pytest
 
 from dbldatagen import TextGenerator, TemplateGenerator
 
@@ -12,10 +13,14 @@ class TestTextGeneratorBasic:
     row_count = 100000
     partitions_requested = 4
 
+    class TestTextGenerator(TextGenerator):
+        def pandasGenerateText(self, v):    # pylint: disable=useless-parent-delegation
+            return super().pandasGenerateText(v)
+
     @pytest.mark.parametrize("randomSeed", [None, 0, -1, 2112, 42])
     def test_text_generator_basic(self, randomSeed):
-        text_gen1 = TextGenerator()
-        text_gen2 = TextGenerator()
+        text_gen1 = self.TestTextGenerator()
+        text_gen2 = self.TestTextGenerator()
 
         if randomSeed is not None:
             text_gen1 = text_gen1.withRandomSeed(randomSeed)
@@ -29,14 +34,19 @@ class TestTextGeneratorBasic:
 
         assert text_gen1 == text_gen2
 
+    def test_base_textgenerator_raises_error(self):
+        with pytest.raises(NotImplementedError):
+            text_gen1 = self.TestTextGenerator()
+            text_gen1.pandasGenerateText(None)
+
     @pytest.mark.parametrize("randomSeed, forceNewInstance", [(None, True), (None, False),
                                                               (0, True), (0, False),
                                                               (-1, True), (-1, False),
                                                               (2112, True), (2112, False),
                                                               (42, True), (42, False)])
     def test_text_generator_rng(self, randomSeed, forceNewInstance):
-        text_gen1 = TextGenerator()
-        text_gen2 = TextGenerator()
+        text_gen1 = self.TestTextGenerator()
+        text_gen2 = self.TestTextGenerator()
 
         if randomSeed is not None:
             text_gen1 = text_gen1.withRandomSeed(randomSeed)
@@ -71,7 +81,7 @@ class TestTextGeneratorBasic:
                                                       (np.array([1, 40000.4, 3]), np.uint16)
                                                       ])
     def test_text_generator_compact_types(self, values, expectedType):
-        text_gen1 = TextGenerator()
+        text_gen1 = self.TestTextGenerator()
 
         np_type = text_gen1.compactNumpyTypeForValues(values)
         assert np_type == expectedType
