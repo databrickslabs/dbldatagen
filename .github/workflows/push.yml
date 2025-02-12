@@ -49,6 +49,9 @@ jobs:
       - name: Install dependencies
         run: pipenv install --dev
 
+      - name: Install Coverage
+        run: pip install coverage
+
       - name: Lint
         run: |
           pipenv run prospector --profile prospector.yaml
@@ -57,9 +60,12 @@ jobs:
         run: make test
 
       - name: Publish test coverage to coverage site
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           name: dbldatagen
+          verbose: true
           files: ./coverage.xml
-
+          env_vars: OS,PYTHON
+          fail_ci_if_error: true
+          flags: unittests

@@ -36,13 +36,25 @@ class ColumnSpecOptions(object):
 
     :param step: Step to use for range of generated value. As an alternative, you may use the `dataRange` parameter
 
-    :param numColumns: generate `n` columns numbered from 1 .. n-1 with same definition
+    :param numColumns: generate `n` columns numbered from 1 .. n-1 with same definition. If generating random column
+                       values,  it is recommended to use the `hash_fieldname` mechanism to generate random values
+                       to avoid all columns having the same value sequence.
 
     :param numFeatures: generate `n` columns numbered from 0 .. n-1 with same definition. Alias for `numColumns`
 
     :param structType: If specified as "array" and used with numColumns / numFeatures, will combine columns as array
 
-    :param random: If True, will generate random values for column value. Defaults to `False`
+    :param random: If True, will generate random values for column value. Defaults to `False`. When set to true,
+                      `randomSeed` and `randomSeedMethod` govern how the random values are generated.
+
+    :param randomSeed: If set, sets a value for the randomSeed. This will override the setting for the data generator
+                         object for this column. If set to `-1` generates a true psuedo random number (as opposed to
+                         one based on the randomSeed value)
+
+    :param randomSeedMethod: Controls how the random values are generated from the random seed.
+                             This may have the values `fixed`, `hash_fieldname` or None.
+                             If set to `hash_fieldname`, the `randomSeed` value is ignored and a hash of the field name
+                             is used as the seed.
 
     :param baseColumn: Either the string name of the base column, or a list of columns to use to
                         control data generation. The option ``baseColumns`` is an alias for ``baseColumn``.
