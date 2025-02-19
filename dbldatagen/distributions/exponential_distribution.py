@@ -30,6 +30,10 @@ class Exponential(DataDistribution):
         DataDistribution.__init__(self)
         self._rate = rate
 
+    @classmethod
+    def getMapping(cls):
+        return {"rate": "_rate"}
+
     def __str__(self):
         """ Return string representation"""
         return f"ExponentialDistribution(rate={self.rate}, randomSeed={self.randomSeed})"

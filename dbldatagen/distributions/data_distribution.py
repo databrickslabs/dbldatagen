@@ -25,13 +25,19 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pyspark.sql.functions as F
 
+from ..serialization import Serializable
 
-class DataDistribution(ABC):
+
+class DataDistribution(Serializable, ABC):
     """ Base class for all distributions"""
 
     def __init__(self):
         self._rounding = False
         self._randomSeed = None
+
+    @classmethod
+    def getMapping(cls):
+        raise NotImplementedError("method not implemented")
 
     @staticmethod
     def get_np_random_generator(random_seed):

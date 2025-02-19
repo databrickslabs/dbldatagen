@@ -27,6 +27,10 @@ class Normal(DataDistribution):
         self.mean = mean if mean is not None else 0.0
         self.stddev = stddev if stddev is not None else 1.0
 
+    @classmethod
+    def getMapping(cls):
+        return {"mean": "mean", "stddev": "stddev"}
+
     @staticmethod
     def normal_func(mean_series: pd.Series, std_dev_series: pd.Series, random_seed: pd.Series) -> pd.Series:
         """ Pandas / Numpy based function to generate normal / gaussian samples

@@ -35,6 +35,10 @@ class Beta(DataDistribution):
         self._alpha = alpha
         self._beta = beta
 
+    @classmethod
+    def getMapping(cls):
+        return {"alpha": "_alpha", "beta": "_beta"}
+
     @property
     def alpha(self):
         """ Return alpha parameter."""

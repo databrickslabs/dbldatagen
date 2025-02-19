@@ -34,6 +34,10 @@ class Gamma(DataDistribution):
         self._shape = shape
         self._scale = scale
 
+    @classmethod
+    def getMapping(cls):
+        return {"shape": "_shape", "scale": "_scale"}
+
     @property
     def shape(self):
         """ Return shape parameter."""
