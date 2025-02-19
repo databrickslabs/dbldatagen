@@ -57,8 +57,17 @@ class NRange(DataRange):
         assert self.maxValue is None if until is not None else True, "Only one of maxValue or until can be specified"
 
         if until is not None:
+            self.until = until
             self.maxValue = until + 1
         self.step = step
+
+    @classmethod
+    def getMapping(cls):
+        return {
+            "minValue": "minValue",
+            "maxValue": "maxValue",
+            "step": "step"
+        }
 
     def __str__(self):
         return f"NRange({self.minValue}, {self.maxValue}, {self.step})"

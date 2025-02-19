@@ -44,6 +44,7 @@ class DateRange(DataRange):
         assert begin is not None, "`begin` must be specified"
         assert end is not None, "`end` must be specified"
 
+        self.datetime_format = datetime_format
         self.begin = begin if not isinstance(begin, str) else self._datetime_from_string(begin, datetime_format)
         self.end = end if not isinstance(end, str) else self._datetime_from_string(end, datetime_format)
         self.interval = interval if not isinstance(interval, str) else self._timedelta_from_string(interval)
@@ -55,10 +56,35 @@ class DateRange(DataRange):
         self.step = self.interval.total_seconds()
 
     @classmethod
+    def getMapping(cls):
+        return {
+            "begin": "begin_string",
+            "end": "end_string",
+            "interval": "interval_string",
+            "datetime_format": "datetime_format"
+        }
+
+    @property
+    def begin_string(self):
+        return self._string_from_datetime(self.begin, self.datetime_format)
+
+    @property
+    def end_string(self):
+        return self._string_from_datetime(self.end, self.datetime_format)
+
+    @property
+    def interval_string(self):
+        return self.formatInterval(int(self.interval.total_seconds()))
+
+    @classmethod
     def _datetime_from_string(cls, date_str, date_format):
         """convert string to Python DateTime object using format"""
         result = datetime.strptime(date_str, date_format)
         return result
+
+    @classmethod
+    def _string_from_datetime(cls, date_str, date_format):
+        return datetime.strftime(date_str, date_format)
 
     @classmethod
     def _timedelta_from_string(cls, interval):
@@ -69,6 +95,11 @@ class DateRange(DataRange):
         """Parse interval from string"""
         assert interval_str is not None, "`interval_str` must be specified"
         return parse_time_interval(interval_str)
+
+    @classmethod
+    def formatInterval(cls, interval_time_seconds):
+        assert interval_time_seconds is not None, "`interval_time` must be specified"
+        return f"INTERVAL {interval_time_seconds} SECONDS"
 
     @classmethod
     def _getDateTime(cls, dt, datetime_format, default_value):

@@ -26,6 +26,7 @@ pandas = "==1.2.4"
 setuptools = "==65.6.3"
 pyparsing = "==2.4.7"
 jmespath = "==0.10.0"
+pyyaml = ">=6.0.2"
 
 [requires]
 python_version = "3.8.12"

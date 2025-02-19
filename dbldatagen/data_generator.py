@@ -6,20 +6,25 @@
 This file defines the `DataGenError` and `DataGenerator` classes
 """
 import copy
+import json
 import logging
 import re
 
+import yaml
 from pyspark.sql.types import LongType, IntegerType, StringType, StructType, StructField, DataType
 
 from ._version import _get_spark_version
 from .column_generation_spec import ColumnGenerationSpec
-from .constraints.constraint import Constraint
-from .constraints.sql_expr import SqlExpr
+from .constraints import Constraint, SqlExpr
+from .datarange import DataRange
+from .distributions import DataDistribution
+
 from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, \
     DEFAULT_SEED_COLUMN, SPARK_RANGE_COLUMN, MIN_SPARK_VERSION, \
     OPTION_RANDOM, OPTION_RANDOM_SEED, OPTION_RANDOM_SEED_METHOD, \
     INFER_DATATYPE, SPARK_DEFAULT_PARALLELISM
 from .html_utils import HtmlUtils
+from .serialization import Serializable
 from .schema_parser import SchemaParser
 from .spark_singleton import SparkSingleton
 from .utils import ensure, topologicalSort, DataGenError, deprecated, split_list_matching_condition
@@ -30,7 +35,7 @@ _OLD_MAX_OPTION = 'max'
 _STREAMING_TIMESTAMP_COLUMN = "_source_timestamp"
 
 
-class DataGenerator:
+class DataGenerator(Serializable):
     """ Main Class for test data set generation
 
     This class acts as the entry point to all test data generation activities.
@@ -172,6 +177,50 @@ class DataGenerator:
 
         # set up use of pandas udfs
         self._setupPandas(batchSize)
+
+    @classmethod
+    def getMapping(cls):
+        return {
+            "name": "name",
+            "randomSeedMethod": "_seedMethod",
+            "rows": "_rowCount",
+            "startingId": "starting_id",
+            "randomSeed": "_randomSeed",
+            "partitions": "partitions",
+            "verbose": "verbose",
+            "batchSize": "_batchSize",
+            "debug": "debug",
+            "seedColumnName": "_seedColumnName",
+            "random": "_defaultRandom"
+        }
+
+    @classmethod
+    def fromDict(cls, options):
+        """ Creates a DataGenerator instance from a Python dictionary.
+            :param options: Python dictionary of options for the DataGenerator, ColumnGenerationSpecs, and Constraints
+            :return: DataGenerator instance
+        """
+        ir = options.copy()
+        columns = ir.pop("columns") if "columns" in ir else []
+        constraints = ir.pop("constraints") if "constraints" in ir else []
+        return (
+            DataGenerator(**{k: v for k, v in ir.items() if not isinstance(v, list)})
+            .withColumnDefinitions(columns)
+            .withConstraintDefinitions(constraints)
+        )
+
+    def toDict(self):
+        """ Creates a Python dictionary from a DataGenerator instance.
+            :return: Python dictionary of options for the DataGenerator, ColumnGenerationSpecs, and Constraints
+        """
+        d = {constructor_key: getattr(self, object_key) for constructor_key, object_key in self.getMapping().items()}
+        d["columns"] = [{
+                k: v for k, v in column.toDict().items()
+                if k != "kind"}
+            for column in self.getColumnGenerationSpecs()]
+        d["constraints"] = [constraint.toDict() for constraint in self.getConstraints()]
+        d["kind"] = self.__class__.__name__
+        return d
 
     @property
     def seedColumnName(self):
@@ -869,6 +918,26 @@ class DataGenerator:
         self._inferredSchemaFields.append(StructField(colName, newColumn.datatype, nullable))
         return self
 
+    def withColumnDefinitions(self, columns):
+        """ Adds a set of columns to the synthetic generation specification.
+            :param columns: A list of column generation specifications as dictionaries
+            :returns:       A modified in-place instance of a data generator allowing for chaining of calls
+                            following a builder pattern
+        """
+        for column in columns:
+            internal_column = column.copy()
+            if "colName" not in internal_column:
+                internal_column["colName"] = internal_column.pop("name")
+            for k, v in internal_column.items():
+                if k == "dataRange":
+                    t = [s for s in DataRange.__subclasses__() if s.__name__ == v["kind"]][0]
+                    internal_column[k] = t.fromDict(v)
+                if k == "distribution":
+                    t = [s for s in DataDistribution.__subclasses__() if s.__name__ == v["kind"]][0]
+                    internal_column[k] = t.fromDict(v)
+            self.withColumn(**internal_column)
+        return self
+
     def _mkSqlStructFromList(self, fields):
         """
         Create a SQL struct expression from a list of fields
@@ -1206,6 +1275,12 @@ class DataGenerator:
         """
         return [self._columnSpecsByName[colspec].datatype for colspec in columns]
 
+    def getColumnGenerationSpecs(self):
+        return self._allColumnSpecs
+
+    def getConstraints(self):
+        return self._constraints
+
     def withConstraint(self, constraint):
         """Add a constraint to control the data generation
 
@@ -1253,6 +1328,18 @@ class DataGenerator:
         are satisfied more efficiently.
         """
         self.withConstraint(SqlExpr(sqlExpression))
+        return self
+
+    def withConstraintDefinitions(self, constraints):
+        """ Adds a set of constraints to the synthetic generation specification.
+
+            :param constraints: A list of constraints as dictionaries
+            :returns:       A modified in-place instance of a data generator allowing for chaining of calls
+                            following a builder pattern
+        """
+        for c in constraints:
+            t = [s for s in Constraint.__subclasses__() if s.__name__ == c["kind"]][0]
+            self.withConstraint(t.fromDict(c))  # Call fromDict
         return self
 
     def computeBuildPlan(self):
@@ -1604,3 +1691,33 @@ class DataGenerator:
             result = HtmlUtils.formatCodeAsHtml(results)
 
         return result
+
+    @staticmethod
+    def fromJson(options):
+        """ Creates a data generator from a JSON string.
+            :param options: A JSON string containing data generation options
+            :return: A data generator with the specified options
+        """
+        options = json.loads(options)
+        return DataGenerator.fromDict(options)
+
+    def toJson(self):
+        """ Returns the JSON string representation of a data generator.
+            :return: A JSON string representation of the DataGenerator
+        """
+        return json.dumps(self.toDict())
+
+    @staticmethod
+    def fromYaml(options):
+        """ Creates a data generator from a YAML string.
+            :param options: A YAML string containing data generation options
+            :return: A data generator with the specified options
+        """
+        options = yaml.safe_load(options)
+        return DataGenerator.fromDict(options)
+
+    def toYaml(self):
+        """ Returns the YAML string representation of a data generator.
+            :return: A YAML string representation of the DataGenerator
+        """
+        return yaml.dump(self.toDict())

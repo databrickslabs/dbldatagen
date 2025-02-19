@@ -25,6 +25,7 @@ from .datagen_constants import RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, R
 from .daterange import DateRange
 from .distributions import Normal, DataDistribution
 from .nrange import NRange
+from .serialization import Serializable
 from .text_generators import TemplateGenerator
 from .utils import ensure, coalesce_values
 from .schema_parser import SchemaParser
@@ -40,7 +41,7 @@ COMPUTE_METHOD_VALID_VALUES = [HASH_COMPUTE_METHOD,
                                RAW_VALUES_COMPUTE_METHOD]
 
 
-class ColumnGenerationSpec(object):
+class ColumnGenerationSpec(Serializable):
     """ Column generation spec object - specifies how column is to be generated
 
     Each column to be output will have a corresponding ColumnGenerationSpec object.
@@ -119,7 +120,7 @@ class ColumnGenerationSpec(object):
             if EXPR_OPTION not in kwargs:
                 raise ValueError("Column generation spec must have `expr` attribute specified if datatype is inferred")
 
-        elif type(colType) == str:
+        elif isinstance(colType, str):
             colType = SchemaParser.columnTypeFromString(colType)
 
         assert isinstance(colType, DataType), f"colType `{colType}` is not instance of DataType"
@@ -299,6 +300,29 @@ class ColumnGenerationSpec(object):
         # set up the temporary columns needed for data generation
         self._setupTemporaryColumns()
 
+    @classmethod
+    def getMapping(cls):
+        return {
+            "colName": "name",
+            "colType": "typeString",
+            "minValue": "min",
+            "maxValue": "max",
+            "step": "step",
+            "prefix": "prefix",
+            "random": "random",
+            "randomSeed": "_randomSeed",
+            "randomSeedMethod": "_randomSeedMethod",
+            "implicit": "implicit",
+            "omit": "omit",
+            "nullable": "nullable",
+            "values": "values",
+            "weights": "weights",
+            "distribution": "distribution",
+            "baseColumn": "baseColumn",
+            "dataRange": "dataRange"
+            # TODO: ADD ALL COLUMN SPEC OPTIONS?
+        }
+
     def _temporaryRename(self, tmpName):
         """ Create enter / exit object to support temporary renaming of column spec
 
@@ -416,6 +440,11 @@ class ColumnGenerationSpec(object):
         """ If True indicates that datatype should be inferred to be result of computing SQL expression
         """
         return self._inferDataType
+
+    @property
+    def typeString(self):
+        """ Get the simple string representing the column type."""
+        return self.datatype.simpleString()
 
     @property
     def baseColumns(self):
@@ -835,6 +864,10 @@ class ColumnGenerationSpec(object):
         copies of the column, combined into an array or feature vector
         """
         return self['numFeatures']
+
+    @property
+    def dataRange(self):
+        return self._dataRange
 
     def structType(self):
         """get the `structType` attribute used to generate values for this column
