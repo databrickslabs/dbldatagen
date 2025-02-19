@@ -530,5 +530,5 @@ class TestBasicOperation:
         lib_version = dg.__version__
 
         assert lib_version is not None
-        assert type(lib_version) == str, "__version__ is expected to be a string"
+        assert isinstance(lib_version, str), "__version__ is expected to be a string"
         assert len(lib_version.strip()) > 0, "__version__ is expected to be non-empty"

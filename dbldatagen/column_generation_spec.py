@@ -480,7 +480,7 @@ class ColumnGenerationSpec(Serializable):
         assert type(columnDatatypes) is list, " `column_datatypes` parameter must be list"
         ensure(len(columnDatatypes) == len(self.baseColumns),
                "number of base column datatypes must match number of  base columns")
-        self._baseColumnDatatypes = [].append(columnDatatypes)
+        self._baseColumnDatatypes = columnDatatypes
 
     def _setupTemporaryColumns(self):
         """ Set up any temporary columns needed for test data generation.

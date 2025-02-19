@@ -59,40 +59,40 @@ class TestColumnGenerationSpec:
         dt = StringType()
         cd = dg.ColumnGenerationSpec(name="test", colType=StringType(), prefix="test_")
         assert cd.prefix == "test_"
-        assert type(cd.datatype) == type(dt)
+        assert isinstance(cd.datatype, type(dt))
 
     def test_suffix(self):
         dt = StringType()
         cd = dg.ColumnGenerationSpec(name="test", colType=StringType(), suffix="_test")
         assert cd.suffix == "_test"
-        assert type(cd.datatype) == type(dt)
+        assert isinstance(cd.datatype, type(dt))
 
     def test_baseColumn(self):
         dt = StringType()
         cd = dg.ColumnGenerationSpec(name="test", colType=StringType(), baseColumn='test0')
         assert cd.baseColumn == 'test0', "baseColumn should be as expected"
         assert cd.baseColumns == ['test0']
-        assert type(cd.datatype) == type(dt)
+        assert isinstance(cd.datatype, type(dt))
 
     def test_baseColumnMultiple(self):
         dt = StringType()
         cd = dg.ColumnGenerationSpec(name="test", colType=StringType(), baseColumn=['test0', 'test_1'])
         assert cd.baseColumn == ['test0', 'test_1'], "baseColumn should be as expected"
         assert cd.baseColumns == ['test0', 'test_1']
-        assert type(cd.datatype) == type(dt)
+        assert isinstance(cd.datatype, type(dt))
 
     def test_baseColumnMultiple2(self):
         dt = StringType()
         cd = dg.ColumnGenerationSpec(name="test", colType=StringType(), baseColumn='test0,test_1')
         assert cd.baseColumn == 'test0,test_1', "baseColumn should be as expected"
         assert cd.baseColumns == ['test0', 'test_1']
-        assert type(cd.datatype) == type(dt)
+        assert isinstance(cd.datatype, type(dt))
 
     def test_expr(self):
         dt = StringType()
         cd = dg.ColumnGenerationSpec(name="test", colType=StringType(), baseColumn='test0,test_1', expr="concat(1,2)")
         assert cd.expr == 'concat(1,2)'
-        assert type(cd.datatype) == type(dt)
+        assert isinstance(cd.datatype, type(dt))
 
     def test_default_random_attribute(self):
         dt = StringType()

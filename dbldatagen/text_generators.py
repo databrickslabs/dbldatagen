@@ -77,7 +77,7 @@ class TextGenerator(object):
         return f"TextGenerator(randomSeed={self._randomSeed})"
 
     def __eq__(self, other):
-        return type(self) == type(other) and self._randomSeed == other._randomSeed
+        return isinstance(self, type(other)) and self._randomSeed == other._randomSeed
 
     def withRandomSeed(self, seed):
         """ Set the random seed for the text generator
@@ -260,7 +260,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
             assert v is not None and isinstance(v, tuple) and len(v) == 2, "value must be tuple of length 2"
             mapping_length, mappings = v
             assert isinstance(mapping_length, int), "mapping length must be of type int"
-            assert isinstance(mappings, (list, np.ndarray)),\
+            assert isinstance(mappings, (list, np.ndarray)), \
                 "mappings are lists or numpy arrays"
             assert mapping_length == 0 or len(mappings) == mapping_length, "mappings must match mapping_length"
 
@@ -277,7 +277,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
             assert v is not None and isinstance(v, tuple) and len(v) == 2, "value must be tuple of length 2"
             mapping_length, mappings = v
             assert isinstance(mapping_length, int), "mapping length must be of type int"
-            assert mappings is None or isinstance(mappings, (list, np.ndarray)),\
+            assert mappings is None or isinstance(mappings, (list, np.ndarray)), \
                 "mappings are lists or numpy arrays"
 
             # for escaped mappings, the mapping can be None in which case the mapping is to the number itself

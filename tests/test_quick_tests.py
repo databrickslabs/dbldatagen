@@ -767,7 +767,6 @@ class TestQuickTests:
         assert new_gen.rowCount == 1000
         assert new_gen.partitions == 2
 
-
     def test_version_info(self):
         # test access to version info without explicit import
         print("Data generator version", dg.__version__)
