@@ -751,6 +751,23 @@ class TestQuickTests:
         sortedVals = sortedDf.select("randCol").collect()
         assert sortedVals != df.select("randCol").collect()
 
+    def test_to_dict(self):
+        gen = dg.DataGenerator(name="test", rows=100, partitions=1)
+        d = gen.toDict()
+        assert d["name"] == "test"
+        assert d["rows"] == 100
+        assert d["partitions"] == 1
+
+    def test_from_dict(self):
+        gen = dg.DataGenerator(name="test", rows=1000, partitions=2)
+        d = gen.toDict()
+        d["type"] = "DataGenerator"
+        new_gen = DataGenerator.fromDict(d)
+        assert new_gen.name == "test"
+        assert new_gen.rowCount == 1000
+        assert new_gen.partitions == 2
+
+
     def test_version_info(self):
         # test access to version info without explicit import
         print("Data generator version", dg.__version__)
