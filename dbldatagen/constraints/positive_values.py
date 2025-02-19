@@ -27,6 +27,10 @@ class PositiveValues(NoPrepareTransformMixin, Constraint):
         self._columns = self._columnsFromListOrString(columns)
         self._strict = strict
 
+    @classmethod
+    def getMapping(cls):
+        return {"columns": "_columns", "strict": "_strict"}
+
     def _generateFilterExpression(self):
         """ Generate a filter expression that may be used for filtering"""
         expressions = [F.col(colname) for colname in self._columns]

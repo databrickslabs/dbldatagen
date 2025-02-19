@@ -27,6 +27,10 @@ class NegativeValues(NoPrepareTransformMixin, Constraint):
         self._columns = self._columnsFromListOrString(columns)
         self._strict = strict
 
+    @classmethod
+    def getMapping(cls):
+        return {"columns": "_columns", "strict": "_strict"}
+
     def _generateFilterExpression(self):
         expressions = [F.col(colname) for colname in self._columns]
         if self._strict:

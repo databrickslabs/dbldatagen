@@ -8,9 +8,10 @@ This module defines the Constraint class
 import types
 from abc import ABC, abstractmethod
 from pyspark.sql import Column
+from ..serialization import Serializable
 
 
-class Constraint(ABC):
+class Constraint(Serializable, ABC):
     """ Constraint object - base class for predefined and custom constraints
 
     This class is meant for internal use only.

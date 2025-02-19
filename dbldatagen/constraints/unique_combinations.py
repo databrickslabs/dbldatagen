@@ -45,6 +45,10 @@ class UniqueCombinations(NoFilterMixin, Constraint):
         else:
             self._columns = None
 
+    @classmethod
+    def getMapping(cls):
+        return {"columns": "_columns"}
+
     def prepareDataGenerator(self, dataGenerator):
         """ Prepare the data generator to generate data that matches the constraint
 

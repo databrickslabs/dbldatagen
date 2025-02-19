@@ -29,6 +29,10 @@ class LiteralRelation(NoPrepareTransformMixin, Constraint):
         if relation not in self.SUPPORTED_OPERATORS:
             raise ValueError(f"Parameter `relation` should be one of the operators :{self.SUPPORTED_OPERATORS}")
 
+    @classmethod
+    def getMapping(cls):
+        return {"columns": "_columns", "relation": "_relation", "value": "_value"}
+
     def _generateFilterExpression(self):
         expressions = [F.col(colname) for colname in self._columns]
         literalValue = F.lit(self._value)

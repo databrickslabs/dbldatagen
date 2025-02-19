@@ -38,6 +38,10 @@ class ChainedRelation(NoPrepareTransformMixin, Constraint):
         if not isinstance(self._columns, list) or len(self._columns) <= 1:
             raise ValueError("ChainedRelation constraints must be defined across more than one column")
 
+    @classmethod
+    def getMapping(cls):
+        return {"relation": "_relation", "columns": "_columns"}
+
     def _generateFilterExpression(self):
         """ Generated composite filter expression for chained set of filter expressions
 

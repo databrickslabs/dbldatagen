@@ -29,6 +29,10 @@ class LiteralRange(NoPrepareTransformMixin, Constraint):
         self._highValue = highValue
         self._strict = strict
 
+    @classmethod
+    def getMapping(cls):
+        return {"columns": "_columns", "lowValue": "_lowValue", "highValue": "_highValue", "strict": "_strict"}
+
     def _generateFilterExpression(self):
         """ Generate a SQL filter expression that may be used for filtering"""
         expressions = [F.col(colname) for colname in self._columns]
