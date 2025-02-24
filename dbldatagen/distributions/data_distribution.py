@@ -25,19 +25,22 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pyspark.sql.functions as F
 
-from ..serialization import Serializable
+from ..serialization import SerializableToDict
 
 
-class DataDistribution(Serializable, ABC):
+class DataDistribution(SerializableToDict, ABC):
     """ Base class for all distributions"""
 
     def __init__(self):
         self._rounding = False
         self._randomSeed = None
 
-    @classmethod
-    def getMapping(cls):
-        raise NotImplementedError("method not implemented")
+    def _getConstructorOptions(self):
+        """ Returns an internal mapping dictionary for the object. Keys represent the
+            class constructor arguments and values representing the object's internal data.
+        """
+        raise NotImplementedError(
+            f"Object is not serializable. {self.__class__.__name__} does not implement '_getConstructorOptions'")
 
     @staticmethod
     def get_np_random_generator(random_seed):

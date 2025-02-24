@@ -27,9 +27,12 @@ class PositiveValues(NoPrepareTransformMixin, Constraint):
         self._columns = self._columnsFromListOrString(columns)
         self._strict = strict
 
-    @classmethod
-    def getMapping(cls):
-        return {"columns": "_columns", "strict": "_strict"}
+    def _getConstructorOptions(self):
+        """ Returns an internal mapping dictionary for the object. Keys represent the
+            class constructor arguments and values representing the object's internal data.
+            :return: Python dictionary mapping constructor options to the object properties
+        """
+        return {"columns": self._columns, "strict": self._strict}
 
     def _generateFilterExpression(self):
         """ Generate a filter expression that may be used for filtering"""

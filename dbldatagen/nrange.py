@@ -57,16 +57,18 @@ class NRange(DataRange):
         assert self.maxValue is None if until is not None else True, "Only one of maxValue or until can be specified"
 
         if until is not None:
-            self.until = until
             self.maxValue = until + 1
         self.step = step
 
-    @classmethod
-    def getMapping(cls):
+    def _getConstructorOptions(self):
+        """ Returns an internal mapping dictionary for the object. Keys represent the
+            class constructor arguments and values representing the object's internal data.
+            :return: Python dictionary mapping constructor options to the object properties
+        """
         return {
-            "minValue": "minValue",
-            "maxValue": "maxValue",
-            "step": "step"
+            "minValue": self.minValue,
+            "maxValue": self.maxValue,
+            "step": self.step
         }
 
     def __str__(self):

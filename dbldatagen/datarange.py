@@ -10,15 +10,11 @@ changes to method names when refactoring
 
 """
 
-from .serialization import Serializable
+from .serialization import SerializableToDict
 
 
-class DataRange(Serializable):
+class DataRange(SerializableToDict):
     """ Abstract class used as base class for NRange and DateRange """
-
-    @classmethod
-    def getMapping(cls):
-        raise NotImplementedError("method not implemented")
 
     def isEmpty(self):
         """Check if object is empty (i.e all instance vars of note are `None`)"""

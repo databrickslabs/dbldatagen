@@ -10,7 +10,6 @@ import json
 import logging
 import re
 
-import yaml
 from pyspark.sql.types import LongType, IntegerType, StringType, StructType, StructField, DataType
 
 from ._version import _get_spark_version
@@ -18,13 +17,14 @@ from .column_generation_spec import ColumnGenerationSpec
 from .constraints import Constraint, SqlExpr
 from .datarange import DataRange
 from .distributions import DataDistribution
+from .text_generators import TextGenerator
 
 from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, \
     DEFAULT_SEED_COLUMN, SPARK_RANGE_COLUMN, MIN_SPARK_VERSION, \
     OPTION_RANDOM, OPTION_RANDOM_SEED, OPTION_RANDOM_SEED_METHOD, \
     INFER_DATATYPE, SPARK_DEFAULT_PARALLELISM
 from .html_utils import HtmlUtils
-from .serialization import Serializable
+from .serialization import SerializableToDict
 from .schema_parser import SchemaParser
 from .spark_singleton import SparkSingleton
 from .utils import ensure, topologicalSort, DataGenError, deprecated, split_list_matching_condition
@@ -35,7 +35,7 @@ _OLD_MAX_OPTION = 'max'
 _STREAMING_TIMESTAMP_COLUMN = "_source_timestamp"
 
 
-class DataGenerator(Serializable):
+class DataGenerator(SerializableToDict):
     """ Main Class for test data set generation
 
     This class acts as the entry point to all test data generation activities.
@@ -178,25 +178,28 @@ class DataGenerator(Serializable):
         # set up use of pandas udfs
         self._setupPandas(batchSize)
 
-    @classmethod
-    def getMapping(cls):
+    def _getConstructorOptions(self):
+        """ Returns an internal mapping dictionary for the object. Keys represent the
+            class constructor arguments and values representing the object's internal data.
+            :return: Python dictionary mapping constructor options to the object properties
+        """
         return {
-            "name": "name",
-            "randomSeedMethod": "_seedMethod",
-            "rows": "_rowCount",
-            "startingId": "starting_id",
-            "randomSeed": "_randomSeed",
-            "partitions": "partitions",
-            "verbose": "verbose",
-            "batchSize": "_batchSize",
-            "debug": "debug",
-            "seedColumnName": "_seedColumnName",
-            "random": "_defaultRandom"
+            "name": self.name,
+            "randomSeedMethod": self._seedMethod,
+            "rows": self._rowCount,
+            "startingId": self.starting_id,
+            "randomSeed": self._randomSeed,
+            "partitions": self.partitions,
+            "verbose": self.verbose,
+            "batchSize": self._batchSize,
+            "debug": self.debug,
+            "seedColumnName": self._seedColumnName,
+            "random": self._defaultRandom
         }
 
     @classmethod
-    def fromDict(cls, options):
-        """ Creates a DataGenerator instance from a Python dictionary.
+    def _fromConstructorOptions(cls, options):
+        """ Creates a DataGenerator instance from a dictionary of class constructor options.
             :param options: Python dictionary of options for the DataGenerator, ColumnGenerationSpecs, and Constraints
             :return: DataGenerator instance
         """
@@ -209,18 +212,26 @@ class DataGenerator(Serializable):
             .withConstraintDefinitions(constraints)
         )
 
-    def toDict(self):
+    @classmethod
+    def fromConstructorOptions(cls, options):
+        return cls._fromConstructorOptions(options)
+
+    def _toConstructorOptions(self):
         """ Creates a Python dictionary from a DataGenerator instance.
             :return: Python dictionary of options for the DataGenerator, ColumnGenerationSpecs, and Constraints
         """
-        d = {constructor_key: getattr(self, object_key) for constructor_key, object_key in self.getMapping().items()}
+        d = self._getConstructorOptions()
         d["columns"] = [{
-                k: v for k, v in column.toDict().items()
+                k: v for k, v in column._toConstructorOptions().items()
                 if k != "kind"}
-            for column in self.getColumnGenerationSpecs()]
-        d["constraints"] = [constraint.toDict() for constraint in self.getConstraints()]
+            for column in self.columnGenerationSpecs]
+        d["constraints"] = [constraint._toConstructorOptions() for constraint in self.constraints]
         d["kind"] = self.__class__.__name__
         return d
+
+    @property
+    def constructorOptions(self):
+        return self._toConstructorOptions()
 
     @property
     def seedColumnName(self):
@@ -925,17 +936,18 @@ class DataGenerator(Serializable):
                             following a builder pattern
         """
         for column in columns:
-            internal_column = column.copy()
-            if "colName" not in internal_column:
-                internal_column["colName"] = internal_column.pop("name")
-            for k, v in internal_column.items():
+            _column = column.copy()
+            for k, v in _column.items():
                 if k == "dataRange":
                     t = [s for s in DataRange.__subclasses__() if s.__name__ == v["kind"]][0]
-                    internal_column[k] = t.fromDict(v)
+                    _column[k] = t._fromConstructorOptions(v)
                 if k == "distribution":
                     t = [s for s in DataDistribution.__subclasses__() if s.__name__ == v["kind"]][0]
-                    internal_column[k] = t.fromDict(v)
-            self.withColumn(**internal_column)
+                    _column[k] = t._fromConstructorOptions(v)
+                if k == "text":
+                    t = [s for s in TextGenerator.__subclasses__() if s.__name__ == v["kind"]][0]
+                    _column[k] = t._fromConstructorOptions(v)
+            self.withColumn(**_column)
         return self
 
     def _mkSqlStructFromList(self, fields):
@@ -1275,10 +1287,12 @@ class DataGenerator(Serializable):
         """
         return [self._columnSpecsByName[colspec].datatype for colspec in columns]
 
-    def getColumnGenerationSpecs(self):
+    @property
+    def columnGenerationSpecs(self):
         return self._allColumnSpecs
 
-    def getConstraints(self):
+    @property
+    def constraints(self):
         return self._constraints
 
     def withConstraint(self, constraint):
@@ -1332,14 +1346,13 @@ class DataGenerator(Serializable):
 
     def withConstraintDefinitions(self, constraints):
         """ Adds a set of constraints to the synthetic generation specification.
-
             :param constraints: A list of constraints as dictionaries
             :returns:       A modified in-place instance of a data generator allowing for chaining of calls
                             following a builder pattern
         """
         for c in constraints:
             t = [s for s in Constraint.__subclasses__() if s.__name__ == c["kind"]][0]
-            self.withConstraint(t.fromDict(c))  # Call fromDict
+            self.withConstraint(t._fromConstructorOptions(c))  # Call fromDict
         return self
 
     def computeBuildPlan(self):
@@ -1699,25 +1712,10 @@ class DataGenerator(Serializable):
             :return: A data generator with the specified options
         """
         options = json.loads(options)
-        return DataGenerator.fromDict(options)
+        return DataGenerator.fromConstructorOptions(options)
 
     def toJson(self):
         """ Returns the JSON string representation of a data generator.
             :return: A JSON string representation of the DataGenerator
         """
-        return json.dumps(self.toDict())
-
-    @staticmethod
-    def fromYaml(options):
-        """ Creates a data generator from a YAML string.
-            :param options: A YAML string containing data generation options
-            :return: A data generator with the specified options
-        """
-        options = yaml.safe_load(options)
-        return DataGenerator.fromDict(options)
-
-    def toYaml(self):
-        """ Returns the YAML string representation of a data generator.
-            :return: A YAML string representation of the DataGenerator
-        """
-        return yaml.dump(self.toDict())
+        return json.dumps(self.constructorOptions)

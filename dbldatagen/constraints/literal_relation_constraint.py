@@ -29,9 +29,12 @@ class LiteralRelation(NoPrepareTransformMixin, Constraint):
         if relation not in self.SUPPORTED_OPERATORS:
             raise ValueError(f"Parameter `relation` should be one of the operators :{self.SUPPORTED_OPERATORS}")
 
-    @classmethod
-    def getMapping(cls):
-        return {"columns": "_columns", "relation": "_relation", "value": "_value"}
+    def _getConstructorOptions(self):
+        """ Returns an internal mapping dictionary for the object. Keys represent the
+            class constructor arguments and values representing the object's internal data.
+            :return: Python dictionary mapping constructor options to the object properties
+        """
+        return {"columns": self._columns, "relation": self._relation, "value": self._value}
 
     def _generateFilterExpression(self):
         expressions = [F.col(colname) for colname in self._columns]

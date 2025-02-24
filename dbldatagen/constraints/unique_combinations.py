@@ -45,9 +45,12 @@ class UniqueCombinations(NoFilterMixin, Constraint):
         else:
             self._columns = None
 
-    @classmethod
-    def getMapping(cls):
-        return {"columns": "_columns"}
+    def _getConstructorOptions(self):
+        """ Returns an internal mapping dictionary for the object. Keys represent the
+            class constructor arguments and values representing the object's internal data.
+            :return: Python dictionary mapping constructor options to the object properties
+        """
+        return {"columns": self._columns}
 
     def prepareDataGenerator(self, dataGenerator):
         """ Prepare the data generator to generate data that matches the constraint

@@ -35,9 +35,12 @@ class Beta(DataDistribution):
         self._alpha = alpha
         self._beta = beta
 
-    @classmethod
-    def getMapping(cls):
-        return {"alpha": "_alpha", "beta": "_beta"}
+    def _getConstructorOptions(self):
+        """ Returns an internal mapping dictionary for the object. Keys represent the
+            class constructor arguments and values representing the object's internal data.
+            :return: Python dictionary mapping constructor options to the object properties
+        """
+        return {"alpha": self._alpha, "beta": self._beta}
 
     @property
     def alpha(self):

@@ -27,9 +27,12 @@ class Normal(DataDistribution):
         self.mean = mean if mean is not None else 0.0
         self.stddev = stddev if stddev is not None else 1.0
 
-    @classmethod
-    def getMapping(cls):
-        return {"mean": "mean", "stddev": "stddev"}
+    def _getConstructorOptions(self):
+        """ Returns an internal mapping dictionary for the object. Keys represent the
+            class constructor arguments and values representing the object's internal data.
+            :return: Python dictionary mapping constructor options to the object properties
+        """
+        return {"mean": self.mean, "stddev": self.stddev}
 
     @staticmethod
     def normal_func(mean_series: pd.Series, std_dev_series: pd.Series, random_seed: pd.Series) -> pd.Series:

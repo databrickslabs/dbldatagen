@@ -30,9 +30,12 @@ class Exponential(DataDistribution):
         DataDistribution.__init__(self)
         self._rate = rate
 
-    @classmethod
-    def getMapping(cls):
-        return {"rate": "_rate"}
+    def _getConstructorOptions(self):
+        """ Returns an internal mapping dictionary for the object. Keys represent the
+            class constructor arguments and values representing the object's internal data.
+            :return: Python dictionary mapping constructor options to the object properties
+        """
+        return {"rate": self._rate}
 
     def __str__(self):
         """ Return string representation"""

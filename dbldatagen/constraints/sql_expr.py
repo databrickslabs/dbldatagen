@@ -25,9 +25,12 @@ class SqlExpr(NoPrepareTransformMixin, Constraint):
         assert isinstance(expr, str) and len(expr.strip()) > 0, "Expression must be a valid SQL string"
         self._expr = expr
 
-    @classmethod
-    def getMapping(cls):
-        return {"expr": "_expr"}
+    def _getConstructorOptions(self):
+        """ Returns an internal mapping dictionary for the object. Keys represent the
+            class constructor arguments and values representing the object's internal data.
+            :return: Python dictionary mapping constructor options to the object properties
+        """
+        return {"expr": self._expr}
 
     def _generateFilterExpression(self):
         """ Generate a SQL filter expression that may be used for filtering"""

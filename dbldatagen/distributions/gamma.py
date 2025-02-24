@@ -34,9 +34,12 @@ class Gamma(DataDistribution):
         self._shape = shape
         self._scale = scale
 
-    @classmethod
-    def getMapping(cls):
-        return {"shape": "_shape", "scale": "_scale"}
+    def _getConstructorOptions(self):
+        """ Returns an internal mapping dictionary for the object. Keys represent the
+            class constructor arguments and values representing the object's internal data.
+            :return: Python dictionary mapping constructor options to the object properties
+        """
+        return {"shape": self._shape, "scale": self._scale}
 
     @property
     def shape(self):

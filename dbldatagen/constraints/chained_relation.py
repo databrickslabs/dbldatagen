@@ -38,9 +38,12 @@ class ChainedRelation(NoPrepareTransformMixin, Constraint):
         if not isinstance(self._columns, list) or len(self._columns) <= 1:
             raise ValueError("ChainedRelation constraints must be defined across more than one column")
 
-    @classmethod
-    def getMapping(cls):
-        return {"relation": "_relation", "columns": "_columns"}
+    def _getConstructorOptions(self):
+        """ Returns an internal mapping dictionary for the object. Keys represent the
+            class constructor arguments and values representing the object's internal data.
+            :return: Python dictionary mapping constructor options to the object properties
+        """
+        return {"relation": self._relation, "columns": self._columns}
 
     def _generateFilterExpression(self):
         """ Generated composite filter expression for chained set of filter expressions

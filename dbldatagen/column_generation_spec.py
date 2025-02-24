@@ -25,7 +25,7 @@ from .datagen_constants import RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, R
 from .daterange import DateRange
 from .distributions import Normal, DataDistribution
 from .nrange import NRange
-from .serialization import Serializable
+from .serialization import SerializableToDict
 from .text_generators import TemplateGenerator
 from .utils import ensure, coalesce_values
 from .schema_parser import SchemaParser
@@ -41,7 +41,7 @@ COMPUTE_METHOD_VALID_VALUES = [HASH_COMPUTE_METHOD,
                                RAW_VALUES_COMPUTE_METHOD]
 
 
-class ColumnGenerationSpec(Serializable):
+class ColumnGenerationSpec(SerializableToDict):
     """ Column generation spec object - specifies how column is to be generated
 
     Each column to be output will have a corresponding ColumnGenerationSpec object.
@@ -300,28 +300,15 @@ class ColumnGenerationSpec(Serializable):
         # set up the temporary columns needed for data generation
         self._setupTemporaryColumns()
 
-    @classmethod
-    def getMapping(cls):
-        return {
-            "colName": "name",
-            "colType": "typeString",
-            "minValue": "min",
-            "maxValue": "max",
-            "step": "step",
-            "prefix": "prefix",
-            "random": "random",
-            "randomSeed": "_randomSeed",
-            "randomSeedMethod": "_randomSeedMethod",
-            "implicit": "implicit",
-            "omit": "omit",
-            "nullable": "nullable",
-            "values": "values",
-            "weights": "weights",
-            "distribution": "distribution",
-            "baseColumn": "baseColumn",
-            "dataRange": "dataRange"
-            # TODO: ADD ALL COLUMN SPEC OPTIONS?
-        }
+    def _getConstructorOptions(self):
+        """ Returns an internal mapping dictionary for the object. Keys represent the
+            class constructor arguments and values representing the object's internal data.
+            :return: Python dictionary mapping constructor options to the object properties
+        """
+        _options = self._csOptions.options.copy()
+        _options["colName"] = _options.pop("name", self.name)
+        _options["colType"] = _options.pop("type", self.datatype).simpleString()
+        return _options
 
     def _temporaryRename(self, tmpName):
         """ Create enter / exit object to support temporary renaming of column spec
@@ -442,11 +429,6 @@ class ColumnGenerationSpec(Serializable):
         return self._inferDataType
 
     @property
-    def typeString(self):
-        """ Get the simple string representing the column type."""
-        return self.datatype.simpleString()
-
-    @property
     def baseColumns(self):
         """ Return base columns as list of strings"""
 
@@ -480,7 +462,7 @@ class ColumnGenerationSpec(Serializable):
         assert type(columnDatatypes) is list, " `column_datatypes` parameter must be list"
         ensure(len(columnDatatypes) == len(self.baseColumns),
                "number of base column datatypes must match number of  base columns")
-        self._baseColumnDatatypes = columnDatatypes
+        self._baseColumnDatatypes = columnDatatypes.copy()
 
     def _setupTemporaryColumns(self):
         """ Set up any temporary columns needed for test data generation.
@@ -864,10 +846,6 @@ class ColumnGenerationSpec(Serializable):
         copies of the column, combined into an array or feature vector
         """
         return self['numFeatures']
-
-    @property
-    def dataRange(self):
-        return self._dataRange
 
     def structType(self):
         """get the `structType` attribute used to generate values for this column
