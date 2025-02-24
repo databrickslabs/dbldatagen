@@ -13,6 +13,8 @@ import logging
 import numpy as np
 import pandas as pd
 
+from .serialization import SerializableToDict
+
 #: list of hex digits for template generation
 _HEX_LOWER = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
 
@@ -162,7 +164,7 @@ class TextGenerator(object):
         return defaultValue
 
 
-class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
+class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-equals]
     """This class handles the generation of text from templates
 
     :param template: template string to use in text generation
@@ -225,6 +227,8 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
         super().__init__()
 
         self._template = template
+        self._escapeSpecialChars = escapeSpecialChars
+        self._extendedWordList = extendedWordList
         self._escapeSpecialMeaning = bool(escapeSpecialChars)
         self._templates = self._splitTemplates(self._template)
         self._wordList = np.array(extendedWordList if extendedWordList is not None else _WORDS_LOWER)
@@ -297,6 +301,17 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
 
     def __repr__(self):
         return f"TemplateGenerator(template='{self._template}')"
+
+    def _getConstructorOptions(self):
+        """ Returns an internal mapping dictionary for the object. Keys represent the
+            class constructor arguments and values representing the object's internal data.
+            :return: Python dictionary mapping constructor options to the object properties
+        """
+        return {
+            "template": self._template,
+            "escapeSpecialChars": self._escapeSpecialChars,
+            "extendedWordList": self._extendedWordList
+        }
 
     def _splitTemplates(self, templateStr):
         """ Split template string into individual template strings
@@ -662,7 +677,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
         return results
 
 
-class ILText(TextGenerator):  # lgtm [py/missing-equals]
+class ILText(TextGenerator, SerializableToDict):  # lgtm [py/missing-equals]
     """ Class to generate Ipsum Lorem text paragraphs, words and sentences
 
     :param paragraphs: Number of paragraphs to generate. If tuple will generate random number in range
@@ -680,6 +695,11 @@ class ILText(TextGenerator):  # lgtm [py/missing-equals]
 
         super().__init__()
 
+        self._paragraphs = paragraphs
+        self._sentences = sentences
+        self._words = words
+        self._extendedWordList = extendedWordList
+
         self.paragraphs = self.getAsTupleOrElse(paragraphs, (1, 1), "paragraphs")
         self.words = self.getAsTupleOrElse(words, (2, 12), "words")
         self.sentences = self.getAsTupleOrElse(sentences, (1, 1), "sentences")
@@ -692,6 +712,18 @@ class ILText(TextGenerator):  # lgtm [py/missing-equals]
 
         self._processStats()
         self._processWordList()
+
+    def _getConstructorOptions(self):
+        """ Returns an internal mapping dictionary for the object. Keys represent the
+            class constructor arguments and values representing the object's internal data.
+            :return: Python dictionary mapping constructor options to the object properties
+        """
+        return {
+            "paragraphs": self._paragraphs,
+            "sentences": self._sentences,
+            "words": self._words,
+            "extendedWordList": self._extendedWordList
+        }
 
     def _processStats(self):
         """ Compute the stats needed for the text generation """
