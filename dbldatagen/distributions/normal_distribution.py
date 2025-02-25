@@ -14,6 +14,7 @@ import pyspark.sql.functions as F
 from pyspark.sql.types import FloatType
 
 from .data_distribution import DataDistribution
+from ..serialization import SerializableToDict
 
 
 class Normal(DataDistribution):
@@ -27,12 +28,17 @@ class Normal(DataDistribution):
         self.mean = mean if mean is not None else 0.0
         self.stddev = stddev if stddev is not None else 1.0
 
-    def _getConstructorOptions(self):
-        """ Returns an internal mapping dictionary for the object. Keys represent the
-            class constructor arguments and values representing the object's internal data.
-            :return: Python dictionary mapping constructor options to the object properties
+    def _toInitializationDict(self):
+        """ Converts an object to a Python dictionary. Keys represent the object's
+            constructor arguments.
+            :return: Python dictionary representation of the object
         """
-        return {"mean": self.mean, "stddev": self.stddev}
+        _options = {"kind": self.__class__.__name__, "mean": self.mean, "stddev": self.stddev}
+        return {
+            k: v._toInitializationDict()
+            if isinstance(v, SerializableToDict) else v
+            for k, v in _options.items() if v is not None
+        }
 
     @staticmethod
     def normal_func(mean_series: pd.Series, std_dev_series: pd.Series, random_seed: pd.Series) -> pd.Series:

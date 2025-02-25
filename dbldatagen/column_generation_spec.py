@@ -300,15 +300,20 @@ class ColumnGenerationSpec(SerializableToDict):
         # set up the temporary columns needed for data generation
         self._setupTemporaryColumns()
 
-    def _getConstructorOptions(self):
-        """ Returns an internal mapping dictionary for the object. Keys represent the
-            class constructor arguments and values representing the object's internal data.
-            :return: Python dictionary mapping constructor options to the object properties
+    def _toInitializationDict(self):
+        """ Converts an object to a Python dictionary. Keys represent the object's
+            constructor arguments.
+            :return: Python dictionary representation of the object
         """
         _options = self._csOptions.options.copy()
         _options["colName"] = _options.pop("name", self.name)
         _options["colType"] = _options.pop("type", self.datatype).simpleString()
-        return _options
+        _options["kind"] = self.__class__.__name__
+        return {
+            k: v._toInitializationDict()
+            if isinstance(v, SerializableToDict) else v
+            for k, v in _options.items() if v is not None
+        }
 
     def _temporaryRename(self, tmpName):
         """ Create enter / exit object to support temporary renaming of column spec

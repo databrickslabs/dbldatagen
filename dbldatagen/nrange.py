@@ -12,6 +12,7 @@ from pyspark.sql.types import LongType, FloatType, IntegerType, DoubleType, Shor
     ByteType, DecimalType
 
 from .datarange import DataRange
+from .serialization import SerializableToDict
 
 _OLD_MIN_OPTION = 'min'
 _OLD_MAX_OPTION = 'max'
@@ -60,15 +61,21 @@ class NRange(DataRange):
             self.maxValue = until + 1
         self.step = step
 
-    def _getConstructorOptions(self):
-        """ Returns an internal mapping dictionary for the object. Keys represent the
-            class constructor arguments and values representing the object's internal data.
-            :return: Python dictionary mapping constructor options to the object properties
+    def _toInitializationDict(self):
+        """ Converts an object to a Python dictionary. Keys represent the object's
+            constructor arguments.
+            :return: Python dictionary representation of the object
         """
-        return {
+        _options = {
+            "kind": self.__class__.__name__,
             "minValue": self.minValue,
             "maxValue": self.maxValue,
             "step": self.step
+        }
+        return {
+            k: v._toInitializationDict()
+            if isinstance(v, SerializableToDict) else v
+            for k, v in _options.items() if v is not None
         }
 
     def __str__(self):

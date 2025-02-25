@@ -13,6 +13,7 @@ import pyspark.sql.functions as F
 from pyspark.sql.types import FloatType
 
 from .data_distribution import DataDistribution
+from ..serialization import SerializableToDict
 
 
 class Gamma(DataDistribution):
@@ -34,12 +35,17 @@ class Gamma(DataDistribution):
         self._shape = shape
         self._scale = scale
 
-    def _getConstructorOptions(self):
-        """ Returns an internal mapping dictionary for the object. Keys represent the
-            class constructor arguments and values representing the object's internal data.
-            :return: Python dictionary mapping constructor options to the object properties
+    def _toInitializationDict(self):
+        """ Converts an object to a Python dictionary. Keys represent the object's
+            constructor arguments.
+            :return: Python dictionary representation of the object
         """
-        return {"shape": self._shape, "scale": self._scale}
+        _options = {"kind": self.__class__.__name__, "shape": self._shape, "scale": self._scale}
+        return {
+            k: v._toInitializationDict()
+            if isinstance(v, SerializableToDict) else v
+            for k, v in _options.items() if v is not None
+        }
 
     @property
     def shape(self):

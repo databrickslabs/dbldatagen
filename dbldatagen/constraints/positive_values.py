@@ -7,6 +7,7 @@ This module defines the Positive class
 """
 import pyspark.sql.functions as F
 from .constraint import Constraint, NoPrepareTransformMixin
+from ..serialization import SerializableToDict
 
 
 class PositiveValues(NoPrepareTransformMixin, Constraint):
@@ -27,12 +28,17 @@ class PositiveValues(NoPrepareTransformMixin, Constraint):
         self._columns = self._columnsFromListOrString(columns)
         self._strict = strict
 
-    def _getConstructorOptions(self):
-        """ Returns an internal mapping dictionary for the object. Keys represent the
-            class constructor arguments and values representing the object's internal data.
-            :return: Python dictionary mapping constructor options to the object properties
+    def _toInitializationDict(self):
+        """ Converts an object to a Python dictionary. Keys represent the object's
+            constructor arguments.
+            :return: Python dictionary representation of the object
         """
-        return {"columns": self._columns, "strict": self._strict}
+        _options = {"kind": self.__class__.__name__, "columns": self._columns, "strict": self._strict}
+        return {
+            k: v._toInitializationDict()
+            if isinstance(v, SerializableToDict) else v
+            for k, v in _options.items() if v is not None
+        }
 
     def _generateFilterExpression(self):
         """ Generate a filter expression that may be used for filtering"""

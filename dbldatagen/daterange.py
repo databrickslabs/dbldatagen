@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 
 from .datarange import DataRange
 from .utils import parse_time_interval
+from .serialization import SerializableToDict
 
 
 class DateRange(DataRange):
@@ -55,16 +56,22 @@ class DateRange(DataRange):
                          * self.computeTimestampIntervals(self.begin, self.end, self.interval))
         self.step = self.interval.total_seconds()
 
-    def _getConstructorOptions(self):
-        """ Returns an internal mapping dictionary for the object. Keys represent the
-            class constructor arguments and values representing the object's internal data.
-            :return: Python dictionary mapping constructor options to the object properties
+    def _toInitializationDict(self):
+        """ Converts an object to a Python dictionary. Keys represent the object's
+            constructor arguments.
+            :return: Python dictionary representation of the object
         """
-        return {
+        _options = {
+            "kind": self.__class__.__name__,
             "begin": datetime.strftime(self.begin, self.datetime_format),
             "end": datetime.strftime(self.end, self.datetime_format),
             "interval": f"INTERVAL {int(self.interval.total_seconds())} SECONDS",
             "datetime_format": self.datetime_format
+        }
+        return {
+            k: v._toInitializationDict()
+            if isinstance(v, SerializableToDict) else v
+            for k, v in _options.items() if v is not None
         }
 
     @classmethod

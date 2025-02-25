@@ -302,15 +302,21 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
     def __repr__(self):
         return f"TemplateGenerator(template='{self._template}')"
 
-    def _getConstructorOptions(self):
-        """ Returns an internal mapping dictionary for the object. Keys represent the
-            class constructor arguments and values representing the object's internal data.
-            :return: Python dictionary mapping constructor options to the object properties
+    def _toInitializationDict(self):
+        """ Converts an object to a Python dictionary. Keys represent the object's
+            constructor arguments.
+            :return: Python dictionary representation of the object
         """
-        return {
+        _options = {
+            "kind": self.__class__.__name__,
             "template": self._template,
             "escapeSpecialChars": self._escapeSpecialChars,
             "extendedWordList": self._extendedWordList
+        }
+        return {
+            k: v._toInitializationDict()
+            if isinstance(v, SerializableToDict) else v
+            for k, v in _options.items() if v is not None
         }
 
     def _splitTemplates(self, templateStr):
@@ -713,16 +719,22 @@ class ILText(TextGenerator, SerializableToDict):  # lgtm [py/missing-equals]
         self._processStats()
         self._processWordList()
 
-    def _getConstructorOptions(self):
-        """ Returns an internal mapping dictionary for the object. Keys represent the
-            class constructor arguments and values representing the object's internal data.
-            :return: Python dictionary mapping constructor options to the object properties
+    def _toInitializationDict(self):
+        """ Converts an object to a Python dictionary. Keys represent the object's
+            constructor arguments.
+            :return: Python dictionary representation of the object
         """
-        return {
+        _options = {
+            "kind": self.__class__.__name__,
             "paragraphs": self._paragraphs,
             "sentences": self._sentences,
             "words": self._words,
             "extendedWordList": self._extendedWordList
+        }
+        return {
+            k: v._toInitializationDict()
+            if isinstance(v, SerializableToDict) else v
+            for k, v in _options.items() if v is not None
         }
 
     def _processStats(self):

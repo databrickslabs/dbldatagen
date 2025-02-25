@@ -8,6 +8,7 @@ This module defines the ScalarRange class
 import pyspark.sql.functions as F
 
 from .constraint import Constraint, NoPrepareTransformMixin
+from ..serialization import SerializableToDict
 
 
 class RangedValues(NoPrepareTransformMixin, Constraint):
@@ -28,16 +29,22 @@ class RangedValues(NoPrepareTransformMixin, Constraint):
         self._highValue = highValue
         self._strict = strict
 
-    def _getConstructorOptions(self):
+    def _toInitializationDict(self):
         """ Returns an internal mapping dictionary for the object. Keys represent the
             class constructor arguments and values representing the object's internal data.
             :return: Python dictionary mapping constructor options to the object properties
         """
-        return {
+        _options = {
+            "kind": self.__class__.__name__,
             "columns": self._columns,
             "lowValue": self._lowValue,
             "highValue": self._highValue,
             "strict": self._strict
+        }
+        return {
+            k: v._toInitializationDict()
+            if isinstance(v, SerializableToDict) else v
+            for k, v in _options.items() if v is not None
         }
 
     def _generateFilterExpression(self):

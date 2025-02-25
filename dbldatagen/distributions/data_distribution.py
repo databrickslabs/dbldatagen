@@ -35,13 +35,6 @@ class DataDistribution(SerializableToDict, ABC):
         self._rounding = False
         self._randomSeed = None
 
-    def _getConstructorOptions(self):
-        """ Returns an internal mapping dictionary for the object. Keys represent the
-            class constructor arguments and values representing the object's internal data.
-        """
-        raise NotImplementedError(
-            f"Object is not serializable. {self.__class__.__name__} does not implement '_getConstructorOptions'")
-
     @staticmethod
     def get_np_random_generator(random_seed):
         """ Get numpy random number generator

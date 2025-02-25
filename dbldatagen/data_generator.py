@@ -178,27 +178,8 @@ class DataGenerator(SerializableToDict):
         # set up use of pandas udfs
         self._setupPandas(batchSize)
 
-    def _getConstructorOptions(self):
-        """ Returns an internal mapping dictionary for the object. Keys represent the
-            class constructor arguments and values representing the object's internal data.
-            :return: Python dictionary mapping constructor options to the object properties
-        """
-        return {
-            "name": self.name,
-            "randomSeedMethod": self._seedMethod,
-            "rows": self._rowCount,
-            "startingId": self.starting_id,
-            "randomSeed": self._randomSeed,
-            "partitions": self.partitions,
-            "verbose": self.verbose,
-            "batchSize": self._batchSize,
-            "debug": self.debug,
-            "seedColumnName": self._seedColumnName,
-            "random": self._defaultRandom
-        }
-
     @classmethod
-    def _fromConstructorOptions(cls, options):
+    def _fromInitializationDict(cls, options):
         """ Creates a DataGenerator instance from a dictionary of class constructor options.
             :param options: Python dictionary of options for the DataGenerator, ColumnGenerationSpecs, and Constraints
             :return: DataGenerator instance
@@ -208,30 +189,46 @@ class DataGenerator(SerializableToDict):
         constraints = ir.pop("constraints") if "constraints" in ir else []
         return (
             DataGenerator(**{k: v for k, v in ir.items() if not isinstance(v, list)})
-            .withColumnDefinitions(columns)
-            .withConstraintDefinitions(constraints)
+            ._loadColumnsFromInitializationDicts(columns)
+            ._loadConstraintsFromInitializationDicts(constraints)
         )
 
     @classmethod
-    def fromConstructorOptions(cls, options):
-        return cls._fromConstructorOptions(options)
+    def loadFromInitializationDict(cls, options):
+        """ Creates a DataGenerator instance from a dictionary of class constructor options.
+            :param options: Python dictionary of options for the DataGenerator, ColumnGenerationSpecs, and Constraints
+            :return: DataGenerator instance
+        """
+        return cls._fromInitializationDict(options)
 
-    def _toConstructorOptions(self):
+    def _toInitializationDict(self):
         """ Creates a Python dictionary from a DataGenerator instance.
             :return: Python dictionary of options for the DataGenerator, ColumnGenerationSpecs, and Constraints
         """
-        d = self._getConstructorOptions()
-        d["columns"] = [{
-                k: v for k, v in column._toConstructorOptions().items()
+        _options = {
+            "kind": self.__class__.__name__,
+            "name": self.name,
+            "randomSeedMethod": self._seedMethod,
+            "rows": self._rowCount,
+            "startingId": self.starting_id,
+            "randomSeed": self._randomSeed,
+            "partitions": self.partitions,
+            "verbose": self.verbose, "batchSize": self._batchSize, "debug": self.debug,
+            "seedColumnName": self._seedColumnName,
+            "random": self._defaultRandom,
+            "columns": [{
+                k: v for k, v in column._toInitializationDict().items()
                 if k != "kind"}
-            for column in self.columnGenerationSpecs]
-        d["constraints"] = [constraint._toConstructorOptions() for constraint in self.constraints]
-        d["kind"] = self.__class__.__name__
-        return d
+                for column in self.columnGenerationSpecs],
+            "constraints": [constraint._toInitializationDict() for constraint in self.constraints]
+        }
+        return _options
 
-    @property
-    def constructorOptions(self):
-        return self._toConstructorOptions()
+    def saveToInitializationDict(self):
+        """ Creates a Python dictionary from a DataGenerator instance.
+            :return: Python dictionary of options for the DataGenerator, ColumnGenerationSpecs, and Constraints
+        """
+        return self._toInitializationDict()
 
     @property
     def seedColumnName(self):
@@ -929,7 +926,7 @@ class DataGenerator(SerializableToDict):
         self._inferredSchemaFields.append(StructField(colName, newColumn.datatype, nullable))
         return self
 
-    def withColumnDefinitions(self, columns):
+    def _loadColumnsFromInitializationDicts(self, columns):
         """ Adds a set of columns to the synthetic generation specification.
             :param columns: A list of column generation specifications as dictionaries
             :returns:       A modified in-place instance of a data generator allowing for chaining of calls
@@ -938,15 +935,20 @@ class DataGenerator(SerializableToDict):
         for column in columns:
             _column = column.copy()
             for k, v in _column.items():
-                if k == "dataRange":
-                    t = [s for s in DataRange.__subclasses__() if s.__name__ == v["kind"]][0]
-                    _column[k] = t._fromConstructorOptions(v)
-                if k == "distribution":
-                    t = [s for s in DataDistribution.__subclasses__() if s.__name__ == v["kind"]][0]
-                    _column[k] = t._fromConstructorOptions(v)
-                if k == "text":
-                    t = [s for s in TextGenerator.__subclasses__() if s.__name__ == v["kind"]][0]
-                    _column[k] = t._fromConstructorOptions(v)
+                if not isinstance(v, dict):
+                    continue
+                value_superclass = (
+                    DataRange if k == "dataRange"
+                    else DataDistribution if k == "distribution"
+                    else TextGenerator
+                )
+                value_subclasses = value_superclass.__subclasses__()
+                if v["kind"] not in [s.__name__ for s in value_subclasses]:
+                    raise ValueError(f"{v['kind']} is not a valid object type for property {k}")
+                value_class = [s for s in value_subclasses if s.__name__ == v["kind"]][0]
+                if not issubclass(value_class, SerializableToDict):
+                    raise NotImplementedError(f"Object of class {value_class} is not serializable.")
+                _column[k] = value_class._fromInitializationDict(v)
             self.withColumn(**_column)
         return self
 
@@ -1344,7 +1346,7 @@ class DataGenerator(SerializableToDict):
         self.withConstraint(SqlExpr(sqlExpression))
         return self
 
-    def withConstraintDefinitions(self, constraints):
+    def _loadConstraintsFromInitializationDicts(self, constraints):
         """ Adds a set of constraints to the synthetic generation specification.
             :param constraints: A list of constraints as dictionaries
             :returns:       A modified in-place instance of a data generator allowing for chaining of calls
@@ -1352,7 +1354,7 @@ class DataGenerator(SerializableToDict):
         """
         for c in constraints:
             t = [s for s in Constraint.__subclasses__() if s.__name__ == c["kind"]][0]
-            self.withConstraint(t._fromConstructorOptions(c))  # Call fromDict
+            self.withConstraint(t._fromInitializationDict(c))
         return self
 
     def computeBuildPlan(self):
@@ -1706,16 +1708,16 @@ class DataGenerator(SerializableToDict):
         return result
 
     @staticmethod
-    def fromJson(options):
+    def loadFromJson(options):
         """ Creates a data generator from a JSON string.
             :param options: A JSON string containing data generation options
             :return: A data generator with the specified options
         """
         options = json.loads(options)
-        return DataGenerator.fromConstructorOptions(options)
+        return DataGenerator.loadFromInitializationDict(options)
 
-    def toJson(self):
+    def saveToJson(self):
         """ Returns the JSON string representation of a data generator.
             :return: A JSON string representation of the DataGenerator
         """
-        return json.dumps(self.constructorOptions)
+        return json.dumps(self.saveToInitializationDict())
