@@ -16,7 +16,7 @@ Note that for Sphinx source documents (.rst docs), correct rendering is only pro
 - [Using data distributions](source/DISTRIBUTIONS.md)
 - [Generating text data](source/textdata.rst)
 - [Repeatable data generation](source/repeatable_data_generation.rst)
-- [Creating data generators from configuration](source/serialized_data_generators.rst)
+- [Saving and loading data generators from configuration](source/serialized_data_generators.rst)
 - [Generating CDC data](source/generating_cdc_data.rst)
 - [Multi-table data generation](source/multi_table_data.rst)
 - [Troubleshooting](source/troubleshooting.rst)

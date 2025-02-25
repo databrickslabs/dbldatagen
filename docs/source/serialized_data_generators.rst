@@ -1,42 +1,42 @@
 .. Databricks Labs Data Generator documentation master file, created by
    sphinx-quickstart on Sun Jun 21 10:54:30 2020.
 
-Creating Data Generation Specs from Configuration
-=================================================
+Saving and Loading Data Generation Specs from Configuration
+===========================================================
 
 Data generation specifications can be converted to and from configuration (either Python dictionaries or JSON strings).
-This section shows conversion between configuration and data generators, columns, and constraints.
+This section shows how to save and load data generators, columns, and constraints from configuration.
 
-Getting Data Generator Configuration Options
---------------------------------------------
+Saving data generation specs to configuration
+---------------------------------------------
 
-A dictionary of options needed to create a ``DataGenerator`` via the ``constructorOptions`` property.
+``DataGenerators`` can be converted to dictionaries using the ``saveToInitializationDict`` method.
 
 .. code-block:: python
 
-   from pyspark.sql.types import LongType, IntegerType, StringType
+   from pyspark.sql.types import StringType
    import dbldatagen as dg
 
    # Create a sample data generator with a few columns:
    testDataSpec = (
-       dg.DataGenerator(spark, name="users_dataset", rows=1000, randomSeedMethod='hash_fieldname')
-       .withIdOutput()
+       dg.DataGenerator(spark, name="users_dataset", rows=1000)
        .withColumn("user_name", StringType(), expr="concat('user_', id)")
        .withColumn("email_address", StringType(), expr="concat(user_name, '@email.com')")
        .withColumn("phone_number", StringType(), template="555-DDD-DDDD")
    )
 
    # Get the data generation options as a Python dictionary:
-   dataSpecOptions = testDataSpec.constructorOptions
+   dataSpecOptions = testDataSpec.saveToInitializationDict()
 
-Calling  ``constructorOptions`` will return properties of the ``DataGenerator``  (e.g. `rows`, `randomSeedMethod`) as
-root-level keys. Associated dictionaries for the ``ColumnGenerationSpecs`` and ``Constraints`` will be returned in the
-``columns`` and ``constraints`` keys.
+Calling  ``saveToInitializationDict`` will return properties of the ``DataGenerator``  (e.g. ``rows``,
+``randomSeedMethod``) as root-level keys. Associated dictionaries for the ``ColumnGenerationSpecs`` and ``Constraints``
+will be returned in the ``columns`` and ``constraints`` keys.
 
-Creating Data Generators from Configuration
+Creating data generators from configuration
 -------------------------------------------
 
-``DataGenerators`` and their associated objects can be created from configuration by calling ``fromConstructorOptions``.
+``DataGenerators`` and their associated objects can be created from configuration by calling
+``loadFromInitializationDict``.
 
 .. code-block:: python
 
@@ -54,9 +54,9 @@ Creating Data Generators from Configuration
    }
 
    # Create the DataGenerator from options:
-   dg.DataGenerator.fromConstructorOptions(dataSpecOptions)
+   dg.DataGenerator.loadFromInitializationDict(dataSpecOptions)
 
-Advanced Configuration Syntax
+Advanced configuration syntax
 -----------------------------
 
 When adding constraints, distributions, text generators, or data ranges via configuration, specify the object's
@@ -131,37 +131,35 @@ To define a column with a text generator, pass a dictionary with the ``TextGener
    Columns which use ``PyfuncText``, ``PyfuncTextFactory``, and ``FakerTextFactory`` are not currently serializable to
    and from configuration.
 
-Using JSON Configuration
-------------------------
+Saving and loading from JSON
+----------------------------
 
 Data generators can be converted to and from JSON. This allows users to repeatedly generate datasets via options stored
 in files.
 
-Use ``toJson`` to generate a JSON string from a ``DataGenerator``.
+Use ``saveToJson`` to generate a JSON string from a ``DataGenerator``.
 
 .. code-block:: python
 
-   from pyspark.sql.types import LongType, IntegerType, StringType
+   from pyspark.sql.types import StringType
    import dbldatagen as dg
 
    # Create a sample data generator with a few columns:
    testDataSpec = (
-       dg.DataGenerator(spark, name="users_dataset", rows=1000, randomSeedMethod='hash_fieldname')
-       .withIdOutput()
+       dg.DataGenerator(spark, name="users_dataset", rows=1000)
        .withColumn("user_name", StringType(), expr="concat('user_', id)")
        .withColumn("email_address", StringType(), expr="concat(user_name, '@email.com')")
        .withColumn("phone_number", StringType(), template="555-DDD-DDDD")
    )
 
    # Create a JSON string with the data generation config:
-   jsonStr = testDataSpec.toJson()
+   jsonStr = testDataSpec.saveToJson()
 
 
-Use ``fromJson`` to create a ``DataGenerator`` from a JSON string.
+Use ``loadFromJson`` to create a ``DataGenerator`` from a JSON string.
 
 .. code-block:: python
 
-   from pyspark.sql.types import LongType, IntegerType, StringType
    import dbldatagen as dg
 
    # Define the data generation options:
@@ -176,4 +174,4 @@ Use ``fromJson`` to create a ``DataGenerator`` from a JSON string.
    }'''
 
    # Create a data generator from the JSON string:
-   testDataSpec = dg.DataGenerator.fromJson(jsonStr)
+   testDataSpec = dg.DataGenerator.loadFromJson(jsonStr)
