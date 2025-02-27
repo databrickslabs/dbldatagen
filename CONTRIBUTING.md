@@ -158,3 +158,22 @@ Basically it follows the Python PEP8 coding conventions - but method and argumen
 with a lower case letter rather than underscores following Pyspark coding conventions.
 
 See https://legacy.python.org/dev/peps/pep-0008/
+
+# Github expectations
+When running the unit tests on Github, the environment should use the same environment as the latest Databricks
+runtime latest LTS release. While compatibility is preserved on LTS releases from Databricks runtime 10.4 onwards, 
+unit tests will be run on the environment corresponding to the latest LTS release. 
+
+Libraries will use the same versions as the earliest supported LTS release - currently 10.4 LTS
+
+This means for the current build:
+
+- Use of Ubuntu 22.04 for the test runner
+- Use of Java 8
+- Use of Python 3.11
+
+See the following resources for more information
+= https://docs.databricks.com/en/release-notes/runtime/15.4lts.html
+- https://docs.databricks.com/en/release-notes/runtime/10.4lts.html
+- https://github.com/actions/runner-images/issues/10636
+
