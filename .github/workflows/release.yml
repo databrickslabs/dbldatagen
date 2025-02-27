@@ -7,16 +7,22 @@ on:
 
 jobs:
   release:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      max-parallel: 1
-      matrix:
-        python-version: [ 3.8 ]
-        os: [ ubuntu-latest ]
+    runs-on: ubuntu-22.04
+    environment: release
+    permissions:
+      # Used to authenticate to PyPI via OIDC and sign the release's artifacts with sigstore-python.
+      id-token: write
+      # Used to attach signing artifacts to the published release.
+      contents: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set Java 8
+        run: |
+          sudo update-alternatives --set java /usr/lib/jvm/temurin-8-jdk-amd64/bin/java
+          java -version
 
       - name: Set up Python 3.8
         uses: actions/setup-python@v5
@@ -44,9 +50,3 @@ jobs:
 
       - name: Publish a Python distribution to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.LABS_PYPI_TOKEN }}
-
-
-

@@ -23,11 +23,13 @@ As it is installable via `%pip install`, it can also be incorporated in environm
    Get Started Here <APIDOCS>
    Installation instructions <installation_notes>
    Generating column data <generating_column_data>
+   Using standard datasets <using_standard_datasets>
    Using data ranges <DATARANGES>
    Generating text data <textdata>
    Using data distributions <DISTRIBUTIONS>
    Options for column specification <options_and_features>
    Generating repeatable data <repeatable_data_generation>
+   Using constraints to control data generation<using_constraints>
    Using streaming data <using_streaming_data>
    Generating JSON and structured column data <generating_json_data>
    Generating synthetic data from existing data <generating_from_existing_data>

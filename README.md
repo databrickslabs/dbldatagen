@@ -53,6 +53,7 @@ used in other computations
 * plugin mechanism to allow use of 3rd party libraries such as Faker
 * Use within a Databricks Delta Live Tables pipeline as a synthetic data generation source
 * Generate synthetic data generation code from existing schema or data (experimental)
+* Use of standard datasets for quick generation of synthetic data
 
 Details of these features can be found in the online documentation  -
  [online documentation](https://databrickslabs.github.io/dbldatagen/public_docs/index.html). 
@@ -64,7 +65,7 @@ details of use and many examples.
 
 Release notes and details of the latest changes for this specific release
 can be found in the GitHub repository
-[here](https://github.com/databrickslabs/dbldatagen/blob/release/v0.3.6post1/CHANGELOG.md)
+[here](https://github.com/databrickslabs/dbldatagen/blob/release/v0.4.0post2/CHANGELOG.md)
 
 # Installation
 
@@ -109,6 +110,17 @@ To use the data generator, install the library using the `%pip install` method o
 in your environment.
 
 Once the library has been installed, you can use it to generate a data frame composed of synthetic data.
+
+The easiest way to use the data generator is to use one of the standard datasets which can be further customized
+for your use case.
+
+```buildoutcfg
+import dbldatagen as dg
+df = dg.Datasets(spark, "basic/user").get(rows=1000_000).build()
+num_rows=df.count()                          
+```
+
+You can also define fully custom data sets using the `DataGenerator` class.
 
 For example
 

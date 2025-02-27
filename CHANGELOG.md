@@ -1,12 +1,39 @@
-# Databricks Labs Data Generator Release Notes
+# Databricks Labs Synthetic Data Generator Release Notes
 
 ## Change History
 All notable changes to the Databricks Labs Data Generator will be documented in this file.
 
-### Unreleased
+### unreleased
+
+#### Fixed 
+* Updated build scripts to use Ubuntu 22.04 to correspond to environment in Databricks runtime
+
+### Version 0.4.0 Hotfix 2
+
+#### Fixed
+* Added basic stock ticker and multi-table sales order standard datasets
+* Added min and max latitude and longitude options for the basic geometries dataset provider
+* Added default max values for numeric data types
+
+### Version 0.4.0 Hotfix 1
+
+#### Fixed
+* Fixed issue with running on serverless environment
+
+
+### Version 0.4.0
 
 #### Changed
+* Updated minimum pyspark version to be 3.2.1, compatible with Databricks runtime 10.4 LTS or later
+* Modified data generator to allow specification of constraints to the data generation process
 * Updated documentation for generating text data.
+* Modified data distribiutions to use abstract base classes
+* migrated data distribution tests to use `pytest`
+* Additional standard datasets
+
+#### Added
+* Added classes for constraints on the data generation via new package `dbldatagen.constraints`
+* Added support for standard data sets via the new package `dbldatagen.datasets`
 
 
 ### Version 0.3.6 Post 1
@@ -17,7 +44,6 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 
 #### Fixed 
 * Fixed scenario where `DataAnalyzer` is used on dataframe containing a column named `summary`
-
 
 ### Version 0.3.6
 

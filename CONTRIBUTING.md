@@ -26,7 +26,7 @@ runtime 9.1 LTS or later.
 
 ## Checking your code for common issues
 
-Run `./lint.sh` from the project root directory to run various code style checks. 
+Run `make dev-lint` from the project root directory to run various code style checks. 
 These are based on the use of `prospector`, `pylint` and related tools.
 
 ## Setting up your build environment
@@ -44,6 +44,11 @@ directly in your environment.
 Our recommended mechanism for building the code is to use a `conda` or `pipenv` based development process. 
 
 But it can be built with any Python virtualization environment.
+
+### Spark dependencies
+The builds have been tested against Spark 3.2.1. This requires the OpenJDK 1.8.56 or later version of Java 8.
+The Databricks runtimes use the Azul Zulu version of OpenJDK 8 and we have used these in local testing.
+These are not installed automatically by the build process, so you will need to install them separately.
 
 ### Building with Conda
 To build with `conda`, perform the following commands:
@@ -70,7 +75,7 @@ To build with `pipenv`, perform the following commands:
     - Run `make dist` from the main project directory
   - The resulting wheel file will be placed in the `dist` subdirectory
 
-The resulting build has been tested against Spark 3.0.1
+The resulting build has been tested against Spark 3.2.1
 
 ## Creating the HTML documentation
 
@@ -153,3 +158,22 @@ Basically it follows the Python PEP8 coding conventions - but method and argumen
 with a lower case letter rather than underscores following Pyspark coding conventions.
 
 See https://legacy.python.org/dev/peps/pep-0008/
+
+# Github expectations
+When running the unit tests on Github, the environment should use the same environment as the latest Databricks
+runtime latest LTS release. While compatibility is preserved on LTS releases from Databricks runtime 10.4 onwards, 
+unit tests will be run on the environment corresponding to the latest LTS release. 
+
+Libraries will use the same versions as the earliest supported LTS release - currently 10.4 LTS
+
+This means for the current build:
+
+- Use of Ubuntu 22.04 for the test runner
+- Use of Java 8
+- Use of Python 3.11
+
+See the following resources for more information
+= https://docs.databricks.com/en/release-notes/runtime/15.4lts.html
+- https://docs.databricks.com/en/release-notes/runtime/10.4lts.html
+- https://github.com/actions/runner-images/issues/10636
+
