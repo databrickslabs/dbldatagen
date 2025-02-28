@@ -13,6 +13,8 @@ import logging
 import numpy as np
 import pandas as pd
 
+from .serialization import SerializableToDict
+
 #: list of hex digits for template generation
 _HEX_LOWER = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
 
@@ -77,7 +79,7 @@ class TextGenerator(object):
         return f"TextGenerator(randomSeed={self._randomSeed})"
 
     def __eq__(self, other):
-        return type(self) == type(other) and self._randomSeed == other._randomSeed
+        return isinstance(self, type(other)) and self._randomSeed == other._randomSeed
 
     def withRandomSeed(self, seed):
         """ Set the random seed for the text generator
@@ -162,7 +164,7 @@ class TextGenerator(object):
         return defaultValue
 
 
-class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
+class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-equals]
     """This class handles the generation of text from templates
 
     :param template: template string to use in text generation
@@ -225,6 +227,8 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
         super().__init__()
 
         self._template = template
+        self._escapeSpecialChars = escapeSpecialChars
+        self._extendedWordList = extendedWordList
         self._escapeSpecialMeaning = bool(escapeSpecialChars)
         self._templates = self._splitTemplates(self._template)
         self._wordList = np.array(extendedWordList if extendedWordList is not None else _WORDS_LOWER)
@@ -260,7 +264,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
             assert v is not None and isinstance(v, tuple) and len(v) == 2, "value must be tuple of length 2"
             mapping_length, mappings = v
             assert isinstance(mapping_length, int), "mapping length must be of type int"
-            assert isinstance(mappings, (list, np.ndarray)),\
+            assert isinstance(mappings, (list, np.ndarray)), \
                 "mappings are lists or numpy arrays"
             assert mapping_length == 0 or len(mappings) == mapping_length, "mappings must match mapping_length"
 
@@ -277,7 +281,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
             assert v is not None and isinstance(v, tuple) and len(v) == 2, "value must be tuple of length 2"
             mapping_length, mappings = v
             assert isinstance(mapping_length, int), "mapping length must be of type int"
-            assert mappings is None or isinstance(mappings, (list, np.ndarray)),\
+            assert mappings is None or isinstance(mappings, (list, np.ndarray)), \
                 "mappings are lists or numpy arrays"
 
             # for escaped mappings, the mapping can be None in which case the mapping is to the number itself
@@ -297,6 +301,23 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
 
     def __repr__(self):
         return f"TemplateGenerator(template='{self._template}')"
+
+    def _toInitializationDict(self):
+        """ Converts an object to a Python dictionary. Keys represent the object's
+            constructor arguments.
+            :return: Python dictionary representation of the object
+        """
+        _options = {
+            "kind": self.__class__.__name__,
+            "template": self._template,
+            "escapeSpecialChars": self._escapeSpecialChars,
+            "extendedWordList": self._extendedWordList
+        }
+        return {
+            k: v._toInitializationDict()
+            if isinstance(v, SerializableToDict) else v
+            for k, v in _options.items() if v is not None
+        }
 
     def _splitTemplates(self, templateStr):
         """ Split template string into individual template strings
@@ -662,7 +683,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
         return results
 
 
-class ILText(TextGenerator):  # lgtm [py/missing-equals]
+class ILText(TextGenerator, SerializableToDict):  # lgtm [py/missing-equals]
     """ Class to generate Ipsum Lorem text paragraphs, words and sentences
 
     :param paragraphs: Number of paragraphs to generate. If tuple will generate random number in range
@@ -680,6 +701,11 @@ class ILText(TextGenerator):  # lgtm [py/missing-equals]
 
         super().__init__()
 
+        self._paragraphs = paragraphs
+        self._sentences = sentences
+        self._words = words
+        self._extendedWordList = extendedWordList
+
         self.paragraphs = self.getAsTupleOrElse(paragraphs, (1, 1), "paragraphs")
         self.words = self.getAsTupleOrElse(words, (2, 12), "words")
         self.sentences = self.getAsTupleOrElse(sentences, (1, 1), "sentences")
@@ -692,6 +718,24 @@ class ILText(TextGenerator):  # lgtm [py/missing-equals]
 
         self._processStats()
         self._processWordList()
+
+    def _toInitializationDict(self):
+        """ Converts an object to a Python dictionary. Keys represent the object's
+            constructor arguments.
+            :return: Python dictionary representation of the object
+        """
+        _options = {
+            "kind": self.__class__.__name__,
+            "paragraphs": self._paragraphs,
+            "sentences": self._sentences,
+            "words": self._words,
+            "extendedWordList": self._extendedWordList
+        }
+        return {
+            k: v._toInitializationDict()
+            if isinstance(v, SerializableToDict) else v
+            for k, v in _options.items() if v is not None
+        }
 
     def _processStats(self):
         """ Compute the stats needed for the text generation """

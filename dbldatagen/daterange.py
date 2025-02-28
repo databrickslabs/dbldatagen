@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 
 from .datarange import DataRange
 from .utils import parse_time_interval
+from .serialization import SerializableToDict
 
 
 class DateRange(DataRange):
@@ -44,6 +45,7 @@ class DateRange(DataRange):
         assert begin is not None, "`begin` must be specified"
         assert end is not None, "`end` must be specified"
 
+        self.datetime_format = datetime_format
         self.begin = begin if not isinstance(begin, str) else self._datetime_from_string(begin, datetime_format)
         self.end = end if not isinstance(end, str) else self._datetime_from_string(end, datetime_format)
         self.interval = interval if not isinstance(interval, str) else self._timedelta_from_string(interval)
@@ -53,6 +55,24 @@ class DateRange(DataRange):
         self.maxValue = (self.minValue + self.interval.total_seconds()
                          * self.computeTimestampIntervals(self.begin, self.end, self.interval))
         self.step = self.interval.total_seconds()
+
+    def _toInitializationDict(self):
+        """ Converts an object to a Python dictionary. Keys represent the object's
+            constructor arguments.
+            :return: Python dictionary representation of the object
+        """
+        _options = {
+            "kind": self.__class__.__name__,
+            "begin": datetime.strftime(self.begin, self.datetime_format),
+            "end": datetime.strftime(self.end, self.datetime_format),
+            "interval": f"INTERVAL {int(self.interval.total_seconds())} SECONDS",
+            "datetime_format": self.datetime_format
+        }
+        return {
+            k: v._toInitializationDict()
+            if isinstance(v, SerializableToDict) else v
+            for k, v in _options.items() if v is not None
+        }
 
     @classmethod
     def _datetime_from_string(cls, date_str, date_format):

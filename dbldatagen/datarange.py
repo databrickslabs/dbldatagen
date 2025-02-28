@@ -10,8 +10,10 @@ changes to method names when refactoring
 
 """
 
+from .serialization import SerializableToDict
 
-class DataRange(object):
+
+class DataRange(SerializableToDict):
     """ Abstract class used as base class for NRange and DateRange """
 
     def isEmpty(self):

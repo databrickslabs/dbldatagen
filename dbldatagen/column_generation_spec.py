@@ -25,6 +25,7 @@ from .datagen_constants import RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, R
 from .daterange import DateRange
 from .distributions import Normal, DataDistribution
 from .nrange import NRange
+from .serialization import SerializableToDict
 from .text_generators import TemplateGenerator
 from .utils import ensure, coalesce_values
 from .schema_parser import SchemaParser
@@ -40,7 +41,7 @@ COMPUTE_METHOD_VALID_VALUES = [HASH_COMPUTE_METHOD,
                                RAW_VALUES_COMPUTE_METHOD]
 
 
-class ColumnGenerationSpec(object):
+class ColumnGenerationSpec(SerializableToDict):
     """ Column generation spec object - specifies how column is to be generated
 
     Each column to be output will have a corresponding ColumnGenerationSpec object.
@@ -119,7 +120,7 @@ class ColumnGenerationSpec(object):
             if EXPR_OPTION not in kwargs:
                 raise ValueError("Column generation spec must have `expr` attribute specified if datatype is inferred")
 
-        elif type(colType) == str:
+        elif isinstance(colType, str):
             colType = SchemaParser.columnTypeFromString(colType)
 
         assert isinstance(colType, DataType), f"colType `{colType}` is not instance of DataType"
@@ -299,6 +300,21 @@ class ColumnGenerationSpec(object):
         # set up the temporary columns needed for data generation
         self._setupTemporaryColumns()
 
+    def _toInitializationDict(self):
+        """ Converts an object to a Python dictionary. Keys represent the object's
+            constructor arguments.
+            :return: Python dictionary representation of the object
+        """
+        _options = self._csOptions.options.copy()
+        _options["colName"] = _options.pop("name", self.name)
+        _options["colType"] = _options.pop("type", self.datatype).simpleString()
+        _options["kind"] = self.__class__.__name__
+        return {
+            k: v._toInitializationDict()
+            if isinstance(v, SerializableToDict) else v
+            for k, v in _options.items() if v is not None
+        }
+
     def _temporaryRename(self, tmpName):
         """ Create enter / exit object to support temporary renaming of column spec
 
@@ -451,7 +467,7 @@ class ColumnGenerationSpec(object):
         assert type(columnDatatypes) is list, " `column_datatypes` parameter must be list"
         ensure(len(columnDatatypes) == len(self.baseColumns),
                "number of base column datatypes must match number of  base columns")
-        self._baseColumnDatatypes = [].append(columnDatatypes)
+        self._baseColumnDatatypes = columnDatatypes.copy()
 
     def _setupTemporaryColumns(self):
         """ Set up any temporary columns needed for test data generation.

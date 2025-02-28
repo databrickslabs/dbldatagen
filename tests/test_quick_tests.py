@@ -751,6 +751,34 @@ class TestQuickTests:
         sortedVals = sortedDf.select("randCol").collect()
         assert sortedVals != df.select("randCol").collect()
 
+    def test_to_dict(self):
+        # Test serialization to dictionary:
+        gen1 = dg.DataGenerator(name="test", rows=100, partitions=1)
+        d1 = gen1.saveToInitializationDict()
+        assert d1["name"] == "test"
+        assert d1["rows"] == 100
+        assert d1["partitions"] == 1
+
+        # Test serialization to dictionary of a cloned DataGenerator:
+        gen2 = gen1.clone()
+        d2 = gen2.saveToInitializationDict()
+        assert d2 == d1
+
+    def test_from_dict(self):
+        # Test deserialization from dictionary:
+        d1 = dg.DataGenerator(name="test", rows=1000, partitions=2).saveToInitializationDict()
+        gen1 = DataGenerator.loadFromInitializationDict(d1)
+        assert gen1.name == "test"
+        assert gen1.rowCount == 1000
+        assert gen1.partitions == 2
+
+        # Test deserialization from a copied dictionary:
+        d2 = d1.copy()
+        gen2 = DataGenerator.loadFromInitializationDict(d2)
+        assert gen1.name == gen2.name
+        assert gen1.rowCount == gen2.rowCount
+        assert gen1.partitions == gen2.partitions
+
     def test_version_info(self):
         # test access to version info without explicit import
         print("Data generator version", dg.__version__)

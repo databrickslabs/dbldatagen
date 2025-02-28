@@ -34,6 +34,8 @@ from .utils import ensure, topologicalSort, mkBoundsList, coalesce_values, \
 from ._version import __version__
 from .column_generation_spec import ColumnGenerationSpec
 from .column_spec_options import ColumnSpecOptions
+from .constraints import Constraint, ChainedRelation, LiteralRange, LiteralRelation, NegativeValues, PositiveValues, \
+    RangedValues, SqlExpr, UniqueCombinations
 from .data_analyzer import DataAnalyzer
 from .schema_parser import SchemaParser
 from .daterange import DateRange
@@ -49,7 +51,7 @@ from .datasets_object import Datasets
 __all__ = ["data_generator", "data_analyzer", "schema_parser", "daterange", "nrange",
            "column_generation_spec", "utils", "function_builder",
            "spark_singleton", "text_generators", "datarange", "datagen_constants",
-           "text_generator_plugins", "html_utils", "datasets_object"
+           "text_generator_plugins", "html_utils", "datasets_object", "constraints"
            ]
 
 

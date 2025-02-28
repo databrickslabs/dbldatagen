@@ -8,6 +8,7 @@ This module defines the ScalarInequality class
 import pyspark.sql.functions as F
 
 from .constraint import Constraint, NoPrepareTransformMixin
+from ..serialization import SerializableToDict
 
 
 class LiteralRelation(NoPrepareTransformMixin, Constraint):
@@ -28,6 +29,23 @@ class LiteralRelation(NoPrepareTransformMixin, Constraint):
 
         if relation not in self.SUPPORTED_OPERATORS:
             raise ValueError(f"Parameter `relation` should be one of the operators :{self.SUPPORTED_OPERATORS}")
+
+    def _toInitializationDict(self):
+        """ Converts an object to a Python dictionary. Keys represent the object's
+            constructor arguments.
+            :return: Python dictionary representation of the object
+        """
+        _options = {
+            "kind": self.__class__.__name__,
+            "columns": self._columns,
+            "relation": self._relation,
+            "value": self._value
+        }
+        return {
+            k: v._toInitializationDict()
+            if isinstance(v, SerializableToDict) else v
+            for k, v in _options.items() if v is not None
+        }
 
     def _generateFilterExpression(self):
         expressions = [F.col(colname) for colname in self._columns]

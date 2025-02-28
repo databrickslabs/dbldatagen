@@ -13,6 +13,7 @@ import pyspark.sql.functions as F
 from pyspark.sql.types import FloatType
 
 from .data_distribution import DataDistribution
+from ..serialization import SerializableToDict
 
 
 class Gamma(DataDistribution):
@@ -33,6 +34,18 @@ class Gamma(DataDistribution):
         assert type(scale) in [float, int, np.float64, np.int32, np.int64], "beta must be int-like or float-like"
         self._shape = shape
         self._scale = scale
+
+    def _toInitializationDict(self):
+        """ Converts an object to a Python dictionary. Keys represent the object's
+            constructor arguments.
+            :return: Python dictionary representation of the object
+        """
+        _options = {"kind": self.__class__.__name__, "shape": self._shape, "scale": self._scale}
+        return {
+            k: v._toInitializationDict()
+            if isinstance(v, SerializableToDict) else v
+            for k, v in _options.items() if v is not None
+        }
 
     @property
     def shape(self):

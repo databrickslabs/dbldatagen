@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 
 from .data_distribution import DataDistribution
+from ..serialization import SerializableToDict
 
 
 class Beta(DataDistribution):
@@ -34,6 +35,18 @@ class Beta(DataDistribution):
         assert type(beta) in [float, int, np.float64, np.int32, np.int64], "beta must be int-like or float-like"
         self._alpha = alpha
         self._beta = beta
+
+    def _toInitializationDict(self):
+        """ Converts an object to a Python dictionary. Keys represent the object's
+            constructor arguments.
+            :return: Python dictionary representation of the object
+        """
+        _options = {"kind": self.__class__.__name__, "alpha": self._alpha, "beta": self._beta}
+        return {
+            k: v._toInitializationDict()
+            if isinstance(v, SerializableToDict) else v
+            for k, v in _options.items() if v is not None
+        }
 
     @property
     def alpha(self):
