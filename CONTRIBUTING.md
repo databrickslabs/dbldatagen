@@ -19,10 +19,7 @@ Dependent packages are not installed automatically by the `dbldatagen` package.
 
 ## Python compatibility
 
-The code has been tested with Python 3.8.12 and later.
-
-Older releases were tested with Python 3.7.5 but as of this release, it requires the Databricks 
-runtime 9.1 LTS or later. 
+The code has been tested with Python 3.9.21 and later.
 
 ## Checking your code for common issues
 
@@ -46,7 +43,7 @@ Our recommended mechanism for building the code is to use a `conda` or `pipenv` 
 But it can be built with any Python virtualization environment.
 
 ### Spark dependencies
-The builds have been tested against Spark 3.2.1. This requires the OpenJDK 1.8.56 or later version of Java 8.
+The builds have been tested against Spark 3.3.0. This requires the OpenJDK 1.8.56 or later version of Java 8.
 The Databricks runtimes use the Azul Zulu version of OpenJDK 8 and we have used these in local testing.
 These are not installed automatically by the build process, so you will need to install them separately.
 
@@ -75,7 +72,7 @@ To build with `pipenv`, perform the following commands:
     - Run `make dist` from the main project directory
   - The resulting wheel file will be placed in the `dist` subdirectory
 
-The resulting build has been tested against Spark 3.2.1
+The resulting build has been tested against Spark 3.3.0
 
 ## Creating the HTML documentation
 
@@ -161,19 +158,19 @@ See https://legacy.python.org/dev/peps/pep-0008/
 
 # Github expectations
 When running the unit tests on Github, the environment should use the same environment as the latest Databricks
-runtime latest LTS release. While compatibility is preserved on LTS releases from Databricks runtime 10.4 onwards, 
+runtime latest LTS release. While compatibility is preserved on LTS releases from Databricks runtime 11.3 onwards, 
 unit tests will be run on the environment corresponding to the latest LTS release. 
 
-Libraries will use the same versions as the earliest supported LTS release - currently 10.4 LTS
+Libraries will use the same versions as the earliest supported LTS release - currently 11.3 LTS
 
 This means for the current build:
 
 - Use of Ubuntu 22.04 for the test runner
 - Use of Java 8
-- Use of Python 3.11
+- Use of Python 3.9.21 when testing / building the image
 
 See the following resources for more information
 = https://docs.databricks.com/en/release-notes/runtime/15.4lts.html
-- https://docs.databricks.com/en/release-notes/runtime/10.4lts.html
+- https://docs.databricks.com/en/release-notes/runtime/11.3lts.html
 - https://github.com/actions/runner-images/issues/10636
 

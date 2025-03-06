@@ -95,7 +95,7 @@ class ColumnGenerationSpec(SerializableToDict):
     # restrict spurious messages from java gateway
     logging.getLogger("py4j").setLevel(logging.WARNING)
 
-    def __init__(self, name, colType=None, minValue=0, maxValue=None, step=1, prefix='', random=False,
+    def __init__(self, name, colType=None, *, minValue=0, maxValue=None, step=1, prefix='', random=False,
                  distribution=None, baseColumn=None, randomSeed=None, randomSeedMethod=None,
                  implicit=False, omit=False, nullable=True, debug=False, verbose=False,
                  seedColumnName=DEFAULT_SEED_COLUMN,
@@ -529,18 +529,22 @@ class ColumnGenerationSpec(SerializableToDict):
         else:
             self.logger.setLevel(logging.WARNING)
 
-    def _computeAdjustedRangeForColumn(self, colType, c_min, c_max, c_step, c_begin, c_end, c_interval, c_range,
+    def _computeAdjustedRangeForColumn(self, colType, c_min, c_max, c_step, *, c_begin, c_end, c_interval, c_range,
                                        c_unique):
         """Determine adjusted range for data column
         """
         assert colType is not None, "`colType` must be non-None instance"
 
         if type(colType) is DateType or type(colType) is TimestampType:
-            return self._computeAdjustedDateTimeRangeForColumn(colType, c_begin, c_end, c_interval, c_range, c_unique)
+            return self._computeAdjustedDateTimeRangeForColumn(colType, c_begin, c_end, c_interval,
+                                                               c_range=c_range,
+                                                               c_unique=c_unique)
         else:
-            return self._computeAdjustedNumericRangeForColumn(colType, c_min, c_max, c_step, c_range, c_unique)
+            return self._computeAdjustedNumericRangeForColumn(colType, c_min, c_max, c_step,
+                                                              c_range=c_range,
+                                                              c_unique=c_unique)
 
-    def _computeAdjustedNumericRangeForColumn(self, colType, c_min, c_max, c_step, c_range, c_unique):
+    def _computeAdjustedNumericRangeForColumn(self, colType, c_min, c_max, c_step, *, c_range, c_unique):
         """Determine adjusted range for data column
 
         Rules:
@@ -589,7 +593,7 @@ class ColumnGenerationSpec(SerializableToDict):
 
         return result
 
-    def _computeAdjustedDateTimeRangeForColumn(self, colType, c_begin, c_end, c_interval, c_range, c_unique):
+    def _computeAdjustedDateTimeRangeForColumn(self, colType, c_begin, c_end, c_interval, *, c_range, c_unique):
         """Determine adjusted range for Date or Timestamp data column
         """
         effective_begin, effective_end, effective_interval = None, None, None
@@ -656,7 +660,7 @@ class ColumnGenerationSpec(SerializableToDict):
         else:
             return "rand()"
 
-    def _getScaledIntSQLExpression(self, col_name, scale, base_columns, base_datatypes=None, compute_method=None,
+    def _getScaledIntSQLExpression(self, col_name, scale, base_columns, *, base_datatypes=None, compute_method=None,
                                    normalize=False):
         """ Get scaled numeric expression
 

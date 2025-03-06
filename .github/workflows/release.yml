@@ -24,10 +24,10 @@ jobs:
           sudo update-alternatives --set java /usr/lib/jvm/temurin-8-jdk-amd64/bin/java
           java -version
 
-      - name: Set up Python 3.8
+      - name: Set up Python 3.9.21
         uses: actions/setup-python@v5
         with:
-          python-version: '3.8.12'
+          python-version: '3.9.21'
           cache: 'pipenv'
 
       - name: Check Python version

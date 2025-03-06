@@ -69,7 +69,7 @@ class PyfuncText(TextGenerator):  # lgtm [py/missing-equals]
         def __init__(self, txtGen):
             self.textGenerator = txtGen
 
-    def __init__(self, fn, init=None, initPerBatch=False, name=None, rootProperty=None):
+    def __init__(self, fn, *, init=None, initPerBatch=False, name=None, rootProperty=None):
         super().__init__()
         assert fn is not None or callable(fn), "Function must be provided wiith signature fn(context, oldValue)"
         assert init is None or callable(init), "Init function must be a callable function or lambda if passed"
@@ -284,7 +284,7 @@ class FakerTextFactory(PyfuncTextFactory):
 
     _defaultFakerTextFactory = None
 
-    def __init__(self, locale=None, providers=None, name="FakerText", lib=None,
+    def __init__(self, *, locale=None, providers=None, name="FakerText", lib=None,
                  rootClass=None):
 
         super().__init__(name)

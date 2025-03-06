@@ -55,5 +55,5 @@ setuptools.setup(
         "Intended Audience :: Developers",
         "Intended Audience :: System Administrators"
     ],
-    python_requires='>=3.8.10',
+    python_requires='>=3.9.21',
 )
