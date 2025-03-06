@@ -429,7 +429,8 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
 
         return num_placeholders, retval
 
-    def _applyTemplateStringsForTemplate(self, baseValue, genTemplate, placeholders, rnds, escapeSpecialMeaning=False):
+    def _applyTemplateStringsForTemplate(self, baseValue, genTemplate, placeholders, rnds, *,
+                                         escapeSpecialMeaning=False):
         """ Vectorized implementation of template driven text substitution
 
          Apply substitutions to placeholders using random numbers

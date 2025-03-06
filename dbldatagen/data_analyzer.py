@@ -92,7 +92,7 @@ class DataAnalyzer:
 
         return ", ".join(results)
 
-    def _addMeasureToSummary(self, measureName, summaryExpr="''", fieldExprs=None, dfData=None, rowLimit=1,
+    def _addMeasureToSummary(self, measureName, *, summaryExpr="''", fieldExprs=None, dfData=None, rowLimit=1,
                              dfSummary=None):
         """ Add a measure to the summary dataframe
 
@@ -340,7 +340,7 @@ class DataAnalyzer:
         return result
 
     @classmethod
-    def _scriptDataGeneratorCode(cls, schema, dataSummary=None, sourceDf=None, suppressOutput=False, name=None):
+    def _scriptDataGeneratorCode(cls, schema, *, dataSummary=None, sourceDf=None, suppressOutput=False, name=None):
         """
         Generate outline data generator code from an existing dataframe
 

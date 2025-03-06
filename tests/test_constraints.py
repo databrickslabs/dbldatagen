@@ -109,7 +109,9 @@ class TestConstraints:
                                  ("id", "==", 50, 1),
                                  ("id", "!=", 50, 98),
                              ])
-    def test_scalar_relation(self, generationSpec1, column, operation, literalValue, expectedRows):
+    def test_scalar_relation(self, column, operation, literalValue, expectedRows, generationSpec1):  \
+            # pylint: disable=too-many-positional-arguments
+
         testDataSpec = (generationSpec1
                         .withConstraints([SqlExpr("id < 100"),
                                           SqlExpr("id > 0")])
@@ -275,7 +277,9 @@ class TestConstraints:
                                  ("id", 10, 20, True, 9),
                                  ("id", 10, 20, False, 11),
                              ])
-    def test_literal_range(self, generationSpec2, column, minValue, maxValue, strictFlag, expectedRows):
+    def test_literal_range(self, column, minValue, maxValue, strictFlag, expectedRows, generationSpec2):  \
+            # pylint: disable=too-many-positional-arguments
+
         testDataSpec = (generationSpec2
                         .withConstraints([SqlExpr("id < 100"),
                                           SqlExpr("id > 0")])

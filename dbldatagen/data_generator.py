@@ -76,7 +76,7 @@ class DataGenerator(SerializableToDict):
 
     # logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.NOTSET)
 
-    def __init__(self, sparkSession=None, name=None, randomSeedMethod=None,
+    def __init__(self, sparkSession=None, name=None, *, randomSeedMethod=None,
                  rows=1000000, startingId=0, randomSeed=None, partitions=None, verbose=False,
                  batchSize=None, debug=False, seedColumnName=DEFAULT_SEED_COLUMN,
                  random=False,
@@ -782,7 +782,7 @@ class DataGenerator(SerializableToDict):
                    f" column `{columns}` must refer to defined column")
         return True
 
-    def withColumnSpec(self, colName, minValue=None, maxValue=None, step=1, prefix=None,
+    def withColumnSpec(self, colName, *, minValue=None, maxValue=None, step=1, prefix=None,
                        random=None, distribution=None,
                        implicit=False, dataRange=None, omit=False, baseColumn=None, **kwargs):
         """ add a column specification for an existing column
@@ -842,7 +842,7 @@ class DataGenerator(SerializableToDict):
         """
         return colName in self._columnSpecsByName
 
-    def withColumn(self, colName, colType=StringType(), minValue=None, maxValue=None, step=1,
+    def withColumn(self, colName, colType=StringType(), *, minValue=None, maxValue=None, step=1,
                    dataRange=None, prefix=None, random=None, distribution=None,
                    baseColumn=None, nullable=True,
                    omit=False, implicit=False, noWarn=False,
@@ -1058,7 +1058,7 @@ class DataGenerator(SerializableToDict):
 
         return newDf
 
-    def _generateColumnDefinition(self, colName, colType=None, baseColumn=None,
+    def _generateColumnDefinition(self, colName, colType=None, baseColumn=None, *,
                                   implicit=False, omit=False, nullable=True, **kwargs):
         """ generate field definition and column spec
 
@@ -1591,7 +1591,7 @@ class DataGenerator(SerializableToDict):
 
         return results
 
-    def scriptMerge(self, tgtName=None, srcName=None, updateExpr=None, delExpr=None, joinExpr=None, timeExpr=None,
+    def scriptMerge(self, tgtName=None, srcName=None, *, updateExpr=None, delExpr=None, joinExpr=None, timeExpr=None,
                     insertExpr=None,
                     useExplicitNames=True,
                     updateColumns=None, updateColumnExprs=None,

@@ -91,7 +91,7 @@ class TestComplexColumns:
         invalid_data_count = df.where(invalidValueCondition).count()
         assert invalid_data_count == 0, "Not expecting invalid values"
 
-    @pytest.mark.parametrize("complexFieldType, expectedType, valueInitializer, validValueCondition",
+    @pytest.mark.parametrize("complexFieldType, expectedType, valueInit, validCond",
                              [("array<int>", ArrayType(IntegerType()), "array(1,2,3)",
                                "complex_field[1] = 2"),
                               ("array<array<string>>", ArrayType(ArrayType(StringType())), "array(array('one','two'))",
@@ -111,8 +111,9 @@ class TestComplexColumns:
                                "complex_field is not Null and complex_field.c = code2"
                                )
                               ])
-    def test_initialized_complex_fields(self, complexFieldType, expectedType, valueInitializer, validValueCondition,
-                                        setupLogging):
+    def test_initialized_complex_fields(self, complexFieldType, expectedType, valueInit, validCond, setupLogging):  \
+            # pylint: disable=too-many-positional-arguments
+
         data_rows = 1000
         df_spec = (dg.DataGenerator(spark, name="test_data_set1", rows=data_rows,
                                     partitions=spark.sparkContext.defaultParallelism)
@@ -122,7 +123,7 @@ class TestComplexColumns:
                    .withColumn("code3", StringType(), values=['a', 'b', 'c'])
                    .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
                    .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
-                   .withColumn("complex_field", complexFieldType, expr=valueInitializer,
+                   .withColumn("complex_field", complexFieldType, expr=valueInit,
                                baseColumn=['code1', 'code2', 'code3', 'code4', 'code5'])
                    )
 
@@ -132,7 +133,7 @@ class TestComplexColumns:
         complex_type = df.schema["complex_field"].dataType
         assert complex_type == expectedType
 
-        valid_data_count = df.where(validValueCondition).count()
+        valid_data_count = df.where(validCond).count()
         assert valid_data_count == data_rows, "Not expecting invalid values"
 
     def test_basic_arrays_with_columns(self, setupLogging):
