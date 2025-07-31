@@ -27,11 +27,11 @@ prepare: clean
 
 create-dev-env:
 	@echo "$(OK_COLOR)=> making conda dev environment$(NO_COLOR)"
-	conda create -n $(ENV_NAME) python=3.9.21
+	conda create -n $(ENV_NAME) python=3.10.12
 
 create-github-build-env:
 	@echo "$(OK_COLOR)=> making conda dev environment$(NO_COLOR)"
-	conda create -n pip_$(ENV_NAME) python=3.9.21
+	conda create -n pip_$(ENV_NAME) python=3.10.12
 
 install-dev-dependencies:
 	@echo "$(OK_COLOR)=> installing dev environment requirements$(NO_COLOR)"

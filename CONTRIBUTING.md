@@ -43,7 +43,7 @@ Our recommended mechanism for building the code is to use a `conda` or `pipenv` 
 But it can be built with any Python virtualization environment.
 
 ### Spark dependencies
-The builds have been tested against Spark 3.3.0. This requires the OpenJDK 1.8.56 or later version of Java 8.
+The builds have been tested against Apache Spark 3.4.1. 
 The Databricks runtimes use the Azul Zulu version of OpenJDK 8 and we have used these in local testing.
 These are not installed automatically by the build process, so you will need to install them separately.
 
@@ -72,7 +72,7 @@ To build with `pipenv`, perform the following commands:
     - Run `make dist` from the main project directory
   - The resulting wheel file will be placed in the `dist` subdirectory
 
-The resulting build has been tested against Spark 3.3.0
+The resulting build has been tested against Spark 3.4.1
 
 ## Creating the HTML documentation
 
@@ -158,19 +158,19 @@ See https://legacy.python.org/dev/peps/pep-0008/
 
 # Github expectations
 When running the unit tests on Github, the environment should use the same environment as the latest Databricks
-runtime latest LTS release. While compatibility is preserved on LTS releases from Databricks runtime 11.3 onwards, 
+runtime latest LTS release. While compatibility is preserved on LTS releases from Databricks runtime 13.3 LTS onwards, 
 unit tests will be run on the environment corresponding to the latest LTS release. 
 
-Libraries will use the same versions as the earliest supported LTS release - currently 11.3 LTS
+Libraries will use the same versions as the earliest supported LTS release - currently 13.3 LTS
 
 This means for the current build:
 
-- Use of Ubuntu 22.04 for the test runner
+- Use of Ubuntu 22.04.2 LTS for the test runner
 - Use of Java 8
-- Use of Python 3.9.21 when testing / building the image
+- Use of Python 3.10.12 when testing / building the image
 
 See the following resources for more information
 = https://docs.databricks.com/en/release-notes/runtime/15.4lts.html
-- https://docs.databricks.com/en/release-notes/runtime/11.3lts.html
+- https://docs.databricks.com/aws/en/release-notes/runtime/13.3lts
 - https://github.com/actions/runner-images/issues/10636
 

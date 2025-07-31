@@ -9,7 +9,8 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 * Updated build scripts to use Ubuntu 22.04 to correspond to environment in Databricks runtime
 
 #### Changed
-* Changed base Databricks runtime version to DBR 11.3 LTS (based on Apache Spark 3.3.0)
+* Changed base Databricks runtime version to DBR 13.3 LTS (based on Apache Spark 3.4.1) - minimum supported version
+  of Python is now 3.12
 
 #### Added
 * Added support for serialization to/from JSON format
