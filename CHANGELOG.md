@@ -10,7 +10,7 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 
 #### Changed
 * Changed base Databricks runtime version to DBR 13.3 LTS (based on Apache Spark 3.4.1) - minimum supported version
-  of Python is now 3.12
+  of Python is now 3.10.12
 
 #### Added
 * Added support for serialization to/from JSON format
