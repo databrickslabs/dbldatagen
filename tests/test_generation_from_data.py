@@ -49,7 +49,6 @@ class TestGenerationFromData:
             .withColumn("short_value", "short", max=32767, percentNulls=0.1)
             .withColumn("byte_value", "tinyint", max=127)
             .withColumn("decimal_value", "decimal(10,2)", max=1000000)
-            .withColumn("decimal_value", "decimal(10,2)", max=1000000)
             .withColumn("date_value", "date", expr="current_date()", random=True)
             .withColumn("binary_value", "binary", expr="cast('spark' as binary)", random=True)
 

@@ -36,3 +36,15 @@ docs/source/reference/api/*.rst
 .coverage
 htmlcov/
 .coverage.xml
+
+# IDE-specific folders — prevent local/editor config files from polluting source control.
+# PyCharm
+#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
+#  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
+#  and can be added to the global gitignore or merged into this file.  For a more nuclear
+#  option (not recommended) you can uncomment the following to ignore the entire idea folder.
+.idea/
+# Cursor IDE
+# Cursor is an AI-powered code editor. The .cursor/ directory contains IDE-specific
+# settings and configurations similar to other IDEs.
+.cursor/
