@@ -29,6 +29,16 @@ package_long_description = """###Databricks Labs Spark Data Generator###
     benchmarking, environment validation and other purposes.
     """
 
+extras_require = {
+    'extension': [
+        'pydantic>=2.0.0',
+        "rapidfuzz>=3.13.0"  # Only pydantic as additional dependency
+    ],
+    'spec-generators': [
+        'databricks-sdk==0.62.0'
+    ]
+}
+
 setuptools.setup(
     name="dbldatagen",
     version="0.4.0post2",
@@ -45,7 +55,8 @@ setuptools.setup(
     packages=['dbldatagen',
               'dbldatagen.distributions',
               'dbldatagen.constraints',
-              'dbldatagen.datasets'
+              'dbldatagen.datasets',
+              'dbldatagen.extensions'
               ],
     license="Databricks License",
     classifiers=[
@@ -56,4 +67,5 @@ setuptools.setup(
         "Intended Audience :: System Administrators"
     ],
     python_requires='>=3.9.21',
+    extras_require=extras_require,
 )
