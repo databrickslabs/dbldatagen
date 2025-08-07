@@ -147,7 +147,7 @@ class TestStreaming():
         while elapsed_time < time_limit and rows_retrieved < self.rows_per_second:
             sq = (dfTestData
                   .writeStream
-                  .format("parquet")
+                  .format("csv")
                   .outputMode("append")
                   .option("path", test_dir)
                   .option("checkpointLocation", checkpoint_dir)
@@ -160,7 +160,7 @@ class TestStreaming():
             elapsed_time = time.time() - start_time
 
             try:
-                df2 = spark.read.format("parquet").load(test_dir)
+                df2 = spark.read.format("csv").load(test_dir)
                 rows_retrieved = df2.count()
 
             # ignore file or metadata not found issues arising from read before stream has written first batch
