@@ -53,7 +53,7 @@ jobs:
         with:
           cache: 'pip'
           cache-dependency-path: '**/pyproject.toml'
-          pyVersion: ${{ matrix.pyVersion }}
+          python-version: ${{ matrix.pyVersion }}
 
       - name: Install Hatch
         run: pip install hatch
