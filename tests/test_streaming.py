@@ -1,6 +1,7 @@
 import os
 import shutil
 import time
+import uuid
 import pytest
 
 from pyspark.sql.types import IntegerType, StringType, FloatType
@@ -18,8 +19,7 @@ class TestStreaming():
 
     @pytest.fixture
     def getStreamingDirs(self):
-        time_now = int(round(time.time() * 1000))
-        base_dir = f"/tmp/testdatagenerator_{time_now}"
+        base_dir = f"/tmp/testdatagenerator/{uuid.uuid4()}"
         print("test dir created")
         data_dir = os.path.join(base_dir, "data")
         checkpoint_dir = os.path.join(base_dir, "checkpoint")
@@ -70,7 +70,7 @@ class TestStreaming():
               .format("parquet")
               .outputMode("append")
               .option("path", test_dir)
-              .option("checkpointLocation", checkpoint_dir)
+              .option("checkpointLocation", f"{checkpoint_dir}/{uuid.uuid4()}")
               .start())
 
         # loop until we get one seconds worth of data
