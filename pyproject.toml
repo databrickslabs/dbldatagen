@@ -72,7 +72,6 @@ docs = [
 ]
 
 [tool.hatch.build]
-sources= ["dbldatagen"]
 include = ["dbldatagen"]
 
 [tool.hatch.version]
