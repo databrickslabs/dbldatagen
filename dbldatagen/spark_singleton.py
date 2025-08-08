@@ -9,8 +9,9 @@ This is primarily meant for situations where the test data generator is run on a
 for use cases like unit testing rather than in a Databricks workspace environment
 """
 
-import os
 import logging
+import os
+
 from pyspark.sql import SparkSession
 
 
@@ -18,8 +19,8 @@ class SparkSingleton:
     """A singleton class which returns one Spark session instance"""
 
     @classmethod
-    def getInstance(cls):
-        """Create a Spark instance for Datalib.
+    def getInstance(cls) -> SparkSession:
+        """Creates a `SparkSession` instance for Datalib.
 
         :returns: A Spark instance
         """
@@ -27,17 +28,20 @@ class SparkSingleton:
         return SparkSession.builder.getOrCreate()
 
     @classmethod
-    def getLocalInstance(cls, appName="new Spark session", useAllCores=True):
-        """Create a machine local Spark instance for Datalib.
+    def getLocalInstance(cls, appName: str = "new Spark session", useAllCores: bool = True) -> SparkSession:
+        """Creates a machine local `SparkSession` instance for Datalib.
         By default, it uses `n-1` cores  of the available cores for the spark session,
         where `n` is total cores available.
 
+        :param appName: Name to use for the local `SparkSession` instance
         :param useAllCores:  If `useAllCores` is True, then use all cores rather than `n-1` cores
-        :returns: A Spark instance
+        :returns: A `SparkSession` instance
         """
         cpu_count = os.cpu_count()
 
-        if useAllCores:
+        if not cpu_count:
+            spark_core_count = 1
+        elif useAllCores:
             spark_core_count = cpu_count
         else:
             spark_core_count = cpu_count - 1
