@@ -10,6 +10,7 @@ import math
 import random
 
 import logging
+from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 
@@ -63,7 +64,7 @@ _WORDS_UPPER = ['LOREM', 'IPSUM', 'DOLOR', 'SIT', 'AMET', 'CONSECTETUR', 'ADIPIS
                 'LABORUM']
 
 
-class TextGenerator(object):
+class TextGenerator(ABC):
     """ Base class for text generation classes
 
     """
@@ -162,6 +163,10 @@ class TextGenerator(object):
             assert type(defaultValue[0]) is int and type(defaultValue[1]) is int, "all elements must be integers"
 
         return defaultValue
+
+    @abstractmethod
+    def pandasGenerateText(self, v):
+        raise NotImplementedError("Subclasses should implement unique versions of `pandasGenerateText`")
 
 
 class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-equals]
