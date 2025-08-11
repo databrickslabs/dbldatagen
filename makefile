@@ -1,4 +1,4 @@
-.PHONY: install install-dev test test-cov lint fmt clean build docs help
+.PHONY: dev test coverage lint fmt clean build docs
 
 all: clean dev lint fmt test coverage
 

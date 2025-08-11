@@ -15,7 +15,7 @@ warrant that you have the legal authority to do so.
 
 ## Python Compatibility
 
-The code supports Python 3.9+ and has been tested with Python 3.9.21 and later.
+The code supports Python 3.10+ and has been tested with Python 3.10 and later.
 
 ## Quick Start
 
@@ -29,7 +29,7 @@ make lint                # Check code quality
 
 # Run tests
 make test                # Run tests
-make test-cov            # Run tests with coverage report
+make coverage            # Run tests with coverage report
 
 # Build package
 make build               # Build with modern build system
@@ -48,7 +48,7 @@ All dependencies are defined in `pyproject.toml`:
 
 ## Spark Dependencies
 
-The builds have been tested against Spark 3.3.0+. This requires OpenJDK 1.8.56 or later version of Java 8.
+The builds have been tested against Spark 3.4.1+. This requires OpenJDK 1.8.56 or later version of Java 8.
 The Databricks runtimes use the Azul Zulu version of OpenJDK 8.
 These are not installed automatically by the build process.
 

@@ -51,12 +51,12 @@ def _get_spark_version(sparkVersion: str) -> VersionInfo:
         match = r.match(sparkVersion)
 
         if not match:
-            raise AttributeError(f"Provided Spark version '{sparkVersion}' is invalid")
+            raise ValueError(f"Provided Spark version '{sparkVersion}' is invalid")
 
         major, minor, patch, release = match.groups()
         spark_version_info = VersionInfo(int(major), int(minor), int(patch), release, build="0")
 
-    except (RuntimeError, AttributeError):
+    except (RuntimeError, ValueError):
         spark_version_info = VersionInfo(major=3, minor=0, patch=1, release="unknown", build="0")
         logger = logging.getLogger(__name__)
         logger.warning("Could not parse spark version - using assumed Spark Version : %s", spark_version_info)
