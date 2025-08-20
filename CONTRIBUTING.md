@@ -29,7 +29,6 @@ make lint                # Check code quality
 
 # Run tests
 make test                # Run tests
-make coverage            # Run tests with coverage report
 
 # Build package
 make build               # Build with modern build system
@@ -88,10 +87,6 @@ The name used to flag the spark instance should be the test module or test class
 ```bash
 # Run all tests
 make test
-
-# Run tests with coverage report (generates htmlcov/index.html)
-make coverage
-```
 
 If using an environment with multiple Python versions, make sure to use virtual env or similar to pick up correct python versions.
 

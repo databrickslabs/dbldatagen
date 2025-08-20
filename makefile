@@ -1,6 +1,6 @@
-.PHONY: dev test coverage lint fmt clean build docs
+.PHONY: dev test lint fmt clean build docs
 
-all: clean dev lint fmt test coverage
+all: clean dev lint fmt test
 
 clean:
 	rm -fr .venv clean htmlcov .mypy_cache .pytest_cache .ruff_cache .coverage coverage.xml
@@ -21,9 +21,6 @@ fmt:
 
 test:
 	hatch run test
-
-coverage:
-	hatch run coverage
 
 build:
 	hatch build
