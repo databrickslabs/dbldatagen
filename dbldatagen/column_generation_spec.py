@@ -943,7 +943,7 @@ class ColumnGenerationSpec(SerializableToDict):
                 else:
                     return col(base_column[0])
             elif self._baseColumnComputeMethod == VALUES_COMPUTE_METHOD:
-                base_values = [f"string(ifnull(`{x}`, 'null'))" for x in base_column]
+                base_values = [f"string(ifnull(`{x}`, cast(null as string)))" for x in base_column]
                 return expr(f"array({','.join(base_values)})")
             else:
                 return expr(f"hash({','.join(base_column)})")

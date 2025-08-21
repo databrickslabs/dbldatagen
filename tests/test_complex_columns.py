@@ -523,11 +523,11 @@ class TestComplexColumns:
         df = df_spec.build()
 
         type1 = self.getFieldType(df.schema, "struct1")
-        expectedType = StructType([StructField('a', IntegerType()), StructField('b', IntegerType())])
+        expectedType = StructType([StructField('a', IntegerType(), True), StructField('b', IntegerType(), True)])
         assert type1 == expectedType
 
         type2 = self.getFieldType(df.schema, "struct2")
-        expectedType2 = StructType([StructField('a', DateType(), False), StructField('b', StringType())])
+        expectedType2 = StructType([StructField('a', DateType(), False), StructField('b', StringType(), False)])
         assert type2 == expectedType2
 
     def test_inferred_column_structs2(self, setupLogging):
@@ -551,13 +551,13 @@ class TestComplexColumns:
         df = df_spec.build()
 
         type1 = self.getFieldType(df.schema, "struct1")
-        assert type1 == StructType([StructField('a', IntegerType()), StructField('b', IntegerType())])
+        assert type1 == StructType([StructField('a', IntegerType(), True), StructField('b', IntegerType(), True)])
         type2 = self.getFieldType(df.schema, "struct2")
-        assert type2 == StructType([StructField('a', DateType(), False), StructField('b', StringType())])
+        assert type2 == StructType([StructField('a', DateType(), False), StructField('b', StringType(), False)])
         type3 = self.getFieldType(df.schema, "struct3")
         assert type3 == StructType(
-            [StructField('a', StructType([StructField('a', IntegerType()), StructField('b', IntegerType())]), False),
-             StructField('b', StructType([StructField('a', DateType(), False), StructField('b', StringType())]), False)]
+            [StructField('a', StructType([StructField('a', IntegerType(), True), StructField('b', IntegerType(), True)]), False),
+             StructField('b', StructType([StructField('a', DateType(), False), StructField('b', StringType(), False)]), False)]
         )
 
     def test_with_struct_column1(self, setupLogging):
@@ -580,9 +580,9 @@ class TestComplexColumns:
         df = df_spec.build()
 
         type1 = self.getFieldType(df.schema, "struct1")
-        assert type1 == StructType([StructField('a', IntegerType()), StructField('b', IntegerType())])
+        assert type1 == StructType([StructField('a', IntegerType(), True), StructField('b', IntegerType(), True)])
         type2 = self.getFieldType(df.schema, "struct2")
-        assert type2 == StructType([StructField('a', DateType(), False), StructField('b', StringType())])
+        assert type2 == StructType([StructField('a', DateType(), False), StructField('b', StringType(), False)])
 
     def test_with_struct_column2(self, setupLogging):
         column_count = 10
@@ -604,9 +604,9 @@ class TestComplexColumns:
         df = df_spec.build()
 
         type1 = self.getFieldType(df.schema, "struct1")
-        assert type1 == StructType([StructField('code1', IntegerType()), StructField('code2', IntegerType())])
+        assert type1 == StructType([StructField('code1', IntegerType(), True), StructField('code2', IntegerType(), True)])
         type2 = self.getFieldType(df.schema, "struct2")
-        assert type2 == StructType([StructField('code5', DateType(), False), StructField('code6', StringType())])
+        assert type2 == StructType([StructField('code5', DateType(), False), StructField('code6', StringType(), False)])
 
     def test_with_json_struct_column(self, setupLogging):
         column_count = 10
@@ -680,13 +680,13 @@ class TestComplexColumns:
         df = df_spec.build()
 
         type1 = self.getFieldType(df.schema, "struct1")
-        assert type1 == StructType([StructField('a', IntegerType()), StructField('b', IntegerType())])
+        assert type1 == StructType([StructField('a', IntegerType(), True), StructField('b', IntegerType(), True)])
         type2 = self.getFieldType(df.schema, "struct2")
-        assert type2 == StructType([StructField('a', DateType(), False), StructField('b', StringType())])
+        assert type2 == StructType([StructField('a', DateType(), False), StructField('b', StringType(), False)])
         type3 = self.getFieldType(df.schema, "struct3")
         assert type3 == StructType(
-            [StructField('a', StructType([StructField('a', IntegerType()), StructField('b', IntegerType())]), False),
-             StructField('b', StructType([StructField('a', DateType(), False), StructField('b', StringType())]),
+            [StructField('a', StructType([StructField('a', IntegerType(), True), StructField('b', IntegerType(), True)]), False),
+             StructField('b', StructType([StructField('a', DateType(), False), StructField('b', StringType(), False)]),
                          False)])
 
     def test_with_struct_column4(self, setupLogging):
@@ -711,13 +711,13 @@ class TestComplexColumns:
         df = df_spec.build()
 
         type1 = self.getFieldType(df.schema, "struct1")
-        assert type1 == StructType([StructField('a', IntegerType()), StructField('b', IntegerType())])
+        assert type1 == StructType([StructField('a', IntegerType(), True), StructField('b', IntegerType(), True)])
         type2 = self.getFieldType(df.schema, "struct2")
-        assert type2 == StructType([StructField('a', DateType(), False), StructField('b', StringType())])
+        assert type2 == StructType([StructField('a', DateType(), False), StructField('b', StringType(), False)])
         type3 = self.getFieldType(df.schema, "struct3")
         assert type3 == StructType(
-            [StructField('a', StructType([StructField('a', IntegerType()), StructField('b', IntegerType())]), False),
-             StructField('b', StructType([StructField('a', DateType(), False), StructField('b', StringType())]),
+            [StructField('a', StructType([StructField('a', IntegerType(), True), StructField('b', IntegerType(), True)]), False),
+             StructField('b', StructType([StructField('a', DateType(), False), StructField('b', StringType(), False)]),
                          False)])
 
     def test_with_struct_column_err1(self, setupLogging):

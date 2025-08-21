@@ -856,8 +856,8 @@ class ILText(TextGenerator, SerializableToDict):  # lgtm [py/missing-equals]
         # hardening a mask prevents masked values from being changed
         np.ma.harden_mask(masked_offsets)
         # Cast offsets to the same dtype as the array to avoid casting errors
-        capitals_offset = word_offset_type.type(self._startOfCapitalsOffset)
-        spaced_words_offset = word_offset_type.type(self._startOfSpacedWordsOffset)
+        capitals_offset = self._wordOffsetType.type(self._startOfCapitalsOffset)
+        spaced_words_offset = self._wordOffsetType.type(self._startOfSpacedWordsOffset)
         masked_offsets[:, :, :, 0] = masked_offsets[:, :, :, 0] + capitals_offset
         masked_offsets[:, :, :, 1:] = masked_offsets[:, :, :, 1:] + spaced_words_offset
         np.ma.soften_mask(masked_offsets)
@@ -869,7 +869,7 @@ class ILText(TextGenerator, SerializableToDict):  # lgtm [py/missing-equals]
         new_col = new_word_offsets[:, :, :, np.newaxis]
         terminated_word_offsets = np.ma.concatenate((masked_offsets, new_col), axis=3)
         new_column = terminated_word_offsets[:, :, :, -1]
-        sentence_end_offset = word_offset_type.type(self._sentenceEndOffset)
+        sentence_end_offset = self._wordOffsetType.type(self._sentenceEndOffset)
         new_column[~new_column.mask] = sentence_end_offset
 
         # reshape to paragraphs
@@ -887,7 +887,7 @@ class ILText(TextGenerator, SerializableToDict):  # lgtm [py/missing-equals]
             # set the paragraph end marker on all paragraphs except last
             # new_masked_elements = terminated_paragraph_offsets[:,:,-1]
             new_column = terminated_paragraph_offsets[:, :, -1]
-            paragraph_end_offset = word_offset_type.type(self._paragraphEnd)
+            paragraph_end_offset = self._wordOffsetType.type(self._paragraphEnd)
             new_column[~new_column.mask] = paragraph_end_offset
         else:
             terminated_paragraph_offsets = paragraph_offsets
@@ -897,7 +897,7 @@ class ILText(TextGenerator, SerializableToDict):  # lgtm [py/missing-equals]
         shape = terminated_paragraph_offsets.shape
         terminated_paragraph_offsets = terminated_paragraph_offsets.reshape((rowCount, shape[1] * shape[2]))
 
-        empty_string_offset = word_offset_type.type(self._emptyStringOffset)
+        empty_string_offset = self._wordOffsetType.type(self._emptyStringOffset)
         final_data = terminated_paragraph_offsets.filled(fill_value=empty_string_offset)
 
         # its faster to manipulate text in data frames as numpy strings are fixed length

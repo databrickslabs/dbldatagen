@@ -59,7 +59,7 @@ jobs:
         run: pip install hatch
 
       - name: Run unit tests
-        run: make test
+        run: make dev test
 
       - name: Publish test coverage to coverage site
         uses: codecov/codecov-action@v4

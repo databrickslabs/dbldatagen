@@ -60,14 +60,14 @@ class BasicStockTickerProvider(DatasetProvider.NoAssociatedDatasetsMixin, Datase
                         baseColumn="symbol_id", omit=True)
             .withColumn("symbol", "string",
                         expr="""concat_ws('', transform(split(conv(symbol_id, 10, 26), ''), 
-                            x -> case when x < 10 then char(ascii(x) - 48 + 65) else char(ascii(x) + 10) end))""")
-            .withColumn("days_from_start_date", "int", expr=f"floor(id / {numSymbols})", omit=True)
+                            x -> case when ascii(x) < 10 then char(ascii(x) - 48 + 65) else char(ascii(x) + 10) end))""")
+            .withColumn("days_from_start_date", "int", expr=f"floor(try_divide(id, {numSymbols}))", omit=True)
             .withColumn("post_date", "date", expr=f"date_add(cast('{startDate}' as date), days_from_start_date)")
             .withColumn("start_value", "decimal(11,2)",
-                        values=[1.0 + 199.0 * random() for _ in range(int(numSymbols / 10))], omit=True)
-            .withColumn("growth_rate", "float", values=[-0.1 + 0.35 * random() for _ in range(int(numSymbols / 10))],
+                        values=[1.0 + 199.0 * random() for _ in range(max(1, int(numSymbols / 10)))], omit=True)
+            .withColumn("growth_rate", "float", values=[-0.1 + 0.35 * random() for _ in range(max(1, int(numSymbols / 10)))],
                         baseColumn="symbol_id")
-            .withColumn("volatility", "float", values=[0.0075 * random() for _ in range(int(numSymbols / 10))],
+            .withColumn("volatility", "float", values=[0.0075 * random() for _ in range(max(1, int(numSymbols / 10)))],
                         baseColumn="symbol_id", omit=True)
             .withColumn("prev_modifier_sign", "float",
                         expr=f"case when sin((id - {numSymbols}) % 17) > 0 then -1.0 else 1.0 end""",
@@ -78,12 +78,12 @@ class BasicStockTickerProvider(DatasetProvider.NoAssociatedDatasetsMixin, Datase
             .withColumn("open_base", "decimal(11,2)",
                         expr=f"""start_value 
                             + (volatility * prev_modifier_sign * start_value * sin((id - {numSymbols}) % 17)) 
-                            + (growth_rate * start_value * (days_from_start_date - 1) / 365)""",
+                            + (growth_rate * start_value * try_divide(days_from_start_date - 1, 365))""",
                         omit=True)
             .withColumn("close_base", "decimal(11,2)",
                         expr="""start_value 
                             + (volatility * start_value * sin(id % 17)) 
-                            + (growth_rate * start_value * days_from_start_date / 365)""",
+                            + (growth_rate * start_value * try_divide(days_from_start_date, 365))""",
                         omit=True)
             .withColumn("high_base", "decimal(11,2)",
                         expr="greatest(open_base, close_base) + rand() * volatility * open_base",

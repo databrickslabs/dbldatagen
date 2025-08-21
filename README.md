@@ -168,8 +168,7 @@ runtimes.
 By design, installing `dbldatagen` does not install releases of dependent packages in order 
 to preserve the curated set of packages pre-installed in any Databricks runtime environment.
 
-When building on local environments, the build process uses the `Pipfile` and requirements files to determine 
-the package versions for releases and unit tests. 
+When building on local environments, run `make dev` to install required dependencies.
 
 ## Project Support
 Please note that all projects released under [`Databricks Labs`](https://www.databricks.com/learn/labs)
