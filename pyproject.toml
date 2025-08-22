@@ -29,7 +29,6 @@ classifiers = [
 ]
 dependencies = [
     "databricks-sdk~=0.57",
-    "py4j>=0.10.9"
 ]
 
 [project.urls]
