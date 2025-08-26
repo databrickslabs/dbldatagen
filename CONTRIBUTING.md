@@ -11,68 +11,45 @@ state this explicitly, by submitting any copyrighted material via pull request, 
 other means you agree to license the material under the project's Databricks license and 
 warrant that you have the legal authority to do so.
 
-# Building the code
+# Development Setup
 
-## Package Dependencies
-See the contents of the file `python/require.txt` to see the Python package dependencies. 
-Dependent packages are not installed automatically by the `dbldatagen` package.
+## Python Compatibility
 
-## Python compatibility
+The code supports Python 3.10+ and has been tested with Python 3.10 and later.
 
-The code has been tested with Python 3.9.21 and later.
+## Quick Start
 
-## Checking your code for common issues
+```bash
+# Install development dependencies
+make dev
 
-Run `make dev-lint` from the project root directory to run various code style checks. 
-These are based on the use of `prospector`, `pylint` and related tools.
+# Format and lint code
+make fmt                 # Format with ruff and fix issues
+make lint                # Check code quality
 
-## Setting up your build environment
-Run `make buildenv` from the root of the project directory to setup a `pipenv` based build environment.
+# Run tests
+make test                # Run tests
 
-Run `make create-dev-env` from the root of the project directory to 
-set up a conda based virtualized Python build environment in the project directory.
+# Build package
+make build               # Build with modern build system
+```
 
-You can use alternative build virtualization environments or simply install the requirements
-directly in your environment.
+## Development Tools
 
+All development tools are configured in `pyproject.toml`.
 
-## Build steps
+## Dependencies
 
-Our recommended mechanism for building the code is to use a `conda` or `pipenv` based development process. 
+All dependencies are defined in `pyproject.toml`:
 
-But it can be built with any Python virtualization environment.
+- `[project.dependencies]` lists dependencies necessary to run the `dbldatagen` library
+- `[tool.hatch.envs.default]` lists the default environment necessary to develop, test, and build the `dbldatagen` library
 
-### Spark dependencies
-The builds have been tested against Apache Spark 3.4.1. 
-The Databricks runtimes use the Azul Zulu version of OpenJDK 8 and we have used these in local testing.
-These are not installed automatically by the build process, so you will need to install them separately.
+## Spark Dependencies
 
-### Building with Conda
-To build with `conda`, perform the following commands:
-  - `make create-dev-env` from the main project directory to create your conda environment, if using
-  - activate the conda environment - e.g `conda activate dbl_testdatagenerator`
-  - install the necessary dependencies in your conda environment via `make install-dev-dependencies`
-  
-  - use the following to build and run the tests with a coverage report
-    - Run  `make dev-test-with-html-report` from the main project directory.
-
-  - Use the following command to make the distributable:
-    - Run `make dev-dist` from the main project directory
-  - The resulting wheel file will be placed in the `dist` subdirectory
-  
-### Building with Pipenv
-To build with `pipenv`, perform the following commands:
-  - `make buildenv` from the main project directory to create your conda environment, if using
-  - install the necessary dependencies in your conda environment via `make install-dev-dependencies`
-  
-  - use the following to build and run the tests with a coverage report
-    - Run  `make test-with-html-report` from the main project directory.
-
-  - Use the following command to make the distributable:
-    - Run `make dist` from the main project directory
-  - The resulting wheel file will be placed in the `dist` subdirectory
-
-The resulting build has been tested against Spark 3.4.1
+The builds have been tested against Spark 3.4.1+. This requires OpenJDK 1.8.56 or later version of Java 8.
+The Databricks runtimes use the Azul Zulu version of OpenJDK 8.
+These are not installed automatically by the build process.
 
 ## Creating the HTML documentation
 
@@ -82,7 +59,10 @@ The main html document will be in the file (relative to the root of the build di
  `./docs/docs/build/html/index.html`
 
 ## Building the Python wheel
-Run  `make clean dist` from the main project directory.
+
+```bash
+make build               # Clean and build the package
+```
 
 # Testing 
 
@@ -102,22 +82,15 @@ spark = dg.SparkSingleton.getLocalInstance("<name to flag spark instance>")
 
 The name used to flag the spark instance should be the test module or test class name. 
 
-## Running unit / integration tests
+## Running Tests
 
-If using an environment with multiple Python versions, make sure to use virtual env or 
-similar to pick up correct python versions. The make target `create`
+```bash
+# Run all tests
+make test
+
+If using an environment with multiple Python versions, make sure to use virtual env or similar to pick up correct python versions.
 
 If necessary, set `PYSPARK_PYTHON` and `PYSPARK_DRIVER_PYTHON` to point to correct versions of Python.
-
-To run the tests using a `conda` environment:
-  - Run `make dev-test` from the main project directory to run the unit tests.
-
-  - Run `make dev-test-with-html-report` to generate test coverage report in `htmlcov/inxdex.html`
-
-To run the tests using a `pipenv` environment:
-  - Run `make test` from the main project directory to run the unit tests.
-
-  - Run `make test-with-html-report` to generate test coverage report in `htmlcov/inxdex.html`
 
 # Using the Databricks Labs data generator
 The recommended method for installation is to install from the PyPi package
@@ -147,30 +120,44 @@ For example, the following code downloads the release V0.2.1
 
 > '%pip install https://github.com/databrickslabs/dbldatagen/releases/download/v021/dbldatagen-0.2.1-py3-none-any.whl'
 
-# Coding Style 
+# Code Quality and Style
 
-The code follows the Pyspark coding conventions. 
+## Automated Formatting
 
-Basically it follows the Python PEP8 coding conventions - but method and argument names used mixed case starting 
-with a lower case letter rather than underscores following Pyspark coding conventions.
+Code can be automatically formatted and linted with the following commands:
 
-See https://legacy.python.org/dev/peps/pep-0008/
+```bash
+# Format code and fix issues automatically
+make fmt
+
+# Check code quality without making changes
+make lint
+```
+
+## Coding Conventions
+
+The code follows PySpark coding conventions:
+- Python PEP8 standards with some PySpark-specific adaptations
+- Method and argument names use mixed case starting with lowercase (following PySpark conventions)
+- Line length limit of 120 characters
+
+See the [Python PEP8 Guide](https://peps.python.org/pep-0008/) for general Python style guidelines.
 
 # Github expectations
-When running the unit tests on Github, the environment should use the same environment as the latest Databricks
-runtime latest LTS release. While compatibility is preserved on LTS releases from Databricks runtime 13.3 LTS onwards, 
+When running the unit tests on GitHub, the environment should use the same environment as the latest Databricks
+runtime latest LTS release. While compatibility is preserved on LTS releases from Databricks runtime 13.3 onwards, 
 unit tests will be run on the environment corresponding to the latest LTS release. 
 
 Libraries will use the same versions as the earliest supported LTS release - currently 13.3 LTS
 
 This means for the current build:
 
-- Use of Ubuntu 22.04.2 LTS for the test runner
+- Use of Ubuntu 22.04 for the test runner
 - Use of Java 8
 - Use of Python 3.10.12 when testing / building the image
 
 See the following resources for more information
 = https://docs.databricks.com/en/release-notes/runtime/15.4lts.html
-- https://docs.databricks.com/aws/en/release-notes/runtime/13.3lts
+- https://docs.databricks.com/en/release-notes/runtime/11.3lts.html
 - https://github.com/actions/runner-images/issues/10636
 

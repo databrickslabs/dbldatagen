@@ -24,10 +24,28 @@ class TestSimulatedServerless:
 
         oldSetMethod = sparkSession.conf.set
         oldGetMethod = sparkSession.conf.get
-        sparkSession.conf.set = MagicMock(
-            side_effect=ValueError("Setting value prohibited in simulated serverless env."))
-        sparkSession.conf.get = MagicMock(
-            side_effect=ValueError("Getting value prohibited in simulated serverless env."))
+        def mock_conf_set(*args, **kwargs):
+            raise ValueError("Setting value prohibited in simulated serverless env.")
+        
+        def mock_conf_get(config_key, default=None):
+            # Allow internal PySpark configuration calls that are needed for basic operation
+            whitelisted_configs = {
+                'spark.sql.stackTracesInDataFrameContext': '1',
+                'spark.sql.execution.arrow.enabled': 'false',
+                'spark.sql.execution.arrow.pyspark.enabled': 'false',
+                'spark.python.sql.dataFrameDebugging.enabled': 'true',
+                'spark.sql.execution.arrow.maxRecordsPerBatch': '10000'
+            }
+            if config_key in whitelisted_configs:
+                try:
+                    return oldGetMethod(config_key, whitelisted_configs[config_key])
+                except:
+                    return whitelisted_configs[config_key]
+            else:
+                raise ValueError("Getting value prohibited in simulated serverless env.")
+        
+        sparkSession.conf.set = MagicMock(side_effect=mock_conf_set)
+        sparkSession.conf.get = MagicMock(side_effect=mock_conf_get)
 
         yield sparkSession
 
@@ -59,7 +77,7 @@ class TestSimulatedServerless:
             )
         )
 
-        dfTestData = testDataSpec.build()
+        testDataSpec.build()
 
     @pytest.mark.parametrize("providerName, providerOptions", [
         ("basic/user", {"rows": 50, "partitions": 4, "random": False, "dummyValues": 0}),

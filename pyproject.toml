@@ -1,0 +1,442 @@
+[build-system]
+requires = ["hatchling", "hatch-fancy-pypi-readme"]
+build-backend = "hatchling.build"
+
+[project]
+name = "dbldatagen"
+dynamic = ["version"]
+description = "Databricks Labs - PySpark Synthetic Data Generator"
+authors = [
+    {name = "Databricks Labs", email = "labs-oss@databricks.com"},
+    {name = "Ronan Stokes", email = "ronan.stokes@databricks.com"},
+    {name = "Greg Hansen", email = "gregory.hansen@databricks.com"},
+]
+readme = "README.md"
+license = {text = "Databricks License"}
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: Other/Proprietary License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "databricks-sdk~=0.57",
+]
+
+[project.urls]
+Issues = "https://github.com/databrickslabs/dbldatagen/issues"
+Changelog = "https://github.com/databrickslabs/dbldatagen/blob/main/CHANGELOG.md"
+Documentation = "https://databrickslabs.github.io/dbldatagen/public_docs/index.html"
+Homepage = "https://github.com/databrickslabs/dbldatagen"
+Repository = "https://github.com/databrickslabs/dbldatagen.git"
+
+[project.optional-dependencies]
+docs = [
+    "sphinx>=7.0.0",
+    "sphinx-rtd-theme",
+    "nbsphinx",
+    "numpydoc>=0.8",
+    "pypandoc",
+    "ipython>=7.32.0",
+    "recommonmark",
+    "sphinx-markdown-builder",
+    "Jinja2<3.1",
+    "sphinx-copybutton",
+]
+
+[tool.hatch.build]
+include = ["dbldatagen"]
+
+[tool.hatch.version]
+path = "dbldatagen/_version.py"
+pattern = "__version__ = \"(?P<version>[^\"]+)\""
+
+[tool.hatch.build.targets.wheel]
+packages = ["dbldatagen"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/dbldatagen",
+    "/tests", 
+    "/examples",
+    "/tutorial",
+    "/docs",
+    "/README.md",
+    "/LICENSE",
+    "/NOTICE",
+    "/CHANGELOG.md",
+    "/CONTRIBUTING.md",
+    "/MANIFEST.in",
+]
+
+[tool.hatch.envs.default]
+dependencies = [
+    "chispa~=0.10.1",
+    "coverage[toml]~=7.4.4",
+    "mypy~=1.9.0",
+    "pylint~=3.3.1",
+    "pylint-pytest==2.0.0a0",
+    "pytest~=8.3.3",
+    "pytest-cov~=4.1.0",
+    "pytest-mock~=3.14.0",
+    "pytest-timeout~=2.3.1",
+    "pytest-xdist~=3.5.0",
+    "ruff~=0.3.4",
+    "types-PyYAML~=6.0.12",
+    "types-requests~=2.31.0",
+    "databricks-sdk~=0.57",
+    "numpy>=1.21.5",
+    "pandas>=1.4.4",
+    "pyarrow>=8.0.0",
+    "pyspark[sql]>=3.4.1",
+    "python-dateutil>=2.8.2",
+    "six>=1.16.0",
+    "pyparsing>=3.0.9",
+    "jmespath>=0.10.0",
+    "py4j>=0.10.9",
+    "pickleshare>=0.7.5",
+]
+
+python="3.10"
+
+# store virtual env as the child of this folder. Helps VSCode (and PyCharm) to run better
+path = ".venv"
+
+[tool.hatch.envs.default.scripts]
+test    = "pytest tests/ -n 10 --cov --cov-report=html --timeout 600 --durations 20"
+fmt         = ["ruff check . --fix",
+               "mypy .",
+               "pylint --output-format=colorized -j 0 dbldatagen tests"]
+verify      = ["ruff check .",
+               "mypy .",
+               "pylint --output-format=colorized -j 0 dbldatagen tests"]
+
+# Ruff configuration - replaces flake8, isort, pydocstyle, etc.
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".venv",
+    ".env",
+    "htmlcov",
+    ".pytest_cache",
+    ".mypy_cache",
+    "docs/build",
+    "tutorial",
+    "examples",
+    "tests",
+    "dbldatagen/constraints",
+    "dbldatagen/datasets",
+    "dbldatagen/distributions",
+    "dbldatagen/__init__.py",
+    "dbldatagen/column_generation_spec.py",
+    "dbldatagen/column_spec_options.py",
+    "dbldatagen/data_analyzer.py",
+    "dbldatagen/data_generator.py",
+    "dbldatagen/datagen_constants.py",
+    "dbldatagen/datarange.py",
+    "dbldatagen/datasets_object.py",
+    "dbldatagen/daterange.py",
+    "dbldatagen/function_builder.py",
+    "dbldatagen/html_utils.py",
+    "dbldatagen/nrange.py",
+    "dbldatagen/schema_parser.py",
+    "dbldatagen/serialization.py",
+    "dbldatagen/text_generator_plugins.py",
+    "dbldatagen/text_generators.py",
+    "dbldatagen/utils.py"
+]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+    "SIM",    # flake8-simplify
+    "TID",    # flake8-tidy-imports
+    "Q",      # flake8-quotes
+    "PL",     # pylint
+    "RUF",    # ruff-specific rules
+]
+ignore = [
+    "E501",   # Line too long (let ruff formatter handle this)
+    "B008",   # Do not perform function calls in argument defaults
+    "B006",   # Do not use mutable data structures for argument defaults
+    "C901",   # Too complex (let pylint handle complexity)
+    "PLC0414", # Import alias does not rename original package
+    "PLR0912", # Too many branches
+    "PLR0913", # Too many arguments in function definition
+    "PLR0915", # Too many statements
+    "PLR2004", # Magic value used in comparison
+    "PLW2901", # for loop variable overwritten by assignment target
+    "SIM102", # Use a single if-statement
+    "SIM108", # Use ternary operator
+    "UP007",  # Use X | Y for type annotations (keep Union for compatibility)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["PLR2004", "S101", "TID252"]
+"examples/*" = ["ALL"]
+"tutorial/*" = ["ALL"]
+"docs/*" = ["ALL"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["dbldatagen"]
+force-single-line = false
+lines-after-imports = 2
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+
+# Pylint configuration
+[tool.pylint.MASTER]
+ignore = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".venv",
+    ".env",
+    "htmlcov",
+    ".pytest_cache",
+    ".mypy_cache",
+    "docs/build",
+    "tutorial",
+    "examples",
+    "tests",
+    "dbldatagen/constraints",
+    "dbldatagen/datasets",
+    "dbldatagen/distributions",
+    "dbldatagen/__init__.py",
+    "dbldatagen/column_generation_spec.py",
+    "dbldatagen/column_spec_options.py",
+    "dbldatagen/data_analyzer.py",
+    "dbldatagen/data_generator.py",
+    "dbldatagen/datagen_constants.py",
+    "dbldatagen/datarange.py",
+    "dbldatagen/datasets_object.py",
+    "dbldatagen/daterange.py",
+    "dbldatagen/function_builder.py",
+    "dbldatagen/html_utils.py",
+    "dbldatagen/nrange.py",
+    "dbldatagen/schema_parser.py",
+    "dbldatagen/serialization.py",
+    "dbldatagen/text_generator_plugins.py",
+    "dbldatagen/text_generators.py",
+    "dbldatagen/utils.py"
+]
+
+[tool.pylint.main]
+py-version = "3.10"
+suggestion-mode = true
+fail-under = 8.0
+ignore-paths = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".venv",
+    ".env",
+    "htmlcov",
+    ".pytest_cache",
+    ".mypy_cache",
+    "docs/build",
+    "tutorial",
+    "examples",
+    "tests",
+    "dbldatagen/constraints",
+    "dbldatagen/datasets",
+    "dbldatagen/distributions",
+    "dbldatagen/__init__.py",
+    "dbldatagen/column_generation_spec.py",
+    "dbldatagen/column_spec_options.py",
+    "dbldatagen/data_analyzer.py",
+    "dbldatagen/data_generator.py",
+    "dbldatagen/datagen_constants.py",
+    "dbldatagen/datarange.py",
+    "dbldatagen/datasets_object.py",
+    "dbldatagen/daterange.py",
+    "dbldatagen/function_builder.py",
+    "dbldatagen/html_utils.py",
+    "dbldatagen/nrange.py",
+    "dbldatagen/schema_parser.py",
+    "dbldatagen/serialization.py",
+    "dbldatagen/text_generator_plugins.py",
+    "dbldatagen/text_generators.py",
+    "dbldatagen/utils.py"
+]
+
+[tool.pylint.messages_control]
+max-line-length = 120
+disable = [
+    "too-many-instance-attributes",
+    "invalid-name",
+    "no-else-return",
+    "protected-access",
+    "too-many-arguments",
+    "too-many-locals",
+    "inconsistent-return-statements",
+    "import-outside-toplevel",
+    "consider-using-set-comprehension",
+    "useless-object-inheritance",
+    "unnecessary-pass",
+    "unidiomatic-typecheck",
+    "too-many-lines",
+    "too-many-statements",
+    "unused-argument",
+    "unused-import",
+    "too-many-branches",
+    "unnecessary-lambda",
+    "unused-variable",
+    "logging-fstring-interpolation",
+    "unnecessary-lambda-assignment",
+    "redefined-outer-name",
+    "duplicate-code",
+    "consider-using-f-string",
+    "too-few-public-methods",
+    "line-too-long", # handled by ruff
+]
+
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.pylint.design]
+max-args = 10
+max-locals = 20
+max-branches = 15
+max-statements = 60
+
+# Pytest configuration
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+    "--cov=dbldatagen",
+    "--cov-report=term-missing:skip-covered",
+    "--cov-report=xml",
+    "--cov-report=html",
+    "--cov-fail-under=80",
+    "-p", "no:warnings",
+]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "[pytest][%(asctime)s][%(levelname)s][%(module)s][%(funcName)s] %(message)s"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+filterwarnings = [
+    "error",
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning",
+]
+cache_dir = ".venv/pytest-cache"
+
+# Coverage configuration
+[tool.coverage.run]
+source = ["dbldatagen"]
+branch = true
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/examples/*",
+    "*/tutorial/*",
+    "*/docs/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+show_missing = true
+skip_covered = true
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+# MyPy configuration
+[tool.mypy]
+python_version = "3.10"
+exclude = [
+    "venv",
+    ".venv",
+    "build",
+    "docs",
+    "examples",
+    "tests",
+    "tutorial",
+    "tests",
+    "dbldatagen/constraints",
+    "dbldatagen/datasets", 
+    "dbldatagen/distributions",
+    "dbldatagen/__init__.py",
+    "dbldatagen/column_generation_spec.py",
+    "dbldatagen/column_spec_options.py",
+    "dbldatagen/data_analyzer.py",
+    "dbldatagen/data_generator.py",
+    "dbldatagen/datagen_constants.py",
+    "dbldatagen/datarange.py",
+    "dbldatagen/datasets_object.py",
+    "dbldatagen/daterange.py",
+    "dbldatagen/function_builder.py",
+    "dbldatagen/html_utils.py",
+    "dbldatagen/nrange.py",
+    "dbldatagen/schema_parser.py",
+    "dbldatagen/serialization.py",
+    "dbldatagen/text_generator_plugins.py",
+    "dbldatagen/text_generators.py",
+    "dbldatagen/utils.py"
+]
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+disallow_untyped_decorators = false
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "pyspark.*",
+    "pyarrow.*",
+    "pandas.*",
+    "numpy.*",
+]
+ignore_missing_imports = true

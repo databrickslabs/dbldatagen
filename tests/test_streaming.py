@@ -1,6 +1,7 @@
 import os
 import shutil
 import time
+import uuid
 import pytest
 
 from pyspark.sql.types import IntegerType, StringType, FloatType
@@ -18,8 +19,7 @@ class TestStreaming():
 
     @pytest.fixture
     def getStreamingDirs(self):
-        time_now = int(round(time.time() * 1000))
-        base_dir = f"/tmp/testdatagenerator_{time_now}"
+        base_dir = f"/tmp/testdatagenerator/{uuid.uuid4()}"
         print("test dir created")
         data_dir = os.path.join(base_dir, "data")
         checkpoint_dir = os.path.join(base_dir, "checkpoint")
@@ -67,10 +67,10 @@ class TestStreaming():
 
         sq = (dfTestData
               .writeStream
-              .format("parquet")
+              .format("csv")
               .outputMode("append")
               .option("path", test_dir)
-              .option("checkpointLocation", checkpoint_dir)
+              .option("checkpointLocation", f"{checkpoint_dir}/{uuid.uuid4()}")
               .start())
 
         # loop until we get one seconds worth of data
@@ -85,7 +85,7 @@ class TestStreaming():
             elapsed_time = time.time() - start_time
 
             try:
-                df2 = spark.read.format("parquet").load(test_dir)
+                df2 = spark.read.format("csv").load(test_dir)
                 rows_retrieved = df2.count()
 
             # ignore file or metadata not found issues arising from read before stream has written first batch
@@ -147,7 +147,7 @@ class TestStreaming():
         while elapsed_time < time_limit and rows_retrieved < self.rows_per_second:
             sq = (dfTestData
                   .writeStream
-                  .format("parquet")
+                  .format("csv")
                   .outputMode("append")
                   .option("path", test_dir)
                   .option("checkpointLocation", checkpoint_dir)
@@ -160,7 +160,7 @@ class TestStreaming():
             elapsed_time = time.time() - start_time
 
             try:
-                df2 = spark.read.format("parquet").load(test_dir)
+                df2 = spark.read.format("csv").load(test_dir)
                 rows_retrieved = df2.count()
 
             # ignore file or metadata not found issues arising from read before stream has written first batch

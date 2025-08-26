@@ -226,13 +226,13 @@ class DataAnalyzer:
         # string characteristics for strings and string representation of other values
         dfDataSummary = self._addMeasureToSummary(
             'print_len_min',
-            fieldExprs=[f"min(length(string({dtype[0]}))) as {dtype[0]}" for dtype in dtypes],
+            fieldExprs=[f"string(min(length(string({dtype[0]})))) as {dtype[0]}" for dtype in dtypes],
             dfData=self._df,
             dfSummary=dfDataSummary)
 
         dfDataSummary = self._addMeasureToSummary(
             'print_len_max',
-            fieldExprs=[f"max(length(string({dtype[0]}))) as {dtype[0]}" for dtype in dtypes],
+            fieldExprs=[f"string(max(length(string({dtype[0]})))) as {dtype[0]}" for dtype in dtypes],
             dfData=self._df,
             dfSummary=dfDataSummary)
 
