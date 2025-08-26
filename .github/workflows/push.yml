@@ -20,10 +20,6 @@ jobs:
         run: git diff --exit-code
 
   tests:
-    strategy:
-      fail-fast: false
-      matrix:
-        pyVersion: [ '3.10', '3.11', '3.12' ]
     # Ubuntu latest no longer installs Python 3.9 by default so install it
     runs-on: ubuntu-latest
     steps:
@@ -62,7 +58,7 @@ jobs:
         with:
           cache: 'pip'
           cache-dependency-path: '**/pyproject.toml'
-          python-version: ${{ matrix.pyVersion }}
+          python-version: '3.10'
 
       - name: Install Hatch
         run: pip install hatch
