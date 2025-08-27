@@ -9,7 +9,7 @@ pyspark==3.4.1
 python-dateutil==2.8.2
 six==1.16.0
 pyparsing==3.0.9
-jmespath==0.10.0
+jmespath==1.0.1
 
 # The following packages are required for development only
 wheel==0.37.1
