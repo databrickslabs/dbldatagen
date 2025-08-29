@@ -48,7 +48,7 @@ docs = [
     "ipython>=7.32.0",
     "recommonmark",
     "sphinx-markdown-builder",
-    "Jinja2<3.1",
+    "Jinja2<3.2",
     "sphinx-copybutton",
 ]
 
