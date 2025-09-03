@@ -27,3 +27,6 @@ build:
 
 docs:
 	cd docs && make docs
+
+docs-serve:
+	cd docs && make docs && open build/html/index.html
