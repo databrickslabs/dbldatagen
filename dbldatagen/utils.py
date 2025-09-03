@@ -32,7 +32,7 @@ def deprecated(message=""):
         def deprecated_func(*args, **kwargs):
             warnings.warn(f"`{func.__name__}` is a deprecated function or method. \n{message}",
                           category=DeprecationWarning, stacklevel=1)
-            warnings.simplefilter('default', DeprecationWarning)
+            warnings.simplefilter("default", DeprecationWarning)
             return func(*args, **kwargs)
 
         return deprecated_func
@@ -83,7 +83,7 @@ def ensure(cond, msg="condition does not hold true"):
     """
 
     def strip_margin(text):
-        return re.sub(r'\n[ \t]*\|', '\n', text)
+        return re.sub(r"\n[ \t]*\|", "\n", text)
 
     if not cond:
         raise DataGenError(strip_margin(msg))
@@ -97,9 +97,9 @@ def mkBoundsList(x, default):
         :returns: list of form [x,y]
     """
     if x is None:
-        retval = (True, [default, default]) if type(default) is int else (True, list(default))
+        retval = (True, [default, default]) if isinstance(default, int) else (True, list(default))
         return retval
-    elif type(x) is int:
+    elif isinstance(x, int):
         bounds_list = [x, x]
         assert len(bounds_list) == 2, "bounds list must be of length 2"
         return False, bounds_list
@@ -241,28 +241,24 @@ def parse_time_interval(spec):
 def strip_margins(s, marginChar):
     """
     Python equivalent of Scala stripMargins method
-    
     Takes a string (potentially multiline) and strips all chars up and including the first occurrence of `marginChar`.
     Used to control the formatting of generated text
-
     `strip_margins("one\n    |two\n    |three", '|')`
-
-    will produce 
-    
+    will produce
     ``
-    one 
+    one
     two
     three
     ``
 
     :param s: string to strip margins from
-    :param marginChar: character to strip 
+    :param marginChar: character to strip
     :return: modified string
     """
-    assert s is not None and type(s) is str
-    assert marginChar is not None and type(marginChar) is str
+    assert s is not None and isinstance(s, str)
+    assert marginChar is not None and isinstance(marginChar, str)
 
-    lines = s.split('\n')
+    lines = s.split("\n")
     revised_lines = []
 
     for line in lines:
@@ -272,7 +268,7 @@ def strip_margins(s, marginChar):
         else:
             revised_lines.append(line)
 
-    return '\n'.join(revised_lines)
+    return "\n".join(revised_lines)
 
 
 def split_list_matching_condition(lst, cond):
