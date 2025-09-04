@@ -13,12 +13,14 @@ import json
 import re
 import time
 import warnings
+from collections.abc import Callable
 from datetime import timedelta
+from typing import Any, Optional, Union
 
 import jmespath
 
 
-def deprecated(message=""):
+def deprecated(message: str = "") -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """
     Define a deprecated decorator without dependencies on 3rd party libraries
 
@@ -27,9 +29,9 @@ def deprecated(message=""):
     """
 
     # create closure around function that follows use of the decorator
-    def deprecated_decorator(func):
+    def deprecated_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @functools.wraps(func)
-        def deprecated_func(*args, **kwargs):
+        def deprecated_func(*args: object, **kwargs: object) -> object:
             warnings.warn(f"`{func.__name__}` is a deprecated function or method. \n{message}",
                           category=DeprecationWarning, stacklevel=1)
             warnings.simplefilter("default", DeprecationWarning)
@@ -47,21 +49,21 @@ class DataGenError(Exception):
         :param baseException: underlying exception, if any that caused the issue
     """
 
-    def __init__(self, msg, baseException=None):
+    def __init__(self: "DataGenError", msg: str, baseException: Optional[Exception] = None) -> None:
         """ constructor
         """
         super().__init__(msg)
-        self._underlyingException = baseException
-        self._msg = msg
+        self._underlyingException: Optional[Exception] = baseException
+        self._msg: str = msg
 
-    def __repr__(self):
+    def __repr__(self: "DataGenError") -> str:
         return f"DataGenError(msg='{self._msg}', baseException={self._underlyingException})"
 
-    def __str__(self):
+    def __str__(self: "DataGenError") -> str:
         return f"DataGenError(msg='{self._msg}', baseException={self._underlyingException})"
 
 
-def coalesce_values(*args):
+def coalesce_values(*args: object) -> Optional[object]:
     """For a supplied list of arguments, returns the first argument that does not have the value `None`
 
     :param args: variable list of arguments which are evaluated
@@ -73,7 +75,7 @@ def coalesce_values(*args):
     return None
 
 
-def ensure(cond, msg="condition does not hold true"):
+def ensure(cond: bool, msg: str = "condition does not hold true") -> None:
     """ensure(cond, s) => throws Exception(s) if c is not true
 
     :param cond: condition to test
@@ -82,14 +84,14 @@ def ensure(cond, msg="condition does not hold true"):
     :returns: Does not return anything but raises exception if condition does not hold
     """
 
-    def strip_margin(text):
+    def strip_margin(text: str) -> str:
         return re.sub(r"\n[ \t]*\|", "\n", text)
 
     if not cond:
         raise DataGenError(strip_margin(msg))
 
 
-def mkBoundsList(x, default):
+def mkBoundsList(x: Optional[Union[int, list[int]]], default: Union[int, list[int]]) -> tuple[bool, list[int]]:
     """ make a bounds list from supplied parameter - otherwise use default
 
         :param x: integer or list of 2 values that define bounds list
@@ -100,16 +102,20 @@ def mkBoundsList(x, default):
         retval = (True, [default, default]) if isinstance(default, int) else (True, list(default))
         return retval
     elif isinstance(x, int):
-        bounds_list = [x, x]
+        bounds_list: list[int] = [x, x]
         assert len(bounds_list) == 2, "bounds list must be of length 2"
         return False, bounds_list
     else:
-        bounds_list = list(x)
+        bounds_list: list[int] = list(x)
         assert len(bounds_list) == 2, "bounds list must be of length 2"
         return False, bounds_list
 
 
-def topologicalSort(sources, initial_columns=None, flatten=True):
+def topologicalSort(
+    sources: list[tuple[str, set[str]]],
+    initial_columns: Optional[list[str]] = None,
+    flatten: bool = True
+) -> Union[list[str], list[list[str]]]:
     """ Perform a topological sort over sources
 
     Used to compute the column test data generation order of the column generation dependencies.
@@ -129,16 +135,16 @@ def topologicalSort(sources, initial_columns=None, flatten=True):
        Overall the effect is that the input build order should be retained unless there are forward references
     """
     # generate a copy so that we can modify in place
-    pending = [(name, set(deps)) for name, deps in sources]
-    provided = [] if initial_columns is None else initial_columns[:]
-    build_orders = [] if initial_columns is None else [initial_columns]
+    pending: list[tuple[str, set[str]]] = [(name, set(deps)) for name, deps in sources]
+    provided: list[str] = [] if initial_columns is None else initial_columns[:]
+    build_orders: list[list[str]] = [] if initial_columns is None else [initial_columns]
 
     while pending:
-        next_pending = []
-        gen = []
-        value_emitted = False
-        defer_emitted = False
-        gen_provided = []
+        next_pending: list[tuple[str, set[str]]] = []
+        gen: list[str] = []
+        value_emitted: bool = False
+        defer_emitted: bool = False
+        gen_provided: list[str] = []
         for entry in pending:
             name, deps = entry
             deps.difference_update(provided)
@@ -165,7 +171,7 @@ def topologicalSort(sources, initial_columns=None, flatten=True):
         pending = next_pending
 
     if flatten:
-        flattened_list = [item for sublist in build_orders for item in sublist]
+        flattened_list: list[str] = [item for sublist in build_orders for item in sublist]
         return flattened_list
     else:
         return build_orders
@@ -176,31 +182,31 @@ PATTERN_VALUE_SPACE_NAME = re.compile(r"([0-9]+)\s+(\w+)")
 _WEEKS_PER_YEAR = 52
 
 
-def parse_time_interval(spec):
+def parse_time_interval(spec: str) -> timedelta:
     """parse time interval from string"""
-    hours = 0
-    minutes = 0
-    weeks = 0
-    microseconds = 0
-    milliseconds = 0
-    seconds = 0
-    years = 0
-    days = 0
+    hours: int = 0
+    minutes: int = 0
+    weeks: int = 0
+    microseconds: int = 0
+    milliseconds: int = 0
+    seconds: int = 0
+    years: int = 0
+    days: int = 0
 
     assert spec is not None, "Must have valid time interval specification"
 
     # get time specs such as 12 days, etc. Supported timespans are years, days, hours, minutes, seconds
-    timespecs = [x.strip() for x in spec.strip().split(",")]
+    timespecs: list[str] = [x.strip() for x in spec.strip().split(",")]
 
     for ts in timespecs:
         # allow both 'days=1' and '1 day' syntax
-        timespec_parts = re.findall(PATTERN_NAME_EQUALS_VALUE, ts)
+        timespec_parts: list[tuple[str, str]] = re.findall(PATTERN_NAME_EQUALS_VALUE, ts)
         # findall returns list of tuples
         if timespec_parts is not None and len(timespec_parts) > 0:
-            num_parts = len(timespec_parts[0])
+            num_parts: int = len(timespec_parts[0])
             assert num_parts >= 1, "must have numeric specification and time element such as `12 hours` or `hours=12`"
-            time_value = int(timespec_parts[0][num_parts - 1])
-            time_type = timespec_parts[0][0].lower()
+            time_value: int = int(timespec_parts[0][num_parts - 1])
+            time_type: str = timespec_parts[0][0].lower()
         else:
             timespec_parts = re.findall(PATTERN_VALUE_SPACE_NAME, ts)
             num_parts = len(timespec_parts[0])
@@ -225,7 +231,7 @@ def parse_time_interval(spec):
         elif time_type in ["milliseconds", "millisecond"]:
             milliseconds = time_value
 
-    delta = timedelta(
+    delta: timedelta = timedelta(
         days=days,
         seconds=seconds,
         microseconds=microseconds,
@@ -238,7 +244,7 @@ def parse_time_interval(spec):
     return delta
 
 
-def strip_margins(s, marginChar):
+def strip_margins(s: str, marginChar: str) -> str:
     """
     Python equivalent of Scala stripMargins method
     Takes a string (potentially multiline) and strips all chars up and including the first occurrence of `marginChar`.
@@ -258,12 +264,12 @@ def strip_margins(s, marginChar):
     assert s is not None and isinstance(s, str)
     assert marginChar is not None and isinstance(marginChar, str)
 
-    lines = s.split("\n")
-    revised_lines = []
+    lines: list[str] = s.split("\n")
+    revised_lines: list[str] = []
 
     for line in lines:
         if marginChar in line:
-            revised_line = line[line.index(marginChar) + 1:]
+            revised_line: str = line[line.index(marginChar) + 1:]
             revised_lines.append(revised_line)
         else:
             revised_lines.append(line)
@@ -271,7 +277,7 @@ def strip_margins(s, marginChar):
     return "\n".join(revised_lines)
 
 
-def split_list_matching_condition(lst, cond):
+def split_list_matching_condition(lst: list[Any], cond: Callable[[Any], bool]) -> list[list[Any]]:
     """
     Split a list on elements that match a condition
 
@@ -293,9 +299,9 @@ def split_list_matching_condition(lst, cond):
     :arg cond: lambda function or function taking single argument and returning True or False
     :returns: list of sublists
     """
-    retval = []
+    retval: list[list[Any]] = []
 
-    def match_condition(matchList, matchFn):
+    def match_condition(matchList: list[Any], matchFn: Callable[[Any], bool]) -> int:
         """Return first index of element of list matching condition"""
         if matchList is None or len(matchList) == 0:
             return -1
@@ -311,7 +317,7 @@ def split_list_matching_condition(lst, cond):
     elif len(lst) == 1:
         retval = [lst]
     else:
-        ix = match_condition(lst, cond)
+        ix: int = match_condition(lst, cond)
         if ix != -1:
             retval.extend(split_list_matching_condition(lst[0:ix], cond))
             retval.append(lst[ix:ix + 1])
@@ -323,7 +329,7 @@ def split_list_matching_condition(lst, cond):
     return [el for el in retval if el != []]
 
 
-def json_value_from_path(searchPath, jsonData, defaultValue):
+def json_value_from_path(searchPath: str, jsonData: str, defaultValue: object) -> object:
     """ Get JSON value from JSON data referenced by searchPath
 
     searchPath should be a JSON path as supported by the `jmespath` package
@@ -337,9 +343,9 @@ def json_value_from_path(searchPath, jsonData, defaultValue):
     assert searchPath is not None and len(searchPath) > 0, "search path cannot be empty"
     assert jsonData is not None and len(jsonData) > 0, "JSON data cannot be empty"
 
-    jsonDict = json.loads(jsonData)
+    jsonDict: dict = json.loads(jsonData)
 
-    jsonValue = jmespath.search(searchPath, jsonDict)
+    jsonValue: Any = jmespath.search(searchPath, jsonDict)
 
     if jsonValue is not None:
         return jsonValue
@@ -347,10 +353,10 @@ def json_value_from_path(searchPath, jsonData, defaultValue):
     return defaultValue
 
 
-def system_time_millis():
+def system_time_millis() -> int:
     """ return system time as milliseconds since start of epoch
 
     :return: system time millis as long
     """
-    curr_time = round(time.time() / 1000)
+    curr_time: int = round(time.time() / 1000)
     return curr_time

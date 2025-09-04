@@ -116,6 +116,7 @@ fmt         = ["ruff check . --fix",
                "mypy .",
                "pylint --output-format=colorized -j 0 dbldatagen tests"]
 verify      = ["ruff check .",
+               "ruff check . --select ANN",
                "mypy .",
                "pylint --output-format=colorized -j 0 dbldatagen tests"]
 
