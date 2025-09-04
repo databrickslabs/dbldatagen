@@ -15,7 +15,7 @@ import time
 import warnings
 from collections.abc import Callable
 from datetime import timedelta
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 import jmespath
 
@@ -91,7 +91,7 @@ def ensure(cond: bool, msg: str = "condition does not hold true") -> None:
         raise DataGenError(strip_margin(msg))
 
 
-def mkBoundsList(x: Optional[Union[int, list[int]]], default: Union[int, list[int]]) -> tuple[bool, list[int]]:
+def mkBoundsList(x: Optional[int | list[int]], default: int | list[int]) -> tuple[bool, list[int]]:
     """ make a bounds list from supplied parameter - otherwise use default
 
         :param x: integer or list of 2 values that define bounds list
@@ -115,7 +115,7 @@ def topologicalSort(
     sources: list[tuple[str, set[str]]],
     initial_columns: Optional[list[str]] = None,
     flatten: bool = True
-) -> Union[list[str], list[list[str]]]:
+) -> list[str] | list[list[str]]:
     """ Perform a topological sort over sources
 
     Used to compute the column test data generation order of the column generation dependencies.
