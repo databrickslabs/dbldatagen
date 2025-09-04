@@ -22,6 +22,9 @@ fmt:
 test:
 	hatch run test
 
+test-coverage:
+	make test && open htmlcov/index.html
+
 build:
 	hatch build
 
