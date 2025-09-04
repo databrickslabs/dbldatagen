@@ -116,7 +116,6 @@ fmt         = ["ruff check . --fix",
                "mypy .",
                "pylint --output-format=colorized -j 0 dbldatagen tests"]
 verify      = ["ruff check .",
-               "ruff check . --select ANN",
                "mypy .",
                "pylint --output-format=colorized -j 0 dbldatagen tests"]
 
@@ -173,6 +172,7 @@ select = [
     "Q",      # flake8-quotes
     "PL",     # pylint
     "RUF",    # ruff-specific rules
+    "ANN",    # ruff-flake8-annotations
 ]
 ignore = [
     "E501",   # Line too long (let ruff formatter handle this)
