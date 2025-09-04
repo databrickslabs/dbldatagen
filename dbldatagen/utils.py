@@ -49,17 +49,17 @@ class DataGenError(Exception):
         :param baseException: underlying exception, if any that caused the issue
     """
 
-    def __init__(self: "DataGenError", msg: str, baseException: Optional[Exception] = None) -> None:
+    def __init__(self, msg: str, baseException: Optional[Exception] = None) -> None:
         """ constructor
         """
         super().__init__(msg)
         self._underlyingException: Optional[Exception] = baseException
         self._msg: str = msg
 
-    def __repr__(self: "DataGenError") -> str:
+    def __repr__(self) -> str:
         return f"DataGenError(msg='{self._msg}', baseException={self._underlyingException})"
 
-    def __str__(self: "DataGenError") -> str:
+    def __str__(self) -> str:
         return f"DataGenError(msg='{self._msg}', baseException={self._underlyingException})"
 
 
