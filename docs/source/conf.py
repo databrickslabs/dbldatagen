@@ -13,12 +13,9 @@
 import os
 import sys
 
-PACKAGE_DIR = "../../dbldatagen"
+PACKAGE_DIR = "../.."
 
-sys.path.insert(0, os.path.abspath(f"{PACKAGE_DIR}"))
-sys.path.insert(0, os.path.abspath(f"{PACKAGE_DIR}/constraints"))
-sys.path.insert(0, os.path.abspath(f"{PACKAGE_DIR}/datasets"))
-sys.path.insert(0, os.path.abspath(f"{PACKAGE_DIR}/distributions"))
+sys.path.insert(0, os.path.abspath(PACKAGE_DIR))
 
 from dbldatagen import *
 from dbldatagen.distributions import *

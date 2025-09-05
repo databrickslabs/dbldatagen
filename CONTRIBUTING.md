@@ -1,163 +1,137 @@
 # Contributing to the Databricks Labs Data Generator
-We happily welcome contributions to *dbldatagen*. 
+While **dbldatagen** cannot accept direct contribution from external contributors, all users can create GitHub Issues to propose new functionality. The dbldatagen team will review and prioritize new features based on user feedback.
 
-We use GitHub Issues to track community reported issues and GitHub Pull Requests for accepting changes.
+## Making a contribution
+
+### Setup
+To set up your local environment:
+
+1. Ensure any [Non-Python Dependencies](#other-dependencies) are installed locally.
+2. Clone the repository:
+   ```bash
+   git clone "repository URL"
+   ````
+   
+3. Open the repository in your IDE. Run the following terminal command to create a local development environment:
+   ```bash
+   make dev
+   ```
+
+### Development
+When contributing new functionality:
+
+1. Sync changes from the `master` branch:
+   ```bash
+   git checkout main && git pull
+   ```
+2. Checkout a new branch from `master`:
+   ```bash
+   git checkout -b "branch name"
+   ```
+3. Add your functionality, tests, documentation, and examples.
+
+### Formatting
+dbldatagen aims to follow [PEP8 standards](https://peps.python.org/pep-0008/). Code style should be checked for any new commits.
+
+To validate code locally:
+
+1. Run the following terminal command in your IDE:
+   ```bash
+   make fmt
+   ```
+2. Fix any issues until no messages remain.
+
+### Testing
+dbldatagen aims to have the highest possible test coverage. Code should be tested for any new commits.
+
+To run unit tests locally:
+
+1. Run the following terminal command in your IDE:
+   ```bash
+   make test-coverage
+   ```
+2. Verify that all tests pass.
+3. Open the coverage report in your browser.
+4. Verify that all modified modules have full coverage.
+
+### Submitting a PR
+To submit a pull request:
+
+1. Squash all local commits in your branch.
+2. Push your changes:
+   ```bash
+   git push
+   ```
+3. Navigate to the [Pull Requests](https://github.com/databrickslabs/dbldatagen/pulls) page and click **New pull request**.
+4. Complete the template.
+5. Submit your PR.
+
+## Building the project locally
+
+### Building the HTML documentation
+Documentation can be reviewed locally. To build and open the documentation in your browser, run the following terminal command:
+```bash
+make docs-serve
+```
+
+### Building the Python wheel
+dbldatagen can be built locally as a Python wheel. To build the wheel, run the following terminal command:
+
+```bash
+make build
+```
+
+## Prerequisites
+
+### Python Compatibility
+dbldatagen supports Python 3.10+ and is tested with Python 3.10 and later.
+
+### Development Tools
+All development tools are configured in `pyproject.toml`.
+
+### Python Dependencies
+All Python dependencies are defined in `pyproject.toml`:
+
+1. `[project.dependencies]` lists dependencies installed with the `dbldatagen` library
+2. `[tool.hatch.envs.default]` lists the default environment necessary to develop, test, and build the `dbldatagen` library
+
+### Non-Python Dependencies
+dbldatagen is tested against Databricks Runtime version 13.3LTS and OpenJDK 17. 
+
+Spark and Java dependencies are not installed automatically by the build process and should be installed manually to develop and run dbldatagen locally.
+
+## Development standards
+
+### Code style
+All code should adhere to the following standards:
+
+1. **Formatted and linted** to PEP8 standards.
+2. **Type-validated** using [mypy](https://mypy-lang.org/).
+3. **Clearly-named** variables, classes, and methods.
+4. **Include docstrings** that detail functionality and usage.
+
+### Testing
+All tests should use [pytest](https://docs.pytest.org/en/stable/) with fixtures and parameterization where appropriate. This includes:
+
+1. **Unit tests** cover functionality which does not require a Databricks workspace and should always be preferred to integration tests when possible.
+2. **Integration tests** cover functionality which requires Databricks compute, Unity Catalog, or other workspace features.
+
+### Branches
+All local development should branch from `master` and adhere to the following naming convention:
+
+1. `feat_<feature_name>` for new functionality
+2. `fix_<issue_number>_<fix_name>` for bugfixes
+
+### Pull requests
+All pull requests should adhere to the following standards:
+
+1. Pull requests should be scoped to 1 repository issue.
+2. Local commits should be squashed on your branch before opening a pull request.
+3. All pull requests should include functionality, tests, documentation, and examples.
 
 ## License
-
 When you contribute code, you affirm that the contribution is your original work and that you 
 license the work to the project under the project's Databricks license. Whether or not you 
 state this explicitly, by submitting any copyrighted material via pull request, email, or 
 other means you agree to license the material under the project's Databricks license and 
 warrant that you have the legal authority to do so.
-
-# Development Setup
-
-## Python Compatibility
-
-The code supports Python 3.10+ and has been tested with Python 3.10 and later.
-
-## Quick Start
-
-```bash
-# Install development dependencies
-make dev
-
-# Format and lint code
-make fmt                 # Format with ruff and fix issues
-make lint                # Check code quality
-
-# Run tests
-make test                # Run tests
-
-# Build package
-make build               # Build with modern build system
-```
-
-## Development Tools
-
-All development tools are configured in `pyproject.toml`.
-
-## Dependencies
-
-All dependencies are defined in `pyproject.toml`:
-
-- `[project.dependencies]` lists dependencies necessary to run the `dbldatagen` library
-- `[tool.hatch.envs.default]` lists the default environment necessary to develop, test, and build the `dbldatagen` library
-
-## Spark Dependencies
-
-The builds have been tested against Spark 3.4.1+. This requires OpenJDK 1.8.56 or later version of Java 8.
-The Databricks runtimes use the Azul Zulu version of OpenJDK 8.
-These are not installed automatically by the build process.
-
-## Creating the HTML documentation
-
-Run  `make docs` from the main project directory.
-
-The main html document will be in the file (relative to the root of the build directory)
- `./docs/docs/build/html/index.html`
-
-## Building the Python wheel
-
-```bash
-make build               # Clean and build the package
-```
-
-# Testing 
-
-## Developing new tests
-New tests should be created using PyTest with classes combining multiple `Pytest` tests.
-
-Existing test code contains tests based on Python's `unittest` framework but these are 
-run on `pytest` rather than `unitest`. 
-
-To get a  `spark` instance for test purposes, use the following code:
-
-```python
-import dbldatagen as dg
-
-spark = dg.SparkSingleton.getLocalInstance("<name to flag spark instance>")
-```
-
-The name used to flag the spark instance should be the test module or test class name. 
-
-## Running Tests
-
-```bash
-# Run all tests
-make test
-
-If using an environment with multiple Python versions, make sure to use virtual env or similar to pick up correct python versions.
-
-If necessary, set `PYSPARK_PYTHON` and `PYSPARK_DRIVER_PYTHON` to point to correct versions of Python.
-
-# Using the Databricks Labs data generator
-The recommended method for installation is to install from the PyPi package
-
-You can install the library as a notebook scoped library when working within the Databricks 
-notebook environment through the use of a `%pip` cell in your notebook.
-
-To install as a notebook-scoped library, create and execute a notebook cell with the following text:
-
-> `%pip install dbldatagen`
-
-This installs from the PyPi package
-
-You can also install from release binaries or directly from the Github sources.
-
-The release binaries can be accessed at:
-- Databricks Labs Github Data Generator releases - https://github.com/databrickslabs/dbldatagen/releases
-
-
-The `%pip install` method also works on the Databricks Community Edition.
-
-Alternatively, you use download a wheel file and install using the Databricks install mechanism to install a wheel based
-library into your workspace.
-
-The `%pip install` method can also down load a specific binary release.
-For example, the following code downloads the release V0.2.1
-
-> '%pip install https://github.com/databrickslabs/dbldatagen/releases/download/v021/dbldatagen-0.2.1-py3-none-any.whl'
-
-# Code Quality and Style
-
-## Automated Formatting
-
-Code can be automatically formatted and linted with the following commands:
-
-```bash
-# Format code and fix issues automatically
-make fmt
-
-# Check code quality without making changes
-make lint
-```
-
-## Coding Conventions
-
-The code follows PySpark coding conventions:
-- Python PEP8 standards with some PySpark-specific adaptations
-- Method and argument names use mixed case starting with lowercase (following PySpark conventions)
-- Line length limit of 120 characters
-
-See the [Python PEP8 Guide](https://peps.python.org/pep-0008/) for general Python style guidelines.
-
-# Github expectations
-When running the unit tests on GitHub, the environment should use the same environment as the latest Databricks
-runtime latest LTS release. While compatibility is preserved on LTS releases from Databricks runtime 13.3 onwards, 
-unit tests will be run on the environment corresponding to the latest LTS release. 
-
-Libraries will use the same versions as the earliest supported LTS release - currently 13.3 LTS
-
-This means for the current build:
-
-- Use of Ubuntu 22.04 for the test runner
-- Use of Java 8
-- Use of Python 3.10.12 when testing / building the image
-
-See the following resources for more information
-= https://docs.databricks.com/en/release-notes/runtime/15.4lts.html
-- https://docs.databricks.com/en/release-notes/runtime/11.3lts.html
-- https://github.com/actions/runner-images/issues/10636
-
