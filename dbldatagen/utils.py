@@ -15,7 +15,7 @@ import time
 import warnings
 from collections.abc import Callable
 from datetime import timedelta
-from typing import Any, Optional
+from typing import Any
 
 import jmespath
 
@@ -49,11 +49,11 @@ class DataGenError(Exception):
         :param baseException: underlying exception, if any that caused the issue
     """
 
-    def __init__(self, msg: str, baseException: Optional[Exception] = None) -> None:
+    def __init__(self, msg: str, baseException: object | None = None) -> None:
         """ constructor
         """
         super().__init__(msg)
-        self._underlyingException: Optional[Exception] = baseException
+        self._underlyingException: object | None = baseException
         self._msg: str = msg
 
     def __repr__(self) -> str:
@@ -63,7 +63,7 @@ class DataGenError(Exception):
         return f"DataGenError(msg='{self._msg}', baseException={self._underlyingException})"
 
 
-def coalesce_values(*args: object) -> Optional[object]:
+def coalesce_values(*args: object) -> object | None:
     """For a supplied list of arguments, returns the first argument that does not have the value `None`
 
     :param args: variable list of arguments which are evaluated
@@ -91,7 +91,7 @@ def ensure(cond: bool, msg: str = "condition does not hold true") -> None:
         raise DataGenError(strip_margin(msg))
 
 
-def mkBoundsList(x: Optional[int | list[int]], default: int | list[int]) -> tuple[bool, list[int]]:
+def mkBoundsList(x: int | list[int] | None, default: int | list[int]) -> tuple[bool, list[int]]:
     """ make a bounds list from supplied parameter - otherwise use default
 
         :param x: integer or list of 2 values that define bounds list
@@ -113,7 +113,7 @@ def mkBoundsList(x: Optional[int | list[int]], default: int | list[int]) -> tupl
 
 def topologicalSort(
     sources: list[tuple[str, set[str]]],
-    initial_columns: Optional[list[str]] = None,
+    initial_columns: list[str] | None = None,
     flatten: bool = True
 ) -> list[str] | list[list[str]]:
     """ Perform a topological sort over sources
