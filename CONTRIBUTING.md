@@ -1,5 +1,5 @@
 # Contributing to the Databricks Labs Data Generator
-We happily welcome contributions to *dbldatagen*. GitHub Issues and Pull Requests are used to track issues and review changes.
+While **dbldatagen** cannot accept direct contribution from external contributors, all users can create GitHub Issues to propose new functionality. The dbldatagen team will review and prioritize new features based on user feedback.
 
 ## Making a contribution
 
@@ -9,7 +9,7 @@ To set up your local environment:
 1. Ensure any [Non-Python Dependencies](#other-dependencies) are installed locally.
 2. Clone the repository:
    ```bash
-   git clone https://github.com/databrickslabs/dbldatagen
+   git clone "repository URL"
    ````
    
 3. Open the repository in your IDE. Run the following terminal command to create a local development environment:
@@ -26,7 +26,7 @@ When contributing new functionality:
    ```
 2. Checkout a new branch from `master`:
    ```bash
-   git checkout -b "branch_name"
+   git checkout -b "branch name"
    ```
 3. Add your functionality, tests, documentation, and examples.
 
