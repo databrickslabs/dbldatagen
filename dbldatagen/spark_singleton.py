@@ -19,7 +19,7 @@ class SparkSingleton:
     """A singleton class which returns one Spark session instance"""
 
     @classmethod
-    def getInstance(cls) -> SparkSession:
+    def getInstance(cls: type["SparkSingleton"]) -> SparkSession:
         """Creates a `SparkSession` instance for Datalib.
 
         :returns: A Spark instance
@@ -28,7 +28,7 @@ class SparkSingleton:
         return SparkSession.builder.getOrCreate()
 
     @classmethod
-    def getLocalInstance(cls, appName: str = "new Spark session", useAllCores: bool = True) -> SparkSession:
+    def getLocalInstance(cls: type["SparkSingleton"], appName: str = "new Spark session", useAllCores: bool = True) -> SparkSession:
         """Creates a machine local `SparkSession` instance for Datalib.
         By default, it uses `n-1` cores  of the available cores for the spark session,
         where `n` is total cores available.
