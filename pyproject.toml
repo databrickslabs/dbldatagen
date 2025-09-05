@@ -155,8 +155,7 @@ exclude = [
     "dbldatagen/schema_parser.py",
     "dbldatagen/serialization.py",
     "dbldatagen/text_generator_plugins.py",
-    "dbldatagen/text_generators.py",
-    "dbldatagen/utils.py"
+    "dbldatagen/text_generators.py"
 ]
 
 [tool.ruff.lint]
@@ -173,6 +172,7 @@ select = [
     "Q",      # flake8-quotes
     "PL",     # pylint
     "RUF",    # ruff-specific rules
+    "ANN",    # ruff-flake8-annotations
 ]
 ignore = [
     "E501",   # Line too long (let ruff formatter handle this)
@@ -188,6 +188,7 @@ ignore = [
     "SIM102", # Use a single if-statement
     "SIM108", # Use ternary operator
     "UP007",  # Use X | Y for type annotations (keep Union for compatibility)
+    "ANN101", # Missing type annotation for `self` in method
 ]
 
 [tool.ruff.lint.per-file-ignores]
