@@ -153,7 +153,6 @@ exclude = [
     "dbldatagen/html_utils.py",
     "dbldatagen/nrange.py",
     "dbldatagen/schema_parser.py",
-    "dbldatagen/serialization.py",
     "dbldatagen/text_generator_plugins.py",
     "dbldatagen/text_generators.py"
 ]
