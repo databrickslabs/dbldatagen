@@ -9,12 +9,12 @@ class SerializableToDict:
     """
 
     @classmethod
-    def _fromInitializationDict(cls: object, options: dict) -> object:
+    def _fromInitializationDict(cls, options: dict) -> object:
         """ Converts a Python dictionary to an object using the object's constructor.
             :param options: Python dictionary with class constructor options
             :return: An instance of the class
         """
-        _options = options.copy()
+        _options: dict = options.copy()
         _options.pop("kind")
         _ir = {}
         for key, value in _options.items():
