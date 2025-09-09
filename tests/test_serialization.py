@@ -102,11 +102,11 @@ class TestSerialization:
             {"kind": "SqlExpr", "expr": "col1 > 0"},
             {"kind": "LiteralRelation", "columns": ["col2"], "relation": "+", "value": "0"}
         ]),
-        (pytest.raises(IndexError), [  # Testing an invalid "kind" value
+        (pytest.raises(TypeError), [  # Testing an invalid "kind" value
             {"kind": "LiteralRange", "columns": ["col1"], "lowValue": -1000, "highValue": 1000, "strict": False},
             {"kind": "PositiveValues", "columns": ["col1", "col2"], "strict": True},
             {"kind": "SqlExpr", "expr": "col1 > 0"},
-            {"kind": "Equivalent", "columns": ["col2"], "value": "0"}
+            {"kind": "InvalidConstraintType", "columns": ["col2"], "value": "0"}
         ]),
         (does_not_raise(), [
             {"kind": "LiteralRange", "columns": ["col1"], "lowValue": -1000, "highValue": 1000, "strict": True},
@@ -165,7 +165,7 @@ class TestSerialization:
              {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0, "step": 1.5},
              {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": True}]
           }),
-        (pytest.raises(IndexError),  # Testing an invalid "kind" value
+        (pytest.raises(TypeError),  # Testing an invalid "kind" value
          {"name": "test_generator", "rows": 10000, "randomSeed": 42,
           "columns": [
               {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100, "step": 2, "random": True},
@@ -175,7 +175,7 @@ class TestSerialization:
               {"kind": "LiteralRange", "columns": ["col1"], "lowValue": -1000, "highValue": 1000, "strict": True},
               {"kind": "PositiveValues", "columns": ["col1", "col2"], "strict": True},
               {"kind": "SqlExpr", "expr": "col1 > 0"},
-              {"kind": "Equivalent", "columns": ["col2"], "value": 0}]
+              {"kind": "InvalidConstraintType", "columns": ["col2"], "value": 0}]
           }),
     ])
     def test_generator_from_dict(self, options, expectation):
@@ -243,7 +243,7 @@ class TestSerialization:
             {"colName": "col2", "colType": "float", "minValue": 0.0, "maxValue": 100.0, "step": 1.5},
             {"colName": "col3", "colType": "string", "values": ["a", "b", "c"], "random": true}]
           }'''),
-        (pytest.raises(IndexError),  # Testing an invalid "kind" value
+        (pytest.raises(TypeError),  # Testing an invalid "kind" value
          '''{"name": "test_generator", "rows": 10000, "randomSeed": 42,
           "columns": [
               {"colName": "col1", "colType": "int", "minValue": 0, "maxValue": 100, "step": 2, "random": true},
@@ -253,7 +253,7 @@ class TestSerialization:
               {"kind": "LiteralRange", "columns": ["col1"], "lowValue": -1000, "highValue": 1000, "strict": true},
               {"kind": "PositiveValues", "columns": ["col1", "col2"], "strict": true},
               {"kind": "SqlExpr", "expr": "col1 > 0"},
-              {"kind": "Equivalent", "columns": ["col2"], "value": 0}]
+              {"kind": "InvalidConstraintType", "columns": ["col2"], "value": 0}]
           }'''),
     ])
     def test_generator_from_json(self, json_options, expectation):

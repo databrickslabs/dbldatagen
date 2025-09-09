@@ -144,7 +144,6 @@ exclude = [
     "dbldatagen/column_generation_spec.py",
     "dbldatagen/column_spec_options.py",
     "dbldatagen/data_analyzer.py",
-    "dbldatagen/data_generator.py",
     "dbldatagen/datagen_constants.py",
     "dbldatagen/datarange.py",
     "dbldatagen/datasets_object.py",
@@ -189,6 +188,8 @@ ignore = [
     "SIM108", # Use ternary operator
     "UP007",  # Use X | Y for type annotations (keep Union for compatibility)
     "ANN101", # Missing type annotation for `self` in method
+    "ANN102", # Missing type annotation for `cls` in method
+    "ANN003", # Missing type annotation for **kwargs
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -230,7 +231,6 @@ ignore = [
     "dbldatagen/column_generation_spec.py",
     "dbldatagen/column_spec_options.py",
     "dbldatagen/data_analyzer.py",
-    "dbldatagen/data_generator.py",
     "dbldatagen/datagen_constants.py",
     "dbldatagen/datarange.py",
     "dbldatagen/datasets_object.py",
@@ -399,13 +399,12 @@ exclude = [
     "tutorial",
     "tests",
     "dbldatagen/constraints",
-    "dbldatagen/datasets", 
+    "dbldatagen/datasets",
     "dbldatagen/distributions",
     "dbldatagen/__init__.py",
     "dbldatagen/column_generation_spec.py",
     "dbldatagen/column_spec_options.py",
     "dbldatagen/data_analyzer.py",
-    "dbldatagen/data_generator.py",
     "dbldatagen/datagen_constants.py",
     "dbldatagen/datarange.py",
     "dbldatagen/datasets_object.py",
