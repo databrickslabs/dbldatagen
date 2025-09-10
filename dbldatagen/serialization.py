@@ -1,6 +1,9 @@
 """ Defines interface contracts."""
 import sys
+from typing import TypeVar
 
+
+T = TypeVar("T", bound="SerializableToDict")
 
 class SerializableToDict:
     """ Serializable objects must implement a `_getConstructorOptions` method
@@ -9,12 +12,12 @@ class SerializableToDict:
     """
 
     @classmethod
-    def _fromInitializationDict(cls, options):
+    def _fromInitializationDict(cls: type[T], options: dict) -> T:
         """ Converts a Python dictionary to an object using the object's constructor.
             :param options: Python dictionary with class constructor options
             :return: An instance of the class
         """
-        _options = options.copy()
+        _options: dict = options.copy()
         _options.pop("kind")
         _ir = {}
         for key, value in _options.items():
@@ -29,7 +32,7 @@ class SerializableToDict:
             _ir[key] = value
         return cls(**_ir)
 
-    def _toInitializationDict(self):
+    def _toInitializationDict(self) -> dict:
         """ Converts an object to a Python dictionary. Keys represent the object's
             constructor arguments.
             :return: Python dictionary representation of the object
