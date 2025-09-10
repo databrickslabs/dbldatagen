@@ -82,6 +82,8 @@ class ColumnGenerationSpec(SerializableToDict):
     For full list of options, see :doc:`/reference/api/dbldatagen.column_spec_options`.
     """
 
+    datatype: DataType
+
     #: maxValue values for each column type, only if where value is intentionally restricted
     _max_type_range = {
         'byte': 256,
