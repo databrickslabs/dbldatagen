@@ -1,3 +1,9 @@
+from typing import ClassVar
+
+from pyspark.sql import SparkSession
+
+from dbldatagen.data_generator import DataGenerator
+
 from .dataset_provider import DatasetProvider, dataset_definition
 
 
@@ -34,7 +40,7 @@ class BasicGeometriesProvider(DatasetProvider.NoAssociatedDatasetsMixin, Dataset
     DEFAULT_MIN_LON = -180.0
     DEFAULT_MAX_LON = 180.0
     COLUMN_COUNT = 2
-    ALLOWED_OPTIONS = [
+    ALLOWED_OPTIONS: ClassVar[list[str]]  = [
         "geometryType",
         "maxVertices",
         "minLatitude",
@@ -45,10 +51,10 @@ class BasicGeometriesProvider(DatasetProvider.NoAssociatedDatasetsMixin, Dataset
     ]
 
     @DatasetProvider.allowed_options(options=ALLOWED_OPTIONS)
-    def getTableGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
-                          **options):
-        import dbldatagen as dg
-        import warnings as w
+    def getTableGenerator(self, sparkSession: SparkSession, *, tableName: str|None=None, rows: int=-1, partitions: int=-1, **options: object) -> DataGenerator:
+        # ruff: noqa: I001
+        import dbldatagen as dg # noqa: PLC0415
+        import warnings as w # noqa: PLC0415
 
         generateRandom = options.get("random", False)
         geometryType = options.get("geometryType", "point")
@@ -72,7 +78,7 @@ class BasicGeometriesProvider(DatasetProvider.NoAssociatedDatasetsMixin, Dataset
         )
         if geometryType == "point":
             if maxVertices > 1:
-                w.warn('Ignoring property maxVertices for point geometries')
+                w.warn("Ignoring property maxVertices for point geometries", stacklevel=2)
             df_spec = (
                 df_spec.withColumn("lat", "float", minValue=minLatitude, maxValue=maxLatitude,
                                    step=1e-5, random=generateRandom, omit=True)
@@ -83,7 +89,7 @@ class BasicGeometriesProvider(DatasetProvider.NoAssociatedDatasetsMixin, Dataset
         elif geometryType == "lineString":
             if maxVertices < 2:
                 maxVertices = 2
-                w.warn("Parameter maxVertices must be >=2 for 'lineString' geometries; Setting to 2")
+                w.warn("Parameter maxVertices must be >=2 for 'lineString' geometries; Setting to 2", stacklevel=2)
             j = 0
             while j < maxVertices:
                 df_spec = (
@@ -101,7 +107,7 @@ class BasicGeometriesProvider(DatasetProvider.NoAssociatedDatasetsMixin, Dataset
         elif geometryType == "polygon":
             if maxVertices < 3:
                 maxVertices = 3
-                w.warn("Parameter maxVertices must be >=3 for 'polygon' geometries; Setting to 3")
+                w.warn("Parameter maxVertices must be >=3 for 'polygon' geometries; Setting to 3", stacklevel=2)
             j = 0
             while j < maxVertices:
                 df_spec = (
@@ -111,7 +117,7 @@ class BasicGeometriesProvider(DatasetProvider.NoAssociatedDatasetsMixin, Dataset
                                         step=1e-5, random=generateRandom, omit=True)
                 )
                 j = j + 1
-            vertexIndices = list(range(maxVertices)) + [0]
+            vertexIndices = [*list(range(maxVertices)), 0]
             concatCoordinatesExpr = [f"concat(lon_{j}, ' ', lat_{j}, ', ')" for j in vertexIndices]
             concatPairsExpr = f"replace(concat('POLYGON(', {', '.join(concatCoordinatesExpr)}, ')'), ', )', ')')"
             df_spec = (
