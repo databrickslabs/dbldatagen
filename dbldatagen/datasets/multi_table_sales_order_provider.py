@@ -1,3 +1,7 @@
+from pyspark.sql import SparkSession
+
+from dbldatagen.data_generator import DataGenerator
+
 from .dataset_provider import DatasetProvider, dataset_definition
 
 
@@ -60,8 +64,8 @@ class MultiTableSalesOrderProvider(DatasetProvider):
     SHIPMENT_MIN_VALUE = 10_000_000
     INVOICE_MIN_VALUE = 1_000_000
 
-    def getCustomers(self, sparkSession, *, rows, partitions, numCustomers, dummyValues):
-        import dbldatagen as dg
+    def getCustomers(self, sparkSession: SparkSession, *, rows: int, partitions: int, numCustomers: int, dummyValues: int) -> DataGenerator:
+        import dbldatagen as dg # noqa: PLC0415
 
         # Validate the options:
         if numCustomers is None or numCustomers < 0:
@@ -101,8 +105,8 @@ class MultiTableSalesOrderProvider(DatasetProvider):
 
         return customers_data_spec
 
-    def getCarriers(self, sparkSession, *, rows, partitions, numCarriers, dummyValues):
-        import dbldatagen as dg
+    def getCarriers(self, sparkSession: SparkSession, *, rows: int, partitions: int, numCarriers: int, dummyValues: int) -> DataGenerator:
+        import dbldatagen as dg # noqa: PLC0415
 
         # Validate the options:
         if numCarriers is None or numCarriers < 0:
@@ -138,8 +142,8 @@ class MultiTableSalesOrderProvider(DatasetProvider):
 
         return carriers_data_spec
 
-    def getCatalogItems(self, sparkSession, *, rows, partitions, numCatalogItems, dummyValues):
-        import dbldatagen as dg
+    def getCatalogItems(self, sparkSession: SparkSession, *, rows: int, partitions: int, numCatalogItems: int, dummyValues: int) -> DataGenerator:
+        import dbldatagen as dg # noqa: PLC0415
 
         # Validate the options:
         if numCatalogItems is None or numCatalogItems < 0:
@@ -164,7 +168,7 @@ class MultiTableSalesOrderProvider(DatasetProvider):
             .withColumn("created_by", "integer", minValue=1_000, maxValue=9_999, random=True)
             .withColumn("is_updated", "boolean", expr="rand() > 0.75", omit=True)
             .withColumn("updated_after_days", "integer", minValue=0, maxValue=1_000, random=True, omit=True)
-            .withColumn("updated_on", "date", expr="""case when is_updated then created_on 
+            .withColumn("updated_on", "date", expr="""case when is_updated then created_on
                                                     else date_add(created_on, updated_after_days) end""")
             .withColumn("updated_by_user", "integer", minValue=1_000, maxValue=9_999, random=True, omit=True)
             .withColumn("updated_by", "integer", expr="case when is_updated then updated_by_user else created_by end")
@@ -178,9 +182,9 @@ class MultiTableSalesOrderProvider(DatasetProvider):
 
         return catalog_items_data_spec
 
-    def getBaseOrders(self, sparkSession, *, rows, partitions, numOrders, numCustomers, startDate,
-                      endDate, dummyValues):
-        import dbldatagen as dg
+    def getBaseOrders(self, sparkSession: SparkSession, *, rows: int, partitions: int, numOrders: int, numCustomers: int, startDate: str,
+                      endDate: str, dummyValues: int) -> DataGenerator:
+        import dbldatagen as dg # noqa: PLC0415
 
         # Validate the options:
         if numOrders is None or numOrders < 0:
@@ -225,9 +229,9 @@ class MultiTableSalesOrderProvider(DatasetProvider):
 
         return base_orders_data_spec
 
-    def getBaseOrderLineItems(self, sparkSession, *, rows, partitions, numOrders, numCatalogItems,
-                              lineItemsPerOrder, dummyValues):
-        import dbldatagen as dg
+    def getBaseOrderLineItems(self, sparkSession: SparkSession, *, rows: int, partitions: int, numOrders: int, numCatalogItems: int,
+                              lineItemsPerOrder: int, dummyValues: int) -> DataGenerator:
+        import dbldatagen as dg # noqa: PLC0415
 
         # Validate the options:
         if numOrders is None or numOrders < 0:
@@ -263,8 +267,9 @@ class MultiTableSalesOrderProvider(DatasetProvider):
 
         return base_order_line_items_data_spec
 
-    def getBaseOrderShipments(self, sparkSession, *, rows, partitions, numOrders, numCarriers, dummyValues):
-        import dbldatagen as dg
+    def getBaseOrderShipments(self, sparkSession: SparkSession, *, rows: int, partitions: int, numOrders: int, numCarriers: int, dummyValues: int) -> DataGenerator:
+        # ruff: noqa: I001
+        import dbldatagen as dg # noqa: PLC0415
 
         # Validate the options:
         if numOrders is None or numOrders < 0:
@@ -288,7 +293,7 @@ class MultiTableSalesOrderProvider(DatasetProvider):
             .withColumn("street_number", "integer", minValue=1, maxValue=150, random=True, omit=True)
             .withColumn("street_direction", "string", values=["", "N", "S", "E", "W", "NW", "NE", "SW", "SE"],
                         random=True)
-            .withColumn("ship_to_address_line", "string", expr="""concat_ws(' ', house_number, street_direction, 
+            .withColumn("ship_to_address_line", "string", expr="""concat_ws(' ', house_number, street_direction,
                                                                             street_number, 'ST')""")
             .withColumn("ship_to_country_code", "string", values=["US", "CA"], weights=[8, 3], random=True)
             .withColumn("order_open_to_ship_days", "integer", minValue=0, maxValue=30, random=True)
@@ -305,8 +310,10 @@ class MultiTableSalesOrderProvider(DatasetProvider):
 
         return base_order_shipments_data_spec
 
-    def getBaseInvoices(self, sparkSession, *, rows, partitions, numOrders, dummyValues):
-        import dbldatagen as dg
+    def getBaseInvoices(self, sparkSession: SparkSession, *, rows: int, partitions: int, numOrders: int, dummyValues: int) -> DataGenerator:
+        # ruff: noqa: I001
+        import dbldatagen as dg # noqa: PLC0415
+
 
         # Validate the options:
         if numOrders is None or numOrders < 0:
@@ -326,7 +333,7 @@ class MultiTableSalesOrderProvider(DatasetProvider):
             .withColumn("street_number", "integer", minValue=1, maxValue=150, random=True, omit=True)
             .withColumn("street_direction", "string", values=["", "N", "S", "E", "W", "NW", "NE", "SW", "SE"],
                         random=True)
-            .withColumn("bill_to_address_line", "string", expr="""concat_ws(' ', house_number, street_direction, 
+            .withColumn("bill_to_address_line", "string", expr="""concat_ws(' ', house_number, street_direction,
                                                                             street_number, 'ST')""")
             .withColumn("bill_to_country_code", "string", values=["US", "CA"], weights=[8, 3], random=True)
             .withColumn("order_close_to_invoice_days", "integer", minValue=0, maxValue=5, random=True)
@@ -347,7 +354,7 @@ class MultiTableSalesOrderProvider(DatasetProvider):
 
     @DatasetProvider.allowed_options(options=["numCustomers", "numCarriers", "numCatalogItems", "numOrders",
                                               "lineItemsPerOrder", "startDate", "endDate", "dummyValues"])
-    def getTableGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1, **options):
+    def getTableGenerator(self, sparkSession: SparkSession, *, tableName: str|None=None, rows: int=-1, partitions: int=-1, **options: object) -> DataGenerator:
         # Get the option values:
         numCustomers = options.get("numCustomers", self.DEFAULT_NUM_CUSTOMERS)
         numCarriers = options.get("numCarriers", self.DEFAULT_NUM_CARRIERS)
@@ -436,35 +443,36 @@ class MultiTableSalesOrderProvider(DatasetProvider):
         "baseOrderShipments",
         "baseInvoices"
     ])
-    def getAssociatedDataset(self, sparkSession, *, tableName=None, rows=-1, partitions=-1, **options):
-        from pyspark.sql import DataFrame
-        import pyspark.sql.functions as F
+    def getAssociatedDataset(self, sparkSession: SparkSession, *, tableName: str|None=None, rows: int=-1, partitions: int=-1, **options: object) -> DataGenerator:
+        # ruff: noqa: I001
+        from pyspark.sql import DataFrame # noqa: PLC0415
+        import pyspark.sql.functions as F  # noqa: PLC0415
 
-        dfCustomers = options.get("customers", None)
+        dfCustomers = options.get("customers")
         assert dfCustomers is not None and issubclass(type(dfCustomers), DataFrame), \
             "Option `customers` should be a dataframe of customer records"
 
-        dfCarriers = options.get("carriers", None)
+        dfCarriers = options.get("carriers")
         assert dfCarriers is not None and issubclass(type(dfCarriers), DataFrame), \
             "Option `carriers` should be dataframe of carrier records"
 
-        dfCatalogItems = options.get("catalogItems", None)
+        dfCatalogItems = options.get("catalogItems")
         assert dfCatalogItems is not None and issubclass(type(dfCatalogItems), DataFrame), \
             "Option `catalogItems` should be dataframe of catalog item records"
 
-        dfBaseOrders = options.get("baseOrders", None)
+        dfBaseOrders = options.get("baseOrders")
         assert dfBaseOrders is not None and issubclass(type(dfBaseOrders), DataFrame), \
             "Option `baseOrders` should be dataframe of base order records"
 
-        dfBaseOrderLineItems = options.get("baseOrderLineItems", None)
+        dfBaseOrderLineItems = options.get("baseOrderLineItems")
         assert dfBaseOrderLineItems is not None and issubclass(type(dfBaseOrderLineItems), DataFrame), \
             "Option `baseOrderLineItems` should be dataframe of base order line item records"
 
-        dfBaseOrderShipments = options.get("baseOrderShipments", None)
+        dfBaseOrderShipments = options.get("baseOrderShipments")
         assert dfBaseOrderShipments is not None and issubclass(type(dfBaseOrderShipments), DataFrame), \
             "Option `baseOrderLineItems` should be dataframe of base order shipment records"
 
-        dfBaseInvoices = options.get("baseInvoices", None)
+        dfBaseInvoices = options.get("baseInvoices")
         assert dfBaseInvoices is not None and issubclass(type(dfBaseInvoices), DataFrame), \
             "Option `baseInvoices` should be dataframe of base invoice records"
 
@@ -474,7 +482,7 @@ class MultiTableSalesOrderProvider(DatasetProvider):
                 .join(dfCatalogItems.alias("b"), on="catalog_item_id")
                 .selectExpr("a.order_id as order_id",
                             "a.order_line_item_id as order_line_item_id",
-                            """case when a.has_discount then (b.unit_price * 1 - (b.discount_rate / 100)) 
+                            """case when a.has_discount then (b.unit_price * 1 - (b.discount_rate / 100))
                             else b.unit_price end as unit_price""",
                             "a.units as units")
                 .selectExpr("order_id", "order_line_item_id", "unit_price * units as total_price")
@@ -515,7 +523,7 @@ class MultiTableSalesOrderProvider(DatasetProvider):
                     "a.units",
                     "c.unit_price",
                     "a.units * c.unit_price as gross_price",
-                    """case when a.has_discount then a.units * c.unit_price * (1 - (c.discount_rate / 100)) 
+                    """case when a.has_discount then a.units * c.unit_price * (1 - (c.discount_rate / 100))
                         else a.units * c.unit_price end as net_price""",
                     "date_add(b.created_on, a.added_after_order_creation_days) as created_on",
                     "b.created_by")
@@ -532,7 +540,7 @@ class MultiTableSalesOrderProvider(DatasetProvider):
                     "a.method",
                     "a.ship_to_address_line",
                     "a.ship_to_country_code",
-                    """least(b.order_close_date, 
+                    """least(b.order_close_date,
                         date_add(b.order_open_date, a.order_open_to_ship_days)) as order_shipment_date""",
                     "a.estimated_transit_days",
                     "a.actual_transit_days",
@@ -546,7 +554,7 @@ class MultiTableSalesOrderProvider(DatasetProvider):
                 .join(dfCatalogItems.alias("b"), on="catalog_item_id")
                 .selectExpr("a.order_id as order_id",
                             "a.order_line_item_id as order_line_item_id",
-                            """case when a.has_discount then (b.unit_price * 1 - (b.discount_rate / 100)) 
+                            """case when a.has_discount then (b.unit_price * 1 - (b.discount_rate / 100))
                             else b.unit_price end as unit_price""",
                             "a.units as units")
                 .selectExpr("order_id", "order_line_item_id", "unit_price * units as total_price")
@@ -570,7 +578,7 @@ class MultiTableSalesOrderProvider(DatasetProvider):
                     "date_add(b.order_close_date, a.order_close_to_invoice_days) as invoice_date",
                     "date_add(b.order_close_date, a.order_close_to_create_days) as created_on",
                     "a.created_by",
-                    """case when a.is_updated then 
+                    """case when a.is_updated then
                         date_add(b.order_close_date, a.order_close_to_create_days + a.updated_after_days)
                         else date_add(b.order_close_date, a.order_close_to_create_days) end as updated_on""",
                     "case when a.is_updated then a.updated_by else a.created_by end as updated_by")

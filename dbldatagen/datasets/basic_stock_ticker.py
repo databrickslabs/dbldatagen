@@ -1,4 +1,9 @@
+from typing import ClassVar
 from random import random
+
+from pyspark.sql import SparkSession
+
+from dbldatagen.data_generator import DataGenerator
 
 from .dataset_provider import DatasetProvider, dataset_definition
 
@@ -21,7 +26,6 @@ class BasicStockTickerProvider(DatasetProvider.NoAssociatedDatasetsMixin, Datase
         - numSymbols: number of unique stock ticker symbols
         - startDate: first date for stock ticker data
         - endDate: last date for stock ticker data
-        
     As the data specification is a DataGenerator object, you can add further columns to the data set and
     add constraints (when the feature is available)
 
@@ -32,14 +36,15 @@ class BasicStockTickerProvider(DatasetProvider.NoAssociatedDatasetsMixin, Datase
     DEFAULT_NUM_SYMBOLS = 100
     DEFAULT_START_DATE = "2024-10-01"
     COLUMN_COUNT = 8
-    ALLOWED_OPTIONS = [
+    ALLOWED_OPTIONS: ClassVar[list[str]] = [
         "numSymbols",
         "startDate"
     ]
 
     @DatasetProvider.allowed_options(options=ALLOWED_OPTIONS)
-    def getTableGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1, **options):
-        import dbldatagen as dg
+    def getTableGenerator(self, sparkSession: SparkSession, *, tableName: str|None=None, rows: int=-1, partitions: int=-1, **options: object) -> DataGenerator:
+        # ruff: noqa: I001
+        import dbldatagen as dg # noqa: PLC0415
 
         numSymbols = options.get("numSymbols", self.DEFAULT_NUM_SYMBOLS)
         startDate = options.get("startDate", self.DEFAULT_START_DATE)
@@ -59,7 +64,7 @@ class BasicStockTickerProvider(DatasetProvider.NoAssociatedDatasetsMixin, Datase
             .withColumn("rand_value", "float", minValue=0.0, maxValue=1.0, step=0.1,
                         baseColumn="symbol_id", omit=True)
             .withColumn("symbol", "string",
-                        expr="""concat_ws('', transform(split(conv(symbol_id, 10, 26), ''), 
+                        expr="""concat_ws('', transform(split(conv(symbol_id, 10, 26), ''),
                             x -> case when ascii(x) < 10 then char(ascii(x) - 48 + 65) else char(ascii(x) + 10) end))""")
             .withColumn("days_from_start_date", "int", expr=f"floor(try_divide(id, {numSymbols}))", omit=True)
             .withColumn("post_date", "date", expr=f"date_add(cast('{startDate}' as date), days_from_start_date)")
@@ -76,13 +81,13 @@ class BasicStockTickerProvider(DatasetProvider.NoAssociatedDatasetsMixin, Datase
                         expr="case when sin(id % 17) > 0 then -1.0 else 1.0 end",
                         omit=True)
             .withColumn("open_base", "decimal(11,2)",
-                        expr=f"""start_value 
-                            + (volatility * prev_modifier_sign * start_value * sin((id - {numSymbols}) % 17)) 
+                        expr=f"""start_value
+                            + (volatility * prev_modifier_sign * start_value * sin((id - {numSymbols}) % 17))
                             + (growth_rate * start_value * try_divide(days_from_start_date - 1, 365))""",
                         omit=True)
             .withColumn("close_base", "decimal(11,2)",
-                        expr="""start_value 
-                            + (volatility * start_value * sin(id % 17)) 
+                        expr="""start_value
+                            + (volatility * start_value * sin(id % 17))
                             + (growth_rate * start_value * try_divide(days_from_start_date, 365))""",
                         omit=True)
             .withColumn("high_base", "decimal(11,2)",
