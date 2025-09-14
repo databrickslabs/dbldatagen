@@ -25,6 +25,7 @@ from .datagen_constants import RANDOM_SEED_FIXED, RANDOM_SEED_HASH_FIELD_NAME, R
 from .daterange import DateRange
 from .distributions import Normal, DataDistribution
 from .nrange import NRange
+from .serialization import SerializableToDict
 from .text_generators import TemplateGenerator
 from .utils import ensure, coalesce_values
 from .schema_parser import SchemaParser
@@ -40,7 +41,7 @@ COMPUTE_METHOD_VALID_VALUES = [HASH_COMPUTE_METHOD,
                                RAW_VALUES_COMPUTE_METHOD]
 
 
-class ColumnGenerationSpec(object):
+class ColumnGenerationSpec(SerializableToDict):
     """ Column generation spec object - specifies how column is to be generated
 
     Each column to be output will have a corresponding ColumnGenerationSpec object.
@@ -81,6 +82,8 @@ class ColumnGenerationSpec(object):
     For full list of options, see :doc:`/reference/api/dbldatagen.column_spec_options`.
     """
 
+    datatype: DataType
+
     #: maxValue values for each column type, only if where value is intentionally restricted
     _max_type_range = {
         'byte': 256,
@@ -94,7 +97,7 @@ class ColumnGenerationSpec(object):
     # restrict spurious messages from java gateway
     logging.getLogger("py4j").setLevel(logging.WARNING)
 
-    def __init__(self, name, colType=None, minValue=0, maxValue=None, step=1, prefix='', random=False,
+    def __init__(self, name, colType=None, *, minValue=0, maxValue=None, step=1, prefix='', random=False,
                  distribution=None, baseColumn=None, randomSeed=None, randomSeedMethod=None,
                  implicit=False, omit=False, nullable=True, debug=False, verbose=False,
                  seedColumnName=DEFAULT_SEED_COLUMN,
@@ -119,7 +122,7 @@ class ColumnGenerationSpec(object):
             if EXPR_OPTION not in kwargs:
                 raise ValueError("Column generation spec must have `expr` attribute specified if datatype is inferred")
 
-        elif type(colType) == str:
+        elif isinstance(colType, str):
             colType = SchemaParser.columnTypeFromString(colType)
 
         assert isinstance(colType, DataType), f"colType `{colType}` is not instance of DataType"
@@ -299,6 +302,21 @@ class ColumnGenerationSpec(object):
         # set up the temporary columns needed for data generation
         self._setupTemporaryColumns()
 
+    def _toInitializationDict(self):
+        """ Converts an object to a Python dictionary. Keys represent the object's
+            constructor arguments.
+            :return: Python dictionary representation of the object
+        """
+        _options = self._csOptions.options.copy()
+        _options["colName"] = _options.pop("name", self.name)
+        _options["colType"] = _options.pop("type", self.datatype).simpleString()
+        _options["kind"] = self.__class__.__name__
+        return {
+            k: v._toInitializationDict()
+            if isinstance(v, SerializableToDict) else v
+            for k, v in _options.items() if v is not None
+        }
+
     def _temporaryRename(self, tmpName):
         """ Create enter / exit object to support temporary renaming of column spec
 
@@ -451,7 +469,7 @@ class ColumnGenerationSpec(object):
         assert type(columnDatatypes) is list, " `column_datatypes` parameter must be list"
         ensure(len(columnDatatypes) == len(self.baseColumns),
                "number of base column datatypes must match number of  base columns")
-        self._baseColumnDatatypes = [].append(columnDatatypes)
+        self._baseColumnDatatypes = columnDatatypes.copy()
 
     def _setupTemporaryColumns(self):
         """ Set up any temporary columns needed for test data generation.
@@ -513,18 +531,22 @@ class ColumnGenerationSpec(object):
         else:
             self.logger.setLevel(logging.WARNING)
 
-    def _computeAdjustedRangeForColumn(self, colType, c_min, c_max, c_step, c_begin, c_end, c_interval, c_range,
+    def _computeAdjustedRangeForColumn(self, colType, c_min, c_max, c_step, *, c_begin, c_end, c_interval, c_range,
                                        c_unique):
         """Determine adjusted range for data column
         """
         assert colType is not None, "`colType` must be non-None instance"
 
         if type(colType) is DateType or type(colType) is TimestampType:
-            return self._computeAdjustedDateTimeRangeForColumn(colType, c_begin, c_end, c_interval, c_range, c_unique)
+            return self._computeAdjustedDateTimeRangeForColumn(colType, c_begin, c_end, c_interval,
+                                                               c_range=c_range,
+                                                               c_unique=c_unique)
         else:
-            return self._computeAdjustedNumericRangeForColumn(colType, c_min, c_max, c_step, c_range, c_unique)
+            return self._computeAdjustedNumericRangeForColumn(colType, c_min, c_max, c_step,
+                                                              c_range=c_range,
+                                                              c_unique=c_unique)
 
-    def _computeAdjustedNumericRangeForColumn(self, colType, c_min, c_max, c_step, c_range, c_unique):
+    def _computeAdjustedNumericRangeForColumn(self, colType, c_min, c_max, c_step, *, c_range, c_unique):
         """Determine adjusted range for data column
 
         Rules:
@@ -573,7 +595,7 @@ class ColumnGenerationSpec(object):
 
         return result
 
-    def _computeAdjustedDateTimeRangeForColumn(self, colType, c_begin, c_end, c_interval, c_range, c_unique):
+    def _computeAdjustedDateTimeRangeForColumn(self, colType, c_begin, c_end, c_interval, *, c_range, c_unique):
         """Determine adjusted range for Date or Timestamp data column
         """
         effective_begin, effective_end, effective_interval = None, None, None
@@ -640,7 +662,7 @@ class ColumnGenerationSpec(object):
         else:
             return "rand()"
 
-    def _getScaledIntSQLExpression(self, col_name, scale, base_columns, base_datatypes=None, compute_method=None,
+    def _getScaledIntSQLExpression(self, col_name, scale, base_columns, *, base_datatypes=None, compute_method=None,
                                    normalize=False):
         """ Get scaled numeric expression
 
@@ -923,7 +945,7 @@ class ColumnGenerationSpec(object):
                 else:
                     return col(base_column[0])
             elif self._baseColumnComputeMethod == VALUES_COMPUTE_METHOD:
-                base_values = [f"string(ifnull(`{x}`, 'null'))" for x in base_column]
+                base_values = [f"string(ifnull(`{x}`, cast(null as string)))" for x in base_column]
                 return expr(f"array({','.join(base_values)})")
             else:
                 return expr(f"hash({','.join(base_column)})")

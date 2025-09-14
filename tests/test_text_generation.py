@@ -73,7 +73,9 @@ class TestTextGeneration:
                                  (r'\n.\n.\n.\n', False, 15, None, True),
                                  (r'\n.\n.\n.\n', False, 15, -1, True),
                              ])
-    def test_random_number_generator(self, template, escapeSpecial, low, high, useSystemLib):
+    def test_random_number_generator(self, template, escapeSpecial, low, high, useSystemLib):  \
+            # pylint: disable=too-many-positional-arguments
+
         """ As the test coverage tools dont detect code only used in UDFs,
             lets add some explicit tests for the underlying code"""
         test_template = TemplateGenerator(template, escapeSpecialChars=escapeSpecial)

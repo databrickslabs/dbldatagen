@@ -7,6 +7,23 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 
 #### Fixed 
 * Updated build scripts to use Ubuntu 22.04 to correspond to environment in Databricks runtime
+* Refactored `DataAnalyzer` and `BasicStockTickerProvider` to comply with ANSI SQL standards
+* Removed internal modification of `SparkSession`
+
+#### Changed
+* Changed base Databricks runtime version to DBR 13.3 LTS (based on Apache Spark 3.4.1) - minimum supported version
+  of Python is now 3.10.12
+* Updated build tooling to use [hatch](https://hatch.pypa.io/latest/)
+* Moved dependencies and tool configuration to [pyproject.toml](pyproject.toml)
+* Removed dependencies provided by the Databricks Runtime
+* Updated Git actions
+* Updated [makefile](makefile)
+* Updated [CONTRIBUTING.md](CONTRIBUTING.md)
+
+#### Added
+* Added support for serialization to/from JSON format
+* Added Ruff and mypy tooling
+
 
 ### Version 0.4.0 Hotfix 2
 

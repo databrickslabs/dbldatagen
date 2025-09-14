@@ -6,6 +6,7 @@
 This module defines the Positive class
 """
 from .constraint import Constraint, NoFilterMixin
+from ..serialization import SerializableToDict
 
 
 class UniqueCombinations(NoFilterMixin, Constraint):
@@ -44,6 +45,18 @@ class UniqueCombinations(NoFilterMixin, Constraint):
             self._columns = self._columnsFromListOrString(columns)
         else:
             self._columns = None
+
+    def _toInitializationDict(self):
+        """ Converts an object to a Python dictionary. Keys represent the object's
+            constructor arguments.
+            :return: Python dictionary representation of the object
+        """
+        _options = {"kind": self.__class__.__name__, "columns": self._columns}
+        return {
+            k: v._toInitializationDict()
+            if isinstance(v, SerializableToDict) else v
+            for k, v in _options.items() if v is not None
+        }
 
     def prepareDataGenerator(self, dataGenerator):
         """ Prepare the data generator to generate data that matches the constraint

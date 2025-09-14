@@ -25,8 +25,10 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pyspark.sql.functions as F
 
+from ..serialization import SerializableToDict
 
-class DataDistribution(ABC):
+
+class DataDistribution(SerializableToDict, ABC):
     """ Base class for all distributions"""
 
     def __init__(self):

@@ -14,6 +14,8 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 
+from .serialization import SerializableToDict
+
 #: list of hex digits for template generation
 _HEX_LOWER = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
 
@@ -78,7 +80,7 @@ class TextGenerator(ABC):
         return f"TextGenerator(randomSeed={self._randomSeed})"
 
     def __eq__(self, other):
-        return type(self) == type(other) and self._randomSeed == other._randomSeed
+        return isinstance(self, type(other)) and self._randomSeed == other._randomSeed
 
     def withRandomSeed(self, seed):
         """ Set the random seed for the text generator
@@ -167,7 +169,7 @@ class TextGenerator(ABC):
         raise NotImplementedError("Subclasses should implement unique versions of `pandasGenerateText`")
 
 
-class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
+class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-equals]
     """This class handles the generation of text from templates
 
     :param template: template string to use in text generation
@@ -230,6 +232,8 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
         super().__init__()
 
         self._template = template
+        self._escapeSpecialChars = escapeSpecialChars
+        self._extendedWordList = extendedWordList
         self._escapeSpecialMeaning = bool(escapeSpecialChars)
         self._templates = self._splitTemplates(self._template)
         self._wordList = np.array(extendedWordList if extendedWordList is not None else _WORDS_LOWER)
@@ -265,7 +269,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
             assert v is not None and isinstance(v, tuple) and len(v) == 2, "value must be tuple of length 2"
             mapping_length, mappings = v
             assert isinstance(mapping_length, int), "mapping length must be of type int"
-            assert isinstance(mappings, (list, np.ndarray)),\
+            assert isinstance(mappings, (list, np.ndarray)), \
                 "mappings are lists or numpy arrays"
             assert mapping_length == 0 or len(mappings) == mapping_length, "mappings must match mapping_length"
 
@@ -282,7 +286,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
             assert v is not None and isinstance(v, tuple) and len(v) == 2, "value must be tuple of length 2"
             mapping_length, mappings = v
             assert isinstance(mapping_length, int), "mapping length must be of type int"
-            assert mappings is None or isinstance(mappings, (list, np.ndarray)),\
+            assert mappings is None or isinstance(mappings, (list, np.ndarray)), \
                 "mappings are lists or numpy arrays"
 
             # for escaped mappings, the mapping can be None in which case the mapping is to the number itself
@@ -302,6 +306,23 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
 
     def __repr__(self):
         return f"TemplateGenerator(template='{self._template}')"
+
+    def _toInitializationDict(self):
+        """ Converts an object to a Python dictionary. Keys represent the object's
+            constructor arguments.
+            :return: Python dictionary representation of the object
+        """
+        _options = {
+            "kind": self.__class__.__name__,
+            "template": self._template,
+            "escapeSpecialChars": self._escapeSpecialChars,
+            "extendedWordList": self._extendedWordList
+        }
+        return {
+            k: v._toInitializationDict()
+            if isinstance(v, SerializableToDict) else v
+            for k, v in _options.items() if v is not None
+        }
 
     def _splitTemplates(self, templateStr):
         """ Split template string into individual template strings
@@ -413,7 +434,8 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
 
         return num_placeholders, retval
 
-    def _applyTemplateStringsForTemplate(self, baseValue, genTemplate, placeholders, rnds, escapeSpecialMeaning=False):
+    def _applyTemplateStringsForTemplate(self, baseValue, genTemplate, placeholders, rnds, *,
+                                         escapeSpecialMeaning=False):
         """ Vectorized implementation of template driven text substitution
 
          Apply substitutions to placeholders using random numbers
@@ -667,7 +689,7 @@ class TemplateGenerator(TextGenerator):  # lgtm [py/missing-equals]
         return results
 
 
-class ILText(TextGenerator):  # lgtm [py/missing-equals]
+class ILText(TextGenerator, SerializableToDict):  # lgtm [py/missing-equals]
     """ Class to generate Ipsum Lorem text paragraphs, words and sentences
 
     :param paragraphs: Number of paragraphs to generate. If tuple will generate random number in range
@@ -685,6 +707,11 @@ class ILText(TextGenerator):  # lgtm [py/missing-equals]
 
         super().__init__()
 
+        self._paragraphs = paragraphs
+        self._sentences = sentences
+        self._words = words
+        self._extendedWordList = extendedWordList
+
         self.paragraphs = self.getAsTupleOrElse(paragraphs, (1, 1), "paragraphs")
         self.words = self.getAsTupleOrElse(words, (2, 12), "words")
         self.sentences = self.getAsTupleOrElse(sentences, (1, 1), "sentences")
@@ -697,6 +724,24 @@ class ILText(TextGenerator):  # lgtm [py/missing-equals]
 
         self._processStats()
         self._processWordList()
+
+    def _toInitializationDict(self):
+        """ Converts an object to a Python dictionary. Keys represent the object's
+            constructor arguments.
+            :return: Python dictionary representation of the object
+        """
+        _options = {
+            "kind": self.__class__.__name__,
+            "paragraphs": self._paragraphs,
+            "sentences": self._sentences,
+            "words": self._words,
+            "extendedWordList": self._extendedWordList
+        }
+        return {
+            k: v._toInitializationDict()
+            if isinstance(v, SerializableToDict) else v
+            for k, v in _options.items() if v is not None
+        }
 
     def _processStats(self):
         """ Compute the stats needed for the text generation """
@@ -768,9 +813,10 @@ class ILText(TextGenerator):  # lgtm [py/missing-equals]
         stats_shape = [rowCount, self.paragraphs[1], self.sentences[1], 3]
 
         # determine counts of paragraphs, sentences and words
-        stats_array = np.empty(stats_shape, dtype=self._textGenerationValues.dtype)
         para_stats_raw = np.round(rng.normal(self._meanValues, self._stdVals2, size=stats_shape))
-        para_stats = np.clip(para_stats_raw, self._minValues, self._maxValues, out=stats_array)
+        para_stats = np.clip(para_stats_raw, self._minValues, self._maxValues)
+        # Convert to the compact dtype after clipping
+        para_stats = para_stats.astype(self._textGenerationValues.dtype)
 
         # replicate paragraphs and sentences from first row of each paragraph through other elememnts
         # this is used to efficiently create mask for manipulating word offsets
@@ -814,8 +860,11 @@ class ILText(TextGenerator):  # lgtm [py/missing-equals]
 
         # hardening a mask prevents masked values from being changed
         np.ma.harden_mask(masked_offsets)
-        masked_offsets[:, :, :, 0] = masked_offsets[:, :, :, 0] + self._startOfCapitalsOffset
-        masked_offsets[:, :, :, 1:] = masked_offsets[:, :, :, 1:] + self._startOfSpacedWordsOffset
+        # Cast offsets to the same dtype as the array to avoid casting errors
+        capitals_offset = self._wordOffsetType.type(self._startOfCapitalsOffset)
+        spaced_words_offset = self._wordOffsetType.type(self._startOfSpacedWordsOffset)
+        masked_offsets[:, :, :, 0] = masked_offsets[:, :, :, 0] + capitals_offset
+        masked_offsets[:, :, :, 1:] = masked_offsets[:, :, :, 1:] + spaced_words_offset
         np.ma.soften_mask(masked_offsets)
 
         # add period to every sentence
@@ -825,7 +874,8 @@ class ILText(TextGenerator):  # lgtm [py/missing-equals]
         new_col = new_word_offsets[:, :, :, np.newaxis]
         terminated_word_offsets = np.ma.concatenate((masked_offsets, new_col), axis=3)
         new_column = terminated_word_offsets[:, :, :, -1]
-        new_column[~new_column.mask] = self._sentenceEndOffset
+        sentence_end_offset = self._wordOffsetType.type(self._sentenceEndOffset)
+        new_column[~new_column.mask] = sentence_end_offset
 
         # reshape to paragraphs
         shape = terminated_word_offsets.shape
@@ -842,7 +892,8 @@ class ILText(TextGenerator):  # lgtm [py/missing-equals]
             # set the paragraph end marker on all paragraphs except last
             # new_masked_elements = terminated_paragraph_offsets[:,:,-1]
             new_column = terminated_paragraph_offsets[:, :, -1]
-            new_column[~new_column.mask] = self._paragraphEnd
+            paragraph_end_offset = self._wordOffsetType.type(self._paragraphEnd)
+            new_column[~new_column.mask] = paragraph_end_offset
         else:
             terminated_paragraph_offsets = paragraph_offsets
 
@@ -851,7 +902,8 @@ class ILText(TextGenerator):  # lgtm [py/missing-equals]
         shape = terminated_paragraph_offsets.shape
         terminated_paragraph_offsets = terminated_paragraph_offsets.reshape((rowCount, shape[1] * shape[2]))
 
-        final_data = terminated_paragraph_offsets.filled(fill_value=self._emptyStringOffset)
+        empty_string_offset = self._wordOffsetType.type(self._emptyStringOffset)
+        final_data = terminated_paragraph_offsets.filled(fill_value=empty_string_offset)
 
         # its faster to manipulate text in data frames as numpy strings are fixed length
         all_python_words = self._wordsAsPythonStrings

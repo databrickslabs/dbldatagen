@@ -1,6 +1,6 @@
 import logging
-import pytest
 
+import pytest
 from pyspark.sql import functions as F
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType
 
@@ -146,7 +146,9 @@ class TestBasicOperation:
                                IntegerType(),
                                {'uniqueValues': 5000, 'random': True})
                               ])
-    def test_seed_column_nocollision(self, caseName, withIdOutput, idType, additionalOptions, caplog):
+    def test_seed_column_nocollision(self, caseName, withIdOutput, idType, additionalOptions, caplog):  \
+            # pylint: disable=too-many-positional-arguments
+
         logging.info(f"case: {caseName}")
 
         # caplog fixture captures log content
@@ -189,7 +191,9 @@ class TestBasicOperation:
                               ("with no Id output _id float", False, FloatType(), "_id"),
                               ("with no Id output _id int", False, IntegerType(), "_id"),
                               ])
-    def test_seed_column_expected_collision1(self, caseName, withIdOutput, idType, idName, caplog):
+    def test_seed_column_expected_collision1(self, caseName, withIdOutput, idType, idName, caplog):  \
+            # pylint: disable=too-many-positional-arguments
+
         logging.info(f"case: {caseName}")
 
         # caplog fixture captures log content
@@ -530,5 +534,5 @@ class TestBasicOperation:
         lib_version = dg.__version__
 
         assert lib_version is not None
-        assert type(lib_version) == str, "__version__ is expected to be a string"
+        assert isinstance(lib_version, str), "__version__ is expected to be a string"
         assert len(lib_version.strip()) > 0, "__version__ is expected to be non-empty"

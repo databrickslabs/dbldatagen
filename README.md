@@ -83,23 +83,26 @@ The documentation [installation notes](https://databrickslabs.github.io/dbldatag
 contains details of installation using alternative mechanisms.
 
 ## Compatibility 
-The Databricks Labs Data Generator framework can be used with Pyspark 3.1.2 and Python 3.8 or later. These are 
-compatible with the Databricks runtime 10.4 LTS and later releases. For full Unity Catalog support, 
-we recommend using Databricks runtime 13.2 or later (Databricks 13.3 LTS or above preferred)
+The Databricks Labs Data Generator framework can be used with Pyspark 3.4.1 and Python 3.10.12 or later. These are 
+compatible with the Databricks runtime 13.3 LTS and later releases. This version also provides Unity Catalog
+compatibily.
 
 For full library compatibility for a specific Databricks Spark release, see the Databricks 
 release notes for library compatibility
 
 - https://docs.databricks.com/release-notes/runtime/releases.html
 
-When using the Databricks Labs Data Generator on "Unity Catalog" enabled Databricks environments, 
+In older releases, when using the Databricks Labs Data Generator on "Unity Catalog" enabled Databricks environments, 
 the Data Generator requires the use of `Single User` or `No Isolation Shared` access modes when using Databricks 
 runtimes prior to release 13.2. This is because some needed features are not available in `Shared` 
 mode (for example, use of 3rd party libraries, use of Python UDFs) in these releases. 
-Depending on settings, the `Custom` access mode may be supported.
+Depending on settings, the `Custom` access mode may be supported for those releases.
 
 The use of Unity Catalog `Shared` access mode is supported in Databricks runtimes from Databricks runtime release 13.2
-onwards.
+onwards. 
+
+*This version of the data generator uses the Databricks runtime 13.3 LTS as the minimum supported 
+version and alleviates these issues.*
 
 See the following documentation for more information:
 
@@ -155,7 +158,7 @@ The GitHub repository also contains further examples in the examples directory.
 
 ## Spark and Databricks Runtime Compatibility
 The `dbldatagen` package is intended to be compatible with recent LTS versions of the Databricks runtime, including 
-older LTS versions at least from 10.4 LTS and later. It also aims to be compatible with Delta Live Table runtimes, 
+older LTS versions at least from 13.3 LTS and later. It also aims to be compatible with Delta Live Table runtimes, 
 including `current` and `preview`. 
 
 While we don't specifically drop support for older runtimes, changes in Pyspark APIs or
@@ -165,8 +168,7 @@ runtimes.
 By design, installing `dbldatagen` does not install releases of dependent packages in order 
 to preserve the curated set of packages pre-installed in any Databricks runtime environment.
 
-When building on local environments, the build process uses the `Pipfile` and requirements files to determine 
-the package versions for releases and unit tests. 
+When building on local environments, run `make dev` to install required dependencies.
 
 ## Project Support
 Please note that all projects released under [`Databricks Labs`](https://www.databricks.com/learn/labs)
