@@ -1,9 +1,11 @@
-from typing import ClassVar
+import warnings as w
+from typing import Any, ClassVar
+
 from pyspark.sql import SparkSession
 
+import dbldatagen as dg
 from dbldatagen.data_generator import DataGenerator
-
-from .dataset_provider import DatasetProvider, dataset_definition
+from dbldatagen.datasets.dataset_provider import DatasetProvider, dataset_definition
 
 
 @dataset_definition(name="basic/telematics",
@@ -60,11 +62,7 @@ class BasicTelematicsProvider(DatasetProvider.NoAssociatedDatasetsMixin, Dataset
     ]
 
     @DatasetProvider.allowed_options(options=ALLOWED_OPTIONS)
-    def getTableGenerator(self, sparkSession: SparkSession, *, tableName: str|None=None, rows: int=-1, partitions: int=-1, **options: object) -> DataGenerator:
-        # ruff: noqa: I001
-        import warnings as w # noqa: PLC0415
-
-        import dbldatagen as dg # noqa: PLC0415
+    def getTableGenerator(self, sparkSession: SparkSession, *, tableName: str|None=None, rows: int=-1, partitions: int=-1, **options: dict[str, Any]) -> DataGenerator:
 
         generateRandom = options.get("random", False)
         numDevices = options.get("numDevices", self.DEFAULT_NUM_DEVICES)

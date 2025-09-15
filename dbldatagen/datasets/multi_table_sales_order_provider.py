@@ -1,8 +1,11 @@
-from pyspark.sql import SparkSession
+from typing import Any
 
+import pyspark.sql.functions as F
+from pyspark.sql import DataFrame, SparkSession
+
+import dbldatagen as dg
 from dbldatagen.data_generator import DataGenerator
-
-from .dataset_provider import DatasetProvider, dataset_definition
+from dbldatagen.datasets.dataset_provider import DatasetProvider, dataset_definition
 
 
 @dataset_definition(name="multi_table/sales_order", summary="Multi-table sales order dataset", supportsStreaming=True,
@@ -65,7 +68,7 @@ class MultiTableSalesOrderProvider(DatasetProvider):
     INVOICE_MIN_VALUE = 1_000_000
 
     def getCustomers(self, sparkSession: SparkSession, *, rows: int, partitions: int, numCustomers: int, dummyValues: int) -> DataGenerator:
-        import dbldatagen as dg # noqa: PLC0415
+        import dbldatagen as dg  # noqa: PLC0415
 
         # Validate the options:
         if numCustomers is None or numCustomers < 0:
@@ -106,7 +109,7 @@ class MultiTableSalesOrderProvider(DatasetProvider):
         return customers_data_spec
 
     def getCarriers(self, sparkSession: SparkSession, *, rows: int, partitions: int, numCarriers: int, dummyValues: int) -> DataGenerator:
-        import dbldatagen as dg # noqa: PLC0415
+        import dbldatagen as dg  # noqa: PLC0415
 
         # Validate the options:
         if numCarriers is None or numCarriers < 0:
@@ -143,7 +146,7 @@ class MultiTableSalesOrderProvider(DatasetProvider):
         return carriers_data_spec
 
     def getCatalogItems(self, sparkSession: SparkSession, *, rows: int, partitions: int, numCatalogItems: int, dummyValues: int) -> DataGenerator:
-        import dbldatagen as dg # noqa: PLC0415
+        import dbldatagen as dg  # noqa: PLC0415
 
         # Validate the options:
         if numCatalogItems is None or numCatalogItems < 0:
@@ -184,7 +187,7 @@ class MultiTableSalesOrderProvider(DatasetProvider):
 
     def getBaseOrders(self, sparkSession: SparkSession, *, rows: int, partitions: int, numOrders: int, numCustomers: int, startDate: str,
                       endDate: str, dummyValues: int) -> DataGenerator:
-        import dbldatagen as dg # noqa: PLC0415
+        import dbldatagen as dg  # noqa: PLC0415
 
         # Validate the options:
         if numOrders is None or numOrders < 0:
@@ -231,7 +234,7 @@ class MultiTableSalesOrderProvider(DatasetProvider):
 
     def getBaseOrderLineItems(self, sparkSession: SparkSession, *, rows: int, partitions: int, numOrders: int, numCatalogItems: int,
                               lineItemsPerOrder: int, dummyValues: int) -> DataGenerator:
-        import dbldatagen as dg # noqa: PLC0415
+        import dbldatagen as dg  # noqa: PLC0415
 
         # Validate the options:
         if numOrders is None or numOrders < 0:
@@ -268,9 +271,6 @@ class MultiTableSalesOrderProvider(DatasetProvider):
         return base_order_line_items_data_spec
 
     def getBaseOrderShipments(self, sparkSession: SparkSession, *, rows: int, partitions: int, numOrders: int, numCarriers: int, dummyValues: int) -> DataGenerator:
-        # ruff: noqa: I001
-        import dbldatagen as dg # noqa: PLC0415
-
         # Validate the options:
         if numOrders is None or numOrders < 0:
             numOrders = self.DEFAULT_NUM_ORDERS
@@ -311,10 +311,6 @@ class MultiTableSalesOrderProvider(DatasetProvider):
         return base_order_shipments_data_spec
 
     def getBaseInvoices(self, sparkSession: SparkSession, *, rows: int, partitions: int, numOrders: int, dummyValues: int) -> DataGenerator:
-        # ruff: noqa: I001
-        import dbldatagen as dg # noqa: PLC0415
-
-
         # Validate the options:
         if numOrders is None or numOrders < 0:
             numOrders = self.DEFAULT_NUM_ORDERS
@@ -354,7 +350,7 @@ class MultiTableSalesOrderProvider(DatasetProvider):
 
     @DatasetProvider.allowed_options(options=["numCustomers", "numCarriers", "numCatalogItems", "numOrders",
                                               "lineItemsPerOrder", "startDate", "endDate", "dummyValues"])
-    def getTableGenerator(self, sparkSession: SparkSession, *, tableName: str|None=None, rows: int=-1, partitions: int=-1, **options: object) -> DataGenerator:
+    def getTableGenerator(self, sparkSession: SparkSession, *, tableName: str|None=None, rows: int=-1, partitions: int=-1, **options: dict[str, Any]) -> DataGenerator:
         # Get the option values:
         numCustomers = options.get("numCustomers", self.DEFAULT_NUM_CUSTOMERS)
         numCarriers = options.get("numCarriers", self.DEFAULT_NUM_CARRIERS)
@@ -443,11 +439,7 @@ class MultiTableSalesOrderProvider(DatasetProvider):
         "baseOrderShipments",
         "baseInvoices"
     ])
-    def getAssociatedDataset(self, sparkSession: SparkSession, *, tableName: str|None=None, rows: int=-1, partitions: int=-1, **options: object) -> DataGenerator:
-        # ruff: noqa: I001
-        from pyspark.sql import DataFrame # noqa: PLC0415
-        import pyspark.sql.functions as F  # noqa: PLC0415
-
+    def getAssociatedDataset(self, sparkSession: SparkSession, *, tableName: str|None=None, rows: int=-1, partitions: int=-1, **options: dict[str, Any]) -> DataGenerator:
         dfCustomers = options.get("customers")
         assert dfCustomers is not None and issubclass(type(dfCustomers), DataFrame), \
             "Option `customers` should be a dataframe of customer records"

@@ -1,8 +1,10 @@
+from typing import Any
+
 from pyspark.sql import SparkSession
 
+import dbldatagen as dg
 from dbldatagen.data_generator import DataGenerator
-
-from .dataset_provider import DatasetProvider, dataset_definition
+from dbldatagen.datasets.dataset_provider import DatasetProvider, dataset_definition
 
 
 @dataset_definition(name="basic/user", summary="Basic User Data Set", autoRegister=True, supportsStreaming=True)
@@ -31,10 +33,7 @@ class BasicUserProvider(DatasetProvider.NoAssociatedDatasetsMixin, DatasetProvid
     COLUMN_COUNT = 5
 
     @DatasetProvider.allowed_options(options=["random", "dummyValues"])
-    def getTableGenerator(self, sparkSession: SparkSession, *, tableName: str|None=None, rows: int=-1, partitions: int=-1, **options: object) -> DataGenerator:
-        # ruff: noqa: I001
-        import dbldatagen as dg # noqa: PLC0415
-
+    def getTableGenerator(self, sparkSession: SparkSession, *, tableName: str|None=None, rows: int=-1, partitions: int=-1, **options: dict[str, Any]) -> DataGenerator:
         generateRandom = options.get("random", False)
         dummyValues = options.get("dummyValues", 0)
 

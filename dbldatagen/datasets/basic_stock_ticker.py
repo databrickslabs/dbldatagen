@@ -1,11 +1,11 @@
-from typing import ClassVar
 from random import random
+from typing import ClassVar
 
 from pyspark.sql import SparkSession
 
+import dbldatagen as dg
 from dbldatagen.data_generator import DataGenerator
-
-from .dataset_provider import DatasetProvider, dataset_definition
+from dbldatagen.datasets.dataset_provider import DatasetProvider, dataset_definition
 
 
 @dataset_definition(name="basic/stock_ticker",
@@ -43,8 +43,6 @@ class BasicStockTickerProvider(DatasetProvider.NoAssociatedDatasetsMixin, Datase
 
     @DatasetProvider.allowed_options(options=ALLOWED_OPTIONS)
     def getTableGenerator(self, sparkSession: SparkSession, *, tableName: str|None=None, rows: int=-1, partitions: int=-1, **options: object) -> DataGenerator:
-        # ruff: noqa: I001
-        import dbldatagen as dg # noqa: PLC0415
 
         numSymbols = options.get("numSymbols", self.DEFAULT_NUM_SYMBOLS)
         startDate = options.get("startDate", self.DEFAULT_START_DATE)

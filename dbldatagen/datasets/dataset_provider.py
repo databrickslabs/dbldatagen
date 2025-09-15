@@ -187,7 +187,7 @@ class DatasetProvider(ABC):
         return cls._registeredDatasetsVersion
 
     @abstractmethod
-    def getTableGenerator(self, sparkSession: SparkSession, *, tableName: str|None=None, rows: int=-1, partitions: int=-1, **options: object) -> DataGenerator:
+    def getTableGenerator(self, sparkSession: SparkSession, *, tableName: str|None=None, rows: int=-1, partitions: int=-1, **options: dict[str, Any]) -> DataGenerator:
         """Gets data generation instance that will produce table for named table
 
         :param sparkSession: Spark session to use
@@ -207,7 +207,7 @@ class DatasetProvider(ABC):
 
     @abstractmethod
     def getAssociatedDataset(self, sparkSession: SparkSession, *, tableName: str|None=None, rows: int=-1, partitions: int=-1,
-                             **options: object) -> DataGenerator:
+                             **options: dict[str, Any]) -> DataGenerator:
         """
         Gets associated datasets that are used in conjunction with the provider datasets.
         These may be associated lookup tables, tables that execute benchmarks or exercise key features as part of
@@ -288,7 +288,7 @@ class DatasetProvider(ABC):
             any associated datasets
         """
         def getAssociatedDataset(self, sparkSession: SparkSession, *, tableName: str|None=None, rows: int=-1, partitions: int   =-1,
-                                 **options: object) -> DataGenerator:
+                                 **options: dict[str, Any]) -> DataGenerator:
             raise NotImplementedError("Data provider does not produce any associated datasets!")
 
     class DatasetDecoratorUtils:
@@ -381,7 +381,7 @@ class DatasetProvider(ABC):
             return retval
 
 
-def dataset_definition(cls: type|None =None, *args: Any, autoRegister: bool =False, **kwargs: Any) -> type:  # pylint: disable=keyword-arg-before-vararg # noqa: ANN401
+def dataset_definition(cls: type|None =None, *args: object, autoRegister: bool =False, **kwargs: object) -> type:
     """ decorator to define standard dataset definition
 
     This is intended to be applied classes derived from DatasetProvider to simplify the implementation
@@ -414,7 +414,7 @@ def dataset_definition(cls: type|None =None, *args: Any, autoRegister: bool =Fal
 
     """
 
-    def inner_wrapper(inner_cls: type|None =None, *inner_args: Any, **inner_kwargs) -> type:  # pylint: disable=keyword-arg-before-vararg # noqa: ANN401
+    def inner_wrapper(inner_cls: type|None =None, *inner_args: object, **inner_kwargs: object) -> type:
         """ The inner wrapper function is used to handle the case where the decorator is used with arguments.
         It defers the application of the decorator to the target class until the target class is available.
 
