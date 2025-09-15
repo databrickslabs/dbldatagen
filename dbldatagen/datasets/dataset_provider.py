@@ -254,7 +254,7 @@ class DatasetProvider(ABC):
 
         return decorator
 
-    def checkOptions(self, options: dict[str, Any], allowedOptions: list[str]) -> None:
+    def checkOptions(self, options: dict[str, Any], allowedOptions: list[str]) -> DatasetDefinition:
         """ Check that options are valid
 
         :param options: options to check as dict

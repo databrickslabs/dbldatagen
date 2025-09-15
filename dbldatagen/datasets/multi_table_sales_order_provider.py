@@ -68,8 +68,6 @@ class MultiTableSalesOrderProvider(DatasetProvider):
     INVOICE_MIN_VALUE = 1_000_000
 
     def getCustomers(self, sparkSession: SparkSession, *, rows: int, partitions: int, numCustomers: int, dummyValues: int) -> DataGenerator:
-        import dbldatagen as dg  # noqa: PLC0415
-
         # Validate the options:
         if numCustomers is None or numCustomers < 0:
             numCustomers = self.DEFAULT_NUM_CUSTOMERS
@@ -109,8 +107,6 @@ class MultiTableSalesOrderProvider(DatasetProvider):
         return customers_data_spec
 
     def getCarriers(self, sparkSession: SparkSession, *, rows: int, partitions: int, numCarriers: int, dummyValues: int) -> DataGenerator:
-        import dbldatagen as dg  # noqa: PLC0415
-
         # Validate the options:
         if numCarriers is None or numCarriers < 0:
             numCarriers = self.DEFAULT_NUM_CARRIERS
@@ -146,9 +142,6 @@ class MultiTableSalesOrderProvider(DatasetProvider):
         return carriers_data_spec
 
     def getCatalogItems(self, sparkSession: SparkSession, *, rows: int, partitions: int, numCatalogItems: int, dummyValues: int) -> DataGenerator:
-        import dbldatagen as dg  # noqa: PLC0415
-
-        # Validate the options:
         if numCatalogItems is None or numCatalogItems < 0:
             numCatalogItems = self.DEFAULT_NUM_CATALOG_ITEMS
         if rows is None or rows < 0:
@@ -187,8 +180,6 @@ class MultiTableSalesOrderProvider(DatasetProvider):
 
     def getBaseOrders(self, sparkSession: SparkSession, *, rows: int, partitions: int, numOrders: int, numCustomers: int, startDate: str,
                       endDate: str, dummyValues: int) -> DataGenerator:
-        import dbldatagen as dg  # noqa: PLC0415
-
         # Validate the options:
         if numOrders is None or numOrders < 0:
             numOrders = self.DEFAULT_NUM_ORDERS
@@ -234,9 +225,6 @@ class MultiTableSalesOrderProvider(DatasetProvider):
 
     def getBaseOrderLineItems(self, sparkSession: SparkSession, *, rows: int, partitions: int, numOrders: int, numCatalogItems: int,
                               lineItemsPerOrder: int, dummyValues: int) -> DataGenerator:
-        import dbldatagen as dg  # noqa: PLC0415
-
-        # Validate the options:
         if numOrders is None or numOrders < 0:
             numOrders = self.DEFAULT_NUM_ORDERS
         if numCatalogItems is None or numCatalogItems < 0:

@@ -1,10 +1,11 @@
 from typing import Any
-from pyspark.sql import SparkSession
 
-from dbldatagen.data_generator import DataGenerator
+import pyspark.sql.functions as F
+from pyspark.sql import DataFrame, SparkSession
 
-from dbldatagen.datasets.dataset_provider import DatasetProvider, dataset_definition
 import dbldatagen as dg
+from dbldatagen.data_generator import DataGenerator
+from dbldatagen.datasets.dataset_provider import DatasetProvider, dataset_definition
 
 
 @dataset_definition(name="multi_table/telephony", summary="Multi-table telephony dataset", supportsStreaming=True,
@@ -107,8 +108,6 @@ class MultiTableTelephonyProvider(DatasetProvider):
         return plan_dataspec
 
     def getCustomers(self, sparkSession: SparkSession, *, rows: int, partitions: int, generateRandom: bool, numCustomers: int, numPlans: int, dummyValues: int) -> DataGenerator:
-        import dbldatagen as dg # noqa: PLC0415
-
         if numCustomers is None or numCustomers < 0:
             numCustomers = self.DEFAULT_NUM_CUSTOMERS
 
@@ -149,7 +148,6 @@ class MultiTableTelephonyProvider(DatasetProvider):
 
     def getDeviceEvents(self, sparkSession: SparkSession, *, rows: int, partitions: int, generateRandom: bool, numCustomers: int, numDays: int, dummyValues: int,
                         averageEventsPerCustomer: int) -> DataGenerator:
-        import dbldatagen as dg # noqa: PLC0415
         MB_100 = 100 * 1000 * 1000
         K_1 = 1000
 
@@ -242,13 +240,9 @@ class MultiTableTelephonyProvider(DatasetProvider):
     @DatasetProvider.allowed_options(options=["plans", "customers", "deviceEvents"])
     def getAssociatedDataset(self, sparkSession: SparkSession, *, tableName: str|None=None, rows: int=-1, partitions: int=-1,
                              **options: dict[str, Any]) -> DataGenerator:
-        # ruff: noqa: I001
-        import pyspark.sql.functions as F #noqa: PLC0415
-        from pyspark.sql import DataFrame #noqa: PLC0415
 
         dfPlans = options.get("plans")
-        assert dfPlans is not None and issubclass(type(dfPlans), DataFrame), \
-            "Option `plans` should be a dataframe of plan records"
+        assert dfPlans is not None and issubclass(type(dfPlans), DataFrame), "Option `plans` should be a dataframe of plan records"
 
         dfCustomers = options.get("customers")
         assert dfCustomers is not None and issubclass(type(dfCustomers), DataFrame), \
