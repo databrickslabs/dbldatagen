@@ -88,6 +88,9 @@ class TextGenerator(ABC):
             return False
         return self._randomSeed == other._randomSeed
 
+    def __hash__(self) -> int:
+        return hash(self._randomSeed)
+
     def withRandomSeed(self, seed: int) -> "TextGenerator":
         """
         Sets the TextGenerator's random seed.
@@ -148,7 +151,7 @@ class TextGenerator(ABC):
             retval = np.dtype("B")
         else:
             # compute bytes required and raise to nearest power of 2
-            bytesRequired = int(math.ceil(bits_required / 8.0))
+            bytesRequired = math.ceil(bits_required / 8.0)
             retval = np.dtype(f"u{bytesRequired}")
         return retval
 
@@ -386,7 +389,7 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
         placeholders = np.full((v.shape[0], self._max_placeholders), "", dtype=np.object_)
 
         # prepare template selections, bounds, rnd values to drive application of algorithm
-        template_choices, template_rnd_bounds, template_rnds = self._prepare_random_bounds(v)
+        template_choices, _, template_rnds = self._prepare_random_bounds(v)
         template_choices_t = template_choices.T
 
         # create masked arrays, with all elements initially masked
@@ -516,7 +519,7 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
                 use_value = False
             elif (char in self._templateMappings) and (not escape) ^ escapeSpecialMeaning:
                 # handle case for ['a','A','k', 'K', 'x', 'X']
-                bound, mappingArr = self._templateMappings[char]
+                bound, _ = self._templateMappings[char]
                 retval.append(bound)
                 num_placeholders += 1
                 escape = False
@@ -655,7 +658,7 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
             elif char in regular_keys and (not escape) ^ escapeSpecialMeaning:
                 # note vectorized lookup - `rnds[:, rnd_offset]` will get vertical column of
                 # random numbers from `rnds` 2d array
-                bound, value_mappings = self._templateMappings[char]
+                _, value_mappings = self._templateMappings[char]
 
                 if unmasked_rows is not None:
                     placeholders[unmasked_rows, num_placeholders] = value_mappings[rnds[unmasked_rows, rnd_offset]]
@@ -841,7 +844,7 @@ class ILText(TextGenerator, SerializableToDict):  # lgtm [py/missing-equals]
         # for example - if number of good words is 3 and sentence is index array of [0, 1, 2, 3, 4, 5 ,6]
         # then mask is produced via conditions indices <= good_word
         # note value of True means masked for numpy
-        r, p, s, w = np.indices(output_shape)
+        _, p, s, w = np.indices(output_shape)
 
         good_words = para_stats[:, :, :, 2]
         good_paragraphs = para_stats[:, :, :, 0]
