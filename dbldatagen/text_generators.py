@@ -8,32 +8,35 @@ This file defines various text generation classes and methods
 
 import math
 import random
+from abc import ABC, abstractmethod
+from typing import Any
 
-import logging
 import numpy as np
+import numpy.random
 import pandas as pd
 
-from .serialization import SerializableToDict
+from dbldatagen.serialization import SerializableToDict
+
 
 #: list of hex digits for template generation
-_HEX_LOWER = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
+_HEX_LOWER = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f"]
 
 #: list of upper case hex digits for template generation
-_HEX_UPPER = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
+_HEX_UPPER = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
 
 #: list of non-zero digits for template generation
-_DIGITS_NON_ZERO = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+_DIGITS_NON_ZERO = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
 #: list of digits for template generation
-_DIGITS_ZERO = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+_DIGITS_ZERO = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
 #: list of uppercase letters for template generation
-_LETTERS_UPPER = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
-                  'Q', 'R', 'T', 'S', 'U', 'V', 'W', 'X', 'Y', 'Z']
+_LETTERS_UPPER = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P",
+                  "Q", "R", "T", "S", "U", "V", "W", "X", "Y", "Z"]
 
 #: list of lowercase letters for template generation
-_LETTERS_LOWER = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q',
-                  'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+_LETTERS_LOWER = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q",
+                  "r", "s", "t", "u", "v", "w", "x", "y", "z"]
 
 #: list of all letters uppercase and lowercase
 _LETTERS_ALL = _LETTERS_LOWER + _LETTERS_UPPER
@@ -45,61 +48,71 @@ _ALNUM_LOWER = _LETTERS_LOWER + _DIGITS_ZERO
 _ALNUM_UPPER = _LETTERS_UPPER + _DIGITS_ZERO
 
 """ words for ipsum lorem based text generation"""
-_WORDS_LOWER = ['lorem', 'ipsum', 'dolor', 'sit', 'amet', 'consectetur', 'adipiscing', 'elit', 'sed', 'do',
-                'eiusmod', 'tempor', 'incididunt', 'ut', 'labore', 'et', 'dolore', 'magna', 'aliqua', 'ut',
-                'enim', 'ad', 'minim', 'veniam', 'quis', 'nostrud', 'exercitation', 'ullamco', 'laboris',
-                'nisi', 'ut', 'aliquip', 'ex', 'ea', 'commodo', 'consequat', 'duis', 'aute', 'irure', 'dolor',
-                'in', 'reprehenderit', 'in', 'voluptate', 'velit', 'esse', 'cillum', 'dolore', 'eu', 'fugiat',
-                'nulla', 'pariatur', 'excepteur', 'sint', 'occaecat', 'cupidatat', 'non', 'proident', 'sunt',
-                'in', 'culpa', 'qui', 'officia', 'deserunt', 'mollit', 'anim', 'id', 'est', 'laborum']
+_WORDS_LOWER = ["lorem", "ipsum", "dolor", "sit", "amet", "consectetur", "adipiscing", "elit", "sed", "do",
+                "eiusmod", "tempor", "incididunt", "ut", "labore", "et", "dolore", "magna", "aliqua", "ut",
+                "enim", "ad", "minim", "veniam", "quis", "nostrud", "exercitation", "ullamco", "laboris",
+                "nisi", "ut", "aliquip", "ex", "ea", "commodo", "consequat", "duis", "aute", "irure", "dolor",
+                "in", "reprehenderit", "in", "voluptate", "velit", "esse", "cillum", "dolore", "eu", "fugiat",
+                "nulla", "pariatur", "excepteur", "sint", "occaecat", "cupidatat", "non", "proident", "sunt",
+                "in", "culpa", "qui", "officia", "deserunt", "mollit", "anim", "id", "est", "laborum"]
 
-_WORDS_UPPER = ['LOREM', 'IPSUM', 'DOLOR', 'SIT', 'AMET', 'CONSECTETUR', 'ADIPISCING', 'ELIT', 'SED', 'DO',
-                'EIUSMOD', 'TEMPOR', 'INCIDIDUNT', 'UT', 'LABORE', 'ET', 'DOLORE', 'MAGNA', 'ALIQUA', 'UT',
-                'ENIM', 'AD', 'MINIM', 'VENIAM', 'QUIS', 'NOSTRUD', 'EXERCITATION', 'ULLAMCO', 'LABORIS',
-                'NISI', 'UT', 'ALIQUIP', 'EX', 'EA', 'COMMODO', 'CONSEQUAT', 'DUIS', 'AUTE', 'IRURE',
-                'DOLOR', 'IN', 'REPREHENDERIT', 'IN', 'VOLUPTATE', 'VELIT', 'ESSE', 'CILLUM', 'DOLORE',
-                'EU', 'FUGIAT', 'NULLA', 'PARIATUR', 'EXCEPTEUR', 'SINT', 'OCCAECAT', 'CUPIDATAT', 'NON',
-                'PROIDENT', 'SUNT', 'IN', 'CULPA', 'QUI', 'OFFICIA', 'DESERUNT', 'MOLLIT', 'ANIM', 'ID', 'EST',
-                'LABORUM']
+_WORDS_UPPER = ["LOREM", "IPSUM", "DOLOR", "SIT", "AMET", "CONSECTETUR", "ADIPISCING", "ELIT", "SED", "DO",
+                "EIUSMOD", "TEMPOR", "INCIDIDUNT", "UT", "LABORE", "ET", "DOLORE", "MAGNA", "ALIQUA", "UT",
+                "ENIM", "AD", "MINIM", "VENIAM", "QUIS", "NOSTRUD", "EXERCITATION", "ULLAMCO", "LABORIS",
+                "NISI", "UT", "ALIQUIP", "EX", "EA", "COMMODO", "CONSEQUAT", "DUIS", "AUTE", "IRURE",
+                "DOLOR", "IN", "REPREHENDERIT", "IN", "VOLUPTATE", "VELIT", "ESSE", "CILLUM", "DOLORE",
+                "EU", "FUGIAT", "NULLA", "PARIATUR", "EXCEPTEUR", "SINT", "OCCAECAT", "CUPIDATAT", "NON",
+                "PROIDENT", "SUNT", "IN", "CULPA", "QUI", "OFFICIA", "DESERUNT", "MOLLIT", "ANIM", "ID", "EST",
+                "LABORUM"]
 
 
-class TextGenerator(object):
-    """ Base class for text generation classes
-
+class TextGenerator(ABC):
     """
+    Base class for all text generation classes.
+    """
+    _randomSeed: int
+    _rngInstance: numpy.random.Generator | None
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._randomSeed = 42
         self._rngInstance = None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"TextGenerator(randomSeed={self._randomSeed})"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"TextGenerator(randomSeed={self._randomSeed})"
 
-    def __eq__(self, other):
-        return isinstance(self, type(other)) and self._randomSeed == other._randomSeed
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, self.__class__):
+            return False
+        return self._randomSeed == other._randomSeed
 
-    def withRandomSeed(self, seed):
-        """ Set the random seed for the text generator
-
-        :param seed: seed value to set
-        :return: self
+    def withRandomSeed(self, seed: int) -> "TextGenerator":
         """
-        assert seed is None or type(seed) is int, "expecting an integer seed for Text Generator"
+        Sets the TextGenerator's random seed.
+
+        :param seed: Random seed value
+        :return: Text generator with the specified seed value
+        """
+        assert not seed or isinstance(seed, int), "expecting an integer seed for Text Generator"
         self._randomSeed = seed
         return self
 
     @property
-    def randomSeed(self):
-        """ Get random seed for text generator"""
+    def randomSeed(self) -> int:
+        """
+        Gets the TextGenerator's random seed.
+
+        :return: Random seed value
+        """
         return self._randomSeed
 
-    def getNPRandomGenerator(self, forceNewInstance=False):
-        """ Get numpy random number generator
+    def getNPRandomGenerator(self, forceNewInstance: bool = False) -> numpy.random.Generator:
+        """
+        Gets a NumPy random number generator.
 
-        :return: returns random number generator initialized from previously supplied random seed
+        :return: Random number generator initialized from previously supplied random seed.
         """
         assert self._randomSeed is None or type(self._randomSeed) in [int, np.int32, np.int64], \
             f"`random_seed` must be int or int-like not {type(self._randomSeed)}"
@@ -107,24 +120,24 @@ class TextGenerator(object):
         if self._rngInstance is not None and not forceNewInstance:
             return self._rngInstance
 
-        from numpy.random import default_rng
         if self._randomSeed is not None and self._randomSeed not in (-1, -1.0):
-            rng = default_rng(seed=self._randomSeed)
+            rng = numpy.random.default_rng(seed=self._randomSeed)
         else:
-            rng = default_rng()
+            rng = numpy.random.default_rng()
 
         if not forceNewInstance:
             self._rngInstance = rng
         return rng
 
     @staticmethod
-    def compactNumpyTypeForValues(listValues):
-        """ determine smallest numpy type to represent values
-
-        :param listValues: list or np.ndarray of values to get np.dtype for
-        :return: np.dtype that is most compact representation for values provided
+    def compactNumpyTypeForValues(listValues: list | numpy.ndarray) -> np.dtype:
         """
-        if type(listValues) is list:
+        Determines the smallest numpy type to represent the supplied values.
+
+        :param listValues: List or `np.ndarray` of values to get `np.dtype` for
+        :return: `np.dtype` that is most compact representation for values provided
+        """
+        if isinstance(listValues, list):
             max_value_represented = np.max(np.array(listValues).flatten())
         else:
             max_value_represented = np.max(listValues.flatten()) + 1
@@ -132,7 +145,7 @@ class TextGenerator(object):
 
         if bits_required <= 8:
             # for small values, use byte representation
-            retval = np.dtype('B')
+            retval = np.dtype("B")
         else:
             # compute bytes required and raise to nearest power of 2
             bytesRequired = int(math.ceil(bits_required / 8.0))
@@ -140,7 +153,11 @@ class TextGenerator(object):
         return retval
 
     @staticmethod
-    def getAsTupleOrElse(v, defaultValue, valueName):
+    def getAsTupleOrElse(
+            v: int | tuple[int, int] | None,
+            defaultValue: tuple[int, int],
+            valueName: str = "value"
+    ) -> tuple[int, int]:
         """ get value v as tuple or return default value
 
             :param v: value to test
@@ -148,29 +165,44 @@ class TextGenerator(object):
             :param valueName: name of value for debugging and logging purposes
             :returns: return `v` as tuple if not `None` or value of `default_v` if `v` is `None`. If `v` is a single
                       value, returns the tuple (`v`, `v`)"""
-        assert v is None or type(v) is int or type(v) is tuple, f"param {valueName} must be an int, a tuple or None"
-        assert type(defaultValue) is tuple and len(defaultValue) == 2, "default value must be tuple"
+        assert not v or isinstance(v, int | tuple), f"param {valueName} must be an int, a tuple or None"
+        assert isinstance(defaultValue, tuple) and len(defaultValue) == 2, "default value must be tuple"
 
-        if type(v) is int:
-            return v, v
-        elif type(v) is tuple:
-            assert len(v) == 2, "expecting tuple of length 2"
-            assert type(v[0]) is int and type(v[1]) is int, "expecting tuple with both elements as integers"
-            return v
-        else:
+        if not v:
             assert len(defaultValue) == 2, "must have list or iterable with lenght 2"
-            assert type(defaultValue[0]) is int and type(defaultValue[1]) is int, "all elements must be integers"
+            assert isinstance(defaultValue[0], int) and isinstance(defaultValue[1], int), \
+                "all elements must be integers"
+            return defaultValue
 
-        return defaultValue
+        if isinstance(v, tuple):
+            assert len(v) == 2, "expecting tuple of length 2"
+            assert isinstance(v[0], int) and isinstance(v[1], int), "expecting tuple with both elements as integers"
+            return v[0], v[1]
+
+        return v, v
+
+    @abstractmethod
+    def pandasGenerateText(self, v: pd.Series) -> pd.Series:
+        """
+        Generates text from a template using Pandas.
+
+        :param v: Pandas series of values passed as base values
+        :return: Pandas series of expanded templates
+        """
+        raise NotImplementedError("Subclasses should implement unique versions of `pandasGenerateText`")
 
 
 class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-equals]
-    """This class handles the generation of text from templates
+    """
+    This class handles the generation of text from templates.
 
-    :param template: template string to use in text generation
-    :param escapeSpecialChars: By default special chars in the template have special meaning if unescaped
-                               If set to true, then the special meaning requires escape char ``\\``
-    :param extendedWordList: if provided, use specified word list instead of default word list
+    :param template: Template string to use in text generation
+    :param escapeSpecialChars: Whether to escape special characters (e.g. "a" or "d") in the template (default is
+        ``False``).
+        * If ``False``, unescaped special characters correspond to character classes (e.g. "a" for lowercase alphabetical
+        characters).
+        * If ``True``, special characters must be escaped using ``\\``.
+    :param extendedWordList: Optional list of words to use during text generation
 
     The template generator generates text from a template to allow for generation of synthetic account card numbers,
     VINs, IBANs and many other structured codes.
@@ -220,10 +252,34 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
 
     If set to True, then the template ``r"dr_\\v"`` will generate the values ``"dr_0"`` ... ``"dr_999"``
     when applied to the values zero to 999. This conforms to the preferred style going forward
-
     """
-    def __init__(self, template, escapeSpecialChars=False, extendedWordList=None):
-        assert template is not None, "`template` must be specified"
+
+    _template: str
+    _escapeSpecialChars: bool
+    _extendedWordList: list[str] | None
+    _escapeSpecialMeaning: bool
+    _templates: list[str]
+    _wordList: np.ndarray
+    _upperWordList: np.ndarray
+    _np_digits_zero: np.ndarray
+    _np_digits_non_zero: np.ndarray
+    _np_hex_upper: np.ndarray
+    _np_hex_lower: np.ndarray
+    _np_alnum_lower: np.ndarray
+    _np_alnum_upper: np.ndarray
+    _np_letters_lower: np.ndarray
+    _np_letters_upper: np.ndarray
+    _np_letters_all: np.ndarray
+    _lenWords: int
+    _templateMappings: dict[str, tuple[int, np.ndarray]]
+    _templateEscapedMappings: dict[str, tuple[int, np.ndarray | None]]
+
+    def __init__(
+        self,
+        template: str,
+        escapeSpecialChars: bool = False,
+        extendedWordList: list[str] | None = None
+    ) -> None:
         super().__init__()
 
         self._template = template
@@ -248,40 +304,40 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
 
         # mappings must be mapping from string to tuple(length of mappings, mapping array or list)
         self._templateMappings = {
-            'a': (26, self._np_letters_lower),
-            'A': (26, self._np_letters_upper),
-            'x': (16, self._np_hex_lower),
-            'X': (16, self._np_hex_upper),
-            'd': (10, self._np_digits_zero),
-            'D': (9, self._np_digits_non_zero),
-            'k': (36, self._np_alnum_lower),
-            'K': (36, self._np_alnum_upper)
+            "a": (26, self._np_letters_lower),
+            "A": (26, self._np_letters_upper),
+            "x": (16, self._np_hex_lower),
+            "X": (16, self._np_hex_upper),
+            "d": (10, self._np_digits_zero),
+            "D": (9, self._np_digits_non_zero),
+            "k": (36, self._np_alnum_lower),
+            "K": (36, self._np_alnum_upper)
         }
 
         # ensure that each mapping is mapping from string to list or numpy array
         for k, v in self._templateMappings.items():
-            assert (k is not None) and isinstance(k, str) and len(k) > 0, "key must be non-empty string"
-            assert v is not None and isinstance(v, tuple) and len(v) == 2, "value must be tuple of length 2"
+            assert k and isinstance(k, str) and len(k) > 0, "key must be non-empty string"
+            assert v and isinstance(v, tuple) and len(v) == 2, "value must be tuple of length 2"
             mapping_length, mappings = v
             assert isinstance(mapping_length, int), "mapping length must be of type int"
-            assert isinstance(mappings, (list, np.ndarray)), \
+            assert isinstance(mappings, list | np.ndarray), \
                 "mappings are lists or numpy arrays"
             assert mapping_length == 0 or len(mappings) == mapping_length, "mappings must match mapping_length"
 
         self._templateEscapedMappings = {
-            'n': (256, None),
-            'N': (65536, None),
-            'w': (self._lenWords, self._wordList),
-            'W': (self._lenWords, self._upperWordList)
+            "n": (256, None),
+            "N": (65536, None),
+            "w": (self._lenWords, self._wordList),
+            "W": (self._lenWords, self._upperWordList)
         }
 
         # ensure that each escaped mapping is mapping from string to None, list or numpy array
-        for k, v in self._templateEscapedMappings.items():
-            assert (k is not None) and isinstance(k, str) and len(k) > 0, "key must be non-empty string"
-            assert v is not None and isinstance(v, tuple) and len(v) == 2, "value must be tuple of length 2"
+        for k, v in self._templateEscapedMappings.items():  # type: ignore[assignment]
+            assert k and isinstance(k, str) and len(k) > 0, "key must be non-empty string"
+            assert v and isinstance(v, tuple) and len(v) == 2, "value must be tuple of length 2"
             mapping_length, mappings = v
             assert isinstance(mapping_length, int), "mapping length must be of type int"
-            assert mappings is None or isinstance(mappings, (list, np.ndarray)), \
+            assert mappings is None or isinstance(mappings, list | np.ndarray), \
                 "mappings are lists or numpy arrays"
 
             # for escaped mappings, the mapping can be None in which case the mapping is to the number itself
@@ -294,15 +350,82 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
         template_info = [self._prepareTemplateStrings(template, escapeSpecialMeaning=escapeSpecialChars)
                                     for template in self._templates]
 
-        self._max_placeholders = max([ x[0] for x in template_info])  # pylint: disable=consider-using-generator
-        self._max_rnds_needed = max([ len(x[1]) for x in template_info])  # pylint: disable=consider-using-generator
-        self._placeholders_needed = [ x[0] for x in template_info]
-        self._template_rnd_bounds = [ x[1] for x in template_info]
+        self._max_placeholders = max(x[0] for x in template_info)
+        self._max_rnds_needed = max(len(x[1]) for x in template_info)
+        self._placeholders_needed = [x[0] for x in template_info]
+        self._template_rnd_bounds = [x[1] for x in template_info]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"TemplateGenerator(template='{self._template}')"
 
-    def _toInitializationDict(self):
+    @property
+    def templates(self) -> list[str]:
+        """ Get effective templates for text generator"""
+        return self._templates
+
+    def classicGenerateText(self, v: str) -> str:
+        """
+        Generates text from a template.
+
+        :param v: Value passed as a base value
+        :return: Expanded template
+        """
+
+        values = pd.Series([v])
+        results = self.pandasGenerateText(values).iloc[0]
+        return str(results)
+
+    def pandasGenerateText(self, v: pd.Series) -> pd.Series:
+        """
+        Generates text from a template using Pandas.
+
+        :param v: Pandas series of values passed as base values
+        :return: Pandas series of expanded templates
+        """
+        # placeholders is numpy array used to hold results
+        placeholders = np.full((v.shape[0], self._max_placeholders), "", dtype=np.object_)
+
+        # prepare template selections, bounds, rnd values to drive application of algorithm
+        template_choices, template_rnd_bounds, template_rnds = self._prepare_random_bounds(v)
+        template_choices_t = template_choices.T
+
+        # create masked arrays, with all elements initially masked
+        # as we substitute template expansion, we'll mask and unmask rows corresponding to each template
+        # calling the method to substitute the values on the masked placeholders
+        masked_placeholders: np.ma.MaskedArray = np.ma.MaskedArray(placeholders, mask=False)
+        masked_rnds: np.ma.MaskedArray = np.ma.MaskedArray(template_rnds, mask=False)
+        masked_matrices = [masked_placeholders, masked_rnds]
+
+        # test logic for template expansion
+        for x in range(len(self._templates)):  # pylint: disable=consider-using-enumerate
+            masked_placeholders[template_choices_t != x, :] = np.ma.masked
+            masked_rnds[template_choices_t != x, :] = np.ma.masked
+
+            # harden mask, preventing modifications
+            for m in masked_matrices:
+                np.ma.harden_mask(m)
+
+            # expand values into placeholders without affect masked values
+            self._applyTemplateStringsForTemplate(
+                v,
+                self._templates[x],
+                masked_placeholders,
+                masked_rnds,
+                escapeSpecialMeaning=self._escapeSpecialMeaning
+            )
+
+            # soften and clear mask, allowing modifications
+            for m in masked_matrices:
+                np.ma.soften_mask(m)
+                m.mask = False
+
+        # join strings in placeholders
+        output = pd.Series(list(placeholders))
+        results = output.apply(lambda placeholder_items: "".join([str(elem) for elem in placeholder_items]))
+
+        return results
+
+    def _toInitializationDict(self) -> dict[str, Any]:
         """ Converts an object to a Python dictionary. Keys represent the object's
             constructor arguments.
             :return: Python dictionary representation of the object
@@ -319,60 +442,56 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
             for k, v in _options.items() if v is not None
         }
 
-    def _splitTemplates(self, templateStr):
-        """ Split template string into individual template strings
-
-        :param templateStr: template string
-        :return: list of individual template strings
-
-
+    @staticmethod
+    def _splitTemplates(templateStr: str) -> list[str]:
         """
-        tmp_template = templateStr.replace(r'\\', '$__escape__').replace(r'\|', '$__sep__')
-        results = [x.replace('$__escape__', r'\\').replace('$__sep__', '|') for x in tmp_template.split('|')]
+        Splits the template string into a list of template strings.
+
+        :param templateStr: Template string
+        :return: List of template strings
+        """
+        tmp_template = templateStr.replace(r"\\", "$__escape__").replace(r"\|", "$__sep__")
+        results = [x.replace("$__escape__", r"\\").replace("$__sep__", "|") for x in tmp_template.split("|")]
         return results
 
-    @property
-    def templates(self):
-        """ Get effective templates for text generator"""
-        return self._templates
+    @staticmethod
+    def _getRandomInt(low: int, high: int = -1, rng: np.random.Generator | None = None) -> int | np.int32:
+        """
+        Generates a random integer between the provided low and high values.
 
-    def _getRandomInt(self, low, high=-1, rng=None):
-        """ generate random integer between low and high inclusive
-
-        :param low: low value, if no high value is specified, treat low value as high value and low of 0
-        :param high: high value for random number generation
-        :param rng: if provided, an instance of a numpy random number generator
-        :return: generated value
+        :param low: Low value, if no high value is specified, treat low value as high value and low of 0
+        :param high: High value for random number generation
+        :param rng: A numpy random number generator to use for generating hte random value
+        :return: A random integer between the provided low and high values
         """
         if high == -1:
             high = low
             low = 0
 
-        if rng is not None:
+        if rng:
             # numpy interval is different to ``randint``
             return rng.integers(low, high + 1, dtype=np.int32)
 
         # use standard random for now as it performs better when generating values one at a time
         return random.randint(low, high)
 
-    def _prepareTemplateStrings(self, genTemplate, escapeSpecialMeaning=False):
-        """ Prepare list of random numbers needed to generate template in vectorized form
+    def _prepareTemplateStrings(self, genTemplate: str, escapeSpecialMeaning: bool = False) -> tuple[int, list[int]]:
+        """
+        Prepares a list of random numbers needed to generate the template value in vectorized form.
 
-        :param genTemplate: template string to control text generation
-        :param escapeSpecialMeaning: if True, requires escape on special meaning chars.
-        :returns: tuple containing number of placeholders and vector of random values upper bounds
+        :param genTemplate: Template string used to control text generation
+        :param escapeSpecialMeaning: If ``True``, requires escape on special meaning chars
+        :returns: A tuple with the number of placeholders and a vector of random values upper bounds
 
-        The first element of the tuple is the number of placeholders needed to populate the template
-
-        The second elememt is a vector of integer values which determine bounds for random number vector for
-        template generation
+        The first element of the tuple is the number of placeholders needed to populate the generated template. The
+        second element is a vector of integer values which determine bounds for random number vector for template
+        generation.
 
         Each element of the vector will be used to generate a random number between 0 and the element inclusive,
-        which is then used to select words from wordlists etc for template expansion
+        which is then used to select words (e.g. from wordlists) for template expansion.
 
-        `_escapeSpecialMeaning` parameter allows for backwards compatibility with old style syntax while allowing
+        The `_escapeSpecialMeaning` parameter allows for backwards compatibility with old style syntax while allowing
         for preferred new style template syntax. Specify as True to force escapes for special meanings,.
-
         """
         retval = []
 
@@ -388,9 +507,9 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
             char = genTemplate[i]
             following_char = genTemplate[i + 1] if i + 1 < template_len else None
 
-            if char == '\\':
+            if char == "\\":
                 escape = True
-            elif use_value and ('0' <= char <= '9'):
+            elif use_value and ("0" <= char <= "9"):
                 # val_index = int(char)
                 # retval.append(str(baseValue[val_index]))
                 num_placeholders += 1
@@ -403,18 +522,18 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
                 escape = False
             elif (char in self._templateEscapedMappings) and escape:
                 # handle case for ['n', 'N', 'w', 'W']
-                bound, mappingArr = self._templateEscapedMappings[char]
+                bound, _mappingArr = self._templateEscapedMappings[char][0], self._templateEscapedMappings[char][1]
                 retval.append(bound)
                 num_placeholders += 1
                 escape = False
-            elif char == 'v' and escape:
+            elif char == "v" and escape:
                 escape = False
-                if following_char is not None and ('0' <= following_char <= '9'):
+                if following_char is not None and ("0" <= following_char <= "9"):
                     use_value = True
                 else:
                     num_placeholders += 1
                     # retval.append(str(baseValue))
-            elif char == 'V' and escape:
+            elif char == "V" and escape:
                 # retval.append(str(baseValue))
                 num_placeholders += 1
                 escape = False
@@ -429,22 +548,29 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
 
         return num_placeholders, retval
 
-    def _applyTemplateStringsForTemplate(self, baseValue, genTemplate, placeholders, rnds, *,
-                                         escapeSpecialMeaning=False):
-        """ Vectorized implementation of template driven text substitution
+    def _applyTemplateStringsForTemplate(
+            self,
+            baseValue: pd.Series | pd.DataFrame,
+            genTemplate: str,
+            placeholders: np.ndarray,
+            rnds: np.ndarray,
+            *,
+            escapeSpecialMeaning: bool = False
+    ) -> np.ndarray:
+        """
+        Vectorized implementation of template driven text substitution. Applies substitutions to placeholders using
+        random numbers.
 
-         Apply substitutions to placeholders using random numbers
-
-        :param baseValue: Pandas series or data frame of base value for applying template
-        :param genTemplate: template string to control text generation
-        :param placeholders: masked nparray of type np.object_ pre-allocated to hold strings emitted
-        :param rnds: masked numpy 2d array of random numbers needed for vectorized generation
-        :param escapeSpecialMeaning: if True, requires escape on special meaning chars.
+        :param baseValue: Pandas Series or DataFrame of base value for applying the template
+        :param genTemplate: A template string to control text generation
+        :param placeholders: A masked nparray of type np.object_ pre-allocated to hold the generated strings
+        :param rnds: A masked numpy 2d array of random numbers needed for vectorized generation
+        :param escapeSpecialMeaning: If ``True``, requires escape on special meaning chars.
         :returns: placeholders
 
         The vectorized implementation populates the placeholder Numpy array with the substituted values.
 
-        `_escapeSpecialMeaning` parameter allows for backwards compatibility with old style syntax while allowing
+        The `_escapeSpecialMeaning` parameter allows for backwards compatibility with old style syntax while allowing
         for preferred new style template syntax. Specify as True to force escapes for special meanings,.
 
         .. note::
@@ -454,37 +580,44 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
                 will apply the template to rows to which that template applies.
 
                 The template may be the empty string.
-
         """
         assert baseValue.shape[0] == placeholders.shape[0]
         assert baseValue.shape[0] == rnds.shape[0]
 
         _cached_values = {}
 
-        regularKeys = self._templateMappings.keys()
-        escapedKeys = self._templateEscapedMappings.keys()
+        regular_keys = self._templateMappings.keys()
+        escaped_keys = self._templateEscapedMappings.keys()
 
-        def _get_values_as_np_array():
+        def _get_values_as_np_array() -> np.ndarray:
             """Get baseValue which is pd.Series or Dataframe as a numpy array and cache it"""
             if "np_values" not in _cached_values:
                 _cached_values["np_values"] = baseValue.to_numpy()
 
-            return _cached_values["np_values"]
+            values = _cached_values["np_values"]
+            if not isinstance(values, np.ndarray):
+                raise TypeError("Value for 'np_values' should be of type 'np.ndarray'")
 
-        def _get_values_subelement(elem):
+            return values
+
+        def _get_values_subelement(elem: int) -> np.ndarray:
             """Get element from base values as np array and cache it"""
             cache_key = f"v_{elem}"
             if cache_key not in _cached_values:
                 np_values = _get_values_as_np_array()
                 # element_values = []
-                element_values = np.ndarray(np_values.shape[0], dtype=np_values.dtype)
+                element_values: np.ndarray = np.ndarray(np_values.shape[0], dtype=np_values.dtype)
 
                 for x in range(baseValue.shape[0]):
                     # element_values.append(baseValue[x][elem])
                     element_values[x] = baseValue[x][elem]
                 _cached_values[cache_key] = element_values
 
-            return _cached_values[cache_key]
+            sub_element = _cached_values[cache_key]
+            if not isinstance(sub_element, np.ndarray):
+                raise TypeError("Sub-element value must be of type 'np.ndarray'")
+
+            return sub_element
 
         escape = False
         use_value = False
@@ -511,54 +644,53 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
             char = genTemplate[i]
             following_char = genTemplate[i + 1] if i + 1 < template_len else None
 
-            if char == '\\':
+            if char == "\\":
                 escape = True
-            elif use_value and ('0' <= char <= '9'):
+            elif use_value and ("0" <= char <= "9"):
                 val_index = int(char)
                 placeholders[:, num_placeholders] = _get_values_subelement(val_index)
                 # placeholders[:, num_placeholders] = pd_base_values.apply(lambda x: str(x[val_index]))
                 num_placeholders += 1
                 use_value = False
-            elif char in regularKeys and (not escape) ^ escapeSpecialMeaning:
+            elif char in regular_keys and (not escape) ^ escapeSpecialMeaning:
                 # note vectorized lookup - `rnds[:, rnd_offset]` will get vertical column of
                 # random numbers from `rnds` 2d array
-                bound, valueMappings = self._templateMappings[char]
+                bound, value_mappings = self._templateMappings[char]
 
                 if unmasked_rows is not None:
-                    placeholders[unmasked_rows, num_placeholders] = valueMappings[rnds[unmasked_rows, rnd_offset]]
+                    placeholders[unmasked_rows, num_placeholders] = value_mappings[rnds[unmasked_rows, rnd_offset]]
                 else:
-                    placeholders[:, num_placeholders] = valueMappings[rnds[:, rnd_offset]]
+                    placeholders[:, num_placeholders] = value_mappings[rnds[:, rnd_offset]]
 
                 num_placeholders += 1
                 rnd_offset = rnd_offset + 1
                 escape = False
                 # used for retval.append(_HEX_LOWER[self._getRandomInt(0, 15, rndGenerator)])
-            elif char in escapedKeys and escape:
-                bound, valueMappings = self._templateEscapedMappings[char]
+            elif char in escaped_keys and escape:
+                _bound, value_mappings = self._templateEscapedMappings[char]  # type: ignore[assignment]
 
-                if valueMappings is not None:
+                if value_mappings is not None:
                     if unmasked_rows is not None:
-                        placeholders[unmasked_rows, num_placeholders] = valueMappings[rnds[unmasked_rows, rnd_offset]]
+                        placeholders[unmasked_rows, num_placeholders] = value_mappings[rnds[unmasked_rows, rnd_offset]]
                     else:
-                        placeholders[:, num_placeholders] = valueMappings[rnds[:, rnd_offset]]
+                        placeholders[:, num_placeholders] = value_mappings[rnds[:, rnd_offset]]
+                elif unmasked_rows is not None: # type: ignore[unreachable]
+                    placeholders[unmasked_rows, num_placeholders] = rnds[unmasked_rows, rnd_offset]
                 else:
-                    if unmasked_rows is not None:
-                        placeholders[unmasked_rows, num_placeholders] = rnds[unmasked_rows, rnd_offset]
-                    else:
-                        placeholders[:, num_placeholders] = rnds[:, rnd_offset]
+                    placeholders[:, num_placeholders] = rnds[:, rnd_offset]
                 num_placeholders += 1
                 rnd_offset = rnd_offset + 1
                 # retval.append(str(self._getRandomInt(0, 255, rndGenerator)))
                 escape = False
-            elif char == 'v' and escape:
+            elif char == "v" and escape:
                 escape = False
-                if following_char is not None and ('0' <= following_char <= '9'):
+                if following_char is not None and ("0" <= following_char <= "9"):
                     use_value = True
                 else:
                     placeholders[:, num_placeholders] = _get_values_as_np_array()
                     num_placeholders += 1
                     # retval.append(str(baseValue))
-            elif char == 'V' and escape:
+            elif char == "V" and escape:
                 placeholders[:, num_placeholders] = _get_values_as_np_array()
                 # retval.append(str(baseValue))
                 num_placeholders += 1
@@ -576,24 +708,15 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
 
         return placeholders
 
-    def classicGenerateText(self, v):
-        """entry point to use for classic udfs"""
-
-        pdValues = pd.Series([v])
-        results = self.pandasGenerateText(pdValues)
-        return results[0]
-
-    def _prepare_random_bounds(self, v):
+    def _prepare_random_bounds(self, v: pd.Series) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
-        Prepare the random bounds for processing of the template expansion
+        Prepares the random bounds for processing the template expansion.
 
-        For each template, we will have a vector of random numbers to generate for expanding the template
+        For each template, we will have a vector of random numbers to generate for expanding the template. If we have
+        multiple templates, there will be a separate vector of random numbers for each template.
 
-        If we have multiple templates, there will be a separate vector of random numbers for each template
-
-
-        :param v: Pandas series of values passed as base values
-        :return: vector of templates chosen, template random bounds (1 for each substitution) and selected
+        :param v: Pandas Series of values passed as base values
+        :return: A vector of templates chosen, template random bounds (1 for each substitution) and selected
                  random numbers for each row (as numpy array)
         """
         # choose templates
@@ -611,12 +734,12 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
 
         # populate template random numbers
         template_rnd_bounds = np.full((v.size, self._max_rnds_needed), -1)
-        masked_template_bounds = np.ma.MaskedArray(template_rnd_bounds, mask=False)
+        masked_template_bounds: np.ma.MaskedArray = np.ma.MaskedArray(template_rnd_bounds, mask=False)
 
         for i in range(num_templates):
             # assign the
             len_bounds_i = len(self._template_rnd_bounds[i])
-            masked_template_bounds[templates_chosen.T == i, 0:len_bounds_i] = self._template_rnd_bounds[i]
+            masked_template_bounds[i == templates_chosen.T, 0:len_bounds_i] = self._template_rnd_bounds[i]
 
         masked_template_bounds[template_rnd_bounds == -1] = np.ma.masked
 
@@ -628,75 +751,27 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
 
         return templates_chosen, template_rnd_bounds, template_rnds
 
-    def pandasGenerateText(self, v):
-        """ entry point to use for pandas udfs
-
-        Implementation uses vectorized implementation of process
-
-        :param v: Pandas series of values passed as base values
-        :return: Pandas series of expanded templates
-
-        """
-        # placeholders is numpy array used to hold results
-        placeholders = np.full((v.shape[0], self._max_placeholders), '', dtype=np.object_)
-
-        # prepare template selections, bounds, rnd values to drive application of algorithm
-        template_choices, template_rnd_bounds, template_rnds = self._prepare_random_bounds(v)
-        template_choices_t = template_choices.T
-
-        # create masked arrays, with all elements initially masked
-        # as we substitute template expansion, we'll mask and unmask rows corresponding to each template
-        # calling the method to substitute the values on the masked placeholders
-        masked_placeholders = np.ma.MaskedArray(placeholders, mask=False)
-        masked_rnds = np.ma.MaskedArray(template_rnds, mask=False)
-        # masked_base_values = np.ma.MaskedArray(baseValues, mask=False)
-        masked_matrices = [masked_placeholders, masked_rnds]
-
-        # test logic for template expansion
-        for x in range(len(self._templates)):  # pylint: disable=consider-using-enumerate
-            masked_placeholders[template_choices_t != x, :] = np.ma.masked
-            masked_rnds[template_choices_t != x, :] = np.ma.masked
-            # masked_base_values[template_choices_t != x] = np.ma.masked
-
-            # harden mask, preventing modifications
-            for m in masked_matrices:
-                np.ma.harden_mask(m)
-
-            # expand values into placeholders without affect masked values
-            #self._applyTemplateStringsForTemplate(v.to_numpy(dtype=np.object_), #masked_base_values,
-            self._applyTemplateStringsForTemplate(v,
-                                                  # masked_base_values,
-                                                  self._templates[x],
-                                                  masked_placeholders,
-                                                  masked_rnds,
-                                                  escapeSpecialMeaning=self._escapeSpecialMeaning
-                                                  )
-
-            # soften and clear mask, allowing modifications
-            for m in masked_matrices:
-                np.ma.soften_mask(m)
-                m.mask = False
-
-        # join strings in placeholders
-        output = pd.Series(list(placeholders))
-        results = output.apply(lambda placeholder_items: "".join([str(elem) for elem in placeholder_items]))
-
-        return results
-
 
 class ILText(TextGenerator, SerializableToDict):  # lgtm [py/missing-equals]
-    """ Class to generate Ipsum Lorem text paragraphs, words and sentences
+    """
+    This class generates Ipsum Lorem text paragraphs, words, and sentences.
 
-    :param paragraphs: Number of paragraphs to generate. If tuple will generate random number in range
-    :param sentences:  Number of sentences to generate. If tuple will generate random number in tuple range
-    :param words:  Number of words per sentence to generate. If tuple, will generate random number in tuple range
-
+    :param paragraphs: Number of paragraphs to generate. If a tuple is provided, we will generate a random number of
+        paragraphs in the provided range.
+    :param sentences: Number of sentences per paragraph to generate. If a tuple is provided, we will generate a random
+        number of sentences in the provided range.
+    :param words: Number of words per sentence to generate. If a tuple is provided, we will generate a random number of
+        words in the provided range.
+    :param extendedWordList: Optional list of words to use instead of the default Ipsum Lorem list.
     """
 
-    def __init__(self, paragraphs=None, sentences=None, words=None, extendedWordList=None):
-        """
-        Initialize the ILText with text generation parameters
-        """
+    def __init__(
+            self,
+            paragraphs: int | tuple[int, int] | None = None,
+            sentences: int | tuple[int, int] | None = None,
+            words: int | tuple[int, int] | None = None,
+            extendedWordList: list[str] | None = None
+    ) -> None:
         assert paragraphs is not None or sentences is not None or words is not None, \
             "At least one of the params `paragraphs`, `sentences` or `words` must be specified"
 
@@ -720,96 +795,30 @@ class ILText(TextGenerator, SerializableToDict):  # lgtm [py/missing-equals]
         self._processStats()
         self._processWordList()
 
-    def _toInitializationDict(self):
-        """ Converts an object to a Python dictionary. Keys represent the object's
-            constructor arguments.
-            :return: Python dictionary representation of the object
-        """
-        _options = {
-            "kind": self.__class__.__name__,
-            "paragraphs": self._paragraphs,
-            "sentences": self._sentences,
-            "words": self._words,
-            "extendedWordList": self._extendedWordList
-        }
-        return {
-            k: v._toInitializationDict()
-            if isinstance(v, SerializableToDict) else v
-            for k, v in _options.items() if v is not None
-        }
-
-    def _processStats(self):
-        """ Compute the stats needed for the text generation """
-
-        vals = [self.paragraphs, self.sentences, self.words]
-        self._textGenerationValues = np.array(vals, dtype=self.compactNumpyTypeForValues(vals))
-        self._minValues = self._textGenerationValues[:, 0]
-        self._maxValues = self._textGenerationValues[:, 1]
-
-        self._meanValues = np.mean(self._textGenerationValues, axis=1)
-
-        # we want to force wider spread of sentence length, so we're not simply computing the std_deviation
-        # - but computing a target std_dev that will spread sentence length
-        self._stdVals = self._meanValues / 2
-        self._stdVals2 = np.std(self._textGenerationValues, axis=1)
-
-    def _processWordList(self):
-        """ Set up the word lists"""
-        np_words = np.array(self.wordList, np.dtype(np.str_))
-        np_capitalized_words = np.char.capitalize(np_words[:])
-
-        all_words = np_words[:]
-
-        self._wordOffsetSize = all_words.size
-        self._sentenceEndOffset = all_words.size
-        self._paragraphEnd = self._sentenceEndOffset + 1
-        self._wordSpaceOffset = self._paragraphEnd + 1
-        self._emptyStringOffset = self._wordSpaceOffset + 1
-
-        punctuation = [". ", "\n\n", " ", ""]
-        all_words = np.concatenate((all_words, punctuation))
-
-        self._startOfCapitalsOffset = all_words.size
-        all_words = np.concatenate((all_words, np_capitalized_words, punctuation))
-
-        # for efficiency, we'll create list of words preceded by spaces - it will reduce memory consumption during join
-        # and array manipulation as we dont have to hold offset for space
-        self._startOfSpacedWordsOffset = all_words.size
-
-        np_spaced_words = np.array([" " + x for x in self.wordList], np.dtype(np.str_))
-        all_words = np.concatenate((all_words, np_spaced_words, punctuation))
-
-        # set up python list of all words so that we dont have to convert between numpy and python representations
-        self._allWordsSize = all_words.size
-        self._wordsAsPythonStrings = [str(x) for x in all_words]
-
-        # get smallest type that can represent word offset
-        self._wordOffsetType = self.compactNumpyTypeForValues([all_words.size * 2 + 10])
-
-    def __repr__(self):
+    def __repr__(self) -> str:
         paras, sentences, words = self.paragraphs, self.sentences, self.words
         wl = self.wordList.__repr__ if self.wordList is not None else "None"
         return f"ILText(paragraphs={paras}, sentences={sentences}, words={words}, wordList={wl})"
 
-    def generateText(self, baseValues, rowCount=1):
+    def generateText(self, baseValues: list | pd.Series | np.ndarray, rowCount: int = 1) -> list[str] | pd.Series:
         """
         generate text for seed based on configuration parameters.
 
         As it uses numpy, repeatability is restricted depending on version of the runtime
 
-        :param baseValues: list or array-like list of baseValues
-        :param rowCount: number of rows
-        :returns: list or Pandas series of generated strings of same size as input seed
+        :param baseValues: List or array-like list of baseValues
+        :param rowCount: Number of rows
+        :returns: List or Pandas series of generated strings of same size as input seed
         """
         assert baseValues is not None, "`baseValues` param must be specified"
         rng = self.getNPRandomGenerator(forceNewInstance=True)
         word_offset_type = self._wordOffsetType
-
         stats_shape = [rowCount, self.paragraphs[1], self.sentences[1], 3]
 
         # determine counts of paragraphs, sentences and words
         para_stats_raw = np.round(rng.normal(self._meanValues, self._stdVals2, size=stats_shape))
         para_stats = np.clip(para_stats_raw, self._minValues, self._maxValues)
+
         # Convert to the compact dtype after clipping
         para_stats = para_stats.astype(self._textGenerationValues.dtype)
 
@@ -826,7 +835,6 @@ class ILText(TextGenerator, SerializableToDict):  # lgtm [py/missing-equals]
         output_shape = (rowCount, self.paragraphs[1], self.sentences[1], self.words[1])
 
         # compute the masks for paragraphs, sentences, and words
-
         # get the set of indices for shape  - r = rows, p = paragraphs, s = sentences, w = words
         # the indices will produce a set of rows of values for each dimension
         # the mask is then produced by iterating comparing index with good value
@@ -846,7 +854,7 @@ class ILText(TextGenerator, SerializableToDict):  # lgtm [py/missing-equals]
         final_mask = words_mask | para_mask | sentences_mask
 
         word_offsets = np.full(output_shape, dtype=word_offset_type, fill_value=self._emptyStringOffset)
-        masked_offsets = np.ma.MaskedArray(word_offsets, mask=final_mask)
+        masked_offsets: np.ma.MaskedArray = np.ma.MaskedArray(word_offsets, mask=final_mask)
 
         # note numpy random differs from standard random in that it never produces upper bound
         masked_offsets[~masked_offsets.mask] = rng.integers(self._wordOffsetSize,
@@ -898,7 +906,7 @@ class ILText(TextGenerator, SerializableToDict):  # lgtm [py/missing-equals]
         terminated_paragraph_offsets = terminated_paragraph_offsets.reshape((rowCount, shape[1] * shape[2]))
 
         empty_string_offset = self._wordOffsetType.type(self._emptyStringOffset)
-        final_data = terminated_paragraph_offsets.filled(fill_value=empty_string_offset)
+        final_data = terminated_paragraph_offsets.filled(fill_value=empty_string_offset)  # pylint: disable=no-member
 
         # its faster to manipulate text in data frames as numpy strings are fixed length
         all_python_words = self._wordsAsPythonStrings
@@ -907,28 +915,100 @@ class ILText(TextGenerator, SerializableToDict):  # lgtm [py/missing-equals]
 
         # build our lambda expression, copying point to word list locally for efficiency
         empty_string_offsets = [self._emptyStringOffset, self._emptyStringOffset + self._startOfSpacedWordsOffset]
-        mk_str_fn = lambda x: ("".join([all_python_words[x1] for x1 in x if x1 not in empty_string_offsets])).strip()
+        # mk_str_fn = lambda x: ("".join([all_python_words[x1] for x1 in x if x1 not in empty_string_offsets])).strip()
         # mk_str_fn = lambda x: ("".join([all_python_words[x1] for x1 in x ]))
 
         # ... and execute it
-        results = base_results.apply(mk_str_fn, axis=1)
+        results = base_results.apply(lambda w: self._get_word(w, all_python_words, empty_string_offsets), axis=1)
         return results
 
-    def classicGenerateText(self, v):
+    def classicGenerateText(self, v: str) -> str:
         """
-        classic udf entry point for text generation
+        Generates text using PySpark UDFs (non-Pandas).
 
-        :param v: base value to control generation of random numbers
+        :param v: Value passed as a base value
+        :return: Expanded template
         """
         return self.generateText([v], 1)[0]
 
-    def pandasGenerateText(self, v):
+    def pandasGenerateText(self, v: pd.Series) -> pd.Series:
         """
-        pandas udf entry point for text generation
+        Generates text with Pandas UDFs.
 
-        :param v: pandas series of base values for random text generation
-        :returns: Pandas series of generated strings
+        :param v: Pandas series of values passed as base values
+        :return: Pandas series of expanded templates
         """
         rows = v.to_numpy()
         results = self.generateText(rows, rows.size)
         return pd.Series(results)
+
+    def _toInitializationDict(self) -> dict[str, Any]:
+        """
+        Converts an object to a Python dictionary. Keys represent the object's constructor arguments.
+
+        :return: Python dictionary representation of the object
+        """
+        _options = {
+            "kind": self.__class__.__name__,
+            "paragraphs": self._paragraphs,
+            "sentences": self._sentences,
+            "words": self._words,
+            "extendedWordList": self._extendedWordList
+        }
+        return _options
+
+    def _processStats(self) -> None:
+        """
+        Computes statistics needed for the text generation.
+        """
+
+        vals = [self.paragraphs, self.sentences, self.words]
+        self._textGenerationValues = np.array(vals, dtype=self.compactNumpyTypeForValues(vals))
+        self._minValues = self._textGenerationValues[:, 0]
+        self._maxValues = self._textGenerationValues[:, 1]
+
+        self._meanValues = np.mean(self._textGenerationValues, axis=1)
+
+        # we want to force wider spread of sentence length, so we're not simply computing the std_deviation
+        # - but computing a target std_dev that will spread sentence length
+        self._stdVals = self._meanValues / 2
+        self._stdVals2 = np.std(self._textGenerationValues, axis=1)
+
+    def _processWordList(self) -> None:
+        """
+        Sets up the word lists needed for text generation.
+        """
+        np_words = np.array(self.wordList, np.dtype(np.str_))
+        np_capitalized_words = np.char.capitalize(np_words[:])
+
+        all_words = np_words[:]
+
+        self._wordOffsetSize = all_words.size
+        self._sentenceEndOffset = all_words.size
+        self._paragraphEnd = self._sentenceEndOffset + 1
+        self._wordSpaceOffset = self._paragraphEnd + 1
+        self._emptyStringOffset = self._wordSpaceOffset + 1
+
+        punctuation = [". ", "\n\n", " ", ""]
+        all_words = np.concatenate((all_words, np.array(punctuation)))
+
+        self._startOfCapitalsOffset = all_words.size
+        all_words = np.concatenate((all_words, np_capitalized_words, np.array(punctuation)))
+
+        # for efficiency, we'll create list of words preceded by spaces - it will reduce memory consumption during join
+        # and array manipulation as we dont have to hold offset for space
+        self._startOfSpacedWordsOffset = all_words.size
+
+        np_spaced_words = np.array([" " + x for x in self.wordList], np.dtype(np.str_))
+        all_words = np.concatenate((all_words, np_spaced_words, np.array(punctuation)))
+
+        # set up python list of all words so that we dont have to convert between numpy and python representations
+        self._allWordsSize = all_words.size
+        self._wordsAsPythonStrings = [str(x) for x in all_words]
+
+        # get smallest type that can represent word offset
+        self._wordOffsetType = self.compactNumpyTypeForValues([all_words.size * 2 + 10])
+
+    @staticmethod
+    def _get_word(elements: list[int], words: list[str], excluded: list[int]) -> str:
+        return "".join([words[element] for element in elements if element not in excluded]).strip()

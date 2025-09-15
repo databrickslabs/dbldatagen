@@ -153,7 +153,6 @@ exclude = [
     "dbldatagen/nrange.py",
     "dbldatagen/schema_parser.py",
     "dbldatagen/text_generator_plugins.py",
-    "dbldatagen/text_generators.py"
 ]
 
 [tool.ruff.lint]
@@ -240,7 +239,6 @@ ignore = [
     "dbldatagen/schema_parser.py",
     "dbldatagen/serialization.py",
     "dbldatagen/text_generator_plugins.py",
-    "dbldatagen/text_generators.py",
     "dbldatagen/utils.py"
 ]
 
@@ -280,7 +278,6 @@ ignore-paths = [
     "dbldatagen/schema_parser.py",
     "dbldatagen/serialization.py",
     "dbldatagen/text_generator_plugins.py",
-    "dbldatagen/text_generators.py",
     "dbldatagen/utils.py"
 ]
 
@@ -414,7 +411,6 @@ exclude = [
     "dbldatagen/schema_parser.py",
     "dbldatagen/serialization.py",
     "dbldatagen/text_generator_plugins.py",
-    "dbldatagen/text_generators.py",
     "dbldatagen/utils.py"
 ]
 warn_return_any = true
