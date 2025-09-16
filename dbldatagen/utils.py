@@ -18,6 +18,9 @@ from datetime import timedelta
 from typing import Any
 
 import jmespath
+from pyspark.sql import DataFrame
+
+from dbldatagen.config import OutputConfig
 
 
 def deprecated(message: str = "") -> Callable[[Callable[..., Any]], Callable[..., Any]]:
@@ -360,3 +363,32 @@ def system_time_millis() -> int:
     """
     curr_time: int = round(time.time() / 1000)
     return curr_time
+
+
+def write_data_to_output(df: DataFrame, config: OutputConfig, is_streaming: bool = False) -> None:
+    """
+    Writes a DataFrame to the sink configured in the output configuration.
+
+    :param df: Spark DataFrame to write
+    :param config: Output configuration passed as an `OutputConfig`
+    :param is_streaming: Whether to write the data with Structured Streaming (default `False`)
+    """
+
+    if is_streaming:
+        (
+            df
+            .writeStream
+            .format(config.format)
+            .outputMode(config.output_mode)
+            .options(**config.options)
+            .start(config.location)
+        )
+
+    (
+        df
+        .write
+        .format(config.format)
+        .mode(config.output_mode)
+        .options(**config.options)
+        .save(config.location)
+    )

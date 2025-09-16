@@ -20,6 +20,7 @@ from pyspark.sql.types import DataType, IntegerType, LongType, StringType, Struc
 from dbldatagen import datagen_constants
 from dbldatagen._version import _get_spark_version
 from dbldatagen.column_generation_spec import ColumnGenerationSpec
+from dbldatagen.config import OutputConfig
 from dbldatagen.constraints import Constraint, SqlExpr
 from dbldatagen.datarange import DataRange
 from dbldatagen.distributions import DataDistribution
@@ -28,7 +29,14 @@ from dbldatagen.schema_parser import SchemaParser
 from dbldatagen.serialization import SerializableToDict
 from dbldatagen.spark_singleton import SparkSingleton
 from dbldatagen.text_generators import TextGenerator
-from dbldatagen.utils import DataGenError, deprecated, ensure, split_list_matching_condition, topologicalSort
+from dbldatagen.utils import (
+    DataGenError,
+    deprecated,
+    ensure,
+    split_list_matching_condition,
+    topologicalSort,
+    write_data_to_output,
+)
 
 
 _OLD_MIN_OPTION: str = "min"
@@ -1908,6 +1916,18 @@ class DataGenerator(SerializableToDict):
             result = HtmlUtils.formatCodeAsHtml(results)
 
         return result
+
+    def writeGeneratedData(self, config: OutputConfig, is_streaming: bool = False) -> None:
+        """
+        Builds a `DataFrame` from the `DataGenerator` and writes the data to a target table.
+
+        :param config: Output configuration for writing generated data
+        :param is_streaming: Whether to write data with Structured Streaming (default `False`)
+        """
+        if is_streaming:
+            write_data_to_output(self.build(withStreaming=True), config=config, is_streaming=is_streaming)
+
+        write_data_to_output(self.build(), config=config)
 
     @staticmethod
     def loadFromJson(options: str) -> "DataGenerator":
