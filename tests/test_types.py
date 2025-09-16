@@ -327,15 +327,15 @@ class TestTypes(unittest.TestCase):
 
         testdata_defn.build().createOrReplaceTempView("testdata")
 
-        df2 = spark.sql("""select min(code1) as min1, max(code1) as max1, 
-                            min(code2) as min2, 
+        df2 = spark.sql("""select min(code1) as min1, max(code1) as max1,
+                            min(code2) as min2,
                             max(code2) as max2 ,
-                            min(code3) as min3, 
+                            min(code3) as min3,
                             max(code3) as max3,
-                            min(code4) as min4, 
+                            min(code4) as min4,
                             max(code4) as max4,
-                            min(code5) as min5, 
-                            max(code5) as max5 
+                            min(code5) as min5,
+                            max(code5) as max5
                            from testdata group by group1 """)
 
         results = df2.collect()[0]

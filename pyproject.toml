@@ -65,7 +65,7 @@ packages = ["dbldatagen"]
 [tool.hatch.build.targets.sdist]
 include = [
     "/dbldatagen",
-    "/tests", 
+    "/tests",
     "/examples",
     "/tutorial",
     "/docs",
@@ -89,7 +89,7 @@ dependencies = [
     "pytest-mock~=3.14.0",
     "pytest-timeout~=2.3.1",
     "pytest-xdist~=3.5.0",
-    "ruff~=0.3.4",
+    "ruff~=0.13.0",
     "types-PyYAML~=6.0.12",
     "types-requests~=2.31.0",
     "databricks-sdk~=0.57",
@@ -138,7 +138,6 @@ exclude = [
     "examples",
     "tests",
     "dbldatagen/constraints",
-    "dbldatagen/datasets",
     "dbldatagen/distributions",
     "dbldatagen/__init__.py",
     "dbldatagen/column_generation_spec.py",
@@ -185,8 +184,6 @@ ignore = [
     "SIM102", # Use a single if-statement
     "SIM108", # Use ternary operator
     "UP007",  # Use X | Y for type annotations (keep Union for compatibility)
-    "ANN101", # Missing type annotation for `self` in method
-    "ANN102", # Missing type annotation for `cls` in method
     "ANN003", # Missing type annotation for **kwargs
 ]
 

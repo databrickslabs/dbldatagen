@@ -1,4 +1,10 @@
-from .dataset_provider import DatasetProvider, dataset_definition
+from typing import Any
+
+from pyspark.sql import SparkSession
+
+import dbldatagen as dg
+from dbldatagen.data_generator import DataGenerator
+from dbldatagen.datasets.dataset_provider import DatasetProvider, dataset_definition
 
 
 @dataset_definition(name="basic/user", summary="Basic User Data Set", autoRegister=True, supportsStreaming=True)
@@ -27,10 +33,7 @@ class BasicUserProvider(DatasetProvider.NoAssociatedDatasetsMixin, DatasetProvid
     COLUMN_COUNT = 5
 
     @DatasetProvider.allowed_options(options=["random", "dummyValues"])
-    def getTableGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
-                          **options):
-        import dbldatagen as dg
-
+    def getTableGenerator(self, sparkSession: SparkSession, *, tableName: str|None=None, rows: int=-1, partitions: int=-1, **options: dict[str, Any]) -> DataGenerator:
         generateRandom = options.get("random", False)
         dummyValues = options.get("dummyValues", 0)
 
@@ -47,13 +50,13 @@ class BasicUserProvider(DatasetProvider.NoAssociatedDatasetsMixin, DatasetProvid
                              randomSeedMethod="hash_fieldname")
             .withColumn("customer_id", "long", minValue=1000000, maxValue=self.MAX_LONG, random=generateRandom)
             .withColumn("name", "string",
-                        template=r'\w \w|\w \w \w', random=generateRandom)
+                        template=r"\w \w|\w \w \w", random=generateRandom)
             .withColumn("email", "string",
-                        template=r'\w.\w@\w.com|\w@\w.co.u\k', random=generateRandom)
+                        template=r"\w.\w@\w.com|\w@\w.co.u\k", random=generateRandom)
             .withColumn("ip_addr", "string",
-                        template=r'\n.\n.\n.\n', random=generateRandom)
+                        template=r"\n.\n.\n.\n", random=generateRandom)
             .withColumn("phone", "string",
-                        template=r'(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd',
+                        template=r"(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd",
                         random=generateRandom)
         )
 
