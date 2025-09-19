@@ -1,4 +1,11 @@
-from .dataset_provider import DatasetProvider, dataset_definition
+from typing import Any
+
+import pyspark.sql.functions as F
+from pyspark.sql import DataFrame, SparkSession
+
+import dbldatagen as dg
+from dbldatagen.data_generator import DataGenerator
+from dbldatagen.datasets.dataset_provider import DatasetProvider, dataset_definition
 
 
 @dataset_definition(name="multi_table/telephony", summary="Multi-table telephony dataset", supportsStreaming=True,
@@ -55,8 +62,7 @@ class MultiTableTelephonyProvider(DatasetProvider):
     DEFAULT_NUM_DAYS = 31
     DEFAULT_AVG_EVENTS_PER_CUSTOMER = 50
 
-    def getPlans(self, sparkSession, *, rows, partitions, generateRandom, numPlans, dummyValues):
-        import dbldatagen as dg
+    def getPlans(self, sparkSession: SparkSession, *, rows: int, partitions: int, generateRandom: bool, numPlans: int, dummyValues: int) -> DataGenerator:
 
         if numPlans is None or numPlans < 0:
             numPlans = self.DEFAULT_NUM_PLANS
@@ -87,12 +93,12 @@ class MultiTableTelephonyProvider(DatasetProvider):
                         random=generateRandom, distribution="normal", omit=True)
             .withColumn("ld_cost_per_minute", "decimal(5,3)",
                         expr="cost_per_minute * ld_multiplier",
-                        baseColumns=['cost_per_minute', 'ld_multiplier'])
+                        baseColumns=["cost_per_minute", "ld_multiplier"])
             .withColumn("intl_multiplier", "decimal(5,3)", minValue=2, maxValue=4, step=0.05,
                         random=generateRandom, distribution="normal", omit=True)
             .withColumn("intl_cost_per_minute", "decimal(5,3)",
                         expr="cost_per_minute * intl_multiplier",
-                        baseColumns=['cost_per_minute', 'intl_multiplier'])
+                        baseColumns=["cost_per_minute", "intl_multiplier"])
         )
 
         if dummyValues > 0:
@@ -101,9 +107,7 @@ class MultiTableTelephonyProvider(DatasetProvider):
 
         return plan_dataspec
 
-    def getCustomers(self, sparkSession, *, rows, partitions, generateRandom, numCustomers, numPlans, dummyValues):
-        import dbldatagen as dg
-
+    def getCustomers(self, sparkSession: SparkSession, *, rows: int, partitions: int, generateRandom: bool, numCustomers: int, numPlans: int, dummyValues: int) -> DataGenerator:
         if numCustomers is None or numCustomers < 0:
             numCustomers = self.DEFAULT_NUM_CUSTOMERS
 
@@ -142,10 +146,8 @@ class MultiTableTelephonyProvider(DatasetProvider):
 
         return customer_dataspec
 
-    def getDeviceEvents(self, sparkSession, *, rows, partitions, generateRandom, numCustomers, numDays, dummyValues,
-                        averageEventsPerCustomer):
-        import dbldatagen as dg
-
+    def getDeviceEvents(self, sparkSession: SparkSession, *, rows: int, partitions: int, generateRandom: bool, numCustomers: int, numDays: int, dummyValues: int,
+                        averageEventsPerCustomer: int) -> DataGenerator:
         MB_100 = 100 * 1000 * 1000
         K_1 = 1000
 
@@ -216,7 +218,7 @@ class MultiTableTelephonyProvider(DatasetProvider):
 
     @DatasetProvider.allowed_options(options=["random", "numPlans", "numCustomers", "dummyValues", "numDays",
                                               "averageEventsPerCustomer"])
-    def getTableGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1, **options):
+    def getTableGenerator(self, sparkSession: SparkSession, *, tableName: str|None=None, rows: int=-1, partitions: int=-1, **options: dict[str, Any]) -> DataGenerator:
         generateRandom = options.get("random", False)
         numPlans = options.get("numPlans", self.DEFAULT_NUM_PLANS)
         numCustomers = options.get("numCustomers", self.DEFAULT_NUM_CUSTOMERS)
@@ -225,7 +227,7 @@ class MultiTableTelephonyProvider(DatasetProvider):
         averageEventsPerCustomer = options.get("averageEventsPerCustomer", self.DEFAULT_AVG_EVENTS_PER_CUSTOMER)
 
         if tableName == "plans":
-            return self.getPlans(sparkSession, rows=rows, partitions=partitions, numPlans=numPlans,
+            return self.getPlans(sparkSession , rows=rows, partitions=partitions, numPlans=numPlans,
                                  generateRandom=generateRandom, dummyValues=dummyValues)
         elif tableName == "customers":
             return self.getCustomers(sparkSession, rows=rows, partitions=partitions, numCustomers=numCustomers,
@@ -236,20 +238,17 @@ class MultiTableTelephonyProvider(DatasetProvider):
                                         averageEventsPerCustomer=averageEventsPerCustomer)
 
     @DatasetProvider.allowed_options(options=["plans", "customers", "deviceEvents"])
-    def getAssociatedDataset(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
-                             **options):
-        from pyspark.sql import DataFrame
-        import pyspark.sql.functions as F
+    def getAssociatedDataset(self, sparkSession: SparkSession, *, tableName: str|None=None, rows: int=-1, partitions: int=-1,
+                             **options: dict[str, Any]) -> DataGenerator:
 
-        dfPlans = options.get("plans", None)
-        assert dfPlans is not None and issubclass(type(dfPlans), DataFrame), \
-            "Option `plans` should be a dataframe of plan records"
+        dfPlans = options.get("plans")
+        assert dfPlans is not None and issubclass(type(dfPlans), DataFrame), "Option `plans` should be a dataframe of plan records"
 
-        dfCustomers = options.get("customers", None)
+        dfCustomers = options.get("customers")
         assert dfCustomers is not None and issubclass(type(dfCustomers), DataFrame), \
             "Option `customers` should be dataframe of customer records"
 
-        dfDeviceEvents = options.get("deviceEvents", None)
+        dfDeviceEvents = options.get("deviceEvents")
         assert dfDeviceEvents is not None and issubclass(type(dfDeviceEvents), DataFrame), \
             "Option `device_events` should be dataframe of device_event records"
 
@@ -293,11 +292,7 @@ class MultiTableTelephonyProvider(DatasetProvider):
             """)
 
             df_summary.createOrReplaceTempView("mtp_event_summary")
-
-            df_customer_summary = (
-                df_customer_pricing.join(df_summary,
-                                         df_customer_pricing.device_id == df_summary.device_id)
-                .createOrReplaceTempView("mtp_customer_summary"))
+            df_customer_pricing.join(df_summary,df_customer_pricing.device_id == df_summary.device_id).createOrReplaceTempView("mtp_customer_summary")
 
             df_invoices = sparkSession.sql("""
                                  select *,

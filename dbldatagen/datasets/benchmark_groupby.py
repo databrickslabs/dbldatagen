@@ -1,4 +1,11 @@
-from .dataset_provider import DatasetProvider, dataset_definition
+import warnings as w
+from typing import Any, ClassVar
+
+from pyspark.sql import SparkSession
+
+import dbldatagen as dg
+from dbldatagen.data_generator import DataGenerator
+from dbldatagen.datasets.dataset_provider import DatasetProvider, dataset_definition
 
 
 @dataset_definition(name="benchmark/groupby",
@@ -31,13 +38,10 @@ class BenchmarkGroupByProvider(DatasetProvider.NoAssociatedDatasetsMixin, Datase
     DEFAULT_NUM_GROUPS = 100
     DEFAULT_PCT_NULLS = 0.0
     COLUMN_COUNT = 12
-    ALLOWED_OPTIONS = ["groups", "percentNulls", "rows", "partitions", "tableName", "random"]
+    ALLOWED_OPTIONS: ClassVar[list[str]] = ["groups", "percentNulls", "rows", "partitions", "tableName", "random"]
 
     @DatasetProvider.allowed_options(options=ALLOWED_OPTIONS)
-    def getTableGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
-                 **options):
-        import dbldatagen as dg
-        import warnings as w
+    def getTableGenerator(self, sparkSession: SparkSession, *, tableName: str|None=None, rows: int=-1, partitions: int=-1, **options: dict[str, Any]) -> DataGenerator:
 
         generateRandom = options.get("random", False)
         groups = options.get("groups", self.DEFAULT_NUM_GROUPS)
@@ -54,16 +58,16 @@ class BenchmarkGroupByProvider(DatasetProvider.NoAssociatedDatasetsMixin, Datase
             raise ValueError("groups must be a value of type 'int'") from e
         if groups <= 0:
             groups = 100
-            w.warn(f"Received an invalid groups value; Setting to {groups}")
+            w.warn(f"Received an invalid groups value; Setting to {groups}", stacklevel=2)
         if rows < groups:
             groups = 1 + int(rows / 1000)
-            w.warn(f"Received more groups than rows; Setting the number of groups to {groups}")
+            w.warn(f"Received more groups than rows; Setting the number of groups to {groups}", stacklevel=2)
         if percentNulls > 1.0:
             percentNulls = 1.0
-            w.warn(f"Received a percentNulls value > 1; Setting to {percentNulls}")
+            w.warn(f"Received a percentNulls value > 1; Setting to {percentNulls}", stacklevel=2)
         if percentNulls < 1.0:
             percentNulls = 0.0
-            w.warn(f"Received a percentNulls value < 1; Setting to {percentNulls}")
+            w.warn(f"Received a percentNulls value < 1; Setting to {percentNulls}", stacklevel=2)
 
         assert tableName is None or tableName == DatasetProvider.DEFAULT_TABLE_NAME, "Invalid table name"
         df_spec = (

@@ -1,4 +1,11 @@
-from .dataset_provider import DatasetProvider, dataset_definition
+from typing import Any, ClassVar
+
+import numpy as np
+from pyspark.sql import SparkSession
+
+import dbldatagen as dg
+from dbldatagen.data_generator import DataGenerator
+from dbldatagen.datasets.dataset_provider import DatasetProvider, dataset_definition
 
 
 @dataset_definition(name="basic/process_historian",
@@ -43,20 +50,19 @@ class BasicProcessHistorianProvider(DatasetProvider.NoAssociatedDatasetsMixin, D
     DEFAULT_START_TIMESTAMP = "2024-01-01 00:00:00"
     DEFAULT_END_TIMESTAMP = "2024-02-01 00:00:00"
     COLUMN_COUNT = 10
-    ALLOWED_OPTIONS = [
+    ALLOWED_OPTIONS: ClassVar[list[str]] = [
         "numDevices",
         "numPlants",
-        "numTags", 
-        "startTimestamp", 
-        "endTimestamp", 
+        "numTags",
+        "startTimestamp",
+        "endTimestamp",
         "dataQualityRatios",
         "random"
     ]
 
     @DatasetProvider.allowed_options(options=ALLOWED_OPTIONS)
-    def getTableGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1, **options):
-        import dbldatagen as dg  # import locally to avoid circular imports
-        import numpy as np
+    def getTableGenerator(self, sparkSession: SparkSession, *, tableName: str|None=None, rows: int=-1, partitions: int=-1, **options: dict[str, Any]) -> DataGenerator:
+
 
         generateRandom = options.get("random", False)
         numDevices = options.get("numDevices", self.DEFAULT_NUM_DEVICES)
@@ -64,7 +70,7 @@ class BasicProcessHistorianProvider(DatasetProvider.NoAssociatedDatasetsMixin, D
         numTags = options.get("numTags", self.DEFAULT_NUM_TAGS)
         startTimestamp = options.get("startTimestamp", self.DEFAULT_START_TIMESTAMP)
         endTimestamp = options.get("endTimestamp", self.DEFAULT_END_TIMESTAMP)
-        dataQualityRatios = options.get("dataQualityRatios", None)
+        dataQualityRatios = options.get("dataQualityRatios")
 
         assert tableName is None or tableName == DatasetProvider.DEFAULT_TABLE_NAME, "Invalid table name"
         if rows is None or rows < 0:
@@ -83,7 +89,7 @@ class BasicProcessHistorianProvider(DatasetProvider.NoAssociatedDatasetsMixin, D
             .withColumn("device_id", "string", format="0x%09x", baseColumn="internal_device_id")
             .withColumn("plant_id", "string", values=plant_ids, baseColumn="internal_device_id")
             .withColumn("tag_name", "string", values=tag_names, baseColumn="internal_device_id")
-            .withColumn("ts", "timestamp", begin=startTimestamp, end=endTimestamp, 
+            .withColumn("ts", "timestamp", begin=startTimestamp, end=endTimestamp,
                             interval="1 second", random=generateRandom)
             .withColumn("value", "float", minValue=self.MIN_PROPERTY_VALUE, maxValue=self.MAX_PROPERTY_VALUE,
                              step=1e-3, random=generateRandom)
