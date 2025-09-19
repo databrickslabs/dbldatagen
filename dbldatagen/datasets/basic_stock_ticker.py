@@ -10,7 +10,7 @@ from .dataset_provider import DatasetProvider, dataset_definition
 class BasicStockTickerProvider(DatasetProvider.NoAssociatedDatasetsMixin, DatasetProvider):
     """
     Basic Stock Ticker Dataset
-    ========================
+    ==========================
 
     This is a basic stock ticker dataset with time-series `symbol`, `open`, `close`, `high`, `low`,
     `adj_close`, and `volume` values.
@@ -27,7 +27,6 @@ class BasicStockTickerProvider(DatasetProvider.NoAssociatedDatasetsMixin, Datase
 
     Note that this dataset does not use any features that would prevent it from being used as a source for a
     streaming dataframe, and so the flag `supportsStreaming` is set to True.
-
     """
     DEFAULT_NUM_SYMBOLS = 100
     DEFAULT_START_DATE = "2024-10-01"

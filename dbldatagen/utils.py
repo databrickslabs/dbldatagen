@@ -20,7 +20,7 @@ from typing import Any
 import jmespath
 from pyspark.sql import DataFrame
 
-from dbldatagen.config import OutputConfig
+from dbldatagen.config import OutputDataset
 
 
 def deprecated(message: str = "") -> Callable[[Callable[..., Any]], Callable[..., Any]]:
@@ -296,10 +296,10 @@ def split_list_matching_condition(lst: list[Any], cond: Callable[[Any], bool]) -
 
     Result:
     `[['id'], ['city_name'], ['id'], ['city_id', 'city_pop'],
-      ['id'], ['city_id', 'city_pop', 'city_id', 'city_pop'], ['id']]`
+    ['id'], ['city_id', 'city_pop', 'city_id', 'city_pop'], ['id']]`
 
-    :arg lst: list of items to perform condition matches against
-    :arg cond: lambda function or function taking single argument and returning True or False
+    :param lst: list of items to perform condition matches against
+    :param cond: lambda function or function taking single argument and returning True or False
     :returns: list of sublists
     """
     retval: list[list[Any]] = []
@@ -365,30 +365,34 @@ def system_time_millis() -> int:
     return curr_time
 
 
-def write_data_to_output(df: DataFrame, config: OutputConfig, is_streaming: bool = False) -> None:
+def write_data_to_output(df: DataFrame, config: OutputDataset) -> None:
     """
     Writes a DataFrame to the sink configured in the output configuration.
 
     :param df: Spark DataFrame to write
     :param config: Output configuration passed as an `OutputConfig`
-    :param is_streaming: Whether to write the data with Structured Streaming (default `False`)
     """
-
-    if is_streaming:
+    if df.isStreaming:
+        if not config.trigger:
+            query = (
+                df.writeStream.format(config.format)
+                .outputMode(config.output_mode)
+                .options(**config.options)
+                .start(config.location)
+            )
+        else:
+            query = (
+                df.writeStream.format(config.format)
+                .outputMode(config.output_mode)
+                .options(**config.options)
+                .trigger(**config.trigger)
+                .start(config.location)
+            )
+        query.awaitTermination()
+    else:
         (
-            df
-            .writeStream
-            .format(config.format)
-            .outputMode(config.output_mode)
+            df.write.format(config.format)
+            .mode(config.output_mode)
             .options(**config.options)
-            .start(config.location)
+            .save(config.location)
         )
-
-    (
-        df
-        .write
-        .format(config.format)
-        .mode(config.output_mode)
-        .options(**config.options)
-        .save(config.location)
-    )

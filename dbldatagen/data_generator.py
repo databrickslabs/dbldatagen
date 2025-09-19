@@ -20,7 +20,7 @@ from pyspark.sql.types import DataType, IntegerType, LongType, StringType, Struc
 from dbldatagen import datagen_constants
 from dbldatagen._version import _get_spark_version
 from dbldatagen.column_generation_spec import ColumnGenerationSpec
-from dbldatagen.config import OutputConfig
+from dbldatagen.config import OutputDataset
 from dbldatagen.constraints import Constraint, SqlExpr
 from dbldatagen.datarange import DataRange
 from dbldatagen.distributions import DataDistribution
@@ -1212,9 +1212,9 @@ class DataGenerator(SerializableToDict):
     ) -> ColumnGenerationSpec:
         """ generate field definition and column spec
 
-        .. note:: Any time that a new column definition is added,
-                  we'll mark that the build plan needs to be regenerated.
-           For our purposes, the build plan determines the order of column generation etc.
+        .. note::
+            Any time that a new column definition is added, we'll mark that the build plan needs to be regenerated.
+            For our purposes, the build plan determines the order of column generation etc.
 
         :returns: Newly added column_spec
         """
@@ -1389,7 +1389,6 @@ class DataGenerator(SerializableToDict):
         :param buildOrder: list of lists of ids - each sublist represents phase of build
         :param columnSpecsByName: dictionary to map column names to column specs
         :returns: Spark SQL dataframe of generated test data
-
         """
         new_build_order = []
 
@@ -1484,8 +1483,8 @@ class DataGenerator(SerializableToDict):
         :returns: A modified version of the current DataGenerator with the constraint applied
 
         .. note::
-        Constraints are applied at the end of the data generation. Depending on the type of the constraint, the
-        constraint may also affect other aspects of the data generation.
+            Constraints are applied at the end of the data generation. Depending on the type of the constraint, the
+            constraint may also affect other aspects of the data generation.
         """
         assert constraint is not None, "Constraint cannot be empty"
         assert isinstance(constraint, Constraint),  \
@@ -1502,8 +1501,8 @@ class DataGenerator(SerializableToDict):
         :returns: A modified version of the current `DataGenerator` with the constraints applied
 
         .. note::
-        Constraints are applied at the end of the data generation. Depending on the type of the constraint, the
-        constraint may also affect other aspects of the data generation.
+            Constraints are applied at the end of the data generation. Depending on the type of the constraint, the
+            constraint may also affect other aspects of the data generation.
         """
         assert constraints is not None, "Constraints list cannot be empty"
 
@@ -1523,9 +1522,9 @@ class DataGenerator(SerializableToDict):
         :returns: A modified version of the current `DataGenerator` with the SQL expression constraint applied
 
         .. note::
-        Note in the current implementation, this may be equivalent to adding where clauses to the generated dataframe
-        but in future releases, this may be optimized to affect the underlying data generation so that constraints
-        are satisfied more efficiently.
+            Note in the current implementation, this may be equivalent to adding where clauses to the generated dataframe
+            but in future releases, this may be optimized to affect the underlying data generation so that constraints
+            are satisfied more efficiently.
         """
         self.withConstraint(SqlExpr(sqlExpression))
         return self
@@ -1917,17 +1916,18 @@ class DataGenerator(SerializableToDict):
 
         return result
 
-    def writeGeneratedData(self, config: OutputConfig, is_streaming: bool = False) -> None:
+    def buildOutputDataset(
+            self, output_dataset: OutputDataset, generator_options: dict[str, Any] | None = None
+    ) -> None:
         """
         Builds a `DataFrame` from the `DataGenerator` and writes the data to a target table.
 
-        :param config: Output configuration for writing generated data
-        :param is_streaming: Whether to write data with Structured Streaming (default `False`)
+        :param output_dataset: Output configuration for writing generated data
+        :param generator_options: Options for building the generator (e.g. `{"rowsPerSecond": 100}`)
         """
-        if is_streaming:
-            write_data_to_output(self.build(withStreaming=True), config=config, is_streaming=is_streaming)
-
-        write_data_to_output(self.build(), config=config)
+        with_streaming = output_dataset.trigger is not None
+        df = self.build(withStreaming=with_streaming, options=generator_options)
+        write_data_to_output(df, config=output_dataset)
 
     @staticmethod
     def loadFromJson(options: str) -> "DataGenerator":

@@ -5,17 +5,23 @@
 """
 This module implements configuration classes for writing generated data.
 """
-
 from dataclasses import dataclass, field
 
 
 @dataclass(frozen=True, slots=True)
-class OutputConfig:
+class OutputDataset:
     """
-    This class implements an output sink configuration used to write generated data. Output sinks must extend from the
-    `OutputConfig` base class.
+    This class implements an output sink configuration used to write generated data. An output location must be
+    provided. The output mode, format, and options can be provided.
+
+    :param location: Output location for writing data. This could be an absolute path, a relative path to a Databricks
+        Volume, or a full table location using Unity catalog's 3-level namespace.
+    :param output_mode: Output mode for writing data (default is ``"append"``).
+    :param format: Output data format (default is ``"delta"``).
+    :param options: Optional dictionary of options for writing data (e.g. ``{"mergeSchema": "true"}``)
     """
     location: str
-    output_mode: str
+    output_mode: str = "append"
     format: str = "delta"
-    options: dict = field(default_factory=dict)
+    options: dict[str, str] = field(default_factory=dict)
+    trigger: dict[str, bool | str] = field(default_factory=dict)
