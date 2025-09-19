@@ -1,5 +1,6 @@
 import os
 import shutil
+import time
 import uuid
 import pytest
 
@@ -27,14 +28,15 @@ class TestOutput:
         shutil.rmtree(base_dir, ignore_errors=True)
         print(f"\n\n*** test dir [{base_dir}] deleted")
 
-    @pytest.mark.parametrize("seed_column_name, table_format, table_location", [
-        ("id", "delta", "/table_folder"),
-        ("_id", "json", "/json_data_folder"),
-        ("id", "csv", "/csv_data_folder"),
-    ])
-    def test_build_output_data_batch(self, get_output_directories, seed_column_name, table_format, table_location):
+    @pytest.mark.parametrize("trigger", [{"availableNow": True}, {"once": True}, {"invalid": "yes"}])
+    def test_initialize_output_dataset_invalid_trigger(self, trigger):
+        with pytest.raises(ValueError, match=f"Attribute 'trigger' must be a dictionary of the form"):
+            _ = dg.OutputDataset(location="/location", trigger=trigger)
+
+    @pytest.mark.parametrize("seed_column_name, table_format", [("id", "parquet"), ("_id", "json"), ("id", "csv")])
+    def test_build_output_data_batch(self, get_output_directories, seed_column_name, table_format):
         base_dir, data_dir, checkpoint_dir = get_output_directories
-        table_dir = f"{data_dir}/{table_location}"
+        table_dir = f"{data_dir}/{uuid.uuid4()}"
 
         gen = dg.DataGenerator(
             sparkSession=spark,
@@ -59,21 +61,17 @@ class TestOutput:
             location=table_dir,
             output_mode="append",
             format=table_format,
-            options={"mergeSchema": "true", "checkpointLocation": f"{data_dir}/{checkpoint_dir}"},
+            options={"mergeSchema": "true"},
         )
 
         gen.buildOutputDataset(output_dataset)
         persisted_df = spark.read.format(table_format).load(table_dir)
         assert persisted_df.count() > 0
 
-    @pytest.mark.parametrize("seed_column_name, table_format, table_location", [
-        ("id", "delta", "/table_folder"),
-        ("_id", "json", "/json_data_folder"),
-        ("id", "csv", "/csv_data_folder"),
-    ])
-    def test_build_output_data_streaming(self, get_output_directories, seed_column_name, table_format, table_location):
+    @pytest.mark.parametrize("seed_column_name, table_format", [("id", "parquet"), ("_id", "json"), ("id", "csv")])
+    def test_build_output_data_streaming(self, get_output_directories, seed_column_name, table_format):
         base_dir, data_dir, checkpoint_dir = get_output_directories
-        table_dir = f"{data_dir}/{table_location}"
+        table_dir = f"{data_dir}/{uuid.uuid4()}"
 
         gen = dg.DataGenerator(
             sparkSession=spark,
@@ -99,9 +97,19 @@ class TestOutput:
             output_mode="append",
             format=table_format,
             options={"mergeSchema": "true", "checkpointLocation": f"{data_dir}/{checkpoint_dir}"},
-            trigger={"availableNow": True}
+            trigger={"processingTime": "1 SECOND"}
         )
 
-        gen.buildOutputDataset(output_dataset)
+        query = gen.buildOutputDataset(output_dataset, with_streaming=True)
+
+        start_time = time.time()
+        elapsed_time = 0
+        time_limit = 10.0
+
+        while elapsed_time < time_limit:
+            time.sleep(1)
+            elapsed_time = time.time() - start_time
+
+        query.stop()
         persisted_df = spark.read.format(table_format).load(table_dir)
         assert persisted_df.count() > 0

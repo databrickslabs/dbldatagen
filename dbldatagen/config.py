@@ -5,7 +5,7 @@
 """
 This module implements configuration classes for writing generated data.
 """
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass(frozen=True, slots=True)
@@ -23,5 +23,14 @@ class OutputDataset:
     location: str
     output_mode: str = "append"
     format: str = "delta"
-    options: dict[str, str] = field(default_factory=dict)
-    trigger: dict[str, bool | str] = field(default_factory=dict)
+    options: dict[str, str] | None = None
+    trigger: dict[str, str] | None = None
+
+    def __post_init__(self) -> None:
+        if not self.trigger:
+            return
+
+        # Only processingTime is currently supported
+        if "processingTime" not in self.trigger:
+            valid_trigger_format = '{"processingTime": "10 SECONDS"}'
+            raise ValueError(f"Attribute 'trigger' must be a dictionary of the form '{valid_trigger_format}'")

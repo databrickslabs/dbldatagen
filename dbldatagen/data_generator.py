@@ -15,6 +15,7 @@ from functools import partial
 from typing import Any
 
 from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql.streaming.query import StreamingQuery
 from pyspark.sql.types import DataType, IntegerType, LongType, StringType, StructField, StructType
 
 from dbldatagen import datagen_constants
@@ -1917,17 +1918,24 @@ class DataGenerator(SerializableToDict):
         return result
 
     def buildOutputDataset(
-            self, output_dataset: OutputDataset, generator_options: dict[str, Any] | None = None
-    ) -> None:
+            self, output_dataset: OutputDataset,
+            with_streaming: bool | None = None,
+            generator_options: dict[str, Any] | None = None
+    ) -> StreamingQuery | None:
         """
         Builds a `DataFrame` from the `DataGenerator` and writes the data to a target table.
 
         :param output_dataset: Output configuration for writing generated data
+        :param with_streaming: Whether to generate data using streaming. If None, auto-detects based on trigger
         :param generator_options: Options for building the generator (e.g. `{"rowsPerSecond": 100}`)
+        :returns: A Spark `StreamingQuery` if data is written in streaming, otherwise `None`
         """
-        with_streaming = output_dataset.trigger is not None
+        # Auto-detect streaming mode if not explicitly specified
+        if with_streaming is None:
+            with_streaming = output_dataset.trigger is not None and len(output_dataset.trigger) > 0
+
         df = self.build(withStreaming=with_streaming, options=generator_options)
-        write_data_to_output(df, config=output_dataset)
+        return write_data_to_output(df, config=output_dataset)
 
     @staticmethod
     def loadFromJson(options: str) -> "DataGenerator":

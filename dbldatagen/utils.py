@@ -19,6 +19,7 @@ from typing import Any
 
 import jmespath
 from pyspark.sql import DataFrame
+from pyspark.sql.streaming.query import StreamingQuery
 
 from dbldatagen.config import OutputDataset
 
@@ -365,12 +366,13 @@ def system_time_millis() -> int:
     return curr_time
 
 
-def write_data_to_output(df: DataFrame, config: OutputDataset) -> None:
+def write_data_to_output(df: DataFrame, config: OutputDataset) -> StreamingQuery | None:
     """
     Writes a DataFrame to the sink configured in the output configuration.
 
     :param df: Spark DataFrame to write
     :param config: Output configuration passed as an `OutputConfig`
+    :returns: A Spark `StreamingQuery` if data is written in streaming, otherwise `None`
     """
     if df.isStreaming:
         if not config.trigger:
@@ -388,7 +390,8 @@ def write_data_to_output(df: DataFrame, config: OutputDataset) -> None:
                 .trigger(**config.trigger)
                 .start(config.location)
             )
-        query.awaitTermination()
+        return query
+
     else:
         (
             df.write.format(config.format)
@@ -396,3 +399,5 @@ def write_data_to_output(df: DataFrame, config: OutputDataset) -> None:
             .options(**config.options)
             .save(config.location)
         )
+
+    return None
