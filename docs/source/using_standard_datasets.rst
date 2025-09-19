@@ -34,11 +34,11 @@ provide summary derived data from the data produced by the data generation insta
 
    In keeping with the varied roles of the associated datasets, the associated datasets may be retrieved using one of
    several methods to get the dataframes in a way that is self descriptive. The methods are:
-      - `Datasets.getAssociatedDataset()` - returns a dataframe based on the supplied parameters and provider logic
-      - `Datasets.getSupportingDataset()` - alias for `Datasets.getAssociatedDataset()`
-      - `Datasets.getCombinedDataset()` - alias for `Datasets.getAssociatedDataset()`
-      - `Datasets.getEnrichedDataset()` - alias for `Datasets.getAssociatedDataset()`
-      - `Datasets.getSummaryDataset()` - alias for `Datasets.getAssociatedDataset()`
+   - `Datasets.getAssociatedDataset()` - returns a dataframe based on the supplied parameters and provider logic
+   - `Datasets.getSupportingDataset()` - alias for `Datasets.getAssociatedDataset()`
+   - `Datasets.getCombinedDataset()` - alias for `Datasets.getAssociatedDataset()`
+   - `Datasets.getEnrichedDataset()` - alias for `Datasets.getAssociatedDataset()`
+   - `Datasets.getSummaryDataset()` - alias for `Datasets.getAssociatedDataset()`
 
     The method names are intended to be self descriptive and to provide a clear indication of the role of the associated
     usage, but they are all aliases of `getAssociatedDataset()` and can be used interchangeably.

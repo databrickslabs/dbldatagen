@@ -47,11 +47,12 @@ from .text_generators import TemplateGenerator, ILText, TextGenerator
 from .text_generator_plugins import PyfuncText, PyfuncTextFactory, FakerTextFactory, fakerText
 from .html_utils import HtmlUtils
 from .datasets_object import Datasets
+from .config import OutputDataset
 
 __all__ = ["data_generator", "data_analyzer", "schema_parser", "daterange", "nrange",
            "column_generation_spec", "utils", "function_builder",
            "spark_singleton", "text_generators", "datarange", "datagen_constants",
-           "text_generator_plugins", "html_utils", "datasets_object", "constraints"
+           "text_generator_plugins", "html_utils", "datasets_object", "constraints", "config"
            ]
 
 

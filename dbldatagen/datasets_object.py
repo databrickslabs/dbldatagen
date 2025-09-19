@@ -20,8 +20,9 @@ from __future__ import annotations  # needed when using dataclasses in Python 3.
 import re
 
 from dbldatagen.datasets.dataset_provider import DatasetProvider
-from .spark_singleton import SparkSingleton
-from .utils import strip_margins
+from dbldatagen.spark_singleton import SparkSingleton
+from dbldatagen.utils import strip_margins
+from dbldatagen.data_generator import DataGenerator
 
 
 class Datasets:
@@ -211,12 +212,6 @@ class Datasets:
         If the dataset supports multiple tables, the table may be specified in the `table` parameter.
         If none is specified, the primary table is used.
 
-        :param table: name of table to retrieve
-        :param rows: number of rows to generate. if -1, provider should compute defaults.
-        :param partitions: number of partitions to use.If -1, the number of partitions is computed automatically
-        table size and partitioning.If applied to a dataset with only a single table, this is ignored.
-        :param kwargs: additional keyword arguments to pass to the provider
-
         If `rows` or `partitions` are not specified, default values are supplied by the provider.
 
         For multi-table datasets, the table name must be specified. For single table datasets, the table name may
@@ -225,40 +220,43 @@ class Datasets:
         Additionally, for multi-table datasets, the table name must be one of the tables supported by the provider.
         Default number of rows for multi-table datasets may differ - for example a 'customers' table may have a
         100,000 rows while a 'sales' table may have 1,000,000 rows.
+
+        :param table: name of table to retrieve
+        :param rows: number of rows to generate. if -1, provider should compute defaults.
+        :param partitions: number of partitions to use.If -1, the number of partitions is computed automatically
+            table size and partitioning.If applied to a dataset with only a single table, this is ignored.
+        :param kwargs: additional keyword arguments to pass to the provider
+        :returns: table generator
         """
 
         return self._get(providerName=self._name, tableName=table, rows=rows, partitions=partitions,
                          **kwargs)
 
     def _getSupportingTable(self, *, providerName, tableName, rows=-1, partitions=-1, **kwargs):
-        providerInstance, providerDefinition = \
-            self._getProviderInstanceAndMetadata(providerName, supportsStreaming=self._streamingRequired)
+        providerInstance, providerDefinition = self._getProviderInstanceAndMetadata(
+            providerName, supportsStreaming=self._streamingRequired
+        )
 
         assert tableName is not None and len(tableName.strip()) > 0, "Data set name must be provided"
 
         if tableName not in providerDefinition.associatedDatasets:
             raise ValueError(f"Dataset `{tableName}` not a recognized dataset option")
 
-        dfSupportingTable = providerInstance.getAssociatedDataset(self._sparkSession, tableName=tableName, rows=rows,
-                                                                  partitions=partitions,
-                                                                  **kwargs)
+        dfSupportingTable = providerInstance.getAssociatedDataset(
+            self._sparkSession, tableName=tableName, rows=rows, partitions=partitions, **kwargs
+        )
         return dfSupportingTable
 
-    def getAssociatedDataset(self, *, table, rows=-1, partitions=-1, **kwargs):
-        """Get a table generator from the dataset provider
+    def getAssociatedDataset(self, *, table, rows=-1, partitions=-1, **kwargs) -> DataGenerator:
+        """
+        Gets a table generator from the dataset provider.
 
-        These are DataGenerator instances that can be used to generate the data.
+        Associated datasets are DataGenerator instances that can be used to generate the data.
         The dataset providers also optionally can provide supporting tables which are computed tables based on
         parameters. These are retrieved using the `getAssociatedDataset` method
 
         If the dataset supports multiple tables, the table may be specified in the `table` parameter.
         If none is specified, the primary table is used.
-
-        :param table: name of table to retrieve
-        :param rows: number of rows to generate. if -1, provider should compute defaults.
-        :param partitions: number of partitions to use.If -1, the number of partitions is computed automatically
-        table size and partitioning.If applied to a dataset with only a single table, this is ignored.
-        :param kwargs: additional keyword arguments to pass to the provider
 
         If `rows` or `partitions` are not specified, default values are supplied by the provider.
 
@@ -269,9 +267,13 @@ class Datasets:
         Default number of rows for multi-table datasets may differ - for example a 'customers' table may have a
         100,000 rows while a 'sales' table may have 1,000,000 rows.
 
-        .. note ::
+        :param table: Name of table to retrieve
+        :param rows: Number of rows to generate. if -1, provider should compute defaults
+        :param partitions: number of partitions to use. If -1, the number of partitions is computed automatically table
+            size and partitioning. If applied to a dataset with only a single table, this is ignored.
 
-           This method may also be invoked via the aliased names - `getSupportingDataset` and `getCombinedDataset`
+        .. note ::
+            This method may also be invoked via the aliased names - `getSupportingDataset` and `getCombinedDataset`
         """
         return self._getSupportingTable(providerName=self._name, tableName=table, rows=rows, partitions=partitions,
                                         **kwargs)

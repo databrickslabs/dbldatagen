@@ -1,34 +1,15 @@
-## Proposed changes
+## Changes
+<!-- Summarize your changes. Add code examples or screenshots when necessary. -->
 
-Describe the big picture of your changes here to communicate to the maintainers. 
-If it fixes a bug or resolves a feature request, please provide a link to that issue.
+### Linked issues
+<!-- DOC: Link issue with a keyword: close, closes, closed, fix, fixes, fixed, resolve, resolves, resolved. See https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword -->
 
-## Types of changes
+Resolves #..
 
-What types of changes does your code introduce to dbldatagen?
-_Put an `x` in the boxes that apply_
+### Requirements
+<!-- How are your changes documented and tested? Please see the checklist below. -->
 
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] Change to tutorials, tests or examples
-- [ ] Non code change (readme, images or other non-code assets)
-- [ ] Documentation Update (if none of the other choices apply)
-
-## Checklist
-
-_Put an `x` in the boxes that apply. You can also fill these out after creating the PR. 
-If you're unsure about any of them, don't hesitate to ask. We're here to help! 
-This is simply a reminder of what we are going to look for before merging your code._
-
-- [ ] Lint and unit tests pass locally with my changes
-- [ ] I have added tests that prove my fix is effective or that my feature works
-- [ ] I have added necessary documentation (if appropriate)
-- [ ] Any dependent changes have been merged and published in downstream modules
-- [ ] Submission does not reduce code coverage numbers
-- [ ] Submission does not increase alerts or messages from prospector / lint
-
-## Further comments
-
-If this is a relatively large or complex change, kick off the discussion by explaining why you chose the solution you 
-did and what alternatives you considered, etc...
+- [ ] manually tested
+- [ ] updated documentation
+- [ ] updated demos
+- [ ] updated tests
