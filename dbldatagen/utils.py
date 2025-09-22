@@ -366,38 +366,38 @@ def system_time_millis() -> int:
     return curr_time
 
 
-def write_data_to_output(df: DataFrame, config: OutputDataset) -> StreamingQuery | None:
+def write_data_to_output(df: DataFrame, output_dataset: OutputDataset) -> StreamingQuery | None:
     """
     Writes a DataFrame to the sink configured in the output configuration.
 
     :param df: Spark DataFrame to write
-    :param config: Output configuration passed as an `OutputConfig`
+    :param output_dataset: Output dataset configuration passed as an `OutputDataset`
     :returns: A Spark `StreamingQuery` if data is written in streaming, otherwise `None`
     """
     if df.isStreaming:
-        if not config.trigger:
+        if not output_dataset.trigger:
             query = (
-                df.writeStream.format(config.format)
-                .outputMode(config.output_mode)
-                .options(**config.options)
-                .start(config.location)
+                df.writeStream.format(output_dataset.format)
+                .outputMode(output_dataset.output_mode)
+                .options(**output_dataset.options)
+                .start(output_dataset.location)
             )
         else:
             query = (
-                df.writeStream.format(config.format)
-                .outputMode(config.output_mode)
-                .options(**config.options)
-                .trigger(**config.trigger)
-                .start(config.location)
+                df.writeStream.format(output_dataset.format)
+                .outputMode(output_dataset.output_mode)
+                .options(**output_dataset.options)
+                .trigger(**output_dataset.trigger)
+                .start(output_dataset.location)
             )
         return query
 
     else:
         (
-            df.write.format(config.format)
-            .mode(config.output_mode)
-            .options(**config.options)
-            .save(config.location)
+            df.write.format(output_dataset.format)
+            .mode(output_dataset.output_mode)
+            .options(**output_dataset.options)
+            .save(output_dataset.location)
         )
 
     return None

@@ -4,12 +4,12 @@
 Writing Generated Data to Tables or Files
 ===========================================================
 
-Generated data can be written directly to output tables or files using the ``OutputConfig`` class.
+Generated data can be written directly to output tables or files using the ``OutputDataset`` class.
 
 Writing generated data to a table
 ---------------------------------
 
-Once you've defined a ``DataGenerator``, call the ``buildOutputDataset`` method to write data to a target table.
+Once you've defined a ``DataGenerator``, call the ``saveAsDataset`` method to write data to a target table.
 
 .. code-block:: python
 
@@ -28,7 +28,7 @@ Once you've defined a ``DataGenerator``, call the ``buildOutputDataset`` method 
    outputDataset = OutputDataset("main.demo.users")
 
    # Generate and write the output data:
-   testDataSpec.buildOutputDataset(config=outputDataset)
+   testDataSpec.saveAsDataset(dataset=outputDataset)
 
 Writing generated data with streaming
 -------------------------------------
@@ -39,7 +39,7 @@ Python dictionaries (e.g. ``{"processingTime": "10 seconds"}`` to write data eve
 .. code-block:: python
 
    import dbldatagen as dg
-   from dbldatagen.config import OutputConfig
+   from dbldatagen.config import OutputDataset
 
    # Create a sample data generator with a few columns:
    testDataSpec = (
@@ -56,7 +56,7 @@ Python dictionaries (e.g. ``{"processingTime": "10 seconds"}`` to write data eve
    )
 
    # Generate and write the output data:
-   testDataSpec.buildOutputDataset(config=outputDataset)
+   testDataSpec.saveAsDataset(dataset=outputDataset)
 
 Options for writing data
 ------------------------
@@ -85,7 +85,7 @@ Data will be written in append mode by default.
    )
 
    # Generate and write the output data:
-   testDataSpec.buildOutputDataset(config=outputDataset)
+   testDataSpec.saveAsDataset(dataset=outputDataset)
 
 Writing generated data to files
 -------------------------------
@@ -115,4 +115,4 @@ in Databricks File System (DBFS).
    )
 
    # Generate and write the output data:
-   testDataSpec.buildOutputDataset(config=outputDataset)
+   testDataSpec.saveAsDataset(dataset=outputDataset)

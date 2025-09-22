@@ -64,7 +64,7 @@ class TestOutput:
             options={"mergeSchema": "true"},
         )
 
-        gen.buildOutputDataset(output_dataset)
+        gen.saveAsDataset(output_dataset)
         persisted_df = spark.read.format(table_format).load(table_dir)
         assert persisted_df.count() > 0
 
@@ -100,7 +100,7 @@ class TestOutput:
             trigger={"processingTime": "1 SECOND"}
         )
 
-        query = gen.buildOutputDataset(output_dataset, with_streaming=True)
+        query = gen.saveAsDataset(output_dataset, with_streaming=True)
 
         start_time = time.time()
         elapsed_time = 0

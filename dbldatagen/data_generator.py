@@ -1917,25 +1917,26 @@ class DataGenerator(SerializableToDict):
 
         return result
 
-    def buildOutputDataset(
-            self, output_dataset: OutputDataset,
+    def saveAsDataset(
+            self,
+            dataset: OutputDataset,
             with_streaming: bool | None = None,
             generator_options: dict[str, Any] | None = None
     ) -> StreamingQuery | None:
         """
-        Builds a `DataFrame` from the `DataGenerator` and writes the data to a target table.
+        Builds a `DataFrame` from the `DataGenerator` and writes the data to an output dataset (e.g. a table or files).
 
-        :param output_dataset: Output configuration for writing generated data
+        :param dataset: Output dataset for writing generated data
         :param with_streaming: Whether to generate data using streaming. If None, auto-detects based on trigger
         :param generator_options: Options for building the generator (e.g. `{"rowsPerSecond": 100}`)
         :returns: A Spark `StreamingQuery` if data is written in streaming, otherwise `None`
         """
         # Auto-detect streaming mode if not explicitly specified
         if with_streaming is None:
-            with_streaming = output_dataset.trigger is not None and len(output_dataset.trigger) > 0
+            with_streaming = dataset.trigger is not None and len(dataset.trigger) > 0
 
         df = self.build(withStreaming=with_streaming, options=generator_options)
-        return write_data_to_output(df, config=output_dataset)
+        return write_data_to_output(df, output_dataset=dataset)
 
     @staticmethod
     def loadFromJson(options: str) -> "DataGenerator":
