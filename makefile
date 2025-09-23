@@ -8,7 +8,7 @@ clean:
 
 .venv/bin/python:
 	pip install hatch
-	hatch env create
+	hatch env create test-pydantic.pydantic==1.10.6-v1
 
 dev: .venv/bin/python
 	@hatch run which python
@@ -20,7 +20,7 @@ fmt:
 	hatch run fmt
 
 test:
-	hatch run test
+	hatch run test-pydantic:test
 
 test-coverage:
 	make test && open htmlcov/index.html

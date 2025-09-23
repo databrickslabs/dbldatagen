@@ -106,18 +106,31 @@ dependencies = [
 ]
 
 python="3.10"
-
-# store virtual env as the child of this folder. Helps VSCode (and PyCharm) to run better
 path = ".venv"
 
 [tool.hatch.envs.default.scripts]
 test    = "pytest tests/ -n 10 --cov --cov-report=html --timeout 600 --durations 20"
-fmt         = ["ruff check . --fix",
-               "mypy .",
-               "pylint --output-format=colorized -j 0 dbldatagen tests"]
-verify      = ["ruff check .",
-               "mypy .",
-               "pylint --output-format=colorized -j 0 dbldatagen tests"]
+fmt     = [
+    "ruff check . --fix",
+    "mypy .",
+    "pylint --output-format=colorized -j 0 dbldatagen tests"
+]
+verify  = [
+    "ruff check .",
+    "mypy .",
+    "pylint --output-format=colorized -j 0 dbldatagen tests"
+]
+
+
+[tool.hatch.envs.test-pydantic]
+template = "default"
+matrix = [
+    { pydantic_version = ["1.10.6", "2.8.2"] }
+]
+extra-dependencies = [
+    "pydantic=={matrix:pydantic_version}"
+]
+
 
 # Ruff configuration - replaces flake8, isort, pydocstyle, etc.
 [tool.ruff]
