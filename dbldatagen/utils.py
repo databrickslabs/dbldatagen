@@ -18,6 +18,10 @@ from datetime import timedelta
 from typing import Any
 
 import jmespath
+from pyspark.sql import DataFrame
+from pyspark.sql.streaming.query import StreamingQuery
+
+from dbldatagen.config import OutputDataset
 
 
 def deprecated(message: str = "") -> Callable[[Callable[..., Any]], Callable[..., Any]]:
@@ -293,10 +297,10 @@ def split_list_matching_condition(lst: list[Any], cond: Callable[[Any], bool]) -
 
     Result:
     `[['id'], ['city_name'], ['id'], ['city_id', 'city_pop'],
-      ['id'], ['city_id', 'city_pop', 'city_id', 'city_pop'], ['id']]`
+    ['id'], ['city_id', 'city_pop', 'city_id', 'city_pop'], ['id']]`
 
-    :arg lst: list of items to perform condition matches against
-    :arg cond: lambda function or function taking single argument and returning True or False
+    :param lst: list of items to perform condition matches against
+    :param cond: lambda function or function taking single argument and returning True or False
     :returns: list of sublists
     """
     retval: list[list[Any]] = []
@@ -360,3 +364,40 @@ def system_time_millis() -> int:
     """
     curr_time: int = round(time.time() / 1000)
     return curr_time
+
+
+def write_data_to_output(df: DataFrame, output_dataset: OutputDataset) -> StreamingQuery | None:
+    """
+    Writes a DataFrame to the sink configured in the output configuration.
+
+    :param df: Spark DataFrame to write
+    :param output_dataset: Output dataset configuration passed as an `OutputDataset`
+    :returns: A Spark `StreamingQuery` if data is written in streaming, otherwise `None`
+    """
+    if df.isStreaming:
+        if not output_dataset.trigger:
+            query = (
+                df.writeStream.format(output_dataset.format)
+                .outputMode(output_dataset.output_mode)
+                .options(**output_dataset.options)
+                .start(output_dataset.location)
+            )
+        else:
+            query = (
+                df.writeStream.format(output_dataset.format)
+                .outputMode(output_dataset.output_mode)
+                .options(**output_dataset.options)
+                .trigger(**output_dataset.trigger)
+                .start(output_dataset.location)
+            )
+        return query
+
+    else:
+        (
+            df.write.format(output_dataset.format)
+            .mode(output_dataset.output_mode)
+            .options(**output_dataset.options)
+            .save(output_dataset.location)
+        )
+
+    return None

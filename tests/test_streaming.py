@@ -11,7 +11,7 @@ import dbldatagen as dg
 spark = dg.SparkSingleton.getLocalInstance("streaming tests")
 
 
-class TestStreaming():
+class TestStreaming:
     row_count = 100000
     column_count = 10
     time_to_run = 10

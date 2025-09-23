@@ -15,11 +15,13 @@ from functools import partial
 from typing import Any
 
 from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql.streaming.query import StreamingQuery
 from pyspark.sql.types import DataType, IntegerType, LongType, StringType, StructField, StructType
 
 from dbldatagen import datagen_constants
 from dbldatagen._version import _get_spark_version
 from dbldatagen.column_generation_spec import ColumnGenerationSpec
+from dbldatagen.config import OutputDataset
 from dbldatagen.constraints import Constraint, SqlExpr
 from dbldatagen.datarange import DataRange
 from dbldatagen.distributions import DataDistribution
@@ -28,7 +30,14 @@ from dbldatagen.schema_parser import SchemaParser
 from dbldatagen.serialization import SerializableToDict
 from dbldatagen.spark_singleton import SparkSingleton
 from dbldatagen.text_generators import TextGenerator
-from dbldatagen.utils import DataGenError, deprecated, ensure, split_list_matching_condition, topologicalSort
+from dbldatagen.utils import (
+    DataGenError,
+    deprecated,
+    ensure,
+    split_list_matching_condition,
+    topologicalSort,
+    write_data_to_output,
+)
 
 
 _OLD_MIN_OPTION: str = "min"
@@ -1204,9 +1213,9 @@ class DataGenerator(SerializableToDict):
     ) -> ColumnGenerationSpec:
         """ generate field definition and column spec
 
-        .. note:: Any time that a new column definition is added,
-                  we'll mark that the build plan needs to be regenerated.
-           For our purposes, the build plan determines the order of column generation etc.
+        .. note::
+            Any time that a new column definition is added, we'll mark that the build plan needs to be regenerated.
+            For our purposes, the build plan determines the order of column generation etc.
 
         :returns: Newly added column_spec
         """
@@ -1381,7 +1390,6 @@ class DataGenerator(SerializableToDict):
         :param buildOrder: list of lists of ids - each sublist represents phase of build
         :param columnSpecsByName: dictionary to map column names to column specs
         :returns: Spark SQL dataframe of generated test data
-
         """
         new_build_order = []
 
@@ -1476,8 +1484,8 @@ class DataGenerator(SerializableToDict):
         :returns: A modified version of the current DataGenerator with the constraint applied
 
         .. note::
-        Constraints are applied at the end of the data generation. Depending on the type of the constraint, the
-        constraint may also affect other aspects of the data generation.
+            Constraints are applied at the end of the data generation. Depending on the type of the constraint, the
+            constraint may also affect other aspects of the data generation.
         """
         assert constraint is not None, "Constraint cannot be empty"
         assert isinstance(constraint, Constraint),  \
@@ -1494,8 +1502,8 @@ class DataGenerator(SerializableToDict):
         :returns: A modified version of the current `DataGenerator` with the constraints applied
 
         .. note::
-        Constraints are applied at the end of the data generation. Depending on the type of the constraint, the
-        constraint may also affect other aspects of the data generation.
+            Constraints are applied at the end of the data generation. Depending on the type of the constraint, the
+            constraint may also affect other aspects of the data generation.
         """
         assert constraints is not None, "Constraints list cannot be empty"
 
@@ -1515,9 +1523,9 @@ class DataGenerator(SerializableToDict):
         :returns: A modified version of the current `DataGenerator` with the SQL expression constraint applied
 
         .. note::
-        Note in the current implementation, this may be equivalent to adding where clauses to the generated dataframe
-        but in future releases, this may be optimized to affect the underlying data generation so that constraints
-        are satisfied more efficiently.
+            Note in the current implementation, this may be equivalent to adding where clauses to the generated dataframe
+            but in future releases, this may be optimized to affect the underlying data generation so that constraints
+            are satisfied more efficiently.
         """
         self.withConstraint(SqlExpr(sqlExpression))
         return self
@@ -1908,6 +1916,27 @@ class DataGenerator(SerializableToDict):
             result = HtmlUtils.formatCodeAsHtml(results)
 
         return result
+
+    def saveAsDataset(
+            self,
+            dataset: OutputDataset,
+            with_streaming: bool | None = None,
+            generator_options: dict[str, Any] | None = None
+    ) -> StreamingQuery | None:
+        """
+        Builds a `DataFrame` from the `DataGenerator` and writes the data to an output dataset (e.g. a table or files).
+
+        :param dataset: Output dataset for writing generated data
+        :param with_streaming: Whether to generate data using streaming. If None, auto-detects based on trigger
+        :param generator_options: Options for building the generator (e.g. `{"rowsPerSecond": 100}`)
+        :returns: A Spark `StreamingQuery` if data is written in streaming, otherwise `None`
+        """
+        # Auto-detect streaming mode if not explicitly specified
+        if with_streaming is None:
+            with_streaming = dataset.trigger is not None and len(dataset.trigger) > 0
+
+        df = self.build(withStreaming=with_streaming, options=generator_options)
+        return write_data_to_output(df, output_dataset=dataset)
 
     @staticmethod
     def loadFromJson(options: str) -> "DataGenerator":
