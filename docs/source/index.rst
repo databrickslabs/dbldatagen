@@ -37,6 +37,8 @@ As it is installable via `%pip install`, it can also be incorporated in environm
    Using multiple tables <multi_table_data>
    Extending text generation <extending_text_generation>
    Use with Delta Live Tables <using_delta_live_tables>
+   Writing Generated Data <writing_generated_data>
+   Data Generation Specs from Configuration <serialized_data_generators>
    Troubleshooting data generation <troubleshooting>
 
 .. toctree::
