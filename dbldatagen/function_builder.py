@@ -1,30 +1,46 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import itertools
 
-from pyspark.sql.types import StringType, DateType, TimestampType
+"""
+This file defines the `ColumnGeneratorBuilder` class and utility functions
+"""
+
+import itertools
+from typing import Any
+
+from pyspark.sql.types import DataType, DateType, StringType, TimestampType
 
 
 class ColumnGeneratorBuilder:
-    """ Helper class to build functional column generators of specific forms"""
+    """
+    Helper class to build functional column generators of specific forms
+    """
 
     @classmethod
-    def _mkList(cls, x):
+    def _mkList(cls, x: object) -> list:
         """
-        Makes a list of the supplied object instance if it is not already a list
-        :param x: object to process
-        :returns: Returns list of supplied object if it is not already a list, otherwise simply returns the object"""
+        Makes a list of the supplied object instance if it is not already a list.
+
+        :param x: Input object to process
+        :returns: List containing the supplied object if it is not already a list; otherwise returns the object
+        """
         return [x] if type(x) is not list else x
 
     @classmethod
-    def _lastElement(cls, x):
-        """ Gets the last element, if the object is a list otherwise returns the object itself"""
-        return x[-1] if type(x) is list else x
+    def _lastElement(cls, x: object) -> object:
+        """
+        Gets the last element from the supplied object if it is a list.
+
+        :param x: Input object
+        :returns: Last element of the input object if it is a list; otherwise returns the object
+        """
+        return x[-1] if isinstance(x, list) else x
 
     @classmethod
-    def _mkCdfProbabilities(cls, weights):
-        """ make cumulative distribution function probabilities for each value in values list
+    def _mkCdfProbabilities(cls, weights: list[float]) -> list[float]:
+        """
+        Makes cumulative distribution function probabilities for each value in values list.
 
         a cumulative distribution function for discrete values can uses
         a  table of cumulative probabilities to evaluate different expressions
@@ -46,6 +62,9 @@ class ColumnGeneratorBuilder:
         while datasets of size 10,000 x `number of values` gives a repeated
         distribution within 5% of expected distribution.
 
+        :param weights: List of weights to compute CDF probabilities for
+        :returns: List of CDF probabilities
+
         Example code to be generated (pseudo code)::
 
            # given values value1 .. valueN, prob1 to probN
@@ -61,13 +80,12 @@ class ColumnGeneratorBuilder:
 
         """
         total_weights = sum(weights)
-        return list(map(lambda x: x / total_weights, itertools.accumulate(weights)))
+        return [x / total_weights for x in itertools.accumulate(weights)]
 
     @classmethod
-    def mkExprChoicesFn(cls, values, weights, seed_column, datatype):
-        """ Create SQL expression to compute the weighted values expression
-
-        build an expression of the form::
+    def mkExprChoicesFn(cls, values: list[Any], weights: list[float], seed_column: str, datatype: DataType) -> str:
+        """
+        Creates a SQL expression to compute a weighted values expression. Builds an expression of the form::
 
            case
               when rnd_column <= weight1 then value1
@@ -77,22 +95,22 @@ class ColumnGeneratorBuilder:
               else valueN
            end
 
-        based on computed probability distribution for values.
+        The output expression is based on the computed probability distribution for the specified values.
 
-        In Python 3.6 onwards, we could use the choices function but this python version is not
-        guaranteed on all Databricks distributions
+        In Python 3.6 onwards, we could use the choices function but this python version is not guaranteed on all
+        Databricks distributions.
 
-        :param values: list of values
-        :param weights: list of weights
-        :param seed_column: base column for expression
-        :param datatype: data type of function return value
-
+        :param values: List of values
+        :param weights: List of weights
+        :param seed_column: Base column name for expression
+        :param datatype: Spark `DataType` of the output expression
+        :returns: SQL expression representing the weighted values
         """
         cdf_probs = cls._mkCdfProbabilities(weights)
 
         output = [" CASE "]
 
-        conditions = zip(values, cdf_probs)
+        conditions = zip(values, cdf_probs, strict=False)
 
         for v, cdf in conditions:
             # TODO(alex): single quotes needs to be escaped

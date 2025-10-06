@@ -145,10 +145,7 @@ exclude = [
     "dbldatagen/data_analyzer.py",
     "dbldatagen/datagen_constants.py",
     "dbldatagen/datarange.py",
-    "dbldatagen/datasets_object.py",
     "dbldatagen/daterange.py",
-    "dbldatagen/function_builder.py",
-    "dbldatagen/html_utils.py",
     "dbldatagen/nrange.py",
     "dbldatagen/schema_parser.py",
     "dbldatagen/text_generator_plugins.py",
@@ -184,6 +181,7 @@ ignore = [
     "SIM102", # Use a single if-statement
     "SIM108", # Use ternary operator
     "UP007",  # Use X | Y for type annotations (keep Union for compatibility)
+    "ANN002", # Missing type annotation for *args
     "ANN003", # Missing type annotation for **kwargs
 ]
 
@@ -228,10 +226,7 @@ ignore = [
     "dbldatagen/data_analyzer.py",
     "dbldatagen/datagen_constants.py",
     "dbldatagen/datarange.py",
-    "dbldatagen/datasets_object.py",
     "dbldatagen/daterange.py",
-    "dbldatagen/function_builder.py",
-    "dbldatagen/html_utils.py",
     "dbldatagen/nrange.py",
     "dbldatagen/schema_parser.py",
     "dbldatagen/serialization.py",
@@ -267,10 +262,7 @@ ignore-paths = [
     "dbldatagen/data_generator.py",
     "dbldatagen/datagen_constants.py",
     "dbldatagen/datarange.py",
-    "dbldatagen/datasets_object.py",
     "dbldatagen/daterange.py",
-    "dbldatagen/function_builder.py",
-    "dbldatagen/html_utils.py",
     "dbldatagen/nrange.py",
     "dbldatagen/schema_parser.py",
     "dbldatagen/serialization.py",
@@ -400,10 +392,7 @@ exclude = [
     "dbldatagen/data_analyzer.py",
     "dbldatagen/datagen_constants.py",
     "dbldatagen/datarange.py",
-    "dbldatagen/datasets_object.py",
     "dbldatagen/daterange.py",
-    "dbldatagen/function_builder.py",
-    "dbldatagen/html_utils.py",
     "dbldatagen/nrange.py",
     "dbldatagen/schema_parser.py",
     "dbldatagen/serialization.py",
