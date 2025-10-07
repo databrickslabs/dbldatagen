@@ -20,6 +20,7 @@ from dbldatagen.data_generator import DataGenerator
 This file defines the DatasetProvider class
 """
 
+
 class DatasetProvider(ABC):
     """
     The DatasetProvider class acts as a base class for all dataset providers
@@ -206,7 +207,7 @@ class DatasetProvider(ABC):
         raise NotImplementedError("Base data provider does not provide any table generation specifications!")
 
     @abstractmethod
-    def getAssociatedDataset(self, sparkSession: SparkSession, *, tableName: str|None=None, rows: int=-1, partitions: int=-1,
+    def getAssociatedDataset(self, sparkSession: SparkSession, *, tableName: str | None=None, rows: int=-1, partitions: int=-1,
                              **options: dict[str, Any]) -> DataGenerator:
         """
         Gets associated datasets that are used in conjunction with the provider datasets.
@@ -240,7 +241,7 @@ class DatasetProvider(ABC):
 
         def decorator(func: Callable) -> Callable:
             @functools.wraps(func)
-            def wrapper(*args, **kwargs) -> Callable: # noqa: ANN002
+            def wrapper(*args, **kwargs) -> Callable:
                 bad_options = [keyword_arg for keyword_arg in kwargs
                                if keyword_arg not in DEFAULT_OPTIONS and keyword_arg not in options]
 

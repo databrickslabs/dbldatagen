@@ -1913,7 +1913,7 @@ class DataGenerator(SerializableToDict):
         result = "\n".join(results)
 
         if asHtml:
-            result = HtmlUtils.formatCodeAsHtml(results)
+            result = HtmlUtils.formatCodeAsHtml(result)
 
         return result
 
