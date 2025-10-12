@@ -984,3 +984,233 @@ class TestRangedValuesAndDates(unittest.TestCase):
         s1_expected_values = [f"testing {x:05} >>" for x in [1.5, 1.8, 2.1, 2.4]]
         s1_values = [r[0] for r in results.select("s1").distinct().collect()]
         self.assertSetEqual(set(s1_expected_values), set(s1_values))
+
+    def test_unique_values_random_integers(self):
+        test_df = (
+            dg.DataGenerator(
+                sparkSession=spark,
+                name="test_data_set1",
+                rows=10000,
+                partitions=4,
+                randomSeedMethod="fixed",
+                randomSeed=24
+            )
+            .withIdOutput()
+            .withColumn("val1", "int", minValue=1, maxValue=100, uniqueValues=10, random=True)
+            .withColumn("val2", "int", minValue=1, maxValue=100, uniqueValues=10, random=False)
+            .build()
+        )
+
+        # Ensure that we get exactly 10 unique values for both columns:
+        count_unique_val1 = test_df.select("val1").distinct().count()
+        count_unique_val2 = test_df.select("val2").distinct().count()
+        self.assertEqual(count_unique_val1, 10)
+        self.assertEqual(count_unique_val2, 10)
+
+        # Get the generated unique values:
+        unique_set_val1 = {r[0] for r in test_df.select("val1").distinct().collect()}
+        unique_set_val2 = {r[0] for r in test_df.select("val2").distinct().collect()}
+        expected_sequence = set(range(1, 11))
+
+        # Ensure that the expected values for val1 are not generated in sequence:
+        self.assertNotEqual(unique_set_val1, expected_sequence)
+
+        # Ensure that the non-random values for val2 are generated in sequence:
+        self.assertEqual(unique_set_val2, expected_sequence)
+        
+        # Ensure that all values are generated in the provided range:
+        self.assertTrue(all(1 <= v <= 100 for v in unique_set_val1))
+        self.assertTrue(all(1 <= v <= 100 for v in unique_set_val2))
+
+    def test_unique_values_random_floats(self):
+        test_df = (
+            dg.DataGenerator(
+                sparkSession=spark,
+                name="test_data_set1",
+                rows=5000,
+                partitions=4,
+                randomSeedMethod="fixed",
+                randomSeed=42
+            )
+            .withIdOutput()
+            .withColumn("val1", "float", minValue=1.0, maxValue=10.0, step=0.5, uniqueValues=10, random=True)
+            .withColumn("val2", "float", minValue=1.0, maxValue=10.0, step=0.5, uniqueValues=10, random=False)
+            .build()
+        )
+
+        # Ensure that we get exactly 10 unique values for both columns:
+        count_unique_val1 = test_df.select("val1").distinct().count()
+        count_unique_val2 = test_df.select("val2").distinct().count()
+        self.assertEqual(count_unique_val1, 10)
+        self.assertEqual(count_unique_val2, 10)
+
+        # Get the generated unique values:
+        unique_set_val1 = {r[0] for r in test_df.select("val1").distinct().collect()}
+        unique_set_val2 = {r[0] for r in test_df.select("val2").distinct().collect()}
+        expected_sequence = {1.0 + i * 0.5 for i in range(10)}
+
+        # Ensure that the expected values for val1 are not generated in sequence:
+        self.assertNotEqual(unique_set_val1, expected_sequence)
+
+        # Ensure that the non-random values for val2 are generated in sequence:
+        self.assertEqual(unique_set_val2, expected_sequence)
+
+        # Ensure that all values are generated in the provided range:
+        self.assertTrue(all(1.0 <= v <= 10.0 for v in unique_set_val1))
+        self.assertTrue(all(1.0 <= v <= 10.0 for v in unique_set_val2))
+
+    def test_unique_values_random_dates(self):
+        test_df = (
+            dg.DataGenerator(
+                sparkSession=spark,
+                name="test_data_set1",
+                rows=5000,
+                partitions=4,
+                randomSeedMethod="fixed",
+                randomSeed=456
+            )
+            .withIdOutput()
+            .withColumn(
+                "val1",
+                "date",
+                begin="2020-01-01",
+                end="2020-01-31",
+                interval="1 day",
+                uniqueValues=10,
+                random=True
+            )
+            .withColumn(
+                "val2",
+                "date",
+                begin="2020-01-01",
+                end="2020-01-31",
+                interval="1 day",
+                uniqueValues=10,
+                random=False
+            )
+            .build()
+        )
+
+        # Ensure that we get exactly 10 unique values for both columns:
+        count_unique_val1 = test_df.select("val1").distinct().count()
+        count_unique_val2 = test_df.select("val2").distinct().count()
+        self.assertEqual(count_unique_val1, 10)
+        self.assertEqual(count_unique_val2, 10)
+
+        # Get the generated unique values:
+        unique_set_val1 = {r[0] for r in test_df.select("val1").distinct().collect()}
+        unique_set_val2 = {r[0] for r in test_df.select("val2").distinct().collect()}
+        end_date = date(2020, 1, 31)
+        expected_sequence = {end_date - timedelta(days=j-1) for j in range(10, 0, -1)}
+
+        # Ensure that the expected values for val1 are not generated in sequence:
+        self.assertNotEqual(unique_set_val1, expected_sequence)
+
+        # Ensure that the non-random values for val2 are generated in sequence:
+        self.assertEqual(unique_set_val2, expected_sequence)
+
+        # Ensure that all values are generated in the provided range:
+        start_date = date(2020, 1, 1)
+        end_date = date(2020, 1, 31)
+        self.assertTrue(all(start_date <= v <= end_date for v in unique_set_val1))
+        self.assertTrue(all(start_date <= v <= end_date for v in unique_set_val2))
+
+    def test_unique_values_random_timestamps(self):
+        test_df = (
+            dg.DataGenerator(
+                sparkSession=spark,
+                name="test_data_set1",
+                rows=3000,
+                partitions=4,
+                randomSeedMethod="fixed",
+                randomSeed=789
+            )
+            .withIdOutput()
+            .withColumn(
+                "val1",
+                "timestamp",
+                begin="2020-01-01 00:00:00",
+                end="2020-01-01 23:59:59",
+                interval="1 hour",
+                uniqueValues=10,
+                random=True
+            )
+            .withColumn(
+                "val2",
+                "timestamp",
+                begin="2020-01-01 00:00:00",
+                end="2020-01-01 23:59:59",
+                interval="1 hour",
+                uniqueValues=10,
+                random=False
+            )
+            .build()
+        )
+
+        # Ensure that we get exactly 10 unique values for both columns:
+        count_unique_val1 = test_df.select("val1").distinct().count()
+        count_unique_val2 = test_df.select("val2").distinct().count()
+        self.assertEqual(count_unique_val1, 10)
+        self.assertEqual(count_unique_val2, 10)
+
+        # Get the generated unique values:
+        unique_set_val1 = {r[0] for r in test_df.select("val1").distinct().collect()}
+        unique_set_val2 = {r[0] for r in test_df.select("val2").distinct().collect()}
+        end_time = datetime(2020, 1, 1, 23, 59, 59)
+        expected_sequence = {end_time - timedelta(hours=j-1) for j in range(10, 0, -1)}
+
+        # Ensure that the expected values for val1 are not generated in sequence:
+        self.assertNotEqual(unique_set_val1, expected_sequence)
+
+        # Ensure that the non-random values for val2 are generated in sequence:
+        self.assertEqual(unique_set_val2, expected_sequence)
+
+        # Ensure that all values are generated in the provided range:
+        start_ts = datetime(2020, 1, 1, 0, 0, 0)
+        end_ts = datetime(2020, 1, 1, 23, 59, 59)
+        self.assertTrue(all(start_ts <= v <= end_ts for v in unique_set_val1))
+        self.assertTrue(all(start_ts <= v <= end_ts for v in unique_set_val2))
+
+    def test_unique_values_random_reproducible(self):
+        test_gen = (
+            dg.DataGenerator(
+                sparkSession=spark,
+                name="test_data_set1",
+                rows=1000,
+                partitions=2,
+                randomSeedMethod="fixed",
+                randomSeed=999
+            )
+            .withIdOutput()
+            .withColumn("val", "int", minValue=1, maxValue=50, uniqueValues=8, random=True)
+        )
+
+        # Generate data using the same random seed:
+        test_df1 = test_gen.build()
+        test_df2 = test_gen.build()
+
+        # Get the unique generated values:
+        unique_set_val1 = {r[0] for r in test_df1.select("val").distinct().collect()}
+        unique_set_val2 = {r[0] for r in test_df2.select("val").distinct().collect()}
+
+        # Ensure the same unique values are generated using the same random seed:
+        self.assertEqual(unique_set_val1, unique_set_val2)
+
+        # Generate data with a new random seed:
+        test_gen_new_seed = (
+            dg.DataGenerator(
+                sparkSession=spark,
+                name="test_data_set1",
+                rows=1000,
+                partitions=2,
+                randomSeedMethod="fixed",
+                randomSeed=42
+            )
+            .withIdOutput()
+            .withColumn("val", "int", minValue=1, maxValue=50, uniqueValues=8, random=True)
+        )
+        test_df3 = test_gen_new_seed.build()
+        unique_set_val3 = {r[0] for r in test_df3.select("val").distinct().collect()}
+
+        # Ensure different unique values are generated using the new random seed:
+        self.assertNotEqual(unique_set_val1, unique_set_val3)
