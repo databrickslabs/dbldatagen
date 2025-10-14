@@ -2,60 +2,58 @@
 # MAGIC %md
 # MAGIC
 # MAGIC # Getting Started with the Databricks Labs Data Generator
-# MAGIC
 # MAGIC This notebook provides an introduction to synthetic data generation using the [Databricks Labs Data Generator (`dbldatagen`)](https://databrickslabs.github.io/dbldatagen/public_docs/index.html). This data generator is useful for generating large synthetic datasets for development, testing, benchmarking, proofs-of-concept, and other use-cases.
+# MAGIC
+# MAGIC The notebook simulates data for a user login scenario for the gaming industry.
 
 # COMMAND ----------
 
 # DBTITLE 1,Install dbldatagen
-# MAGIC %pip install dbldatagen
+# dbldatagen can be installed using pip install commands, as a cluster-scoped library, or as a serverless environment-scoped library.
+%pip install dbldatagen
 
 # COMMAND ----------
 
 # DBTITLE 1,Import Modules
 import dbldatagen as dg
-import dbldatagen.distributions as dist
 
-from pyspark.sql.types import IntegerType, FloatType, StringType, TimestampType, BooleanType, LongType, ArrayType
-from pyspark.sql.functions import current_timestamp
-
-import random
-import string
-from datetime import datetime
-from pyspark.sql.functions import col, format_string, expr, sha2
+from pyspark.sql.types import DoubleType, StringType, TimestampType, LongType
+from pyspark.sql.functions import col, expr, sha2, to_date, hour
 
 # COMMAND ----------
 
 # DBTITLE 1,Set up Parameters
 # Set up how many rows we want along with how many users, devices and IPs we want
-ROW_COUNT=4144000
-NUMBER_OF_USERS=200000
-NUMBER_OF_DEVICES= NUMBER_OF_USERS+50000
-NUMBER_OF_IPS=40000
-# ROW_COUNT=1000000000
-# NUMBER_OF_USERS=2000000
-# NUMBER_OF_DEVICES= NUMBER_OF_USERS+500000
-# NUMBER_OF_IPS=400000
-START_TIMESTAMP="2025-03-01 00:00:00"
-END_TIMESTAMP="2025-03-30 00:00:00"
+ROW_COUNT = 4500000
+NUMBER_OF_USERS = 200000
+NUMBER_OF_DEVICES = NUMBER_OF_USERS + 50000
+NUMBER_OF_IPS = 40000
+
+START_TIMESTAMP = "2025-03-01 00:00:00"
+END_TIMESTAMP = "2025-03-30 00:00:00"
 
 # COMMAND ----------
 
 # MAGIC %md
 # MAGIC ## Data Generation Specifications
 # MAGIC
-# MAGIC Let's start by generating a DataFrame with rows representing unique login information. Data generation is controlled by a `DataGenerator` object. Each `DataGenerator` can be extended with rules specifying the output schema and value generation.
+# MAGIC Let's start by generating a DataFrame with rows representing unique login information. Data generation is controlled by a `DataGenerator` object. Each `DataGenerator` can be extended with rules specifying the output schema and value generation. Columns can be defined using `withColumn(...)` with a variety of parameters.
+# MAGIC
+# MAGIC **colName** – Name of column to add. If this conflicts with the underlying seed column (id), it is recommended that the seed column name is customized during the construction of the data generator spec.
+# MAGIC
+# MAGIC **colType** – Data type for column. This may be specified as either a type from one of the possible pyspark.sql.types (e.g. StringType, DecimalType(10,3) etc) or as a string containing a Spark SQL type definition (i.e String, array<Integer>, map<String, Float>)
+# MAGIC
+# MAGIC **omit** – if True, the column will be omitted from the final set of columns in the generated data. Used to create columns that are used by other columns as intermediate results. Defaults to False
+# MAGIC
+# MAGIC **expr** – Specifies SQL expression used to create column value. If specified, overrides the default rules for creating column value. Defaults to None
+# MAGIC
+# MAGIC **baseColumn** – String or list of columns to control order of generation of columns. If not specified, column is dependent on base seed column (which defaults to id)
 
 # COMMAND ----------
 
 # DBTITLE 1,Generate a DataFrame
 default_annotations_spec = (
-    dg.DataGenerator(
-        spark,
-        name="default_annotations_spec",
-        rows=ROW_COUNT
-    )
-    .withIdOutput()  # Add a unique id column for each row
+    dg.DataGenerator(spark, name="default_annotations_spec", rows=ROW_COUNT)
     .withColumn(
         "EVENT_TIMESTAMP",
         TimestampType(),
@@ -80,38 +78,51 @@ default_annotations_spec = (
         uniqueValues=NUMBER_OF_DEVICES,
         omit=True,
         baseColumnType="hash",
-        baseColumn="internal_ACCOUNTID"
-    )  # Internal device id, unique per account, omitted from output
+        baseColumn="internal_ACCOUNTID",
+    )  # Internal device id, based on account, omitted from output
     .withColumn(
         "DEVICEID", StringType(), format="0x%032x", baseColumn="internal_DEVICEID"
     )  # Public device id as hex string
-    .withColumn("app_version", StringType(), values=["current"])  # Static app version
-    .withColumn("authMethod", StringType(), values=["OAuth", "password"])  # Auth method, random selection
+    .withColumn("APP_VERSION", StringType(), values=["current"])  # Static app version
+    .withColumn(
+        "AUTHMETHOD", StringType(), values=["OAuth", "password"]
+    )  # Auth method, random selection
     # Assign clientName based on DEVICEID deterministically
     .withColumn(
-        "clientName",
+        "CLIENTNAME",
         StringType(),
         expr="""
             element_at(
                 array('SwitchGameClient','XboxGameClient','PlaystationGameClient','PCGameClient'),
                 (pmod(abs(hash(DEVICEID)), 4) + 1)
             )
-        """
+        """,
     )
     .withColumn(
-        "clientId",
+        "CLIENTID",
         StringType(),
-        expr="sha2(concat(ACCOUNTID, clientName), 256)",
-        baseColumn=["ACCOUNTID", "clientName"]
+        expr="sha2(concat(ACCOUNTID, CLIENTNAME), 256)",
+        baseColumn=["ACCOUNTID", "CLIENTNAME"],
     )  # Deterministic clientId based on ACCOUNTID and clientName
     .withColumn(
-        "correlationId",
+        "SESSION_ID",
         StringType(),
-        expr="sha2(concat(ACCOUNTID, clientId), 256)",
+        expr="sha2(concat(ACCOUNTID, CLIENTID), 256)",
     )  # Session correlation id, deterministic hash
-    .withColumn("country", StringType(), values=["USA", "UK", "AUS"], weights=[0.6, 0.2, 0.2], baseColumn="ACCOUNTID", random=True)  # Assign country with 60% USA, 20% UK, 20% AUS
-    .withColumn("environment", StringType(), values=["prod"])  # Static environment value
-    .withColumn("EVENT_TYPE", StringType(), values=["account_login_success"])  # Static event type
+    .withColumn(
+        "country",
+        StringType(),
+        values=["USA", "UK", "AUS"],
+        weights=[0.6, 0.2, 0.2],
+        baseColumn="ACCOUNTID",
+        random=True,
+    )  # Assign country with 60% USA, 20% UK, 20% AUS
+    .withColumn(
+        "APPENV", StringType(), values=["prod"]
+    )  # Static environment value
+    .withColumn(
+        "EVENT_TYPE", StringType(), values=["account_login_success"]
+    )  # Static event type
     # Assign geoip_city_name based on country and ACCOUNTID
     .withColumn(
         "CITY",
@@ -123,9 +134,14 @@ default_annotations_spec = (
                 WHEN country = 'AUS' THEN 'Sydney'
             END
         """,
-        baseColumn=["country", "ACCOUNTID"]
+        baseColumn=["country", "ACCOUNTID"],
     )
-    .withColumn("countrycode2", StringType(), expr="CASE WHEN country = 'USA' THEN 'US' WHEN country = 'UK' THEN 'UK' WHEN country = 'AUS' THEN 'AU' END", baseColumn=["country"])  # Country code
+    .withColumn(
+        "COUNTRY_CODE2",
+        StringType(),
+        expr="CASE WHEN country = 'USA' THEN 'US' WHEN country = 'UK' THEN 'UK' WHEN country = 'AUS' THEN 'AU' END",
+        baseColumn=["country"],
+    )  # Country code
     # Assign ISP based on country and ACCOUNTID
     .withColumn(
         "ISP",
@@ -138,12 +154,12 @@ default_annotations_spec = (
                 ELSE 'Unknown ISP'
             END
         """,
-        baseColumn=["country", "ACCOUNTID"]
+        baseColumn=["country", "ACCOUNTID"],
     )
     # Assign latitude based on city
     .withColumn(
-        "latitude",
-        FloatType(),
+        "LATITUDE",
+        DoubleType(),
         expr="""
             CASE
                 WHEN CITY = 'New York' THEN 40.7128
@@ -154,12 +170,12 @@ default_annotations_spec = (
                 ELSE 0.0
             END
         """,
-        baseColumn="CITY"
+        baseColumn="CITY",
     )
     # Assign longitude based on city
     .withColumn(
-        "longitude",
-        FloatType(),
+        "LONGITUDE",
+        DoubleType(),
         expr="""
             CASE
                 WHEN CITY = 'New York' THEN -74.0060
@@ -170,11 +186,11 @@ default_annotations_spec = (
                 ELSE 0.0
             END
         """,
-        baseColumn="CITY"
+        baseColumn="CITY",
     )
     # Assign region name based on country and city
     .withColumn(
-        "region_name",
+        "REGION_NAME",
         StringType(),
         expr="""
             CASE
@@ -190,7 +206,7 @@ default_annotations_spec = (
                 ELSE 'Unknown'
             END
         """,
-        baseColumn=["country", "CITY"]
+        baseColumn=["country", "CITY"],
     )
     # Internal IP address as integer, unique per device, omitted from output
     .withColumn(
@@ -200,7 +216,7 @@ default_annotations_spec = (
         uniqueValues=NUMBER_OF_IPS,
         omit=True,
         baseColumnType="hash",
-        baseColumn="internal_DEVICEID"
+        baseColumn="internal_DEVICEID",
     )
     # Convert internal IP integer to dotted quad string
     .withColumn(
@@ -216,50 +232,28 @@ default_annotations_spec = (
         """,
         baseColumn="internal_REQUESTIPADDRESS",
     )
-    # Generate user agent string using clientName and correlationId
+    # Generate user agent string using clientName and SESSION_ID
     .withColumn(
-        "userAgent",
+        "USERAGENT",
         StringType(),
-        expr="concat('Launch/1.0+', clientName, '(', clientName, '/)/', correlationId)",
-        baseColumn=["clientName", "correlationId"]
+        expr="concat('Launch/1.0+', CLIENTNAME, '(', CLIENTNAME, '/)/', SESSION_ID)",
+        baseColumn=["CLIENTNAME", "SESSION_ID"],
     )
 )
-default_annotations = default_annotations_spec.build()
+# Build creates a DataFrame from the DataGenerator
+default_logins_df = default_annotations_spec.build()
 
 # COMMAND ----------
 
 # DBTITLE 1,Transform the Dataframe
-from pyspark.sql.functions import col, to_date, hour
-# Transform the DataFrame
-transformed_df = default_annotations.select(
-    col("EVENT_TYPE").alias("EVENT_TYPE"),
-    col("EVENT_TIMESTAMP").alias("EVENT_TIMESTAMP"),
-    hour(col("EVENT_TIMESTAMP")).alias("EVENT_HOUR"),
-    to_date(col("EVENT_TIMESTAMP")).alias("EVENT_DATE"),
-    col("ACCOUNTID").alias("ACCOUNTID"),
-    col("environment").alias("APPENV"),
-    col("app_version").alias("APP_VERSION"),
-    col("authMethod").alias("AUTHMETHOD"),
-    col("clientId").alias("CLIENTID"),
-    col("clientName").alias("CLIENTNAME"),
-    col("DEVICEID").alias("DEVICEID"),
-    col("environment").alias("ENVIRONMENT"),
-    col("CITY").alias("CITY"),
-    col("countrycode2").alias("COUNTRY_CODE2"),
-    col("ISP").alias("ISP"),
-    col("latitude").cast("double").alias("LATITUDE"),
-    col("longitude").cast("double").alias("LONGITUDE"),
-    col("region_name").alias("REGION_NAME"),
-    col("REQUESTIPADDRESS").alias("REQUESTIPADDRESS"),
-    col("correlationId").alias("SESSION_ID"),
-    col("correlationId").alias("TRACKINGUUID"),
-    col("userAgent").alias("USERAGENT"),
-)
+logins_df = default_logins_df.withColumn(
+    "EVENT_HOUR", hour(col("EVENT_TIMESTAMP"))
+).withColumn("EVENT_DATE", to_date(col("EVENT_TIMESTAMP")))
 
 # COMMAND ----------
 
 # DBTITLE 1,Look at the Data
-display(transformed_df)
+display(logins_df)
 
 # COMMAND ----------
 
@@ -267,5 +261,6 @@ display(transformed_df)
 # MAGIC # Write Data
 
 # COMMAND ----------
+
 
 transformed_df.write.mode("overwrite").saveAsTable("main.test.EVENT_ACCOUNT_LOGIN_SUCCESS")
