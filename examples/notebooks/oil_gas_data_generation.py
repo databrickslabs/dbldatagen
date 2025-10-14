@@ -2,7 +2,7 @@
 # MAGIC %md
 # MAGIC # Synthetic Oil & Gas Data Generation with DBLDATAGEN
 # MAGIC
-# MAGIC Welcome to this tutorial notebook! Here, you'll learn how to use the **DBLDATAGEN** library to generate realistic synthetic datasets for oil & gas analytics.  The Daily Production dataset is a fundamental analytical product for all upstream operators and this notebook walks through the creation of this dataset using DBLDATAGEN.
+# MAGIC Welcome to this tutorial notebook! Here, you'll learn how to use the **[DBLDATAGEN](https://databrickslabs.github.io/dbldatagen/public_docs/APIDOCS.html)** library to generate realistic synthetic datasets for oil & gas analytics.  The Daily Production dataset is a fundamental analytical product for all upstream operators and this notebook walks through the creation of this dataset using DBLDATAGEN.
 # MAGIC
 # MAGIC ---
 # MAGIC
@@ -23,7 +23,7 @@
 # MAGIC
 # MAGIC This section ensures the **DBLDATAGEN** library is installed in your Databricks environment.
 # MAGIC
-# MAGIC > **DBLDATAGEN** is a powerful tool for generating large-scale synthetic datasets, ideal for testing, prototyping, and analytics development in oil & gas.
+# MAGIC > **DBLDATAGEN** is a powerful tool for generating large-scale synthetic datasets, ideal for testing, prototyping, and analytics development in oil & gas.  dbldatagen can be installed using pip install commands, as a cluster-scoped library, or as a serverless environment-scoped library.
 # MAGIC
 # MAGIC ---
 
