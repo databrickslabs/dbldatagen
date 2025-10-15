@@ -24,7 +24,7 @@ DATA_SUMMARY_FIELD_NAME: str = "__data_summary__"
 class DataAnalyzer:
     """
     This class is used to analyze an existing dataset to assist in generating a test data set with similar data
-    characteristics. Analyzer results and to generate code from existing schemas and data.
+    characteristics. Analyzer results can be used to generate code from existing schemas and data.
 
     :param df: Spark ``DataFrame`` to analyze
     :param sparkSession: ``SparkSession`` to use

@@ -10,7 +10,7 @@ import importlib
 import logging
 from collections.abc import Callable
 from types import ModuleType
-from typing import Optional, Union
+from typing import Optional
 
 import pandas as pd
 
@@ -88,16 +88,16 @@ class PyfuncText(TextGenerator):  # lgtm [py/missing-equals]
     _initPerBatch: bool
     _rootProperty: object
     _pyFn: Callable
-    _initFn: Union[Callable, None]
-    _context: Union[_FnCallContext, None]
+    _initFn: Callable | None
+    _context: _FnCallContext | None
 
     def __init__(
         self,
         fn: Callable,
         *,
-        init: Union[Callable, None] = None,
+        init: Callable | None = None,
         initPerBatch: bool = False,
-        name: Union[str, None] = None,
+        name: str | None = None,
         rootProperty: object = None
     ) -> None:
         super().__init__()
@@ -218,10 +218,10 @@ class PyfuncTextFactory:
     """
     _name: str
     _initPerBatch: bool
-    _initFn: Union[Callable, None]
-    _rootProperty: Union[object, None]
+    _initFn: Callable | None
+    _rootProperty: object | None
 
-    def __init__(self, name: Union[str, None] = None) -> None:
+    def __init__(self, name: str | None = None) -> None:
         self._initFn = None
         self._rootProperty = None
         self._name = "PyfuncText" if name is None else name
@@ -270,7 +270,7 @@ class PyfuncTextFactory:
 
     def __call__(
         self,
-        evalFn: Union[str, Callable],
+        evalFn: str | Callable,
         *args,
         isProperty: bool = False,
         **kwargs
@@ -335,11 +335,11 @@ class FakerTextFactory(PyfuncTextFactory):
     def __init__(
         self,
         *,
-        locale: Union[str, list[str], None] = None,
-        providers: Union[list, None] = None,
+        locale: str | list[str] | None = None,
+        providers: list | None = None,
         name: str = "FakerText",
-        lib: Union[str, None] = None,
-        rootClass: Union[str, None] = None
+        lib: str | None = None,
+        rootClass: str | None = None
     ) -> None:
 
         super().__init__(name)
@@ -368,7 +368,7 @@ class FakerTextFactory(PyfuncTextFactory):
         self.withRootProperty("faker")
 
     @classmethod
-    def _getDefaultFactory(cls, lib: Union[str, None] = None, rootClass: Union[str, None] = None) -> "FakerTextFactory":
+    def _getDefaultFactory(cls, lib: str | None = None, rootClass: str | None = None) -> "FakerTextFactory":
         """
         Gets a default faker text factory.
 
@@ -379,7 +379,7 @@ class FakerTextFactory(PyfuncTextFactory):
             cls._defaultFakerTextFactory = FakerTextFactory(lib=lib, rootClass=rootClass)
         return cls._defaultFakerTextFactory
 
-    def _mkInitFn(self, libModule: object, locale: Union[str, list[str], None], providers: Union[list, None]) -> Callable:
+    def _mkInitFn(self, libModule: object, locale: str | list[str] | None, providers: list | None) -> Callable:
         """
         Creates a Faker initialization function.
 
@@ -438,7 +438,7 @@ class FakerTextFactory(PyfuncTextFactory):
             raise DataGenError("Could not load or initialize Faker library") from err
 
 
-def fakerText(mname: str, *args, _lib: Union[str, None] = None, _rootClass: Union[str, None] = None, **kwargs) -> PyfuncText:
+def fakerText(mname: str, *args, _lib: str | None = None, _rootClass: str | None = None, **kwargs) -> PyfuncText:
     """
     Creates a faker text generator object using the default ``FakerTextFactory`` instance. Calling this method is
     equivalent to calling ``FakerTextFactory()("sentence")``.
