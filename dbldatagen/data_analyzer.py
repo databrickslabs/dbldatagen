@@ -227,7 +227,8 @@ class DataAnalyzer:
             measureName="min",
             fieldExprs=[f"string(min({dtype[0]})) as {dtype[0]}" for dtype in dtypes],
             dfData=self._df,
-            dfSummary=data_summary_df)
+            dfSummary=data_summary_df
+        )
 
         data_summary_df = self._addMeasureToSummary(
             measureName="max",
@@ -384,8 +385,9 @@ class DataAnalyzer:
             result = """expr='current_date()'"""
 
         elif isinstance(sqlType, types.DecimalType):
+            max_decimal_value = 10**(sqlType.precision - sqlType.scale) - 10**(-1 * sqlType.scale)
             min_value = cls._valueFromSummary(dataSummary, colName, "min", defaultValue=0)
-            max_value = cls._valueFromSummary(dataSummary, colName, "max", defaultValue=1000)
+            max_value = cls._valueFromSummary(dataSummary, colName, "max", defaultValue=max_decimal_value)
             result = f"""minValue={min_value}, maxValue={max_value}"""
 
         elif sqlType in [types.FloatType(), types.DoubleType()]:
