@@ -125,7 +125,7 @@ class DataAnalyzer:
         :param dfData: Source ``DataFrame`` to summarize
         :param rowLimit: Number of rows to use for ``DataFrame`` summarization
         :param dfSummary: Summary metrics ``DataFrame``
-        :return: Summary metrics ``DataFrame`` with the added measure
+        :returns: Summary metrics ``DataFrame`` with the added measure
         """
         if dfData is None:
             raise ValueError("Input DataFrame `dfData` must be supplied when adding measures to a summary")
@@ -384,10 +384,9 @@ class DataAnalyzer:
         elif sqlType == types.DateType():
             result = """expr='current_date()'"""
 
-        elif isinstance(sqlType, types.DecimalType):
-            max_decimal_value = 10**(sqlType.precision - sqlType.scale) - 10**(-1 * sqlType.scale)
+        elif sqlType == types.DecimalType():
             min_value = cls._valueFromSummary(dataSummary, colName, "min", defaultValue=0)
-            max_value = cls._valueFromSummary(dataSummary, colName, "max", defaultValue=max_decimal_value)
+            max_value = cls._valueFromSummary(dataSummary, colName, "max", defaultValue=1000000.0)
             result = f"""minValue={min_value}, maxValue={max_value}"""
 
         elif sqlType in [types.FloatType(), types.DoubleType()]:

@@ -445,7 +445,7 @@ def fakerText(mname: str, *args, _lib: str | None = None, _rootClass: str | None
 
        :param mname: Method name to invoke
        :param args: Positional argumentss to pass to the Faker text generation method
-       :param _lib: Optional import alias of Faker library (dfault is ``"faker"``)
+       :param _lib: Optional import alias of Faker library (default is ``"faker"``)
        :param _rootClass: Optional name of the root object class (default is ``"Faker"``)
        :returns : ``PyfuncText`` for use with Faker
     """
