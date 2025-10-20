@@ -8,19 +8,48 @@ This file defines the text generator plugin class `PyfuncText`
 
 import importlib
 import logging
+from collections.abc import Callable
+from types import ModuleType
+from typing import Optional
 
-from .text_generators import TextGenerator
-from .utils import DataGenError
+import pandas as pd
+
+from dbldatagen.text_generators import TextGenerator
+from dbldatagen.utils import DataGenError
+
+
+class _FnCallContext:
+    """
+    Inner class for storing context between function calls.
+
+    initial instances of random number generators, clients for services etc here during execution
+    of the `initFn` calls
+
+    :param txtGen: - reference to outer PyfnText object
+    """
+    textGenerator: "TextGenerator"
+
+    def __init__(self, txtGen: "TextGenerator") -> None:
+        self.textGenerator = txtGen
+
+    def __setattr__(self, name: str, value: object) -> None:
+        """Allow dynamic attribute setting for plugin context."""
+        super().__setattr__(name, value)
+
+    def __getattr__(self, name: str) -> object:
+        """Allow dynamic attribute access for plugin context."""
+        raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
 
 
 class PyfuncText(TextGenerator):  # lgtm [py/missing-equals]
-    """ Text generator that supports generating text from arbitrary Python function
+    """
+    Text generator that supports generating text from an arbitrary Python function.
 
-    :param fn: function to call to generate text.
-    :param init: function to call to initialize context
-    :param initPerBatch: if init per batch is set to True, initialization of context is performed on every Pandas udf
-                         call. Default is False.
-    :param name: String representing name of text generator when converted to string via ``repr`` or ``str``
+    :param fn: Python function which generates text
+    :param init: Python function which creates an initial context/state
+    :param initPerBatch: Whether to call the initialization function for each invocation of the Pandas UDF which
+        generates text (default `false`)
+    :param name: Optional name of the text generator when converted to string via ``repr`` or ``str``
 
     The two functions define the plugin model
 
@@ -39,70 +68,75 @@ class PyfuncText(TextGenerator):  # lgtm [py/missing-equals]
     enclosing text generator.
 
     .. note::
-              There are no expectations of repeatability of data generation when using external code
-              or external libraries to generate text.
+      There are no expectations of repeatability of data generation when using external code
+      or external libraries to generate text.
 
-              However, custom code can call the base class method to get a Numpy random
-              number generator instance. This will have been seeded using the ``dbldatagen``
-              random number seed if one was specified, so random numbers generated from this will be repeatable.
+      However, custom code can call the base class method to get a Numpy random
+      number generator instance. This will have been seeded using the ``dbldatagen``
+      random number seed if one was specified, so random numbers generated from this will be repeatable.
 
-              The custom code may call the property ``randomSeed`` on the text generator object to get the random seed
-              which may be used to seed library specific initialization.
+      The custom code may call the property ``randomSeed`` on the text generator object to get the random seed
+      which may be used to seed library specific initialization.
 
-              This random seed property may have the values ``None`` or ``-1`` which should be treated as meaning dont
-              use a random seed.
+      This random seed property may have the values ``None`` or ``-1`` which should be treated as meaning dont
+      use a random seed.
 
-              The code does not guarantee thread or cross process safety. If a new instance of the random number
-              generator is needed, you may call the base class method with the argument `forceNewInstance` set to True.
+      The code does not guarantee thread or cross process safety. If a new instance of the random number
+      generator is needed, you may call the base class method with the argument `forceNewInstance` set to True.
     """
+    _name: str
+    _initPerBatch: bool
+    _rootProperty: object
+    _pyFn: Callable
+    _initFn: Callable | None
+    _context: _FnCallContext | None
 
-    class _FnCallContext:
-        """ inner class to support storage of context between calls
-
-            initial instances of random number generators, clients for services etc here during execution
-            of the `initFn` calls
-
-            :param txtGen: - reference to outer PyfnText object
-
-        """
-
-        def __init__(self, txtGen):
-            self.textGenerator = txtGen
-
-    def __init__(self, fn, *, init=None, initPerBatch=False, name=None, rootProperty=None):
+    def __init__(
+        self,
+        fn: Callable,
+        *,
+        init: Callable | None = None,
+        initPerBatch: bool = False,
+        name: str | None = None,
+        rootProperty: object = None
+    ) -> None:
         super().__init__()
-        assert fn is not None or callable(fn), "Function must be provided wiith signature fn(context, oldValue)"
-        assert init is None or callable(init), "Init function must be a callable function or lambda if passed"
+        if not callable(fn):
+            raise ValueError("Function must be provided with signature fn(context, oldValue)")
+
+        if init and not callable(init):
+            raise ValueError("Init function must be a callable function or lambda if passed")
 
         # if root property is provided, root property will be passed to generate text function
         self._rootProperty = rootProperty
-
         self._pyFn = fn  # generate text function
         self._initFn = init  # context initialization function
         self._context = None  # context used to hold library root object and other properties
 
         # if init per batch is True, initialization of context will be per UDF call
-        assert initPerBatch in [True, False], "initPerBatch must evaluate to boolean True or False"
-        self._initPerBatch = initPerBatch
+        if not isinstance(initPerBatch, bool):
+            raise ValueError("initPerBatch must evaluate to boolean True or False")
 
+        self._initPerBatch = initPerBatch
         self._name = name if name is not None else "PyfuncText"
 
-    def __str__(self):
-        """ Get string representation of object
-            ``name`` property is used to provide user friendly name for text generator
+    def __str__(self) -> str:
         """
-        return f"{self._name}({repr(self._pyFn)}, init={self._initFn})"
+        Gets a string representation of the text generator using the ``name`` property.
 
-    def _getContext(self, forceNewInstance=False):
-        """ Get the context for plugin function calls
-
-        :param forceNewInstance: if True, forces each call to create a new context
-        :return: existing or newly created context.
-
+        :returns: String representation of the text generator
         """
-        context = self._context
-        if context is None or forceNewInstance:
-            context = PyfuncText._FnCallContext(self)
+        return f"{self._name}({self._pyFn!r}, init={self._initFn})"
+
+    def _getContext(self, forceNewInstance: bool = False) -> _FnCallContext:
+        """
+        Gets the context for plugin function calls.
+
+        :param forceNewInstance: Whether to create a new context for each call (default `False`)
+        :return: Existing or new context for plugin function calls
+        """
+        if self._context is None or forceNewInstance:
+            context = _FnCallContext(self)
 
             # init context using context creator if any provided
             if self._initFn is not None:
@@ -113,41 +147,42 @@ class PyfuncText(TextGenerator):  # lgtm [py/missing-equals]
                 self._context = context
             else:
                 return context
+
         return self._context
 
-    def pandasGenerateText(self, v):
-        """ Called to generate text via Pandas UDF mechanism
+    def pandasGenerateText(self, v: pd.Series) -> pd.Series:
+        """
+        Generates text from input columns using a Pandas UDF.
 
-        :param v: base value of column as Pandas Series
-
+        :param v: Input column values as Pandas Series
+        :returns: Generated text values as a Pandas Series or DataFrame
         """
         # save object properties in local vars to avoid overhead of object dereferences
         # on every call
         context = self._getContext(self._initPerBatch)
         evalFn = self._pyFn
-        rootProperty = getattr(context, self._rootProperty) if self._rootProperty is not None else None
+        rootProperty = getattr(context, str(self._rootProperty), None) if self._rootProperty else None
 
         # define functions to call with context and with root property
-        def _valueFromFn(originalValue):
+        def _valueFromFn(originalValue: object) -> object:
             return evalFn(context, originalValue)
 
-        def _valueFromFnWithRoot(originalValue):
+        def _valueFromFnWithRoot(_: object) -> object:
             return evalFn(rootProperty)
 
         if rootProperty is not None:
-            results = v.apply(_valueFromFnWithRoot, args=None)
-        else:
-            results = v.apply(_valueFromFn, args=None)
+            return v.apply(_valueFromFnWithRoot)
 
-        return results
+        return v.apply(_valueFromFn)
 
 
 class PyfuncTextFactory:
-    """PyfuncTextFactory applies syntactic wrapping around creation of PyfuncText objects
+    """
+    Applies syntactic wrapping around the creation of PyfuncText objects.
 
-    :param name: name of generated object (when converted to string via ``str``)
+    :param name: Generated object name (when converted to string via ``str``)
 
-    It allows the use of the following constructs:
+    This class allows the use of the following constructs:
 
     .. code-block:: python
 
@@ -180,87 +215,100 @@ class PyfuncTextFactory:
                                    init=initFaker,
                                    rootProperty="faker",
                                    name="FakerText"))
-
     """
+    _name: str
+    _initPerBatch: bool
+    _initFn: Callable | None
+    _rootProperty: object | None
 
-    def __init__(self, name=None):
-        """
-
-        :param name: name of generated object (when converted to string via ``str``)
-
-        """
+    def __init__(self, name: str | None = None) -> None:
         self._initFn = None
         self._rootProperty = None
         self._name = "PyfuncText" if name is None else name
         self._initPerBatch = False
 
-    def withInit(self, fn):
-        """ Specifies context initialization function
+    def withInit(self, fn: Callable) -> "PyfuncTextFactory":
+        """
+        Sets the initialization function for creating context.
 
-            :param fn: function pointer or lambda function for initialization
-                       signature should ``initFunction(context)``
+        :param fn: Callable function for initializing context; Signature should ``initFunction(context)``
+        :returns: Modified text generation factory with the specified initialization function
 
-            .. note::
-               This variation initializes the context once per worker process per text generator
-               instance.
+        .. note::
+           This variation initializes the context once per worker process per text generator
+           instance.
         """
         self._initFn = fn
         return self
 
-    def withInitPerBatch(self, fn):
-        """ Specifies context initialization function
+    def withInitPerBatch(self, fn: Callable) -> "PyfuncTextFactory":
+        """
+        Sets the initialization function for creating context for each batch.
 
-            :param fn: function pointer or lambda function for initialization
-                       signature should ``initFunction(context)``
+        :param fn: Callable function for initializing context; Signature should ``initFunction(context)``
+        :returns: Modified text generation factory with the specified initialization function called for each batch
 
-            .. note::
-               This variation initializes the context once per internal pandas UDF call.
-               The UDF call will be called once per 10,000 rows if system is configured using defaults.
-               Setting the pandas batch size as an argument to the DataSpec creation will change the default
-               batch size.
+        .. note::
+           This variation initializes the context once per internal pandas UDF call.
+           The UDF call will be called once per 10,000 rows if system is configured using defaults.
+           Setting the pandas batch size as an argument to the DataSpec creation will change the default
+           batch size.
         """
         self._initPerBatch = True
         return self.withInit(fn)
 
-    def withRootProperty(self, prop):
-        """ If called, specifies the property of the context to be passed to the text generation function.
-            If not called, the context object itself will be passed to the text generation function.
+    def withRootProperty(self, prop: object) -> "PyfuncTextFactory":
+        """
+        Sets the context property to be passed to the text generation function. If not called, the context object will
+        be passed to the text generation function.
+
+        :param prop: Context property
+        :returns: Modified text generation factory with the context property
         """
         self._rootProperty = prop
         return self
 
-    def __call__(self, evalFn, *args, isProperty=False, **kwargs):
-        """ Internal function call mechanism that implements the syntax expansion
+    def __call__(
+        self,
+        evalFn: str | Callable,
+        *args,
+        isProperty: bool = False,
+        **kwargs
+    ) -> PyfuncText:
+        """
+        Internal function calling mechanism that implements the syntax expansion.
 
-        :param evalFn: text generation function or lambda
-        :param args: optional args to be passed by position
-        :param kwargs: optional keyword args following Python keyword passing mechanism
-        :param isProperty: if true, interpret evalFn as string name of property, not a function or method
+        :param evalFn: Callable text generation function
+        :param args: Optional arguments to pass by position to the text generation function
+        :param kwargs: Optional keyword arguments following Python keyword passing mechanism
+        :param isProperty: Whether to interpret the evaluation function as string name of property instead of a callable
+            function (default `False`)
         """
         assert evalFn is not None and (type(evalFn) is str or callable(evalFn)), "Function must be provided"
 
-        if type(evalFn) is str:
-            assert self._rootProperty is not None and len(self._rootProperty.strip()) > 0, \
-                "string named functions can only be used on text generators with root property"
-            fnName = evalFn
-            if len(args) > 0 and len(kwargs) > 0:
-                # generate lambda with both kwargs and args
-                assert not isProperty, "isProperty cannot be true if using arguments"
-                evalFn = lambda root: getattr(root, fnName)(*args, **kwargs)
-            elif len(args) > 0:
-                # generate lambda with positional args
-                assert not isProperty, "isProperty cannot be true if using arguments"
-                evalFn = lambda root: getattr(root, fnName)(*args)
-            elif len(kwargs) > 0:
-                # generate lambda with keyword args
-                assert not isProperty, "isProperty cannot be true if using arguments"
-                evalFn = lambda root: getattr(root, fnName)(**kwargs)
-            elif isProperty:
-                # generate lambda with property access, not method call
-                evalFn = lambda root: getattr(root, fnName)
-            else:
-                # generate lambda with no args
-                evalFn = (lambda root: getattr(root, fnName)())
+        if isinstance(evalFn, str):
+            if not self._rootProperty:
+                raise ValueError("String named functions can only be used on text generators with root property")
+            function_name = evalFn
+
+            if (len(args) > 0 or len(kwargs) > 0) and isProperty:
+                raise ValueError("Argument 'isProperty' cannot be used when passing arguments")
+
+            def generated_evalFn(root: object) -> object:
+                method = getattr(root, function_name)
+
+                if isProperty:
+                    return method
+                elif len(args) > 0 and len(kwargs) > 0:
+                    return method(*args, **kwargs)
+                elif len(args) > 0:
+                    return method(*args)
+                elif len(kwargs) > 0:
+                    return method(**kwargs)
+                else:
+                    return method()
+
+            evalFn = generated_evalFn
 
         # returns the actual PyfuncText text generator object.
         # Note all syntax expansion is performed once only
@@ -268,24 +316,31 @@ class PyfuncTextFactory:
 
 
 class FakerTextFactory(PyfuncTextFactory):
-    """ Factory object for Faker text generator flavored ``PyfuncText`` objects
+    """
+    Factory for creating Faker text generators.
 
-    :param locale: list of locales. If empty, defaults to ``en-US``
-    :param providers: list of providers
-    :param name: name of generated objects. Defaults to ``FakerText``
-    :param lib: library import name of Faker library. If none passed, uses ``faker``
-    :param rootClass: name of root object class If none passed, uses ``Faker``
+    :param locale: Optional list of locales (default is ``["en-US"]``)
+    :param providers: List of providers
+    :param name: Optional name of generated objects (default is ``FakerText``)
+    :param lib: Optional import alias of Faker library (dfault is ``"faker"``)
+    :param rootClass: Optional name of the root object class (default is ``"Faker"``)
 
     ..note ::
        Both the library name and root object class can be overridden - this is primarily for internal testing purposes.
     """
 
-    _FAKER_LIB = "faker"
+    _defaultFakerTextFactory: Optional["FakerTextFactory"] = None
+    _FAKER_LIB: str = "faker"
 
-    _defaultFakerTextFactory = None
-
-    def __init__(self, *, locale=None, providers=None, name="FakerText", lib=None,
-                 rootClass=None):
+    def __init__(
+        self,
+        *,
+        locale: str | list[str] | None = None,
+        providers: list | None = None,
+        name: str = "FakerText",
+        lib: str | None = None,
+        rootClass: str | None = None
+    ) -> None:
 
         super().__init__(name)
 
@@ -304,37 +359,42 @@ class FakerTextFactory(PyfuncTextFactory):
             self._rootObjectClass = rootClass
 
         # load the library
-        fakerModule = self._loadLibrary(lib)
+        faker_module = self._loadLibrary(lib)
 
         # make the initialization function
-        initFn = self._mkInitFn(fakerModule, locale, providers)
+        init_function = self._mkInitFn(faker_module, locale, providers)
 
-        self.withInit(initFn)
+        self.withInit(init_function)
         self.withRootProperty("faker")
 
     @classmethod
-    def _getDefaultFactory(cls, lib=None, rootClass=None):
-        """Class method to get default faker text factory
+    def _getDefaultFactory(cls, lib: str | None = None, rootClass: str | None = None) -> "FakerTextFactory":
+        """
+        Gets a default faker text factory.
 
-           Not intended for general use
+        :param lib: Optional import alias of Faker library (dfault is ``"faker"``)
+        :param rootClass: Optional name of the root object class (default is ``"Faker"``)
         """
         if cls._defaultFakerTextFactory is None:
             cls._defaultFakerTextFactory = FakerTextFactory(lib=lib, rootClass=rootClass)
         return cls._defaultFakerTextFactory
 
-    def _mkInitFn(self, libModule, locale, providers):
-        """ Make Faker initialization function
-
-        :param locale: locale string or list of locale strings
-        :param providers: providers to load
-        :return:
+    def _mkInitFn(self, libModule: object, locale: str | list[str] | None, providers: list | None) -> Callable:
         """
-        assert libModule is not None, "must have a valid loaded Faker library module"
+        Creates a Faker initialization function.
+
+        :param libModule: Faker module
+        :param locale: Locale string or list of locale strings (e.g. "en-us")
+        :param providers: List of Faker providers to load
+        :returns: Callable initialization function
+        """
+        if libModule is None:
+            raise ValueError("must have a valid loaded Faker library module")
 
         fakerClass = getattr(libModule, self._rootObjectClass)
 
         # define the initialization function for Faker
-        def fakerInitFn(ctx):
+        def fakerInitFn(ctx: _FnCallContext) -> None:
             if locale is not None:
                 ctx.faker = fakerClass(locale=locale)
             else:
@@ -342,44 +402,52 @@ class FakerTextFactory(PyfuncTextFactory):
 
             if providers is not None:
                 for provider in providers:
-                    ctx.faker.add_provider(provider)
+                    ctx.faker.add_provider(provider)  # type: ignore[attr-defined]
 
         return fakerInitFn
 
-    def _loadLibrary(self, lib):
-        """ Load faker library if not already loaded
-
-        :param lib: library name of Faker library. If none passed, uses ``faker``
+    def _loadLibrary(self, lib: str) -> ModuleType:
         """
-        # load library
+        Loads the faker library.
+
+        :param lib: Optional alias name for Faker library (default is ``"faker"``)
+        """
         try:
             if lib is not None:
-                assert type(lib) is str and len(lib.strip()), f"Library ``{lib}`` must be a valid library name"
+                if not isinstance(lib, str):
+                    raise ValueError(f"Input Faker alias with type '{type(lib)}' must be of type 'str'")
+
+                if not lib:
+                    raise ValueError("Input Faker alias must be provided")
 
                 if lib in globals():
-                    return globals()[lib]
+                    module = globals()[lib]
+                    if isinstance(module, ModuleType):
+                        return module
+                    else:
+                        raise ValueError(f"Global '{lib}' is not a module")
+
                 else:
                     fakerModule = importlib.import_module(lib)
                     globals()[lib] = fakerModule
                     return fakerModule
+            else:
+                raise ValueError("Library name must be provided")
+
         except RuntimeError as err:
-            # pylint: disable=raise-missing-from
-            raise DataGenError("Could not load or initialize Faker library", err)
+            raise DataGenError("Could not load or initialize Faker library") from err
 
 
-def fakerText(mname, *args, _lib=None, _rootClass=None, **kwargs):
-    """Generate faker text generator object using default FakerTextFactory
-       instance
-
-       :param mname: method name to invoke
-       :param args: positional args to be passed to underlying Faker instance
-       :param _lib: internal only param - library to load
-       :param _rootClass: internal only param - root class to create
-       
-       :returns : instance of PyfuncText for use with Faker
-
-       ``fakerText("sentence")`` is same as ``FakerTextFactory()("sentence")``
+def fakerText(mname: str, *args, _lib: str | None = None, _rootClass: str | None = None, **kwargs) -> PyfuncText:
     """
-    defaultFactory = FakerTextFactory._getDefaultFactory(lib=_lib,
-                                                         rootClass=_rootClass)
-    return defaultFactory(mname, *args, **kwargs)  # pylint: disable=not-callable
+    Creates a faker text generator object using the default ``FakerTextFactory`` instance. Calling this method is
+    equivalent to calling ``FakerTextFactory()("sentence")``.
+
+       :param mname: Method name to invoke
+       :param args: Positional argumentss to pass to the Faker text generation method
+       :param _lib: Optional import alias of Faker library (default is ``"faker"``)
+       :param _rootClass: Optional name of the root object class (default is ``"Faker"``)
+       :returns : ``PyfuncText`` for use with Faker
+    """
+    default_factory = FakerTextFactory._getDefaultFactory(lib=_lib, rootClass=_rootClass)
+    return default_factory(mname, *args, **kwargs)  # pylint: disable=not-callable

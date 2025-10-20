@@ -156,13 +156,11 @@ exclude = [
     "dbldatagen/__init__.py",
     "dbldatagen/column_generation_spec.py",
     "dbldatagen/column_spec_options.py",
-    "dbldatagen/data_analyzer.py",
     "dbldatagen/datagen_constants.py",
     "dbldatagen/datarange.py",
     "dbldatagen/daterange.py",
     "dbldatagen/nrange.py",
     "dbldatagen/schema_parser.py",
-    "dbldatagen/text_generator_plugins.py",
 ]
 
 [tool.ruff.lint]
@@ -237,14 +235,12 @@ ignore = [
     "dbldatagen/__init__.py",
     "dbldatagen/column_generation_spec.py",
     "dbldatagen/column_spec_options.py",
-    "dbldatagen/data_analyzer.py",
     "dbldatagen/datagen_constants.py",
     "dbldatagen/datarange.py",
     "dbldatagen/daterange.py",
     "dbldatagen/nrange.py",
     "dbldatagen/schema_parser.py",
     "dbldatagen/serialization.py",
-    "dbldatagen/text_generator_plugins.py",
     "dbldatagen/utils.py"
 ]
 
@@ -272,7 +268,6 @@ ignore-paths = [
     "dbldatagen/__init__.py",
     "dbldatagen/column_generation_spec.py",
     "dbldatagen/column_spec_options.py",
-    "dbldatagen/data_analyzer.py",
     "dbldatagen/data_generator.py",
     "dbldatagen/datagen_constants.py",
     "dbldatagen/datarange.py",
@@ -280,7 +275,6 @@ ignore-paths = [
     "dbldatagen/nrange.py",
     "dbldatagen/schema_parser.py",
     "dbldatagen/serialization.py",
-    "dbldatagen/text_generator_plugins.py",
     "dbldatagen/utils.py"
 ]
 
@@ -403,14 +397,12 @@ exclude = [
     "dbldatagen/__init__.py",
     "dbldatagen/column_generation_spec.py",
     "dbldatagen/column_spec_options.py",
-    "dbldatagen/data_analyzer.py",
     "dbldatagen/datagen_constants.py",
     "dbldatagen/datarange.py",
     "dbldatagen/daterange.py",
     "dbldatagen/nrange.py",
     "dbldatagen/schema_parser.py",
     "dbldatagen/serialization.py",
-    "dbldatagen/text_generator_plugins.py",
     "dbldatagen/utils.py"
 ]
 warn_return_any = true
