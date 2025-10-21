@@ -60,8 +60,8 @@ SCHEMA_NAME = 'SCHEMA_NAME'
 spark.sql(f"USE CATALOG {CATALOG_NAME}")
 spark.sql(f"USE SCHEMA {SCHEMA_NAME}")
 
-print(f"✅ Generating data in: {CATALOG_NAME}.{SCHEMA_NAME}")
-print(f"📊 Total records to generate: {NUM_PRODUCTS + NUM_DISTRIBUTION_CENTERS + NUM_STORES + NUM_ORDERS + NUM_INVENTORY_RECORDS + NUM_SHIPMENTS:,}")
+print(f"Generating data in: {CATALOG_NAME}.{SCHEMA_NAME}")
+print(f"Total records to generate: {NUM_PRODUCTS + NUM_DISTRIBUTION_CENTERS + NUM_STORES + NUM_ORDERS + NUM_INVENTORY_RECORDS + NUM_SHIPMENTS:,}")
 
 # COMMAND ----------
 
@@ -127,7 +127,6 @@ df_products = products_spec.build()
 # Write to table
 df_products.write.mode("overwrite").saveAsTable("products")
 
-# print(f"✅ Created products table with {df_products.count():,} records")
 display(df_products.limit(10))
 
 # COMMAND ----------
@@ -179,7 +178,7 @@ distribution_center_spec = (
 df_distribution_centers = distribution_center_spec.build()
 df_distribution_centers.write.mode("overwrite").saveAsTable("distribution_centers")
 
-print(f"✅ Created distribution_centers table with {df_distribution_centers.count():,} records")
+print(f"Created distribution_centers table with {df_distribution_centers.count():,} records")
 display(df_distribution_centers.limit(10))
 
 # COMMAND ----------
@@ -227,8 +226,8 @@ stores_spec = (
 df_stores = stores_spec.build()
 df_stores.write.mode("overwrite").saveAsTable("stores")
 
-print(f"✅ Created stores table with {df_stores.count():,} records")
-print(f"🔗 Each store is linked to a distribution_center via distribution_center_id foreign key")
+print(f"Created stores table with {df_stores.count():,} records")
+print(f"Each store is linked to a distribution_center via distribution_center_id foreign key")
 display(df_stores.limit(10))
 
 # COMMAND ----------
@@ -335,8 +334,8 @@ df_orders = (
 
 df_orders.write.mode("overwrite").saveAsTable("orders")
 
-print(f"✅ Created orders table with {df_orders.count():,} records")
-print(f"📊 Status distribution:")
+print(f"Created orders table with {df_orders.count():,} records")
+print(f"Order Status distribution:")
 df_orders.groupBy("status").count().orderBy("status").show()
 
 # COMMAND ----------
@@ -434,10 +433,10 @@ df_inventory = inventory_spec.build().drop("reserve_factor", "days_offset", "loc
 
 df_inventory.write.mode("overwrite").saveAsTable("inventory")
 
-print(f"✅ Created inventory table with {df_inventory.count():,} records")
-print(f"📊 Location type distribution:")
+print(f"Created inventory table with {df_inventory.count():,} records")
+print(f"Location type distribution:")
 df_inventory.groupBy("location_type").count().show()
-print(f"⚠️ Stockout risk distribution:")
+print(f"Stockout risk distribution:")
 df_inventory.groupBy("stockout_risk").count().orderBy("stockout_risk").show()
 
 # COMMAND ----------
@@ -570,10 +569,10 @@ df_shipments = shipments_spec.build().drop(
 
 df_shipments.write.mode("overwrite").saveAsTable("shipments")
 
-print(f"✅ Created shipments table with {df_shipments.count():,} records")
-print(f"🚚 Transport mode distribution:")
+print(f"Created shipments table with {df_shipments.count():,} records")
+print(f"Transport mode distribution:")
 df_shipments.groupBy("transport_mode").count().orderBy(F.desc("count")).show()
-print(f"📦 Shipment status distribution:")
+print(f"Shipment status distribution:")
 df_shipments.groupBy("status").count().orderBy(F.desc("count")).show()
 display(df_shipments)
 
@@ -584,35 +583,30 @@ display(df_shipments)
 # MAGIC
 # MAGIC This dataset enables the following analytics use cases:
 # MAGIC
-# MAGIC ### 📦 Inventory Optimization
-# MAGIC - Multi-echelon inventory visibility across distribution_centers and stores
+# MAGIC ### Inventory Optimization
 # MAGIC - Stockout risk identification and prediction
 # MAGIC - Days of supply analysis by product/location
 # MAGIC - Slow-moving inventory identification
 # MAGIC
-# MAGIC ### 🚚 Logistics & Transportation
+# MAGIC ### Logistics & Transportation
 # MAGIC - Carrier performance scorecards (OTD%, cost, speed)
 # MAGIC - Route optimization opportunities
 # MAGIC - Transport mode analysis (cost vs speed tradeoffs)
-# MAGIC - Delay root cause analysis
 # MAGIC
-# MAGIC ### 🏭 Order Planning
+# MAGIC ### Order Planning
 # MAGIC - Order schedule optimization
 # MAGIC - Line efficiency tracking
 # MAGIC - Capacity planning and utilization
-# MAGIC - Order-to-inventory flow analysis
 # MAGIC
-# MAGIC ### 📊 Supply Chain Analytics
+# MAGIC ### Supply Chain Analytics
 # MAGIC - End-to-end supply chain visibility
 # MAGIC - Network optimization (distribution_center placement, capacity)
 # MAGIC - Working capital optimization
-# MAGIC - Cost-to-serve analysis by region/channel
 # MAGIC
-# MAGIC ### 🤖 AI/ML Use Cases
+# MAGIC ### AI/ML Use Cases
 # MAGIC - Demand forecasting
 # MAGIC - Predictive maintenance (production efficiency)
 # MAGIC - Shipment delay prediction
-# MAGIC - Inventory replenishment optimization
 
 # COMMAND ----------
 
@@ -693,34 +687,6 @@ display(df_shipments)
 # MAGIC   AND s.ship_date >= CURRENT_DATE - INTERVAL 30 DAY
 # MAGIC GROUP BY distribution_center.distribution_center_code, distribution_center.region, distribution_center.capacity_pallets, distribution_center.current_utilization_pct
 # MAGIC ORDER BY inventory_value DESC
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ## 🎉 Congratulations!
-# MAGIC
-# MAGIC You've successfully generated a complete CPG supply chain dataset using dbldatagen!
-# MAGIC
-# MAGIC ### What You've Learned:
-# MAGIC ✅ How to install and import dbldatagen  
-# MAGIC ✅ Basic column generation with different data types  
-# MAGIC ✅ Creating foreign key relationships  
-# MAGIC ✅ Weighted categorical distributions  
-# MAGIC ✅ Date/timestamp generation  
-# MAGIC ✅ Post-processing with PySpark  
-# MAGIC ✅ Safe handling of division and NULL values  
-# MAGIC
-# MAGIC ### Your Dataset Includes:
-# MAGIC - 500 Products across 7 categories  
-# MAGIC - 25 Distribution Centers  
-# MAGIC - 1,000 Retail Stores  
-# MAGIC - 10,000 Orders  
-# MAGIC - 50,000 Inventory Records  
-# MAGIC - 30,000 Shipments  
-# MAGIC
-# MAGIC **Total: 91,525 records ready for analytics!**
-# MAGIC
-# MAGIC Now go build some amazing dashboards! 📊✨
 
 # COMMAND ----------
 
