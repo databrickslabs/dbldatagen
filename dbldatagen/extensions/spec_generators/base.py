@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from dbldatagen.extensions.datagen_spec import DatagenSpec
 
+
 class AbstractSpecGenerator(ABC):
     @abstractmethod
     def generate_spec(self) -> DatagenSpec:

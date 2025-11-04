@@ -1,5 +1,6 @@
 from typing import List, Dict, Optional
 import json
+import logging
 from pydantic import ValidationError
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.service.catalog import TableInfo, ColumnInfo, TableConstraint
@@ -13,6 +14,9 @@ from dbldatagen.extensions.datagen_spec import (
 
 from dbldatagen.extensions.spec_generators.base import AbstractSpecGenerator
 from dbldatagen.extensions.spec_generators.text_templates import guess_template
+
+# Set up logger
+logger = logging.getLogger(__name__)
 
 
 # --- User's custom generator ---
@@ -46,8 +50,9 @@ class DatabricksUCSpecGenerator(AbstractSpecGenerator):
             SchemaParsingError: If the source type cannot be reliably mapped.
         """
         if not source_type_str:
-            print(
-                f"Warning: Source type for column '{column_name}' is None or empty. Defaulting to 'string'.")
+            logger.warning(
+                f"Warning: Source type for column '{column_name}' is None or empty. "
+                f"Defaulting to 'string'.")
             return "string"
 
         s_type = source_type_str.lower().strip()
@@ -82,23 +87,21 @@ class DatabricksUCSpecGenerator(AbstractSpecGenerator):
             "varbinary": "binary",
         }
 
+        # Check direct mapping first
         if s_type in type_mapping:
             return type_mapping[s_type]
 
         # Handle types with parameters like decimal(p,s) or varchar(n)
-        if s_type.startswith("decimal"):
+        if s_type.startswith(("decimal", "numeric")):
             return "decimal"
-        if s_type.startswith("varchar"):
+        if s_type.startswith(("varchar", "char")):
             return "string"
-        if s_type.startswith("char"):
-            return "string"
-        if s_type.startswith("numeric"):
-            return "decimal"
 
         # Fallback or raise error if mapping is critical
         # Consider making this stricter by raising an error if a type is truly unknown
-        print(
-            f"Warning: Unmapped source type '{source_type_str}' for column '{column_name}'. Defaulting to 'string'.")
+        logger.warning(
+            f"Warning: Unmapped source type '{source_type_str}' for column '{column_name}'. "
+            f"Defaulting to 'string'.")
         return "string"
 
     def _generate_column_definitions(
@@ -129,7 +132,7 @@ class DatabricksUCSpecGenerator(AbstractSpecGenerator):
             col_name = getattr(raw_col_info, "name", None)
             if not col_name:
                 # Or raise SchemaParsingError
-                print("Warning: Skipping column info object without a 'name' attribute.")
+                logger.warning("Warning: Skipping column info object without a 'name' attribute.")
                 continue
 
             source_type_str: Optional[str] = None
@@ -140,8 +143,9 @@ class DatabricksUCSpecGenerator(AbstractSpecGenerator):
                     type_info_dict = json.loads(type_json_str)
                     source_type_str = type_info_dict.get("type")
                 except json.JSONDecodeError:
-                    print(
-                        f"Warning: Could not parse type_json for column '{col_name}'. Falling back to type_name/type_text."
+                    logger.warning(
+                        f"Warning: Could not parse type_json for column '{col_name}'. "
+                        f"Falling back to type_name/type_text."
                     )
 
             if not source_type_str:  # Fallback to type_name or type_text
@@ -151,7 +155,7 @@ class DatabricksUCSpecGenerator(AbstractSpecGenerator):
                 source_type_str = getattr(raw_col_info, "type_text", None)
 
             if not source_type_str:
-                print(
+                logger.warning(
                     f"Warning: Could not determine source type for column '{col_name}'. Defaulting to 'string'.")
                 source_type_str = "string"
 

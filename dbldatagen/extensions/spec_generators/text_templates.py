@@ -168,15 +168,15 @@ COLUMN_TEMPLATES = {
 }
 
 
-def _semantic_match(name: str, candidates: Tuple[str, ...]) -> Tuple[str, float]:
-    """Transformer‑based semantic similarity (0‑1)."""
-    if not _model:
-        return "", 0.0
-    emb_query = _model.encode(name, normalize_embeddings=True)
-    emb_cand = _model.encode(list(candidates), normalize_embeddings=True)
-    sims = util.cos_sim(emb_query, emb_cand)[0].tolist()
-    idx = int(max(range(len(sims)), key=sims.__getitem__))
-    return candidates[idx], sims[idx]
+# def _semantic_match(name: str, candidates: Tuple[str, ...]) -> Tuple[str, float]:
+#     """Transformer‑based semantic similarity (0‑1)."""
+#     if not _model:
+#         return "", 0.0
+#     emb_query = _model.encode(name, normalize_embeddings=True)
+#     emb_cand = _model.encode(list(candidates), normalize_embeddings=True)
+#     sims = util.cos_sim(emb_query, emb_cand)[0].tolist()
+#     idx = int(max(range(len(sims)), key=sims.__getitem__))
+#     return candidates[idx], sims[idx]
 
 
 def _normalize(s: str) -> str:
@@ -244,10 +244,10 @@ def guess_template(col_name: str) -> Optional[str]:
     if fuzzy_score >= 0.9:  # very high confidence
         return COLUMN_TEMPLATES[best_fuzzy]
 
-    # TODO: semantic similarity
-    best_sem, sem_score = _semantic_match(col_name, keys)
-    if sem_score >= 0.6 and sem_score > fuzzy_score:
-        return COLUMN_TEMPLATES[best_sem]
+    # # TODO: semantic similarity
+    # best_sem, sem_score = _semantic_match(col_name, keys)
+    # if sem_score >= 0.6 and sem_score > fuzzy_score:
+    #     return COLUMN_TEMPLATES[best_sem]
 
     # lower‑threshold fuzzy fallback
     if fuzzy_score >= 0.75:

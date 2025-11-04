@@ -1,7 +1,7 @@
 from typing import Optional
 from dbldatagen.extensions.datagen_spec import ColumnDefinition, DatagenSpec, TableDefinition
-from .base import AbstractSpecGenerator
-from .text_templates import COLUMN_TEMPLATES
+from dbldatagen.extensions.spec_generators.base import AbstractSpecGenerator
+from dbldatagen.extensions.spec_generators.text_templates import COLUMN_TEMPLATES
 
 
 class EmployeeSpecGenerator(AbstractSpecGenerator):
@@ -84,13 +84,6 @@ class EmployeeSpecGenerator(AbstractSpecGenerator):
                     "random": True,
                 },
             ),
-            # The active field did fail locally with
-            # pyspark.errors.exceptions.captured.AnalysisException: [DATATYPE_MISMATCH.DATA_DIFF_TYPES] Cannot resolve "CASE WHEN (_scaled_code59 <= 0.6666666666666666) THEN true WHEN (_scaled_code59 <= 1.0) THEN false ELSE {values[-1]} END" due to data type mismatch: Input to `casewhen` should all be the same type, but it's ["BOOLEAN", "BOOLEAN", "STRING"].; line 1 pos 1;
-            # 'Project [id#0L, _scaled_code59#2, cast(cast(CASE WHEN (_scaled_code59#2 <= cast(0.6666666666666666 as double)) THEN true WHEN (_scaled_code59#2 <= cast(1.0 as double)) THEN false ELSE {values[-1]} END as boolean) as boolean) AS code59#5]
-            # +- Project [id#0L, cast(cast((cast((FLOOR(((id#0L % cast(6 as bigint)) + cast(6 as bigint))) % cast(6 as bigint)) as double) / cast(5.0 as double)) as double) as double) AS _scaled_code59#2]
-            #    +- Range (0, 10, step=1, splits=Some(4))
-            # Likely bug in dbldatagen.function_builder.ColumnGeneratorBuilder.mkExprChoicesFn {values[-1]} should be a f string with values -1 evaluated.
-            # works on dbr might be hash or the seed differs
             ColumnDefinition(
                 name="is_active",
                 type="boolean",

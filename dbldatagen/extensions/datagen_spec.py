@@ -61,7 +61,7 @@ class UCSchemaTarget(BaseModel):
     output_format: str = "delta"  # Default to delta for UC Schema
 
     @field_validator("catalog", "schema_", mode="after")
-    def validate_identifiers(cls, v):
+    def validate_identifiers(cls, v):  # noqa: N805, pylint: disable=no-self-argument
         if not v.strip():
             raise ValueError("Identifier must be non-empty.")
         if not v.isidentifier():
@@ -78,7 +78,7 @@ class FilePathTarget(BaseModel):
     output_format: Literal["csv", "parquet"]  # No default, must be specified
 
     @field_validator("base_path", mode="after")
-    def validate_base_path(cls, v):
+    def validate_base_path(cls, v):  # noqa: N805, pylint: disable=no-self-argument
         if not v.strip():
             raise ValueError("base_path must be non-empty.")
         return v.strip()
@@ -139,8 +139,8 @@ class DatagenSpec(BaseModel):
             return PathType.ABSOLUTE_NON_UC
         return PathType.RELATIVE
 
-    @model_validator(mode="before")
-    def validate_paths_and_formats(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+    @model_validator(mode="before") 
+    def validate_paths_and_formats(cls, values: Dict[str, Any]) -> Dict[str, Any]:  # noqa: N805, pylint: disable=no-self-argument
         output = values.get("output_destination")
         intended = values.get(
             "intended_for_databricks") or cls._is_running_on_databricks()
@@ -174,14 +174,14 @@ class DatagenSpec(BaseModel):
                 output = f"{self.output_destination}"
                 display(HTML(f"<strong>Output destination:</strong> {output}"))
             else:
-                display(
-                    HTML(
-                        "<strong>Output destination:</strong> "
-                        "<span style='color: red; font-weight: bold;'>None</span><br>"
-                        "<span style='color: gray;'>Set it using the <code>output_destination</code> attribute on your "
-                        "<code>DatagenSpec</code> object (e.g., <code>my_spec.output_destination = UCSchemaTarget(...)</code>).</span>"
-                    )
+                message = (
+                    "<strong>Output destination:</strong> "
+                    "<span style='color: red; font-weight: bold;'>None</span><br>"
+                    "<span style='color: gray;'>Set it using the <code>output_destination</code> "
+                    "attribute on your <code>DatagenSpec</code> object "
+                    "(e.g., <code>my_spec.output_destination = UCSchemaTarget(...)</code>).</span>"
                 )
+                display(HTML(message))
 
             df = pd.DataFrame([col.dict() for col in table_def.columns])
             try:
