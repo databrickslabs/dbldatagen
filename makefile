@@ -8,7 +8,7 @@ clean:
 
 .venv/bin/python:
 	pip install hatch
-	hatch env create test-pydantic.pydantic==1.10.6-v1
+	hatch env create
 
 dev: .venv/bin/python
 	@hatch run which python

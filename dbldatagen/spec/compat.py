@@ -2,13 +2,12 @@
 
 try:
     # This will succeed on environments with Pydantic V2.x
-    # It imports the V1 API that is bundled within V2.
-    from pydantic.v1 import BaseModel, Field, validator, constr
-
+    from pydantic.v1 import BaseModel, Field, constr, root_validator, validator
 except ImportError:
     # This will be executed on environments with only Pydantic V1.x
-    from pydantic import BaseModel, Field, validator, constr, root_validator, field_validator
+    from pydantic import BaseModel, Field, constr, root_validator, validator  # type: ignore[assignment,no-redef]
 
+__all__ = ["BaseModel", "Field", "constr", "root_validator", "validator"]
 # In your application code, do this:
 # from .compat import BaseModel
 # NOT this:

@@ -1,66 +1,25 @@
-from .compat import BaseModel, validator, root_validator, field_validator
-from typing import Dict, Optional, Union, Any, Literal, List
+from __future__ import annotations
+
+import logging
+from typing import Any, Literal, Union
+
 import pandas as pd
-from IPython.display import display, HTML
+from IPython.display import HTML, display
 
-DbldatagenBasicType = Literal[
-    "string",
-    "int",
-    "long",
-    "float",
-    "double",
-    "decimal",
-    "boolean",
-    "date",
-    "timestamp",
-    "short",
-    "byte",
-    "binary",
-    "integer",
-    "bigint",
-    "tinyint",
-]
+from dbldatagen.spec.column_spec import ColumnDefinition
 
-class ColumnDefinition(BaseModel):
-    name: str
-    type: Optional[DbldatagenBasicType] = None
-    primary: bool = False
-    options: Optional[Dict[str, Any]] = {}
-    nullable: Optional[bool] = False
-    omit: Optional[bool] = False
-    baseColumn: Optional[str] = "id"
-    baseColumnType: Optional[str] = "auto"
+from .compat import BaseModel, validator
 
-    @root_validator(skip_on_failure=True)
-    def check_model_constraints(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Validates constraints across the entire model after individual fields are processed.
-        """
-        is_primary = values.get("primary")
-        options = values.get("options", {})
-        name = values.get("name")
-        is_nullable = values.get("nullable")
-        column_type = values.get("type")
 
-        if is_primary:
-            if "min" in options or "max" in options:
-                raise ValueError(f"Primary column '{name}' cannot have min/max options.")
-
-            if is_nullable:
-                raise ValueError(f"Primary column '{name}' cannot be nullable.")
-
-            if column_type is None:
-                raise ValueError(f"Primary column '{name}' must have a type defined.")
-        return values
-
+logger = logging.getLogger(__name__)
 
 class UCSchemaTarget(BaseModel):
     catalog: str
     schema_: str
     output_format: str = "delta"  # Default to delta for UC Schema
 
-    @field_validator("catalog", "schema_", mode="after")
-    def validate_identifiers(cls, v):  # noqa: N805, pylint: disable=no-self-argument
+    @validator("catalog", "schema_")
+    def validate_identifiers(cls, v: str) -> str:
         if not v.strip():
             raise ValueError("Identifier must be non-empty.")
         if not v.isidentifier():
@@ -68,7 +27,7 @@ class UCSchemaTarget(BaseModel):
                 f"'{v}' is not a basic Python identifier. Ensure validity for Unity Catalog.")
         return v.strip()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.catalog}.{self.schema_} (Format: {self.output_format}, Type: UC Table)"
 
 
@@ -76,28 +35,28 @@ class FilePathTarget(BaseModel):
     base_path: str
     output_format: Literal["csv", "parquet"]  # No default, must be specified
 
-    @field_validator("base_path", mode="after")
-    def validate_base_path(cls, v):  # noqa: N805, pylint: disable=no-self-argument
+    @validator("base_path")
+    def validate_base_path(cls, v: str) -> str:
         if not v.strip():
             raise ValueError("base_path must be non-empty.")
         return v.strip()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.base_path} (Format: {self.output_format}, Type: File Path)"
 
 
 class TableDefinition(BaseModel):
     number_of_rows: int
-    partitions: Optional[int] = None
-    columns: List[ColumnDefinition]
+    partitions: int | None = None
+    columns: list[ColumnDefinition]
 
 
 class ValidationResult:
     """Container for validation results with errors and warnings."""
 
     def __init__(self) -> None:
-        self.errors: List[str] = []
-        self.warnings: List[str] = []
+        self.errors: list[str] = []
+        self.warnings: list[str] = []
 
     def add_error(self, message: str) -> None:
         """Add an error message."""
@@ -132,16 +91,16 @@ class ValidationResult:
         return "\n".join(lines)
 
 class DatagenSpec(BaseModel):
-    tables: Dict[str, TableDefinition]
-    output_destination: Optional[Union[UCSchemaTarget, FilePathTarget]] = None # there is a abstraction, may be we can use that? talk to Greg
-    generator_options: Optional[Dict[str, Any]] = {}
-    intended_for_databricks: Optional[bool] = None # May be infered.
+    tables: dict[str, TableDefinition]
+    output_destination: Union[UCSchemaTarget, FilePathTarget] | None = None # there is a abstraction, may be we can use that? talk to Greg
+    generator_options: dict[str, Any] | None = None
+    intended_for_databricks: bool | None = None # May be infered.
 
     def _check_circular_dependencies(
         self,
         table_name: str,
-        columns: List[ColumnDefinition]
-    ) -> List[str]:
+        columns: list[ColumnDefinition]
+    ) -> list[str]:
         """
         Check for circular dependencies in baseColumn references.
         Returns a list of error messages if circular dependencies are found.
@@ -152,13 +111,13 @@ class DatagenSpec(BaseModel):
         for col in columns:
             if col.baseColumn and col.baseColumn != "id":
                 # Track the dependency chain
-                visited = set()
+                visited: set[str] = set()
                 current = col.name
 
                 while current:
                     if current in visited:
                         # Found a cycle
-                        cycle_path = " -> ".join(list(visited) + [current])
+                        cycle_path = " -> ".join([*list(visited), current])
                         errors.append(
                             f"Table '{table_name}': Circular dependency detected in column '{col.name}': {cycle_path}"
                         )
@@ -182,7 +141,7 @@ class DatagenSpec(BaseModel):
 
         return errors
 
-    def validate(self, strict: bool = True) -> ValidationResult:
+    def validate(self, strict: bool = True) -> ValidationResult:  # type: ignore[override]
         """
         Validates the entire DatagenSpec configuration.
         Always runs all validation checks and collects all errors and warnings.
@@ -284,7 +243,7 @@ class DatagenSpec(BaseModel):
                 "random", "randomSeed", "randomSeedMethod", "verbose",
                 "debug", "seedColumnName"
             ]
-            for key in self.generator_options.keys():
+            for key in self.generator_options:
                 if key not in known_options:
                     result.add_warning(
                         f"Unknown generator option: '{key}'. "
@@ -292,9 +251,7 @@ class DatagenSpec(BaseModel):
                     )
 
         # Now that all validations are complete, decide whether to raise
-        if strict and (result.errors or result.warnings):
-            raise ValueError(str(result))
-        elif not strict and result.errors:
+        if (strict and (result.errors or result.warnings)) or (not strict and result.errors):
             raise ValueError(str(result))
 
         return result

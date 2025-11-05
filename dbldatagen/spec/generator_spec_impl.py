@@ -1,11 +1,13 @@
 import logging
-from typing import Dict, Union
 import posixpath
+from typing import Any, Union
 
-from dbldatagen.spec.generator_spec import TableDefinition
 from pyspark.sql import SparkSession
+
 import dbldatagen as dg
-from .generator_spec import DatagenSpec, UCSchemaTarget, FilePathTarget, ColumnDefinition
+from dbldatagen.spec.generator_spec import TableDefinition
+
+from .generator_spec import ColumnDefinition, DatagenSpec, FilePathTarget, UCSchemaTarget
 
 
 logging.basicConfig(
@@ -41,7 +43,7 @@ class Generator:
         self.app_name = app_name
         logger.info("Generator initialized with SparkSession")
 
-    def _columnspec_to_datagen_columnspec(self, col_def: ColumnDefinition) -> Dict[str, str]:
+    def _columnspec_to_datagen_columnspec(self, col_def: ColumnDefinition) -> dict[str, Any]:
         """
         Convert a ColumnDefinition to dbldatagen column specification.
         Args:
@@ -95,7 +97,7 @@ class Generator:
         self,
         config: DatagenSpec,
         config_source_name: str = "PydanticConfig"
-    ) -> Dict[str, dg.DataGenerator]:
+    ) -> dict[str, dg.DataGenerator]:
         """
         Prepare DataGenerator specifications for each table based on the configuration.
         Args:
@@ -117,10 +119,10 @@ class Generator:
             raise RuntimeError(
                 "SparkSession is not available. Cannot prepare data generators")
 
-        tables_config: Dict[str, TableDefinition] = config.tables
+        tables_config: dict[str, TableDefinition] = config.tables
         global_gen_options = config.generator_options if config.generator_options else {}
 
-        prepared_generators: Dict[str, dg.DataGenerator] = {}
+        prepared_generators: dict[str, dg.DataGenerator] = {}
         generation_order = list(tables_config.keys()) # This becomes impotant when we get into multitable
 
         for table_name in generation_order:
@@ -156,7 +158,7 @@ class Generator:
 
     def write_prepared_data(
         self,
-        prepared_generators: Dict[str, dg.DataGenerator],
+        prepared_generators: dict[str, dg.DataGenerator],
         output_destination: Union[UCSchemaTarget, FilePathTarget, None],
         config_source_name: str = "PydanticConfig",
     ) -> None:
@@ -188,7 +190,7 @@ class Generator:
                 logger.info(
                     f"Built DataFrame for '{table_name}': {actual_row_count} rows (requested: {requested_rows})")
 
-                if actual_row_count == 0 and requested_rows > 0:
+                if actual_row_count == 0 and requested_rows is not None and requested_rows > 0:
                     logger.warning(f"Table '{table_name}': Requested {requested_rows} rows but built 0")
 
                 # Write data based on destination type
