@@ -3,21 +3,18 @@
 all: clean dev lint fmt test
 
 clean:
-	rm -fr .venv clean htmlcov .mypy_cache .pytest_cache .ruff_cache .coverage coverage.xml
+	rm -fr clean htmlcov .mypy_cache .pytest_cache .ruff_cache .coverage coverage.xml
 	rm -fr **/*.pyc
 
-.venv/bin/python:
-	pip install hatch
-	hatch env create
-
-dev: .venv/bin/python
+dev:
+	@which hatch > /dev/null || pip install hatch
 	@hatch run which python
 
 lint:
-	hatch run verify
+	hatch run test-pydantic.2.8.2:verify
 
 fmt:
-	hatch run fmt
+	hatch run test-pydantic.2.8.2:fmt
 
 test:
 	hatch run test-pydantic:test
