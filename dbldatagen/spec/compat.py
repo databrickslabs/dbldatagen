@@ -1,30 +1,57 @@
-# This module acts as a compatibility layer for Pydantic V1 and V2.
+"""Pydantic compatibility layer for supporting both Pydantic V1 and V2.
+
+This module provides a unified interface for Pydantic functionality that works across both
+Pydantic V1.x and V2.x versions. It ensures that the dbldatagen spec API works in multiple
+environments without requiring specific Pydantic version installations.
+
+The module exports a consistent Pydantic V1-compatible API regardless of which version is installed:
+
+- **BaseModel**: Base class for all Pydantic models
+- **Field**: Field definition with metadata and validation
+- **constr**: Constrained string type for validation
+- **root_validator**: Decorator for model-level validation
+- **validator**: Decorator for field-level validation
+
+Usage in other modules:
+    Always import from this compat module, not directly from pydantic::
+
+        # Correct
+        from .compat import BaseModel, validator
+
+        # Incorrect - don't do this
+        from pydantic import BaseModel, validator
+
+Environment Support:
+    - **Pydantic V2.x environments**: Imports from pydantic.v1 compatibility layer
+    - **Pydantic V1.x environments**: Imports directly from pydantic package
+    - **Databricks runtimes**: Works with pre-installed Pydantic versions without conflicts
+
+.. note::
+    This approach is inspired by FastAPI's compatibility layer:
+    https://github.com/fastapi/fastapi/blob/master/fastapi/_compat.py
+
+Benefits:
+    - **No Installation Required**: Works with whatever Pydantic version is available
+    - **Single Codebase**: One set of code works across both Pydantic versions
+    - **Environment Agnostic**: Application code doesn't need to know which version is installed
+    - **Future-Ready**: Easy migration path to Pydantic V2 API when ready
+    - **Databricks Compatible**: Avoids conflicts with pre-installed libraries
+
+Future Migration:
+    When ready to migrate to native Pydantic V2 API:
+    1. Update application code to use V2 patterns
+    2. Modify this compat.py to import from native V2 locations
+    3. Test in both environments
+    4. Deploy incrementally
+"""
 
 try:
     # This will succeed on environments with Pydantic V2.x
+    # Pydantic V2 provides a v1 compatibility layer for backwards compatibility
     from pydantic.v1 import BaseModel, Field, constr, root_validator, validator
 except ImportError:
     # This will be executed on environments with only Pydantic V1.x
+    # Import directly from pydantic since v1 subpackage doesn't exist
     from pydantic import BaseModel, Field, constr, root_validator, validator  # type: ignore[assignment,no-redef]
 
 __all__ = ["BaseModel", "Field", "constr", "root_validator", "validator"]
-# In your application code, do this:
-# from .compat import BaseModel
-# NOT this:
-# from pydantic import BaseModel
-
-# FastAPI Notes
-# https://github.com/fastapi/fastapi/blob/master/fastapi/_compat.py
-
-
-"""
-## Why This Approach
-No Installation Required: It directly addresses your core requirement.
-You don't need to %pip install anything, which avoids conflicts with the pre-installed libraries on Databricks.
-Single Codebase: You maintain one set of code that is guaranteed to work with the Pydantic V1 API, which is available in both runtimes.
-
-Environment Agnostic: Your application code in models.py has no idea which version of Pydantic is actually installed. The compat.py module handles that complexity completely.
-
-Future-Ready: When you eventually decide to migrate fully to the Pydantic V2 API (to take advantage of its speed and features),
-you only need to change your application code and your compat.py import statements, making the transition much clearer.
-"""

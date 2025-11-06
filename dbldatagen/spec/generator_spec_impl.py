@@ -21,18 +21,35 @@ INTERNAL_ID_COLUMN_NAME = "id"
 
 
 class Generator:
-    """
-    Main data generation orchestrator that handles configuration, preparation, and writing of data.
+    """Main orchestrator for generating synthetic data from DatagenSpec configurations.
+
+    This class provides the primary interface for the spec-based data generation API. It handles
+    the complete lifecycle of data generation:
+    1. Converting spec configurations into dbldatagen DataGenerator objects
+    2. Building the actual data as Spark DataFrames
+    3. Writing the data to specified output destinations (Unity Catalog or file system)
+
+    The Generator encapsulates all the complexity of translating declarative specs into
+    executable data generation plans, allowing users to focus on what data they want rather
+    than how to generate it.
+
+    :param spark: Active SparkSession to use for data generation
+    :param app_name: Application name used in logging and tracking. Defaults to "DataGen_ClassBased"
+
+    .. note::
+        The Generator requires an active SparkSession. On Databricks, you can use the pre-configured
+        `spark` variable. For local development, create a SparkSession first
+
+    .. note::
+        The same Generator instance can be reused to generate multiple different specs
     """
 
     def __init__(self, spark: SparkSession, app_name: str = "DataGen_ClassBased") -> None:
-        """
-        Initialize the Generator with a SparkSession.
-        Args:
-            spark: An existing SparkSession instance
-            app_name: Application name for logging purposes
-        Raises:
-            RuntimeError: If spark is None
+        """Initialize the Generator with a SparkSession.
+
+        :param spark: An active SparkSession instance to use for data generation operations
+        :param app_name: Application name for logging and identification purposes
+        :raises RuntimeError: If spark is None or not properly initialized
         """
         if not spark:
             logger.error(
@@ -44,12 +61,26 @@ class Generator:
         logger.info("Generator initialized with SparkSession")
 
     def _columnspec_to_datagen_columnspec(self, col_def: ColumnDefinition) -> dict[str, Any]:
-        """
-        Convert a ColumnDefinition to dbldatagen column specification.
-        Args:
-            col_def: ColumnDefinition object containing column configuration
-        Returns:
-            Dictionary containing dbldatagen column specification
+        """Convert a ColumnDefinition spec into dbldatagen DataGenerator column arguments.
+
+        This internal method translates the declarative ColumnDefinition format into the
+        keyword arguments expected by dbldatagen's withColumn() method. It handles special
+        cases like primary keys, nullable columns, and omitted columns.
+
+        Primary key columns receive special treatment:
+        - Automatically use the internal ID column as their base
+        - String primary keys use hash-based generation
+        - Numeric primary keys maintain sequential values
+
+        :param col_def: ColumnDefinition object from a DatagenSpec
+        :returns: Dictionary of keyword arguments suitable for DataGenerator.withColumn()
+
+        .. note::
+            This is an internal method not intended for direct use by end users
+
+        .. note::
+            Conflicting options for primary keys (like min/max, values, expr) will generate
+            warnings but won't prevent generation - the primary key behavior takes precedence
         """
         col_name = col_def.name
         col_type = col_def.type
@@ -98,17 +129,33 @@ class Generator:
         config: DatagenSpec,
         config_source_name: str = "PydanticConfig"
     ) -> dict[str, dg.DataGenerator]:
-        """
-        Prepare DataGenerator specifications for each table based on the configuration.
-        Args:
-            config: DatagenSpec Pydantic object containing table configurations
-            config_source_name: Name for the configuration source (for logging)
-        Returns:
-            Dictionary mapping table names to their configured dbldatagen.DataGenerator objects
-        Raises:
-            RuntimeError: If SparkSession is not available
-            ValueError: If any table preparation fails
-            Exception: If any unexpected error occurs during preparation
+        """Prepare DataGenerator objects for all tables defined in the spec.
+
+        This internal method is the first phase of data generation. It processes the DatagenSpec
+        and creates configured dbldatagen.DataGenerator objects for each table, but does not
+        yet build the actual data. Each table's definition is converted into a DataGenerator
+        with all its columns configured.
+
+        The method:
+        1. Iterates through all tables in the spec
+        2. Creates a DataGenerator for each table with appropriate row count and partitioning
+        3. Adds all columns to each DataGenerator using withColumn()
+        4. Applies global generator options
+        5. Returns the prepared generators ready for building
+
+        :param config: DatagenSpec containing table definitions and configuration
+        :param config_source_name: Descriptive name for the config source, used in logging
+                                   and DataGenerator naming
+        :returns: Dictionary mapping table names to their prepared DataGenerator instances
+        :raises RuntimeError: If SparkSession is not available or if any table preparation fails
+        :raises ValueError: If table configuration is invalid (should be caught by validate() first)
+
+        .. note::
+            This is an internal method. Use generate_and_write_data() for the complete workflow
+
+        .. note::
+            Preparation is separate from building to allow inspection and modification of
+            DataGenerators before data generation begins
         """
         logger.info(
             f"Preparing data generators for {len(config.tables)} tables")
@@ -162,17 +209,34 @@ class Generator:
         output_destination: Union[UCSchemaTarget, FilePathTarget, None],
         config_source_name: str = "PydanticConfig",
     ) -> None:
-        """
-        Write data from prepared generators to the specified output destination.
+        """Build and write data from prepared generators to the specified output destination.
 
-        Args:
-            prepared_generators: Dictionary of prepared DataGenerator objects
-            output_destination: Target destination for data output
-            config_source_name: Name for the configuration source (for logging)
+        This method handles the second phase of data generation: taking prepared DataGenerator
+        objects, building them into actual Spark DataFrames, and writing the results to the
+        configured output location.
 
-        Raises:
-            RuntimeError: If any table write fails
-            ValueError: If output destination is not properly configured
+        The method:
+        1. Iterates through all prepared generators
+        2. Builds each generator into a DataFrame using build()
+        3. Writes the DataFrame to the appropriate destination:
+           - For FilePathTarget: Writes to {base_path}/{table_name}/ in specified format
+           - For UCSchemaTarget: Writes to {catalog}.{schema}.{table_name} as managed table
+        4. Logs row counts and write locations
+
+        :param prepared_generators: Dictionary mapping table names to DataGenerator objects
+                                   (typically from _prepare_data_generators())
+        :param output_destination: Target location for output. Can be UCSchemaTarget,
+                                  FilePathTarget, or None (no write, data generated only)
+        :param config_source_name: Descriptive name for the config source, used in logging
+        :raises RuntimeError: If DataFrame building or writing fails for any table
+        :raises ValueError: If output destination type is not recognized
+
+        .. note::
+            If output_destination is None, data is generated but not persisted anywhere.
+            This can be useful for testing or when you want to process the data in-memory
+
+        .. note::
+            Writing uses "overwrite" mode, so existing tables/files will be replaced
         """
         logger.info("Starting data writing phase")
 
@@ -216,17 +280,44 @@ class Generator:
         config: DatagenSpec,
         config_source_name: str = "PydanticConfig"
     ) -> None:
-        """
-        Combined method to prepare data generators and write data in one operation.
-        This method orchestrates the complete data generation workflow:
-        1. Prepare data generators from configuration
-        2. Write data to the specified destination
-        Args:
-            config: DatagenSpec Pydantic object containing table configurations
-            config_source_name: Name for the configuration source (for logging)
-        Raises:
-            RuntimeError: If SparkSession is not available or any step fails
-            ValueError: If critical errors occur during preparation or writing
+        """Execute the complete data generation workflow from spec to output.
+
+        This is the primary high-level method for generating data from a DatagenSpec. It
+        orchestrates the entire process in one call, handling both preparation and writing phases.
+
+        The complete workflow:
+        1. Validates that the config is properly structured (you should call config.validate() first)
+        2. Converts the spec into DataGenerator objects for each table
+        3. Builds the DataFrames by executing the generation logic
+        4. Writes the results to the configured output destination
+        5. Logs progress and completion status
+
+        This method is the recommended entry point for most use cases. For more control over
+        the generation process, use _prepare_data_generators() and write_prepared_data() separately.
+
+        :param config: DatagenSpec object defining tables, columns, and output destination.
+                      Should be validated with config.validate() before calling this method
+        :param config_source_name: Descriptive name for the config source, used in logging
+                                  and naming DataGenerator instances
+        :raises RuntimeError: If SparkSession is unavailable, or if preparation or writing fails
+        :raises ValueError: If the config is invalid (though config.validate() should catch this first)
+
+        .. note::
+            It's strongly recommended to call config.validate() before this method to catch
+            configuration errors early with better error messages
+
+        .. note::
+            Generation is performed sequentially: table1 is fully generated and written before
+            table2 begins. For multi-table generation with dependencies, the order matters
+
+        Example:
+            >>> spec = DatagenSpec(
+            ...     tables={"users": user_table_def},
+            ...     output_destination=UCSchemaTarget(catalog="main", schema_="test")
+            ... )
+            >>> spec.validate()  # Check for errors first
+            >>> generator = Generator(spark)
+            >>> generator.generate_and_write_data(spec)
         """
         logger.info(f"Starting combined data generation and writing for {len(config.tables)} tables")
 
