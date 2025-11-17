@@ -32,9 +32,6 @@ Environment Support:
 
 Benefits:
     - **No Installation Required**: Works with whatever Pydantic version is available
-    - **Single Codebase**: One set of code works across both Pydantic versions
-    - **Environment Agnostic**: Application code doesn't need to know which version is installed
-    - **Future-Ready**: Easy migration path to Pydantic V2 API when ready
     - **Databricks Compatible**: Avoids conflicts with pre-installed libraries
 
 Future Migration:
