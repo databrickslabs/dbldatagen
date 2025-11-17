@@ -1,19 +1,18 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Literal, Union
+from typing import Any, Union
 
 import pandas as pd
 from IPython.display import HTML, display
 
 from dbldatagen.spec.column_spec import ColumnDefinition
 
-from .compat import BaseModel, validator
-from .output_targets import UCSchemaTarget, FilePathTarget
+from .compat import BaseModel
+from .output_targets import FilePathTarget, UCSchemaTarget
+
 
 logger = logging.getLogger(__name__)
-
-
 
 
 class TableDefinition(BaseModel):

@@ -1,6 +1,8 @@
-from .compat import BaseModel, validator
-from typing import Literal
 import logging
+from typing import Literal
+
+from .compat import BaseModel, validator
+
 
 logger = logging.getLogger(__name__)
 

@@ -60,7 +60,7 @@ class Generator:
         self.app_name = app_name
         logger.info("Generator initialized with SparkSession")
 
-    def _columnspec_to_datagen_columnspec(self, col_def: ColumnDefinition) -> dict[str, Any]:
+    def _columnSpecToDatagenColumnSpec(self, col_def: ColumnDefinition) -> dict[str, Any]:
         """Convert a ColumnDefinition spec into dbldatagen DataGenerator column arguments.
 
         This internal method translates the declarative ColumnDefinition format into the
@@ -124,7 +124,7 @@ class Generator:
 
         return kwargs
 
-    def _prepare_data_generators(
+    def _prepareDataGenerators(
         self,
         config: DatagenSpec,
         config_source_name: str = "PydanticConfig"
@@ -151,7 +151,7 @@ class Generator:
         :raises ValueError: If table configuration is invalid (should be caught by validate() first)
 
         .. note::
-            This is an internal method. Use generate_and_write_data() for the complete workflow
+            This is an internal method. Use generateAndWriteData() for the complete workflow
 
         .. note::
             Preparation is separate from building to allow inspection and modification of
@@ -188,7 +188,7 @@ class Generator:
 
                 # Process each column
                 for col_def in table_spec.columns:
-                    kwargs = self._columnspec_to_datagen_columnspec(col_def)
+                    kwargs = self._columnSpecToDatagenColumnSpec(col_def)
                     data_gen = data_gen.withColumn(colName=col_def.name, **kwargs)
                     # Has performance implications.
 
@@ -203,7 +203,7 @@ class Generator:
         logger.info("All data generators prepared successfully")
         return prepared_generators
 
-    def write_prepared_data(
+    def writePreparedData(
         self,
         prepared_generators: dict[str, dg.DataGenerator],
         output_destination: Union[UCSchemaTarget, FilePathTarget, None],
@@ -224,7 +224,7 @@ class Generator:
         4. Logs row counts and write locations
 
         :param prepared_generators: Dictionary mapping table names to DataGenerator objects
-                                   (typically from _prepare_data_generators())
+                                   (typically from _prepareDataGenerators())
         :param output_destination: Target location for output. Can be UCSchemaTarget,
                                   FilePathTarget, or None (no write, data generated only)
         :param config_source_name: Descriptive name for the config source, used in logging
@@ -275,7 +275,7 @@ class Generator:
                 raise RuntimeError(f"Failed to write table '{table_name}': {e}") from e
         logger.info("All data writes completed successfully")
 
-    def generate_and_write_data(
+    def generateAndWriteData(
         self,
         config: DatagenSpec,
         config_source_name: str = "PydanticConfig"
@@ -293,7 +293,7 @@ class Generator:
         5. Logs progress and completion status
 
         This method is the recommended entry point for most use cases. For more control over
-        the generation process, use _prepare_data_generators() and write_prepared_data() separately.
+        the generation process, use _prepareDataGenerators() and writePreparedData() separately.
 
         :param config: DatagenSpec object defining tables, columns, and output destination.
                       Should be validated with config.validate() before calling this method
@@ -317,13 +317,13 @@ class Generator:
             ... )
             >>> spec.validate()  # Check for errors first
             >>> generator = Generator(spark)
-            >>> generator.generate_and_write_data(spec)
+            >>> generator.generateAndWriteData(spec)
         """
         logger.info(f"Starting combined data generation and writing for {len(config.tables)} tables")
 
         try:
             # Phase 1: Prepare data generators
-            prepared_generators_map = self._prepare_data_generators(config, config_source_name)
+            prepared_generators_map = self._prepareDataGenerators(config, config_source_name)
 
             if not prepared_generators_map and list(config.tables.keys()):
                 logger.warning(
@@ -331,7 +331,7 @@ class Generator:
                 return
 
             # Phase 2: Write data
-            self.write_prepared_data(
+            self.writePreparedData(
                 prepared_generators_map,
                 config.output_destination,
                 config_source_name
