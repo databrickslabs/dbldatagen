@@ -6,8 +6,9 @@ from dbldatagen.spec.generator_spec import (
     ColumnDefinition,
     UCSchemaTarget,
     FilePathTarget,
-    ValidationResult
 )
+from dbldatagen.spec.validation import ValidationResult
+
 
 class TestValidationResult:
     """Tests for ValidationResult class"""
