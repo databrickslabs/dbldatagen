@@ -54,6 +54,9 @@ class ColumnDefinition(BaseModel):
                           "auto" (infer behavior), "hash" (hash the base column values),
                           "values" (use base column values directly)
 
+    .. warning::
+       Experimental - This API is subject to change in future versions
+
     .. note::
         Primary columns have special constraints:
         - Must have a type defined

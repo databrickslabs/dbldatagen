@@ -36,6 +36,9 @@ class Generator:
     :param spark: Active SparkSession to use for data generation
     :param app_name: Application name used in logging and tracking. Defaults to "DataGen_ClassBased"
 
+    .. warning::
+       Experimental - This API is subject to change in future versions
+
     .. note::
         The Generator requires an active SparkSession. On Databricks, you can use the pre-configured
         `spark` variable. For local development, create a SparkSession first

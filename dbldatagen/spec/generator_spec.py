@@ -30,6 +30,9 @@ class TableDefinition(BaseModel):
     :param columns: List of ColumnDefinition objects specifying the columns to generate
                    in this table. At least one column must be specified
 
+    .. warning::
+       Experimental - This API is subject to change in future versions
+
     .. note::
         Setting an appropriate number of partitions can significantly impact generation performance.
         As a rule of thumb, use 2-4 partitions per CPU core available in your Spark cluster
@@ -63,6 +66,9 @@ class DatagenSpec(BaseModel):
                              - seedColumnName: Name of internal seed column
     :param intended_for_databricks: Flag indicating if this spec is designed for Databricks.
                                    May be automatically inferred based on configuration
+
+    .. warning::
+       Experimental - This API is subject to change in future versions
 
     .. note::
         Call the validate() method before using this spec to ensure configuration is correct

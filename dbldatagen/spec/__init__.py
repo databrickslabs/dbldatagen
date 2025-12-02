@@ -1,7 +1,11 @@
-"""Pydantic-based specification API for dbldatagen.
+"""Pydantic-based specification API for dbldatagen (Experimental).
 
 This module provides Pydantic models and specifications for defining data generation
 in a type-safe, declarative way.
+
+.. warning::
+   Experimental - This API is experimental and both APIs and generated code
+   are liable to change in future versions.
 """
 
 from typing import Any
