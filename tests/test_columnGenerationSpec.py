@@ -99,13 +99,17 @@ class TestColumnGenerationSpec:
         cd = dg.ColumnGenerationSpec(name="test", colType=StringType(), baseColumn='test0,test_1', expr="concat(1,2)")
         assert not cd.random, "random should be False by default"
 
-    @pytest.mark.parametrize("randomSetting, expectedSetting",
-                             [(True, True),
-                              (False, False),
-                              ])
+    @pytest.mark.parametrize(
+        "randomSetting, expectedSetting",
+        [
+            (True, True),
+            (False, False),
+        ],
+    )
     def test_random_explicit(self, randomSetting, expectedSetting):
         dt = StringType()
-        cd = dg.ColumnGenerationSpec(name="test", colType=StringType(), baseColumn='test0,test_1',
-                                     expr="concat(1,2)", random=randomSetting)
+        cd = dg.ColumnGenerationSpec(
+            name="test", colType=StringType(), baseColumn='test0,test_1', expr="concat(1,2)", random=randomSetting
+        )
 
         assert cd.random is expectedSetting, f"random should be {expectedSetting}"

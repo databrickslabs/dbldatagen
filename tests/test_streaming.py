@@ -37,26 +37,34 @@ class TestStreaming:
         base_dir, test_dir, checkpoint_dir = getStreamingDirs
 
         if seedColumnName is not None:
-            testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count,
-                                             partitions=4, seedMethod='hash_fieldname', seedColumnName=seedColumnName))
+            testDataSpec = dg.DataGenerator(
+                sparkSession=spark,
+                name="test_data_set1",
+                rows=self.row_count,
+                partitions=4,
+                seedMethod='hash_fieldname',
+                seedColumnName=seedColumnName,
+            )
         else:
-            testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count,
-                                             partitions=4, seedMethod='hash_fieldname'))
+            testDataSpec = dg.DataGenerator(
+                sparkSession=spark,
+                name="test_data_set1",
+                rows=self.row_count,
+                partitions=4,
+                seedMethod='hash_fieldname',
+            )
 
-        testDataSpec = (testDataSpec
-                        .withIdOutput()
-                        .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
-                                    numColumns=self.column_count)
-                        .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
-                        .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
-                        .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-                        .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
-                        .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+        testDataSpec = (
+            testDataSpec.withIdOutput()
+            .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)", numColumns=self.column_count)
+            .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
+            .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
+            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+            .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+            .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+        )
 
-                        )
-
-        dfTestData = testDataSpec.build(withStreaming=True,
-                                        options={'rowsPerSecond': self.rows_per_second})
+        dfTestData = testDataSpec.build(withStreaming=True, options={'rowsPerSecond': self.rows_per_second})
 
         # check that seed column is in schema
         fields = [c.name for c in dfTestData.schema.fields]
@@ -65,13 +73,13 @@ class TestStreaming:
             assert seedColumnName in fields
             assert "id" not in fields if seedColumnName != "id" else True
 
-        sq = (dfTestData
-              .writeStream
-              .format("csv")
-              .outputMode("append")
-              .option("path", test_dir)
-              .option("checkpointLocation", f"{checkpoint_dir}/{uuid.uuid4()}")
-              .start())
+        sq = (
+            dfTestData.writeStream.format("csv")
+            .outputMode("append")
+            .option("path", test_dir)
+            .option("checkpointLocation", f"{checkpoint_dir}/{uuid.uuid4()}")
+            .start()
+        )
 
         # loop until we get one seconds worth of data
         start_time = time.time()
@@ -109,27 +117,34 @@ class TestStreaming:
         base_dir, test_dir, checkpoint_dir = getStreamingDirs
 
         if seedColumnName is not None:
-            testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count,
-                                             partitions=4, seedMethod='hash_fieldname',
-                                             seedColumnName=seedColumnName))
+            testDataSpec = dg.DataGenerator(
+                sparkSession=spark,
+                name="test_data_set1",
+                rows=self.row_count,
+                partitions=4,
+                seedMethod='hash_fieldname',
+                seedColumnName=seedColumnName,
+            )
         else:
-            testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count,
-                                             partitions=4, seedMethod='hash_fieldname'))
+            testDataSpec = dg.DataGenerator(
+                sparkSession=spark,
+                name="test_data_set1",
+                rows=self.row_count,
+                partitions=4,
+                seedMethod='hash_fieldname',
+            )
 
-        testDataSpec = (testDataSpec
-                        .withIdOutput()
-                        .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
-                                    numColumns=self.column_count)
-                        .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
-                        .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
-                        .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-                        .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
-                        .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+        testDataSpec = (
+            testDataSpec.withIdOutput()
+            .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)", numColumns=self.column_count)
+            .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
+            .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
+            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+            .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+            .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+        )
 
-                        )
-
-        dfTestData = testDataSpec.build(withStreaming=True,
-                                        options={'rowsPerSecond': self.rows_per_second})
+        dfTestData = testDataSpec.build(withStreaming=True, options={'rowsPerSecond': self.rows_per_second})
 
         # check that seed column is in schema
         fields = [c.name for c in dfTestData.schema.fields]
@@ -145,14 +160,14 @@ class TestStreaming:
         time_limit = 10.0
 
         while elapsed_time < time_limit and rows_retrieved < self.rows_per_second:
-            sq = (dfTestData
-                  .writeStream
-                  .format("csv")
-                  .outputMode("append")
-                  .option("path", test_dir)
-                  .option("checkpointLocation", checkpoint_dir)
-                  .trigger(once=True)
-                  .start())
+            sq = (
+                dfTestData.writeStream.format("csv")
+                .outputMode("append")
+                .option("path", test_dir)
+                .option("checkpointLocation", checkpoint_dir)
+                .trigger(once=True)
+                .start()
+            )
 
             # wait for trigger once to terminate
             sq.awaitTermination(5)

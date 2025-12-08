@@ -26,8 +26,4 @@ from .gamma import Gamma
 from .exponential_distribution import Exponential
 
 
-__all__ = ["normal_distribution",
-           "gamma",
-           "beta",
-           "data_distribution",
-           "exponential_distribution"]
+__all__ = ["normal_distribution", "gamma", "beta", "data_distribution", "exponential_distribution"]

@@ -24,18 +24,44 @@ Most of the other classes are used for internal purposes only
 """
 
 from .data_generator import DataGenerator
-from .datagen_constants import DEFAULT_RANDOM_SEED, RANDOM_SEED_RANDOM, RANDOM_SEED_FIXED, \
-                               RANDOM_SEED_HASH_FIELD_NAME, MIN_PYTHON_VERSION, MIN_SPARK_VERSION, \
-                               INFER_DATATYPE, SPARK_DEFAULT_PARALLELISM
-from .utils import ensure, topologicalSort, mkBoundsList, coalesce_values, \
-    deprecated, parse_time_interval, DataGenError, split_list_matching_condition, strip_margins, \
-    json_value_from_path, system_time_millis
+from .datagen_constants import (
+    DEFAULT_RANDOM_SEED,
+    RANDOM_SEED_RANDOM,
+    RANDOM_SEED_FIXED,
+    RANDOM_SEED_HASH_FIELD_NAME,
+    MIN_PYTHON_VERSION,
+    MIN_SPARK_VERSION,
+    INFER_DATATYPE,
+    SPARK_DEFAULT_PARALLELISM,
+)
+from .utils import (
+    ensure,
+    topologicalSort,
+    mkBoundsList,
+    coalesce_values,
+    deprecated,
+    parse_time_interval,
+    DataGenError,
+    split_list_matching_condition,
+    strip_margins,
+    json_value_from_path,
+    system_time_millis,
+)
 
 from ._version import __version__
 from .column_generation_spec import ColumnGenerationSpec
 from .column_spec_options import ColumnSpecOptions
-from .constraints import Constraint, ChainedRelation, LiteralRange, LiteralRelation, NegativeValues, PositiveValues, \
-    RangedValues, SqlExpr, UniqueCombinations
+from .constraints import (
+    Constraint,
+    ChainedRelation,
+    LiteralRange,
+    LiteralRelation,
+    NegativeValues,
+    PositiveValues,
+    RangedValues,
+    SqlExpr,
+    UniqueCombinations,
+)
 from .data_analyzer import DataAnalyzer
 from .schema_parser import SchemaParser
 from .daterange import DateRange
@@ -48,24 +74,45 @@ from .text_generator_plugins import PyfuncText, PyfuncTextFactory, FakerTextFact
 from .html_utils import HtmlUtils
 from .datasets_object import Datasets
 from .config import OutputDataset
+from .multi_table_builder import MultiTableBuilder
+from .relation import ForeignKeyRelation
+from .datagen_types import ColumnLike
 
-__all__ = ["data_generator", "data_analyzer", "schema_parser", "daterange", "nrange",
-           "column_generation_spec", "utils", "function_builder",
-           "spark_singleton", "text_generators", "datarange", "datagen_constants",
-           "text_generator_plugins", "html_utils", "datasets_object", "constraints", "config"
-           ]
+__all__ = [
+    "data_generator",
+    "data_analyzer",
+    "schema_parser",
+    "daterange",
+    "nrange",
+    "column_generation_spec",
+    "utils",
+    "function_builder",
+    "spark_singleton",
+    "text_generators",
+    "datarange",
+    "datagen_constants",
+    "text_generator_plugins",
+    "html_utils",
+    "datasets_object",
+    "constraints",
+    "config",
+    "multi_table_builder",
+    "relation",
+    "datagen_types",
+]
 
 
 def python_version_check(python_version_expected):
     """Check against Python version
 
-       Allows minimum version to be passed in to facilitate unit testing
+    Allows minimum version to be passed in to facilitate unit testing
 
-       :param python_version_expected: = minimum version of python to support as tuple e.g (3,6)
-       :return: True if passed
+    :param python_version_expected: = minimum version of python to support as tuple e.g (3,6)
+    :return: True if passed
 
-        """
+    """
     import sys
+
     return sys.version_info >= python_version_expected
 
 

@@ -23,73 +23,72 @@ import copy
 from abc import ABC, abstractmethod
 
 import numpy as np
-import pyspark.sql.functions as F
+from pyspark.sql import Column
 
-from ..serialization import SerializableToDict
+from dbldatagen.serialization import SerializableToDict
 
 
 class DataDistribution(SerializableToDict, ABC):
-    """ Base class for all distributions"""
+    """Base class for all distributions"""
 
-    def __init__(self):
-        self._rounding = False
-        self._randomSeed = None
+    _randomSeed: int | np.int32 | np.int64 | None = None
+    _rounding: bool = False
 
     @staticmethod
-    def get_np_random_generator(random_seed):
-        """ Get numpy random number generator
+    def get_np_random_generator(random_seed: int | np.int32 | np.int64 | None) -> np.random.Generator:
+        """Gets a numpy random number generator.
 
-        :param random_seed: Numeric random seed to use. If < 0, then no random
-        :return:
+        :param random_seed: Numeric random seed to use; If < 0, then no random
+        :return: Numpy random number generator
         """
-        assert random_seed is None or type(random_seed) in [np.int32, np.int64, int], \
-            f"`randomSeed` must be int or int-like not {type(random_seed)}"
-        from numpy.random import default_rng
         if random_seed not in (-1, -1.0):
-            rng = default_rng(random_seed)
+            rng = np.random.default_rng(random_seed)
         else:
-            rng = default_rng()
-
+            rng = np.random.default_rng()
         return rng
 
     @abstractmethod
-    def generateNormalizedDistributionSample(self):
-        """ Generate sample of data for distribution
+    def generateNormalizedDistributionSample(self) -> Column:
+        """Generates a sample of data for the distribution. Implementors must provide an implementation for this method.
 
-        :return: random samples from distribution scaled to values between 0 and 1
-
-        Note implementors should provide implementation for this,
-
-        Return value is expected to be a Pyspark SQL column expression such as F.expr("rand()")
+        :return: Pyspark SQL column expression for the sample
         """
-        pass
+        raise NotImplementedError(
+            f"Class '{self.__class__.__name__}' does not implement 'generateNormalizedDistributionSample'"
+        )
 
-    def withRounding(self, rounding):
-        """ Create copy of object and set the rounding attribute
+    def withRounding(self, rounding: bool) -> "DataDistribution":
+        """Creates a copy of the object and sets the rounding attribute.
 
-        :param rounding: rounding value to set. Should be True or False
-        :return: new instance of data distribution object with rounding set
+        :param rounding: Rounding value to set
+        :return: New instance of data distribution object with rounding set
         """
         new_distribution_instance = copy.copy(self)
         new_distribution_instance._rounding = rounding
         return new_distribution_instance
 
     @property
-    def rounding(self):
-        """get the `rounding` attribute """
+    def rounding(self) -> bool:
+        """Returns the rounding attribute.
+
+        :return: Rounding attribute
+        """
         return self._rounding
 
-    def withRandomSeed(self, seed):
-        """ Create copy of object and set the random seed attribute
+    def withRandomSeed(self, seed: int | np.int32 | np.int64 | None) -> "DataDistribution":
+        """Creates a copy of the object and with a new random seed value.
 
-        :param seed: random generator seed value to set. Should be integer,  float or None
-        :return: new instance of data distribution object with rounding set
+        :param seed: Random generator seed value to set; Should be integer,  float or None
+        :return: New instance of data distribution object with random seed set
         """
         new_distribution_instance = copy.copy(self)
         new_distribution_instance._randomSeed = seed
         return new_distribution_instance
 
     @property
-    def randomSeed(self):
-        """get the `randomSeed` attribute """
+    def randomSeed(self) -> int | np.int32 | np.int64 | None:
+        """Returns the random seed attribute.
+
+        :return: Random seed attribute
+        """
         return self._randomSeed

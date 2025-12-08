@@ -5,49 +5,61 @@
 """
 This module defines the Constraint class
 """
-import types
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from pyspark.sql import Column
-from ..serialization import SerializableToDict
+from types import GeneratorType
+from typing import TYPE_CHECKING, ClassVar
+
+from pyspark.sql import Column, DataFrame
+
+from dbldatagen.serialization import SerializableToDict
+
+
+if TYPE_CHECKING:
+    # Imported only for type checking to avoid circular dependency at runtime
+    from dbldatagen.data_generator import DataGenerator
 
 
 class Constraint(SerializableToDict, ABC):
-    """ Constraint object - base class for predefined and custom constraints
+    """Constraint object - base class for predefined and custom constraints.
 
     This class is meant for internal use only.
-
     """
-    SUPPORTED_OPERATORS = ["<", ">", ">=", "!=", "==", "=", "<=", "<>"]
 
-    def __init__(self, supportsStreaming=False):
-        """
-        Initialize the constraint object
-        """
-        self._filterExpression = None
-        self._calculatedFilterExpression = False
+    SUPPORTED_OPERATORS: ClassVar[list[str]] = ["<", ">", ">=", "!=", "==", "=", "<=", "<>"]
+    _filterExpression: Column | None = None
+    _calculatedFilterExpression: bool = False
+    _supportsStreaming: bool = False
+
+    def __init__(self, supportsStreaming: bool = False) -> None:
         self._supportsStreaming = supportsStreaming
 
     @staticmethod
-    def _columnsFromListOrString(columns):
-        """ Get columns as  list of columns from string of list-like
+    def _columnsFromListOrString(
+        columns: str | list[str] | set[str] | tuple[str] | GeneratorType | None,
+    ) -> list[str]:
+        """Get a list of columns from string or list-like object
 
-        :param columns: string or list of strings representing column names
+        :param columns: String or list-like object representing column names
+        :return: List of column names
         """
+        if columns is None:
+            raise ValueError("Columns must be a non-empty string or list-like of column names")
+
         if isinstance(columns, str):
             return [columns]
-        elif isinstance(columns, (list, set, tuple, types.GeneratorType)):
-            return list(columns)
-        else:
-            raise ValueError("Columns must be a string or list of strings")
+
+        return list(columns)
 
     @staticmethod
-    def _generate_relation_expression(column, relation, valueExpression):
-        """ Generate comparison expression
+    def _generate_relation_expression(column: Column, relation: str, valueExpression: Column) -> Column:
+        """Generate comparison expression
 
         :param column: Column to generate comparison against
-        :param relation: relation to implement
-        :param valueExpression: expression to compare to
-        :return: relation expression as variation of Pyspark SQL columns
+        :param relation: Relation to implement
+        :param valueExpression: Expression to compare to
+        :return: Relation expression as variation of Pyspark SQL columns
         """
         if relation == ">":
             return column > valueExpression
@@ -65,18 +77,17 @@ class Constraint(SerializableToDict, ABC):
             raise ValueError(f"Unsupported relation type '{relation}")
 
     @staticmethod
-    def mkCombinedConstraintExpression(constraintExpressions):
-        """ Generate a SQL expression that combines multiple constraints using AND
+    def mkCombinedConstraintExpression(constraintExpressions: list[Column] | None) -> Column | None:
+        """Generate a SQL expression that combines multiple constraints using AND.
 
-        :param constraintExpressions: list of Pyspark SQL Column constraint expression objects
-        :return: combined constraint expression as Pyspark SQL Column object (or None if no valid expressions)
-
+        :param constraintExpressions: List of Pyspark SQL Column constraint expression objects
+        :return: Combined constraint expression as Pyspark SQL Column object (or None if no valid expressions)
         """
-        assert constraintExpressions is not None and isinstance(constraintExpressions, list), \
-            "Constraints must be a list of Pyspark SQL Column instances"
+        if constraintExpressions is None or not isinstance(constraintExpressions, list):
+            raise ValueError("Constraints must be a list of Pyspark SQL Column instances")
 
-        assert all(expr is None or isinstance(expr, Column) for expr in constraintExpressions), \
-            "Constraint expressions must be Pyspark SQL columns or None"
+        if not all(expr is None or isinstance(expr, Column) for expr in constraintExpressions):
+            raise ValueError("Constraint expressions must be Pyspark SQL columns or None")
 
         valid_constraint_expressions = [expr for expr in constraintExpressions if expr is not None]
 
@@ -87,56 +98,64 @@ class Constraint(SerializableToDict, ABC):
                 combined_constraint_expression = combined_constraint_expression & additional_constraint
 
             return combined_constraint_expression
-        else:
-            return None
+
+        return None
 
     @abstractmethod
-    def prepareDataGenerator(self, dataGenerator):
-        """ Prepare the data generator to generate data that matches the constraint
+    def prepareDataGenerator(self, dataGenerator: DataGenerator) -> DataGenerator:
+        """Prepare the data generator to generate data that matches the constraint. This method may modify the data
+        generation rules to meet the constraint.
 
-           This method may modify the data generation rules to meet the constraint
-
-           :param dataGenerator: Data generation object that will generate the dataframe
-           :return: modified or unmodified data generator
+        :param dataGenerator: Data generation object that will generate the dataframe
+        :return: Modified or unmodified data generator
         """
         raise NotImplementedError("Method prepareDataGenerator must be implemented in derived class")
 
     @abstractmethod
-    def transformDataframe(self, dataGenerator, dataFrame):
-        """ Transform the dataframe to make data conform to constraint if possible
+    def transformDataframe(self, dataGenerator: DataGenerator, dataFrame: DataFrame) -> DataFrame:
+        """Transform the dataframe to make data conform to constraint if possible
 
-           This method should not modify the dataGenerator - but may modify the dataframe
+        This method should not modify the dataGenerator - but may modify the dataframe. The default
+        transformation returns the dataframe unmodified
 
-           :param dataGenerator: Data generation object that generated the dataframe
-           :param dataFrame: generated dataframe
-           :return: modified or unmodified Spark dataframe
-
-           The default transformation returns the dataframe unmodified
-
+        :param dataGenerator: Data generation object that generated the dataframe
+        :param dataFrame: Generated dataframe
+        :return: Modified or unmodified Spark dataframe
         """
         raise NotImplementedError("Method transformDataframe must be implemented in derived class")
 
     @abstractmethod
-    def _generateFilterExpression(self):
-        """ Generate a Pyspark SQL expression that may be used for filtering"""
+    def _generateFilterExpression(self) -> Column | None:
+        """Generate a Pyspark SQL expression that may be used for filtering.
+
+        :return: Pyspark SQL expression that may be used for filtering
+        """
         raise NotImplementedError("Method _generateFilterExpression must be implemented in derived class")
 
     @property
-    def supportsStreaming(self):
-        """ Return True if the constraint supports streaming dataframes"""
+    def supportsStreaming(self) -> bool:
+        """Return True if the constraint supports streaming dataframes.
+
+        :return: True if the constraint supports streaming dataframes
+        """
         return self._supportsStreaming
 
     @property
-    def filterExpression(self):
-        """ Return the filter expression (as instance of type Column that evaluates to True or non-True)"""
-        if not self._calculatedFilterExpression:
-            self._filterExpression = self._generateFilterExpression()
-            self._calculatedFilterExpression = True
+    def filterExpression(self) -> Column | None:
+        """Return the filter expression (as instance of type Column that evaluates to True or non-True).
+
+        :return: Filter expression as Pyspark SQL Column object
+        """
+        if self._calculatedFilterExpression:
+            return self._filterExpression
+
+        self._calculatedFilterExpression = True
+        self._filterExpression = self._generateFilterExpression()
         return self._filterExpression
 
 
 class NoFilterMixin:
-    """ Mixin class to indicate that constraint has no filter expression
+    """Mixin class to indicate that constraint has no filter expression.
 
     Intended to be used in implementation of the concrete constraint classes.
 
@@ -146,13 +165,17 @@ class NoFilterMixin:
 
     When using mixins, place the mixin class first in the list of base classes.
     """
-    def _generateFilterExpression(self):
-        """ Generate a Pyspark SQL expression that may be used for filtering"""
+
+    def _generateFilterExpression(self) -> None:
+        """Generate a Pyspark SQL expression that may be used for filtering.
+
+        :return: Pyspark SQL expression that may be used for filtering
+        """
         return None
 
 
 class NoPrepareTransformMixin:
-    """ Mixin class to indicate that constraint has no filter expression
+    """Mixin class to indicate that constraint has no filter expression
 
     Intended to be used in implementation of the concrete constraint classes.
 
@@ -162,26 +185,25 @@ class NoPrepareTransformMixin:
 
     When using mixins, place the mixin class first in the list of base classes.
     """
-    def prepareDataGenerator(self, dataGenerator):
-        """ Prepare the data generator to generate data that matches the constraint
 
-           This method may modify the data generation rules to meet the constraint
+    def prepareDataGenerator(self, dataGenerator: DataGenerator) -> DataGenerator:
+        """Prepare the data generator to generate data that matches the constraint
 
-           :param dataGenerator: Data generation object that will generate the dataframe
-           :return: modified or unmodified data generator
+        This method may modify the data generation rules to meet the constraint
+
+        :param dataGenerator: Data generation object that will generate the dataframe
+        :return: Modified or unmodified data generator
         """
         return dataGenerator
 
-    def transformDataframe(self, dataGenerator, dataFrame):
-        """ Transform the dataframe to make data conform to constraint if possible
+    def transformDataframe(self, dataGenerator: DataGenerator, dataFrame: DataFrame) -> DataFrame:
+        """Transform the dataframe to make data conform to constraint if possible
 
-           This method should not modify the dataGenerator - but may modify the dataframe
+        This method should not modify the dataGenerator - but may modify the dataframe. The default
+        transformation returns the dataframe unmodified
 
-           :param dataGenerator: Data generation object that generated the dataframe
-           :param dataFrame: generated dataframe
-           :return: modified or unmodified Spark dataframe
-
-           The default transformation returns the dataframe unmodified
-
+        :param dataGenerator: Data generation object that generated the dataframe
+        :param dataFrame: Generated dataframe
+        :return: Modified or unmodified Spark dataframe
         """
         return dataFrame

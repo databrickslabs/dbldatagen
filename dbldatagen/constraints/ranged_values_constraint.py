@@ -3,52 +3,57 @@
 #
 
 """
-This module defines the ScalarRange class
+This module defines the RangedValues class
 """
 import pyspark.sql.functions as F
+from pyspark.sql import Column
 
-from .constraint import Constraint, NoPrepareTransformMixin
-from ..serialization import SerializableToDict
+from dbldatagen.constraints.constraint import Constraint, NoPrepareTransformMixin
+from dbldatagen.serialization import SerializableToDict
 
 
 class RangedValues(NoPrepareTransformMixin, Constraint):
-    """ RangedValues Constraint object - validates that column value(s) are between 2 column values
+    """RangedValues Constraint object - validates that column values are in the range defined by values in
+    `lowValue` and `highValue` columns. `lowValue` and `highValue` must be names of columns that contain
+    the low and high values respectively.
 
     :param columns: Name of column or list of column names
-    :param lowValue: Tests that columns have values greater than low value (greater or equal if `strict` is False)
-    :param highValue: Tests that columns have values less than high value (less or equal if `strict` is False)
+    :param lowValue: Name of column containing the low value
+    :param highValue: Name of column containing the high value
     :param strict: If True, excludes low and high values from range. Defaults to False
-
-    Note `lowValue` and `highValue` must be names of columns that contain the low and high values
     """
 
-    def __init__(self, columns, lowValue, highValue, strict=False):
+    def __init__(self, columns: str | list[str], lowValue: str, highValue: str, strict: bool = False) -> None:
         super().__init__(supportsStreaming=True)
         self._columns = self._columnsFromListOrString(columns)
         self._lowValue = lowValue
         self._highValue = highValue
         self._strict = strict
 
-    def _toInitializationDict(self):
-        """ Returns an internal mapping dictionary for the object. Keys represent the
-            class constructor arguments and values representing the object's internal data.
-            :return: Python dictionary mapping constructor options to the object properties
+    def _toInitializationDict(self) -> dict[str, object]:
+        """Returns an internal mapping dictionary for the object. Keys represent the
+        class constructor arguments and values representing the object's internal data.
+
+        :return: Dictionary mapping constructor options to the object properties
         """
         _options = {
             "kind": self.__class__.__name__,
             "columns": self._columns,
             "lowValue": self._lowValue,
             "highValue": self._highValue,
-            "strict": self._strict
+            "strict": self._strict,
         }
         return {
-            k: v._toInitializationDict()
-            if isinstance(v, SerializableToDict) else v
-            for k, v in _options.items() if v is not None
+            k: v._toInitializationDict() if isinstance(v, SerializableToDict) else v
+            for k, v in _options.items()
+            if v is not None
         }
 
-    def _generateFilterExpression(self):
-        """ Generate a SQL filter expression that may be used for filtering"""
+    def _generateFilterExpression(self) -> Column | None:
+        """Generate a SQL filter expression that may be used for filtering.
+
+        :return: SQL filter expression as Pyspark SQL Column object
+        """
         expressions = [F.col(colname) for colname in self._columns]
         minValue = F.col(self._lowValue)
         maxValue = F.col(self._highValue)

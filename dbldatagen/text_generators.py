@@ -31,12 +31,64 @@ _DIGITS_NON_ZERO = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
 _DIGITS_ZERO = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
 #: list of uppercase letters for template generation
-_LETTERS_UPPER = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P",
-                  "Q", "R", "T", "S", "U", "V", "W", "X", "Y", "Z"]
+_LETTERS_UPPER = [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "P",
+    "Q",
+    "R",
+    "T",
+    "S",
+    "U",
+    "V",
+    "W",
+    "X",
+    "Y",
+    "Z",
+]
 
 #: list of lowercase letters for template generation
-_LETTERS_LOWER = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q",
-                  "r", "s", "t", "u", "v", "w", "x", "y", "z"]
+_LETTERS_LOWER = [
+    "a",
+    "b",
+    "c",
+    "d",
+    "e",
+    "f",
+    "g",
+    "h",
+    "i",
+    "j",
+    "k",
+    "l",
+    "m",
+    "n",
+    "o",
+    "p",
+    "q",
+    "r",
+    "s",
+    "t",
+    "u",
+    "v",
+    "w",
+    "x",
+    "y",
+    "z",
+]
 
 #: list of all letters uppercase and lowercase
 _LETTERS_ALL = _LETTERS_LOWER + _LETTERS_UPPER
@@ -48,28 +100,156 @@ _ALNUM_LOWER = _LETTERS_LOWER + _DIGITS_ZERO
 _ALNUM_UPPER = _LETTERS_UPPER + _DIGITS_ZERO
 
 """ words for ipsum lorem based text generation"""
-_WORDS_LOWER = ["lorem", "ipsum", "dolor", "sit", "amet", "consectetur", "adipiscing", "elit", "sed", "do",
-                "eiusmod", "tempor", "incididunt", "ut", "labore", "et", "dolore", "magna", "aliqua", "ut",
-                "enim", "ad", "minim", "veniam", "quis", "nostrud", "exercitation", "ullamco", "laboris",
-                "nisi", "ut", "aliquip", "ex", "ea", "commodo", "consequat", "duis", "aute", "irure", "dolor",
-                "in", "reprehenderit", "in", "voluptate", "velit", "esse", "cillum", "dolore", "eu", "fugiat",
-                "nulla", "pariatur", "excepteur", "sint", "occaecat", "cupidatat", "non", "proident", "sunt",
-                "in", "culpa", "qui", "officia", "deserunt", "mollit", "anim", "id", "est", "laborum"]
+_WORDS_LOWER = [
+    "lorem",
+    "ipsum",
+    "dolor",
+    "sit",
+    "amet",
+    "consectetur",
+    "adipiscing",
+    "elit",
+    "sed",
+    "do",
+    "eiusmod",
+    "tempor",
+    "incididunt",
+    "ut",
+    "labore",
+    "et",
+    "dolore",
+    "magna",
+    "aliqua",
+    "ut",
+    "enim",
+    "ad",
+    "minim",
+    "veniam",
+    "quis",
+    "nostrud",
+    "exercitation",
+    "ullamco",
+    "laboris",
+    "nisi",
+    "ut",
+    "aliquip",
+    "ex",
+    "ea",
+    "commodo",
+    "consequat",
+    "duis",
+    "aute",
+    "irure",
+    "dolor",
+    "in",
+    "reprehenderit",
+    "in",
+    "voluptate",
+    "velit",
+    "esse",
+    "cillum",
+    "dolore",
+    "eu",
+    "fugiat",
+    "nulla",
+    "pariatur",
+    "excepteur",
+    "sint",
+    "occaecat",
+    "cupidatat",
+    "non",
+    "proident",
+    "sunt",
+    "in",
+    "culpa",
+    "qui",
+    "officia",
+    "deserunt",
+    "mollit",
+    "anim",
+    "id",
+    "est",
+    "laborum",
+]
 
-_WORDS_UPPER = ["LOREM", "IPSUM", "DOLOR", "SIT", "AMET", "CONSECTETUR", "ADIPISCING", "ELIT", "SED", "DO",
-                "EIUSMOD", "TEMPOR", "INCIDIDUNT", "UT", "LABORE", "ET", "DOLORE", "MAGNA", "ALIQUA", "UT",
-                "ENIM", "AD", "MINIM", "VENIAM", "QUIS", "NOSTRUD", "EXERCITATION", "ULLAMCO", "LABORIS",
-                "NISI", "UT", "ALIQUIP", "EX", "EA", "COMMODO", "CONSEQUAT", "DUIS", "AUTE", "IRURE",
-                "DOLOR", "IN", "REPREHENDERIT", "IN", "VOLUPTATE", "VELIT", "ESSE", "CILLUM", "DOLORE",
-                "EU", "FUGIAT", "NULLA", "PARIATUR", "EXCEPTEUR", "SINT", "OCCAECAT", "CUPIDATAT", "NON",
-                "PROIDENT", "SUNT", "IN", "CULPA", "QUI", "OFFICIA", "DESERUNT", "MOLLIT", "ANIM", "ID", "EST",
-                "LABORUM"]
+_WORDS_UPPER = [
+    "LOREM",
+    "IPSUM",
+    "DOLOR",
+    "SIT",
+    "AMET",
+    "CONSECTETUR",
+    "ADIPISCING",
+    "ELIT",
+    "SED",
+    "DO",
+    "EIUSMOD",
+    "TEMPOR",
+    "INCIDIDUNT",
+    "UT",
+    "LABORE",
+    "ET",
+    "DOLORE",
+    "MAGNA",
+    "ALIQUA",
+    "UT",
+    "ENIM",
+    "AD",
+    "MINIM",
+    "VENIAM",
+    "QUIS",
+    "NOSTRUD",
+    "EXERCITATION",
+    "ULLAMCO",
+    "LABORIS",
+    "NISI",
+    "UT",
+    "ALIQUIP",
+    "EX",
+    "EA",
+    "COMMODO",
+    "CONSEQUAT",
+    "DUIS",
+    "AUTE",
+    "IRURE",
+    "DOLOR",
+    "IN",
+    "REPREHENDERIT",
+    "IN",
+    "VOLUPTATE",
+    "VELIT",
+    "ESSE",
+    "CILLUM",
+    "DOLORE",
+    "EU",
+    "FUGIAT",
+    "NULLA",
+    "PARIATUR",
+    "EXCEPTEUR",
+    "SINT",
+    "OCCAECAT",
+    "CUPIDATAT",
+    "NON",
+    "PROIDENT",
+    "SUNT",
+    "IN",
+    "CULPA",
+    "QUI",
+    "OFFICIA",
+    "DESERUNT",
+    "MOLLIT",
+    "ANIM",
+    "ID",
+    "EST",
+    "LABORUM",
+]
 
 
 class TextGenerator(ABC):
     """
     Base class for all text generation classes.
     """
+
     _randomSeed: int
     _rngInstance: numpy.random.Generator | None
 
@@ -117,8 +297,11 @@ class TextGenerator(ABC):
 
         :return: Random number generator initialized from previously supplied random seed.
         """
-        assert self._randomSeed is None or type(self._randomSeed) in [int, np.int32, np.int64], \
-            f"`random_seed` must be int or int-like not {type(self._randomSeed)}"
+        assert self._randomSeed is None or type(self._randomSeed) in [
+            int,
+            np.int32,
+            np.int64,
+        ], f"`random_seed` must be int or int-like not {type(self._randomSeed)}"
 
         if self._rngInstance is not None and not forceNewInstance:
             return self._rngInstance
@@ -157,24 +340,23 @@ class TextGenerator(ABC):
 
     @staticmethod
     def getAsTupleOrElse(
-            v: int | tuple[int, int] | None,
-            defaultValue: tuple[int, int],
-            valueName: str = "value"
+        v: int | tuple[int, int] | None, defaultValue: tuple[int, int], valueName: str = "value"
     ) -> tuple[int, int]:
-        """ get value v as tuple or return default value
+        """get value v as tuple or return default value
 
-            :param v: value to test
-            :param defaultValue: value to use as a default if value of `v` is None. Must be a tuple.
-            :param valueName: name of value for debugging and logging purposes
-            :returns: return `v` as tuple if not `None` or value of `default_v` if `v` is `None`. If `v` is a single
-                      value, returns the tuple (`v`, `v`)"""
+        :param v: value to test
+        :param defaultValue: value to use as a default if value of `v` is None. Must be a tuple.
+        :param valueName: name of value for debugging and logging purposes
+        :returns: return `v` as tuple if not `None` or value of `default_v` if `v` is `None`. If `v` is a single
+                  value, returns the tuple (`v`, `v`)"""
         assert not v or isinstance(v, int | tuple), f"param {valueName} must be an int, a tuple or None"
         assert isinstance(defaultValue, tuple) and len(defaultValue) == 2, "default value must be tuple"
 
         if not v:
             assert len(defaultValue) == 2, "must have list or iterable with lenght 2"
-            assert isinstance(defaultValue[0], int) and isinstance(defaultValue[1], int), \
-                "all elements must be integers"
+            assert isinstance(defaultValue[0], int) and isinstance(
+                defaultValue[1], int
+            ), "all elements must be integers"
             return defaultValue
 
         if isinstance(v, tuple):
@@ -278,10 +460,7 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
     _templateEscapedMappings: dict[str, tuple[int, np.ndarray | None]]
 
     def __init__(
-        self,
-        template: str,
-        escapeSpecialChars: bool = False,
-        extendedWordList: list[str] | None = None
+        self, template: str, escapeSpecialChars: bool = False, extendedWordList: list[str] | None = None
     ) -> None:
         super().__init__()
 
@@ -291,8 +470,9 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
         self._escapeSpecialMeaning = bool(escapeSpecialChars)
         self._templates = self._splitTemplates(self._template)
         self._wordList = np.array(extendedWordList if extendedWordList is not None else _WORDS_LOWER)
-        self._upperWordList = np.array([x.upper() for x in extendedWordList]
-                                       if extendedWordList is not None else _WORDS_UPPER)
+        self._upperWordList = np.array(
+            [x.upper() for x in extendedWordList] if extendedWordList is not None else _WORDS_UPPER
+        )
 
         self._np_digits_zero = np.array(_DIGITS_ZERO)
         self._np_digits_non_zero = np.array(_DIGITS_NON_ZERO)
@@ -314,7 +494,7 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
             "d": (10, self._np_digits_zero),
             "D": (9, self._np_digits_non_zero),
             "k": (36, self._np_alnum_lower),
-            "K": (36, self._np_alnum_upper)
+            "K": (36, self._np_alnum_upper),
         }
 
         # ensure that each mapping is mapping from string to list or numpy array
@@ -323,15 +503,14 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
             assert v and isinstance(v, tuple) and len(v) == 2, "value must be tuple of length 2"
             mapping_length, mappings = v
             assert isinstance(mapping_length, int), "mapping length must be of type int"
-            assert isinstance(mappings, list | np.ndarray), \
-                "mappings are lists or numpy arrays"
+            assert isinstance(mappings, list | np.ndarray), "mappings are lists or numpy arrays"
             assert mapping_length == 0 or len(mappings) == mapping_length, "mappings must match mapping_length"
 
         self._templateEscapedMappings = {
             "n": (256, None),
             "N": (65536, None),
             "w": (self._lenWords, self._wordList),
-            "W": (self._lenWords, self._upperWordList)
+            "W": (self._lenWords, self._upperWordList),
         }
 
         # ensure that each escaped mapping is mapping from string to None, list or numpy array
@@ -340,8 +519,7 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
             assert v and isinstance(v, tuple) and len(v) == 2, "value must be tuple of length 2"
             mapping_length, mappings = v
             assert isinstance(mapping_length, int), "mapping length must be of type int"
-            assert mappings is None or isinstance(mappings, list | np.ndarray), \
-                "mappings are lists or numpy arrays"
+            assert mappings is None or isinstance(mappings, list | np.ndarray), "mappings are lists or numpy arrays"
 
             # for escaped mappings, the mapping can be None in which case the mapping is to the number itself
             # i.e mapping[4] = 4
@@ -350,8 +528,10 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
         # get the template metadata - this will be list of metadata entries for each template
         # for each template, metadata will be tuple of number of placeholders followed by list of random bounds
         # to be computed when replacing non static placeholder
-        template_info = [self._prepareTemplateStrings(template, escapeSpecialMeaning=escapeSpecialChars)
-                                    for template in self._templates]
+        template_info = [
+            self._prepareTemplateStrings(template, escapeSpecialMeaning=escapeSpecialChars)
+            for template in self._templates
+        ]
 
         self._max_placeholders = max(x[0] for x in template_info)
         self._max_rnds_needed = max(len(x[1]) for x in template_info)
@@ -363,7 +543,7 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
 
     @property
     def templates(self) -> list[str]:
-        """ Get effective templates for text generator"""
+        """Get effective templates for text generator"""
         return self._templates
 
     def classicGenerateText(self, v: str) -> str:
@@ -410,11 +590,7 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
 
             # expand values into placeholders without affect masked values
             self._applyTemplateStringsForTemplate(
-                v,
-                self._templates[x],
-                masked_placeholders,
-                masked_rnds,
-                escapeSpecialMeaning=self._escapeSpecialMeaning
+                v, self._templates[x], masked_placeholders, masked_rnds, escapeSpecialMeaning=self._escapeSpecialMeaning
             )
 
             # soften and clear mask, allowing modifications
@@ -429,20 +605,20 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
         return results
 
     def _toInitializationDict(self) -> dict[str, Any]:
-        """ Converts an object to a Python dictionary. Keys represent the object's
-            constructor arguments.
-            :return: Python dictionary representation of the object
+        """Converts an object to a Python dictionary. Keys represent the object's
+        constructor arguments.
+        :return: Python dictionary representation of the object
         """
         _options = {
             "kind": self.__class__.__name__,
             "template": self._template,
             "escapeSpecialChars": self._escapeSpecialChars,
-            "extendedWordList": self._extendedWordList
+            "extendedWordList": self._extendedWordList,
         }
         return {
-            k: v._toInitializationDict()
-            if isinstance(v, SerializableToDict) else v
-            for k, v in _options.items() if v is not None
+            k: v._toInitializationDict() if isinstance(v, SerializableToDict) else v
+            for k, v in _options.items()
+            if v is not None
         }
 
     @staticmethod
@@ -552,13 +728,13 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
         return num_placeholders, retval
 
     def _applyTemplateStringsForTemplate(
-            self,
-            baseValue: pd.Series | pd.DataFrame,
-            genTemplate: str,
-            placeholders: np.ndarray,
-            rnds: np.ndarray,
-            *,
-            escapeSpecialMeaning: bool = False
+        self,
+        baseValue: pd.Series | pd.DataFrame,
+        genTemplate: str,
+        placeholders: np.ndarray,
+        rnds: np.ndarray,
+        *,
+        escapeSpecialMeaning: bool = False,
     ) -> np.ndarray:
         """
         Vectorized implementation of template driven text substitution. Applies substitutions to placeholders using
@@ -677,7 +853,7 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
                         placeholders[unmasked_rows, num_placeholders] = value_mappings[rnds[unmasked_rows, rnd_offset]]
                     else:
                         placeholders[:, num_placeholders] = value_mappings[rnds[:, rnd_offset]]
-                elif unmasked_rows is not None: # type: ignore[unreachable]
+                elif unmasked_rows is not None:  # type: ignore[unreachable]
                     placeholders[unmasked_rows, num_placeholders] = rnds[unmasked_rows, rnd_offset]
                 else:
                     placeholders[:, num_placeholders] = rnds[:, rnd_offset]
@@ -769,14 +945,15 @@ class ILText(TextGenerator, SerializableToDict):  # lgtm [py/missing-equals]
     """
 
     def __init__(
-            self,
-            paragraphs: int | tuple[int, int] | None = None,
-            sentences: int | tuple[int, int] | None = None,
-            words: int | tuple[int, int] | None = None,
-            extendedWordList: list[str] | None = None
+        self,
+        paragraphs: int | tuple[int, int] | None = None,
+        sentences: int | tuple[int, int] | None = None,
+        words: int | tuple[int, int] | None = None,
+        extendedWordList: list[str] | None = None,
     ) -> None:
-        assert paragraphs is not None or sentences is not None or words is not None, \
-            "At least one of the params `paragraphs`, `sentences` or `words` must be specified"
+        assert (
+            paragraphs is not None or sentences is not None or words is not None
+        ), "At least one of the params `paragraphs`, `sentences` or `words` must be specified"
 
         super().__init__()
 
@@ -860,9 +1037,9 @@ class ILText(TextGenerator, SerializableToDict):  # lgtm [py/missing-equals]
         masked_offsets: np.ma.MaskedArray = np.ma.MaskedArray(word_offsets, mask=final_mask)
 
         # note numpy random differs from standard random in that it never produces upper bound
-        masked_offsets[~masked_offsets.mask] = rng.integers(self._wordOffsetSize,
-                                                            size=output_shape,
-                                                            dtype=self._wordOffsetType)[~masked_offsets.mask]
+        masked_offsets[~masked_offsets.mask] = rng.integers(
+            self._wordOffsetSize, size=output_shape, dtype=self._wordOffsetType
+        )[~masked_offsets.mask]
 
         # hardening a mask prevents masked values from being changed
         np.ma.harden_mask(masked_offsets)
@@ -956,7 +1133,7 @@ class ILText(TextGenerator, SerializableToDict):  # lgtm [py/missing-equals]
             "paragraphs": self._paragraphs,
             "sentences": self._sentences,
             "words": self._words,
-            "extendedWordList": self._extendedWordList
+            "extendedWordList": self._extendedWordList,
         }
         return _options
 
