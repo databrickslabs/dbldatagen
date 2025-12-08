@@ -465,36 +465,54 @@ class TestQuickTests:
         assert empty_range.isEmpty()
 
     def test_nrange_legacy_min_and_minvalue_conflict(self):
-        """Ensure conflicting legacy 'min' and 'minValue' arguments raise a clear error."""
         with pytest.raises(ValueError, match="Only one of 'minValue' and legacy 'min' may be specified"):
             NRange(minValue=0.0, min=1.0)
 
     def test_nrange_legacy_min_must_be_numeric(self):
-        """Ensure legacy 'min' argument must be numeric."""
         with pytest.raises(ValueError, match=r"Legacy 'min' argument must be an integer or float\."):
             NRange(min="not-a-number")
 
+    def test_nrange_legacy_max_and_maxvalue_conflict(self):
+        with pytest.raises(ValueError, match="Only one of 'maxValue' and legacy 'max' may be specified"):
+            NRange(maxValue=10.0, max=11.0)
+
+    def test_nrange_legacy_max_must_be_numeric(self):
+        with pytest.raises(ValueError, match=r"Legacy 'max' argument must be an integer or float\."):
+            NRange(max="not-a-number")
+
     def test_nrange_unexpected_kwargs_error_message(self):
-        """Ensure unexpected keyword arguments produce a helpful error."""
         with pytest.raises(ValueError, match=r"Unexpected keyword arguments for NRange: .*"):
             NRange(foo=1)
 
     def test_nrange_maxvalue_and_until_conflict(self):
-        """Ensure conflicting 'maxValue' and 'until' arguments raise a clear error."""
         with pytest.raises(ValueError, match="Only one of 'maxValue' or 'until' may be specified."):
             NRange(maxValue=10, until=20)
 
     def test_nrange_discrete_range_requires_min_max_step(self):
-        """Ensure getDiscreteRange validates required attributes."""
         rng = NRange(minValue=0.0, maxValue=10.0)
         with pytest.raises(ValueError, match="Range must have 'minValue', 'maxValue', and 'step' defined\\."):
             _ = rng.getDiscreteRange()
 
     def test_nrange_discrete_range_step_must_be_non_zero(self):
-        """Ensure getDiscreteRange validates non-zero step."""
         rng = NRange(minValue=0.0, maxValue=10.0, step=0)
         with pytest.raises(ValueError, match="Parameter 'step' must be non-zero when computing discrete range\\."):
             _ = rng.getDiscreteRange()
+
+    def test_nrange_adjust_for_byte_type_maxvalue_out_of_range(self):
+        rng = NRange(maxValue=300)  # above allowed ByteType max of 256
+        with pytest.raises(
+            ValueError,
+            match=r"`maxValue` must be within the valid range \(0 - 256\) for ByteType\.",
+        ):
+            rng.adjustForColumnDatatype(ByteType())
+
+    def test_nrange_get_continuous_range_requires_min_and_max(self):
+        rng = NRange(minValue=None, maxValue=10.0)
+        with pytest.raises(
+            ValueError,
+            match=r"Range must have 'minValue' and 'maxValue' defined\.",
+        ):
+            _ = rng.getContinuousRange()
 
     def test_reversed_ranges(self):
         testDataSpec = (
@@ -560,8 +578,6 @@ class TestQuickTests:
 
         rowCount = rangedDF.count()
         assert rowCount == 100000
-
-        # TODO: add additional validation statement
 
     @pytest.mark.parametrize("asHtml", [True, False])
     def test_script_table(self, asHtml):

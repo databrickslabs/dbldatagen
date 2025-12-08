@@ -2,6 +2,8 @@ import logging
 from datetime import timedelta
 
 import pytest
+from pyspark.sql import Column
+from pyspark.sql.functions import current_date
 
 from dbldatagen import (
     ensure,
@@ -17,6 +19,8 @@ from dbldatagen import (
     json_value_from_path,
     system_time_millis,
 )
+
+from dbldatagen.utils import ensure_column
 
 spark = SparkSingleton.getLocalInstance("unit tests")
 
@@ -225,3 +229,8 @@ class TestUtils:
         deps = [("a", {"b"}), ("b", {"a"})]
         with pytest.raises(ValueError, match="cyclic or missing dependency detected"):
             topologicalSort(deps)
+
+    @pytest.mark.parametrize("col", ["col1", current_date()])
+    def test_ensure_column(self, col):
+        ensured = ensure_column(col)
+        assert isinstance(ensured, Column)

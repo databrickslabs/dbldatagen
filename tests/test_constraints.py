@@ -60,6 +60,10 @@ class TestConstraints:
         rowCount = testDataDF.count()
         assert rowCount == 100
 
+    def test_sql_expr_requires_non_empty_expression(self):
+        with pytest.raises(ValueError, match="Expression must be a valid non-empty SQL string"):
+            SqlExpr("")
+
     def test_multiple_constraints(self, generationSpec1):
         testDataSpec = generationSpec1.withConstraints([SqlExpr("id < 100"), SqlExpr("id > 0")])
 
