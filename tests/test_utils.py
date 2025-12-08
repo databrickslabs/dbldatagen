@@ -219,3 +219,9 @@ class TestUtils:
     def test_system_time_millis(self):
         curr_time = system_time_millis()
         assert curr_time > 0
+
+    def test_topological_sort_cycle_error_message(self):
+        """Validate that topologicalSort raises a helpful error message for cyclic dependencies."""
+        deps = [("a", {"b"}), ("b", {"a"})]
+        with pytest.raises(ValueError, match="cyclic or missing dependency detected"):
+            topologicalSort(deps)

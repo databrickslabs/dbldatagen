@@ -4,6 +4,7 @@ from datetime import timedelta, datetime, date
 import pyspark.sql.functions as F
 from pyspark.sql.types import DoubleType, ShortType, LongType, DecimalType, ByteType, DateType
 from pyspark.sql.types import IntegerType, StringType, FloatType, TimestampType
+import pytest
 
 import dbldatagen as dg
 from dbldatagen import DateRange
@@ -1033,3 +1034,21 @@ class TestRangedValuesAndDates(unittest.TestCase):
         s1_expected_values = [f"testing {x:05} >>" for x in [1.5, 1.8, 2.1, 2.4]]
         s1_values = [r[0] for r in results.select("s1").distinct().collect()]
         self.assertSetEqual(set(s1_expected_values), set(s1_values))
+
+
+def test_daterange_parse_interval_requires_value():
+    """Validate DateRange.parseInterval requires a non-null interval string."""
+    with pytest.raises(ValueError, match="Parameter 'interval_str' must be specified"):
+        DateRange.parseInterval(None)
+
+
+def test_daterange_compute_date_range_unique_values_positive():
+    """Validate DateRange.computeDateRange enforces positive unique_values."""
+    with pytest.raises(ValueError, match="Parameter 'unique_values' must be a positive integer"):
+        DateRange.computeDateRange(begin=None, end=None, interval="days=1", unique_values=0)
+
+
+def test_daterange_compute_timestamp_range_unique_values_positive():
+    """Validate DateRange.computeTimestampRange enforces positive unique_values."""
+    with pytest.raises(ValueError, match="Parameter 'unique_values' must be a positive integer"):
+        DateRange.computeTimestampRange(begin=None, end=None, interval="days=1", unique_values=-5)

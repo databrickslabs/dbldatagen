@@ -119,3 +119,26 @@ class TestGenerationFromData:
         summary_df = dg.DataAnalyzer(sparkSession=spark, df=df).summarizeToDF()
 
         assert summary_df.count() == 10
+
+    def test_data_analyzer_requires_dataframe(self):
+        """Validate that DataAnalyzer cannot be initialized without a DataFrame."""
+        with pytest.raises(
+            ValueError, match="Argument `df` must be supplied when initializing a `DataAnalyzer`"
+        ):
+            dg.DataAnalyzer()
+
+    def test_add_measure_to_summary_requires_dataframe(self):
+        """Validate that _addMeasureToSummary enforces a non-null dfData argument."""
+        with pytest.raises(
+            ValueError,
+            match="Input DataFrame `dfData` must be supplied when adding measures to a summary",
+        ):
+            dg.DataAnalyzer._addMeasureToSummary("measure_name", dfData=None)
+
+    def test_generator_default_attributes_from_type_requires_datatype(self):
+        """Validate that _generatorDefaultAttributesFromType enforces a DataType instance."""
+        with pytest.raises(
+            ValueError,
+            match=r"Argument 'sqlType' with type .* must be an instance of `pyspark\.sql\.types\.DataType`",
+        ):
+            dg.DataAnalyzer._generatorDefaultAttributesFromType("not-a-sql-type")

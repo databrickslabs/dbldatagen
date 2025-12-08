@@ -464,6 +464,42 @@ class TestQuickTests:
         empty_range = NRange()
         assert empty_range.isEmpty()
 
+    def test_nrange_legacy_min_and_minvalue_conflict(self):
+        """Ensure conflicting legacy 'min' and 'minValue' arguments raise a clear error."""
+        with pytest.raises(ValueError, match="Only one of 'minValue' and legacy 'min' may be specified"):
+            NRange(minValue=0.0, min=1.0)
+
+    def test_nrange_legacy_min_must_be_numeric(self):
+        """Ensure legacy 'min' argument must be numeric."""
+        with pytest.raises(ValueError, match=r"Legacy 'min' argument must be an integer or float\."):
+            NRange(min="not-a-number")
+
+    def test_nrange_unexpected_kwargs_error_message(self):
+        """Ensure unexpected keyword arguments produce a helpful error."""
+        with pytest.raises(ValueError, match=r"Unexpected keyword arguments for NRange: .*"):
+            NRange(foo=1)
+
+    def test_nrange_maxvalue_and_until_conflict(self):
+        """Ensure conflicting 'maxValue' and 'until' arguments raise a clear error."""
+        with pytest.raises(ValueError, match="Only one of 'maxValue' or 'until' may be specified."):
+            NRange(maxValue=10, until=20)
+
+    def test_nrange_discrete_range_requires_min_max_step(self):
+        """Ensure getDiscreteRange validates required attributes."""
+        rng = NRange(minValue=0.0, maxValue=10.0)
+        with pytest.raises(
+            ValueError, match="Range must have 'minValue', 'maxValue', and 'step' defined\\."
+        ):
+            _ = rng.getDiscreteRange()
+
+    def test_nrange_discrete_range_step_must_be_non_zero(self):
+        """Ensure getDiscreteRange validates non-zero step."""
+        rng = NRange(minValue=0.0, maxValue=10.0, step=0)
+        with pytest.raises(
+            ValueError, match="Parameter 'step' must be non-zero when computing discrete range\\."
+        ):
+            _ = rng.getDiscreteRange()
+
     def test_reversed_ranges(self):
         testDataSpec = (
             dg.DataGenerator(sparkSession=spark, name="ranged_data", rows=100000, partitions=4)
