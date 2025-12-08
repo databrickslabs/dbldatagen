@@ -74,8 +74,6 @@ from .text_generator_plugins import PyfuncText, PyfuncTextFactory, FakerTextFact
 from .html_utils import HtmlUtils
 from .datasets_object import Datasets
 from .config import OutputDataset
-from .multi_table_builder import MultiTableBuilder
-from .relation import ForeignKeyRelation
 from .datagen_types import ColumnLike
 
 __all__ = [
@@ -96,8 +94,6 @@ __all__ = [
     "datasets_object",
     "constraints",
     "config",
-    "multi_table_builder",
-    "relation",
     "datagen_types",
 ]
 
