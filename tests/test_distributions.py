@@ -490,15 +490,11 @@ class TestDistributions:
     def test_exponential_requires_rate_for_scale(self):
         """Ensure accessing scale without a rate produces a clear error."""
         exp = dist.Exponential()
-        with pytest.raises(
-            ValueError, match="Cannot compute value for 'scale'; Missing value for 'rate'"
-        ):
+        with pytest.raises(ValueError, match="Cannot compute value for 'scale'; Missing value for 'rate'"):
             _ = exp.scale
 
     def test_exponential_requires_rate_for_generation(self):
         """Ensure generating samples without a rate produces a clear error."""
         exp = dist.Exponential()
-        with pytest.raises(
-            ValueError, match="Cannot compute value for 'scale'; Missing value for 'rate'"
-        ):
+        with pytest.raises(ValueError, match="Cannot compute value for 'scale'; Missing value for 'rate'"):
             _ = exp.generateNormalizedDistributionSample()

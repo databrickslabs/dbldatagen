@@ -122,9 +122,7 @@ class TestGenerationFromData:
 
     def test_data_analyzer_requires_dataframe(self):
         """Validate that DataAnalyzer cannot be initialized without a DataFrame."""
-        with pytest.raises(
-            ValueError, match="Argument `df` must be supplied when initializing a `DataAnalyzer`"
-        ):
+        with pytest.raises(ValueError, match="Argument `df` must be supplied when initializing a `DataAnalyzer`"):
             dg.DataAnalyzer()
 
     def test_add_measure_to_summary_requires_dataframe(self):

@@ -487,17 +487,13 @@ class TestQuickTests:
     def test_nrange_discrete_range_requires_min_max_step(self):
         """Ensure getDiscreteRange validates required attributes."""
         rng = NRange(minValue=0.0, maxValue=10.0)
-        with pytest.raises(
-            ValueError, match="Range must have 'minValue', 'maxValue', and 'step' defined\\."
-        ):
+        with pytest.raises(ValueError, match="Range must have 'minValue', 'maxValue', and 'step' defined\\."):
             _ = rng.getDiscreteRange()
 
     def test_nrange_discrete_range_step_must_be_non_zero(self):
         """Ensure getDiscreteRange validates non-zero step."""
         rng = NRange(minValue=0.0, maxValue=10.0, step=0)
-        with pytest.raises(
-            ValueError, match="Parameter 'step' must be non-zero when computing discrete range\\."
-        ):
+        with pytest.raises(ValueError, match="Parameter 'step' must be non-zero when computing discrete range\\."):
             _ = rng.getDiscreteRange()
 
     def test_reversed_ranges(self):
