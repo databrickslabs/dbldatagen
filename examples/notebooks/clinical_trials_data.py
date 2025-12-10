@@ -47,7 +47,7 @@ from pyspark.sql.types import (
     TimestampType,
     BooleanType,
 )
-from dbldatagen import DataGenerator, PyfuncText
+from dbldatagen import DataGenerator, PyfuncText, fakerText
 from faker import Faker
 from faker.providers import BaseProvider
 
@@ -113,18 +113,6 @@ def init_faker(context):
     context.faker.add_provider(ClinicalTrialProvider)
 
 
-def generate_name(context, _):
-    return context.faker.name()
-
-
-def generate_phone(context, _):
-    return context.faker.phone_number()
-
-
-def generate_company(context, _):
-    return context.faker.company()
-
-
 def generate_city_medical(context, _):
     return f"{context.faker.city()} Medical Center"
 
@@ -137,22 +125,6 @@ def generate_trial_title(context, _):
     return (
         f"Study of {context.faker.medication()} in {context.faker.therapeutic_area()}"
     )
-
-
-def generate_trial_phase(context, _):
-    return context.faker.trial_phase()
-
-
-def generate_trial_status(context, _):
-    return context.faker.trial_status()
-
-
-def generate_therapeutic_area(context, _):
-    return context.faker.therapeutic_area()
-
-
-def generate_medication(context, _):
-    return context.faker.medication()
 
 
 def generate_ae_description(context, row):
@@ -204,30 +176,58 @@ class ClinicalTrialsGenerator:
                 StringType(),
                 text=PyfuncText(generate_trial_title, init=init_faker),
             )
-            .withColumn(
-                "sponsor_company",
-                StringType(),
-                text=PyfuncText(generate_company, init=init_faker),
-            )
+            .withColumn("sponsor_company", StringType(), text=fakerText("company"))
             .withColumn(
                 "phase",
                 StringType(),
-                text=PyfuncText(generate_trial_phase, init=init_faker),
+                values=["Phase I", "Phase II", "Phase III", "Phase IV"],
+                random=True,
             )
             .withColumn(
                 "status",
                 StringType(),
-                text=PyfuncText(generate_trial_status, init=init_faker),
+                values=["Active", "Completed", "Suspended", "Terminated"],
+                random=True,
             )
             .withColumn(
                 "therapeutic_area",
                 StringType(),
-                text=PyfuncText(generate_therapeutic_area, init=init_faker),
+                values=[
+                    "Oncology",
+                    "Cardiology",
+                    "Neurology",
+                    "Immunology",
+                    "Endocrinology",
+                    "Rheumatology",
+                ],
+                random=True,
             )
             .withColumn(
                 "study_drug",
                 StringType(),
-                text=PyfuncText(generate_medication, init=init_faker),
+                values=[
+                    "Pembrolizumab",
+                    "Nivolumab",
+                    "Atezolizumab",
+                    "Durvalumab",
+                    "Atorvastatin",
+                    "Rosuvastatin",
+                    "Evolocumab",
+                    "Alirocumab",
+                    "Lecanemab",
+                    "Aducanumab",
+                    "Donepezil",
+                    "Memantine",
+                    "Adalimumab",
+                    "Etanercept",
+                    "Infliximab",
+                    "Tocilizumab",
+                    "Semaglutide",
+                    "Tirzepatide",
+                    "Empagliflozin",
+                    "Dapagliflozin",
+                ],
+                random=True,
             )
             .withColumn(
                 "target_enrollment",
@@ -272,9 +272,7 @@ class ClinicalTrialsGenerator:
                 StringType(),
                 text=PyfuncText(generate_dr_name, init=init_faker),
             )
-            .withColumn(
-                "phone", StringType(), text=PyfuncText(generate_phone, init=init_faker)
-            )
+            .withColumn("phone", StringType(), text=fakerText("phone_number"))
             .withColumn(
                 "site_status",
                 StringType(),
@@ -650,11 +648,7 @@ class ClinicalTrialsGenerator:
                 baseColumn="sample_quality",
                 expr="CASE WHEN sample_quality != 'Acceptable' THEN true ELSE rand() < 0.03 END",
             )
-            .withColumn(
-                "lab_technician",
-                StringType(),
-                text=PyfuncText(generate_name, init=init_faker),
-            )
+            .withColumn("lab_technician", StringType(), text=fakerText("name"))
             .withColumn(
                 "reviewed_by_physician",
                 StringType(),
