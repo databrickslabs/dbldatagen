@@ -7,71 +7,75 @@ This file defines the Beta statistical distributions related classes
 
 """
 
+import pandas as pd
 import pyspark.sql.functions as F
+from pyspark.sql import Column
 from pyspark.sql.types import FloatType
 
-import numpy as np
-import pandas as pd
-
-from .data_distribution import DataDistribution
-from ..serialization import SerializableToDict
+from dbldatagen.datagen_types import NumericLike
+from dbldatagen.distributions.data_distribution import DataDistribution
+from dbldatagen.serialization import SerializableToDict
 
 
 class Beta(DataDistribution):
-    """ Specify that random samples should be drawn from the Beta distribution parameterized by alpha and beta
+    """Specify that random samples should be drawn from the Beta distribution parameterized by alpha and beta. By
+    default the Beta distribution produces values between 0 and 1 so no scaling is needed. See
+    https://en.wikipedia.org/wiki/Beta_distribution.
 
-    :param alpha: value for alpha parameter - float, int or other numeric value, greater than 0
-    :param beta: value for beta parameter - float, int or other numeric value, greater than 0
-
-    See https://en.wikipedia.org/wiki/Beta_distribution
-
-    By default the Beta distribution produces values between 0 and 1 so no scaling is needed
+    :param alpha: Alpha parameter value; Should be a float, int or other numeric value, greater than 0
+    :param beta: Beta parameter value; Should be a float, int or other numeric value, greater than 0
     """
 
-    def __init__(self, alpha=None, beta=None):
+    def __init__(self, alpha: NumericLike | None = None, beta: NumericLike | None = None) -> None:
         DataDistribution.__init__(self)
-
-        assert type(alpha) in [float, int, np.float64, np.int32, np.int64], "alpha must be int-like or float-like"
-        assert type(beta) in [float, int, np.float64, np.int32, np.int64], "beta must be int-like or float-like"
         self._alpha = alpha
         self._beta = beta
 
-    def _toInitializationDict(self):
-        """ Converts an object to a Python dictionary. Keys represent the object's
-            constructor arguments.
-            :return: Python dictionary representation of the object
+    def _toInitializationDict(self) -> dict[str, object]:
+        """Converts an object to a Python dictionary. Keys represent the object's
+        constructor arguments.
+
+        :return: Python dictionary representation of the object
         """
         _options = {"kind": self.__class__.__name__, "alpha": self._alpha, "beta": self._beta}
         return {
-            k: v._toInitializationDict()
-            if isinstance(v, SerializableToDict) else v
-            for k, v in _options.items() if v is not None
+            k: v._toInitializationDict() if isinstance(v, SerializableToDict) else v
+            for k, v in _options.items()
+            if v is not None
         }
 
     @property
-    def alpha(self):
-        """ Return alpha parameter."""
+    def alpha(self) -> NumericLike | None:
+        """Returns the alpha parameter value.
+
+        :return: Alpha parameter value
+        """
         return self._alpha
 
     @property
-    def beta(self):
-        """ Return beta parameter."""
+    def beta(self) -> NumericLike | None:
+        """Returns the beta parameter value.
+
+        :return: Beta parameter value
+        """
         return self._beta
 
-    def __str__(self):
-        """ Return string representation of object"""
+    def __str__(self) -> str:
+        """Returns a string representation of the object.
+
+        :return: String representation of the object
+        """
         return f"BetaDistribution(alpha={self._alpha}, beta={self._beta}, randomSeed={self.randomSeed})"
 
     @staticmethod
     def beta_func(alpha_series: pd.Series, beta_series: pd.Series, random_seed: pd.Series) -> pd.Series:
-        """ Generate sample of beta distribution using pandas / numpy
+        """Generates samples from the beta distribution using pandas / numpy.
 
         :param alpha_series: value for alpha parameter as Pandas Series
         :param beta_series: value for beta parameter as Pandas Series
         :param random_seed: value for randomSeed parameter as Pandas Series
 
         :return: random samples from distribution scaled to values between 0 and 1
-
         """
         alpha = alpha_series.to_numpy()
         beta = beta_series.to_numpy()
@@ -82,14 +86,14 @@ class Beta(DataDistribution):
         results = rng.beta(alpha, beta)
         return pd.Series(results)
 
-    def generateNormalizedDistributionSample(self):
-        """ Generate sample of data for distribution
+    def generateNormalizedDistributionSample(self) -> Column:
+        """Generates a sample of data for the distribution.
 
-        :return: random samples from distribution scaled to values between 0 and 1
+        :return: Pyspark SQL column expression for the sample values
         """
-        beta_sample = F.pandas_udf(self.beta_func, returnType=FloatType()).asNondeterministic()
+        beta_sample = F.pandas_udf(self.beta_func, returnType=FloatType()).asNondeterministic()  # type: ignore
 
-        newDef = beta_sample(F.lit(self._alpha),
-                             F.lit(self._beta),
-                             F.lit(self.randomSeed) if self.randomSeed is not None else F.lit(-1))
+        newDef: Column = beta_sample(
+            F.lit(self._alpha), F.lit(self._beta), F.lit(self.randomSeed) if self.randomSeed is not None else F.lit(-1)
+        )
         return newDef

@@ -11,6 +11,7 @@ from pyspark.sql.types import StructType, StructField, IntegerType, StringType, 
 @pytest.fixture(scope="class")
 def setupSpark():
     import dbldatagen as dg
+
     sparkSession = dg.SparkSingleton.getLocalInstance("unit tests")
     return sparkSession
 
@@ -31,7 +32,7 @@ class TestLoggingOperation:
     row_count = SMALL_ROW_COUNT
 
     def setup_log_capture(self, caplog_object):
-        """ set up log capture fixture
+        """set up log capture fixture
 
         Sets up log capture fixture to only capture messages after setup and only
         capture warnings and errors
@@ -121,16 +122,16 @@ class TestLoggingOperation:
 
         from dbldatagen import DataGenerator
 
-        spec = (DataGenerator(sparkSession=spark, name="test_data_set1", rows=10000, seedMethod='hash_fieldname')
-                .withIdOutput()
-                .withColumn("r", "float", expr="floor(rand() * 350) * (86400 + 3600)",
-                            numColumns=10)
-                .withColumn("code1", "int", min=100, max=200)
-                .withColumn("code2", "int", min=0, max=10)
-                .withColumn("code3", "string", values=['a', 'b', 'c'])
-                .withColumn("code4", "string", values=['a', 'b', 'c'], random=True)
-                .withColumn("code5", "string", values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
-                )
+        spec = (
+            DataGenerator(sparkSession=spark, name="test_data_set1", rows=10000, seedMethod='hash_fieldname')
+            .withIdOutput()
+            .withColumn("r", "float", expr="floor(rand() * 350) * (86400 + 3600)", numColumns=10)
+            .withColumn("code1", "int", min=100, max=200)
+            .withColumn("code2", "int", min=0, max=10)
+            .withColumn("code3", "string", values=['a', 'b', 'c'])
+            .withColumn("code4", "string", values=['a', 'b', 'c'], random=True)
+            .withColumn("code5", "string", values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+        )
 
         df = spec.build()
 

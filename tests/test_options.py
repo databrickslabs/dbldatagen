@@ -40,7 +40,6 @@ class TestUseOfOptions:
             .withColumn("code3", "integer", minValue=1, maxValue=20, step=1, random=True)
             .withColumn("code4", "integer", minValue=1, maxValue=20, step=1, random=True)
             # base column specifies dependent column
-
             .withColumn("site_cd", "string", prefix='site', baseColumn='code1')
             .withColumn("device_status", "string", minValue=1, maxValue=200, step=1, prefix='status', random=True)
             .withColumn("tech", "string", values=["GSM", "UMTS", "LTE", "UNKNOWN"], random=True)
@@ -94,17 +93,14 @@ class TestUseOfOptions:
             .withColumn("code2", "integer", minValue=1, maxValue=20, step=1, distribution="normal")
             .withColumn("code3", "integer", min=1, max=20, step=1, base_column="code1")
             .withColumn("code4", "integer", min=1, max=20, step=1, baseColumn="code1")
-
             # implicit allows column definition to be overridden - used by system when initializing from schema
             .withColumn("code5", "integer", min=1, max=20, step=1, baseColumn="code1", implicit=True)
-
             .withColumn("code5", "integer", min=1, max=20, step=1, baseColumn="code4", random_seed=45)
             .withColumn("code6", "integer", minValue=1, maxValue=20, step=1, omit=True)
             .withColumn("code7", "integer", min=1, max=20, step=1, baseColumn="code6")
             .withColumn("code2", "integer", minValue=1, maxValue=20, step=1, distribution="normal")
             .withColumn("site_cd1", "string", prefix='site', baseColumn='code1', text_separator="")
             .withColumn("site_cd2", "string", prefix='site', baseColumn='code1', textSeparator="-")
-
         )
 
         colSpec1 = testdata_generator.getColumnSpec("site_cd1")
@@ -144,11 +140,12 @@ class TestUseOfOptions:
         testdata_generator = (
             dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=10000, partitions=4)
             .withColumn("code1", "integer", min=1, max=20, step=1)
-            .withColumn("site_cd1", "string", prefix='site', baseColumn='code1',
-                        random_seed_method=dg.RANDOM_SEED_FIXED)
-            .withColumn("site_cd2", "string", prefix='site', baseColumn='code1',
-                        randomSeedMethod=dg.RANDOM_SEED_HASH_FIELD_NAME)
-
+            .withColumn(
+                "site_cd1", "string", prefix='site', baseColumn='code1', random_seed_method=dg.RANDOM_SEED_FIXED
+            )
+            .withColumn(
+                "site_cd2", "string", prefix='site', baseColumn='code1', randomSeedMethod=dg.RANDOM_SEED_HASH_FIELD_NAME
+            )
         )
 
         colSpec1 = testdata_generator.getColumnSpec("site_cd1")
@@ -177,7 +174,6 @@ class TestUseOfOptions:
             .withColumn("code3", "integer", minValue=1, maxValue=20, step=1, random=True)
             .withColumn("code4", "integer", minValue=1, maxValue=20, step=1, random=True)
             # base column specifies dependent column
-
             .withColumn("site_cd", "string", prefix='site', baseColumn='code1')
             .withColumn("device_status", "string", minValue=1, maxValue=200, step=1, prefix='status', random=True)
             .withColumn("tech", "string", values=["GSM", "UMTS", "LTE", "UNKNOWN"], random=True)
@@ -200,7 +196,6 @@ class TestUseOfOptions:
             .withColumn("code3", "integer", minValue=1, maxValue=20, step=1, random=True)
             .withColumn("code4", "integer", minValue=1, maxValue=20, step=1)
             # base column specifies dependent column
-
             .withColumn("site_cd", "string", values=["one", "two", "three"], weights=[1, 2, 3], baseColumn='code1')
             .withColumn("device_status", "string", minValue=1, maxValue=200, step=1, prefix='status')
             .withColumn("tech", "string", values=["GSM", "UMTS", "LTE", "UNKNOWN"])
@@ -245,7 +240,6 @@ class TestUseOfOptions:
             .withColumn("code2", "integer", minValue=1, maxValue=20, step=1, numColumns=5)
             .withColumn("code3", "integer", minValue=1, maxValue=20, step=1, numFeatures=(3, 5), structType="array")
             .withColumn("code4", "integer", minValue=1, maxValue=20, step=1)
-
         )
 
         df = ds.build()
@@ -255,13 +249,7 @@ class TestUseOfOptions:
 
         df.show()
 
-    @pytest.mark.parametrize("numFeaturesSupplied",
-                             [(3, 5, 3),
-                              (3.4, 3),
-                              ("3", "5"),
-                              "3",
-                              (5, 3)
-                              ])
+    @pytest.mark.parametrize("numFeaturesSupplied", [(3, 5, 3), (3.4, 3), ("3", "5"), "3", (5, 3)])
     def test_random_multiple_columns_bad(self, numFeaturesSupplied):
         # will have implied column `id` for ordinal of row
 
@@ -270,10 +258,16 @@ class TestUseOfOptions:
                 dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=1000, partitions=4, random=True)
                 .withColumn("code1", "integer", min=1, max=20, step=1)
                 .withColumn("code2", "integer", minValue=1, maxValue=20, step=1, numColumns=5)
-                .withColumn("code3", "integer", minValue=1, maxValue=20, step=1, numFeatures=numFeaturesSupplied,
-                            structType="array")
+                .withColumn(
+                    "code3",
+                    "integer",
+                    minValue=1,
+                    maxValue=20,
+                    step=1,
+                    numFeatures=numFeaturesSupplied,
+                    structType="array",
+                )
                 .withColumn("code4", "integer", minValue=1, maxValue=20, step=1)
-
             )
 
             df = ds.build()
@@ -289,7 +283,6 @@ class TestUseOfOptions:
             .withColumn("code2", "integer", minValue=1, maxValue=20, step=1, numColumns=5)
             .withColumn("code3", "integer", minValue=1, maxValue=20, step=1, numColumns=(3, 5))
             .withColumn("code4", "integer", minValue=1, maxValue=20, step=1, numFeatures=(3, 5))
-
         )
 
         df = ds.build()
@@ -299,20 +292,21 @@ class TestUseOfOptions:
 
         assert msgs > 0
 
-    @pytest.mark.parametrize("numFeaturesSupplied",
-                             [3,
-                              (2, 4),
-                              0,
-                              (0, 3)
-                              ])
+    @pytest.mark.parametrize("numFeaturesSupplied", [3, (2, 4), 0, (0, 3)])
     def test_multiple_columns_email(self, numFeaturesSupplied):
         # will have implied column `id` for ordinal of row
 
         ds = (
             dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=1000, partitions=4, random=True)
             .withColumn("name", "string", percentNulls=0.01, template=r'\\w \\w|\\w A. \\w|test')
-            .withColumn("emails", "string", template=r'\\w.\\w@\\w.com', random=True,
-                        numFeatures=numFeaturesSupplied, structType="array")
+            .withColumn(
+                "emails",
+                "string",
+                template=r'\\w.\\w@\\w.com',
+                random=True,
+                numFeatures=numFeaturesSupplied,
+                structType="array",
+            )
         )
 
         df = ds.build()
@@ -330,20 +324,21 @@ class TestUseOfOptions:
         assert min(set_lengths) == min_lengths
         assert max(set_lengths) == max_lengths
 
-    @pytest.mark.parametrize("numFeaturesSupplied",
-                             [3,
-                              (2, 4),
-                              0,
-                              (0, 3)
-                              ])
+    @pytest.mark.parametrize("numFeaturesSupplied", [3, (2, 4), 0, (0, 3)])
     def test_multi_email_random(self, numFeaturesSupplied):
         # will have implied column `id` for ordinal of row
 
         ds = (
             dg.DataGenerator(sparkSession=spark, name="test_dataset1", rows=1000, partitions=4, random=True)
             .withColumn("name", "string", percentNulls=0.01, template=r'\\w \\w|\\w A. \\w|test')
-            .withColumn("emails", "string", template=r'\\w.\\w@\\w.com', random=True,
-                        numFeatures=numFeaturesSupplied, structType="array")
+            .withColumn(
+                "emails",
+                "string",
+                template=r'\\w.\\w@\\w.com',
+                random=True,
+                numFeatures=numFeaturesSupplied,
+                structType="array",
+            )
         )
 
         df = ds.build()

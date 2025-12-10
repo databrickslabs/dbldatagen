@@ -8,10 +8,9 @@ from dbldatagen.data_generator import DataGenerator
 from dbldatagen.datasets.dataset_provider import DatasetProvider, dataset_definition
 
 
-@dataset_definition(name="basic/telematics",
-                    summary="Telematics dataset for GPS tracking",
-                    autoRegister=True,
-                    supportsStreaming=True)
+@dataset_definition(
+    name="basic/telematics", summary="Telematics dataset for GPS tracking", autoRegister=True, supportsStreaming=True
+)
 class BasicTelematicsProvider(DatasetProvider.NoAssociatedDatasetsMixin, DatasetProvider):
     """
     Basic Telematics Dataset
@@ -39,6 +38,7 @@ class BasicTelematicsProvider(DatasetProvider.NoAssociatedDatasetsMixin, Dataset
     streaming dataframe, and so the flag `supportsStreaming` is set to True.
 
     """
+
     MIN_DEVICE_ID = 1000000
     MAX_DEVICE_ID = 9223372036854775807
     DEFAULT_NUM_DEVICES = 1000
@@ -58,11 +58,19 @@ class BasicTelematicsProvider(DatasetProvider.NoAssociatedDatasetsMixin, Dataset
         "minLon",
         "maxLon",
         "generateWkt",
-        "random"
+        "random",
     ]
 
     @DatasetProvider.allowed_options(options=ALLOWED_OPTIONS)
-    def getTableGenerator(self, sparkSession: SparkSession, *, tableName: str|None=None, rows: int=-1, partitions: int=-1, **options: dict[str, Any]) -> DataGenerator:
+    def getTableGenerator(
+        self,
+        sparkSession: SparkSession,
+        *,
+        tableName: str | None = None,
+        rows: int = -1,
+        partitions: int = -1,
+        **options: dict[str, Any],
+    ) -> DataGenerator:
 
         generateRandom = options.get("random", False)
         numDevices = options.get("numDevices", self.DEFAULT_NUM_DEVICES)
@@ -110,24 +118,42 @@ class BasicTelematicsProvider(DatasetProvider.NoAssociatedDatasetsMixin, Dataset
             (minLat, maxLat) = (maxLat, minLat)
             w.warn("Received minLat > maxLat; Swapping values", stacklevel=2)
         df_spec = (
-             dg.DataGenerator(sparkSession=sparkSession, rows=rows,
-                              partitions=partitions, randomSeedMethod="hash_fieldname")
-            .withColumn("device_id", "long", minValue=self.MIN_DEVICE_ID, maxValue=self.MAX_DEVICE_ID,
-                            uniqueValues=numDevices, random=generateRandom)
-            .withColumn("ts", "timestamp", begin=startTimestamp, end=endTimestamp,
-                            interval="1 second", random=generateRandom)
-            .withColumn("base_lat", "float", minValue=minLat, maxValue=maxLat, step=0.5,
-                            baseColumn="device_id", omit=True)
-            .withColumn("base_lon", "float", minValue=minLon, maxValue=maxLon, step=0.5,
-                            baseColumn="device_id", omit=True)
+            dg.DataGenerator(
+                sparkSession=sparkSession, rows=rows, partitions=partitions, randomSeedMethod="hash_fieldname"
+            )
+            .withColumn(
+                "device_id",
+                "long",
+                minValue=self.MIN_DEVICE_ID,
+                maxValue=self.MAX_DEVICE_ID,
+                uniqueValues=numDevices,
+                random=generateRandom,
+            )
+            .withColumn(
+                "ts", "timestamp", begin=startTimestamp, end=endTimestamp, interval="1 second", random=generateRandom
+            )
+            .withColumn(
+                "base_lat", "float", minValue=minLat, maxValue=maxLat, step=0.5, baseColumn="device_id", omit=True
+            )
+            .withColumn(
+                "base_lon", "float", minValue=minLon, maxValue=maxLon, step=0.5, baseColumn="device_id", omit=True
+            )
             .withColumn("unv_lat", "float", expr="base_lat + (0.5-format_number(rand(), 3))*1e-3", omit=True)
             .withColumn("unv_lon", "float", expr="base_lon + (0.5-format_number(rand(), 3))*1e-3", omit=True)
-            .withColumn("lat", "float", expr=f"""CASE WHEN unv_lat > {maxLat} THEN {maxLat}
+            .withColumn(
+                "lat",
+                "float",
+                expr=f"""CASE WHEN unv_lat > {maxLat} THEN {maxLat}
                 ELSE CASE WHEN unv_lat < {minLat} THEN {minLat}
-                ELSE unv_lat END END""")
-            .withColumn("lon", "float", expr=f"""CASE WHEN unv_lon > {maxLon} THEN {maxLon}
+                ELSE unv_lat END END""",
+            )
+            .withColumn(
+                "lon",
+                "float",
+                expr=f"""CASE WHEN unv_lon > {maxLon} THEN {maxLon}
                 ELSE CASE WHEN unv_lon < {minLon} THEN {minLon}
-                ELSE unv_lon END END""")
+                ELSE unv_lon END END""",
+            )
             .withColumn("heading", "integer", minValue=0, maxValue=359, step=1, random=generateRandom)
             .withColumn("wkt", "string", expr="concat('POINT(', lon, ' ', lat, ')')", omit=not generateWkt)
         )

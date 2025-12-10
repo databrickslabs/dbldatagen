@@ -9,52 +9,53 @@ This file defines the Exponential statistical distributions related classes
 
 import numpy as np
 import pandas as pd
-
 import pyspark.sql.functions as F
+from pyspark.sql import Column
 from pyspark.sql.types import FloatType
 
-from .data_distribution import DataDistribution
-from ..serialization import SerializableToDict
+from dbldatagen.datagen_types import NumericLike
+from dbldatagen.distributions.data_distribution import DataDistribution
+from dbldatagen.serialization import SerializableToDict
 
 
 class Exponential(DataDistribution):
-    """ Specify that random samples should be drawn from the exponential distribution parameterized by rate
+    """Specifies that random samples should be drawn from the exponential distribution parameterized
+    by rate. See https://en.wikipedia.org/wiki/Exponential_distribution
 
-    :param rate: value for rate parameter - float, int or other numeric value, greater than 0
-
-    See https://en.wikipedia.org/wiki/Exponential_distribution
-
-    Scaling is performed to normalize values between 0 and 1
+    :param rate: Value for rate parameter; Should be a float, int or other numeric value greater than 0
     """
 
-    def __init__(self, rate=None):
+    def __init__(self, rate: NumericLike | None = None) -> None:
         DataDistribution.__init__(self)
         self._rate = rate
 
-    def _toInitializationDict(self):
-        """ Converts an object to a Python dictionary. Keys represent the object's
-            constructor arguments.
-            :return: Python dictionary representation of the object
+    def _toInitializationDict(self) -> dict[str, object]:
+        """Converts an object to a Python dictionary. Keys represent the object's
+        constructor arguments.
+
+        :return: Dictionary representation of the object
         """
         _options = {"kind": self.__class__.__name__, "rate": self._rate}
         return {
-            k: v._toInitializationDict()
-            if isinstance(v, SerializableToDict) else v
-            for k, v in _options.items() if v is not None
+            k: v._toInitializationDict() if isinstance(v, SerializableToDict) else v
+            for k, v in _options.items()
+            if v is not None
         }
 
-    def __str__(self):
-        """ Return string representation"""
+    def __str__(self) -> str:
+        """Returns a string representation of the object.
+
+        :return: String representation of the object
+        """
         return f"ExponentialDistribution(rate={self.rate}, randomSeed={self.randomSeed})"
 
     @staticmethod
     def exponential_func(scale_series: pd.Series, random_seed: pd.Series) -> pd.Series:
-        """ Generate sample of exponential distribution using pandas / numpy
+        """Generates samples from the exponential distribution using pandas / numpy.
 
-        :param scale_series: value for scale parameter as Pandas Series
-        :param random_seed: value for randomSeed parameter as Pandas Series
-        :return: random samples from distribution scaled to values between 0 and 1
-
+        :param scale_series: Value for scale parameter as Pandas Series
+        :param random_seed: Value for randomSeed parameter as Pandas Series
+        :return: Random samples from distribution scaled to values between 0 and 1
         """
         scale_param = scale_series.to_numpy()
         random_seed = random_seed.to_numpy()[0]
@@ -76,23 +77,37 @@ class Exponential(DataDistribution):
         return pd.Series(results2)
 
     @property
-    def rate(self):
-        """ Return rate parameter"""
+    def rate(self) -> NumericLike | None:
+        """Returns the rate parameter.
+
+        :return: Rate parameter
+        """
         return self._rate
 
     @property
-    def scale(self):
-        """ Return scale implicit parameter. Scale is 1/rate"""
+    def scale(self) -> float | np.floating | None:
+        """Returns the scale implicit parameter. Scale is 1/rate.
+
+        :return: Scale implicit parameter
+        """
+        if not self._rate:
+            raise ValueError("Cannot compute value for 'scale'; Missing value for 'rate'")
         return 1.0 / self._rate
 
-    def generateNormalizedDistributionSample(self):
-        """ Generate sample of data for distribution
+    def generateNormalizedDistributionSample(self) -> Column:
+        """Generates a sample of data for the distribution.
 
-        :return: random samples from distribution scaled to values between 0 and 1
+        :return: Pyspark SQL column expression for the sample values
         """
-        exponential_sample = F.pandas_udf(self.exponential_func, returnType=FloatType()).asNondeterministic()
+        if not self._rate:
+            raise ValueError("Cannot compute value for 'scale'; Missing value for 'rate'")
+
+        exponential_sample = F.pandas_udf(  # type: ignore
+            self.exponential_func, returnType=FloatType()
+        ).asNondeterministic()
 
         # scala formulation uses scale = 1/rate
-        newDef = exponential_sample(F.lit(1.0 / self._rate),
-                             F.lit(self.randomSeed) if self.randomSeed is not None else F.lit(-1.0))
+        newDef: Column = exponential_sample(
+            F.lit(1.0 / self._rate), F.lit(self.randomSeed) if self.randomSeed is not None else F.lit(-1.0)
+        )
         return newDef

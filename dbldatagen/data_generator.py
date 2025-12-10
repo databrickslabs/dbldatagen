@@ -103,9 +103,9 @@ class DataGenerator(SerializableToDict):
         debug: bool = False,
         seedColumnName: str = datagen_constants.DEFAULT_SEED_COLUMN,
         random: bool = False,
-        **kwargs
+        **kwargs,
     ) -> None:
-        """ Constructor for data generator object """
+        """Constructor for data generator object"""
 
         # set up logging
         self.verbose = verbose
@@ -187,7 +187,9 @@ class DataGenerator(SerializableToDict):
                 self._seedMethod = "fixed"
 
         allowed_seed_methods = [
-            None, datagen_constants.RANDOM_SEED_FIXED, datagen_constants.RANDOM_SEED_HASH_FIELD_NAME
+            None,
+            datagen_constants.RANDOM_SEED_FIXED,
+            datagen_constants.RANDOM_SEED_HASH_FIELD_NAME,
         ]
         if self._seedMethod not in allowed_seed_methods:
             msg = f"seedMethod should be None, '{datagen_constants.RANDOM_SEED_FIXED}' or '{datagen_constants.RANDOM_SEED_HASH_FIELD_NAME}' "
@@ -266,14 +268,16 @@ class DataGenerator(SerializableToDict):
             "startingId": self.starting_id,
             "randomSeed": self._randomSeed,
             "partitions": self.partitions,
-            "verbose": self.verbose, "batchSize": self._batchSize, "debug": self.debug,
+            "verbose": self.verbose,
+            "batchSize": self._batchSize,
+            "debug": self.debug,
             "seedColumnName": self._seedColumnName,
             "random": self._defaultRandom,
-            "columns": [{
-                k: v for k, v in column._toInitializationDict().items()
-                if k != "kind"}
-                for column in self.columnGenerationSpecs],
-            "constraints": [constraint._toInitializationDict() for constraint in self.constraints]
+            "columns": [
+                {k: v for k, v in column._toInitializationDict().items() if k != "kind"}
+                for column in self.columnGenerationSpecs
+            ],
+            "constraints": [constraint._toInitializationDict() for constraint in self.constraints],
         }
         return _options
 
@@ -309,8 +313,7 @@ class DataGenerator(SerializableToDict):
 
         if spark_version_info < minSparkVersion:
             logging.warning(
-                f"*** Minimum version of Python supported is {minSparkVersion} - found version %s ",
-                spark_version_info
+                f"*** Minimum version of Python supported is {minSparkVersion} - found version %s ", spark_version_info
             )
             return False
 
@@ -484,7 +487,7 @@ class DataGenerator(SerializableToDict):
             "",
             f"column build order: {self._buildOrder}",
             "",
-            "build plan:"
+            "build plan:",
         ]
 
         for plan_action in self._buildPlan:
@@ -602,7 +605,7 @@ class DataGenerator(SerializableToDict):
             "partitions": self.partitions,
             "columnDefinitions": self._columnSpecsByName,
             "debug": self.debug,
-            "verbose": self.verbose
+            "verbose": self.verbose,
         }
 
     def __repr__(self) -> str:
@@ -661,7 +664,7 @@ class DataGenerator(SerializableToDict):
         return StructType(self._inferredSchemaFields)
 
     def __getitem__(self, key: str) -> ColumnGenerationSpec:
-        """ implement the built-in dereference by key behavior """
+        """implement the built-in dereference by key behavior"""
         ensure(key is not None, "key should be non-empty")
         return self._columnSpecsByName[key]
 
@@ -724,10 +727,13 @@ class DataGenerator(SerializableToDict):
 
         :returns: List of column names in the `DataGenerator's` output `DataFrame`
         """
-        return self.flatten([
-            self._columnSpecsByName[fd.name].getNames() for fd in
-            self._inferredSchemaFields if not self._columnSpecsByName[fd.name].isFieldOmitted
-        ])
+        return self.flatten(
+            [
+                self._columnSpecsByName[fd.name].getNames()
+                for fd in self._inferredSchemaFields
+                if not self._columnSpecsByName[fd.name].isFieldOmitted
+            ]
+        )
 
     def getOutputColumnNamesAndTypes(self) -> list[tuple[str, DataType]]:
         """
@@ -736,9 +742,13 @@ class DataGenerator(SerializableToDict):
 
         :returns: A list of tuples of column name and data type
         """
-        return self.flatten([self._columnSpecsByName[fd.name].getNamesAndTypes()
-                             for fd in
-                             self._inferredSchemaFields if not self._columnSpecsByName[fd.name].isFieldOmitted])
+        return self.flatten(
+            [
+                self._columnSpecsByName[fd.name].getNamesAndTypes()
+                for fd in self._inferredSchemaFields
+                if not self._columnSpecsByName[fd.name].isFieldOmitted
+            ]
+        )
 
     def withSchema(self, sch: StructType) -> "DataGenerator":
         """
@@ -760,7 +770,7 @@ class DataGenerator(SerializableToDict):
         dataRange: DataRange | range | None = None,
         minValue: int | float | complex | date | datetime | None = None,
         maxValue: int | float | complex | date | datetime | None = None,
-        step: int | float | complex | timedelta | None = None
+        step: int | float | complex | timedelta | None = None,
     ) -> tuple[Any, Any, Any]:
         """
         Computes a numeric range from the input parameters.
@@ -783,7 +793,7 @@ class DataGenerator(SerializableToDict):
         patterns: str | list[str] | None = None,
         fields: str | list[str] | None = None,
         matchTypes: str | list[str] | DataType | list[DataType] | None = None,
-        **kwargs
+        **kwargs,
     ) -> "DataGenerator":
         """
         Adds column specs for columns matching:
@@ -822,8 +832,7 @@ class DataGenerator(SerializableToDict):
             patterns = ["^" + pat + "$" for pat in patterns]
 
         all_fields = self.getInferredColumnNames()
-        effective_fields = [x for x in all_fields if
-                            (fields is None or x in fields) and x != self._seedColumnName]
+        effective_fields = [x for x in all_fields if (fields is None or x in fields) and x != self._seedColumnName]
 
         if patterns:
             effective_fields = [x for x in effective_fields for y in patterns if re.search(y, x) is not None]
@@ -841,9 +850,7 @@ class DataGenerator(SerializableToDict):
                 else:
                     effective_types.append(match_type)
 
-            effective_fields = [
-                x for x in effective_fields for y in effective_types if self.getColumnType(x) == y
-            ]
+            effective_fields = [x for x in effective_fields for y in effective_types if self.getColumnType(x) == y]
 
         for f in effective_fields:
             self.withColumnSpec(f, implicit=True, **kwargs)
@@ -866,7 +873,7 @@ class DataGenerator(SerializableToDict):
             for column in columns:
                 ensure(column in inferred_columns, f" column `{column}` must refer to defined column")
         else:
-            ensure(columns in inferred_columns,f" column `{columns}` must refer to defined column")
+            ensure(columns in inferred_columns, f" column `{columns}` must refer to defined column")
         return True
 
     def withColumnSpec(
@@ -883,7 +890,7 @@ class DataGenerator(SerializableToDict):
         dataRange: DataRange | None = None,
         omit: bool = False,
         baseColumn: str | None = None,
-        **kwargs
+        **kwargs,
     ) -> "DataGenerator":
         """
         Adds a `ColumnGenerationSpec` for an existing column.
@@ -905,7 +912,7 @@ class DataGenerator(SerializableToDict):
             not isinstance(minValue, DataType),
             """unnecessary `datatype` argument specified for `withColumnSpec` for column `{colName}` -
                     Datatype parameter is only needed for `withColumn` and not permitted for `withColumnSpec`
-                """
+                """,
         )
 
         if random is None:
@@ -913,14 +920,16 @@ class DataGenerator(SerializableToDict):
 
         # handle migration of old `min` and `max` options
         if _OLD_MIN_OPTION in kwargs:
-            assert minValue is None, \
-                "Only one of `minValue` and `minValue` can be specified. Use of `minValue` is preferred"
+            assert (
+                minValue is None
+            ), "Only one of `minValue` and `minValue` can be specified. Use of `minValue` is preferred"
             minValue = kwargs[_OLD_MIN_OPTION]
             kwargs.pop(_OLD_MIN_OPTION, None)
 
         if _OLD_MAX_OPTION in kwargs:
-            assert maxValue is None, \
-                "Only one of `maxValue` and `maxValue` can be specified. Use of `maxValue` is preferred"
+            assert (
+                maxValue is None
+            ), "Only one of `maxValue` and `maxValue` can be specified. Use of `maxValue` is preferred"
             maxValue = kwargs[_OLD_MAX_OPTION]
             kwargs.pop(_OLD_MAX_OPTION, None)
 
@@ -936,14 +945,15 @@ class DataGenerator(SerializableToDict):
             self.getColumnType(colName),
             minValue=minValue,
             maxValue=maxValue,
-            step=step, prefix=prefix,
+            step=step,
+            prefix=prefix,
             random=random,
             dataRange=dataRange,
             distribution=distribution,
             baseColumn=baseColumn,
             implicit=implicit,
             omit=omit,
-            **new_props
+            **new_props,
         )
         return self
 
@@ -964,7 +974,8 @@ class DataGenerator(SerializableToDict):
         minValue: int | float | complex | date | datetime | None = None,
         maxValue: int | float | complex | date | datetime | None = None,
         step: int | float | complex | timedelta | None = 1,
-        dataRange: DataRange | None = None, prefix: str | None = None,
+        dataRange: DataRange | None = None,
+        prefix: str | None = None,
         random: bool | None = None,
         distribution: DataDistribution | None = None,
         baseColumn: str | None = None,
@@ -972,7 +983,7 @@ class DataGenerator(SerializableToDict):
         omit: bool = False,
         implicit: bool = False,
         noWarn: bool = False,
-        **kwargs
+        **kwargs,
     ) -> "DataGenerator":
         """
         Adds a new column generation specification to the `DataGenerator`.
@@ -1022,14 +1033,16 @@ class DataGenerator(SerializableToDict):
 
         # handle migration of old `min` and `max` options
         if _OLD_MIN_OPTION in kwargs:
-            assert minValue is None, \
-                "Only one of `minValue` and `minValue` can be specified. Use of `minValue` is preferred"
+            assert (
+                minValue is None
+            ), "Only one of `minValue` and `minValue` can be specified. Use of `minValue` is preferred"
             minValue = kwargs[_OLD_MIN_OPTION]
             kwargs.pop(_OLD_MIN_OPTION, None)
 
         if _OLD_MAX_OPTION in kwargs:
-            assert maxValue is None, \
-                "Only one of `maxValue` and `maxValue` can be specified. Use of `maxValue` is preferred"
+            assert (
+                maxValue is None
+            ), "Only one of `maxValue` and `maxValue` can be specified. Use of `maxValue` is preferred"
             maxValue = kwargs[_OLD_MAX_OPTION]
             kwargs.pop(_OLD_MAX_OPTION, None)
 
@@ -1040,8 +1053,9 @@ class DataGenerator(SerializableToDict):
         new_props.update(kwargs)
 
         self.logger.info(f"effective range: {minValue}, {maxValue}, {step} args: {kwargs}")
-        self.logger.info("adding column - `%s` with baseColumn : `%s`, implicit : %s , omit %s",
-                         colName, baseColumn, implicit, omit)
+        self.logger.info(
+            "adding column - `%s` with baseColumn : `%s`, implicit : %s , omit %s", colName, baseColumn, implicit, omit
+        )
         newColumn = self._generateColumnDefinition(
             colName,
             colType,
@@ -1055,7 +1069,7 @@ class DataGenerator(SerializableToDict):
             dataRange=dataRange,
             implicit=implicit,
             omit=omit,
-            **new_props
+            **new_props,
         )
 
         # note for inferred columns, the column type is initially sey to a StringType but may be superceded later
@@ -1076,9 +1090,7 @@ class DataGenerator(SerializableToDict):
                 if not isinstance(v, dict):
                     continue
                 value_superclass = (
-                    DataRange if k == "dataRange"
-                    else DataDistribution if k == "distribution"
-                    else TextGenerator
+                    DataRange if k == "dataRange" else DataDistribution if k == "distribution" else TextGenerator
                 )
                 value_subclasses = value_superclass.__subclasses__()
                 if v["kind"] not in [s.__name__ for s in value_subclasses]:
@@ -1108,8 +1120,9 @@ class DataGenerator(SerializableToDict):
           name of the field within the struct. The second element must be a SQL expression that will be used to generate
           the field value, and may reference previously defined columns.
         """
-        assert fields is not None and isinstance(fields, list), \
-            "Fields must be a non-empty list of fields that make up the struct elements"
+        assert fields is not None and isinstance(
+            fields, list
+        ), "Fields must be a non-empty list of fields that make up the struct elements"
         assert len(fields) >= 1, "Fields must be a non-empty list of fields that make up the struct elements"
 
         struct_expressions = []
@@ -1129,8 +1142,9 @@ class DataGenerator(SerializableToDict):
         return struct_expression
 
     def _mkStructFromDict(self, fields: dict[str, Any]) -> str:
-        assert fields is not None and isinstance(fields, dict), \
-            "Fields must be a non-empty dict of fields that make up the struct elements"
+        assert fields is not None and isinstance(
+            fields, dict
+        ), "Fields must be a non-empty dict of fields that make up the struct elements"
         struct_expressions = []
 
         for key, value in fields.items():
@@ -1153,7 +1167,7 @@ class DataGenerator(SerializableToDict):
         colName: str,
         fields: list[str | tuple[str, str]] | dict[str, Any] | None = None,
         asJson: bool = False,
-        **kwargs
+        **kwargs,
     ) -> "DataGenerator":
         """
         Adds a struct column to the synthetic data generation specification. This will add a new column composed of
@@ -1179,13 +1193,13 @@ class DataGenerator(SerializableToDict):
             When using the `dict` form of the field specifications, a field whose value is a list will be treated
             as creating a SQL array literal.
         """
-        assert fields is not None and isinstance(fields, list | dict), \
-            "Fields argument must be a list of field specifications or dict outlining the target structure "
+        assert fields is not None and isinstance(
+            fields, list | dict
+        ), "Fields argument must be a list of field specifications or dict outlining the target structure "
         assert isinstance(colName, str) and len(colName) > 0, "Must specify a column name"
 
         if isinstance(fields, list):
-            assert len(fields) > 0, \
-                "Must specify at least one field for struct column"
+            assert len(fields) > 0, "Must specify at least one field for struct column"
             struct_expr = self._mkSqlStructFromList(fields)
         elif isinstance(fields, dict):
             struct_expr = self._mkStructFromDict(fields)
@@ -1209,9 +1223,9 @@ class DataGenerator(SerializableToDict):
         implicit: bool = False,
         omit: bool = False,
         nullable: bool = True,
-        **kwargs
+        **kwargs,
     ) -> ColumnGenerationSpec:
-        """ generate field definition and column spec
+        """generate field definition and column spec
 
         .. note::
             Any time that a new column definition is added, we'll mark that the build plan needs to be regenerated.
@@ -1267,7 +1281,7 @@ class DataGenerator(SerializableToDict):
             verbose=self.verbose,
             debug=self.debug,
             seedColumnName=self._seedColumnName,
-            **new_props
+            **new_props,
         )
 
         self._columnSpecsByName[colName] = column_spec
@@ -1285,9 +1299,9 @@ class DataGenerator(SerializableToDict):
         return column_spec
 
     def _getBaseDataFrame(
-            self, startId: int | None = None, streaming: bool = False, options: dict[str, Any] | None = None
+        self, startId: int | None = None, streaming: bool = False, options: dict[str, Any] | None = None
     ) -> DataFrame:
-        """ generate the base data frame and seed column (which defaults to `id`) , partitioning the data if necessary
+        """generate the base data frame and seed column (which defaults to `id`) , partitioning the data if necessary
 
         This is used when generating the test data.
 
@@ -1310,11 +1324,7 @@ class DataGenerator(SerializableToDict):
                 f"Generating data frame with ids from {startId} to {end_id} with {id_partitions} partitions"
             )
 
-            df = self.sparkSession.range(
-                start=start_id,
-                end=end_id,
-                numPartitions=id_partitions
-            )
+            df = self.sparkSession.range(start=start_id, end=end_id, numPartitions=id_partitions)
 
             # spark.range generates a dataframe with the column `id` so rename it if its not our seed column
             if self._seedColumnName != datagen_constants.SPARK_RANGE_COLUMN:
@@ -1322,9 +1332,7 @@ class DataGenerator(SerializableToDict):
 
             return df
 
-        status = (
-            f"Generating streaming data frame with ids from {startId} to {end_id} with {id_partitions} partitions"
-        )
+        status = f"Generating streaming data frame with ids from {startId} to {end_id} with {id_partitions} partitions"
         self.logger.info(status)
         self.executionHistory.append(status)
 
@@ -1341,15 +1349,14 @@ class DataGenerator(SerializableToDict):
 
         else:
             return (
-                reader
-                .option("rowsPerSecond", 1)
+                reader.option("rowsPerSecond", 1)
                 .option("numPartitions", id_partitions)
                 .load()
                 .withColumnRenamed("value", self._seedColumnName)
             )
 
     def _computeColumnBuildOrder(self) -> list[list[str]]:
-        """ compute the build ordering using a topological sort on dependencies
+        """compute the build ordering using a topological sort on dependencies
 
         In order to avoid references to columns that have not yet been generated, the test data generation process
         sorts the columns according to the order they need to be built.
@@ -1362,8 +1369,8 @@ class DataGenerator(SerializableToDict):
         :returns: the build ordering
         """
         dependency_ordering = [
-            (x.name, set(x.dependencies)) if x.name != self._seedColumnName
-            else (self._seedColumnName, set()) for x in self._allColumnSpecs
+            (x.name, set(x.dependencies)) if x.name != self._seedColumnName else (self._seedColumnName, set())
+            for x in self._allColumnSpecs
         ]
 
         self.logger.info("dependency list: %s", str(dependency_ordering))
@@ -1378,8 +1385,10 @@ class DataGenerator(SerializableToDict):
 
         return self._buildOrder
 
-    def _adjustBuildOrderForSqlDependencies(self, buildOrder: list[list[str]], columnSpecsByName: dict[str, ColumnGenerationSpec]) -> list[list[str]]:
-        """ Adjust column build order according to the following heuristics
+    def _adjustBuildOrderForSqlDependencies(
+        self, buildOrder: list[list[str]], columnSpecsByName: dict[str, ColumnGenerationSpec]
+    ) -> list[list[str]]:
+        """Adjust column build order according to the following heuristics
 
         1: if the column being built in a specific build order phase has a SQL expression and it references
            other columns in the same build phase (or potentially references them as the expression parsing is
@@ -1488,8 +1497,9 @@ class DataGenerator(SerializableToDict):
             constraint may also affect other aspects of the data generation.
         """
         assert constraint is not None, "Constraint cannot be empty"
-        assert isinstance(constraint, Constraint),  \
-            "Value for 'constraint' must be an instance or subclass of the Constraint class."
+        assert isinstance(
+            constraint, Constraint
+        ), "Value for 'constraint' must be an instance or subclass of the Constraint class."
         self._constraints.append(constraint)
         return self
 
@@ -1509,8 +1519,9 @@ class DataGenerator(SerializableToDict):
 
         for constraint in constraints:
             assert constraint is not None, "Constraint cannot be empty"
-            assert isinstance(constraint, Constraint),  \
-                "Constraint must be an instance of, or an instance of a subclass of the Constraint class"
+            assert isinstance(
+                constraint, Constraint
+            ), "Constraint must be an instance of, or an instance of a subclass of the Constraint class"
 
         self._constraints.extend(constraints)
         return self
@@ -1531,10 +1542,10 @@ class DataGenerator(SerializableToDict):
         return self
 
     def _loadConstraintsFromInitializationDicts(self, constraints: list[dict[str, Any]]) -> "DataGenerator":
-        """ Adds a set of constraints to the synthetic generation specification.
-            :param constraints: A list of constraints as dictionaries
-            :returns:       A modified in-place instance of a data generator allowing for chaining of calls
-                            following a builder pattern
+        """Adds a set of constraints to the synthetic generation specification.
+        :param constraints: A list of constraints as dictionaries
+        :returns:       A modified in-place instance of a data generator allowing for chaining of calls
+                        following a builder pattern
         """
         for c in constraints:
             t = next((s for s in Constraint.__subclasses__() if s.__name__ == c["kind"]), Constraint)
@@ -1583,7 +1594,7 @@ class DataGenerator(SerializableToDict):
         return self
 
     def _applyPreGenerationConstraints(self, withStreaming: bool = False) -> None:
-        """ Apply pre data generation constraints """
+        """Apply pre data generation constraints"""
         if self._constraints is not None and len(self._constraints) > 0:
             for constraint in self._constraints:
                 assert isinstance(constraint, Constraint), "Value for 'constraint' should be of type 'Constraint'"
@@ -1592,16 +1603,20 @@ class DataGenerator(SerializableToDict):
                 constraint.prepareDataGenerator(self)
 
     def _applyPostGenerationConstraints(self, df: DataFrame) -> DataFrame:
-        """ Build and apply the constraints using two mechanisms
-            - Apply transformations to dataframe
-            - Apply expressions as SQL filters using where clauses"""
+        """Build and apply the constraints using two mechanisms
+        - Apply transformations to dataframe
+        - Apply expressions as SQL filters using where clauses"""
         if self._constraints is not None and len(self._constraints) > 0:
 
             for constraint in self._constraints:
                 df = constraint.transformDataframe(self, df)
 
             # get set of constraint expressions
-            constraint_expressions = [constraint.filterExpression for constraint in self._constraints]
+            constraint_expressions = [
+                constraint.filterExpression
+                for constraint in self._constraints
+                if constraint.filterExpression is not None
+            ]
             combined_constraint_expression = Constraint.mkCombinedConstraintExpression(constraint_expressions)
 
             # apply the filter
@@ -1616,7 +1631,7 @@ class DataGenerator(SerializableToDict):
         withTempView: bool = False,
         withView: bool = False,
         withStreaming: bool = False,
-        options: dict[str, Any] | None = None
+        options: dict[str, Any] | None = None,
     ) -> DataFrame:
         """
         Builds a Spark `DataFrame` from the current `DataGenerator`.
@@ -1643,11 +1658,13 @@ class DataGenerator(SerializableToDict):
         self.computeBuildPlan()
 
         output_columns = self.getOutputColumnNames()
-        ensure(output_columns is not None and len(output_columns) > 0,
-               """
+        ensure(
+            output_columns is not None and len(output_columns) > 0,
+            """
                 | You must specify at least one column for output
                 | - use withIdOutput() to output base seed column
-               """)
+               """,
+        )
 
         df1 = self._getBaseDataFrame(self.starting_id, streaming=withStreaming, options=options)
 
@@ -1726,7 +1743,9 @@ class DataGenerator(SerializableToDict):
         return dt.simpleString()
 
     @staticmethod
-    def _mkInsertOrUpdateStatement(columns: list[str], srcAlias: str, substitutions: list[str] | None, isUpdate: bool = True) -> str:
+    def _mkInsertOrUpdateStatement(
+        columns: list[str], srcAlias: str, substitutions: list[str] | None, isUpdate: bool = True
+    ) -> str:
         if substitutions is None:
             substitutions = []
         results = []
@@ -1746,11 +1765,7 @@ class DataGenerator(SerializableToDict):
         return ", ".join(results)
 
     def scriptTable(
-        self,
-        name: str | None = None,
-        location: str | None = None,
-        tableFormat: str = "delta",
-        asHtml: bool = False
+        self, name: str | None = None, location: str | None = None, tableFormat: str = "delta", asHtml: bool = False
     ) -> str:
         """
         Gets a Spark SQL `CREATE TABLE AS SELECT` statement suitable for the format of test data set.
@@ -1769,11 +1784,13 @@ class DataGenerator(SerializableToDict):
         output_columns = self.getOutputColumnNamesAndTypes()
 
         results = [f"CREATE TABLE IF NOT EXISTS {name} ("]
-        ensure(output_columns is not None and len(output_columns) > 0,
-               """
+        ensure(
+            output_columns is not None and len(output_columns) > 0,
+            """
                 | You must specify at least one column for output
                 | - use withIdOutput() to output base seed column
-               """)
+               """,
+        )
 
         col_expressions = []
         for col_to_output in output_columns:
@@ -1809,7 +1826,7 @@ class DataGenerator(SerializableToDict):
         insertColumnExprs: list[str] | None = None,
         srcAlias: str = "src",
         tgtAlias: str = "tgt",
-        asHtml: bool = False
+        asHtml: bool = False,
     ) -> str:
         """
         Gets a Spark SQL `MERGE` statement suitable for the format of test dataset.
@@ -1850,11 +1867,13 @@ class DataGenerator(SerializableToDict):
         # get list of column names
         output_columns = [x[0] for x in self.getOutputColumnNamesAndTypes()]
 
-        ensure(output_columns is not None and len(output_columns) > 0,
-               """
+        ensure(
+            output_columns is not None and len(output_columns) > 0,
+            """
                 | You must specify at least one column for output
                 | - use withIdOutput() to output base seed column
-               """)
+               """,
+        )
 
         # use list of column names if not supplied
         if insertColumns is None:
@@ -1886,8 +1905,9 @@ class DataGenerator(SerializableToDict):
             update_clause = update_clause + " SET *"
         else:
             update_clause = (
-                update_clause + " SET " +
-                DataGenerator._mkInsertOrUpdateStatement(updateColumns, srcAlias, updateColumnExprs)
+                update_clause
+                + " SET "
+                + DataGenerator._mkInsertOrUpdateStatement(updateColumns, srcAlias, updateColumnExprs)
             )
 
         results.append(update_clause)
@@ -1905,8 +1925,12 @@ class DataGenerator(SerializableToDict):
             ins_clause = ins_clause + " *"
         else:
             ins_clause = (
-                ins_clause + "(" + ",".join(insertColumns) + ") VALUES (" +
-                DataGenerator._mkInsertOrUpdateStatement(insertColumns, srcAlias, insertColumnExprs, False) + ")"
+                ins_clause
+                + "("
+                + ",".join(insertColumns)
+                + ") VALUES ("
+                + DataGenerator._mkInsertOrUpdateStatement(insertColumns, srcAlias, insertColumnExprs, False)
+                + ")"
             )
 
         results.append(ins_clause)
@@ -1918,10 +1942,10 @@ class DataGenerator(SerializableToDict):
         return result
 
     def saveAsDataset(
-            self,
-            dataset: OutputDataset,
-            with_streaming: bool | None = None,
-            generator_options: dict[str, Any] | None = None
+        self,
+        dataset: OutputDataset,
+        with_streaming: bool | None = None,
+        generator_options: dict[str, Any] | None = None,
     ) -> StreamingQuery | None:
         """
         Builds a `DataFrame` from the `DataGenerator` and writes the data to an output dataset (e.g. a table or files).

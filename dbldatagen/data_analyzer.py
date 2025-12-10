@@ -34,6 +34,7 @@ class DataAnalyzer:
     .. warning::
        Experimental
     """
+
     debug: bool
     verbose: bool
     _sparkSession: SparkSession
@@ -50,7 +51,7 @@ class DataAnalyzer:
         |#   Github project - [https://github.com/databrickslabs/dbldatagen]
         |#
         """,
-        marginChar="|"
+        marginChar="|",
     )
 
     _GENERATED_FROM_SCHEMA_COMMENT: str = strip_margins(
@@ -58,7 +59,7 @@ class DataAnalyzer:
         |# Column definitions are stubs only - modify to generate correct data
         |#
         """,
-        marginChar="|"
+        marginChar="|",
     )
 
     def __init__(
@@ -66,7 +67,7 @@ class DataAnalyzer:
         df: DataFrame | None = None,
         sparkSession: SparkSession | None = None,
         debug: bool = False,
-        verbose: bool = False
+        verbose: bool = False,
     ) -> None:
         self.verbose = verbose
         self.debug = debug
@@ -114,7 +115,7 @@ class DataAnalyzer:
         fieldExprs: list[str] | None = None,
         dfData: DataFrame | None,
         rowLimit: int = 1,
-        dfSummary: DataFrame | None = None
+        dfSummary: DataFrame | None = None,
     ) -> DataFrame:
         """
         Adds a new measure to the summary ``DataFrame``.
@@ -192,7 +193,7 @@ class DataAnalyzer:
             measureName="schema",
             summaryExpr=f"""to_json(named_struct('column_count', {len(dtypes)}))""",
             fieldExprs=[f"'{dtype[1]}' as {dtype[0]}" for dtype in dtypes],
-            dfData=self._df
+            dfData=self._df,
         )
 
         data_summary_df = self._addMeasureToSummary(
@@ -200,17 +201,17 @@ class DataAnalyzer:
             summaryExpr=f"{total_count}",
             fieldExprs=[f"string(count({dtype[0]})) as {dtype[0]}" for dtype in dtypes],
             dfData=self._df,
-            dfSummary=data_summary_df
+            dfSummary=data_summary_df,
         )
 
         data_summary_df = self._addMeasureToSummary(
             measureName="null_probability",
             fieldExprs=[
                 f"""string( round( ({total_count} - count({dtype[0]})) /{total_count}, 2)) as {dtype[0]}"""
-                        for dtype in dtypes
+                for dtype in dtypes
             ],
             dfData=self._df,
-            dfSummary=data_summary_df
+            dfSummary=data_summary_df,
         )
 
         # distinct count
@@ -219,7 +220,7 @@ class DataAnalyzer:
             summaryExpr="count(distinct *)",
             fieldExprs=[f"string(count(distinct {dtype[0]})) as {dtype[0]}" for dtype in dtypes],
             dfData=self._df,
-            dfSummary=data_summary_df
+            dfSummary=data_summary_df,
         )
 
         # min
@@ -227,20 +228,18 @@ class DataAnalyzer:
             measureName="min",
             fieldExprs=[f"string(min({dtype[0]})) as {dtype[0]}" for dtype in dtypes],
             dfData=self._df,
-            dfSummary=data_summary_df
+            dfSummary=data_summary_df,
         )
 
         data_summary_df = self._addMeasureToSummary(
             measureName="max",
             fieldExprs=[f"string(max({dtype[0]})) as {dtype[0]}" for dtype in dtypes],
             dfData=self._df,
-            dfSummary=data_summary_df
+            dfSummary=data_summary_df,
         )
 
-        description_df = (
-            self
-            ._get_dataframe_describe_stats(self._df)
-            .where(f"{DATA_SUMMARY_FIELD_NAME} in ('mean', 'stddev')")
+        description_df = self._get_dataframe_describe_stats(self._df).where(
+            f"{DATA_SUMMARY_FIELD_NAME} in ('mean', 'stddev')"
         )
         description_data = description_df.collect()
 
@@ -257,7 +256,7 @@ class DataAnalyzer:
                 measureName=measure,
                 fieldExprs=[f"'{values[dtype[0]]}'" for dtype in dtypes],
                 dfData=self._df,
-                dfSummary=data_summary_df
+                dfSummary=data_summary_df,
             )
 
         # string characteristics for strings and string representation of other values
@@ -265,14 +264,14 @@ class DataAnalyzer:
             measureName="print_len_min",
             fieldExprs=[f"string(min(length(string({dtype[0]})))) as {dtype[0]}" for dtype in dtypes],
             dfData=self._df,
-            dfSummary=data_summary_df
+            dfSummary=data_summary_df,
         )
 
         data_summary_df = self._addMeasureToSummary(
             measureName="print_len_max",
             fieldExprs=[f"string(max(length(string({dtype[0]})))) as {dtype[0]}" for dtype in dtypes],
             dfData=self._df,
-            dfSummary=data_summary_df
+            dfSummary=data_summary_df,
         )
 
         return data_summary_df
@@ -287,10 +286,7 @@ class DataAnalyzer:
         """
         summary_df = self.summarizeToDF()
 
-        results = [
-            "Data set summary",
-            "================"
-        ]
+        results = ["Data set summary", "================"]
 
         for row in summary_df.collect():
             results.append(self._displayRow(row))
@@ -308,7 +304,7 @@ class DataAnalyzer:
         dataSummary: dict[str, dict[str, object]] | None = None,
         colName: str | None = None,
         measure: str | None = None,
-        defaultValue: int | float | str | None = None
+        defaultValue: int | float | str | None = None,
     ) -> object:
         """
         Gets a measure value from a data summary given a measure name and column name. Returns a default value when the
@@ -334,10 +330,7 @@ class DataAnalyzer:
 
     @classmethod
     def _generatorDefaultAttributesFromType(
-        cls,
-        sqlType: types.DataType,
-        colName: str | None = None,
-        dataSummary: dict | None = None
+        cls, sqlType: types.DataType, colName: str | None = None, dataSummary: dict | None = None
     ) -> str:
         """
         Generates a Spark SQL expression for the input column and data type. Optionally uses ``DataAnalyzer`` summary
@@ -421,7 +414,7 @@ class DataAnalyzer:
         dataSummary: dict | None = None,
         sourceDf: DataFrame | None = None,
         suppressOutput: bool = False,
-        name: str | None = None
+        name: str | None = None,
     ) -> str:
         """
         Generates code to build a ``DataGenerator`` from an existing dataframe. Analyzes the dataframe passed to the
@@ -455,7 +448,7 @@ class DataAnalyzer:
                                     |                     rows=100000,
                                     |                     random=True,
                                     |                     )""",
-                marginChar="|"
+                marginChar="|",
             )
         )
 

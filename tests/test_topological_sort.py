@@ -13,7 +13,7 @@ class TestTopologicalSort(unittest.TestCase):
             ('id', []),
             ('code3a', []),
             ('_r_code1', []),
-            ('_r_code3', [])
+            ('_r_code3', []),
         ]
 
         output = list(dg.topologicalSort(src))
@@ -29,7 +29,7 @@ class TestTopologicalSort(unittest.TestCase):
             ('id', []),
             ('code3a', []),
             ('_r_code1', ['id']),
-            ('_r_code3', ['id'])
+            ('_r_code3', ['id']),
         ]
 
         output = list(dg.topologicalSort(src, initial_columns=['id'], flatten=False))

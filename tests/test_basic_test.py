@@ -24,17 +24,18 @@ class TestBasicOperation:
 
     @pytest.fixture(scope="class")
     def testDataSpec(self, setupLogging):
-        retval = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.SMALL_ROW_COUNT,
-                                   seedMethod='hash_fieldname')
-                  .withIdOutput()
-                  .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
-                              numColumns=self.column_count)
-                  .withColumn("code1", IntegerType(), min=100, max=200)
-                  .withColumn("code2", IntegerType(), min=0, max=10)
-                  .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-                  .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
-                  .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
-                  )
+        retval = (
+            dg.DataGenerator(
+                sparkSession=spark, name="test_data_set1", rows=self.SMALL_ROW_COUNT, seedMethod='hash_fieldname'
+            )
+            .withIdOutput()
+            .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)", numColumns=self.column_count)
+            .withColumn("code1", IntegerType(), min=100, max=200)
+            .withColumn("code2", IntegerType(), min=0, max=10)
+            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+            .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+            .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+        )
         return retval
 
     @pytest.fixture(scope="class")
@@ -42,7 +43,7 @@ class TestBasicOperation:
         return testDataSpec.build().cache()
 
     def setup_log_capture(self, caplog_object):
-        """ set up log capture fixture
+        """set up log capture fixture
 
         Sets up log capture fixture to only capture messages after setup and only
         capture warnings and errors
@@ -82,13 +83,14 @@ class TestBasicOperation:
 
     def test_basic_data_generation(self, testData):
         """Test basic data generation of distinct values"""
-        counts = testData.agg(F.countDistinct("id").alias("id_count"),
-                              F.countDistinct("code1").alias("code1_count"),
-                              F.countDistinct("code2").alias("code2_count"),
-                              F.countDistinct("code3").alias("code3_count"),
-                              F.countDistinct("code4").alias("code4_count"),
-                              F.countDistinct("code5").alias("code5_count")
-                              ).collect()[0]
+        counts = testData.agg(
+            F.countDistinct("id").alias("id_count"),
+            F.countDistinct("code1").alias("code1_count"),
+            F.countDistinct("code2").alias("code2_count"),
+            F.countDistinct("code3").alias("code3_count"),
+            F.countDistinct("code4").alias("code4_count"),
+            F.countDistinct("code5").alias("code5_count"),
+        ).collect()[0]
 
         assert counts["id_count"] == self.row_count
         assert counts["code1_count"] == 101
@@ -101,18 +103,24 @@ class TestBasicOperation:
         # caplog fixture captures log content
         self.setup_log_capture(caplog)
 
-        dgspec = (dg.DataGenerator(sparkSession=spark, name="alt_data_set", rows=10000,
-                                   partitions=4, seedMethod='hash_fieldname', verbose=True,
-                                   seedColumnName="_id")
-                  .withIdOutput()
-                  .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
-                              numColumns=4)
-                  .withColumn("code1", IntegerType(), min=100, max=200)
-                  .withColumn("code2", IntegerType(), min=0, max=10)
-                  .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-                  .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
-                  .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
-                  )
+        dgspec = (
+            dg.DataGenerator(
+                sparkSession=spark,
+                name="alt_data_set",
+                rows=10000,
+                partitions=4,
+                seedMethod='hash_fieldname',
+                verbose=True,
+                seedColumnName="_id",
+            )
+            .withIdOutput()
+            .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)", numColumns=4)
+            .withColumn("code1", IntegerType(), min=100, max=200)
+            .withColumn("code2", IntegerType(), min=0, max=10)
+            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+            .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+            .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+        )
 
         fieldsFromGenerator = set(dgspec.getOutputColumnNames())
 
@@ -136,18 +144,19 @@ class TestBasicOperation:
         seed_column_warnings_and_errors = self.get_log_capture_warngings_and_errors(caplog, "seed")
         assert seed_column_warnings_and_errors == 0, "Should not have error messages about seed column"
 
-    @pytest.mark.parametrize("caseName, withIdOutput, idType, additionalOptions",
-                             [("withIdOutput", True, FloatType(), {}),
-                              ("withIdOutput multicolumn", True, FloatType(), {'numColumns': 4}),
-                              ("with no Id output", False, FloatType(), {}),
-                              ("with no Id output multicolumn", False, FloatType(), {'numColumns': 4}),
-                              ("with no Id output random",
-                               False,
-                               IntegerType(),
-                               {'uniqueValues': 5000, 'random': True})
-                              ])
-    def test_seed_column_nocollision(self, caseName, withIdOutput, idType, additionalOptions, caplog):  \
-            # pylint: disable=too-many-positional-arguments
+    @pytest.mark.parametrize(
+        "caseName, withIdOutput, idType, additionalOptions",
+        [
+            ("withIdOutput", True, FloatType(), {}),
+            ("withIdOutput multicolumn", True, FloatType(), {'numColumns': 4}),
+            ("with no Id output", False, FloatType(), {}),
+            ("with no Id output multicolumn", False, FloatType(), {'numColumns': 4}),
+            ("with no Id output random", False, IntegerType(), {'uniqueValues': 5000, 'random': True}),
+        ],
+    )
+    def test_seed_column_nocollision(
+        self, caseName, withIdOutput, idType, additionalOptions, caplog
+    ):  # pylint: disable=too-many-positional-arguments
 
         logging.info(f"case: {caseName}")
 
@@ -155,20 +164,25 @@ class TestBasicOperation:
         self.setup_log_capture(caplog)
 
         # test that there are no collisions on the use of the 'id' field)
-        dgSpec = (dg.DataGenerator(sparkSession=spark, name="alt_data_set", rows=10000,
-                                   partitions=4, seedMethod='hash_fieldname', verbose=True,
-                                   seedColumnName="_id"))
+        dgSpec = dg.DataGenerator(
+            sparkSession=spark,
+            name="alt_data_set",
+            rows=10000,
+            partitions=4,
+            seedMethod='hash_fieldname',
+            verbose=True,
+            seedColumnName="_id",
+        )
 
         if withIdOutput:
             dgSpec = dgSpec.withIdOutput()
 
-        dgSpec = (dgSpec
-                  .withColumn("id", idType, expr="floor(rand() * 350) * (86400 + 3600)",
-                              **additionalOptions)
-                  .withColumn("code1", IntegerType(), min=100, max=200)
-                  .withColumn("code2", IntegerType(), min=0, max=10)
-                  .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-                  )
+        dgSpec = (
+            dgSpec.withColumn("id", idType, expr="floor(rand() * 350) * (86400 + 3600)", **additionalOptions)
+            .withColumn("code1", IntegerType(), min=100, max=200)
+            .withColumn("code2", IntegerType(), min=0, max=10)
+            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+        )
 
         fieldsFromGenerator = set(dgSpec.getOutputColumnNames())
 
@@ -181,18 +195,22 @@ class TestBasicOperation:
         seed_column_warnings_and_errors = self.get_log_capture_warngings_and_errors(caplog, "seed")
         assert seed_column_warnings_and_errors == 0, "Should not have error messages about seed column"
 
-    @pytest.mark.parametrize("caseName, withIdOutput, idType, idName",
-                             [("withIdOutput float", True, FloatType(), "id"),
-                              ("withIdOutput int", True, IntegerType(), "id"),
-                              ("with no Id output float", False, FloatType(), "id"),
-                              ("with no Id output int", False, IntegerType(), "id"),
-                              ("withIdOutput _id float", True, FloatType(), "_id"),
-                              ("withIdOutput _id int", True, IntegerType(), "_id"),
-                              ("with no Id output _id float", False, FloatType(), "_id"),
-                              ("with no Id output _id int", False, IntegerType(), "_id"),
-                              ])
-    def test_seed_column_expected_collision1(self, caseName, withIdOutput, idType, idName, caplog):  \
-            # pylint: disable=too-many-positional-arguments
+    @pytest.mark.parametrize(
+        "caseName, withIdOutput, idType, idName",
+        [
+            ("withIdOutput float", True, FloatType(), "id"),
+            ("withIdOutput int", True, IntegerType(), "id"),
+            ("with no Id output float", False, FloatType(), "id"),
+            ("with no Id output int", False, IntegerType(), "id"),
+            ("withIdOutput _id float", True, FloatType(), "_id"),
+            ("withIdOutput _id int", True, IntegerType(), "_id"),
+            ("with no Id output _id float", False, FloatType(), "_id"),
+            ("with no Id output _id int", False, IntegerType(), "_id"),
+        ],
+    )
+    def test_seed_column_expected_collision1(
+        self, caseName, withIdOutput, idType, idName, caplog
+    ):  # pylint: disable=too-many-positional-arguments
 
         logging.info(f"case: {caseName}")
 
@@ -200,26 +218,34 @@ class TestBasicOperation:
         self.setup_log_capture(caplog)
 
         if idName == "id":
-            dgSpec = (dg.DataGenerator(sparkSession=spark, name="alt_data_set", rows=10000,
-                                       partitions=4, seedMethod='hash_fieldname', verbose=True)
-                      )
+            dgSpec = dg.DataGenerator(
+                sparkSession=spark,
+                name="alt_data_set",
+                rows=10000,
+                partitions=4,
+                seedMethod='hash_fieldname',
+                verbose=True,
+            )
         else:
-            dgSpec = (dg.DataGenerator(sparkSession=spark, name="alt_data_set", rows=10000,
-                                       partitions=4, seedMethod='hash_fieldname', verbose=True,
-                                       seedColumnName=idName
-                                       )
-                      )
+            dgSpec = dg.DataGenerator(
+                sparkSession=spark,
+                name="alt_data_set",
+                rows=10000,
+                partitions=4,
+                seedMethod='hash_fieldname',
+                verbose=True,
+                seedColumnName=idName,
+            )
 
         if withIdOutput:
             dgSpec = dgSpec.withIdOutput()
 
-        dgSpec = (dgSpec
-                  .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
-                              numColumns=4)
-                  .withColumn(idName, idType, min=100, max=200)
-                  .withColumn("code2", IntegerType(), min=0, max=10)
-                  .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-                  )
+        dgSpec = (
+            dgSpec.withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)", numColumns=4)
+            .withColumn(idName, idType, min=100, max=200)
+            .withColumn("code2", IntegerType(), min=0, max=10)
+            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+        )
 
         fieldsFromGenerator = set(dgSpec.getOutputColumnNames())
 
@@ -244,9 +270,11 @@ class TestBasicOperation:
         """Test clone method"""
         ds_copy1 = testDataSpec.clone()
 
-        df_copy1 = (ds_copy1.withRowCount(1000)
-                    .withColumn("another_column", StringType(), values=['a', 'b', 'c'], random=True)
-                    .build())
+        df_copy1 = (
+            ds_copy1.withRowCount(1000)
+            .withColumn("another_column", StringType(), values=['a', 'b', 'c'], random=True)
+            .build()
+        )
 
         assert df_copy1.count() == 1000
         fields1 = ds_copy1.getOutputColumnNames()
@@ -263,11 +291,13 @@ class TestBasicOperation:
         """Test data generation with multiple base columns"""
         ds_copy1 = testDataSpec.clone()
 
-        df_copy1 = (ds_copy1.withRowCount(self.TINY_ROW_COUNT)
-                    .withColumn("ac1", IntegerType(), baseColumn=['code1', 'code2'], minValue=100, maxValue=200)
-                    .withColumn("ac2", IntegerType(), baseColumn=['code1', 'code2'],
-                                minValue=100, maxValue=200, random=True)
-                    .build().cache())
+        df_copy1 = (
+            ds_copy1.withRowCount(self.TINY_ROW_COUNT)
+            .withColumn("ac1", IntegerType(), baseColumn=['code1', 'code2'], minValue=100, maxValue=200)
+            .withColumn("ac2", IntegerType(), baseColumn=['code1', 'code2'], minValue=100, maxValue=200, random=True)
+            .build()
+            .cache()
+        )
 
         assert df_copy1.count() == 1000
         df_overlimit = df_copy1.where("ac1 > 200")
@@ -288,48 +318,51 @@ class TestBasicOperation:
         """
         ds_copy1 = testDataSpec.clone()
 
-        df_copy1 = (ds_copy1.withRowCount(1000)
-                    .withColumn("ac1", IntegerType(), baseColumn=['code1', 'code2'], minValue=100, maxValue=200)
-                    .withColumn("ac2", IntegerType(), baseColumn=['code1', 'code2'],
-                                minValue=100, maxValue=200, random=True)
-                    .build())
+        df_copy1 = (
+            ds_copy1.withRowCount(1000)
+            .withColumn("ac1", IntegerType(), baseColumn=['code1', 'code2'], minValue=100, maxValue=200)
+            .withColumn("ac2", IntegerType(), baseColumn=['code1', 'code2'], minValue=100, maxValue=200, random=True)
+            .build()
+        )
 
         assert df_copy1.count() == 1000
         df_copy1.createOrReplaceTempView("test_data")
 
         # check that for each combination of code1 and code2, we only have a single value of ac1
-        df_check = spark.sql("""select * from (select  count(ac1) as count_ac1 
+        df_check = spark.sql(
+            """select * from (select  count(ac1) as count_ac1 
                                 from (select distinct ac1, code1, code2 from test_data)
                                 group by code1, code2)
                                 where count_ac1 < 1 or count_ac1 > 1
-                                """)
+                                """
+        )
 
         assert df_check.count() == 0
 
     def test_default_spark_instance(self):
-        """ Test different types of seeding for random values"""
-        ds1 = (dg.DataGenerator(name="test_data_set1", rows=1000, seedMethod='hash_fieldname')
-               .withIdOutput()
-               .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
-               .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-               .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
-               .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
-
-               )
+        """Test different types of seeding for random values"""
+        ds1 = (
+            dg.DataGenerator(name="test_data_set1", rows=1000, seedMethod='hash_fieldname')
+            .withIdOutput()
+            .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
+            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+            .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+            .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+        )
 
         df = ds1.build()
         assert df.count() == 1000
 
     def test_default_spark_instance2(self):
-        """ Test different types of seeding for random values"""
-        ds1 = (dg.DataGenerator(name="test_data_set1", rows=1000, seedMethod='hash_fieldname')
-               .withIdOutput()
-               .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
-               .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-               .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
-               .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
-
-               )
+        """Test different types of seeding for random values"""
+        ds1 = (
+            dg.DataGenerator(name="test_data_set1", rows=1000, seedMethod='hash_fieldname')
+            .withIdOutput()
+            .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
+            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+            .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+            .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+        )
 
         ds1._setupSparkSession(None)
 
@@ -337,15 +370,15 @@ class TestBasicOperation:
         assert sparkSession is not None
 
     def test_multiple_hash_methods(self):
-        """ Test different types of seeding for random values"""
-        ds1 = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, seedMethod='hash_fieldname')
-               .withIdOutput()
-               .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
-               .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-               .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
-               .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
-
-               )
+        """Test different types of seeding for random values"""
+        ds1 = (
+            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, seedMethod='hash_fieldname')
+            .withIdOutput()
+            .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
+            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+            .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+            .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+        )
 
         df = ds1.build()
         assert df.count() == 1000
@@ -357,14 +390,14 @@ class TestBasicOperation:
         assert df_count_values2.count() == 0
         df_count_values3 = df.where("code5 not in ('a', 'b', 'c')")
         assert df_count_values3.count() == 0
-        ds2 = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, seedMethod='fixed')
-               .withIdOutput()
-               .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
-               .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-               .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
-               .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
-
-               )
+        ds2 = (
+            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, seedMethod='fixed')
+            .withIdOutput()
+            .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
+            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+            .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+            .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+        )
 
         df2 = ds2.build()
         assert df2.count() == 1000
@@ -376,14 +409,14 @@ class TestBasicOperation:
         assert df2_count_values2.count() == 0
         df2_count_values3 = df2.where("code5 not in ('a', 'b', 'c')")
         assert df2_count_values3.count() == 0
-        ds3 = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, seedMethod=None)
-               .withIdOutput()
-               .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
-               .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-               .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
-               .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
-
-               )
+        ds3 = (
+            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, seedMethod=None)
+            .withIdOutput()
+            .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
+            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+            .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+            .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+        )
 
         df3 = ds3.build()
         assert df3.count() == 1000
@@ -399,12 +432,12 @@ class TestBasicOperation:
         assert df3_count_values3.count() == 1000
 
     def test_generated_data_count(self, testData):
-        """ Test that rows are generated for the number of rows indicated by the row count"""
+        """Test that rows are generated for the number of rows indicated by the row count"""
         count = testData.count()
         assert count == self.row_count
 
     def test_distinct_count(self, testData):
-        """ Test that ids are unique"""
+        """Test that ids are unique"""
         distinct_count = testData.select('id').distinct().count()
         assert distinct_count == self.row_count
 
@@ -415,14 +448,22 @@ class TestBasicOperation:
 
     def test_values_code1(self, testData):
         """Test values"""
-        values = testData.select('code1').groupBy().agg(F.min('code1').alias('minValue'),
-                                                        F.max('code1').alias('maxValue')).collect()[0]
+        values = (
+            testData.select('code1')
+            .groupBy()
+            .agg(F.min('code1').alias('minValue'), F.max('code1').alias('maxValue'))
+            .collect()[0]
+        )
         assert {100, 200} == {values.minValue, values.maxValue}
 
     def test_values_code2(self, testData):
         """Test values"""
-        values = testData.select('code2').groupBy().agg(F.min('code2').alias('minValue'),
-                                                        F.max('code2').alias('maxValue')).collect()[0]
+        values = (
+            testData.select('code2')
+            .groupBy()
+            .agg(F.min('code2').alias('minValue'), F.max('code2').alias('maxValue'))
+            .collect()[0]
+        )
         assert {0, 10} == {values.minValue, values.maxValue}
 
     def test_values_code3(self, testData):
@@ -460,16 +501,17 @@ class TestBasicOperation:
 
     def test_basic_with_schema(self, testDataSpec):
         """Test use of schema"""
-        schema = StructType([
-            StructField("region_id", IntegerType(), True),
-            StructField("region_cd", StringType(), True),
-            StructField("c", StringType(), True),
-            StructField("c1", StringType(), True),
-            StructField("state1", StringType(), True),
-            StructField("state2", StringType(), True),
-            StructField("st_desc", StringType(), True),
-
-        ])
+        schema = StructType(
+            [
+                StructField("region_id", IntegerType(), True),
+                StructField("region_cd", StringType(), True),
+                StructField("c", StringType(), True),
+                StructField("c1", StringType(), True),
+                StructField("state1", StringType(), True),
+                StructField("state2", StringType(), True),
+                StructField("st_desc", StringType(), True),
+            ]
+        )
 
         testDataSpec2 = testDataSpec.clone()
         print("data generation description:", testDataSpec2.describe())
@@ -477,9 +519,7 @@ class TestBasicOperation:
         print("data generation str:", str(testDataSpec2))
         testDataSpec2.explain()
 
-        testDataSpec3 = (testDataSpec2.withSchema(schema)
-                         .withColumnSpec("state1", values=['ca', 'wa', 'ny'])
-                         )
+        testDataSpec3 = testDataSpec2.withSchema(schema).withColumnSpec("state1", values=['ca', 'wa', 'ny'])
 
         print("output columns", testDataSpec3.getOutputColumnNames())
 
@@ -502,7 +542,8 @@ class TestBasicOperation:
             .withColumn("code2", IntegerType(), maxValue=1000, step=5)
             .withColumn("code3", IntegerType(), minValue=100, maxValue=200, step=1, random=True)
             .withColumn("xcode", StringType(), values=["a", "test", "value"], random=True)
-            .withColumn("rating", FloatType(), minValue=1.0, maxValue=5.0, step=0.00001, random=True))
+            .withColumn("rating", FloatType(), minValue=1.0, maxValue=5.0, step=0.00001, random=True)
+        )
 
         df = testdata_defn.build()
         df.printSchema()
@@ -515,9 +556,8 @@ class TestBasicOperation:
 
     def test_percent_nulls(self):
         rows_wanted = 20000
-        testdata_defn = (
-            dg.DataGenerator(name="basic_dataset", rows=rows_wanted)
-            .withColumn("code1", IntegerType(), minValue=1, maxValue=20, step=1, percent_nulls=0.1)
+        testdata_defn = dg.DataGenerator(name="basic_dataset", rows=rows_wanted).withColumn(
+            "code1", IntegerType(), minValue=1, maxValue=20, step=1, percent_nulls=0.1
         )
 
         df = testdata_defn.build()
