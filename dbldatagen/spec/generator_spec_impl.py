@@ -20,6 +20,68 @@ logger = logging.getLogger(__name__)
 INTERNAL_ID_COLUMN_NAME = "id"
 
 
+def _columnSpecToDatagenColumnSpec(col_def: ColumnDefinition) -> dict[str, Any]:
+    """Convert a ColumnDefinition spec into dbldatagen DataGenerator column arguments.
+
+    This function translates the declarative ColumnDefinition format into the
+    keyword arguments expected by dbldatagen's withColumn() method. It handles special
+    cases like primary keys, nullable columns, and omitted columns.
+
+    Primary key columns receive special treatment:
+    - Automatically use the internal ID column as their base
+    - String primary keys use hash-based generation
+    - Numeric primary keys maintain sequential values
+
+    :param col_def: ColumnDefinition object from a DatagenSpec
+    :returns: Dictionary of keyword arguments suitable for DataGenerator.withColumn()
+
+    .. note::
+        Conflicting options for primary keys (like min/max, values, expr) will generate
+        warnings but won't prevent generation - the primary key behavior takes precedence
+    """
+    col_name = col_def.name
+    col_type = col_def.type
+    kwargs = col_def.options.copy() if col_def.options is not None else {}
+
+    if col_def.primary:
+        kwargs["colType"] = col_type
+        kwargs["baseColumn"] = INTERNAL_ID_COLUMN_NAME
+
+        if col_type == "string":
+            kwargs["baseColumnType"] = "hash"
+        elif col_type not in ["int", "long", "integer", "bigint", "short"]:
+            kwargs["baseColumnType"] = "auto"
+            logger.warning(
+                f"Primary key '{col_name}' has non-standard type '{col_type}'")
+
+        # Log conflicting options for primary keys
+        conflicting_opts_for_pk = [
+            "distribution", "template", "dataRange", "random", "omit",
+            "min", "max", "uniqueValues", "values", "expr"
+        ]
+
+        for opt_key in conflicting_opts_for_pk:
+            if opt_key in kwargs:
+                logger.warning(
+                    f"Primary key '{col_name}': Option '{opt_key}' may be ignored")
+
+        if col_def.omit is not None and col_def.omit:
+            kwargs["omit"] = True
+    else:
+        kwargs = col_def.options.copy() if col_def.options is not None else {}
+
+        if col_type:
+            kwargs["colType"] = col_type
+        if col_def.baseColumn:
+            kwargs["baseColumn"] = col_def.baseColumn
+        if col_def.baseColumnType:
+            kwargs["baseColumnType"] = col_def.baseColumnType
+        if col_def.omit is not None:
+            kwargs["omit"] = col_def.omit
+
+    return kwargs
+
+
 class Generator:
     """Main orchestrator for generating synthetic data from DatagenSpec configurations.
 
@@ -59,73 +121,8 @@ class Generator:
                 "SparkSession cannot be None during Generator initialization")
             raise RuntimeError("SparkSession cannot be None")
         self.spark = spark
-        self._created_spark_session = False
         self.app_name = app_name
         logger.info("Generator initialized with SparkSession")
-
-    def _columnSpecToDatagenColumnSpec(self, col_def: ColumnDefinition) -> dict[str, Any]:
-        """Convert a ColumnDefinition spec into dbldatagen DataGenerator column arguments.
-
-        This internal method translates the declarative ColumnDefinition format into the
-        keyword arguments expected by dbldatagen's withColumn() method. It handles special
-        cases like primary keys, nullable columns, and omitted columns.
-
-        Primary key columns receive special treatment:
-        - Automatically use the internal ID column as their base
-        - String primary keys use hash-based generation
-        - Numeric primary keys maintain sequential values
-
-        :param col_def: ColumnDefinition object from a DatagenSpec
-        :returns: Dictionary of keyword arguments suitable for DataGenerator.withColumn()
-
-        .. note::
-            This is an internal method not intended for direct use by end users
-
-        .. note::
-            Conflicting options for primary keys (like min/max, values, expr) will generate
-            warnings but won't prevent generation - the primary key behavior takes precedence
-        """
-        col_name = col_def.name
-        col_type = col_def.type
-        kwargs = col_def.options.copy() if col_def.options is not None else {}
-
-        if col_def.primary:
-            kwargs["colType"] = col_type
-            kwargs["baseColumn"] = INTERNAL_ID_COLUMN_NAME
-
-            if col_type == "string":
-                kwargs["baseColumnType"] = "hash"
-            elif col_type not in ["int", "long", "integer", "bigint", "short"]:
-                kwargs["baseColumnType"] = "auto"
-                logger.warning(
-                    f"Primary key '{col_name}' has non-standard type '{col_type}'")
-
-            # Log conflicting options for primary keys
-            conflicting_opts_for_pk = [
-                "distribution", "template", "dataRange", "random", "omit",
-                "min", "max", "uniqueValues", "values", "expr"
-            ]
-
-            for opt_key in conflicting_opts_for_pk:
-                if opt_key in kwargs:
-                    logger.warning(
-                        f"Primary key '{col_name}': Option '{opt_key}' may be ignored")
-
-            if col_def.omit is not None and col_def.omit:
-                kwargs["omit"] = True
-        else:
-            kwargs = col_def.options.copy() if col_def.options is not None else {}
-
-            if col_type:
-                kwargs["colType"] = col_type
-            if col_def.baseColumn:
-                kwargs["baseColumn"] = col_def.baseColumn
-            if col_def.baseColumnType:
-                kwargs["baseColumnType"] = col_def.baseColumnType
-            if col_def.omit is not None:
-                kwargs["omit"] = col_def.omit
-
-        return kwargs
 
     def _prepareDataGenerators(
         self,
@@ -191,7 +188,7 @@ class Generator:
 
                 # Process each column
                 for col_def in table_spec.columns:
-                    kwargs = self._columnSpecToDatagenColumnSpec(col_def)
+                    kwargs = _columnSpecToDatagenColumnSpec(col_def)
                     data_gen = data_gen.withColumn(colName=col_def.name, **kwargs)
                     # Has performance implications.
 
@@ -206,9 +203,9 @@ class Generator:
         logger.info("All data generators prepared successfully")
         return prepared_generators
 
-    def writePreparedData(
-        self,
-        prepared_generators: dict[str, dg.DataGenerator],
+    @staticmethod
+    def _writePreparedData(
+            prepared_generators: dict[str, dg.DataGenerator],
         output_destination: Union[UCSchemaTarget, FilePathTarget, None],
         config_source_name: str = "PydanticConfig",
     ) -> None:
@@ -244,8 +241,8 @@ class Generator:
         logger.info("Starting data writing phase")
 
         if not prepared_generators:
-            logger.warning("No prepared data generators to write")
-            return
+            logger.error("No prepared data generators to write")
+            raise RuntimeError("No prepared data generators to write")
 
         for table_name, data_gen in prepared_generators.items():
             logger.info(f"Writing table: {table_name}")
@@ -315,7 +312,7 @@ class Generator:
 
         Example:
             >>> spec = DatagenSpec(
-            ...     tables={"users": user_table_def},
+            ...     datasets={"users": user_table_def},
             ...     output_destination=UCSchemaTarget(catalog="main", schema_="test")
             ... )
             >>> spec.validate()  # Check for errors first
@@ -334,7 +331,7 @@ class Generator:
                 return
 
             # Phase 2: Write data
-            self.writePreparedData(
+            self._writePreparedData(
                 prepared_generators_map,
                 config.output_destination,
                 config_source_name

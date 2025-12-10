@@ -16,8 +16,177 @@ from .validation import ValidationResult
 logger = logging.getLogger(__name__)
 
 
+def _validate_table_basic_properties(
+    table_name: str,
+    table_def: DatasetDefinition,
+    result: ValidationResult
+) -> bool:
+    """Validate basic table properties like columns, row count, and partitions.
+
+    :param table_name: Name of the table being validated
+    :param table_def: DatasetDefinition object to validate
+    :param result: ValidationResult to collect errors/warnings
+    :returns: True if table has columns and can proceed with further validation,
+             False if table has no columns and should skip further checks
+    """
+    # Check table has at least one column
+    if not table_def.columns:
+        result.add_error(f"Table '{table_name}' must have at least one column")
+        return False
+
+    # Check row count is positive
+    if table_def.number_of_rows <= 0:
+        result.add_error(
+            f"Table '{table_name}' has invalid number_of_rows: {table_def.number_of_rows}. "
+            "Must be a positive integer."
+        )
+
+    # Check partitions if specified
+    if table_def.partitions is not None and table_def.partitions <= 0:
+        result.add_error(
+            f"Table '{table_name}' has invalid partitions: {table_def.partitions}. "
+            "Must be a positive integer or None."
+        )
+
+    return True
+
+
+def _validate_duplicate_columns(
+    table_name: str,
+    table_def: DatasetDefinition,
+    result: ValidationResult
+) -> None:
+    """Check for duplicate column names within a table.
+
+    :param table_name: Name of the table being validated
+    :param table_def: DatasetDefinition object to validate
+    :param result: ValidationResult to collect errors/warnings
+    """
+    column_names = [col.name for col in table_def.columns]
+    duplicates = [name for name in set(column_names) if column_names.count(name) > 1]
+    if duplicates:
+        result.add_error(
+            f"Table '{table_name}' has duplicate column names: {', '.join(duplicates)}"
+        )
+
+
+def _validate_column_references(
+    table_name: str,
+    table_def: DatasetDefinition,
+    result: ValidationResult
+) -> None:
+    """Validate that baseColumn references point to existing columns.
+
+    :param table_name: Name of the table being validated
+    :param table_def: DatasetDefinition object to validate
+    :param result: ValidationResult to collect errors/warnings
+    """
+    column_map = {col.name: col for col in table_def.columns}
+    for col in table_def.columns:
+        if col.baseColumn and col.baseColumn != "id":
+            if col.baseColumn not in column_map:
+                result.add_error(
+                    f"Table '{table_name}', column '{col.name}': "
+                    f"baseColumn '{col.baseColumn}' does not exist in the table"
+                )
+
+
+def _validate_primary_key_columns(
+    table_name: str,
+    table_def: DatasetDefinition,
+    result: ValidationResult
+) -> None:
+    """Validate primary key column constraints.
+
+    :param table_name: Name of the table being validated
+    :param table_def: DatasetDefinition object to validate
+    :param result: ValidationResult to collect errors/warnings
+    """
+    primary_columns = [col for col in table_def.columns if col.primary]
+    if len(primary_columns) > 1:
+        primary_names = [col.name for col in primary_columns]
+        result.add_warning(
+            f"Table '{table_name}' has multiple primary columns: {', '.join(primary_names)}. "
+            "This may not be the intended behavior."
+        )
+
+
+def _validate_column_types(
+    table_name: str,
+    table_def: DatasetDefinition,
+    result: ValidationResult
+) -> None:
+    """Validate column type specifications.
+
+    :param table_name: Name of the table being validated
+    :param table_def: DatasetDefinition object to validate
+    :param result: ValidationResult to collect errors/warnings
+    """
+    for col in table_def.columns:
+        if not col.primary and not col.type and not col.options:
+            result.add_warning(
+                f"Table '{table_name}', column '{col.name}': "
+                "No type specified and no options provided. "
+                "Column may not generate data as expected."
+            )
+
+
+def _check_circular_dependencies(
+    table_name: str,
+    columns: list[ColumnDefinition]
+) -> list[str]:
+    """Check for circular dependencies in baseColumn references within a table.
+
+    Analyzes column dependencies to detect cycles where columns reference each other
+    in a circular manner (e.g., col A depends on col B, col B depends on col A).
+    Such circular dependencies would make data generation impossible.
+
+    :param table_name: Name of the table being validated (used in error messages)
+    :param columns: List of ColumnDefinition objects to check for circular dependencies
+    :returns: List of error message strings describing any circular dependencies found.
+             Empty list if no circular dependencies exist
+
+    .. note::
+        This function performs a graph traversal to detect cycles in the dependency chain
+    """
+    errors = []
+    column_map = {col.name: col for col in columns}
+
+    for col in columns:
+        if col.baseColumn and col.baseColumn != "id":
+            # Track the dependency chain
+            visited: set[str] = set()
+            current = col.name
+
+            while current:
+                if current in visited:
+                    # Found a cycle
+                    cycle_path = " -> ".join([*list(visited), current])
+                    errors.append(
+                        f"Table '{table_name}': Circular dependency detected in column '{col.name}': {cycle_path}"
+                    )
+                    break
+
+                visited.add(current)
+                current_col = column_map.get(current)
+
+                if not current_col:
+                    break
+
+                # Move to the next column in the chain
+                if current_col.baseColumn and current_col.baseColumn != "id":
+                    if current_col.baseColumn not in column_map:
+                        # This will be caught by _validate_column_references
+                        break
+                    current = current_col.baseColumn
+                else:
+                    break
+
+    return errors
+
+
 class DatasetDefinition(BaseModel):
-    """Defines the complete specification for a single synthetic data table.
+    """Defines the complete specification for a single synthetic dataset.
 
     This class encapsulates all the information needed to generate a table of synthetic data,
     including the number of rows, partitioning, and column specifications.
@@ -82,60 +251,22 @@ class DatagenSpec(BaseModel):
     generator_options: dict[str, Any] | None = None
     intended_for_databricks: bool | None = None # May be infered.
 
-    def _check_circular_dependencies(
-        self,
-        table_name: str,
-        columns: list[ColumnDefinition]
-    ) -> list[str]:
-        """Check for circular dependencies in baseColumn references within a table.
+    def _validate_generator_options(self, result: ValidationResult) -> None:
+        """Validate generator options against known valid options.
 
-        Analyzes column dependencies to detect cycles where columns reference each other
-        in a circular manner (e.g., col A depends on col B, col B depends on col A).
-        Such circular dependencies would make data generation impossible.
-
-        :param table_name: Name of the table being validated (used in error messages)
-        :param columns: List of ColumnDefinition objects to check for circular dependencies
-        :returns: List of error message strings describing any circular dependencies found.
-                 Empty list if no circular dependencies exist
-
-        .. note::
-            This method performs a graph traversal to detect cycles in the dependency chain
+        :param result: ValidationResult to collect errors/warnings
         """
-        errors = []
-        column_map = {col.name: col for col in columns}
-
-        for col in columns:
-            if col.baseColumn and col.baseColumn != "id":
-                # Track the dependency chain
-                visited: set[str] = set()
-                current = col.name
-
-                while current:
-                    if current in visited:
-                        # Found a cycle
-                        cycle_path = " -> ".join([*list(visited), current])
-                        errors.append(
-                            f"Table '{table_name}': Circular dependency detected in column '{col.name}': {cycle_path}"
-                        )
-                        break
-
-                    visited.add(current)
-                    current_col = column_map.get(current)
-
-                    if not current_col:
-                        break
-
-                    # Move to the next column in the chain
-                    if current_col.baseColumn and current_col.baseColumn != "id":
-                        if current_col.baseColumn not in column_map:
-                            # baseColumn doesn't exist - we'll catch this in another validation
-                            break
-                        current = current_col.baseColumn
-                    else:
-                        # Reached a column that doesn't have a baseColumn or uses "id"
-                        break
-
-        return errors
+        if self.generator_options:
+            known_options = [
+                "random", "randomSeed", "randomSeedMethod", "verbose",
+                "debug", "seedColumnName"
+            ]
+            for key in self.generator_options:
+                if key not in known_options:
+                    result.add_warning(
+                        f"Unknown generator option: '{key}'. "
+                        "This may be ignored during generation."
+                    )
 
     def validate(self, strict: bool = True) -> ValidationResult:  # type: ignore[override]
         """Validate the entire DatagenSpec configuration comprehensively.
@@ -156,6 +287,7 @@ class DatagenSpec(BaseModel):
         :param strict: Controls validation failure behavior:
                       - If True: Raises ValueError for any errors OR warnings found
                       - If False: Only raises ValueError for errors (warnings are tolerated)
+                      Defaults to True
         :returns: ValidationResult object containing all collected errors and warnings,
                  even if an exception is raised
         :raises ValueError: If validation fails based on strict mode setting.
@@ -176,66 +308,26 @@ class DatagenSpec(BaseModel):
 
         # 2. Validate each table (continue checking all tables even if errors found)
         for table_name, table_def in self.datasets.items():
-            # Check table has at least one column
-            if not table_def.columns:
-                result.add_error(f"Table '{table_name}' must have at least one column")
-                continue  # Skip further checks for this table since it has no columns
+            # Validate basic properties (returns False if no columns, skip further checks)
+            if not _validate_table_basic_properties(table_name, table_def, result):
+                continue
 
-            # Check row count is positive
-            if table_def.number_of_rows <= 0:
-                result.add_error(
-                    f"Table '{table_name}' has invalid number_of_rows: {table_def.number_of_rows}. "
-                    "Must be a positive integer."
-                )
+            # Validate duplicate columns
+            _validate_duplicate_columns(table_name, table_def, result)
 
-            # Check partitions if specified
-            # Can we find a way to use the default way?
-            if table_def.partitions is not None and table_def.partitions <= 0:
-                result.add_error(
-                    f"Table '{table_name}' has invalid partitions: {table_def.partitions}. "
-                    "Must be a positive integer or None."
-                )
-
-            # Check for duplicate column names
-            column_names = [col.name for col in table_def.columns]
-            duplicates = [name for name in set(column_names) if column_names.count(name) > 1]
-            if duplicates:
-                result.add_error(
-                    f"Table '{table_name}' has duplicate column names: {', '.join(duplicates)}"
-                )
-
-            # Build column map for reference checking
-            column_map = {col.name: col for col in table_def.columns}
-            for col in table_def.columns:
-                if col.baseColumn and col.baseColumn != "id":
-                    if col.baseColumn not in column_map:
-                        result.add_error(
-                            f"Table '{table_name}', column '{col.name}': "
-                            f"baseColumn '{col.baseColumn}' does not exist in the table"
-                        )
+            # Validate column references
+            _validate_column_references(table_name, table_def, result)
 
             # Check for circular dependencies in baseColumn references
-            circular_errors = self._check_circular_dependencies(table_name, table_def.columns)
+            circular_errors = _check_circular_dependencies(table_name, table_def.columns)
             for error in circular_errors:
                 result.add_error(error)
 
-            # Check primary key constraints
-            primary_columns = [col for col in table_def.columns if col.primary]
-            if len(primary_columns) > 1:
-                primary_names = [col.name for col in primary_columns]
-                result.add_warning(
-                    f"Table '{table_name}' has multiple primary columns: {', '.join(primary_names)}. "
-                    "This may not be the intended behavior."
-                )
+            # Validate primary key constraints
+            _validate_primary_key_columns(table_name, table_def, result)
 
-            # Check for columns with no type and not using baseColumn properly
-            for col in table_def.columns:
-                if not col.primary and not col.type and not col.options:
-                    result.add_warning(
-                        f"Table '{table_name}', column '{col.name}': "
-                        "No type specified and no options provided. "
-                        "Column may not generate data as expected."
-                    )
+            # Validate column types
+            _validate_column_types(table_name, table_def, result)
 
         # 3. Check output destination
         if not self.output_destination:
@@ -244,18 +336,8 @@ class DatagenSpec(BaseModel):
                 "Set output_destination to save generated data."
             )
 
-        # 4. Validate generator options (if any known options)
-        if self.generator_options:
-            known_options = [
-                "random", "randomSeed", "randomSeedMethod", "verbose",
-                "debug", "seedColumnName"
-            ]
-            for key in self.generator_options:
-                if key not in known_options:
-                    result.add_warning(
-                        f"Unknown generator option: '{key}'. "
-                        "This may be ignored during generation."
-                    )
+        # 4. Validate generator options
+        self._validate_generator_options(result)
 
         # Now that all validations are complete, decide whether to raise
         if (strict and (result.errors or result.warnings)) or (not strict and result.errors):

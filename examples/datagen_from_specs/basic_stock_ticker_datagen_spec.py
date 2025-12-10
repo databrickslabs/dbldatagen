@@ -4,7 +4,7 @@ This module defines a declarative Pydantic-based specification for generating
 the basic stock ticker dataset, corresponding to the BasicStockTickerProvider.
 """
 
-from random import random
+import random
 
 from dbldatagen.spec.generator_spec import DatagenSpec, DatasetDefinition
 from dbldatagen.spec.column_spec import ColumnDefinition
@@ -47,9 +47,9 @@ def create_basic_stock_ticker_spec(
     # Generate random values for start_value, growth_rate, and volatility
     # These need to be pre-computed for the values option
     num_value_sets = max(1, int(num_symbols / 10))
-    start_values = [1.0 + 199.0 * random() for _ in range(num_value_sets)]
-    growth_rates = [-0.1 + 0.35 * random() for _ in range(num_value_sets)]
-    volatility_values = [0.0075 * random() for _ in range(num_value_sets)]
+    start_values = [1.0 + 199.0 * random.random() for _ in range(num_value_sets)]
+    growth_rates = [-0.1 + 0.35 * random.random() for _ in range(num_value_sets)]
+    volatility_values = [0.0075 * random.random() for _ in range(num_value_sets)]
 
     columns = [
         # Symbol ID (numeric identifier for symbol)

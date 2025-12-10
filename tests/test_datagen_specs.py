@@ -37,7 +37,7 @@ class TestBasicUserDatagenSpec(unittest.TestCase):
         )
 
         spec = DatagenSpec(
-            tables={"users": table_def},
+            datasets={"users": table_def},
             output_destination=None
         )
 
@@ -68,7 +68,7 @@ class TestBasicUserDatagenSpec(unittest.TestCase):
         )
 
         spec = DatagenSpec(
-            tables={"users": table_def}
+            datasets={"users": table_def}
         )
 
         validation_result = spec.validate(strict=False)
@@ -98,7 +98,7 @@ class TestBasicUserDatagenSpec(unittest.TestCase):
         )
 
         spec = DatagenSpec(
-            tables={"symbols": table_def}
+            datasets={"symbols": table_def}
         )
 
         validation_result = spec.validate(strict=False)
@@ -145,7 +145,7 @@ class TestBasicStockTickerDatagenSpec(unittest.TestCase):
         )
 
         spec = DatagenSpec(
-            tables={"stock_tickers": table_def},
+            datasets={"stock_tickers": table_def},
             output_destination=None
         )
 
@@ -181,7 +181,7 @@ class TestBasicStockTickerDatagenSpec(unittest.TestCase):
         )
 
         spec = DatagenSpec(
-            tables={"prices": table_def}
+            datasets={"prices": table_def}
         )
 
         validation_result = spec.validate(strict=False)
@@ -198,7 +198,7 @@ class TestDatagenSpecValidation(unittest.TestCase):
 
     def test_empty_tables_validation(self):
         """Test that spec with no tables fails validation."""
-        spec = DatagenSpec(tables={})
+        spec = DatagenSpec(datasets={})
 
         with self.assertRaises(ValueError) as context:
             spec.validate(strict=False)
@@ -218,7 +218,7 @@ class TestDatagenSpecValidation(unittest.TestCase):
             columns=columns
         )
 
-        spec = DatagenSpec(tables={"test": table_def})
+        spec = DatagenSpec(datasets={"test": table_def})
 
         with self.assertRaises(ValueError) as context:
             spec.validate(strict=False)
@@ -240,7 +240,7 @@ class TestDatagenSpecValidation(unittest.TestCase):
             columns=columns
         )
 
-        spec = DatagenSpec(tables={"test": table_def})
+        spec = DatagenSpec(datasets={"test": table_def})
 
         with self.assertRaises(ValueError) as context:
             spec.validate(strict=False)
@@ -261,7 +261,7 @@ class TestDatagenSpecValidation(unittest.TestCase):
         )
 
         spec = DatagenSpec(
-            tables={"test": table_def},
+            datasets={"test": table_def},
             generator_options={
                 "randomSeedMethod": "hash_fieldname",
                 "verbose": True
