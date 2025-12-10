@@ -11,7 +11,7 @@ in a type-safe, declarative way.
 from typing import Any
 
 # Import only the compat layer by default to avoid triggering Spark/heavy dependencies
-from .compat import BaseModel, Field, constr, root_validator, validator
+from dbldatagen.spec.compat import BaseModel, Field, constr, root_validator, validator
 
 
 # Lazy imports for heavy modules - import these explicitly when needed

@@ -190,7 +190,7 @@ class TestStandardDatasetsFramework:
         ds_definition = X1.getDatasetDefinition()
         print("ds_definition", ds_definition)
         assert ds_definition.name == "providers/X1"
-        assert ds_definition.tables == [DatasetProvider.DEFAULT_TABLE_NAME]
+        assert ds_definition.datasets == [DatasetProvider.DEFAULT_TABLE_NAME]
         assert ds_definition.primaryTable == DatasetProvider.DEFAULT_TABLE_NAME
         assert ds_definition.summary is not None
         assert ds_definition.description is not None

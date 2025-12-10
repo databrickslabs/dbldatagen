@@ -1,8 +1,7 @@
-from dbldatagen.spec.generator_spec import DatagenSpec
 import pytest
 from dbldatagen.spec.generator_spec import (
     DatagenSpec,
-    TableDefinition,
+    DatasetDefinition,
     ColumnDefinition,
     UCSchemaTarget,
     FilePathTarget,
@@ -103,7 +102,7 @@ class TestDatagenSpecValidation:
     def test_valid_spec_passes_validation(self):
         spec = DatagenSpec(
             tables={
-                "users": TableDefinition(
+                "users": DatasetDefinition(
                     number_of_rows=100,
                     columns=[
                         ColumnDefinition(name="id", type="int", primary=True),
@@ -127,7 +126,7 @@ class TestDatagenSpecValidation:
     def test_table_without_columns_raises_error(self):
         spec = DatagenSpec(
             tables={
-                "empty_table": TableDefinition(
+                "empty_table": DatasetDefinition(
                     number_of_rows=100,
                     columns=[]
                 )
@@ -140,7 +139,7 @@ class TestDatagenSpecValidation:
     def test_negative_row_count_raises_error(self):
         spec = DatagenSpec(
             tables={
-                "users": TableDefinition(
+                "users": DatasetDefinition(
                     number_of_rows=-10,
                     columns=[ColumnDefinition(name="id", type="int", primary=True)]
                 )
@@ -153,7 +152,7 @@ class TestDatagenSpecValidation:
     def test_zero_row_count_raises_error(self):
         spec = DatagenSpec(
             tables={
-                "users": TableDefinition(
+                "users": DatasetDefinition(
                     number_of_rows=0,
                     columns=[ColumnDefinition(name="id", type="int", primary=True)]
                 )
@@ -166,7 +165,7 @@ class TestDatagenSpecValidation:
     def test_invalid_partitions_raises_error(self):
         spec = DatagenSpec(
             tables={
-                "users": TableDefinition(
+                "users": DatasetDefinition(
                     number_of_rows=100,
                     partitions=-5,
                     columns=[ColumnDefinition(name="id", type="int", primary=True)]
@@ -180,7 +179,7 @@ class TestDatagenSpecValidation:
     def test_duplicate_column_names_raises_error(self):
         spec = DatagenSpec(
             tables={
-                "users": TableDefinition(
+                "users": DatasetDefinition(
                     number_of_rows=100,
                     columns=[
                         ColumnDefinition(name="id", type="int", primary=True),
@@ -197,7 +196,7 @@ class TestDatagenSpecValidation:
     def test_invalid_base_column_reference_raises_error(self):
         spec = DatagenSpec(
             tables={
-                "users": TableDefinition(
+                "users": DatasetDefinition(
                     number_of_rows=100,
                     columns=[
                         ColumnDefinition(name="id", type="int", primary=True),
@@ -213,7 +212,7 @@ class TestDatagenSpecValidation:
     def test_circular_dependency_raises_error(self):
         spec = DatagenSpec(
             tables={
-                "users": TableDefinition(
+                "users": DatasetDefinition(
                     number_of_rows=100,
                     columns=[
                         ColumnDefinition(name="id", type="int", primary=True),
@@ -231,7 +230,7 @@ class TestDatagenSpecValidation:
     def test_multiple_primary_columns_warning(self):
         spec = DatagenSpec(
             tables={
-                "users": TableDefinition(
+                "users": DatasetDefinition(
                     number_of_rows=100,
                     columns=[
                         ColumnDefinition(name="id1", type="int", primary=True),
@@ -254,7 +253,7 @@ class TestDatagenSpecValidation:
     def test_column_without_type_or_options_warning(self):
         spec = DatagenSpec(
             tables={
-                "users": TableDefinition(
+                "users": DatasetDefinition(
                     number_of_rows=100,
                     columns=[
                         ColumnDefinition(name="id", type="int", primary=True),
@@ -272,7 +271,7 @@ class TestDatagenSpecValidation:
     def test_no_output_destination_warning(self):
         spec = DatagenSpec(
             tables={
-                "users": TableDefinition(
+                "users": DatasetDefinition(
                     number_of_rows=100,
                     columns=[ColumnDefinition(name="id", type="int", primary=True)]
                 )
@@ -287,7 +286,7 @@ class TestDatagenSpecValidation:
     def test_unknown_generator_option_warning(self):
         spec = DatagenSpec(
             tables={
-                "users": TableDefinition(
+                "users": DatasetDefinition(
                     number_of_rows=100,
                     columns=[ColumnDefinition(name="id", type="int", primary=True)]
                 )
@@ -304,7 +303,7 @@ class TestDatagenSpecValidation:
         """Test that all errors are collected before raising"""
         spec = DatagenSpec(
             tables={
-                "users": TableDefinition(
+                "users": DatasetDefinition(
                     number_of_rows=-10,  # Error 1
                     partitions=0,  # Error 2
                     columns=[
@@ -329,7 +328,7 @@ class TestDatagenSpecValidation:
     def test_strict_mode_raises_on_warnings(self):
         spec = DatagenSpec(
             tables={
-                "users": TableDefinition(
+                "users": DatasetDefinition(
                     number_of_rows=100,
                     columns=[ColumnDefinition(name="id", type="int", primary=True)]
                 )
@@ -349,7 +348,7 @@ class TestDatagenSpecValidation:
         """Test that valid baseColumn chains work"""
         spec = DatagenSpec(
             tables={
-                "users": TableDefinition(
+                "users": DatasetDefinition(
                     number_of_rows=100,
                     columns=[
                         ColumnDefinition(name="id", type="int", primary=True),
@@ -368,15 +367,15 @@ class TestDatagenSpecValidation:
         """Test validation across multiple tables"""
         spec = DatagenSpec(
             tables={
-                "users": TableDefinition(
+                "users": DatasetDefinition(
                     number_of_rows=100,
                     columns=[ColumnDefinition(name="id", type="int", primary=True)]
                 ),
-                "orders": TableDefinition(
+                "orders": DatasetDefinition(
                     number_of_rows=-50,  # Error in second table
                     columns=[ColumnDefinition(name="order_id", type="int", primary=True)]
                 ),
-                "products": TableDefinition(
+                "products": DatasetDefinition(
                     number_of_rows=200,
                     columns=[]  # Error: no columns
                 )
@@ -425,7 +424,7 @@ class TestValidationIntegration:
         """Test a realistic, valid specification"""
         spec = DatagenSpec(
             tables={
-                "users": TableDefinition(
+                "users": DatasetDefinition(
                     number_of_rows=1000,
                     partitions=4,
                     columns=[
@@ -441,7 +440,7 @@ class TestValidationIntegration:
                         }),
                     ]
                 ),
-                "orders": TableDefinition(
+                "orders": DatasetDefinition(
                     number_of_rows=5000,
                     columns=[
                         ColumnDefinition(name="order_id", type="int", primary=True),

@@ -3,7 +3,7 @@
 import unittest
 
 # Import DatagenSpec classes directly to avoid Spark initialization
-from dbldatagen.spec.generator_spec import DatagenSpec, TableDefinition
+from dbldatagen.spec.generator_spec import DatagenSpec, DatasetDefinition
 from dbldatagen.spec.column_spec import ColumnDefinition
 
 
@@ -30,7 +30,7 @@ class TestBasicUserDatagenSpec(unittest.TestCase):
             ),
         ]
 
-        table_def = TableDefinition(
+        table_def = DatasetDefinition(
             number_of_rows=1000,
             partitions=2,
             columns=columns
@@ -42,10 +42,10 @@ class TestBasicUserDatagenSpec(unittest.TestCase):
         )
 
         self.assertIsNotNone(spec)
-        self.assertIn("users", spec.tables)
-        self.assertEqual(spec.tables["users"].number_of_rows, 1000)
-        self.assertEqual(spec.tables["users"].partitions, 2)
-        self.assertEqual(len(spec.tables["users"].columns), 3)
+        self.assertIn("users", spec.datasets)
+        self.assertEqual(spec.datasets["users"].number_of_rows, 1000)
+        self.assertEqual(spec.datasets["users"].partitions, 2)
+        self.assertEqual(len(spec.datasets["users"].columns), 3)
 
     def test_basic_user_spec_validation(self):
         """Test validating a basic user DatagenSpec."""
@@ -62,7 +62,7 @@ class TestBasicUserDatagenSpec(unittest.TestCase):
             ),
         ]
 
-        table_def = TableDefinition(
+        table_def = DatasetDefinition(
             number_of_rows=100,
             columns=columns
         )
@@ -92,7 +92,7 @@ class TestBasicUserDatagenSpec(unittest.TestCase):
             ),
         ]
 
-        table_def = TableDefinition(
+        table_def = DatasetDefinition(
             number_of_rows=50,
             columns=columns
         )
@@ -138,7 +138,7 @@ class TestBasicStockTickerDatagenSpec(unittest.TestCase):
             ),
         ]
 
-        table_def = TableDefinition(
+        table_def = DatasetDefinition(
             number_of_rows=1000,
             partitions=2,
             columns=columns
@@ -150,9 +150,9 @@ class TestBasicStockTickerDatagenSpec(unittest.TestCase):
         )
 
         self.assertIsNotNone(spec)
-        self.assertIn("stock_tickers", spec.tables)
-        self.assertEqual(spec.tables["stock_tickers"].number_of_rows, 1000)
-        self.assertEqual(len(spec.tables["stock_tickers"].columns), 5)
+        self.assertIn("stock_tickers", spec.datasets)
+        self.assertEqual(spec.datasets["stock_tickers"].number_of_rows, 1000)
+        self.assertEqual(len(spec.datasets["stock_tickers"].columns), 5)
 
     def test_stock_ticker_with_omitted_columns(self):
         """Test creating spec with omitted intermediate columns."""
@@ -175,7 +175,7 @@ class TestBasicStockTickerDatagenSpec(unittest.TestCase):
             ),
         ]
 
-        table_def = TableDefinition(
+        table_def = DatasetDefinition(
             number_of_rows=100,
             columns=columns
         )
@@ -213,7 +213,7 @@ class TestDatagenSpecValidation(unittest.TestCase):
             ColumnDefinition(name="id", type="string"),  # Duplicate!
         ]
 
-        table_def = TableDefinition(
+        table_def = DatasetDefinition(
             number_of_rows=100,
             columns=columns
         )
@@ -235,7 +235,7 @@ class TestDatagenSpecValidation(unittest.TestCase):
         ]
 
         # Create with negative rows using dict to bypass Pydantic validation
-        table_def = TableDefinition(
+        table_def = DatasetDefinition(
             number_of_rows=-100,  # Invalid
             columns=columns
         )
@@ -255,7 +255,7 @@ class TestDatagenSpecValidation(unittest.TestCase):
             ColumnDefinition(name="value", type="long")
         ]
 
-        table_def = TableDefinition(
+        table_def = DatasetDefinition(
             number_of_rows=100,
             columns=columns
         )

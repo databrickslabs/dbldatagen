@@ -6,7 +6,7 @@ the basic stock ticker dataset, corresponding to the BasicStockTickerProvider.
 
 from random import random
 
-from dbldatagen.spec.generator_spec import DatagenSpec, TableDefinition
+from dbldatagen.spec.generator_spec import DatagenSpec, DatasetDefinition
 from dbldatagen.spec.column_spec import ColumnDefinition
 
 
@@ -266,7 +266,7 @@ def create_basic_stock_ticker_spec(
         ),
     ]
 
-    table_def = TableDefinition(
+    table_def = DatasetDefinition(
         number_of_rows=number_of_rows,
         partitions=partitions,
         columns=columns

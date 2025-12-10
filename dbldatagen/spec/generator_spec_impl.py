@@ -5,7 +5,7 @@ from typing import Any, Union
 from pyspark.sql import SparkSession
 
 import dbldatagen as dg
-from dbldatagen.spec.generator_spec import TableDefinition
+from dbldatagen.spec.generator_spec import DatasetDefinition
 
 from .generator_spec import ColumnDefinition, DatagenSpec, FilePathTarget, UCSchemaTarget
 
@@ -161,7 +161,7 @@ class Generator:
             DataGenerators before data generation begins
         """
         logger.info(
-            f"Preparing data generators for {len(config.tables)} tables")
+            f"Preparing data generators for {len(config.datasets)} tables")
 
         if not self.spark:
             logger.error(
@@ -169,11 +169,11 @@ class Generator:
             raise RuntimeError(
                 "SparkSession is not available. Cannot prepare data generators")
 
-        tables_config: dict[str, TableDefinition] = config.tables
+        tables_config: dict[str, DatasetDefinition] = config.datasets
         global_gen_options = config.generator_options if config.generator_options else {}
 
         prepared_generators: dict[str, dg.DataGenerator] = {}
-        generation_order = list(tables_config.keys()) # This becomes impotant when we get into multitable
+        generation_order = list(tables_config.keys()) # This becomes important when we get into multitable
 
         for table_name in generation_order:
             table_spec = tables_config[table_name]
@@ -322,13 +322,13 @@ class Generator:
             >>> generator = Generator(spark)
             >>> generator.generateAndWriteData(spec)
         """
-        logger.info(f"Starting combined data generation and writing for {len(config.tables)} tables")
+        logger.info(f"Starting combined data generation and writing for {len(config.datasets)} tables")
 
         try:
             # Phase 1: Prepare data generators
             prepared_generators_map = self._prepareDataGenerators(config, config_source_name)
 
-            if not prepared_generators_map and list(config.tables.keys()):
+            if not prepared_generators_map and list(config.datasets.keys()):
                 logger.warning(
                     "No data generators were successfully prepared, though tables were defined")
                 return

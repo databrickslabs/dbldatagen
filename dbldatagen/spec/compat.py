@@ -16,7 +16,7 @@ Usage in other modules:
     Always import from this compat module, not directly from pydantic::
 
         # Correct
-        from .compat import BaseModel, validator
+        from dbldatagen.spec.compat import BaseModel, validator
 
         # Incorrect - don't do this
         from pydantic import BaseModel, validator
@@ -25,6 +25,9 @@ Environment Support:
     - **Pydantic V2.x environments**: Imports from pydantic.v1 compatibility layer
     - **Pydantic V1.x environments**: Imports directly from pydantic package
     - **Databricks runtimes**: Works with pre-installed Pydantic versions without conflicts
+
+        - **DBR 16.4 onwards**: Pydantic 2.8+ available
+        - **DBR 15.4 and below**: Pydantic 1.10.6 available
 
 .. note::
     This approach is inspired by FastAPI's compatibility layer:

@@ -16,7 +16,7 @@ from .validation import ValidationResult
 logger = logging.getLogger(__name__)
 
 
-class TableDefinition(BaseModel):
+class DatasetDefinition(BaseModel):
     """Defines the complete specification for a single synthetic data table.
 
     This class encapsulates all the information needed to generate a table of synthetic data,
@@ -46,12 +46,12 @@ class TableDefinition(BaseModel):
 
 
 class DatagenSpec(BaseModel):
-    """Top-level specification for synthetic data generation across one or more tables.
+    """Top-level specification for synthetic data generation across one or more datasets.
 
     This is the main configuration class for the dbldatagen spec-based API. It defines all tables
     to be generated, where the output should be written, and global generation options.
 
-    :param tables: Dictionary mapping table names to their TableDefinition specifications.
+    :param datasets: Dictionary mapping table names to their DatasetDefinition specifications.
                   Keys are the table names that will be used in the output destination
     :param output_destination: Target location for generated data. Can be either a
                               UCSchemaTarget (Unity Catalog) or FilePathTarget (file system).
@@ -77,7 +77,7 @@ class DatagenSpec(BaseModel):
         Multiple tables can share the same DatagenSpec and will be generated in the order
         they appear in the tables dictionary
     """
-    tables: dict[str, TableDefinition]
+    datasets: dict[str, DatasetDefinition]
     output_destination: Union[UCSchemaTarget, FilePathTarget] | None = None # there is a abstraction, may be we can use that? talk to Greg
     generator_options: dict[str, Any] | None = None
     intended_for_databricks: bool | None = None # May be infered.
@@ -171,11 +171,11 @@ class DatagenSpec(BaseModel):
         result = ValidationResult()
 
         # 1. Check that there's at least one table
-        if not self.tables:
+        if not self.datasets:
             result.add_error("Spec must contain at least one table definition")
 
         # 2. Validate each table (continue checking all tables even if errors found)
-        for table_name, table_def in self.tables.items():
+        for table_name, table_def in self.datasets.items():
             # Check table has at least one column
             if not table_def.columns:
                 result.add_error(f"Table '{table_name}' must have at least one column")
@@ -283,7 +283,7 @@ class DatagenSpec(BaseModel):
         .. note::
             This is intended for interactive exploration and debugging of spec configurations
         """
-        for table_name, table_def in self.tables.items():
+        for table_name, table_def in self.datasets.items():
             print(f"Table: {table_name}")
 
             if self.output_destination:
