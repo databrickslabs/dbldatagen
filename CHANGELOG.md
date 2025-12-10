@@ -7,8 +7,8 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 
 #### Fixed 
 * Refactored `DataAnalyzer` and `BasicStockTickerProvider` to comply with ANSI SQL standards
+* Refactored `Constraint` to treat `_filterExpression` and `_calculatedFilterExpression` as instance variables
 * Removed internal modification of `SparkSession`
-* Updated `Constraint` to treat `_filterExpression` and `_calculatedFilterExpression` as instance variables
 
 #### Changed
 * Added type hints for modules and classes
