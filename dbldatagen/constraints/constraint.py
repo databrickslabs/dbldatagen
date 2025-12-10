@@ -28,12 +28,11 @@ class Constraint(SerializableToDict, ABC):
     """
 
     SUPPORTED_OPERATORS: ClassVar[list[str]] = ["<", ">", ">=", "!=", "==", "=", "<=", "<>"]
-    _filterExpression: Column | None = None
-    _calculatedFilterExpression: bool = False
-    _supportsStreaming: bool = False
 
     def __init__(self, supportsStreaming: bool = False) -> None:
         self._supportsStreaming = supportsStreaming
+        self._filterExpression: Column | None = None
+        self._calculatedFilterExpression: bool = False
 
     @staticmethod
     def _columnsFromListOrString(
