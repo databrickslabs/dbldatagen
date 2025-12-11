@@ -7,7 +7,7 @@
 
 # COMMAND ----------
 
-# MAGIC %pip install dbldatagen
+# MAGIC %pip install dbldatagen faker
 
 # COMMAND ----------
 
@@ -47,7 +47,24 @@ from pyspark.sql.types import (
     TimestampType,
     BooleanType,
 )
-from dbldatagen import DataGenerator
+from dbldatagen import DataGenerator, PyfuncText
+from faker import Faker
+
+
+def init_faker(context):
+    context.faker = Faker()
+
+
+def generate_name(context, _):
+    return context.faker.name()
+
+
+def generate_company(context, _):
+    return context.faker.company()
+
+
+def generate_city(context, _):
+    return context.faker.city()
 
 
 @dataclass
@@ -83,7 +100,7 @@ class ClinicalTrialsGenerator:
             .withColumn(
                 "sponsor_company",
                 StringType(),
-                template=r"\\w \\w|\\w \\w \\w|\\w & \\w",
+                text=PyfuncText(generate_company, init=init_faker),
             )
             .withColumn(
                 "phase",
@@ -176,14 +193,24 @@ class ClinicalTrialsGenerator:
             .withColumn(
                 "trial_id", IntegerType(), minValue=10000, maxValue=10099, random=True
             )
-            .withColumn("city_base", StringType(), template=r"\\w|\\w \\w", omit=True)
+            .withColumn(
+                "city_base",
+                StringType(),
+                text=PyfuncText(generate_city, init=init_faker),
+                omit=True,
+            )
             .withColumn(
                 "site_name",
                 StringType(),
                 baseColumn="city_base",
                 expr="concat(city_base, ' Medical Center')",
             )
-            .withColumn("pi_name_base", StringType(), template=r"\\w \\w", omit=True)
+            .withColumn(
+                "pi_name_base",
+                StringType(),
+                text=PyfuncText(generate_name, init=init_faker),
+                omit=True,
+            )
             .withColumn(
                 "principal_investigator",
                 StringType(),
@@ -398,7 +425,7 @@ class ClinicalTrialsGenerator:
                     "Week 24",
                     "End of Study",
                 ],
-                weights=[1, 1.5, 1.3, 1.3, 1.3, 1.2, 1],
+                random=True,
             )
             .withColumn(
                 "visit_number",
@@ -577,9 +604,16 @@ class ClinicalTrialsGenerator:
                 baseColumn="sample_quality",
                 expr="CASE WHEN sample_quality != 'Acceptable' THEN true ELSE rand() < 0.03 END",
             )
-            .withColumn("lab_technician", StringType(), template=r"\\w \\w")
             .withColumn(
-                "physician_name_base", StringType(), template=r"\\w \\w", omit=True
+                "lab_technician",
+                StringType(),
+                text=PyfuncText(generate_name, init=init_faker),
+            )
+            .withColumn(
+                "physician_name_base",
+                StringType(),
+                text=PyfuncText(generate_name, init=init_faker),
+                omit=True,
             )
             .withColumn(
                 "reviewed_by_physician",
