@@ -218,10 +218,6 @@ class PyfuncTextFactory:
                                    rootProperty="faker",
                                    name="FakerText"))
     """
-    _name: str
-    _initPerBatch: bool
-    _initFn: Callable | None
-    _rootProperty: object | None
 
     _name: str
     _initPerBatch: bool

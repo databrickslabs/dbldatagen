@@ -273,7 +273,7 @@ def create_basic_stock_ticker_spec(
     )
 
     spec = DatagenSpec(
-        tables={"stock_tickers": table_def},
+        datasets={"stock_tickers": table_def},
         output_destination=None,  # No automatic persistence
         generator_options={
             "randomSeedMethod": "hash_fieldname"

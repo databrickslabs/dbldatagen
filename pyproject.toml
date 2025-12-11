@@ -125,6 +125,17 @@ verify      = ["black --check .",
                "mypy .",
                "pylint --output-format=colorized -j 0 dbldatagen tests"]
 
+
+[tool.hatch.envs.test-pydantic]
+template = "default"
+matrix = [
+    { pydantic_version = ["1.10.6", "2.8.2"] }
+]
+extra-dependencies = [
+    "pydantic=={matrix:pydantic_version}"
+]
+
+
 [tool.black]
 target-version = ["py310"]
 line-length = 120

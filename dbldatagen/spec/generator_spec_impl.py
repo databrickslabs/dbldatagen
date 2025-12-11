@@ -51,19 +51,25 @@ def _columnSpecToDatagenColumnSpec(col_def: ColumnDefinition) -> dict[str, Any]:
             kwargs["baseColumnType"] = "hash"
         elif col_type not in ["int", "long", "integer", "bigint", "short"]:
             kwargs["baseColumnType"] = "auto"
-            logger.warning(
-                f"Primary key '{col_name}' has non-standard type '{col_type}'")
+            logger.warning(f"Primary key '{col_name}' has non-standard type '{col_type}'")
 
         # Log conflicting options for primary keys
         conflicting_opts_for_pk = [
-            "distribution", "template", "dataRange", "random", "omit",
-            "min", "max", "uniqueValues", "values", "expr"
+            "distribution",
+            "template",
+            "dataRange",
+            "random",
+            "omit",
+            "min",
+            "max",
+            "uniqueValues",
+            "values",
+            "expr",
         ]
 
         for opt_key in conflicting_opts_for_pk:
             if opt_key in kwargs:
-                logger.warning(
-                    f"Primary key '{col_name}': Option '{opt_key}' may be ignored")
+                logger.warning(f"Primary key '{col_name}': Option '{opt_key}' may be ignored")
 
         if col_def.omit is not None and col_def.omit:
             kwargs["omit"] = True
@@ -117,17 +123,14 @@ class Generator:
         :raises RuntimeError: If spark is None or not properly initialized
         """
         if not spark:
-            logger.error(
-                "SparkSession cannot be None during Generator initialization")
+            logger.error("SparkSession cannot be None during Generator initialization")
             raise RuntimeError("SparkSession cannot be None")
         self.spark = spark
         self.app_name = app_name
         logger.info("Generator initialized with SparkSession")
 
     def _prepareDataGenerators(
-        self,
-        config: DatagenSpec,
-        config_source_name: str = "PydanticConfig"
+        self, config: DatagenSpec, config_source_name: str = "PydanticConfig"
     ) -> dict[str, dg.DataGenerator]:
         """Prepare DataGenerator objects for all tables defined in the spec.
 
@@ -157,20 +160,17 @@ class Generator:
             Preparation is separate from building to allow inspection and modification of
             DataGenerators before data generation begins
         """
-        logger.info(
-            f"Preparing data generators for {len(config.datasets)} tables")
+        logger.info(f"Preparing data generators for {len(config.datasets)} tables")
 
         if not self.spark:
-            logger.error(
-                "SparkSession is not available. Cannot prepare data generators")
-            raise RuntimeError(
-                "SparkSession is not available. Cannot prepare data generators")
+            logger.error("SparkSession is not available. Cannot prepare data generators")
+            raise RuntimeError("SparkSession is not available. Cannot prepare data generators")
 
         tables_config: dict[str, DatasetDefinition] = config.datasets
         global_gen_options = config.generator_options if config.generator_options else {}
 
         prepared_generators: dict[str, dg.DataGenerator] = {}
-        generation_order = list(tables_config.keys()) # This becomes important when we get into multitable
+        generation_order = list(tables_config.keys())  # This becomes important when we get into multitable
 
         for table_name in generation_order:
             table_spec = tables_config[table_name]
@@ -190,22 +190,19 @@ class Generator:
                 for col_def in table_spec.columns:
                     kwargs = _columnSpecToDatagenColumnSpec(col_def)
                     data_gen = data_gen.withColumn(colName=col_def.name, **kwargs)
-                    # Has performance implications.
-
                 prepared_generators[table_name] = data_gen
                 logger.info(f"Successfully prepared table: {table_name}")
 
             except Exception as e:
                 logger.error(f"Failed to prepare table '{table_name}': {e}")
-                raise RuntimeError(
-                    f"Failed to prepare table '{table_name}': {e}") from e
+                raise RuntimeError(f"Failed to prepare table '{table_name}': {e}") from e
 
         logger.info("All data generators prepared successfully")
         return prepared_generators
 
     @staticmethod
     def _writePreparedData(
-            prepared_generators: dict[str, dg.DataGenerator],
+        prepared_generators: dict[str, dg.DataGenerator],
         output_destination: Union[UCSchemaTarget, FilePathTarget, None],
         config_source_name: str = "PydanticConfig",
     ) -> None:
@@ -252,7 +249,8 @@ class Generator:
                 requested_rows = data_gen.rowCount
                 actual_row_count = df.count()
                 logger.info(
-                    f"Built DataFrame for '{table_name}': {actual_row_count} rows (requested: {requested_rows})")
+                    f"Built DataFrame for '{table_name}': {actual_row_count} rows (requested: {requested_rows})"
+                )
 
                 if actual_row_count == 0 and requested_rows is not None and requested_rows > 0:
                     logger.warning(f"Table '{table_name}': Requested {requested_rows} rows but built 0")
@@ -275,11 +273,7 @@ class Generator:
                 raise RuntimeError(f"Failed to write table '{table_name}': {e}") from e
         logger.info("All data writes completed successfully")
 
-    def generateAndWriteData(
-        self,
-        config: DatagenSpec,
-        config_source_name: str = "PydanticConfig"
-    ) -> None:
+    def generateAndWriteData(self, config: DatagenSpec, config_source_name: str = "PydanticConfig") -> None:
         """Execute the complete data generation workflow from spec to output.
 
         This is the primary high-level method for generating data from a DatagenSpec. It
@@ -326,22 +320,14 @@ class Generator:
             prepared_generators_map = self._prepareDataGenerators(config, config_source_name)
 
             if not prepared_generators_map and list(config.datasets.keys()):
-                logger.warning(
-                    "No data generators were successfully prepared, though tables were defined")
+                logger.warning("No data generators were successfully prepared, though tables were defined")
                 return
 
             # Phase 2: Write data
-            self._writePreparedData(
-                prepared_generators_map,
-                config.output_destination,
-                config_source_name
-            )
+            self._writePreparedData(prepared_generators_map, config.output_destination, config_source_name)
 
-            logger.info(
-                "Combined data generation and writing completed successfully")
+            logger.info("Combined data generation and writing completed successfully")
 
         except Exception as e:
-            logger.error(
-                f"Error during combined data generation and writing: {e}")
-            raise RuntimeError(
-                f"Error during combined data generation and writing: {e}") from e
+            logger.error(f"Error during combined data generation and writing: {e}")
+            raise RuntimeError(f"Error during combined data generation and writing: {e}") from e

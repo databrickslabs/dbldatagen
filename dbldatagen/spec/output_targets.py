@@ -25,6 +25,7 @@ class UCSchemaTarget(BaseModel):
     .. note::
         Tables will be written to the location: `{catalog}.{schema_}.{table_name}`
     """
+
     catalog: str
     schema_: str
     output_format: str = "delta"  # Default to delta for UC Schema
@@ -47,8 +48,7 @@ class UCSchemaTarget(BaseModel):
         if not v.strip():
             raise ValueError("Identifier must be non-empty.")
         if not v.isidentifier():
-            logger.warning(
-                f"'{v}' is not a basic Python identifier. Ensure validity for Unity Catalog.")
+            logger.warning(f"'{v}' is not a basic Python identifier. Ensure validity for Unity Catalog.")
         return v.strip()
 
     def __str__(self) -> str:
@@ -77,6 +77,7 @@ class FilePathTarget(BaseModel):
         The base_path can be a local file system path, DBFS path, or cloud storage path
         (e.g., s3://, gs://, abfs://) depending on your environment
     """
+
     base_path: str
     output_format: Literal["csv", "parquet"]  # No default, must be specified
 

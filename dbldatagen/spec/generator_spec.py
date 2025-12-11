@@ -16,11 +16,7 @@ from .validation import ValidationResult
 logger = logging.getLogger(__name__)
 
 
-def _validate_table_basic_properties(
-    table_name: str,
-    table_def: DatasetDefinition,
-    result: ValidationResult
-) -> bool:
+def _validate_table_basic_properties(table_name: str, table_def: DatasetDefinition, result: ValidationResult) -> bool:
     """Validate basic table properties like columns, row count, and partitions.
 
     :param table_name: Name of the table being validated
@@ -51,11 +47,7 @@ def _validate_table_basic_properties(
     return True
 
 
-def _validate_duplicate_columns(
-    table_name: str,
-    table_def: DatasetDefinition,
-    result: ValidationResult
-) -> None:
+def _validate_duplicate_columns(table_name: str, table_def: DatasetDefinition, result: ValidationResult) -> None:
     """Check for duplicate column names within a table.
 
     :param table_name: Name of the table being validated
@@ -65,16 +57,10 @@ def _validate_duplicate_columns(
     column_names = [col.name for col in table_def.columns]
     duplicates = [name for name in set(column_names) if column_names.count(name) > 1]
     if duplicates:
-        result.add_error(
-            f"Table '{table_name}' has duplicate column names: {', '.join(duplicates)}"
-        )
+        result.add_error(f"Table '{table_name}' has duplicate column names: {', '.join(duplicates)}")
 
 
-def _validate_column_references(
-    table_name: str,
-    table_def: DatasetDefinition,
-    result: ValidationResult
-) -> None:
+def _validate_column_references(table_name: str, table_def: DatasetDefinition, result: ValidationResult) -> None:
     """Validate that baseColumn references point to existing columns.
 
     :param table_name: Name of the table being validated
@@ -91,11 +77,7 @@ def _validate_column_references(
                 )
 
 
-def _validate_primary_key_columns(
-    table_name: str,
-    table_def: DatasetDefinition,
-    result: ValidationResult
-) -> None:
+def _validate_primary_key_columns(table_name: str, table_def: DatasetDefinition, result: ValidationResult) -> None:
     """Validate primary key column constraints.
 
     :param table_name: Name of the table being validated
@@ -111,11 +93,7 @@ def _validate_primary_key_columns(
         )
 
 
-def _validate_column_types(
-    table_name: str,
-    table_def: DatasetDefinition,
-    result: ValidationResult
-) -> None:
+def _validate_column_types(table_name: str, table_def: DatasetDefinition, result: ValidationResult) -> None:
     """Validate column type specifications.
 
     :param table_name: Name of the table being validated
@@ -131,10 +109,7 @@ def _validate_column_types(
             )
 
 
-def _check_circular_dependencies(
-    table_name: str,
-    columns: list[ColumnDefinition]
-) -> list[str]:
+def _check_circular_dependencies(table_name: str, columns: list[ColumnDefinition]) -> list[str]:
     """Check for circular dependencies in baseColumn references within a table.
 
     Analyzes column dependencies to detect cycles where columns reference each other
@@ -209,6 +184,7 @@ class DatasetDefinition(BaseModel):
     .. note::
         Column order in the list determines the order of columns in the generated output
     """
+
     number_of_rows: int
     partitions: int | None = None
     columns: list[ColumnDefinition]
@@ -246,10 +222,13 @@ class DatagenSpec(BaseModel):
         Multiple tables can share the same DatagenSpec and will be generated in the order
         they appear in the tables dictionary
     """
+
     datasets: dict[str, DatasetDefinition]
-    output_destination: Union[UCSchemaTarget, FilePathTarget] | None = None # there is a abstraction, may be we can use that? talk to Greg
+    output_destination: Union[UCSchemaTarget, FilePathTarget] | None = (
+        None  # there is a abstraction, may be we can use that? talk to Greg
+    )
     generator_options: dict[str, Any] | None = None
-    intended_for_databricks: bool | None = None # May be infered.
+    intended_for_databricks: bool | None = None  # May be infered.
 
     def _validate_generator_options(self, result: ValidationResult) -> None:
         """Validate generator options against known valid options.
@@ -257,16 +236,10 @@ class DatagenSpec(BaseModel):
         :param result: ValidationResult to collect errors/warnings
         """
         if self.generator_options:
-            known_options = [
-                "random", "randomSeed", "randomSeedMethod", "verbose",
-                "debug", "seedColumnName"
-            ]
+            known_options = ["random", "randomSeed", "randomSeedMethod", "verbose", "debug", "seedColumnName"]
             for key in self.generator_options:
                 if key not in known_options:
-                    result.add_warning(
-                        f"Unknown generator option: '{key}'. "
-                        "This may be ignored during generation."
-                    )
+                    result.add_warning(f"Unknown generator option: '{key}'. " "This may be ignored during generation.")
 
     def validate(self, strict: bool = True) -> ValidationResult:  # type: ignore[override]
         """Validate the entire DatagenSpec configuration comprehensively.
@@ -344,7 +317,6 @@ class DatagenSpec(BaseModel):
             raise ValueError(str(result))
 
         return result
-
 
     def display_all_tables(self) -> None:
         """Display a formatted view of all table definitions in the spec.

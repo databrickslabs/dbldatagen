@@ -16,6 +16,7 @@ class TestBasicUserSpec(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures - define model inline to avoid import issues."""
+
         # Define the model inline to avoid triggering Spark imports
         class BasicUser(BaseModel):
             customer_id: int = Field(..., ge=1000000)
@@ -33,7 +34,7 @@ class TestBasicUserSpec(unittest.TestCase):
             name="John Doe",
             email="john.doe@example.com",
             ip_addr="192.168.1.100",
-            phone="(555)-123-4567"
+            phone="(555)-123-4567",
         )
 
         self.assertEqual(user.customer_id, 1234567890)
@@ -50,7 +51,7 @@ class TestBasicUserSpec(unittest.TestCase):
                 name="Jane Smith",
                 email="jane@example.com",
                 ip_addr="10.0.0.1",
-                phone="555-1234"
+                phone="555-1234",
             )
 
         error = context.exception
@@ -63,7 +64,7 @@ class TestBasicUserSpec(unittest.TestCase):
             name="John Doe",
             email="john.doe@example.com",
             ip_addr="192.168.1.100",
-            phone="(555)-123-4567"
+            phone="(555)-123-4567",
         )
 
         user_dict = user.dict()
@@ -78,7 +79,7 @@ class TestBasicUserSpec(unittest.TestCase):
             name="John Doe",
             email="john.doe@example.com",
             ip_addr="192.168.1.100",
-            phone="(555)-123-4567"
+            phone="(555)-123-4567",
         )
 
         json_str = user.json()
@@ -97,6 +98,7 @@ class TestBasicStockTickerSpec(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures - define model inline to avoid import issues."""
+
         class BasicStockTicker(BaseModel):
             symbol: str = Field(..., min_length=1, max_length=10)
             post_date: date
@@ -119,7 +121,7 @@ class TestBasicStockTickerSpec(unittest.TestCase):
             high=Decimal("153.75"),
             low=Decimal("149.80"),
             adj_close=Decimal("152.35"),
-            volume=2500000
+            volume=2500000,
         )
 
         self.assertEqual(ticker.symbol, "AAPL")
@@ -142,7 +144,7 @@ class TestBasicStockTickerSpec(unittest.TestCase):
                 high=Decimal("310.00"),
                 low=Decimal("295.00"),
                 adj_close=Decimal("304.50"),
-                volume=-1000  # Negative
+                volume=-1000,  # Negative
             )
 
         error = context.exception
@@ -159,7 +161,7 @@ class TestBasicStockTickerSpec(unittest.TestCase):
                 high=Decimal("310.00"),
                 low=Decimal("295.00"),
                 adj_close=Decimal("304.50"),
-                volume=1000000
+                volume=1000000,
             )
 
         error = context.exception
@@ -175,7 +177,7 @@ class TestBasicStockTickerSpec(unittest.TestCase):
             high=Decimal("153.75"),
             low=Decimal("149.80"),
             adj_close=Decimal("152.35"),
-            volume=2500000
+            volume=2500000,
         )
 
         ticker_dict = ticker.dict()
@@ -193,7 +195,7 @@ class TestBasicStockTickerSpec(unittest.TestCase):
             high=Decimal("153.75"),
             low=Decimal("149.80"),
             adj_close=Decimal("152.35"),
-            volume=2500000
+            volume=2500000,
         )
 
         json_str = ticker.json()
@@ -209,4 +211,3 @@ class TestBasicStockTickerSpec(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

@@ -42,6 +42,7 @@ class ColumnDefinition(BaseModel):
         Columns can be chained via baseColumn references, but circular dependencies
         will be caught during validation
     """
+
     name: str
     type: DbldatagenBasicType | None = None
     primary: bool = False

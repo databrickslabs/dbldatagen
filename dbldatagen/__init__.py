@@ -97,6 +97,7 @@ __all__ = [
     "datagen_types",
 ]
 
+
 def python_version_check(python_version_expected):
     """Check against Python version
 

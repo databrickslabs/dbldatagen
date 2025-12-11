@@ -84,7 +84,7 @@ def create_basic_user_spec(
     )
 
     spec = DatagenSpec(
-        tables={"users": table_def},
+        datasets={"users": table_def},
         output_destination=None,  # No automatic persistence
         generator_options={
             "randomSeedMethod": "hash_fieldname"

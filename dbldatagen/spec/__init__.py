@@ -39,11 +39,14 @@ def __getattr__(name: str) -> Any:  # noqa: ANN401
     """
     if name == "ColumnSpec":
         from .column_spec import ColumnDefinition  # noqa: PLC0415
+
         return ColumnDefinition
     elif name == "GeneratorSpec":
         from .generator_spec import DatagenSpec  # noqa: PLC0415
+
         return DatagenSpec
     elif name == "GeneratorSpecImpl":
         from .generator_spec_impl import Generator  # noqa: PLC0415
+
         return Generator
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

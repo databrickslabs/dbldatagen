@@ -54,45 +54,25 @@ class TestColumnDefinitionValidation:
     """Tests for ColumnDefinition validation"""
 
     def test_valid_primary_column(self):
-        col = ColumnDefinition(
-            name="id",
-            type="int",
-            primary=True
-        )
+        col = ColumnDefinition(name="id", type="int", primary=True)
         assert col.primary
         assert col.type == "int"
 
     def test_primary_column_with_min_max_raises_error(self):
         with pytest.raises(ValueError, match="cannot have min/max options"):
-            ColumnDefinition(
-                name="id",
-                type="int",
-                primary=True,
-                options={"min": 1, "max": 100}
-            )
+            ColumnDefinition(name="id", type="int", primary=True, options={"min": 1, "max": 100})
 
     def test_primary_column_nullable_raises_error(self):
         with pytest.raises(ValueError, match="cannot be nullable"):
-            ColumnDefinition(
-                name="id",
-                type="int",
-                primary=True,
-                nullable=True
-            )
+            ColumnDefinition(name="id", type="int", primary=True, nullable=True)
 
     def test_primary_column_without_type_raises_error(self):
         with pytest.raises(ValueError, match="must have a type defined"):
-            ColumnDefinition(
-                name="id",
-                primary=True
-            )
+            ColumnDefinition(name="id", primary=True)
 
     def test_non_primary_column_without_type(self):
         # Should not raise
-        col = ColumnDefinition(
-            name="data",
-            options={"values": ["a", "b", "c"]}
-        )
+        col = ColumnDefinition(name="data", options={"values": ["a", "b", "c"]})
         assert col.name == "data"
 
 
@@ -107,10 +87,10 @@ class TestDatagenSpecValidation:
                     columns=[
                         ColumnDefinition(name="id", type="int", primary=True),
                         ColumnDefinition(name="name", type="string", options={"values": ["Alice", "Bob"]}),
-                    ]
+                    ],
                 )
             },
-            output_destination=UCSchemaTarget(catalog="main", schema_="default")
+            output_destination=UCSchemaTarget(catalog="main", schema_="default"),
         )
 
         result = spec.validate(strict=False)
@@ -124,14 +104,7 @@ class TestDatagenSpecValidation:
             spec.validate(strict=True)
 
     def test_table_without_columns_raises_error(self):
-        spec = DatagenSpec(
-            datasets={
-                "empty_table": DatasetDefinition(
-                    number_of_rows=100,
-                    columns=[]
-                )
-            }
-        )
+        spec = DatagenSpec(datasets={"empty_table": DatasetDefinition(number_of_rows=100, columns=[])})
 
         with pytest.raises(ValueError, match="must have at least one column"):
             spec.validate()
@@ -140,8 +113,7 @@ class TestDatagenSpecValidation:
         spec = DatagenSpec(
             datasets={
                 "users": DatasetDefinition(
-                    number_of_rows=-10,
-                    columns=[ColumnDefinition(name="id", type="int", primary=True)]
+                    number_of_rows=-10, columns=[ColumnDefinition(name="id", type="int", primary=True)]
                 )
             }
         )
@@ -153,8 +125,7 @@ class TestDatagenSpecValidation:
         spec = DatagenSpec(
             datasets={
                 "users": DatasetDefinition(
-                    number_of_rows=0,
-                    columns=[ColumnDefinition(name="id", type="int", primary=True)]
+                    number_of_rows=0, columns=[ColumnDefinition(name="id", type="int", primary=True)]
                 )
             }
         )
@@ -166,9 +137,7 @@ class TestDatagenSpecValidation:
         spec = DatagenSpec(
             datasets={
                 "users": DatasetDefinition(
-                    number_of_rows=100,
-                    partitions=-5,
-                    columns=[ColumnDefinition(name="id", type="int", primary=True)]
+                    number_of_rows=100, partitions=-5, columns=[ColumnDefinition(name="id", type="int", primary=True)]
                 )
             }
         )
@@ -185,7 +154,7 @@ class TestDatagenSpecValidation:
                         ColumnDefinition(name="id", type="int", primary=True),
                         ColumnDefinition(name="duplicate", type="string"),
                         ColumnDefinition(name="duplicate", type="int"),
-                    ]
+                    ],
                 )
             }
         )
@@ -201,7 +170,7 @@ class TestDatagenSpecValidation:
                     columns=[
                         ColumnDefinition(name="id", type="int", primary=True),
                         ColumnDefinition(name="email", type="string", baseColumn="nonexistent"),
-                    ]
+                    ],
                 )
             }
         )
@@ -219,7 +188,7 @@ class TestDatagenSpecValidation:
                         ColumnDefinition(name="col_a", type="string", baseColumn="col_b"),
                         ColumnDefinition(name="col_b", type="string", baseColumn="col_c"),
                         ColumnDefinition(name="col_c", type="string", baseColumn="col_a"),
-                    ]
+                    ],
                 )
             }
         )
@@ -235,7 +204,7 @@ class TestDatagenSpecValidation:
                     columns=[
                         ColumnDefinition(name="id1", type="int", primary=True),
                         ColumnDefinition(name="id2", type="int", primary=True),
-                    ]
+                    ],
                 )
             }
         )
@@ -258,7 +227,7 @@ class TestDatagenSpecValidation:
                     columns=[
                         ColumnDefinition(name="id", type="int", primary=True),
                         ColumnDefinition(name="empty_col"),
-                    ]
+                    ],
                 )
             }
         )
@@ -272,8 +241,7 @@ class TestDatagenSpecValidation:
         spec = DatagenSpec(
             datasets={
                 "users": DatasetDefinition(
-                    number_of_rows=100,
-                    columns=[ColumnDefinition(name="id", type="int", primary=True)]
+                    number_of_rows=100, columns=[ColumnDefinition(name="id", type="int", primary=True)]
                 )
             }
         )
@@ -287,11 +255,10 @@ class TestDatagenSpecValidation:
         spec = DatagenSpec(
             datasets={
                 "users": DatasetDefinition(
-                    number_of_rows=100,
-                    columns=[ColumnDefinition(name="id", type="int", primary=True)]
+                    number_of_rows=100, columns=[ColumnDefinition(name="id", type="int", primary=True)]
                 )
             },
-            generator_options={"unknown_option": "value"}
+            generator_options={"unknown_option": "value"},
         )
 
         result = spec.validate(strict=False)
@@ -310,7 +277,7 @@ class TestDatagenSpecValidation:
                         ColumnDefinition(name="id", type="int", primary=True),
                         ColumnDefinition(name="id", type="string"),  # Error 3: duplicate
                         ColumnDefinition(name="email", baseColumn="phone"),  # Error 4: nonexistent
-                    ]
+                    ],
                 )
             }
         )
@@ -329,8 +296,7 @@ class TestDatagenSpecValidation:
         spec = DatagenSpec(
             datasets={
                 "users": DatasetDefinition(
-                    number_of_rows=100,
-                    columns=[ColumnDefinition(name="id", type="int", primary=True)]
+                    number_of_rows=100, columns=[ColumnDefinition(name="id", type="int", primary=True)]
                 )
             }
             # No output_destination - will generate warning
@@ -354,10 +320,10 @@ class TestDatagenSpecValidation:
                         ColumnDefinition(name="id", type="int", primary=True),
                         ColumnDefinition(name="code", type="string", baseColumn="id"),
                         ColumnDefinition(name="hash", type="string", baseColumn="code"),
-                    ]
+                    ],
                 )
             },
-            output_destination=FilePathTarget(base_path="/tmp/data", output_format="parquet")
+            output_destination=FilePathTarget(base_path="/tmp/data", output_format="parquet"),
         )
 
         result = spec.validate(strict=False)
@@ -368,17 +334,13 @@ class TestDatagenSpecValidation:
         spec = DatagenSpec(
             datasets={
                 "users": DatasetDefinition(
-                    number_of_rows=100,
-                    columns=[ColumnDefinition(name="id", type="int", primary=True)]
+                    number_of_rows=100, columns=[ColumnDefinition(name="id", type="int", primary=True)]
                 ),
                 "orders": DatasetDefinition(
                     number_of_rows=-50,  # Error in second table
-                    columns=[ColumnDefinition(name="order_id", type="int", primary=True)]
+                    columns=[ColumnDefinition(name="order_id", type="int", primary=True)],
                 ),
-                "products": DatasetDefinition(
-                    number_of_rows=200,
-                    columns=[]  # Error: no columns
-                )
+                "products": DatasetDefinition(number_of_rows=200, columns=[]),  # Error: no columns
             }
         )
 
@@ -429,35 +391,21 @@ class TestValidationIntegration:
                     partitions=4,
                     columns=[
                         ColumnDefinition(name="user_id", type="int", primary=True),
-                        ColumnDefinition(name="username", type="string", options={
-                            "template": r"\w{8,12}"
-                        }),
-                        ColumnDefinition(name="email", type="string", options={
-                            "template": r"\w.\w@\w.com"
-                        }),
-                        ColumnDefinition(name="age", type="int", options={
-                            "min": 18, "max": 99
-                        }),
-                    ]
+                        ColumnDefinition(name="username", type="string", options={"template": r"\w{8,12}"}),
+                        ColumnDefinition(name="email", type="string", options={"template": r"\w.\w@\w.com"}),
+                        ColumnDefinition(name="age", type="int", options={"min": 18, "max": 99}),
+                    ],
                 ),
                 "orders": DatasetDefinition(
                     number_of_rows=5000,
                     columns=[
                         ColumnDefinition(name="order_id", type="int", primary=True),
-                        ColumnDefinition(name="amount", type="decimal", options={
-                            "min": 10.0, "max": 1000.0
-                        }),
-                    ]
-                )
+                        ColumnDefinition(name="amount", type="decimal", options={"min": 10.0, "max": 1000.0}),
+                    ],
+                ),
             },
-            output_destination=UCSchemaTarget(
-                catalog="main",
-                schema_="synthetic_data"
-            ),
-            generator_options={
-                "random": True,
-                "randomSeed": 42
-            }
+            output_destination=UCSchemaTarget(catalog="main", schema_="synthetic_data"),
+            generator_options={"random": True, "randomSeed": 42},
         )
 
         result = spec.validate(strict=True)
