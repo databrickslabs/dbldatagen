@@ -47,9 +47,7 @@ from pyspark.sql.types import (
     TimestampType,
     BooleanType,
 )
-from dbldatagen import DataGenerator, PyfuncText, fakerText
-from faker import Faker
-from faker.providers import BaseProvider
+from dbldatagen import DataGenerator, fakerText
 
 
 @dataclass
@@ -58,95 +56,6 @@ class Config:
     partitions: int = 1
     start_date: str = start_date
     end_date: str = end_date
-
-
-class ClinicalTrialProvider(BaseProvider):
-    trial_phases = ["Phase I", "Phase II", "Phase III", "Phase IV"]
-    trial_statuses = ["Active", "Completed", "Suspended", "Terminated"]
-    therapeutic_areas = [
-        "Oncology",
-        "Cardiology",
-        "Neurology",
-        "Immunology",
-        "Endocrinology",
-        "Rheumatology",
-    ]
-
-    medications = [
-        "Pembrolizumab",
-        "Nivolumab",
-        "Atezolizumab",
-        "Durvalumab",
-        "Atorvastatin",
-        "Rosuvastatin",
-        "Evolocumab",
-        "Alirocumab",
-        "Lecanemab",
-        "Aducanumab",
-        "Donepezil",
-        "Memantine",
-        "Adalimumab",
-        "Etanercept",
-        "Infliximab",
-        "Tocilizumab",
-        "Semaglutide",
-        "Tirzepatide",
-        "Empagliflozin",
-        "Dapagliflozin",
-    ]
-
-    def trial_phase(self) -> str:
-        return self.random_element(self.trial_phases)
-
-    def trial_status(self) -> str:
-        return self.random_element(self.trial_statuses)
-
-    def therapeutic_area(self) -> str:
-        return self.random_element(self.therapeutic_areas)
-
-    def medication(self) -> str:
-        return self.random_element(self.medications)
-
-
-def init_faker(context):
-    context.faker = Faker()
-    context.faker.add_provider(ClinicalTrialProvider)
-
-
-def generate_city_medical(context, _):
-    return f"{context.faker.city()} Medical Center"
-
-
-def generate_dr_name(context, _):
-    return f"Dr. {context.faker.name()}"
-
-
-def generate_trial_title(context, _):
-    return (
-        f"Study of {context.faker.medication()} in {context.faker.therapeutic_area()}"
-    )
-
-
-def generate_ae_description(context, row):
-    events = {
-        "Nausea": ["mild", "moderate", "severe"],
-        "Headache": ["tension-type", "migraine", "mild"],
-        "Fatigue": ["mild", "moderate with activity limitation", "severe"],
-        "Dizziness": ["occasional", "frequent", "with orthostatic hypotension"],
-        "Injection Site Reaction": [
-            "mild erythema",
-            "moderate swelling",
-            "pain at site",
-        ],
-        "Diarrhea": [
-            "mild, self-limiting",
-            "moderate, requiring intervention",
-            "severe",
-        ],
-    }
-    event = context.faker.random_element(list(events.keys()))
-    severity = context.faker.random_element(events[event])
-    return f"{event}: {severity}. Reported on day {context.faker.random_int(1, 180)} of treatment."
 
 
 class ClinicalTrialsGenerator:
@@ -171,11 +80,6 @@ class ClinicalTrialsGenerator:
                 uniqueValues=100,
             )
             .withColumn("nct_number", StringType(), template="NCT########")
-            .withColumn(
-                "trial_title",
-                StringType(),
-                text=PyfuncText(generate_trial_title, init=init_faker),
-            )
             .withColumn("sponsor_company", StringType(), text=fakerText("company"))
             .withColumn(
                 "phase",
@@ -230,6 +134,12 @@ class ClinicalTrialsGenerator:
                 random=True,
             )
             .withColumn(
+                "trial_title",
+                StringType(),
+                baseColumn=["study_drug", "therapeutic_area"],
+                expr="concat('Study of ', study_drug, ' in ', therapeutic_area)",
+            )
+            .withColumn(
                 "target_enrollment",
                 IntegerType(),
                 baseColumn="phase",
@@ -262,15 +172,19 @@ class ClinicalTrialsGenerator:
             .withColumn(
                 "trial_id", IntegerType(), minValue=10000, maxValue=10099, random=True
             )
+            .withColumn("city_base", StringType(), text=fakerText("city"), omit=True)
             .withColumn(
                 "site_name",
                 StringType(),
-                text=PyfuncText(generate_city_medical, init=init_faker),
+                baseColumn="city_base",
+                expr="concat(city_base, ' Medical Center')",
             )
+            .withColumn("pi_name_base", StringType(), text=fakerText("name"), omit=True)
             .withColumn(
                 "principal_investigator",
                 StringType(),
-                text=PyfuncText(generate_dr_name, init=init_faker),
+                baseColumn="pi_name_base",
+                expr="concat('Dr. ', pi_name_base)",
             )
             .withColumn("phone", StringType(), text=fakerText("phone_number"))
             .withColumn(
@@ -429,9 +343,18 @@ class ClinicalTrialsGenerator:
                 """,
             )
             .withColumn(
+                "report_day",
+                IntegerType(),
+                minValue=1,
+                maxValue=180,
+                random=True,
+                omit=True,
+            )
+            .withColumn(
                 "ae_description",
                 StringType(),
-                text=PyfuncText(generate_ae_description, init=init_faker),
+                baseColumn=["ae_term", "severity", "report_day"],
+                expr="concat(ae_term, ': ', lower(severity), '. Reported on day ', cast(report_day as string), ' of treatment.')",
             )
         )
 
@@ -650,9 +573,13 @@ class ClinicalTrialsGenerator:
             )
             .withColumn("lab_technician", StringType(), text=fakerText("name"))
             .withColumn(
+                "physician_name_base", StringType(), text=fakerText("name"), omit=True
+            )
+            .withColumn(
                 "reviewed_by_physician",
                 StringType(),
-                text=PyfuncText(generate_dr_name, init=init_faker),
+                baseColumn="physician_name_base",
+                expr="concat('Dr. ', physician_name_base)",
             )
         )
 
