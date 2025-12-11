@@ -7,7 +7,7 @@
 
 # COMMAND ----------
 
-# MAGIC %pip install dbldatagen faker
+# MAGIC %pip install dbldatagen
 
 # COMMAND ----------
 
@@ -47,7 +47,7 @@ from pyspark.sql.types import (
     TimestampType,
     BooleanType,
 )
-from dbldatagen import DataGenerator, fakerText
+from dbldatagen import DataGenerator
 
 
 @dataclass
@@ -80,7 +80,11 @@ class ClinicalTrialsGenerator:
                 uniqueValues=100,
             )
             .withColumn("nct_number", StringType(), template="NCT########")
-            .withColumn("sponsor_company", StringType(), text=fakerText("company"))
+            .withColumn(
+                "sponsor_company",
+                StringType(),
+                template=r"\\w \\w|\\w \\w \\w|\\w & \\w",
+            )
             .withColumn(
                 "phase",
                 StringType(),
@@ -172,21 +176,23 @@ class ClinicalTrialsGenerator:
             .withColumn(
                 "trial_id", IntegerType(), minValue=10000, maxValue=10099, random=True
             )
-            .withColumn("city_base", StringType(), text=fakerText("city"), omit=True)
+            .withColumn("city_base", StringType(), template=r"\\w|\\w \\w", omit=True)
             .withColumn(
                 "site_name",
                 StringType(),
                 baseColumn="city_base",
                 expr="concat(city_base, ' Medical Center')",
             )
-            .withColumn("pi_name_base", StringType(), text=fakerText("name"), omit=True)
+            .withColumn("pi_name_base", StringType(), template=r"\\w \\w", omit=True)
             .withColumn(
                 "principal_investigator",
                 StringType(),
                 baseColumn="pi_name_base",
                 expr="concat('Dr. ', pi_name_base)",
             )
-            .withColumn("phone", StringType(), text=fakerText("phone_number"))
+            .withColumn(
+                "phone", StringType(), template=r"(\\d\\d\\d) \\d\\d\\d-\\d\\d\\d\\d"
+            )
             .withColumn(
                 "site_status",
                 StringType(),
@@ -571,9 +577,9 @@ class ClinicalTrialsGenerator:
                 baseColumn="sample_quality",
                 expr="CASE WHEN sample_quality != 'Acceptable' THEN true ELSE rand() < 0.03 END",
             )
-            .withColumn("lab_technician", StringType(), text=fakerText("name"))
+            .withColumn("lab_technician", StringType(), template=r"\\w \\w")
             .withColumn(
-                "physician_name_base", StringType(), text=fakerText("name"), omit=True
+                "physician_name_base", StringType(), template=r"\\w \\w", omit=True
             )
             .withColumn(
                 "reviewed_by_physician",
