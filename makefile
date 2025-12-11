@@ -3,7 +3,7 @@
 all: clean dev lint fmt test
 
 clean:
-	rm -fr .venv clean htmlcov .mypy_cache .pytest_cache .ruff_cache .coverage coverage.xml
+	rm -fr clean htmlcov .mypy_cache .pytest_cache .ruff_cache .coverage coverage.xml
 	rm -fr **/*.pyc
 
 dev:
@@ -11,10 +11,10 @@ dev:
 	@hatch run which python
 
 lint:
-	hatch run test-pydantic.2.8.2:verify
+	hatch run dev:verify
 
 fmt:
-	hatch run test-pydantic.2.8.2:fmt
+	hatch run dev:fmt
 
 test:
 	hatch run test-pydantic:test

@@ -112,7 +112,11 @@ dependencies = [
 ]
 
 python="3.10"
-path = ".venv"
+[tool.hatch.envs.dev]
+template = "default"
+extra-dependencies = [
+    "pydantic~=2.8.2"
+]
 
 [tool.hatch.envs.default.scripts]
 test    = "pytest tests/ -n 10 --cov --cov-report=html --timeout 600 --durations 20"
