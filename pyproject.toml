@@ -9,7 +9,11 @@ description = "Databricks Labs - PySpark Synthetic Data Generator"
 authors = [
     {name = "Databricks Labs", email = "labs-oss@databricks.com"},
     {name = "Ronan Stokes", email = "ronan.stokes@databricks.com"},
+]
+maintainers = [
+    {name = "Daniel Tomes", email = "daniel.tomes@databricks.com"},
     {name = "Greg Hansen", email = "gregory.hansen@databricks.com"},
+    {name = "Anup Kalburgi", email = "anup.kalburgi@databricks.com"}
 ]
 readme = "README.md"
 license = {text = "Databricks License"}
@@ -79,6 +83,7 @@ include = [
 
 [tool.hatch.envs.default]
 dependencies = [
+    "black~=25.12.0",
     "chispa~=0.10.1",
     "coverage[toml]~=7.4.4",
     "mypy~=1.9.0",
@@ -111,27 +116,20 @@ path = ".venv"
 
 [tool.hatch.envs.default.scripts]
 test    = "pytest tests/ -n 10 --cov --cov-report=html --timeout 600 --durations 20"
-fmt     = [
-    "ruff check . --fix",
-    "mypy .",
-    "pylint --output-format=colorized -j 0 dbldatagen tests"
-]
-verify  = [
-    "ruff check .",
-    "mypy .",
-    "pylint --output-format=colorized -j 0 dbldatagen tests"
-]
+fmt         = ["black .",
+               "ruff check . --fix",
+               "mypy .",
+               "pylint --output-format=colorized -j 0 dbldatagen tests"]
+verify      = ["black --check .",
+               "ruff check .",
+               "mypy .",
+               "pylint --output-format=colorized -j 0 dbldatagen tests"]
 
-
-[tool.hatch.envs.test-pydantic]
-template = "default"
-matrix = [
-    { pydantic_version = ["1.10.6", "2.8.2"] }
-]
-extra-dependencies = [
-    "pydantic=={matrix:pydantic_version}"
-]
-
+[tool.black]
+target-version = ["py310"]
+line-length = 120
+skip-string-normalization = true
+extend-exclude = "examples"
 
 # Ruff configuration - replaces flake8, isort, pydocstyle, etc.
 [tool.ruff]
@@ -151,15 +149,12 @@ exclude = [
     "tutorial",
     "examples",
     "tests",
-    "dbldatagen/constraints",
-    "dbldatagen/distributions",
     "dbldatagen/__init__.py",
+    "dbldatagen/constraints/__init__.py",
+    "dbldatagen/distributions/__init__.py",
     "dbldatagen/column_generation_spec.py",
     "dbldatagen/column_spec_options.py",
     "dbldatagen/datagen_constants.py",
-    "dbldatagen/datarange.py",
-    "dbldatagen/daterange.py",
-    "dbldatagen/nrange.py",
     "dbldatagen/schema_parser.py",
 ]
 
@@ -229,16 +224,14 @@ ignore = [
     "tutorial",
     "examples",
     "tests",
-    "dbldatagen/constraints",
     "dbldatagen/datasets",
-    "dbldatagen/distributions",
     "dbldatagen/__init__.py",
+    "dbldatagen/constraints/__init__.py",
+    "dbldatagen/distributions/__init__.py",
     "dbldatagen/column_generation_spec.py",
     "dbldatagen/column_spec_options.py",
     "dbldatagen/datagen_constants.py",
-    "dbldatagen/datarange.py",
     "dbldatagen/daterange.py",
-    "dbldatagen/nrange.py",
     "dbldatagen/schema_parser.py",
     "dbldatagen/serialization.py",
     "dbldatagen/utils.py"
@@ -262,7 +255,6 @@ ignore-paths = [
     "tutorial",
     "examples",
     "tests",
-    "dbldatagen/constraints",
     "dbldatagen/datasets",
     "dbldatagen/distributions",
     "dbldatagen/__init__.py",
@@ -270,9 +262,6 @@ ignore-paths = [
     "dbldatagen/column_spec_options.py",
     "dbldatagen/data_generator.py",
     "dbldatagen/datagen_constants.py",
-    "dbldatagen/datarange.py",
-    "dbldatagen/daterange.py",
-    "dbldatagen/nrange.py",
     "dbldatagen/schema_parser.py",
     "dbldatagen/serialization.py",
     "dbldatagen/utils.py"
@@ -391,16 +380,13 @@ exclude = [
     "tests",
     "tutorial",
     "tests",
-    "dbldatagen/constraints",
     "dbldatagen/datasets",
-    "dbldatagen/distributions",
     "dbldatagen/__init__.py",
+    "dbldatagen/constraints/__init__.py",
+    "dbldatagen/distributions/__init__.py",
     "dbldatagen/column_generation_spec.py",
     "dbldatagen/column_spec_options.py",
     "dbldatagen/datagen_constants.py",
-    "dbldatagen/datarange.py",
-    "dbldatagen/daterange.py",
-    "dbldatagen/nrange.py",
     "dbldatagen/schema_parser.py",
     "dbldatagen/serialization.py",
     "dbldatagen/utils.py"

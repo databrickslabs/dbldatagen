@@ -27,6 +27,7 @@ class _FnCallContext:
 
     :param txtGen: - reference to outer PyfnText object
     """
+
     textGenerator: "TextGenerator"
 
     def __init__(self, txtGen: "TextGenerator") -> None:
@@ -84,6 +85,7 @@ class PyfuncText(TextGenerator):  # lgtm [py/missing-equals]
       The code does not guarantee thread or cross process safety. If a new instance of the random number
       generator is needed, you may call the base class method with the argument `forceNewInstance` set to True.
     """
+
     _name: str
     _initPerBatch: bool
     _rootProperty: object
@@ -98,7 +100,7 @@ class PyfuncText(TextGenerator):  # lgtm [py/missing-equals]
         init: Callable | None = None,
         initPerBatch: bool = False,
         name: str | None = None,
-        rootProperty: object = None
+        rootProperty: object = None,
     ) -> None:
         super().__init__()
         if not callable(fn):
@@ -221,6 +223,11 @@ class PyfuncTextFactory:
     _initFn: Callable | None
     _rootProperty: object | None
 
+    _name: str
+    _initPerBatch: bool
+    _initFn: Callable | None
+    _rootProperty: object | None
+
     def __init__(self, name: str | None = None) -> None:
         self._initFn = None
         self._rootProperty = None
@@ -268,13 +275,7 @@ class PyfuncTextFactory:
         self._rootProperty = prop
         return self
 
-    def __call__(
-        self,
-        evalFn: str | Callable,
-        *args,
-        isProperty: bool = False,
-        **kwargs
-    ) -> PyfuncText:
+    def __call__(self, evalFn: str | Callable, *args, isProperty: bool = False, **kwargs) -> PyfuncText:
         """
         Internal function calling mechanism that implements the syntax expansion.
 
@@ -339,7 +340,7 @@ class FakerTextFactory(PyfuncTextFactory):
         providers: list | None = None,
         name: str = "FakerText",
         lib: str | None = None,
-        rootClass: str | None = None
+        rootClass: str | None = None,
     ) -> None:
 
         super().__init__(name)

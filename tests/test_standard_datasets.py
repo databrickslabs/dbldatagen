@@ -11,19 +11,25 @@ __MISSING__ = "MISSING_PARAM"
 
 @pytest.fixture
 def mkTableSpec():
-    dataspec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
-                .withIdOutput()
-                .withColumn("code1", IntegerType(), min=100, max=200)
-                .withColumn("code2", IntegerType(), min=0, max=10)
-                )
+    dataspec = (
+        dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000)
+        .withIdOutput()
+        .withColumn("code1", IntegerType(), min=100, max=200)
+        .withColumn("code2", IntegerType(), min=0, max=10)
+    )
     return dataspec
 
 
 class TestStandardDatasetsFramework:
     # Define some dummy providers - we will use these to check if they are found by
     # the listing and describe methods etc.
-    @dataset_definition(name="test_providers/test_batch", summary="Test Data Set1", autoRegister=True,
-                        tables=["green", "yellow", "red"], supportsStreaming=False)
+    @dataset_definition(
+        name="test_providers/test_batch",
+        summary="Test Data Set1",
+        autoRegister=True,
+        tables=["green", "yellow", "red"],
+        supportsStreaming=False,
+    )
     class SampleDatasetProviderBatch(DatasetProvider.NoAssociatedDatasetsMixin, DatasetProvider):
         def __init__(self):
             pass
@@ -48,40 +54,41 @@ class TestStandardDatasetsFramework:
             cls.lastPartitionsRequested = partitions
 
         @DatasetProvider.allowed_options(options=["random", "dummyValues"])
-        def getTableGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
-                              **options):
+        def getTableGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1, **options):
             generateRandom = options.get("random", True)
             dummyValues = options.get("dummyValues", 0)
 
-            ds = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, seedMethod='hash_fieldname')
-                  .withColumn("code1", "int", min=100, max=200)
-                  .withColumn("code2", "int", min=0, max=10)
-                  .withColumn("code3", "string", values=['a', 'b', 'c'])
-                  .withColumn("code4", "string", values=['a', 'b', 'c'], random=generateRandom)
-                  .withColumn("code5", "string", values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
-                  )
+            ds = (
+                dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, seedMethod='hash_fieldname')
+                .withColumn("code1", "int", min=100, max=200)
+                .withColumn("code2", "int", min=0, max=10)
+                .withColumn("code3", "string", values=['a', 'b', 'c'])
+                .withColumn("code4", "string", values=['a', 'b', 'c'], random=generateRandom)
+                .withColumn("code5", "string", values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+            )
             if dummyValues > 0:
-                ds = ds.withColumn("dummy", "long", random=True, numColumns=dummyValues,
-                                   minValue=1, maxValue=self.MAX_LONG)
+                ds = ds.withColumn(
+                    "dummy", "long", random=True, numColumns=dummyValues, minValue=1, maxValue=self.MAX_LONG
+                )
 
             return ds
 
-    @dataset_definition(name="test_providers/test_streaming", summary="Test Data Set2", autoRegister=True,
-                        supportsStreaming=True)
+    @dataset_definition(
+        name="test_providers/test_streaming", summary="Test Data Set2", autoRegister=True, supportsStreaming=True
+    )
     class SampleDatasetProviderStreaming(DatasetProvider.NoAssociatedDatasetsMixin, DatasetProvider):
         def __init__(self):
             pass
 
-        def getTableGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
-                              **options):
-            ds = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000,
-                                   seedMethod='hash_fieldname')
-                  .withColumn("code1", "int", min=100, max=200)
-                  .withColumn("code2", "int", min=0, max=10)
-                  .withColumn("code3", "string", values=['a', 'b', 'c'])
-                  .withColumn("code4", "string", values=['a', 'b', 'c'], random=True)
-                  .withColumn("code5", "string", values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
-                  )
+        def getTableGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1, **options):
+            ds = (
+                dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=1000, seedMethod='hash_fieldname')
+                .withColumn("code1", "int", min=100, max=200)
+                .withColumn("code2", "int", min=0, max=10)
+                .withColumn("code3", "string", values=['a', 'b', 'c'])
+                .withColumn("code4", "string", values=['a', 'b', 'c'], random=True)
+                .withColumn("code5", "string", values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+            )
             return ds
 
     @pytest.fixture
@@ -94,7 +101,7 @@ class TestStandardDatasetsFramework:
             description="Description of the test dataset",
             supportsStreaming=True,
             providerClass=DatasetProvider,
-            associatedDatasets=None
+            associatedDatasets=None,
         )
 
     def test_datasets_bad_table_name(self):
@@ -124,6 +131,7 @@ class TestStandardDatasetsFramework:
 
     def test_datasets_bad_decorator_usage(self):
         with pytest.raises(TypeError):
+
             @dataset_definition(name="test_providers/badly_applied_decorator", summary="Bad Usage", autoRegister=True)
             def by_two(x):
                 return x * 2
@@ -179,6 +187,7 @@ class TestStandardDatasetsFramework:
 
     def test_decorators1(self, mkTableSpec):
         import sys
+
         print("sys.versioninfo", sys.version_info)
 
         @dataset_definition
@@ -215,9 +224,9 @@ class TestStandardDatasetsFramework:
     def test_decorators1a(self, mkTableSpec):
         @dataset_definition(name="test/test", tables=["main1"])
         class Y1a(DatasetProvider.NoAssociatedDatasetsMixin, DatasetProvider):
-            def getTableGenerator(self, sparkSession, *, tableName=None, rows=1000000, partitions=4,
-                                  autoSizePartitions=False,
-                                  **options):
+            def getTableGenerator(
+                self, sparkSession, *, tableName=None, rows=1000000, partitions=4, autoSizePartitions=False, **options
+            ):
                 return mkTableSpec
 
         ds_definition = Y1a.getDatasetDefinition()
@@ -241,9 +250,16 @@ class TestStandardDatasetsFramework:
     def test_decorators1b(self, mkTableSpec):
         @dataset_definition(description="a test description")
         class X1b(DatasetProvider.NoAssociatedDatasetsMixin, DatasetProvider):
-            def getTableGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
-                                  description="a test description",
-                                  **options):
+            def getTableGenerator(
+                self,
+                sparkSession,
+                *,
+                tableName=None,
+                rows=-1,
+                partitions=-1,
+                description="a test description",
+                **options,
+            ):
                 return mkTableSpec
 
         ds_definition = X1b.getDatasetDefinition()
@@ -274,9 +290,16 @@ class TestStandardDatasetsFramework:
     def test_bad_registration(self, mkTableSpec):
         @dataset_definition(description="a test description")
         class X1b(DatasetProvider):
-            def getTableGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1,
-                                  description="a test description",
-                                  **options):
+            def getTableGenerator(
+                self,
+                sparkSession,
+                *,
+                tableName=None,
+                rows=-1,
+                partitions=-1,
+                description="a test description",
+                **options,
+            ):
                 return mkTableSpec
 
         with pytest.raises(ValueError):
@@ -291,23 +314,28 @@ class TestStandardDatasetsFramework:
 
     def test_invalid_decorator_use(self):
         with pytest.raises(TypeError):
+
             @dataset_definition
             def my_function(x):
                 return x
 
     def test_invalid_decorator_use2(self):
         with pytest.raises(TypeError):
+
             @dataset_definition(name="test/bad_decorator1")
             def my_function(x):
                 return x
 
-    @pytest.mark.parametrize("providerClass, options",
-                             [(SampleDatasetProviderBatch, {}),
-                              (SampleDatasetProviderBatch, {"pattern": "test.*"}),
-                              (SampleDatasetProviderBatch, {"pattern": "test_providers/test_batch"}),
-                              (SampleDatasetProviderBatch, {"supportsStreaming": False}),
-                              (SampleDatasetProviderStreaming, {"supportsStreaming": True})
-                              ])
+    @pytest.mark.parametrize(
+        "providerClass, options",
+        [
+            (SampleDatasetProviderBatch, {}),
+            (SampleDatasetProviderBatch, {"pattern": "test.*"}),
+            (SampleDatasetProviderBatch, {"pattern": "test_providers/test_batch"}),
+            (SampleDatasetProviderBatch, {"supportsStreaming": False}),
+            (SampleDatasetProviderStreaming, {"supportsStreaming": True}),
+        ],
+    )
     def test_listing(self, providerClass, options, capsys):
         print("listing datasets")
 
@@ -334,9 +362,9 @@ class TestStandardDatasetsFramework:
     @pytest.fixture
     def dataset_provider(self):
         class MyDatasetProvider(DatasetProvider.NoAssociatedDatasetsMixin, DatasetProvider):
-            def getTableGenerator(self, sparkSession, *, tableName=None, rows=1000000, partitions=4,
-                                  autoSizePartitions=False,
-                                  **options):
+            def getTableGenerator(
+                self, sparkSession, *, tableName=None, rows=1000000, partitions=4, autoSizePartitions=False, **options
+            ):
                 return mkTableSpec
 
         return MyDatasetProvider()
@@ -359,13 +387,10 @@ class TestStandardDatasetsFramework:
         with pytest.raises(AssertionError):
             dataset_provider.checkOptions(options, allowed_options)
 
-    @pytest.mark.parametrize("rows, columns, expected_partitions", [
-        (1000000, 10, 4),
-        (5000000, 100, 12),
-        (100, 2, 4),
-        (1000_000_000, 10, 18),
-        (5000_000_000, 30, 32)
-    ])
+    @pytest.mark.parametrize(
+        "rows, columns, expected_partitions",
+        [(1000000, 10, 4), (5000000, 100, 12), (100, 2, 4), (1000_000_000, 10, 18), (5000_000_000, 30, 32)],
+    )
     def test_auto_compute_partitions(self, dataset_provider, rows, columns, expected_partitions):
         partitions = dataset_provider.autoComputePartitions(rows, columns)
         assert partitions == expected_partitions

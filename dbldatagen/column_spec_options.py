@@ -154,34 +154,54 @@ class ColumnSpecOptions(object):
         'random_seed_method': 'randomSeedMethod',
         'random_seed': 'randomSeed',
         'text_separator': 'textSeparator',
-
     }
     #: the set of attributes that are permitted for any call to data generator `withColumn` or `withColumnSpec`
-    _ALLOWED_PROPERTIES = {'name', 'type', 'minValue', 'maxValue', 'step',
-                           'prefix', 'random', 'distribution',
-                           'range', 'baseColumn', 'baseColumnType', 'values',
-                           'numColumns', 'numFeatures', 'structType',
-                           'begin', 'end', 'interval', 'expr', 'omit',
-                           'weights', 'description', 'continuous',
-                           'percentNulls', 'template', 'format',
-                           'uniqueValues', 'dataRange', 'text',
-                           'precision', 'scale',
-                           'randomSeedMethod', 'randomSeed',
-                           'nullable', 'implicit', 'escapeSpecialChars',
-                           'suffix', 'textSeparator'
-                           }
+    _ALLOWED_PROPERTIES = {
+        'name',
+        'type',
+        'minValue',
+        'maxValue',
+        'step',
+        'prefix',
+        'random',
+        'distribution',
+        'range',
+        'baseColumn',
+        'baseColumnType',
+        'values',
+        'numColumns',
+        'numFeatures',
+        'structType',
+        'begin',
+        'end',
+        'interval',
+        'expr',
+        'omit',
+        'weights',
+        'description',
+        'continuous',
+        'percentNulls',
+        'template',
+        'format',
+        'uniqueValues',
+        'dataRange',
+        'text',
+        'precision',
+        'scale',
+        'randomSeedMethod',
+        'randomSeed',
+        'nullable',
+        'implicit',
+        'escapeSpecialChars',
+        'suffix',
+        'textSeparator',
+    }
 
     #: the set of disallowed column attributes for any call to data generator `withColumn` or `withColumnSpec`
-    _FORBIDDEN_PROPERTIES = {
-        'range'
-    }
+    _FORBIDDEN_PROPERTIES = {'range'}
 
     #: maxValue values for each column type, only if where value is intentionally restricted
-    _MAX_TYPE_RANGE = {
-        'byte': 256,
-        'short': 65536,
-        'int': 4294967296
-    }
+    _MAX_TYPE_RANGE = {'byte': 256, 'short': 65536, 'int': 4294967296}
 
     def __init__(self, props, aliases=None):  # TODO: check if additional options are needed here as `**kwArgs`
         self._options = props
@@ -203,15 +223,15 @@ class ColumnSpecOptions(object):
 
     @property
     def options(self):
-        """ Get options dictionary for object
+        """Get options dictionary for object
 
-            :return: options dictionary for object
+        :return: options dictionary for object
 
         """
         return self._options
 
     def getOrElse(self, key, default=None):
-        """ Get val for key if it exists or else return default"""
+        """Get val for key if it exists or else return default"""
         assert key is not None, "key must be valid key string"
 
         if key in self._options:
@@ -221,12 +241,12 @@ class ColumnSpecOptions(object):
         return default
 
     def __getitem__(self, key):
-        """ implement the built in dereference by key behavior """
+        """implement the built in dereference by key behavior"""
         ensure(key is not None, "key should be non-empty")
         return self._options.get(key, None)
 
     def checkBoolOption(self, v, name=None, optional=True):
-        """ Check that option is either not specified or of type boolean
+        """Check that option is either not specified or of type boolean
 
         :param v: value to test
         :param name: name of value to use in any reported errors or exceptions
@@ -235,11 +255,12 @@ class ColumnSpecOptions(object):
         """
         assert name is not None, "`name` must be specified"
         if optional:
-            ensure(v is None or type(v) is bool,
-                   f"Option `{name}` must be boolean if specified - value: {v}, type: {type(v)}")
+            ensure(
+                v is None or type(v) is bool,
+                f"Option `{name}` must be boolean if specified - value: {v}, type: {type(v)}",
+            )
         else:
-            ensure(type(v) is bool,
-                   f"Option `{name}` must be boolean  - value: {v}, type: {type(v)}")
+            ensure(type(v) is bool, f"Option `{name}` must be boolean  - value: {v}, type: {type(v)}")
 
     def checkExclusiveOptions(self, options):
         """check if the options are exclusive - i.e only one is not None
@@ -248,8 +269,9 @@ class ColumnSpecOptions(object):
         """
         assert options is not None, "options must be non empty"
         assert type(options) is list, "`options` must be list"
-        assert len([self[x] for x in options if self[x] is not None]) <= 1, \
-            f" only one of of the options: {options} may be specified "
+        assert (
+            len([self[x] for x in options if self[x] is not None]) <= 1
+        ), f" only one of of the options: {options} may be specified "
 
     def checkOptionValues(self, option, option_values):
         """check if option value is in list of values
@@ -263,10 +285,10 @@ class ColumnSpecOptions(object):
 
     def checkValidColumnProperties(self, columnProps):
         """
-            check that column definition properties are recognized
-            and that the column definition has required properties
+        check that column definition properties are recognized
+        and that the column definition has required properties
 
-            :param columnProps:
+        :param columnProps:
         """
         ensure(columnProps is not None, "columnProps should be non-empty")
 
@@ -281,8 +303,10 @@ class ColumnSpecOptions(object):
                     raise ValueError("Effective range greater than range of type")
 
         for k in columnProps.keys():
-            ensure(k in ColumnSpecOptions._ALLOWED_PROPERTIES or k in ColumnSpecOptions._PROPERTY_ALIASES,
-                   f"invalid column option {k}")
+            ensure(
+                k in ColumnSpecOptions._ALLOWED_PROPERTIES or k in ColumnSpecOptions._PROPERTY_ALIASES,
+                f"invalid column option {k}",
+            )
 
         for arg in self._REQUIRED_PROPERTIES:
             ensure(columnProps.get(arg) is not None, f"missing column option {arg}")
@@ -292,9 +316,15 @@ class ColumnSpecOptions(object):
 
         # check weights and values
         if 'weights' in columnProps:
-            ensure('values' in columnProps,
-                   f"weights are only allowed for columns with values - column '{columnProps['name']}' ")
-            ensure(columnProps['values'] is not None and len(columnProps['values']) > 0,
-                   f"weights must be associated with non-empty list of values - column '{columnProps['name']}' ")
-            ensure(len(columnProps['values']) == len(columnProps['weights']),
-                   f"length(list of weights) must equal length(list of values) - column '{columnProps['name']}' ")
+            ensure(
+                'values' in columnProps,
+                f"weights are only allowed for columns with values - column '{columnProps['name']}' ",
+            )
+            ensure(
+                columnProps['values'] is not None and len(columnProps['values']) > 0,
+                f"weights must be associated with non-empty list of values - column '{columnProps['name']}' ",
+            )
+            ensure(
+                len(columnProps['values']) == len(columnProps['weights']),
+                f"length(list of weights) must equal length(list of values) - column '{columnProps['name']}' ",
+            )

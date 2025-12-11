@@ -45,13 +45,10 @@ extensions = [
     # 'numpydoc',  # handle NumPy documentation formatted docstrings. Needs to install
     'recommonmark',  # allow including Commonmark markdown in sources
     'sphinx_rtd_theme',
-    'sphinx_copybutton'
+    'sphinx_copybutton',
 ]
 
-source_suffix = {
-    '.rst': 'restructuredtext',
-    '.md': 'markdown'
-}
+source_suffix = {'.rst': 'restructuredtext', '.md': 'markdown'}
 
 pdf_documents = [
     ("index", project, project, author),
@@ -107,9 +104,7 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-html_css_files = [
-    'css/tdg.css'
-]
+html_css_files = ['css/tdg.css']
 
 # html_sidebars={
 #    '**' : [ 'globaltoc.html']

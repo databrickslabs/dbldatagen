@@ -20,6 +20,7 @@ class OutputDataset:
     :param format: Output data format (default is ``"delta"``).
     :param options: Optional dictionary of options for writing data (e.g. ``{"mergeSchema": "true"}``)
     """
+
     location: str
     output_mode: str = "append"
     format: str = "delta"
