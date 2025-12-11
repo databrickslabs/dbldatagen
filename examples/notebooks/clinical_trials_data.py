@@ -414,32 +414,25 @@ class ClinicalTrialsGenerator:
                 random=True,
             )
             .withColumn(
-                "visit_name",
-                StringType(),
-                values=[
-                    "Screening",
-                    "Baseline",
-                    "Week 4",
-                    "Week 8",
-                    "Week 12",
-                    "Week 24",
-                    "End of Study",
-                ],
+                "visit_number",
+                IntegerType(),
+                minValue=0,
+                maxValue=6,
                 random=True,
             )
             .withColumn(
-                "visit_number",
-                IntegerType(),
-                baseColumn="visit_name",
+                "visit_name",
+                StringType(),
+                baseColumn="visit_number",
                 expr="""
                 CASE 
-                    WHEN visit_name = 'Screening' THEN 0
-                    WHEN visit_name = 'Baseline' THEN 1
-                    WHEN visit_name = 'Week 4' THEN 2
-                    WHEN visit_name = 'Week 8' THEN 3
-                    WHEN visit_name = 'Week 12' THEN 4
-                    WHEN visit_name = 'Week 24' THEN 5
-                    ELSE 6
+                    WHEN visit_number = 0 THEN 'Screening'
+                    WHEN visit_number = 1 THEN 'Baseline'
+                    WHEN visit_number = 2 THEN 'Week 4'
+                    WHEN visit_number = 3 THEN 'Week 8'
+                    WHEN visit_number = 4 THEN 'Week 12'
+                    WHEN visit_number = 5 THEN 'Week 24'
+                    ELSE 'End of Study'
                 END
                 """,
             )
