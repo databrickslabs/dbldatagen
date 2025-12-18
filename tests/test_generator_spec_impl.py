@@ -150,6 +150,23 @@ class TestGenerator:
             sparkSession=mock_spark, name=ANY, rows=100, partitions=None, randomSeed=12345
         )
 
+    def test_prepare_data_generators_no_spark(self, generator):
+        generator.spark = None
+        spec = DatagenSpec(datasets={"t": DatasetDefinition(number_of_rows=1, columns=[])})
+        with pytest.raises(RuntimeError, match="SparkSession is not available"):
+            generator._prepareDataGenerators(spec)
+
+    def test_prepare_data_generators_error(self, generator, mocker):
+        # Mock DataGenerator to raise exception
+        mocker.patch("dbldatagen.DataGenerator", side_effect=Exception("Simulated error"))
+
+        spec = DatagenSpec(
+            datasets={"table1": DatasetDefinition(number_of_rows=100, columns=[])}, output_destination=None
+        )
+
+        with pytest.raises(RuntimeError, match="Failed to prepare table 'table1'"):
+            generator._prepareDataGenerators(spec)
+
     def test_write_prepared_data_no_destination(self, generator):
         mock_datagen = MagicMock()
         mock_df = MagicMock()
@@ -203,6 +220,53 @@ class TestGenerator:
 
         mock_write.saveAsTable.assert_called_with("main.test.table1")
 
+    def test_write_prepared_data_empty_generators_error(self, generator):
+        with pytest.raises(RuntimeError, match="No prepared data generators to write"):
+            generator._writePreparedData({}, None)
+
+    def test_write_prepared_data_error(self, generator):
+        mock_datagen = MagicMock()
+        mock_datagen.build.side_effect = Exception("Simulated build error")
+
+        prepared_map = {"table1": mock_datagen}
+
+        with pytest.raises(RuntimeError, match="Failed to write table 'table1'"):
+            generator._writePreparedData(prepared_map, None)
+
+    def test_write_prepared_data_zero_rows_warning(self, generator, caplog):
+        mock_datagen = MagicMock()
+        mock_df = MagicMock()
+        mock_datagen.build.return_value = mock_df
+        mock_df.count.return_value = 0
+        mock_datagen.rowCount = 100
+
+        prepared_map = {"table1": mock_datagen}
+
+        import logging
+
+        with caplog.at_level(logging.WARNING):
+            generator._writePreparedData(prepared_map, None)
+
+        assert "Table 'table1': Requested 100 rows but built 0" in caplog.text
+
+    def test_write_prepared_data_unknown_target(self, generator, caplog):
+        mock_datagen = MagicMock()
+        mock_df = MagicMock()
+        mock_datagen.build.return_value = mock_df
+        mock_df.count.return_value = 100
+
+        prepared_map = {"table1": mock_datagen}
+
+        # Pass a random object as target
+        unknown_target = "not a target"
+
+        import logging
+
+        with caplog.at_level(logging.WARNING):
+            generator._writePreparedData(prepared_map, unknown_target)  # type: ignore
+
+        assert "No output destination specified" in caplog.text
+
     def test_generate_and_write_data(self, generator, mocker):
         mock_prepare = mocker.patch("dbldatagen.spec.generator_spec_impl.Generator._prepareDataGenerators")
         mock_write = mocker.patch("dbldatagen.spec.generator_spec_impl.Generator._writePreparedData")
@@ -226,3 +290,12 @@ class TestGenerator:
 
         # Verify write not called
         # Side effect check not needed as we just verify it runs without error and covers the branch
+
+    def test_generate_and_write_data_error(self, generator, mocker):
+        mock_prepare = mocker.patch("dbldatagen.spec.generator_spec_impl.Generator._prepareDataGenerators")
+        mock_prepare.side_effect = RuntimeError("Preparation failed")
+
+        spec = DatagenSpec(datasets={"t": DatasetDefinition(number_of_rows=1, columns=[])})
+
+        with pytest.raises(RuntimeError, match="Error during combined data generation"):
+            generator.generateAndWriteData(spec)
