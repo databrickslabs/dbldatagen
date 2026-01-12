@@ -10,66 +10,72 @@ This file defines the Gamma statistical distributions related classes
 import numpy as np
 import pandas as pd
 import pyspark.sql.functions as F
+from pyspark.sql import Column
 from pyspark.sql.types import FloatType
 
-from .data_distribution import DataDistribution
-from ..serialization import SerializableToDict
+from dbldatagen.datagen_types import NumericLike
+from dbldatagen.distributions.data_distribution import DataDistribution
+from dbldatagen.serialization import SerializableToDict
 
 
 class Gamma(DataDistribution):
-    """ Specify Gamma distribution with specific shape and scale
+    """Specifies that random samples should be drawn from the gamma distribution parameterized by shape
+    and scale. See https://en.wikipedia.org/wiki/Gamma_distribution.
 
-    :param shape: shape parameter (k)
-    :param scale: scale parameter (theta)
-
-    See https://en.wikipedia.org/wiki/Gamma_distribution
-
-    Scaling is performed to normalize values between 0 and 1
-
+    :param shape: Shape parameter; Should be a float, int or other numeric value greater than 0
+    :param scale: Scale parameter; Should be a float, int or other numeric value greater than 0
     """
 
-    def __init__(self, shape, scale):
+    def __init__(self, shape: NumericLike | None = None, scale: NumericLike | None = None) -> None:
         DataDistribution.__init__(self)
-        assert type(shape) in [float, int, np.float64, np.int32, np.int64], "alpha must be int-like or float-like"
-        assert type(scale) in [float, int, np.float64, np.int32, np.int64], "beta must be int-like or float-like"
         self._shape = shape
         self._scale = scale
 
-    def _toInitializationDict(self):
-        """ Converts an object to a Python dictionary. Keys represent the object's
-            constructor arguments.
-            :return: Python dictionary representation of the object
+    def _toInitializationDict(self) -> dict[str, object]:
+        """Converts an object to a Python dictionary. Keys represent the object's
+        constructor arguments.
+
+        :return: Dictionary representation of the object
         """
         _options = {"kind": self.__class__.__name__, "shape": self._shape, "scale": self._scale}
         return {
-            k: v._toInitializationDict()
-            if isinstance(v, SerializableToDict) else v
-            for k, v in _options.items() if v is not None
+            k: v._toInitializationDict() if isinstance(v, SerializableToDict) else v
+            for k, v in _options.items()
+            if v is not None
         }
 
     @property
-    def shape(self):
-        """ Return shape parameter."""
+    def shape(self) -> NumericLike | None:
+        """Returns the shape parameter.
+
+        :return: Shape parameter
+        """
         return self._shape
 
     @property
-    def scale(self):
-        """ Return scale parameter."""
+    def scale(self) -> NumericLike | None:
+        """Returns the scale parameter.
+
+        :return: Scale parameter
+        """
         return self._scale
 
-    def __str__(self):
-        """ Return string representation of object """
+    def __str__(self) -> str:
+        """Returns a string representation of the object.
+
+        :return: String representation of the object
+        """
         return f"GammaDistribution(shape(`k`)={self._shape}, scale(`theta`)={self._scale}, seed={self.randomSeed})"
 
     @staticmethod
     def gamma_func(shape_series: pd.Series, scale_series: pd.Series, random_seed: pd.Series) -> pd.Series:
-        """ Pandas / Numpy based function to generate gamma samples
+        """Generates samples from the gamma distribution using pandas / numpy.
 
-        :param shape_series: pandas series of shape (k) values
-        :param scale_series: pandas series of scale (theta) values
-        :param random_seed:  pandas series of random seed values
+        :param shape_series: Value for shape parameter as Pandas Series
+        :param scale_series: Value for scale parameter as Pandas Series
+        :param random_seed: Value for randomSeed parameter as Pandas Series
 
-        :return: Samples scaled from 0 .. 1
+        :return: Random samples from distribution scaled to values between 0 and 1
         """
         shape = shape_series.to_numpy()
         scale = scale_series.to_numpy()
@@ -90,14 +96,16 @@ class Gamma(DataDistribution):
         results2 = adjusted_results / scaling_factor
         return pd.Series(results2)
 
-    def generateNormalizedDistributionSample(self):
-        """ Generate sample of data for distribution
+    def generateNormalizedDistributionSample(self) -> Column:
+        """Generates a sample of data for the distribution.
 
-        :return: random samples from distribution scaled to values between 0 and 1
+        :return: Pyspark SQL column expression for the sample values
         """
-        gamma_sample = F.pandas_udf(self.gamma_func, returnType=FloatType()).asNondeterministic()
+        gamma_sample = F.pandas_udf(self.gamma_func, returnType=FloatType()).asNondeterministic()  # type: ignore
 
-        newDef = gamma_sample(F.lit(self._shape),
-                             F.lit(self._scale),
-                             F.lit(self.randomSeed) if self.randomSeed is not None else F.lit(-1.0))
+        newDef: Column = gamma_sample(
+            F.lit(self._shape),
+            F.lit(self._scale),
+            F.lit(self.randomSeed) if self.randomSeed is not None else F.lit(-1.0),
+        )
         return newDef

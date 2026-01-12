@@ -17,90 +17,70 @@ NOTE: when a new source code file is added, an entry should be added for that fi
 
 """
 SOURCE_FILES = {
-    "data_generator.py": {"briefDesc": "Main generator classes",
-                          "grouping": "main classes"},
-    "column_generation_spec.py": {"briefDesc": "Column Generation Spec types",
-                                  "grouping": "internal classes"},
-    "column_spec_options.py": {"briefDesc": "Column Generation Options",
-                               "grouping": "main classes"},
-    "datarange.py": {"briefDesc": "Internal data range abstract types",
-                     "grouping": "main classes"},
-    "daterange.py": {"briefDesc": "Date and time ranges",
-                     "grouping": "main classes"},
-
-    "datasets_object.py": {"briefDesc": "Entry point for standard datasets",
-                           "grouping": "main classes"},
-
-    "nrange.py": {"briefDesc": "Numeric ranges",
-                  "grouping": "main classes"},
-    "text_generators.py": {"briefDesc": "Text data generation",
-                           "grouping": "main classes"},
-    "text_generator_plugins.py": {"briefDesc": "Text data generation",
-                                  "grouping": "main classes"},
-    "data_analyzer.py": {"briefDesc": "Analysis of existing data",
-                         "grouping": "main classes"},
-    "function_builder.py": {"briefDesc": "Internal utilities to create functions related to weights",
-                            "grouping": "internal classes"},
-    "schema_parser.py": {"briefDesc": "Internal utilities to parse Spark SQL schema information",
-                         "grouping": "internal classes"},
-    "spark_singleton.py": {"briefDesc": "Spark singleton for test purposes",
-                           "grouping": "internal classes"},
-    "utils.py": {"briefDesc": "",
-                 "grouping": "internal classes"},
-    "html_utils.py": {"briefDesc": "",
-                 "grouping": "internal classes"},
-
-    "beta.py": {"briefDesc": "Beta distribution related code",
-                "grouping": "data distribution"},
-    "data_distribution.py": {"briefDesc": "Data distribution related code",
-                             "grouping": "data distribution"},
-    "normal_distribution.py": {"briefDesc": "Normal data distribution related code",
-                               "grouping": "data distribution"},
-    "gamma.py": {"briefDesc": "Gamma data distribution related code",
-                 "grouping": "data distribution"},
-    "exponential_distribution.py": {"briefDesc": "Exponential data distribution related code",
-                                    "grouping": "data distribution"},
-
-    "basic_user.py": {"briefDesc": "Provider for `basic/user` standard dataset",
-                "grouping": "Standard datasets"},
-    "dataset_provider.py": {"briefDesc": "Base class for standard dataset providers",
-                             "grouping": "Standard datasets"},
-    "multi_table_telephony_provider.py": {"briefDesc": "Provider for `multi-table/telephony` standard dataset",
-                               "grouping": "Standard datasets"},
-    "constraint.py": {"briefDesc": "Constraint related code",
-                "grouping": "data generation constraints"},
-    "chained_relation.py": {"briefDesc": "ChainedInequality constraint related code",
-                             "grouping": "data generation constraints"},
-    "value_multiple_constraint.py": {"briefDesc": "FixedIncrement constraint related code",
-                               "grouping": "data generation constraints"},
-    "negative_values.py": {"briefDesc": "Negative constraint related code",
-                 "grouping": "data generation constraints"},
-    "positive_values.py": {"briefDesc": "Positive constraint related code",
-                                    "grouping": "data generation constraints"},
-    "literal_relation_constraint.py": {"briefDesc": "Scalar inequality constraint related code",
-                               "grouping": "data generation constraints"},
-    "literal_range_constraint.py": {"briefDesc": "ScalarRange constraint related code",
-                                        "grouping": "data generation constraints"},
-    "sql_expr.py": {"briefDesc": "SQL expression constraint related code",
-                                        "grouping": "data generation constraints"},
-
+    "data_generator.py": {"briefDesc": "Main generator classes", "grouping": "main classes"},
+    "column_generation_spec.py": {"briefDesc": "Column Generation Spec types", "grouping": "internal classes"},
+    "column_spec_options.py": {"briefDesc": "Column Generation Options", "grouping": "main classes"},
+    "datarange.py": {"briefDesc": "Internal data range abstract types", "grouping": "main classes"},
+    "daterange.py": {"briefDesc": "Date and time ranges", "grouping": "main classes"},
+    "datasets_object.py": {"briefDesc": "Entry point for standard datasets", "grouping": "main classes"},
+    "nrange.py": {"briefDesc": "Numeric ranges", "grouping": "main classes"},
+    "text_generators.py": {"briefDesc": "Text data generation", "grouping": "main classes"},
+    "text_generator_plugins.py": {"briefDesc": "Text data generation", "grouping": "main classes"},
+    "data_analyzer.py": {"briefDesc": "Analysis of existing data", "grouping": "main classes"},
+    "function_builder.py": {
+        "briefDesc": "Internal utilities to create functions related to weights",
+        "grouping": "internal classes",
+    },
+    "schema_parser.py": {
+        "briefDesc": "Internal utilities to parse Spark SQL schema information",
+        "grouping": "internal classes",
+    },
+    "spark_singleton.py": {"briefDesc": "Spark singleton for test purposes", "grouping": "internal classes"},
+    "utils.py": {"briefDesc": "", "grouping": "internal classes"},
+    "html_utils.py": {"briefDesc": "", "grouping": "internal classes"},
+    "beta.py": {"briefDesc": "Beta distribution related code", "grouping": "data distribution"},
+    "data_distribution.py": {"briefDesc": "Data distribution related code", "grouping": "data distribution"},
+    "normal_distribution.py": {"briefDesc": "Normal data distribution related code", "grouping": "data distribution"},
+    "gamma.py": {"briefDesc": "Gamma data distribution related code", "grouping": "data distribution"},
+    "exponential_distribution.py": {
+        "briefDesc": "Exponential data distribution related code",
+        "grouping": "data distribution",
+    },
+    "basic_user.py": {"briefDesc": "Provider for `basic/user` standard dataset", "grouping": "Standard datasets"},
+    "dataset_provider.py": {"briefDesc": "Base class for standard dataset providers", "grouping": "Standard datasets"},
+    "multi_table_telephony_provider.py": {
+        "briefDesc": "Provider for `multi-table/telephony` standard dataset",
+        "grouping": "Standard datasets",
+    },
+    "constraint.py": {"briefDesc": "Constraint related code", "grouping": "data generation constraints"},
+    "chained_relation.py": {
+        "briefDesc": "ChainedInequality constraint related code",
+        "grouping": "data generation constraints",
+    },
+    "value_multiple_constraint.py": {
+        "briefDesc": "FixedIncrement constraint related code",
+        "grouping": "data generation constraints",
+    },
+    "negative_values.py": {"briefDesc": "Negative constraint related code", "grouping": "data generation constraints"},
+    "positive_values.py": {"briefDesc": "Positive constraint related code", "grouping": "data generation constraints"},
+    "literal_relation_constraint.py": {
+        "briefDesc": "Scalar inequality constraint related code",
+        "grouping": "data generation constraints",
+    },
+    "literal_range_constraint.py": {
+        "briefDesc": "ScalarRange constraint related code",
+        "grouping": "data generation constraints",
+    },
+    "sql_expr.py": {"briefDesc": "SQL expression constraint related code", "grouping": "data generation constraints"},
 }
 
 # grouping metadata information
 # note that the GROUPING_INFO will be output in the order that they appear here
 GROUPING_INFO = {
-    "main classes": {
-        "heading": "Main user facing classes, functions and types"
-    },
-    "internal classes": {
-        "heading": "Internal classes, functions and types"
-    },
-    "data distribution": {
-        "heading": "Data distribution related classes, functions and types"
-    },
-    "data generation constraints": {
-        "heading": "Data generation constraints related classes, functions and types"
-    }
+    "main classes": {"heading": "Main user facing classes, functions and types"},
+    "internal classes": {"heading": "Internal classes, functions and types"},
+    "data distribution": {"heading": "Data distribution related classes, functions and types"},
+    "data generation constraints": {"heading": "Data generation constraints related classes, functions and types"},
 }
 
 PACKAGE_NAME = "dbldatagen"
@@ -108,7 +88,7 @@ PROJECT_PATH = f"../{PACKAGE_NAME}"
 
 
 def writeUnderlined(outputFile, text, underline="="):
-    """ write underlined text in RST markup format
+    """write underlined text in RST markup format
 
     :param outputFile: output file to write to
     :param text:  text to write
@@ -131,7 +111,7 @@ class FileMeta:
     BRIEF_DESCRIPTION = "briefDesc"
 
     def __init__(self, moduleName: str, metadata, classes, functions, types, subpackage: str = None):
-        """ Constructor for File Meta
+        """Constructor for File Meta
 
         :param moduleName:
         :param metadata:
@@ -153,14 +133,16 @@ class FileMeta:
 
     @property
     def isPopulated(self):
-        """ Check if instance has any classes, functions or types"""
-        return ((self.classes is not None and len(self.classes) > 0)
-                or (self.functions is not None and len(self.functions) > 0)
-                or (self.types is not None and len(self.types) > 0))
+        """Check if instance has any classes, functions or types"""
+        return (
+            (self.classes is not None and len(self.classes) > 0)
+            or (self.functions is not None and len(self.functions) > 0)
+            or (self.types is not None and len(self.types) > 0)
+        )
 
 
 def findMembers(sourceFile, fileMetadata, fileSubpackage):
-    """  Find classes, types and functions in file
+    """Find classes, types and functions in file
 
     :param fileMetadata: metadata for file
     :param fileSubpackage: subpackage for file
@@ -194,12 +176,14 @@ def findMembers(sourceFile, fileMetadata, fileSubpackage):
         except Exception as e:
             print(f"*** failed to process file: {fname}")
 
-    return FileMeta(moduleName=Path(sourceFile.name).stem,
-                    metadata=fileMetadata,
-                    subpackage=fileSubpackage,
-                    classes=sorted(classes),
-                    functions=sorted(functions),
-                    types=sorted(types))
+    return FileMeta(
+        moduleName=Path(sourceFile.name).stem,
+        metadata=fileMetadata,
+        subpackage=fileSubpackage,
+        classes=sorted(classes),
+        functions=sorted(functions),
+        types=sorted(types),
+    )
 
 
 def includeTemplate(outputFile):
@@ -215,7 +199,7 @@ def includeTemplate(outputFile):
 
 
 def processItemList(outputFile, items, sectionTitle, subpackage=None):
-    """ process list of items
+    """process list of items
 
     :param outputFile: output file instance
     :param items: list of items. each item is a tuple of ( "moduleName.typename", "type description")
@@ -240,7 +224,7 @@ def processItemList(outputFile, items, sectionTitle, subpackage=None):
 
 
 def processDirectory(outputFile, pathToProcess, subpackage=None):
-    """ process directory for package or subpackage
+    """process directory for package or subpackage
 
     :param outputFile: output file instance
     :param pathToProcess: path to process
@@ -261,9 +245,7 @@ def processDirectory(outputFile, pathToProcess, subpackage=None):
                 title = SOURCE_FILES[relativeFile.name]["briefDesc"]
 
                 # get the classes, functions and types for the file
-                fileMetaInfo = findMembers(fp,
-                                           fileMetadata=SOURCE_FILES[relativeFile.name],
-                                           fileSubpackage=subpackage)
+                fileMetaInfo = findMembers(fp, fileMetadata=SOURCE_FILES[relativeFile.name], fileSubpackage=subpackage)
 
                 assert fileMetaInfo is not None
 
@@ -274,7 +256,9 @@ def processDirectory(outputFile, pathToProcess, subpackage=None):
                         assert type(fileGroupings[fileMetaInfo.grouping]) is list
                         fileGroupings[fileMetaInfo.grouping].append(fileMetaInfo)
                     else:
-                        newEntry = [fileMetaInfo, ]
+                        newEntry = [
+                            fileMetaInfo,
+                        ]
                         assert type(newEntry) is list
                         fileGroupings[fileMetaInfo.grouping] = newEntry
             elif not relativeFile.name.startswith("_"):
@@ -288,30 +272,33 @@ def processDirectory(outputFile, pathToProcess, subpackage=None):
                 fileMetaInfoList = fileGroupings[grp]
 
                 # get the list of classes for the package
-                classList = [(f"{fileMetaInfo.moduleName}.{cls}", fileMetaInfo.description)
-                             for fileMetaInfo in fileMetaInfoList for cls in fileMetaInfo.classes
-                             if fileMetaInfo.isPopulated]
+                classList = [
+                    (f"{fileMetaInfo.moduleName}.{cls}", fileMetaInfo.description)
+                    for fileMetaInfo in fileMetaInfoList
+                    for cls in fileMetaInfo.classes
+                    if fileMetaInfo.isPopulated
+                ]
 
                 # get the list of functions for the package
-                functionList = [(f"{fileMetaInfo.moduleName}.{fn}", fileMetaInfo.description)
-                                for fileMetaInfo in fileMetaInfoList for fn in fileMetaInfo.functions
-                                if fileMetaInfo.isPopulated]
+                functionList = [
+                    (f"{fileMetaInfo.moduleName}.{fn}", fileMetaInfo.description)
+                    for fileMetaInfo in fileMetaInfoList
+                    for fn in fileMetaInfo.functions
+                    if fileMetaInfo.isPopulated
+                ]
 
                 # get the list of types for the package
-                typeList = [(f"{fileMetaInfo.moduleName}.{typ}", "")
-                            for fileMetaInfo in fileMetaInfoList for typ in fileMetaInfo.types
-                            if fileMetaInfo.isPopulated]
+                typeList = [
+                    (f"{fileMetaInfo.moduleName}.{typ}", "")
+                    for fileMetaInfo in fileMetaInfoList
+                    for typ in fileMetaInfo.types
+                    if fileMetaInfo.isPopulated
+                ]
 
                 # emit each of the sections in the index
-                processItemList(outputFile, classList,
-                                sectionTitle="Classes",
-                                subpackage=subpackage)
-                processItemList(outputFile, functionList,
-                                sectionTitle="Functions",
-                                subpackage=subpackage)
-                processItemList(outputFile, typeList,
-                                sectionTitle="Types",
-                                subpackage=subpackage)
+                processItemList(outputFile, classList, sectionTitle="Classes", subpackage=subpackage)
+                processItemList(outputFile, functionList, sectionTitle="Functions", subpackage=subpackage)
+                processItemList(outputFile, typeList, sectionTitle="Types", subpackage=subpackage)
 
 
 def main(dirToSearch, outputPath):

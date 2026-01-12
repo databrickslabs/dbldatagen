@@ -20,11 +20,11 @@ class TestTextGenerationPlugins:
         def initPluginContext(context):
             context.prefix = "testing"
 
-        text_generator = (lambda context, v: context.prefix + str(v))
+        text_generator = lambda context, v: context.prefix + str(v)
 
-        pluginDataspec = (dg.DataGenerator(spark, rows=dataRows, partitions=partitions_requested)
-                          .withColumn("text", text=PyfuncText(text_generator, init=initPluginContext))
-                          )
+        pluginDataspec = dg.DataGenerator(spark, rows=dataRows, partitions=partitions_requested).withColumn(
+            "text", text=PyfuncText(text_generator, init=initPluginContext)
+        )
         dfPlugin = pluginDataspec.build()
 
         assert dfPlugin.count() == dataRows
@@ -41,11 +41,11 @@ class TestTextGenerationPlugins:
         def initPluginContext(context):
             context.prefix = "testing"
 
-        text_generator = (lambda context, v: context.prefix + str(v))
+        text_generator = lambda context, v: context.prefix + str(v)
 
-        pluginDataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
-                          .withColumn("text", text=PyfuncText(text_generator, init=initPluginContext))
-                          )
+        pluginDataspec = dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested).withColumn(
+            "text", text=PyfuncText(text_generator, init=initPluginContext)
+        )
         dfPlugin = pluginDataspec.build()
 
         dfCheck = dfPlugin.where("text like 'testing%'")
@@ -64,7 +64,7 @@ class TestTextGenerationPlugins:
         assert new_count2 == data_rows
 
     def test_plugins_extended_syntax(self):
-        """ test property syntax"""
+        """test property syntax"""
         partitions_requested = 4
         data_rows = 100 * 1000
 
@@ -80,9 +80,9 @@ class TestTextGenerationPlugins:
 
         CustomText = PyfuncTextFactory(name="CustomText").withInit(initPluginContext).withRootProperty("root")
 
-        pluginDataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
-                          .withColumn("text", text=CustomText("mkText"))
-                          )
+        pluginDataspec = dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested).withColumn(
+            "text", text=CustomText("mkText")
+        )
         dfPlugin = pluginDataspec.build()
 
         assert dfPlugin.count() == data_rows
@@ -93,7 +93,7 @@ class TestTextGenerationPlugins:
         assert new_count == data_rows
 
     def test_plugins_extended_syntax2(self):
-        """ test arg passing"""
+        """test arg passing"""
         partitions_requested = 4
         data_rows = 100 * 1000
 
@@ -110,9 +110,9 @@ class TestTextGenerationPlugins:
 
         CustomText = PyfuncTextFactory(name="CustomText").withInit(initPluginContext).withRootProperty("root")
 
-        pluginDataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
-                          .withColumn("text", text=CustomText("mkText", isProperty=True))
-                          )
+        pluginDataspec = dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested).withColumn(
+            "text", text=CustomText("mkText", isProperty=True)
+        )
         dfPlugin = pluginDataspec.build()
 
         assert dfPlugin.count() == data_rows
@@ -138,9 +138,9 @@ class TestTextGenerationPlugins:
 
         CustomText = PyfuncTextFactory(name="CustomText").withInit(initPluginContext).withRootProperty("root")
 
-        pluginDataspec = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
-                          .withColumn("text", text=CustomText("mkText", extra="again"))
-                          )
+        pluginDataspec = dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested).withColumn(
+            "text", text=CustomText("mkText", extra="again")
+        )
         dfPlugin = pluginDataspec.build()
 
         assert dfPlugin.count() == data_rows
@@ -151,7 +151,7 @@ class TestTextGenerationPlugins:
         assert new_count == data_rows
 
     def test_plugins_extended_syntax4(self):
-        """ Test syntax extensions """
+        """Test syntax extensions"""
         partitions_requested = 4
         data_rows = 100 * 1000
 
@@ -178,9 +178,10 @@ class TestTextGenerationPlugins:
             assert x == "testing1again"
 
     def test_plugins_faker_integration(self):
-        """ test faker integration with mock objects"""
+        """test faker integration with mock objects"""
 
         import unittest.mock
+
         shuffle_partitions_requested = 4
         partitions_requested = 4
         data_rows = 30 * 1000
@@ -196,19 +197,21 @@ class TestTextGenerationPlugins:
         # partition parameters etc.
         spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
 
-        fakerDataspec2 = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
-                          .withColumn("customer_id", "int", uniqueValues=uniqueCustomers)
-                          .withColumn("name", text=FakerText("__str__"))  # use __str__ as it returns text
-                          )
+        fakerDataspec2 = (
+            dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
+            .withColumn("customer_id", "int", uniqueValues=uniqueCustomers)
+            .withColumn("name", text=FakerText("__str__"))  # use __str__ as it returns text
+        )
         dfFaker2 = fakerDataspec2.build()
         output = dfFaker2.select("name").collect()
         for x in output:
             assert x["name"].startswith("<MagicMock")
 
     def test_plugins_faker_integration2(self):
-        """ test faker integration with mock objects"""
+        """test faker integration with mock objects"""
 
         import unittest.mock
+
         shuffle_partitions_requested = 4
         partitions_requested = 4
         data_rows = 30 * 1000
@@ -222,12 +225,16 @@ class TestTextGenerationPlugins:
         # partition parameters etc.
         spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
 
-        fakerDataspec2 = (dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
-                          .withColumn("customer_id", "int", uniqueValues=uniqueCustomers)
-                          .withColumn("name", text=dg.fakerText("__str__",  # use __str__ as it returns text
-                                                                _lib="unittest.mock",
-                                                                _rootClass="MagicMock"))
-                          )
+        fakerDataspec2 = (
+            dg.DataGenerator(spark, rows=data_rows, partitions=partitions_requested)
+            .withColumn("customer_id", "int", uniqueValues=uniqueCustomers)
+            .withColumn(
+                "name",
+                text=dg.fakerText(
+                    "__str__", _lib="unittest.mock", _rootClass="MagicMock"  # use __str__ as it returns text
+                ),
+            )
+        )
         dfFaker2 = fakerDataspec2.build()
         output = dfFaker2.select("name").collect()
         for x in output:

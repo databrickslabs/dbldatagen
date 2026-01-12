@@ -24,12 +24,13 @@ class TestTypes(unittest.TestCase):
         id_partitions = 4
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=100000, partitions=id_partitions, verbose=True)
-                .withColumn("code1", IntegerType(), minValue=1, maxValue=20, step=1)
-                .withColumn("code2", LongType(), maxValue=1000, step=5)
-                .withColumn("code3", IntegerType(), minValue=100, maxValue=200, step=1, random=True)
-                .withColumn("xcode", StringType(), values=["a", "test", "value"], random=True)
-                .withColumn("rating", FloatType(), minValue=1.0, maxValue=5.0, step=0.00001, random=True)
-                .withColumn("drating", DoubleType(), minValue=1.0, maxValue=5.0, step=0.00001, random=True))
+            .withColumn("code1", IntegerType(), minValue=1, maxValue=20, step=1)
+            .withColumn("code2", LongType(), maxValue=1000, step=5)
+            .withColumn("code3", IntegerType(), minValue=100, maxValue=200, step=1, random=True)
+            .withColumn("xcode", StringType(), values=["a", "test", "value"], random=True)
+            .withColumn("rating", FloatType(), minValue=1.0, maxValue=5.0, step=0.00001, random=True)
+            .withColumn("drating", DoubleType(), minValue=1.0, maxValue=5.0, step=0.00001, random=True)
+        )
 
         df = testdata_defn.build().cache()
         df.printSchema()
@@ -50,10 +51,11 @@ class TestTypes(unittest.TestCase):
         id_partitions = 4
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=num_rows, partitions=id_partitions, verbose=True)
-                .withColumn("basic_byte", ByteType())
-                .withColumn("basic_short", ShortType())
-                .withColumn("code1", ByteType(), minValue=1, maxValue=20, step=1)
-                .withColumn("code2", ShortType(), maxValue=1000, step=5))
+            .withColumn("basic_byte", ByteType())
+            .withColumn("basic_short", ShortType())
+            .withColumn("code1", ByteType(), minValue=1, maxValue=20, step=1)
+            .withColumn("code2", ShortType(), maxValue=1000, step=5)
+        )
 
         testdata_defn.build().createOrReplaceTempView("testdata")
         df = spark.sql("select * from testdata order by basic_short desc, basic_byte desc")
@@ -61,10 +63,12 @@ class TestTypes(unittest.TestCase):
         self.assertEqual(df.count(), num_rows)
 
         # check that range of code1 and code2 matches expectations
-        df_min_max = df.agg(F.min("code1").alias("min_code1"),
-                            F.max("code1").alias("max_code1"),
-                            F.min("code2").alias("min_code2"),
-                            F.max("code2").alias("max_code2"))
+        df_min_max = df.agg(
+            F.min("code1").alias("min_code1"),
+            F.max("code1").alias("max_code1"),
+            F.min("code2").alias("min_code2"),
+            F.max("code2").alias("max_code2"),
+        )
 
         limits = df_min_max.collect()[0]
         self.assertEqual(limits["min_code2"], 0)
@@ -84,9 +88,10 @@ class TestTypes(unittest.TestCase):
         id_partitions = 4
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
-                .withColumn("basic_byte", ByteType())
-                .withColumn("basic_short", ShortType())
-                .withColumn("code1", ByteType(), minValue=1, maxValue=400, step=1))
+            .withColumn("basic_byte", ByteType())
+            .withColumn("basic_short", ShortType())
+            .withColumn("code1", ByteType(), minValue=1, maxValue=400, step=1)
+        )
 
         testdata_defn.build().createOrReplaceTempView("testdata")
         spark.sql("select * from testdata order by basic_short desc, basic_byte desc").show()
@@ -95,9 +100,10 @@ class TestTypes(unittest.TestCase):
         id_partitions = 4
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
-                .withColumn("basic_byte", ByteType())
-                .withColumn("basic_short", ShortType())
-                .withColumn("code1", ByteType(), minValue=127, maxValue=1, step=-1))
+            .withColumn("basic_byte", ByteType())
+            .withColumn("basic_short", ShortType())
+            .withColumn("code1", ByteType(), minValue=127, maxValue=1, step=-1)
+        )
 
         df = testdata_defn.build().limit(130)
         data_row1 = df.collect()
@@ -111,9 +117,9 @@ class TestTypes(unittest.TestCase):
         id_partitions = 4
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
-                .withColumn("basic_byte", ByteType())
-                .withColumn("basic_short", ShortType())
-                .withColumn("code1", ByteType(), minValue=127, maxValue=1, step=-1)
+            .withColumn("basic_byte", ByteType())
+            .withColumn("basic_short", ShortType())
+            .withColumn("code1", ByteType(), minValue=127, maxValue=1, step=-1)
         )
 
         df = testdata_defn.build().limit(130)
@@ -125,11 +131,9 @@ class TestTypes(unittest.TestCase):
         code_values = ["aa", "bb", "cc", "dd", "ee", "ff"]
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
-                .withColumn("basic_byte", ByteType())
-                .withColumn("basic_short", ShortType())
-                .withColumn("code1", StringType(),
-                            values=code_values,
-                            baseColumn=["basic_byte", "basic_short"])
+            .withColumn("basic_byte", ByteType())
+            .withColumn("basic_short", ShortType())
+            .withColumn("code1", StringType(), values=code_values, baseColumn=["basic_byte", "basic_short"])
         )
 
         df = testdata_defn.build().where("code1 is  null")
@@ -152,11 +156,9 @@ class TestTypes(unittest.TestCase):
         id_partitions = 4
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
-                .withColumn("basic_byte", ByteType())
-                .withColumn("basic_short", ShortType())
-                .withColumn("code1", StringType(),
-                            values=["aa", "bb", "cc", "dd", "ee", "ff"],
-                            baseColumn=["basic_byte"])
+            .withColumn("basic_byte", ByteType())
+            .withColumn("basic_short", ShortType())
+            .withColumn("code1", StringType(), values=["aa", "bb", "cc", "dd", "ee", "ff"], baseColumn=["basic_byte"])
         )
         df = testdata_defn.build().where("code1 is  null")
         self.assertEqual(df.count(), 0)
@@ -166,12 +168,10 @@ class TestTypes(unittest.TestCase):
         rows_wanted = 1000000
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=rows_wanted, partitions=id_partitions, verbose=True)
-                .withIdOutput()
-                .withColumn("basic_byte", ByteType())
-                .withColumn("basic_short", ShortType())
-                .withColumn("code1", StringType(),
-                            values=["aa", "bb", "cc", "dd", "ee", "ff"],
-                            baseColumn=["basic_byte"])
+            .withIdOutput()
+            .withColumn("basic_byte", ByteType())
+            .withColumn("basic_short", ShortType())
+            .withColumn("code1", StringType(), values=["aa", "bb", "cc", "dd", "ee", "ff"], baseColumn=["basic_byte"])
         )
         df = testdata_defn.build()
         # df.show()
@@ -182,10 +182,9 @@ class TestTypes(unittest.TestCase):
         id_partitions = 4
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
-                .withColumn("basic_byte", ByteType())
-                .withColumn("basic_short", ShortType())
-                .withColumn("code1", StringType(),
-                            values=["aa", "bb", "cc", "dd", "ee", "ff"])
+            .withColumn("basic_byte", ByteType())
+            .withColumn("basic_short", ShortType())
+            .withColumn("code1", StringType(), values=["aa", "bb", "cc", "dd", "ee", "ff"])
         )
         df = testdata_defn.build().where("code1 is  null")
         self.assertEqual(df.count(), 0)
@@ -195,11 +194,9 @@ class TestTypes(unittest.TestCase):
         id_partitions = 4
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
-                .withColumn("basic_byte", ByteType())
-                .withColumn("basic_short", ShortType())
-                .withColumn("code1", StringType(),
-                            values=["aa", "bb", "cc", "dd", "ee", "ff"],
-                            weights=[1, 2, 3, 4, 5, 6])
+            .withColumn("basic_byte", ByteType())
+            .withColumn("basic_short", ShortType())
+            .withColumn("code1", StringType(), values=["aa", "bb", "cc", "dd", "ee", "ff"], weights=[1, 2, 3, 4, 5, 6])
         )
         df = testdata_defn.build().where("code1 is  null")
         self.assertEqual(df.count(), 0)
@@ -208,12 +205,10 @@ class TestTypes(unittest.TestCase):
         id_partitions = 4
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
-                .withIdOutput()
-                .withColumn("basic_byte", ByteType())
-                .withColumn("basic_short", ShortType())
-                .withColumn("code1", StringType(),
-                            values=["aa", "bb", "cc", "dd", "ee", "ff"],
-                            weights=[1, 2, 3, 4, 5, 6])
+            .withIdOutput()
+            .withColumn("basic_byte", ByteType())
+            .withColumn("basic_short", ShortType())
+            .withColumn("code1", StringType(), values=["aa", "bb", "cc", "dd", "ee", "ff"], weights=[1, 2, 3, 4, 5, 6])
         )
         df = testdata_defn.build().where("code1 is null")
         df.show()
@@ -223,10 +218,10 @@ class TestTypes(unittest.TestCase):
         id_partitions = 4
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
-                .withColumn("basic_byte", ByteType())
-                .withColumn("basic_short", ShortType())
-
-                .withColumn("code2", ShortType(), maxValue=80000, step=5))
+            .withColumn("basic_byte", ByteType())
+            .withColumn("basic_short", ShortType())
+            .withColumn("code2", ShortType(), maxValue=80000, step=5)
+        )
 
         testdata_defn.build().createOrReplaceTempView("testdata")
         spark.sql("select * from testdata order by basic_short desc, basic_byte desc").show()
@@ -235,10 +230,10 @@ class TestTypes(unittest.TestCase):
         id_partitions = 4
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
-                .withColumn("bb", ByteType(), unique_values=100)
-                .withColumn("basic_short", ShortType())
-
-                .withColumn("code2", ShortType(), maxValue=10000, step=5))
+            .withColumn("bb", ByteType(), unique_values=100)
+            .withColumn("basic_short", ShortType())
+            .withColumn("code2", ShortType(), maxValue=10000, step=5)
+        )
 
         testdata_defn.build().createOrReplaceTempView("testdata")
         data_row = spark.sql("select min(bb) as min_bb, max(bb) as max_bb from testdata ").limit(1).collect()
@@ -249,10 +244,10 @@ class TestTypes(unittest.TestCase):
         id_partitions = 4
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
-                .withColumn("bb", ByteType(), minValue=35, maxValue=72)
-                .withColumn("basic_short", ShortType())
-
-                .withColumn("code2", ShortType(), maxValue=10000, step=5))
+            .withColumn("bb", ByteType(), minValue=35, maxValue=72)
+            .withColumn("basic_short", ShortType())
+            .withColumn("code2", ShortType(), maxValue=10000, step=5)
+        )
 
         testdata_defn.build().createOrReplaceTempView("testdata")
         data_row = spark.sql("select min(bb) as min_bb, max(bb) as max_bb from testdata ").limit(1).collect()
@@ -265,9 +260,10 @@ class TestTypes(unittest.TestCase):
         # result should be the same whether using `minValue` or `min` as options
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
-                .withColumn("bb", ByteType(), minValue=35, maxValue=72)
-                .withColumn("basic_short", ShortType())
-                .withColumn("code2", ShortType(), maxValue=10000, step=5))
+            .withColumn("bb", ByteType(), minValue=35, maxValue=72)
+            .withColumn("basic_short", ShortType())
+            .withColumn("code2", ShortType(), maxValue=10000, step=5)
+        )
 
         testdata_defn.build().createOrReplaceTempView("testdata")
         data_row = spark.sql("select min(bb) as min_bb, max(bb) as max_bb from testdata ").limit(1).collect()
@@ -278,10 +274,10 @@ class TestTypes(unittest.TestCase):
         id_partitions = 4
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
-                .withColumn("bb", ByteType(), unique_values=100)
-                .withColumn("basic_short", ShortType())
-
-                .withColumn("code2", ShortType(), maxValue=4000, step=5))
+            .withColumn("bb", ByteType(), unique_values=100)
+            .withColumn("basic_short", ShortType())
+            .withColumn("code2", ShortType(), maxValue=4000, step=5)
+        )
 
         testdata_defn.build().show()
 
@@ -289,12 +285,13 @@ class TestTypes(unittest.TestCase):
         id_partitions = 4
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
-                .withIdOutput()
-                .withColumn("code1", DecimalType(10, 3))
-                .withColumn("code2", DecimalType(10, 5))
-                .withColumn("code3", DecimalType(10, 5), minValue=1.0, maxValue=1000.0)
-                .withColumn("code4", DecimalType(10, 5), random=True, continuous=True)
-                .withColumn("code5", DecimalType(10, 5), minValue=1.0, maxValue=1000.0, random=True, continuous=True))
+            .withIdOutput()
+            .withColumn("code1", DecimalType(10, 3))
+            .withColumn("code2", DecimalType(10, 5))
+            .withColumn("code3", DecimalType(10, 5), minValue=1.0, maxValue=1000.0)
+            .withColumn("code4", DecimalType(10, 5), random=True, continuous=True)
+            .withColumn("code5", DecimalType(10, 5), minValue=1.0, maxValue=1000.0, random=True, continuous=True)
+        )
 
         df = testdata_defn.build()
         df.show()
@@ -303,12 +300,13 @@ class TestTypes(unittest.TestCase):
         id_partitions = 4
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
-                .withIdOutput()
-                .withColumn("code1", DecimalType(10, 3))
-                .withColumn("code2", DecimalType(10, 5))
-                .withColumn("code3", DecimalType(10, 5), minValue=1.0, maxValue=1000.0)
-                .withColumn("code4", DecimalType(10, 5), random=True, continuous=True)
-                .withColumn("code5", DecimalType(10, 5), minValue=1.0, maxValue=1000.0, random=True, continuous=True))
+            .withIdOutput()
+            .withColumn("code1", DecimalType(10, 3))
+            .withColumn("code2", DecimalType(10, 5))
+            .withColumn("code3", DecimalType(10, 5), minValue=1.0, maxValue=1000.0)
+            .withColumn("code4", DecimalType(10, 5), random=True, continuous=True)
+            .withColumn("code5", DecimalType(10, 5), minValue=1.0, maxValue=1000.0, random=True, continuous=True)
+        )
 
         testdata_defn.build().createOrReplaceTempView("testdata")
 
@@ -316,18 +314,19 @@ class TestTypes(unittest.TestCase):
         id_partitions = 4
         testdata_defn = (
             dg.DataGenerator(name="basic_dataset", rows=1000000, partitions=id_partitions, verbose=True)
-
-                .withIdOutput()
-                .withColumn("group1", IntegerType(), expr="1")
-                .withColumn("code1", DecimalType(10, 3))
-                .withColumn("code2", DecimalType(10, 5))
-                .withColumn("code3", DecimalType(10, 5), minValue=1.0, maxValue=1000.0)
-                .withColumn("code4", DecimalType(10, 5), random=True, continuous=True)
-                .withColumn("code5", DecimalType(10, 5), minValue=2.0, maxValue=2000.0, random=True, continuous=True))
+            .withIdOutput()
+            .withColumn("group1", IntegerType(), expr="1")
+            .withColumn("code1", DecimalType(10, 3))
+            .withColumn("code2", DecimalType(10, 5))
+            .withColumn("code3", DecimalType(10, 5), minValue=1.0, maxValue=1000.0)
+            .withColumn("code4", DecimalType(10, 5), random=True, continuous=True)
+            .withColumn("code5", DecimalType(10, 5), minValue=2.0, maxValue=2000.0, random=True, continuous=True)
+        )
 
         testdata_defn.build().createOrReplaceTempView("testdata")
 
-        df2 = spark.sql("""select min(code1) as min1, max(code1) as max1,
+        df2 = spark.sql(
+            """select min(code1) as min1, max(code1) as max1,
                             min(code2) as min2,
                             max(code2) as max2 ,
                             min(code3) as min3,
@@ -336,16 +335,27 @@ class TestTypes(unittest.TestCase):
                             max(code4) as max4,
                             min(code5) as min5,
                             max(code5) as max5
-                           from testdata group by group1 """)
+                           from testdata group by group1 """
+        )
 
         results = df2.collect()[0]
 
         print(results)
 
-        min1, min2, min3, min4, min5 = results['max1'], results['min2'], results['min3'], results['min4'], results[
-            'min5']
-        max1, max2, max3, max4, max5 = results['max1'], results['max2'], results['max3'], results['max4'], results[
-            'max5']
+        min1, min2, min3, min4, min5 = (
+            results['max1'],
+            results['min2'],
+            results['min3'],
+            results['min4'],
+            results['min5'],
+        )
+        max1, max2, max3, max4, max5 = (
+            results['max1'],
+            results['max2'],
+            results['max3'],
+            results['max4'],
+            results['max5'],
+        )
 
         self.assertGreaterEqual(min1, 0.0)
         self.assertGreaterEqual(min2, 0.0)

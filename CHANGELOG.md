@@ -6,11 +6,12 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 ### unreleased
 
 #### Fixed 
-* Updated build scripts to use Ubuntu 22.04 to correspond to environment in Databricks runtime
 * Refactored `DataAnalyzer` and `BasicStockTickerProvider` to comply with ANSI SQL standards
+* Refactored `Constraint` to treat `_filterExpression` and `_calculatedFilterExpression` as instance variables
 * Removed internal modification of `SparkSession`
 
 #### Changed
+* Added type hints for modules and classes
 * Changed base Databricks runtime version to DBR 13.3 LTS (based on Apache Spark 3.4.1) - minimum supported version
   of Python is now 3.10.12
 * Updated build tooling to use [hatch](https://hatch.pypa.io/latest/)
@@ -23,6 +24,7 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 #### Added
 * Added support for serialization to/from JSON format
 * Added Ruff and mypy tooling
+* Added `OutputDataset` class and the ability to save a `DataGenerator` to an output table or files
 
 
 ### Version 0.4.0 Hotfix 2

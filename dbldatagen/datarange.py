@@ -3,49 +3,54 @@
 #
 
 """
-This module defines the DataRange abstract class
-
-its not used directly, but used as base type for explicit DateRange and NRange types to ensure correct tracking of
-changes to method names when refactoring
-
+This module defines the DataRange abstract class.
 """
 
-from .serialization import SerializableToDict
+from pyspark.sql.types import DataType
+
+from dbldatagen.serialization import SerializableToDict
 
 
 class DataRange(SerializableToDict):
-    """ Abstract class used as base class for NRange and DateRange """
+    """Abstract class used as base class for NRange and DateRange"""
 
-    def isEmpty(self):
-        """Check if object is empty (i.e all instance vars of note are `None`)"""
-        raise NotImplementedError("method not implemented")
+    minValue: object | None
+    maxValue: object | None
 
-    def isFullyPopulated(self):
-        """Check is all instance vars are populated"""
-        raise NotImplementedError("method not implemented")
+    def isEmpty(self) -> bool:
+        """Checks if object is empty (i.e all instance vars of note are `None`).
 
-    def adjustForColumnDatatype(self, ctype):
-        """ Adjust default values for column output type"""
-        raise NotImplementedError("method not implemented")
+        :return: True if the object is empty
+        """
+        raise NotImplementedError(f"'{self.__class__.__name__}' does not implement method 'isEmpty'")
 
-    def getDiscreteRange(self):
-        """Convert range to discrete range"""
-        raise NotImplementedError("method not implemented")
+    def isFullyPopulated(self) -> bool:
+        """Checks if all instance vars are populated.
 
-    def getContinuousRange(self):
-        """Convert range to continuous range"""
-        raise NotImplementedError("method not implemented")
+        :return: True if all instance vars are populated, False otherwise
+        """
+        raise NotImplementedError(f"'{self.__class__.__name__}' does not implement method 'isFullyPopulated'")
 
-    def getScale(self):
-        """Get scale of range"""
-        raise NotImplementedError("method not implemented")
+    def adjustForColumnDatatype(self, ctype: DataType) -> None:
+        """Adjust default values for column output type.
+
+        :param ctype: Spark SQL data type for column
+        """
+        raise NotImplementedError(f"'{self.__class__.__name__}' does not implement method 'adjustForColumnDatatype'")
+
+    def getDiscreteRange(self) -> float:
+        """Convert range to discrete range.
+
+        :return: Discrete range object
+        """
+        raise NotImplementedError(f"'{self.__class__.__name__}' does not implement method 'getDiscreteRange'")
 
     @property
-    def min(self):
+    def min(self) -> object:
         """get the `min` attribute"""
         return self.minValue
-        
+
     @property
-    def max(self):
+    def max(self) -> object:
         """get the `max` attribute"""
         return self.maxValue

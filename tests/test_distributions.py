@@ -44,11 +44,14 @@ class TestDistributions:
         assert column is not None
         assert values is not None
 
-        observed_weights = (df.cube(column).count()
-                            .withColumnRenamed(column, "value")
-                            .withColumnRenamed("count", "rc")
-                            .where("value is not null")
-                            .collect())
+        observed_weights = (
+            df.cube(column)
+            .count()
+            .withColumnRenamed(column, "value")
+            .withColumnRenamed("count", "rc")
+            .where("value is not null")
+            .collect()
+        )
 
         print(observed_weights)
 
@@ -64,6 +67,7 @@ class TestDistributions:
     def test_bad_distribution_inheritance(self, basicDistributionInstance):
         # define a bad derived class (due to lack of abstract methods) to test enforcement
         with pytest.raises(TypeError):
+
             class MyDistribution(dist.DataDistribution):
                 def dummyMethod(self):
                     pass
@@ -115,18 +119,28 @@ class TestDistributions:
             .withIdOutput()  # id column will be emitted in the output
             .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
             .withColumn("code4", "integer", minValue=1, maxValue=40, step=1, random=True, distribution="normal")
-            .withColumn("sector_status_desc", "string", minValue=1, maxValue=200, step=1,
-                        prefix='status', random=True, distribution="normal")
-            .withColumn("tech", "string", values=["GSM", "LTE", "UMTS", "UNKNOWN"],
-                        weights=desired_weights,
-                        random=True)
+            .withColumn(
+                "sector_status_desc",
+                "string",
+                minValue=1,
+                maxValue=200,
+                step=1,
+                prefix='status',
+                random=True,
+                distribution="normal",
+            )
+            .withColumn(
+                "tech", "string", values=["GSM", "LTE", "UMTS", "UNKNOWN"], weights=desired_weights, random=True
+            )
         )
         df_normal_data = normal_data_generator.build().cache()
 
-        df_summary_general = df_normal_data.agg(F.min('code4').alias('min_c4'),
-                                                F.max('code4').alias('max_c4'),
-                                                F.avg('code4').alias('mean_c4'),
-                                                F.stddev('code4').alias('stddev_c4'))
+        df_summary_general = df_normal_data.agg(
+            F.min('code4').alias('min_c4'),
+            F.max('code4').alias('max_c4'),
+            F.avg('code4').alias('mean_c4'),
+            F.stddev('code4').alias('stddev_c4'),
+        )
         df_summary_general.show()
 
         summary_data = df_summary_general.collect()[0]
@@ -140,20 +154,31 @@ class TestDistributions:
             dg.DataGenerator(sparkSession=spark, rows=self.TESTDATA_ROWS, partitions=4)
             .withIdOutput()  # id column will be emitted in the output
             .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
-            .withColumn("code4", "integer", minValue=1, maxValue=40, step=1, random=True,
-                        distribution=dist.Normal(1.0, 1.0))
-            .withColumn("sector_status_desc", "string", minValue=1, maxValue=200, step=1,
-                        prefix='status', random=True, distribution="normal")
-            .withColumn("tech", "string", values=["GSM", "LTE", "UMTS", "UNKNOWN"],
-                        weights=desired_weights,
-                        random=True)
+            .withColumn(
+                "code4", "integer", minValue=1, maxValue=40, step=1, random=True, distribution=dist.Normal(1.0, 1.0)
+            )
+            .withColumn(
+                "sector_status_desc",
+                "string",
+                minValue=1,
+                maxValue=200,
+                step=1,
+                prefix='status',
+                random=True,
+                distribution="normal",
+            )
+            .withColumn(
+                "tech", "string", values=["GSM", "LTE", "UMTS", "UNKNOWN"], weights=desired_weights, random=True
+            )
         )
         df_normal_data = normal_data_generator.build().cache()
 
-        df_summary_general = df_normal_data.agg(F.min('code4').alias('min_c4'),
-                                                F.max('code4').alias('max_c4'),
-                                                F.avg('code4').alias('mean_c4'),
-                                                F.stddev('code4').alias('stddev_c4'))
+        df_summary_general = df_normal_data.agg(
+            F.min('code4').alias('min_c4'),
+            F.max('code4').alias('max_c4'),
+            F.avg('code4').alias('mean_c4'),
+            F.stddev('code4').alias('stddev_c4'),
+        )
         df_summary_general.show()
 
         summary_data = df_summary_general.collect()[0]
@@ -167,20 +192,31 @@ class TestDistributions:
             dg.DataGenerator(sparkSession=spark, rows=self.TESTDATA_ROWS, partitions=4, seed=42)
             .withIdOutput()  # id column will be emitted in the output
             .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
-            .withColumn("code4", "integer", minValue=1, maxValue=40, step=1, random=True,
-                        distribution=dist.Normal(1.0, 1.0))
-            .withColumn("sector_status_desc", "string", minValue=1, maxValue=200, step=1,
-                        prefix='status', random=True, distribution="normal")
-            .withColumn("tech", "string", values=["GSM", "LTE", "UMTS", "UNKNOWN"],
-                        weights=desired_weights,
-                        random=True)
+            .withColumn(
+                "code4", "integer", minValue=1, maxValue=40, step=1, random=True, distribution=dist.Normal(1.0, 1.0)
+            )
+            .withColumn(
+                "sector_status_desc",
+                "string",
+                minValue=1,
+                maxValue=200,
+                step=1,
+                prefix='status',
+                random=True,
+                distribution="normal",
+            )
+            .withColumn(
+                "tech", "string", values=["GSM", "LTE", "UMTS", "UNKNOWN"], weights=desired_weights, random=True
+            )
         )
         df_normal_data = normal_data_generator.build().cache()
 
-        df_summary_general = df_normal_data.agg(F.min('code4').alias('min_c4'),
-                                                F.max('code4').alias('max_c4'),
-                                                F.avg('code4').alias('mean_c4'),
-                                                F.stddev('code4').alias('stddev_c4'))
+        df_summary_general = df_normal_data.agg(
+            F.min('code4').alias('min_c4'),
+            F.max('code4').alias('max_c4'),
+            F.avg('code4').alias('mean_c4'),
+            F.stddev('code4').alias('stddev_c4'),
+        )
         df_summary_general.show()
 
         summary_data = df_summary_general.collect()[0]
@@ -191,24 +227,36 @@ class TestDistributions:
     def test_normal_distribution_seeded2(self):
         # will have implied column `id` for ordinal of row
         normal_data_generator = (
-            dg.DataGenerator(sparkSession=spark, rows=self.TESTDATA_ROWS, partitions=4,
-                             seed=42, seedMethod="hash_fieldname")
+            dg.DataGenerator(
+                sparkSession=spark, rows=self.TESTDATA_ROWS, partitions=4, seed=42, seedMethod="hash_fieldname"
+            )
             .withIdOutput()  # id column will be emitted in the output
             .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
-            .withColumn("code4", "integer", minValue=1, maxValue=40, step=1, random=True,
-                        distribution=dist.Normal(1.0, 1.0))
-            .withColumn("sector_status_desc", "string", minValue=1, maxValue=200, step=1,
-                        prefix='status', random=True, distribution="normal")
-            .withColumn("tech", "string", values=["GSM", "LTE", "UMTS", "UNKNOWN"],
-                        weights=desired_weights,
-                        random=True)
+            .withColumn(
+                "code4", "integer", minValue=1, maxValue=40, step=1, random=True, distribution=dist.Normal(1.0, 1.0)
+            )
+            .withColumn(
+                "sector_status_desc",
+                "string",
+                minValue=1,
+                maxValue=200,
+                step=1,
+                prefix='status',
+                random=True,
+                distribution="normal",
+            )
+            .withColumn(
+                "tech", "string", values=["GSM", "LTE", "UMTS", "UNKNOWN"], weights=desired_weights, random=True
+            )
         )
         df_normal_data = normal_data_generator.build().cache()
 
-        df_summary_general = df_normal_data.agg(F.min('code4').alias('min_c4'),
-                                                F.max('code4').alias('max_c4'),
-                                                F.avg('code4').alias('mean_c4'),
-                                                F.stddev('code4').alias('stddev_c4'))
+        df_summary_general = df_normal_data.agg(
+            F.min('code4').alias('min_c4'),
+            F.max('code4').alias('max_c4'),
+            F.avg('code4').alias('mean_c4'),
+            F.stddev('code4').alias('stddev_c4'),
+        )
         df_summary_general.show()
 
         summary_data = df_summary_general.collect()[0]
@@ -250,20 +298,31 @@ class TestDistributions:
             dg.DataGenerator(sparkSession=spark, rows=self.TESTDATA_ROWS, partitions=4)
             .withIdOutput()  # id column will be emitted in the output
             .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
-            .withColumn("code4", "integer", minValue=1, maxValue=40, step=1, random=True,
-                        distribution=dist.Gamma(0.5, 0.5))
-            .withColumn("sector_status_desc", "string", minValue=1, maxValue=200, step=1,
-                        prefix='status', random=True, distribution="normal")
-            .withColumn("tech", "string", values=["GSM", "LTE", "UMTS", "UNKNOWN"],
-                        weights=desired_weights,
-                        random=True)
+            .withColumn(
+                "code4", "integer", minValue=1, maxValue=40, step=1, random=True, distribution=dist.Gamma(0.5, 0.5)
+            )
+            .withColumn(
+                "sector_status_desc",
+                "string",
+                minValue=1,
+                maxValue=200,
+                step=1,
+                prefix='status',
+                random=True,
+                distribution="normal",
+            )
+            .withColumn(
+                "tech", "string", values=["GSM", "LTE", "UMTS", "UNKNOWN"], weights=desired_weights, random=True
+            )
         )
         df_gamma_data = gamma_data_generator.build().cache()
 
-        df_summary_general = df_gamma_data.agg(F.min('code4').alias('min_c4'),
-                                               F.max('code4').alias('max_c4'),
-                                               F.avg('code4').alias('mean_c4'),
-                                               F.stddev('code4').alias('stddev_c4'))
+        df_summary_general = df_gamma_data.agg(
+            F.min('code4').alias('min_c4'),
+            F.max('code4').alias('max_c4'),
+            F.avg('code4').alias('mean_c4'),
+            F.stddev('code4').alias('stddev_c4'),
+        )
         df_summary_general.show()
 
         summary_data = df_summary_general.collect()[0]
@@ -305,20 +364,31 @@ class TestDistributions:
             dg.DataGenerator(sparkSession=spark, rows=self.TESTDATA_ROWS, partitions=4)
             .withIdOutput()  # id column will be emitted in the output
             .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
-            .withColumn("code4", "integer", minValue=1, maxValue=40, step=1, random=True,
-                        distribution=dist.Beta(0.5, 0.5))
-            .withColumn("sector_status_desc", "string", minValue=1, maxValue=200, step=1,
-                        prefix='status', random=True, distribution="normal")
-            .withColumn("tech", "string", values=["GSM", "LTE", "UMTS", "UNKNOWN"],
-                        weights=desired_weights,
-                        random=True)
+            .withColumn(
+                "code4", "integer", minValue=1, maxValue=40, step=1, random=True, distribution=dist.Beta(0.5, 0.5)
+            )
+            .withColumn(
+                "sector_status_desc",
+                "string",
+                minValue=1,
+                maxValue=200,
+                step=1,
+                prefix='status',
+                random=True,
+                distribution="normal",
+            )
+            .withColumn(
+                "tech", "string", values=["GSM", "LTE", "UMTS", "UNKNOWN"], weights=desired_weights, random=True
+            )
         )
         df_beta_data = beta_data_generator.build().cache()
 
-        df_summary_general = df_beta_data.agg(F.min('code4').alias('min_c4'),
-                                              F.max('code4').alias('max_c4'),
-                                              F.avg('code4').alias('mean_c4'),
-                                              F.stddev('code4').alias('stddev_c4'))
+        df_summary_general = df_beta_data.agg(
+            F.min('code4').alias('min_c4'),
+            F.max('code4').alias('max_c4'),
+            F.avg('code4').alias('mean_c4'),
+            F.stddev('code4').alias('stddev_c4'),
+        )
         df_summary_general.show()
 
         summary_data = df_summary_general.collect()[0]
@@ -359,20 +429,31 @@ class TestDistributions:
             dg.DataGenerator(sparkSession=spark, rows=self.TESTDATA_ROWS, partitions=4)
             .withIdOutput()  # id column will be emitted in the output
             .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
-            .withColumn("code4", "integer", minValue=1, maxValue=40, step=1, random=True,
-                        distribution=dist.Exponential(0.5))
-            .withColumn("sector_status_desc", "string", minValue=1, maxValue=200, step=1,
-                        prefix='status', random=True, distribution="normal")
-            .withColumn("tech", "string", values=["GSM", "LTE", "UMTS", "UNKNOWN"],
-                        weights=desired_weights,
-                        random=True)
+            .withColumn(
+                "code4", "integer", minValue=1, maxValue=40, step=1, random=True, distribution=dist.Exponential(0.5)
+            )
+            .withColumn(
+                "sector_status_desc",
+                "string",
+                minValue=1,
+                maxValue=200,
+                step=1,
+                prefix='status',
+                random=True,
+                distribution="normal",
+            )
+            .withColumn(
+                "tech", "string", values=["GSM", "LTE", "UMTS", "UNKNOWN"], weights=desired_weights, random=True
+            )
         )
         df_exponential_data = exponential_data_generator.build().cache()
 
-        df_summary_general = df_exponential_data.agg(F.min('code4').alias('min_c4'),
-                                                     F.max('code4').alias('max_c4'),
-                                                     F.avg('code4').alias('mean_c4'),
-                                                     F.stddev('code4').alias('stddev_c4'))
+        df_summary_general = df_exponential_data.agg(
+            F.min('code4').alias('min_c4'),
+            F.max('code4').alias('max_c4'),
+            F.avg('code4').alias('mean_c4'),
+            F.stddev('code4').alias('stddev_c4'),
+        )
         df_summary_general.show()
 
         summary_data = df_summary_general.collect()[0]
@@ -405,3 +486,15 @@ class TestDistributions:
 
         assert s2 == pytest.approx(0.10, abs=0.05)
         assert m2 == pytest.approx(0.10, abs=0.05)
+
+    def test_exponential_requires_rate_for_scale(self):
+        """Ensure accessing scale without a rate produces a clear error."""
+        exp = dist.Exponential()
+        with pytest.raises(ValueError, match="Cannot compute value for 'scale'; Missing value for 'rate'"):
+            _ = exp.scale
+
+    def test_exponential_requires_rate_for_generation(self):
+        """Ensure generating samples without a rate produces a clear error."""
+        exp = dist.Exponential()
+        with pytest.raises(ValueError, match="Cannot compute value for 'scale'; Missing value for 'rate'"):
+            _ = exp.generateNormalizedDistributionSample()

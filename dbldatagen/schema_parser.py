@@ -8,15 +8,32 @@ This file defines the `SchemaParser` class
 
 import re
 import pyparsing as pp
-from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, DoubleType, BooleanType, ShortType, \
-    TimestampType, DateType, DecimalType, ByteType, BinaryType, StructField, StructType, MapType, ArrayType
+from pyspark.sql.types import (
+    LongType,
+    FloatType,
+    IntegerType,
+    StringType,
+    DoubleType,
+    BooleanType,
+    ShortType,
+    TimestampType,
+    DateType,
+    DecimalType,
+    ByteType,
+    BinaryType,
+    StructField,
+    StructType,
+    MapType,
+    ArrayType,
+)
 
 
 class SchemaParser(object):
-    """ SchemaParser class
+    """SchemaParser class
 
-        Creates pyspark SQL datatype from string
+    Creates pyspark SQL datatype from string
     """
+
     _type_parser = None
 
     @classmethod
@@ -91,17 +108,33 @@ class SchemaParser(object):
 
             # handle decimal types of the form "decimal(10)", "real", "numeric(10,3)"
             decimal_keyword = pp.MatchFirst(
-                [pp.CaselessKeyword("decimal"), pp.CaselessKeyword("dec"), pp.CaselessKeyword("number"),
-                 pp.CaselessKeyword("numeric")])
+                [
+                    pp.CaselessKeyword("decimal"),
+                    pp.CaselessKeyword("dec"),
+                    pp.CaselessKeyword("number"),
+                    pp.CaselessKeyword("numeric"),
+                ]
+            )
             decimal_keyword.setParseAction(lambda s: "decimal")
             # first number is precision , default 10; second number is scale, default 0
             decimal_type_expr = decimal_keyword + pp.Optional(
-                lbracket + number + pp.Optional(comma + number, "0") + rbracket)
+                lbracket + number + pp.Optional(comma + number, "0") + rbracket
+            )
 
-            primitive_type_keyword = (int_keyword ^ bigint_keyword ^ binary_keyword ^ boolean_keyword
-                                      ^ date_keyword ^ float_keyword ^ smallint_keyword ^ timestamp_keyword
-                                      ^ tinyint_keyword ^ string_type_expr ^ decimal_type_expr ^ double_keyword
-                                      ).setName("primitive_type_defn")
+            primitive_type_keyword = (
+                int_keyword
+                ^ bigint_keyword
+                ^ binary_keyword
+                ^ boolean_keyword
+                ^ date_keyword
+                ^ float_keyword
+                ^ smallint_keyword
+                ^ timestamp_keyword
+                ^ tinyint_keyword
+                ^ string_type_expr
+                ^ decimal_type_expr
+                ^ double_keyword
+            ).setName("primitive_type_defn")
 
             # handle more complex type definitions such as struct, map and array
 
@@ -128,8 +161,12 @@ class SchemaParser(object):
 
             # handle structs
             struct_keyword = pp.CaselessKeyword("struct")
-            struct_expr = struct_keyword + l_angle + pp.Group(
-                pp.delimitedList(pp.Group(ident + pp.Optional(colon) + pp.Group(type_expr)))) + r_angle
+            struct_expr = (
+                struct_keyword
+                + l_angle
+                + pp.Group(pp.delimitedList(pp.Group(ident + pp.Optional(colon) + pp.Group(type_expr))))
+                + r_angle
+            )
 
             # try to capture invalid type name for better error reporting
             invalid_type = pp.Word(pp.alphas, pp.alphanums + "_", asKeyword=True)
@@ -220,7 +257,7 @@ class SchemaParser(object):
 
     @classmethod
     def columnTypeFromString(cls, type_string):
-        """ Generate a Spark SQL data type from a string
+        """Generate a Spark SQL data type from a string
 
         Allowable options for `type_string` parameter are:
          * `string`, `varchar`, `char`, `nvarchar`,
@@ -262,7 +299,7 @@ class SchemaParser(object):
 
     @classmethod
     def _cleanseSQL(cls, sql_string):
-        """ Cleanse sql string removing string literals so that they are not considered as part of potential column
+        """Cleanse sql string removing string literals so that they are not considered as part of potential column
             references
         :param sql_string: String representation of SQL expression
         :returns: cleansed string
@@ -290,7 +327,7 @@ class SchemaParser(object):
 
     @classmethod
     def columnsReferencesFromSQLString(cls, sql_string, filterItems=None):
-        """ Generate a list of possible column references from a SQL string
+        """Generate a list of possible column references from a SQL string
 
         This method finds all condidate references to SQL columnn ids in the string
 
@@ -325,20 +362,21 @@ class SchemaParser(object):
 
     @classmethod
     def parseCreateTable(cls, sparkSession, source_schema):
-        """ Parse a schema from a schema string
+        """Parse a schema from a schema string
 
-            :param sparkSession: spark session to use
-            :param source_schema: should be a table definition minus the create table statement
-            :returns: Spark SQL schema instance
+        :param sparkSession: spark session to use
+        :param source_schema: should be a table definition minus the create table statement
+        :returns: Spark SQL schema instance
         """
-        assert (source_schema is not None), "`source_schema` must be specified"
-        assert (sparkSession is not None), "`sparkSession` must be specified"
+        assert source_schema is not None, "`source_schema` must be specified"
+        assert sparkSession is not None, "`sparkSession` must be specified"
         lines = [x.strip() for x in source_schema.split("\n") if x is not None]
         table_defn = " ".join(lines)
 
         # get table name from s
-        table_name_match = re.search(r"^\s*create\s*(temporary\s*)?table\s*([a-zA-Z0-9_]*)\s*(\(.*)$", table_defn,
-                                     flags=re.IGNORECASE)
+        table_name_match = re.search(
+            r"^\s*create\s*(temporary\s*)?table\s*([a-zA-Z0-9_]*)\s*(\(.*)$", table_defn, flags=re.IGNORECASE
+        )
 
         if table_name_match:
             table_name = table_name_match.group(2)
