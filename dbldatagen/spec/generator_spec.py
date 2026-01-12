@@ -228,7 +228,7 @@ class DatagenSpec(BaseModel):
         None  # there is a abstraction, may be we can use that? talk to Greg
     )
     generator_options: dict[str, Any] | None = None
-    intended_for_databricks: bool | None = None  # May be infered.
+    intended_for_databricks: bool | None = None  # May be inferred.
 
     def _validate_generator_options(self, result: ValidationResult) -> None:
         """Validate generator options against known valid options.
