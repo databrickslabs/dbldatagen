@@ -10,12 +10,8 @@ from dbldatagen.spec.generator_spec import DatasetDefinition
 from .generator_spec import ColumnDefinition, DatagenSpec, FilePathTarget, UCSchemaTarget
 
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
 logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 INTERNAL_ID_COLUMN_NAME = "id"
 
