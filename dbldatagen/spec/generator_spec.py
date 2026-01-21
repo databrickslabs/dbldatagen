@@ -239,7 +239,7 @@ class DatagenSpec(BaseModel):
             known_options = ["random", "randomSeed", "randomSeedMethod", "verbose", "debug", "seedColumnName"]
             for key in self.generator_options:
                 if key not in known_options:
-                    result.add_warning(f"Unknown generator option: '{key}'. " "This may be ignored during generation.")
+                    result.add_warning(f"Unknown generator option: '{key}'. This may be ignored during generation.")
 
     def validate(self, strict: bool = True) -> ValidationResult:  # type: ignore[override]
         """Validate the entire DatagenSpec configuration comprehensively.
