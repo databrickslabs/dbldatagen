@@ -569,9 +569,17 @@ class ColumnGenerationSpec(SerializableToDict):
                 self._initialBuildPlan.append(desc)
 
                 # use a base expression based on mapping base column to size of data
+                # Scale must be large enough for modulo operations to distribute values properly.
+                # When weights sum to a value <= 1 (e.g., [0.85, 0.15]), modulo operations fail
+                # because x % 1 always returns 0. In this case, scale up by 1000000.
+                weights_sum = sum(self.weights)
+                if weights_sum <= 1.0:
+                    scale_factor = 1000000
+                else:
+                    scale_factor = weights_sum
                 sql_scaled_generator = self._getScaledIntSQLExpression(
                     self.name,
-                    scale=sum(self.weights),
+                    scale=scale_factor,
                     base_columns=self.baseColumns,
                     base_datatypes=self._baseColumnDatatypes,
                     compute_method=self._baseColumnComputeMethod,
@@ -796,7 +804,9 @@ class ColumnGenerationSpec(SerializableToDict):
             result = f"cast( ( floor(({column_set} % {scale}) + {scale}) % {scale}) as double) "
 
         if normalize:
-            result = f"({result} / {(scale * 1.0) - 1.0})"
+            divisor = (scale * 1.0) - 1.0
+            # Use try_divide to safely handle edge cases where divisor could be 0
+            result = f"try_divide({result}, {divisor})"
 
         self.logger.debug("computing scaled field [%s] as expression [%s]", col_name, result)
         return result

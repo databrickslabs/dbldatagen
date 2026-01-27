@@ -120,7 +120,10 @@ class ColumnGeneratorBuilder:
                 output.append(f" when {seed_column} <= {cdf} then {v} ")
 
         # TODO(alex): single quotes needs to be escaped
-        output.append("else '{values[-1]}'")
+        if isinstance(datatype, (StringType, DateType, TimestampType)):
+            output.append(f"else '{values[-1]}'")
+        else:
+            output.append(f"else {values[-1]}")
         output.append("end")
 
         retval = "\n".join(output)
