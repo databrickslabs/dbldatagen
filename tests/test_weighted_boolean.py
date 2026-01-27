@@ -148,6 +148,42 @@ class TestWeightedStringStillWorks(unittest.TestCase):
         self.assertAlmostEqual(north_ratio, 0.4, delta=0.1)
 
 
+class TestWeightedSingleQuoteEscaping(unittest.TestCase):
+    """Test that single quotes in values are properly escaped."""
+
+    def test_string_values_with_single_quotes(self):
+        """Test that string values containing single quotes work correctly.
+
+        Values like "O'Brien" need to have their single quotes escaped
+        in the generated SQL expression.
+        """
+        ds = (
+            dg.DataGenerator(sparkSession=spark, name="test_quotes", rows=10000, partitions=4)
+            .withIdOutput()
+            .withColumn(
+                "name",
+                "string",
+                values=["John", "O'Brien", "D'Angelo", "Plain"],
+                weights=[0.4, 0.3, 0.2, 0.1],
+                random=True,
+            )
+        )
+
+        # This should not raise a SQL syntax error
+        df = ds.build()
+        count = df.count()
+        self.assertEqual(count, 10000)
+
+        # Verify we have all expected values including those with quotes
+        distinct_values = df.select("name").distinct().collect()
+        values = {row.name for row in distinct_values}
+        self.assertEqual(values, {"John", "O'Brien", "D'Angelo", "Plain"})
+
+        # Verify O'Brien appears in the data (not escaped version)
+        obrien_count = df.filter("name = \"O'Brien\"").count()
+        self.assertGreater(obrien_count, 0, "O'Brien should appear in generated data")
+
+
 class TestWeightedNormalizedWeights(unittest.TestCase):
     """Test weighted values where weights sum to exactly 1.0 (normalized weights)."""
 

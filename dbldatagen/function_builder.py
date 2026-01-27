@@ -113,15 +113,17 @@ class ColumnGeneratorBuilder:
         conditions = zip(values, cdf_probs, strict=False)
 
         for v, cdf in conditions:
-            # TODO(alex): single quotes needs to be escaped
             if isinstance(datatype, (StringType, DateType, TimestampType)):
-                output.append(f" when {seed_column} <= {cdf} then '{v}' ")
+                # Escape single quotes with backslash for Spark SQL string literals
+                v_escaped = str(v).replace("'", "\\'")
+                output.append(f" when {seed_column} <= {cdf} then '{v_escaped}' ")
             else:
                 output.append(f" when {seed_column} <= {cdf} then {v} ")
 
-        # TODO(alex): single quotes needs to be escaped
         if isinstance(datatype, (StringType, DateType, TimestampType)):
-            output.append(f"else '{values[-1]}'")
+            # Escape single quotes with backslash for Spark SQL string literals
+            last_value_escaped = str(values[-1]).replace("'", "\\'")
+            output.append(f"else '{last_value_escaped}'")
         else:
             output.append(f"else {values[-1]}")
         output.append("end")
