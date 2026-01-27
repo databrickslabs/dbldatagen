@@ -235,5 +235,54 @@ class TestWeightedNormalizedWeights(unittest.TestCase):
         self.assertAlmostEqual(married_ratio, 0.50, delta=0.1)
 
 
+class TestWeightedNonRandom(unittest.TestCase):
+    """Test weighted values WITHOUT random=True to cover non-random code path."""
+
+    def test_weighted_string_non_random_normalized_weights(self):
+        """Test non-random weighted values when weights sum to <= 1.0.
+
+        This covers the scale_factor = 1000000 branch in column_generation_spec.py
+        when weights_sum <= 1.0 and random=False.
+        """
+        # Use enough rows to get some distribution with deterministic mapping
+        ds = (
+            dg.DataGenerator(sparkSession=spark, name="test_nonrandom_norm", rows=100000, partitions=4)
+            .withIdOutput()
+            .withColumn("status", "string", values=["A", "B", "C"], weights=[0.5, 0.3, 0.2])
+        )
+
+        df = ds.build()
+        count = df.count()
+        self.assertEqual(count, 100000)
+
+        # Verify we can generate data without errors
+        distinct_values = df.select("status").distinct().collect()
+        values = {row.status for row in distinct_values}
+        # With non-random, distribution depends on row IDs, but should have valid values
+        self.assertTrue(values.issubset({"A", "B", "C"}))
+
+    def test_weighted_string_non_random_integer_weights(self):
+        """Test non-random weighted values when weights sum to > 1.0.
+
+        This covers the scale_factor = weights_sum branch in column_generation_spec.py
+        when weights_sum > 1.0 and random=False.
+        """
+        # Use integer weights that sum to > 1
+        ds = (
+            dg.DataGenerator(sparkSession=spark, name="test_nonrandom_int", rows=100000, partitions=4)
+            .withIdOutput()
+            .withColumn("category", "string", values=["X", "Y", "Z"], weights=[50, 30, 20])
+        )
+
+        df = ds.build()
+        count = df.count()
+        self.assertEqual(count, 100000)
+
+        # Verify we can generate data without errors
+        distinct_values = df.select("category").distinct().collect()
+        values = {row.category for row in distinct_values}
+        self.assertEqual(values, {"X", "Y", "Z"})
+
+
 if __name__ == "__main__":
     unittest.main()
