@@ -805,8 +805,12 @@ class ColumnGenerationSpec(SerializableToDict):
 
         if normalize:
             divisor = (scale * 1.0) - 1.0
-            # Use try_divide to safely handle edge cases where divisor could be 0
-            result = f"try_divide({result}, {divisor})"
+            if divisor <= 0:
+                raise ValueError(
+                    f"Cannot use scale={scale} with normalize=True: divisor would be {divisor}. "
+                    "Scale must be > 1 when normalizing."
+                )
+            result = f"({result} / {divisor})"
 
         self.logger.debug("computing scaled field [%s] as expression [%s]", col_name, result)
         return result

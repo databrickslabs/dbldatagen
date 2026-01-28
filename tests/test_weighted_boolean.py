@@ -10,14 +10,14 @@ This tests fixes for:
    causing the modulo-based scaling to not distribute values properly (column_generation_spec.py).
 """
 
-import unittest
+import pytest
 
 import dbldatagen as dg
 
 spark = dg.SparkSingleton.getLocalInstance("weighted boolean tests")
 
 
-class TestWeightedBoolean(unittest.TestCase):
+class TestWeightedBoolean:
     """Test weighted values with boolean type."""
 
     def test_weighted_boolean_values_random(self):
@@ -37,17 +37,17 @@ class TestWeightedBoolean(unittest.TestCase):
 
         # Verify the data was generated
         count = df.count()
-        self.assertEqual(count, 10000)
+        assert count == 10000
 
         # Verify we have both True and False values
         distinct_values = df.select("active").distinct().collect()
         values = {row.active for row in distinct_values}
-        self.assertEqual(values, {True, False})
+        assert values == {True, False}
 
         # Verify distribution is approximately correct (within 10% tolerance)
         true_count = df.filter("active = true").count()
         true_ratio = true_count / count
-        self.assertAlmostEqual(true_ratio, 0.85, delta=0.1)
+        assert true_ratio == pytest.approx(0.85, abs=0.1)
 
     def test_weighted_boolean_normalized_weights(self):
         """Test boolean weighted values when weights sum to 1.0.
@@ -62,15 +62,15 @@ class TestWeightedBoolean(unittest.TestCase):
 
         df = ds.build()
         count = df.count()
-        self.assertEqual(count, 10000)
+        assert count == 10000
 
         # Verify distribution
         true_count = df.filter("flag = true").count()
         true_ratio = true_count / count
-        self.assertAlmostEqual(true_ratio, 0.7, delta=0.1)
+        assert true_ratio == pytest.approx(0.7, abs=0.1)
 
 
-class TestWeightedNumeric(unittest.TestCase):
+class TestWeightedNumeric:
     """Test weighted values with numeric types to ensure ELSE clause works correctly."""
 
     def test_weighted_integer_values_random(self):
@@ -83,17 +83,17 @@ class TestWeightedNumeric(unittest.TestCase):
 
         df = ds.build()
         count = df.count()
-        self.assertEqual(count, 10000)
+        assert count == 10000
 
         # Verify we have all expected values
         distinct_values = df.select("status").distinct().collect()
         values = {row.status for row in distinct_values}
-        self.assertEqual(values, {1, 2, 3})
+        assert values == {1, 2, 3}
 
         # Verify distribution is approximately correct
         count_1 = df.filter("status = 1").count()
         ratio_1 = count_1 / count
-        self.assertAlmostEqual(ratio_1, 0.5, delta=0.1)
+        assert ratio_1 == pytest.approx(0.5, abs=0.1)
 
     def test_weighted_float_values_random(self):
         """Test that weighted float values generate correctly with random=True."""
@@ -105,7 +105,7 @@ class TestWeightedNumeric(unittest.TestCase):
 
         df = ds.build()
         count = df.count()
-        self.assertEqual(count, 10000)
+        assert count == 10000
 
     def test_weighted_double_values_random(self):
         """Test that weighted double values generate correctly with random=True."""
@@ -117,10 +117,10 @@ class TestWeightedNumeric(unittest.TestCase):
 
         df = ds.build()
         count = df.count()
-        self.assertEqual(count, 10000)
+        assert count == 10000
 
 
-class TestWeightedStringStillWorks(unittest.TestCase):
+class TestWeightedStringStillWorks:
     """Ensure string weighted values still work after the fix."""
 
     def test_weighted_string_values_random(self):
@@ -135,20 +135,20 @@ class TestWeightedStringStillWorks(unittest.TestCase):
 
         df = ds.build()
         count = df.count()
-        self.assertEqual(count, 10000)
+        assert count == 10000
 
         # Verify we have all expected values
         distinct_values = df.select("region").distinct().collect()
         values = {row.region for row in distinct_values}
-        self.assertEqual(values, {"North", "South", "East", "West"})
+        assert values == {"North", "South", "East", "West"}
 
         # Verify distribution is approximately correct
         north_count = df.filter("region = 'North'").count()
         north_ratio = north_count / count
-        self.assertAlmostEqual(north_ratio, 0.4, delta=0.1)
+        assert north_ratio == pytest.approx(0.4, abs=0.1)
 
 
-class TestWeightedSingleQuoteEscaping(unittest.TestCase):
+class TestWeightedSingleQuoteEscaping:
     """Test that single quotes in values are properly escaped."""
 
     def test_string_values_with_single_quotes(self):
@@ -172,19 +172,19 @@ class TestWeightedSingleQuoteEscaping(unittest.TestCase):
         # This should not raise a SQL syntax error
         df = ds.build()
         count = df.count()
-        self.assertEqual(count, 10000)
+        assert count == 10000
 
         # Verify we have all expected values including those with quotes
         distinct_values = df.select("name").distinct().collect()
         values = {row.name for row in distinct_values}
-        self.assertEqual(values, {"John", "O'Brien", "D'Angelo", "Plain"})
+        assert values == {"John", "O'Brien", "D'Angelo", "Plain"}
 
         # Verify O'Brien appears in the data (not escaped version)
         obrien_count = df.filter("name = \"O'Brien\"").count()
-        self.assertGreater(obrien_count, 0, "O'Brien should appear in generated data")
+        assert obrien_count > 0, "O'Brien should appear in generated data"
 
 
-class TestWeightedNormalizedWeights(unittest.TestCase):
+class TestWeightedNormalizedWeights:
     """Test weighted values where weights sum to exactly 1.0 (normalized weights)."""
 
     def test_string_with_normalized_weights_random(self):
@@ -209,33 +209,33 @@ class TestWeightedNormalizedWeights(unittest.TestCase):
 
         df = ds.build()
         count = df.count()
-        self.assertEqual(count, 10000)
+        assert count == 10000
 
         # Check no literal {values[-1]} in data
         bad_gender = df.filter("gender = '{values[-1]}'").count()
         bad_marital = df.filter("marital_status = '{values[-1]}'").count()
-        self.assertEqual(bad_gender, 0, "Found literal '{values[-1]}' in gender column")
-        self.assertEqual(bad_marital, 0, "Found literal '{values[-1]}' in marital_status column")
+        assert bad_gender == 0, "Found literal '{values[-1]}' in gender column"
+        assert bad_marital == 0, "Found literal '{values[-1]}' in marital_status column"
 
         # Verify we have expected values
         gender_values = {row.gender for row in df.select("gender").distinct().collect()}
-        self.assertEqual(gender_values, {"M", "F"})
+        assert gender_values == {"M", "F"}
 
         marital_values = {row.marital_status for row in df.select("marital_status").distinct().collect()}
-        self.assertEqual(marital_values, {"Single", "Married", "Divorced", "Widowed"})
+        assert marital_values == {"Single", "Married", "Divorced", "Widowed"}
 
         # Verify gender distribution is approximately correct
         f_count = df.filter("gender = 'F'").count()
         f_ratio = f_count / count
-        self.assertAlmostEqual(f_ratio, 0.52, delta=0.1)
+        assert f_ratio == pytest.approx(0.52, abs=0.1)
 
         # Verify marital status distribution is approximately correct
         married_count = df.filter("marital_status = 'Married'").count()
         married_ratio = married_count / count
-        self.assertAlmostEqual(married_ratio, 0.50, delta=0.1)
+        assert married_ratio == pytest.approx(0.50, abs=0.1)
 
 
-class TestWeightedNonRandom(unittest.TestCase):
+class TestWeightedNonRandom:
     """Test weighted values WITHOUT random=True to cover non-random code path."""
 
     def test_weighted_string_non_random_normalized_weights(self):
@@ -253,13 +253,13 @@ class TestWeightedNonRandom(unittest.TestCase):
 
         df = ds.build()
         count = df.count()
-        self.assertEqual(count, 100000)
+        assert count == 100000
 
         # Verify we can generate data without errors
         distinct_values = df.select("status").distinct().collect()
         values = {row.status for row in distinct_values}
         # With non-random, distribution depends on row IDs, but should have valid values
-        self.assertTrue(values.issubset({"A", "B", "C"}))
+        assert values.issubset({"A", "B", "C"})
 
     def test_weighted_string_non_random_integer_weights(self):
         """Test non-random weighted values when weights sum to > 1.0.
@@ -276,13 +276,35 @@ class TestWeightedNonRandom(unittest.TestCase):
 
         df = ds.build()
         count = df.count()
-        self.assertEqual(count, 100000)
+        assert count == 100000
 
         # Verify we can generate data without errors
         distinct_values = df.select("category").distinct().collect()
         values = {row.category for row in distinct_values}
-        self.assertEqual(values, {"X", "Y", "Z"})
+        assert values == {"X", "Y", "Z"}
 
 
-if __name__ == "__main__":
-    unittest.main()
+class TestScaledExpressionValidation:
+    """Test defensive validation in _getScaledIntSQLExpression."""
+
+    def test_scale_one_with_normalize_raises_value_error(self):
+        """Test that scale=1 with normalize=True raises ValueError.
+
+        When normalize=True, the code divides by (scale - 1). If scale=1,
+        this would result in division by zero. Rather than silently returning
+        NULL via try_divide, we should raise an explicit ValueError.
+        """
+        from dbldatagen.column_generation_spec import ColumnGenerationSpec
+
+        # Create a minimal column spec to test the internal method
+        spec = ColumnGenerationSpec(name="test_col", colType="string")
+
+        # Calling with scale=1 and normalize=True should raise ValueError
+        # because divisor = (1 - 1) = 0
+        with pytest.raises(ValueError, match="scale.*normalize.*divisor"):
+            spec._getScaledIntSQLExpression(
+                col_name="test_col",
+                scale=1,
+                base_columns=["id"],
+                normalize=True,
+            )
