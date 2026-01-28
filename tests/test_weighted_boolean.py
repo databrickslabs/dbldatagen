@@ -1,15 +1,3 @@
-"""
-Tests for weighted boolean and numeric values generation.
-
-This tests fixes for:
-1. Bug where weighted values with non-string types (boolean, integer, float) would fail due to
-   the ELSE clause in the generated CASE expression using a string literal instead of the
-   properly typed value (function_builder.py).
-
-2. Bug where divide-by-zero would occur when weights sum to a small value (like 1.0),
-   causing the modulo-based scaling to not distribute values properly (column_generation_spec.py).
-"""
-
 import pytest
 
 import dbldatagen as dg
