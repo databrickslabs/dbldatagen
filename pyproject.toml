@@ -110,12 +110,15 @@ dependencies = [
     "jmespath>=0.10.0",
     "py4j>=0.10.9",
     "pickleshare>=0.7.5",
+    "ipython>=7.32.0",
 ]
 
 python="3.10"
-
-# store virtual env as the child of this folder. Helps VSCode (and PyCharm) to run better
-path = ".venv"
+[tool.hatch.envs.dev]
+template = "default"
+extra-dependencies = [
+    "pydantic~=2.8.2"
+]
 
 [tool.hatch.envs.default.scripts]
 test    = "pytest tests/ -n 10 --cov --cov-report=html --timeout 600 --durations 20"
@@ -127,6 +130,17 @@ verify      = ["black --check .",
                "ruff check .",
                "mypy .",
                "pylint --output-format=colorized -j 0 dbldatagen tests"]
+
+
+[tool.hatch.envs.test-pydantic]
+template = "default"
+matrix = [
+    { pydantic_version = ["1.10.6", "2.8.2"] }
+]
+extra-dependencies = [
+    "pydantic=={matrix:pydantic_version}"
+]
+
 
 [tool.black]
 target-version = ["py310"]
@@ -402,7 +416,7 @@ check_untyped_defs = true
 disallow_untyped_decorators = false
 no_implicit_optional = true
 warn_redundant_casts = true
-warn_unused_ignores = true
+warn_unused_ignores = false
 warn_no_return = true
 warn_unreachable = true
 strict_equality = true

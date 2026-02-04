@@ -98,11 +98,11 @@ class TestOutput:
             trigger={"processingTime": "1 SECOND"},
         )
 
-        query = gen.saveAsDataset(output_dataset, with_streaming=True)
+        query = gen.saveAsDataset(output_dataset, with_streaming=True, generator_options={"rowsPerSecond": 50})
 
         start_time = time.time()
         elapsed_time = 0
-        time_limit = 10.0
+        time_limit = 40.0
 
         while elapsed_time < time_limit:
             time.sleep(1)

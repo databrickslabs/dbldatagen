@@ -24,6 +24,7 @@ As it is installable via `%pip install`, it can also be incorporated in environm
    Installation instructions <installation_notes>
    Generating column data <generating_column_data>
    Using standard datasets <using_standard_datasets>
+   Using DatagenSpec (Experimental) <using_datagen_spec>
    Using data ranges <DATARANGES>
    Generating text data <textdata>
    Using data distributions <DISTRIBUTIONS>
