@@ -1,0 +1,64 @@
+bundle:
+  name: dbldatagen-v1-integration-tests
+
+resources:
+  jobs:
+    integration_tests:
+      name: dbldatagen_v1_integration_tests
+      tasks:
+        - task_key: cleanup
+          notebook_task:
+            notebook_path: ./notebooks/00_cleanup.py
+            source: WORKSPACE
+          environment_key: default
+
+        - task_key: test_batch_generation
+          depends_on:
+            - task_key: cleanup
+          notebook_task:
+            notebook_path: ./notebooks/01_test_batch_generation.py
+            source: WORKSPACE
+          environment_key: default
+
+        - task_key: test_cdc_raw
+          depends_on:
+            - task_key: cleanup
+          notebook_task:
+            notebook_path: ./notebooks/02_test_cdc_raw.py
+            source: WORKSPACE
+          environment_key: default
+
+        - task_key: test_cdc_delta_cdf
+          depends_on:
+            - task_key: cleanup
+          notebook_task:
+            notebook_path: ./notebooks/03_test_cdc_delta_cdf.py
+            source: WORKSPACE
+          environment_key: default
+
+        - task_key: test_ingest
+          depends_on:
+            - task_key: cleanup
+          notebook_task:
+            notebook_path: ./notebooks/04_test_ingest.py
+            source: WORKSPACE
+          environment_key: default
+
+        - task_key: test_determinism
+          depends_on:
+            - task_key: cleanup
+          notebook_task:
+            notebook_path: ./notebooks/05_test_determinism.py
+            source: WORKSPACE
+          environment_key: default
+
+      environments:
+        - environment_key: default
+          spec:
+            client: "1"
+
+targets:
+  dev:
+    default: true
+    workspace:
+      profile: DEFAULT

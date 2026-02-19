@@ -35,6 +35,7 @@ dependencies = [
     "databricks-sdk~=0.57",
     "jmespath>=1.0.0",
     "pyparsing>=3.0.0",
+    "pydantic>=2.0",
 ]
 
 [project.urls]
@@ -57,6 +58,11 @@ docs = [
     "Jinja2<3.1",
     "sphinx-copybutton",
 ]
+v1-faker = ["faker>=20.0"]
+v1-jdbc = ["sqlalchemy>=2.0", "pyyaml>=6.0"]
+v1-csv = ["pandas>=2.0", "pyyaml>=6.0"]
+v1-sql = ["sqlglot>=20.0", "pyyaml>=6.0"]
+v1-dev = ["faker>=20.0", "sqlalchemy>=2.0", "pandas>=2.0", "sqlglot>=20.0", "pyyaml>=6.0"]
 
 [tool.hatch.build]
 include = ["dbldatagen"]
@@ -110,6 +116,11 @@ dependencies = [
     "jmespath>=0.10.0",
     "py4j>=0.10.9",
     "pickleshare>=0.7.5",
+    "pydantic>=2.0",
+    "faker>=20.0",
+    "sqlalchemy>=2.0",
+    "sqlglot>=20.0",
+    "pyyaml>=6.0",
 ]
 
 python="3.10"
@@ -118,7 +129,9 @@ python="3.10"
 path = ".venv"
 
 [tool.hatch.envs.default.scripts]
-test    = "pytest tests/ -n 10 --cov --cov-report=html --timeout 600 --durations 20"
+test    = "pytest tests/ --ignore=tests/v1/ -n 10 --cov --cov-report=html --timeout 600 --durations 20"
+test-v1 = "pytest tests/v1/ --timeout 600 --durations 20 --no-header -q"
+test-all = "pytest tests/ -n 10 --timeout 600 --durations 20"
 fmt         = ["black .",
                "ruff check . --fix",
                "mypy .",
@@ -350,9 +363,13 @@ omit = [
     "*/examples/*",
     "*/tutorial/*",
     "*/docs/*",
+    "*/v1/*",
 ]
 
 [tool.coverage.report]
+omit = [
+    "*/v1/*",
+]
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",

@@ -1,0 +1,21 @@
+base_plan:
+  seed: 42
+  tables:
+    - name: customers
+      rows: 200
+      primary_key: {columns: [customer_id]}
+      columns:
+        - name: customer_id
+          gen: {strategy: sequence, start: 1, step: 1}
+        - name: name
+          dtype: string
+          gen: {strategy: values, values: [Alice, Bob, Carol, Dave]}
+        - name: status
+          dtype: string
+          gen: {strategy: values, values: [active, inactive]}
+num_batches: 3
+format: raw
+table_configs:
+  customers:
+    batch_size: 20
+    operations: {insert: 3, update: 5, delete: 2}
