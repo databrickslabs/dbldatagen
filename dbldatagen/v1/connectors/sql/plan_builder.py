@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from collections import defaultdict, deque
-
 from dbldatagen.v1.connectors.sql.inference import InferredColumn, InferredSchema
 from dbldatagen.v1.connectors.sql.name_mapper import map_column_name
 from dbldatagen.v1.schema import (
@@ -45,6 +43,8 @@ def _topo_sort(
     table_names: list[str],
 ) -> list[str]:
     """Topological sort: parents before children."""
+    from collections import defaultdict, deque
+
     # Build adjacency: parent -> children
     children_of: dict[str, list[str]] = defaultdict(list)
     in_degree: dict[str, int] = dict.fromkeys(table_names, 0)

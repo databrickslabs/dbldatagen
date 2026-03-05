@@ -64,8 +64,11 @@ jobs:
         # click 8.3+ introduced bug for hatch
         run: pip install "hatch==1.13.0" "click<8.3"
 
-      - name: Run unit tests
+      - name: Run v0 unit tests
         run: make dev test
+
+      - name: Run v1 unit tests
+        run: make test-v1
 
       - name: Publish test coverage to coverage site
         uses: codecov/codecov-action@v4

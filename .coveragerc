@@ -1,6 +1,10 @@
 [run]
 branch = True
 source = dbldatagen
+omit =
+    */v1/*
+    dbldatagen/v1/*
+    dbldatagen/v1/**
 
 [report]
 exclude_lines =
@@ -15,3 +19,6 @@ omit =
     examples/*
     tutorial/*
     setup.py
+    */v1/*
+    dbldatagen/v1/*
+    dbldatagen/v1/**

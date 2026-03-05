@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 from enum import Enum
-from typing import Annotated, Any, Literal  # pylint: disable=no-name-in-module
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
-from typing_extensions import Self
 
 
 # ---------------------------------------------------------------------------
@@ -149,8 +147,9 @@ class TimestampColumn(BaseModel):
     distribution: Distribution = Uniform()
 
     @model_validator(mode="after")
-    def validate_timestamps(self) -> Self:
-        """Validate that start and end are valid ISO timestamps."""
+    def validate_timestamps(self) -> TimestampColumn:
+        from datetime import datetime
+
         for field_name in ("start", "end"):
             val = getattr(self, field_name)
             try:
@@ -202,8 +201,7 @@ class ArrayColumn(BaseModel):
     max_length: int = 5
 
     @model_validator(mode="after")
-    def validate_lengths(self) -> Self:
-        """Validate that min_length <= max_length."""
+    def validate_lengths(self) -> ArrayColumn:
         if self.min_length > self.max_length:
             raise ValueError(f"min_length ({self.min_length}) must be <= max_length ({self.max_length})")
         return self
@@ -231,8 +229,6 @@ ColumnStrategy = Annotated[
 
 
 class DataType(str, Enum):
-    """Supported Spark SQL data types for column generation."""
-
     INT = "int"
     LONG = "long"
     FLOAT = "float"
@@ -276,8 +272,7 @@ class ForeignKeyRef(BaseModel):
     null_fraction: float = 0.0
 
     @model_validator(mode="after")
-    def validate_ref_format(self) -> Self:
-        """Validate that ref uses 'table.column' format."""
+    def validate_ref_format(self) -> ForeignKeyRef:
         if "." not in self.ref:
             raise ValueError(f"ForeignKeyRef.ref='{self.ref}' must use 'table.column' format.")
         return self
@@ -306,8 +301,7 @@ class ColumnSpec(BaseModel):
     seed_from: str | None = None
 
     @model_validator(mode="after")
-    def validate_null_fraction(self) -> Self:
-        """Auto-set nullable=True when null_fraction > 0."""
+    def validate_null_fraction(self) -> ColumnSpec:
         if self.null_fraction > 0 and not self.nullable:
             self.nullable = True
         return self
@@ -351,8 +345,7 @@ class TableSpec(BaseModel):
     seed: int | None = None
 
     @model_validator(mode="after")
-    def resolve_row_count(self) -> Self:
-        """Resolve string row counts to integers."""
+    def resolve_row_count(self) -> TableSpec:
         self.rows = parse_human_count(self.rows)
         return self
 
@@ -373,7 +366,7 @@ class DataGenPlan(BaseModel):
     default_locale: str = "en_US"
 
     @model_validator(mode="after")
-    def propagate_seeds(self) -> Self:
+    def propagate_seeds(self) -> DataGenPlan:
         """Assign deterministic per-table seeds from global seed when not set."""
         for i, table in enumerate(self.tables):
             if table.seed is None:

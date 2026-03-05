@@ -84,7 +84,7 @@ class JDBCConnector:
         """Extract and write the plan as a YAML file."""
         plan = self.extract()
         data = plan.model_dump(mode="json")
-        Path(output_path).write_text(yaml.dump(data, sort_keys=False), encoding="utf-8")
+        Path(output_path).write_text(yaml.dump(data, sort_keys=False))
 
     # ------------------------------------------------------------------
     # Internals
@@ -107,7 +107,7 @@ class JDBCConnector:
                 cols = uc.get("column_names", [])
                 if len(cols) == 1:
                     unique_cols.add(cols[0])
-        except (NotImplementedError, TypeError, AttributeError):
+        except (NotImplementedError, Exception):
             # Some dialects don't support get_unique_constraints.
             pass
 
@@ -181,7 +181,7 @@ class JDBCConnector:
                     )
                     stmt = sa_select(sa_table).limit(_SAMPLE_LIMIT)
                     rows = conn.execute(stmt).fetchall()
-                except (KeyError, AttributeError, TypeError, ValueError):
+                except Exception:
                     # Fallback for edge cases where reflection fails
                     quoted = self.engine.dialect.identifier_preparer.quote_identifier(table_name)
                     rows = conn.execute(
@@ -195,7 +195,7 @@ class JDBCConnector:
                     vals = [row._mapping[col_name] for row in rows]
                     samples[col_name] = vals
                     distinct_counts[col_name] = len(set(vals))
-        except (OSError, ValueError, KeyError, AttributeError, TypeError):
+        except Exception:
             pass
         return samples, distinct_counts
 

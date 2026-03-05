@@ -224,7 +224,7 @@ class TestDeltaIncremental:
         initial = generate_initial_snapshot(spark, plan)
         current_df = initial["transactions"]
 
-        all_pks = set(r.txn_id for r in current_df.select("txn_id").collect())
+        _all_pks = {r.txn_id for r in current_df.select("txn_id").collect()}
 
         for day in range(1, 4):
             inc_result = generate_delta_incremental_batch(
@@ -235,7 +235,7 @@ class TestDeltaIncremental:
                 current_df,
             )
             inc_df = inc_result["transactions"]
-            new_pks = set(r.txn_id for r in inc_df.select("txn_id").collect())
+            _new_pks = {r.txn_id for r in inc_df.select("txn_id").collect()}
 
             # Build snapshot
             pk_cols = ["txn_id"]
@@ -250,7 +250,7 @@ class TestDeltaIncremental:
 
             snapshot = current_clean.join(inc_pks, pk_cols, "left_anti").unionByName(inc_clean)
             snapshot = _add_ingest_metadata(snapshot, plan, day)
-            all_pks = set(r.txn_id for r in snapshot.select("txn_id").collect())
+            _all_pks = {r.txn_id for r in snapshot.select("txn_id").collect()}
             current_df = snapshot
 
         # All PKs should be unique

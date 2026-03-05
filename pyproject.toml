@@ -35,7 +35,6 @@ dependencies = [
     "databricks-sdk~=0.57",
     "jmespath>=1.0.0",
     "pyparsing>=3.0.0",
-    "pydantic>=2.0",
 ]
 
 [project.urls]
@@ -58,11 +57,12 @@ docs = [
     "Jinja2<3.1",
     "sphinx-copybutton",
 ]
-v1-faker = ["faker>=20.0"]
-v1-jdbc = ["sqlalchemy>=2.0", "pyyaml>=6.0"]
-v1-csv = ["pandas>=2.0", "pyyaml>=6.0"]
-v1-sql = ["sqlglot>=20.0", "pyyaml>=6.0"]
-v1-dev = ["faker>=20.0", "sqlalchemy>=2.0", "pandas>=2.0", "sqlglot>=20.0", "pyyaml>=6.0"]
+v1 = ["pydantic>=2.0"]
+v1-faker = ["pydantic>=2.0", "faker>=20.0"]
+v1-jdbc = ["pydantic>=2.0", "sqlalchemy>=2.0", "pyyaml>=6.0"]
+v1-csv = ["pydantic>=2.0", "pandas>=2.0", "pyyaml>=6.0"]
+v1-sql = ["pydantic>=2.0", "sqlglot>=20.0", "pyyaml>=6.0"]
+v1-dev = ["pydantic>=2.0", "faker>=20.0", "sqlalchemy>=2.0", "pandas>=2.0", "sqlglot>=20.0", "pyyaml>=6.0"]
 
 [tool.hatch.build]
 include = ["dbldatagen"]
@@ -129,9 +129,12 @@ python="3.10"
 path = ".venv"
 
 [tool.hatch.envs.default.scripts]
-test    = "pytest tests/ --ignore=tests/v1/ -n 10 --cov --cov-report=html --timeout 600 --durations 20"
+test    = "pytest tests/ --ignore=tests/v1/ --timeout 600 --durations 20"
+test-cov = "pytest tests/ --ignore=tests/v1/ --timeout 600 --durations 20 --cov=dbldatagen --cov-config=.coveragerc --cov-report=term-missing:skip-covered --cov-report=xml --cov-report=html --cov-fail-under=80"
 test-v1 = "pytest tests/v1/ --timeout 600 --durations 20 --no-header -q"
-test-all = "pytest tests/ -n 10 --timeout 600 --durations 20"
+test-v1-cov = "pytest tests/v1/ --timeout 600 --durations 20 --no-header -q --cov=dbldatagen/v1 --cov-config=.coveragerc-v1 --cov-report=term-missing:skip-covered --cov-report=html:htmlcov-v1 --ignore=tests/v1/test_faker_pool.py --ignore=tests/v1/test_streaming.py --ignore=tests/v1/connectors/test_sql_spark.py"
+test-all = ["pytest tests/ --ignore=tests/v1/ --timeout 600 --durations 20",
+             "pytest tests/v1/ --timeout 600 --durations 20 --no-header -q"]
 fmt         = ["black .",
                "ruff check . --fix",
                "mypy .",
@@ -164,7 +167,8 @@ exclude = [
     "docs/build",
     "tutorial",
     "examples",
-    "tests",
+    "tests/test_*.py",
+    "tests/__init__.py",
     "dbldatagen/__init__.py",
     "dbldatagen/constraints/__init__.py",
     "dbldatagen/distributions/__init__.py",
@@ -210,6 +214,8 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["PLR2004", "S101", "TID252"]
+"dbldatagen/v1/*" = ["PLC0415"]
+"tests/v1/*" = ["ANN", "PLC0415", "PLR2004", "S101", "TID252", "B905"]
 "examples/*" = ["ALL"]
 "tutorial/*" = ["ALL"]
 "docs/*" = ["ALL"]
@@ -239,7 +245,6 @@ ignore = [
     "docs/build",
     "tutorial",
     "examples",
-    "tests",
     "dbldatagen/datasets",
     "dbldatagen/__init__.py",
     "dbldatagen/constraints/__init__.py",
@@ -270,7 +275,8 @@ ignore-paths = [
     "docs/build",
     "tutorial",
     "examples",
-    "tests",
+    "tests/test_.*",
+    "tests/__init__\\.py",
     "dbldatagen/datasets",
     "dbldatagen/distributions",
     "dbldatagen/__init__.py",
@@ -330,14 +336,12 @@ addopts = [
     "-ra",
     "--strict-markers",
     "--strict-config",
-    "--cov=dbldatagen",
-    "--cov-report=term-missing:skip-covered",
-    "--cov-report=xml",
-    "--cov-report=html",
-    "--cov-fail-under=80",
     "-p", "no:warnings",
 ]
 testpaths = ["tests"]
+markers = [
+    "perf: performance benchmarks (deselect with '-m not perf')",
+]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -364,11 +368,15 @@ omit = [
     "*/tutorial/*",
     "*/docs/*",
     "*/v1/*",
+    "dbldatagen/v1/*",
+    "dbldatagen/v1/**/*",
 ]
 
 [tool.coverage.report]
 omit = [
     "*/v1/*",
+    "dbldatagen/v1/*",
+    "dbldatagen/v1/**/*",
 ]
 exclude_lines = [
     "pragma: no cover",
@@ -397,9 +405,9 @@ exclude = [
     "build",
     "docs",
     "examples",
-    "tests",
+    "tests/test_",
+    "tests/__init__\\.py",
     "tutorial",
-    "tests",
     "dbldatagen/datasets",
     "dbldatagen/__init__.py",
     "dbldatagen/constraints/__init__.py",
@@ -433,3 +441,9 @@ module = [
     "numpy.*",
 ]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "dbldatagen.v1.*",
+]
+ignore_errors = true

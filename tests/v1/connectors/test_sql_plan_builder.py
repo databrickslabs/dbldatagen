@@ -15,6 +15,7 @@ from dbldatagen.v1.schema import (
     SequenceColumn,
 )
 
+
 # ---------------------------------------------------------------------------
 # _resolve_row_count
 # ---------------------------------------------------------------------------
@@ -113,7 +114,7 @@ class TestComputeRowCounts:
         fk_edges: list[tuple[str, str, str, str]] | None = None,
     ) -> InferredSchema:
         tables = {name: [] for name in table_names}
-        pk_columns = {name: "id" for name in table_names}
+        pk_columns = dict.fromkeys(table_names, "id")
         return InferredSchema(
             tables=tables,
             fk_edges=fk_edges or [],
@@ -193,7 +194,7 @@ class TestBuildPlan:
         pk_columns: dict[str, str] | None = None,
     ) -> InferredSchema:
         if pk_columns is None:
-            pk_columns = {t: "id" for t in tables}
+            pk_columns = dict.fromkeys(tables, "id")
         return InferredSchema(
             tables=tables,
             fk_edges=fk_edges or [],

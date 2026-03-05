@@ -53,7 +53,7 @@ class TestIngestTableConfig:
         assert cfg.delete_fraction == 0.0
 
     def test_invalid_fractions_sum(self):
-        with pytest.raises(ValueError, match="sum to ~1.0"):
+        with pytest.raises(ValueError, match=r"sum to ~1.0"):
             IngestTableConfig(insert_fraction=0.5, update_fraction=0.1, delete_fraction=0.1)
 
     def test_all_zero_fractions(self):

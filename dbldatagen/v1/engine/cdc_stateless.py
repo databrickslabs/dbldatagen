@@ -16,12 +16,11 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from typing import TYPE_CHECKING
 
-from pyspark.sql import Column
-from pyspark.sql import functions as F
 
-from dbldatagen.v1.engine.utils import split_with_remainder
+if TYPE_CHECKING:
+    from pyspark.sql import Column
 
 
 # ---------------------------------------------------------------------------
@@ -79,6 +78,8 @@ def compute_periods(
     if total_weight <= 0:
         raise ValueError("At least one operation weight must be positive")
 
+    from dbldatagen.v1.engine.utils import split_with_remainder
+
     inserts_per_batch, updates_per_batch, deletes_per_batch = split_with_remainder(
         batch_size,
         (insert_weight, update_weight, delete_weight),
@@ -89,14 +90,12 @@ def compute_periods(
     # through k-space with period = ceil(initial_rows / D).
     # Using initial_rows as the base for period calculation keeps the
     # stride constant across batches.
-    death_period: int | float
     if deletes_per_batch > 0:
         death_period = max(1, initial_rows // deletes_per_batch)
     else:
         death_period = math.inf
 
     # update_period: how many batches between updates for a given row
-    update_period: int | float
     if updates_per_batch > 0 and initial_rows > 0:
         update_period = max(1, initial_rows // updates_per_batch)
     else:
@@ -163,7 +162,6 @@ def is_alive(
     initial_rows: int,
     inserts_per_batch: int,
     death_period: int | float,
-    *,
     min_life: int = 1,
 ) -> bool:
     """Return True if row *k* is alive at batch *batch_n*.
@@ -183,7 +181,6 @@ def update_due(
     initial_rows: int,
     inserts_per_batch: int,
     death_period: int | float,
-    *,
     update_period: int | float,
     min_life: int = 1,
     update_window: int | None = None,
@@ -404,7 +401,6 @@ def update_indices_at_batch(
     inserts_per_batch: int,
     death_period: int | float,
     update_period: int | float,
-    *,
     min_life: int = 1,
     update_window: int | None = None,
 ) -> list[int]:
@@ -465,6 +461,8 @@ def batch_timestamp_str(start_timestamp: str, batch_interval_seconds: int, batch
 
     Shared by both CDC and ingest generators.
     """
+    from datetime import datetime, timedelta
+
     base = datetime.fromisoformat(start_timestamp.replace("Z", "+00:00"))
     ts = base + timedelta(seconds=batch_id * batch_interval_seconds)
     return ts.strftime("%Y-%m-%d %H:%M:%S")
@@ -476,7 +474,10 @@ def batch_timestamp_str(start_timestamp: str, batch_interval_seconds: int, batch
 
 
 def _safe_import_spark() -> tuple:
-    """Return PySpark functions and Column type."""
+    """Import PySpark functions, raising ImportError if unavailable."""
+    from pyspark.sql import Column
+    from pyspark.sql import functions as F
+
     return F, Column
 
 
@@ -497,7 +498,7 @@ def birth_tick_expr(id_col: Column | str, initial_rows: int, inserts_per_batch: 
     Column
         Spark SQL expression evaluating to the birth batch number.
     """
-
+    F, _Column = _safe_import_spark()
     if isinstance(id_col, str):
         id_col = F.col(id_col)
 
@@ -529,7 +530,7 @@ def death_tick_expr(
     Returns a very large long value (2^62) when death_period is infinite,
     since Spark doesn't support float('inf') in long columns.
     """
-
+    F, _Column = _safe_import_spark()
     if isinstance(id_col, str):
         id_col = F.col(id_col)
 
@@ -554,14 +555,13 @@ def is_alive_expr(
     initial_rows: int,
     inserts_per_batch: int,
     death_period: int | float,
-    *,
     min_life: int = 1,
 ) -> Column:
     """Spark column expression: True if row is alive at *batch_n*.
 
     Evaluates: birth_tick(k) <= batch_n < death_tick(k)
     """
-
+    F, _Column = _safe_import_spark()
     if isinstance(id_col, str):
         id_col = F.col(id_col)
 
@@ -578,7 +578,6 @@ def update_due_expr(
     initial_rows: int,
     inserts_per_batch: int,
     death_period: int | float,
-    *,
     update_period: int | float,
     min_life: int = 1,
     update_window: int | None = None,
@@ -592,7 +591,7 @@ def update_due_expr(
     4. not dying at batch_n (delete supersedes)
     5. if update_window is set, age <= update_window
     """
-
+    F, _Column = _safe_import_spark()
     if isinstance(id_col, str):
         id_col = F.col(id_col)
 
@@ -655,7 +654,7 @@ def pre_image_batch_expr(
     Column
         Spark SQL expression evaluating to the pre-image batch number.
     """
-
+    F, _Column = _safe_import_spark()
     if isinstance(id_col, str):
         id_col = F.col(id_col)
 

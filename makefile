@@ -1,4 +1,4 @@
-.PHONY: dev test lint fmt clean build docs
+.PHONY: dev test test-cov test-v1 test-v1-cov test-all lint fmt clean build docs
 
 all: clean dev lint fmt test
 
@@ -22,8 +22,20 @@ fmt:
 test:
 	hatch run test
 
+test-v1:
+	hatch run test-v1
+
+test-v1-cov:
+	hatch run test-v1-cov
+
+test-all:
+	hatch run test-all
+
+test-cov:
+	hatch run test-cov
+
 test-coverage:
-	make test && open htmlcov/index.html
+	hatch run test-cov && open htmlcov/index.html
 
 build:
 	hatch build

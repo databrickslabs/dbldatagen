@@ -38,42 +38,7 @@ _FAKER_PATTERNS: list[tuple[tuple[str, ...], str]] = [
 LOW_CARDINALITY_THRESHOLD = 50
 
 
-def _select_pk_strategy(column: InferredColumn) -> ColumnStrategy:
-    """Return the strategy for a primary-key column."""
-    if column.synth_dtype == DataType.STRING:
-        if "uuid" in column.name.lower() or "guid" in column.name.lower():
-            return UUIDColumn()
-        return PatternColumn(template=f"{column.name.upper()}-{{digit:8}}")
-    return SequenceColumn(start=1, step=1)
-
-
-def _select_type_default(column: InferredColumn, default_rows: int) -> ColumnStrategy:
-    """Return a strategy based on the column's data type."""
-    dtype = column.synth_dtype
-
-    _TYPE_STRATEGIES: dict[DataType, ColumnStrategy] = {
-        DataType.INT: RangeColumn(min=0, max=max(10_000, default_rows * 10)),
-        DataType.LONG: RangeColumn(min=0, max=max(10_000, default_rows * 10)),
-        DataType.FLOAT: RangeColumn(min=0.0, max=10_000.0),
-        DataType.DOUBLE: RangeColumn(min=0.0, max=10_000.0),
-        DataType.DECIMAL: RangeColumn(min=0.0, max=10_000.0),
-        DataType.BOOLEAN: ValuesColumn(values=[True, False]),
-        DataType.DATE: TimestampColumn(start="2020-01-01", end="2025-12-31"),
-        DataType.TIMESTAMP: TimestampColumn(start="2020-01-01", end="2025-12-31"),
-    }
-
-    if dtype in _TYPE_STRATEGIES:
-        return _TYPE_STRATEGIES[dtype]
-
-    if dtype == DataType.STRING:
-        if column.unique:
-            return UUIDColumn()
-        return PatternColumn(template="{alpha:3}-{digit:4}")
-
-    return RangeColumn(min=0, max=100)
-
-
-def select_strategy(column: InferredColumn, default_rows: int = 1000) -> ColumnStrategy:
+def select_strategy(column: InferredColumn, default_rows: int = 1000) -> ColumnStrategy:  # noqa: PLR0911
     """Choose the best generation strategy for *column*.
 
     Decision priority:
@@ -86,7 +51,11 @@ def select_strategy(column: InferredColumn, default_rows: int = 1000) -> ColumnS
 
     # 1. Primary key
     if column.is_primary_key:
-        return _select_pk_strategy(column)
+        if column.synth_dtype == DataType.STRING:
+            if "uuid" in column.name.lower() or "guid" in column.name.lower():
+                return UUIDColumn()
+            return PatternColumn(template=f"{column.name.upper()}-{{digit:8}}")
+        return SequenceColumn(start=1, step=1)
 
     # 2. Foreign key placeholder
     if column.is_foreign_key:
@@ -105,4 +74,21 @@ def select_strategy(column: InferredColumn, default_rows: int = 1000) -> ColumnS
             return ValuesColumn(values=distinct[:LOW_CARDINALITY_THRESHOLD])
 
     # 5. Type-based defaults
-    return _select_type_default(column, default_rows)
+    if column.synth_dtype in (DataType.INT, DataType.LONG):
+        return RangeColumn(min=0, max=max(10_000, default_rows * 10))
+
+    if column.synth_dtype in (DataType.FLOAT, DataType.DOUBLE, DataType.DECIMAL):
+        return RangeColumn(min=0.0, max=10_000.0)
+
+    if column.synth_dtype == DataType.BOOLEAN:
+        return ValuesColumn(values=[True, False])
+
+    if column.synth_dtype in (DataType.DATE, DataType.TIMESTAMP):
+        return TimestampColumn(start="2020-01-01", end="2025-12-31")
+
+    if column.synth_dtype == DataType.STRING:
+        if column.unique:
+            return UUIDColumn()
+        return PatternColumn(template="{alpha:3}-{digit:4}")
+
+    return RangeColumn(min=0, max=100)

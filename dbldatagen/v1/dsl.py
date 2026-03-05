@@ -45,7 +45,12 @@ def pk_pattern(name: str, template: str) -> ColumnSpec:
 
 
 def fk(
-    name: str, ref: str, *, nullable: bool = False, null_fraction: float = 0.0, distribution: Distribution | None = None
+    name: str,
+    ref: str,
+    *,
+    nullable: bool = False,
+    null_fraction: float = 0.0,
+    distribution: Distribution | None = None,
 ) -> ColumnSpec:
     """Foreign key column referencing 'table.column'.
 
@@ -66,40 +71,27 @@ def fk(
 # -- Common column shorthands --
 
 
-def integer(
-    name: str,
-    min_val: int = 0,
-    max_val: int = 100,
-    seed_from: str | None = None,
-    **kw,
-) -> ColumnSpec:
-    """Create an integer column with values in [min_val, max_val]."""
+def integer(name: str, min: float | int = 0, max: float | int = 100, seed_from: str | None = None, **kw) -> ColumnSpec:
     return ColumnSpec(
         name=name,
         dtype=DataType.INT,
-        gen=RangeColumn(min=min_val, max=max_val, **kw),
+        gen=RangeColumn(min=min, max=max, **kw),
         seed_from=seed_from,
     )
 
 
 def decimal(
-    name: str,
-    min_val: float = 0.0,
-    max_val: float = 1000.0,
-    seed_from: str | None = None,
-    **kw,
+    name: str, min: float | int = 0.0, max: float | int = 1000.0, seed_from: str | None = None, **kw
 ) -> ColumnSpec:
-    """Create a decimal (double) column with values in [min_val, max_val]."""
     return ColumnSpec(
         name=name,
         dtype=DataType.DOUBLE,
-        gen=RangeColumn(min=min_val, max=max_val, **kw),
+        gen=RangeColumn(min=min, max=max, **kw),
         seed_from=seed_from,
     )
 
 
 def text(name: str, values: list[str], seed_from: str | None = None, **kw) -> ColumnSpec:
-    """Create a string column that picks from a list of values."""
     return ColumnSpec(
         name=name,
         dtype=DataType.STRING,
@@ -117,7 +109,6 @@ def faker(
     seed_from: str | None = None,
     **kwargs,
 ) -> ColumnSpec:
-    """Create a column using a Faker provider for realistic text data."""
     return ColumnSpec(
         name=name,
         dtype=dtype,
@@ -127,13 +118,8 @@ def faker(
 
 
 def timestamp(
-    name: str,
-    start: str = "2020-01-01",
-    end: str = "2025-12-31",
-    seed_from: str | None = None,
-    **kw,
+    name: str, start: str = "2020-01-01", end: str = "2025-12-31", seed_from: str | None = None, **kw
 ) -> ColumnSpec:
-    """Create a timestamp column with values in [start, end]."""
     return ColumnSpec(
         name=name,
         dtype=DataType.TIMESTAMP,
@@ -143,7 +129,6 @@ def timestamp(
 
 
 def pattern(name: str, template: str, seed_from: str | None = None) -> ColumnSpec:
-    """Create a string column from a pattern template."""
     return ColumnSpec(
         name=name,
         dtype=DataType.STRING,
@@ -153,7 +138,6 @@ def pattern(name: str, template: str, seed_from: str | None = None) -> ColumnSpe
 
 
 def expression(name: str, expr: str, dtype: DataType | None = None) -> ColumnSpec:
-    """Create a column from a Spark SQL expression."""
     return ColumnSpec(name=name, dtype=dtype, gen=ExpressionColumn(expr=expr))
 
 
@@ -161,7 +145,7 @@ def expression(name: str, expr: str, dtype: DataType | None = None) -> ColumnSpe
 
 
 def struct(name: str, fields: list[ColumnSpec]) -> ColumnSpec:
-    """Nested struct column — produces a JSON object.
+    """Nested struct column -- produces a JSON object.
 
     Example::
 

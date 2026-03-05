@@ -2,6 +2,12 @@
 
 from __future__ import annotations
 
+
+try:
+    import pydantic  # noqa: F401
+except ImportError:
+    raise ImportError("dbldatagen.v1 requires pydantic>=2.0. " "Install with: pip install 'dbldatagen[v1]'") from None
+
 from typing import TYPE_CHECKING
 
 from dbldatagen.v1.dsl import (

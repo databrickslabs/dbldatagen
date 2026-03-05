@@ -5,7 +5,6 @@ from __future__ import annotations
 from enum import Enum
 
 from pydantic import BaseModel, model_validator
-from typing_extensions import Self
 
 from dbldatagen.v1.cdc_schema import MutationSpec
 from dbldatagen.v1.schema import DataGenPlan, parse_human_count
@@ -38,8 +37,7 @@ class IngestTableConfig(BaseModel):
     mutations: MutationSpec = MutationSpec()
 
     @model_validator(mode="after")
-    def validate_fractions(self) -> Self:
-        """Ensure operation fractions are positive and sum to ~1.0."""
+    def validate_fractions(self) -> IngestTableConfig:
         total = self.insert_fraction + self.update_fraction + self.delete_fraction
         if total <= 0:
             raise ValueError("At least one fraction must be positive")
@@ -50,8 +48,7 @@ class IngestTableConfig(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def resolve_batch_size(self) -> Self:
-        """Resolve string batch_size values to integers."""
+    def resolve_batch_size(self) -> IngestTableConfig:
         if isinstance(self.batch_size, str):
             self.batch_size = parse_human_count(self.batch_size)
         return self
@@ -77,8 +74,7 @@ class IngestPlan(BaseModel):
     include_load_timestamp: bool = True
 
     @model_validator(mode="after")
-    def validate_table_refs(self) -> Self:
-        """Validate that all table references exist in the base plan."""
+    def validate_table_refs(self) -> IngestPlan:
         valid = {t.name for t in self.base_plan.tables}
         for name in self.table_configs:
             if name not in valid:
@@ -89,8 +85,7 @@ class IngestPlan(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def populate_ingest_tables(self) -> Self:
-        """Default ingest_tables to all tables in the base plan."""
+    def populate_ingest_tables(self) -> IngestPlan:
         if not self.ingest_tables:
             self.ingest_tables = [t.name for t in self.base_plan.tables]
         return self

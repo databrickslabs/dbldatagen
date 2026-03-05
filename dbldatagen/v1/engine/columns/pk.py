@@ -6,11 +6,9 @@ use a NumPy-vectorized Feistel cipher inside a ``pandas_udf`` (Tier 2).
 
 from __future__ import annotations
 
-import re
 from collections.abc import Callable
 
 import numpy as np
-import pandas as pd
 from pyspark.sql import Column
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
@@ -45,6 +43,8 @@ def build_formatted_pk(id_col: Column | str, template: str) -> Column:
     """
     if isinstance(id_col, str):
         id_col = F.col(id_col)
+
+    import re
 
     m = re.search(r"\{digit:(\d+)\}", template)
     if m:
@@ -150,6 +150,7 @@ def build_random_unique_pk_udf(N: int, seed: int) -> Callable[..., Column]:
         pk_expr = build_random_unique_pk_udf(table_rows, pk_seed)
         df = df.select(pk_expr(F.col("id")).alias("pk"))
     """
+    import pandas as pd
 
     @F.pandas_udf(T.LongType())  # type: ignore[call-overload]
     def _feistel_pk(id_series: pd.Series) -> pd.Series:
@@ -157,5 +158,4 @@ def build_random_unique_pk_udf(N: int, seed: int) -> Callable[..., Column]:
         permuted = feistel_permute_batch(ids, N, seed)
         return pd.Series(permuted, dtype="int64")
 
-    result: Callable[..., Column] = _feistel_pk
-    return result
+    return _feistel_pk

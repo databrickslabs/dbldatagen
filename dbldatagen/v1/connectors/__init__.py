@@ -42,7 +42,7 @@ except ImportError:
 def extract_from_database(
     connection_string: str,
     tables: list[str] | None = None,
-    **kwargs: int | bool | str | None,
+    **kwargs,
 ) -> DataGenPlan:
     """Extract schema from a SQL database via SQLAlchemy.
 

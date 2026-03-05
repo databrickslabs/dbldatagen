@@ -56,8 +56,10 @@ def validate_referential_integrity(
                 "left_anti",
             )
 
-            orphan_count = orphans.count()
-            if orphan_count > 0:
+            # Use limit(1) to short-circuit — avoids full table scan
+            if orphans.limit(1).count() > 0:
+                # Only compute full count for the error message
+                orphan_count = orphans.count()
                 errors.append(
                     f"{table_name}.{col_spec.name} has {orphan_count} orphan FK values "
                     f"not found in {parent_table_name}.{parent_col_name}"

@@ -56,10 +56,9 @@ def cdc_config(
 def cdc_plan(
     base: DataGenPlan,
     num_batches: int = 5,
-    fmt: str | CDCFormat = CDCFormat.RAW,
+    format: str | CDCFormat = CDCFormat.RAW,
     batch_interval_seconds: int = 3600,
     start_timestamp: str = "2025-01-01T00:00:00Z",
-    *,
     cdc_tables: list[str] | None = None,
     **table_configs: CDCTableConfig,
 ) -> CDCPlan:
@@ -70,12 +69,12 @@ def cdc_plan(
         plan = cdc_plan(
             base,
             num_batches=10,
-            fmt="delta_cdf",
+            format="delta_cdf",
             customers=cdc_config(batch_size=0.05, operations=ops(2, 7, 1)),
             orders=cdc_config(batch_size=0.10),
         )
     """
-    fmt = CDCFormat(fmt) if isinstance(fmt, str) else fmt
+    fmt = CDCFormat(format) if isinstance(format, str) else format
     return CDCPlan(
         base_plan=base,
         num_batches=num_batches,
@@ -101,7 +100,7 @@ _FORMAT_COLUMN_RENAMES: dict[str, dict[str, str]] = {
 }
 
 
-def rename_cdc_columns(df: DataFrame, fmt: str = "sql_server") -> DataFrame:
+def rename_cdc_columns(df: DataFrame, format: str = "sql_server") -> DataFrame:
     """Rename CDC metadata columns to clean, SQL-friendly names.
 
     Usage::
@@ -117,7 +116,7 @@ def rename_cdc_columns(df: DataFrame, fmt: str = "sql_server") -> DataFrame:
       - ``__$start_lsn``  → ``cdc_lsn``
       - ``__$seqval``     → ``cdc_seqval``
     """
-    renames = _FORMAT_COLUMN_RENAMES.get(fmt, {})
+    renames = _FORMAT_COLUMN_RENAMES.get(format, {})
     for old_name, new_name in renames.items():
         if old_name in df.columns:
             df = df.withColumnRenamed(old_name, new_name)

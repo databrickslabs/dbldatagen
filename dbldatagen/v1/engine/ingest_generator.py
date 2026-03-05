@@ -16,14 +16,11 @@ Two output modes:
 
 from __future__ import annotations
 
-import math
 from functools import reduce
 
 from pyspark.sql import Column, DataFrame, SparkSession
 from pyspark.sql import functions as F
-from pyspark.sql.types import LongType, StructField, StructType
 
-from dbldatagen.v1.cdc import _generate_batch, generate_expected_state
 from dbldatagen.v1.cdc_schema import (
     CDCFormat,
     CDCPlan,
@@ -31,25 +28,15 @@ from dbldatagen.v1.cdc_schema import (
     OperationWeights,
 )
 from dbldatagen.v1.engine.cdc_state import resolve_batch_size
-from dbldatagen.v1.engine.cdc_stateless import (
-    batch_timestamp_str,
-    birth_tick_expr,
-    compute_periods,
-    death_tick_expr,
-    delete_indices_at_batch_fast,
-    insert_range,
-    is_alive_expr,
-    max_k_at_batch,
-)
-from dbldatagen.v1.engine.generator import build_column_expr, generate_table
+from dbldatagen.v1.engine.generator import generate_table
 from dbldatagen.v1.engine.planner import ResolvedPlan, resolve_plan
-from dbldatagen.v1.engine.seed import compute_batch_seed, derive_column_seed, null_mask_expr
-from dbldatagen.v1.engine.utils import split_with_remainder, union_all
+from dbldatagen.v1.engine.seed import compute_batch_seed
+from dbldatagen.v1.engine.utils import apply_null_fraction, get_pk_columns, union_all
 from dbldatagen.v1.ingest_schema import (
     IngestPlan,
     IngestTableConfig,
 )
-from dbldatagen.v1.schema import ColumnSpec, SequenceColumn, TableSpec
+from dbldatagen.v1.schema import TableSpec
 
 
 # ---------------------------------------------------------------------------
@@ -109,6 +96,8 @@ def _convert_to_cdc_plan(ingest_plan: IngestPlan) -> CDCPlan:
 
 def _ingest_batch_timestamp(plan: IngestPlan, batch_id: int) -> str:
     """Compute the timestamp string for a given ingest batch."""
+    from dbldatagen.v1.engine.cdc_stateless import batch_timestamp_str
+
     return batch_timestamp_str(plan.start_timestamp, plan.batch_interval_seconds, batch_id)
 
 
@@ -156,6 +145,8 @@ def generate_synthetic_incremental_batch(
     Reuses CDC generation, then strips CDC columns and keeps only
     inserts + update after-images (the "new data" arriving).
     """
+    from dbldatagen.v1.cdc import _generate_batch
+
     cdc_plan = _convert_to_cdc_plan(plan)
     raw_batch = _generate_batch(spark, cdc_plan, batch_id, "raw")
 
@@ -192,6 +183,8 @@ def generate_synthetic_snapshot_batch(
     Uses generate_expected_state() from the CDC engine to get all
     live rows at the given batch.
     """
+    from dbldatagen.v1.cdc import generate_expected_state
+
     cdc_plan = _convert_to_cdc_plan(plan)
     result = {}
 
@@ -237,6 +230,8 @@ def _compute_operation_counts(
     abs_batch_size: int,
 ) -> tuple[int, int, int]:
     """Compute insert/update/delete counts with correct remainder assignment."""
+    from dbldatagen.v1.engine.utils import split_with_remainder
+
     return split_with_remainder(
         abs_batch_size,
         (cfg.insert_fraction, cfg.update_fraction, cfg.delete_fraction),
@@ -246,10 +241,9 @@ def _compute_operation_counts(
 def _generate_inserts(
     spark: SparkSession,
     table_spec: TableSpec,
-    resolved: ResolvedPlan | None,
+    resolved: ResolvedPlan,
     batch_id: int,
     inserts_per_batch: int,
-    *,
     initial_rows: int,
     global_seed: int,
 ) -> DataFrame | None:
@@ -258,6 +252,9 @@ def _generate_inserts(
     Bypasses the CDC plan conversion — computes the PK offset range
     inline and builds a TableSpec with adjusted SequenceColumn start.
     """
+    from dbldatagen.v1.engine.cdc_stateless import insert_range
+    from dbldatagen.v1.schema import ColumnSpec, SequenceColumn, TableSpec
+
     start_k, end_k = insert_range(batch_id, initial_rows, inserts_per_batch)
     count = end_k - start_k
     if count <= 0:
@@ -265,7 +262,7 @@ def _generate_inserts(
 
     batch_seed = compute_batch_seed(global_seed, batch_id)
 
-    pk_cols = set(table_spec.primary_key.columns) if table_spec.primary_key else set()
+    pk_cols = get_pk_columns(table_spec)
     new_columns = [
         (
             ColumnSpec(
@@ -340,8 +337,8 @@ def generate_delta_incremental_batch(
             resolved,
             batch_id,
             insert_count,
-            initial_rows=initial_rows,
-            global_seed=global_seed,
+            initial_rows,
+            global_seed,
         )
         if insert_df is not None:
             parts.append(insert_df)
@@ -366,7 +363,7 @@ def generate_delta_incremental_batch(
                 pk_cols,
                 table_spec,
                 batch_seed,
-                cfg=cfg,
+                cfg,
             )
             if mutated is not None:
                 parts.append(mutated)
@@ -422,7 +419,6 @@ def _mutate_selected_rows(
     pk_cols: list[str],
     table_spec: TableSpec,
     batch_seed: int,
-    *,
     cfg: IngestTableConfig,
 ) -> DataFrame | None:
     """Generate mutated versions of selected rows.
@@ -430,6 +426,8 @@ def _mutate_selected_rows(
     Uses a flat ``select([all_column_exprs])`` instead of chained
     ``withColumn`` to avoid O(n^2) Catalyst plan growth.
     """
+    from dbldatagen.v1.engine.seed import derive_column_seed
+
     selected = current_df.join(update_pks, pk_cols, "inner")
 
     pk_set = set(pk_cols)
@@ -536,6 +534,15 @@ def generate_stateless_incremental_batch(
 
     No ``current_df`` needed; any batch can be generated independently.
     """
+    from dbldatagen.v1.engine.cdc_stateless import (
+        birth_tick_expr,
+        compute_periods,
+        death_tick_expr,
+        delete_indices_at_batch_fast,
+        insert_range,
+        max_k_at_batch,
+    )
+
     table_map = {t.name: t for t in plan.base_plan.tables}
     table_spec = table_map[table_name]
     cfg = plan.config_for(table_name)
@@ -553,8 +560,7 @@ def generate_stateless_incremental_batch(
     )
 
     batch_seed = compute_batch_seed(global_seed, batch_id)
-    pk_cols = table_spec.primary_key.columns if table_spec.primary_key else []
-    pk_set = set(pk_cols)
+    pk_set = get_pk_columns(table_spec)
     max_k = max_k_at_batch(batch_id, initial_rows, periods.inserts_per_batch)
 
     parts: list[DataFrame] = []
@@ -570,18 +576,32 @@ def generate_stateless_incremental_batch(
                 batch_seed,
                 global_seed,
                 max_k,
-                cfg=cfg,
-                pk_set=pk_set,
+                cfg,
+                pk_set,
             )
             insert_df = insert_df.select(F.col("_synth_row_id"), *insert_exprs, F.lit("I").alias("_action"))
             parts.append(insert_df)
 
     # --- 2. UPDATES: stride scan, ~50-60% selectivity ---
     if periods.updates_per_batch > 0 and batch_id >= 1:
+        import math
+
         up = int(periods.update_period) if not math.isinf(periods.update_period) else 0
         if up > 0:
             target_mod = (up - (batch_id % up)) % up
-            update_candidates = spark.range(target_mod, max_k, up).withColumnRenamed("id", "_synth_row_id")
+            # Tight upper bound: scan only the first `updates_per_batch` stride
+            # elements (approximately the initial universe).  This avoids the
+            # over-generation that occurs as inserted rows accumulate in k-space,
+            # AND eliminates the need for `.limit()` which forces a CollectLimit
+            # plan exchange and breaks distributed pipelining at scale.
+            #
+            # Why this works: update_period = initial_rows // updates_per_batch,
+            # so target_mod + updates_per_batch * up ≈ initial_rows.  The scan
+            # covers [target_mod, ~initial_rows) — all initial rows at the stride
+            # offset.  Initial rows have t_birth=0 < batch_id so they all pass the
+            # not_birth filter.  Inserted rows (k >= initial_rows) are excluded.
+            scan_end = min(max_k, target_mod + periods.updates_per_batch * up)
+            update_candidates = spark.range(target_mod, scan_end, up).withColumnRenamed("id", "_synth_row_id")
             id_col = F.col("_synth_row_id")
 
             # Filter: alive, not birth batch, not dying, within update window
@@ -610,8 +630,9 @@ def generate_stateless_incremental_batch(
                 batch_seed,
                 global_seed,
                 max_k,
-                cfg=cfg,
-                pk_set=pk_set,
+                cfg,
+                pk_set,
+                is_update=True,
             )
             update_df = update_df.select(F.col("_synth_row_id"), *update_exprs, F.lit("U").alias("_action"))
             parts.append(update_df)
@@ -626,6 +647,8 @@ def generate_stateless_incremental_batch(
             cfg.min_life,
         )
         if delete_ks:
+            from pyspark.sql.types import LongType, StructField, StructType
+
             schema = StructType([StructField("_synth_row_id", LongType(), False)])
             delete_df = spark.createDataFrame([(k,) for k in delete_ks], schema=schema)
             # Generate PK columns for delete rows (identity only)
@@ -671,6 +694,17 @@ def generate_stateless_snapshot_batch(
     PK columns use identity seeding (global_seed); state columns use
     a per-row seed derived from the row's last-write batch for variation.
     """
+    import math
+
+    from dbldatagen.v1.engine.cdc_stateless import (
+        birth_tick_expr,
+        compute_periods,
+        is_alive_expr,
+        max_k_at_batch,
+    )
+    from dbldatagen.v1.engine.generator import build_column_expr
+    from dbldatagen.v1.engine.seed import derive_column_seed
+
     table_map = {t.name: t for t in plan.base_plan.tables}
     table_spec = table_map[table_name]
     cfg = plan.config_for(table_name)
@@ -688,7 +722,7 @@ def generate_stateless_snapshot_batch(
     )
 
     max_k = max_k_at_batch(batch_id, initial_rows, periods.inserts_per_batch)
-    pk_set = set(table_spec.primary_key.columns if table_spec.primary_key else [])
+    pk_set = get_pk_columns(table_spec)
 
     # Scan all rows ever created, filter to alive
     base_df = spark.range(0, max_k).withColumnRenamed("id", "_synth_row_id")
@@ -700,7 +734,7 @@ def generate_stateless_snapshot_batch(
         initial_rows,
         periods.inserts_per_batch,
         periods.death_period,
-        min_life=cfg.min_life,
+        cfg.min_life,
     )
     alive_df = base_df.filter(alive)
 
@@ -741,8 +775,7 @@ def generate_stateless_snapshot_batch(
 
         if col_spec.null_fraction > 0 and col_spec.name not in pk_set:
             col_seed = derive_column_seed(global_seed, table_spec.name, col_spec.name)
-            is_null = null_mask_expr(col_seed, id_col, col_spec.null_fraction)
-            expr = F.when(is_null, F.lit(None)).otherwise(expr)
+            expr = apply_null_fraction(expr, col_seed, id_col, col_spec.null_fraction)
 
         select_exprs.append(expr.alias(col_spec.name))
 
@@ -758,32 +791,65 @@ def _build_stateless_column_exprs(
     batch_seed: int,
     global_seed: int,
     max_k: int,
-    *,
     cfg: IngestTableConfig,
     pk_set: set[str],
-) -> list[Column]:
+    *,
+    is_update: bool = False,
+) -> list:
     """Build column expressions for stateless incremental batches.
 
     PK columns use identity seeding (global_seed) — same value for same k.
-    State columns use batch_seed — values change per batch.
+
+    For inserts: all state columns use batch_seed for variation.
+    For updates: only columns listed in ``cfg.mutations.columns`` use
+    batch_seed; immutable columns keep identity seeding so their values
+    match the original row.  When ``mutations.columns`` is None (all
+    eligible), every non-PK column is mutable.
+
     Returns a list of aliased Column expressions.
     """
+    from dbldatagen.v1.engine.generator import build_column_expr
+    from dbldatagen.v1.engine.seed import derive_column_seed
+    from dbldatagen.v1.schema import FakerColumn as FakerColumnType
+
+    mutable_cols = set(cfg.mutations.columns) if cfg.mutations.columns else None
     select_exprs = []
 
     for col_spec in table_spec.columns:
         is_pk = col_spec.name in pk_set
+        # Determine whether this column should mutate in this row.
+        # - PKs never mutate.
+        # - On updates, only explicitly mutable columns mutate.
+        # - On inserts (or when mutable_cols is None), all non-PK columns
+        #   get fresh values.
+        use_identity = is_pk or (is_update and mutable_cols is not None and col_spec.name not in mutable_cols)
 
-        if is_pk:
+        if use_identity:
             col_seed = derive_column_seed(global_seed, table_spec.name, col_spec.name)
-            expr = build_column_expr(col_spec, id_col, col_seed, max_k, global_seed)
         else:
             col_seed = derive_column_seed(batch_seed, table_spec.name, col_spec.name)
-            expr = build_column_expr(col_spec, id_col, col_seed, max_k, batch_seed)
 
-        if col_spec.null_fraction > 0 and not is_pk:
+        seed_for_expr = global_seed if use_identity else batch_seed
+
+        # FakerColumn needs special handling — build_column_expr doesn't
+        # support it (it's normally handled via pandas_udf in generate_table).
+        if isinstance(col_spec.gen, FakerColumnType):
+            from dbldatagen.v1.engine.columns.faker_pool import build_faker_column
+
+            expr = build_faker_column(
+                id_col,
+                col_seed,
+                provider=col_spec.gen.provider,
+                kwargs=col_spec.gen.kwargs or None,
+                locale=col_spec.gen.locale,
+            )
+        else:
+            expr = build_column_expr(col_spec, id_col, col_seed, max_k, seed_for_expr)
+
+        if not is_pk:
+            # Null seed always from global_seed for consistency across batches
             null_seed = derive_column_seed(global_seed, table_spec.name, col_spec.name)
-            is_null = null_mask_expr(null_seed, id_col, col_spec.null_fraction)
-            expr = F.when(is_null, F.lit(None)).otherwise(expr)
+            expr = apply_null_fraction(expr, null_seed, id_col, col_spec.null_fraction)
 
         select_exprs.append(expr.alias(col_spec.name))
 
@@ -796,8 +862,11 @@ def _build_stateless_pk_exprs(
     global_seed: int,
     max_k: int,
     pk_set: set[str],
-) -> list[Column]:
+) -> list:
     """Build only PK column expressions for delete rows."""
+    from dbldatagen.v1.engine.generator import build_column_expr
+    from dbldatagen.v1.engine.seed import derive_column_seed
+
     exprs = []
     for col_spec in table_spec.columns:
         if col_spec.name in pk_set:

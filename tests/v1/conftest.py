@@ -33,4 +33,5 @@ def spark():
         .getOrCreate()
     )
     yield session
-    session.stop()
+    # Don't stop — other test suites (v0) may share this JVM.
+    # Spark will clean up on process exit.

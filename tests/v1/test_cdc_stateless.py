@@ -26,6 +26,7 @@ from dbldatagen.v1.engine.cdc_stateless import (
 )
 from dbldatagen.v1.engine.seed import compute_batch_seed
 
+
 # ===================================================================
 # compute_periods
 # ===================================================================
@@ -251,7 +252,7 @@ class TestUpdateDue:
 
     def test_no_update_at_birth(self):
         """No update on the birth batch."""
-        assert not update_due(0, 0, 100, 10, 10, update_period=5, min_life=3)
+        assert not update_due(0, 0, 100, 10, 10, 5, min_life=3)
 
     def test_update_at_period(self):
         """Row k=0 with update_period=5: updated at batch 5, 10, etc.
@@ -259,36 +260,36 @@ class TestUpdateDue:
         """
         # k=0: born 0, dies 3 (dp=10, min_life=3 -> death=0+3+0=3)
         # update_period=5, but row dies at 3, so no updates
-        assert not update_due(0, 5, 100, 10, 10, update_period=5, min_life=3)
+        assert not update_due(0, 5, 100, 10, 10, 5, min_life=3)
 
     def test_update_for_long_lived_row(self):
         """Row k=5 with death_tick=8: can get updated at batch 5."""
         # k=5: born 0, death=0+3+(5%10)=8, update_period=5
-        assert update_due(5, 5, 100, 10, 10, update_period=5, min_life=3)
+        assert update_due(5, 5, 100, 10, 10, 5, min_life=3)
         # But not at batch 8 (death)
-        assert not update_due(5, 8, 100, 10, 10, update_period=5, min_life=3)
+        assert not update_due(5, 8, 100, 10, 10, 5, min_life=3)
 
     def test_infinite_update_period(self):
         """Infinite update period means no updates ever."""
-        assert not update_due(0, 5, 100, 10, 10, update_period=math.inf)
+        assert not update_due(0, 5, 100, 10, 10, math.inf)
 
     def test_delete_supersedes_update(self):
         """If a row dies at batch t, it should NOT be updated at t."""
         # k=0: born 0, death=3 (dp=10, min_life=3)
         # Even if update_period=1, no update at death batch
-        assert not update_due(0, 3, 100, 10, 10, update_period=1, min_life=3)
+        assert not update_due(0, 3, 100, 10, 10, 1, min_life=3)
 
     def test_update_period_1(self):
         """With update_period=1, row is updated every batch (while alive)."""
         # k=5: born 0, death=8
-        assert not update_due(5, 0, 100, 10, 10, update_period=1, min_life=3)  # birth
-        assert update_due(5, 1, 100, 10, 10, update_period=1, min_life=3)
-        assert update_due(5, 7, 100, 10, 10, update_period=1, min_life=3)
-        assert not update_due(5, 8, 100, 10, 10, update_period=1, min_life=3)  # death
+        assert not update_due(5, 0, 100, 10, 10, 1, min_life=3)  # birth
+        assert update_due(5, 1, 100, 10, 10, 1, min_life=3)
+        assert update_due(5, 7, 100, 10, 10, 1, min_life=3)
+        assert not update_due(5, 8, 100, 10, 10, 1, min_life=3)  # death
 
     def test_dead_rows_not_updated(self):
         """Rows past their death tick are not updated."""
-        assert not update_due(0, 100, 100, 10, 10, update_period=5, min_life=3)
+        assert not update_due(0, 100, 100, 10, 10, 5, min_life=3)
 
 
 # ===================================================================
@@ -492,7 +493,7 @@ class TestDisjointGuarantee:
         for batch_n in range(1, 30):
             ins_start, ins_end = insert_range(batch_n, initial, ins)
             inserts = set(range(ins_start, ins_end))
-            updates = set(update_indices_at_batch(batch_n, initial, ins, dp, up, min_life=min_life))
+            updates = set(update_indices_at_batch(batch_n, initial, ins, dp, up, min_life))
             deletes = set(delete_indices_at_batch_fast(batch_n, initial, ins, dp, min_life))
 
             # Inserts should never overlap with updates or deletes
@@ -559,9 +560,9 @@ class TestLifecycleConsistency:
                 assert t_d >= t_b + min_life
                 # Alive from birth to death-1
                 for t in range(t_b, min(t_b + 50, int(t_d))):
-                    assert is_alive(k, t, initial, ins, dp, min_life=min_life)
+                    assert is_alive(k, t, initial, ins, dp, min_life)
                 # Dead at death tick
-                assert not is_alive(k, int(t_d), initial, ins, dp, min_life=min_life)
+                assert not is_alive(k, int(t_d), initial, ins, dp, min_life)
 
     def test_no_orphan_updates(self):
         """Updates only happen for rows that are alive."""
@@ -572,10 +573,10 @@ class TestLifecycleConsistency:
         min_life = 3
 
         for batch_n in range(1, 25):
-            updates = update_indices_at_batch(batch_n, initial, ins, dp, up, min_life=min_life)
+            updates = update_indices_at_batch(batch_n, initial, ins, dp, up, min_life)
             for k in updates:
-                assert is_alive(k, batch_n, initial, ins, dp, min_life=min_life)
-                assert update_due(k, batch_n, initial, ins, dp, update_period=up, min_life=min_life)
+                assert is_alive(k, batch_n, initial, ins, dp, min_life)
+                assert update_due(k, batch_n, initial, ins, dp, up, min_life)
 
     def test_inserted_rows_have_correct_birth(self):
         """Rows created in batch n have birth_tick == n."""

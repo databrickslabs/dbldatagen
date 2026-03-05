@@ -15,7 +15,7 @@ from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
 
 from dbldatagen.v1.engine.generator import build_all_column_exprs
-from dbldatagen.v1.engine.planner import FKResolution, _extract_pk_metadata
+from dbldatagen.v1.engine.utils import get_pk_columns
 from dbldatagen.v1.schema import (
     PatternColumn,
     SequenceColumn,
@@ -67,7 +67,7 @@ def generate_stream(
     global_seed = table_spec.seed if table_spec.seed is not None else 42
 
     # Resolve FK metadata if parent_specs provided
-    fk_resolutions: dict[tuple[str, str], FKResolution] = {}
+    fk_resolutions: dict[tuple[str, str], object] = {}
     if parent_specs:
         fk_resolutions = _resolve_streaming_fk(table_spec, parent_specs, global_seed)
 
@@ -88,32 +88,25 @@ def generate_stream(
         row_count=0,
     )
 
-    # 3. Flat select for Spark SQL columns, then withColumn for UDFs
-    df = df.select(id_col, *col_exprs)
+    # 3. Flat select + withColumn phases + drop _synth_row_id
+    from dbldatagen.v1.engine.utils import apply_column_phases
 
-    for col_name, col_expr in udf_columns:
-        df = df.withColumn(col_name, col_expr)
-
-    for col_name, col_expr in seeded_columns:
-        df = df.withColumn(col_name, col_expr)
-
-    # 4. Drop internal columns
-    df = df.drop("_synth_row_id")
-    # The rate source's "timestamp" column was already excluded from select_list
-    return df
+    return apply_column_phases(df, id_col, col_exprs, udf_columns, seeded_columns)
 
 
 def _resolve_streaming_fk(
     table_spec: TableSpec,
     parent_specs: dict[str, TableSpec],
     global_seed: int,
-) -> dict[tuple[str, str], FKResolution]:
+) -> dict[tuple[str, str], object]:
     """Build FKResolution objects for FK columns using parent_specs metadata.
 
     Reuses ``_extract_pk_metadata`` from the planner to derive parent PK
     metadata, then constructs ``FKResolution`` objects identical to those
     produced by ``resolve_plan`` in batch mode.
     """
+    from dbldatagen.v1.engine.planner import FKResolution, _extract_pk_metadata
+
     resolutions: dict[tuple[str, str], FKResolution] = {}
     for col_spec in table_spec.columns:
         if col_spec.foreign_key is None:
@@ -142,9 +135,7 @@ def _validate_streaming_spec(
     parent_specs: dict[str, TableSpec] | None = None,
 ) -> None:
     """Reject column strategies incompatible with streaming."""
-    pk_cols = set()
-    if table_spec.primary_key:
-        pk_cols = set(table_spec.primary_key.columns)
+    pk_cols = get_pk_columns(table_spec)
 
     for col_spec in table_spec.columns:
         # FK columns require parent_specs

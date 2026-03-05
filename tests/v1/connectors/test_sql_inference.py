@@ -15,6 +15,7 @@ from dbldatagen.v1.connectors.sql.parser import (
 )
 from dbldatagen.v1.schema import DataType
 
+
 # ---------------------------------------------------------------------------
 # infer_type_from_name
 # ---------------------------------------------------------------------------
@@ -283,7 +284,7 @@ class TestDetectForeignKeys:
         joins = [ExtractedJoin("customers", "id", "orders", "customer_id", "inner")]
         pk_columns = {"customers": "id", "orders": "id"}
         fks = detect_foreign_keys(joins, pk_columns)
-        child_t, child_c, parent_t, parent_c = fks[0]
+        child_t, _child_c, parent_t, _parent_c = fks[0]
         assert parent_t == "customers"
         assert child_t == "orders"
 
@@ -292,7 +293,7 @@ class TestDetectForeignKeys:
         joins = [ExtractedJoin("a", "b_id", "b", "code", "inner")]
         pk_columns = {"a": "id", "b": "id"}  # Neither side is the PK
         fks = detect_foreign_keys(joins, pk_columns)
-        child_t, child_c, parent_t, parent_c = fks[0]
+        child_t, child_c, parent_t, _parent_c = fks[0]
         assert child_t == "a"
         assert child_c == "b_id"
         assert parent_t == "b"
@@ -419,7 +420,7 @@ class TestInferSchema:
 
         # FK edges
         assert len(result.fk_edges) == 1
-        child_t, child_c, parent_t, parent_c = result.fk_edges[0]
+        child_t, child_c, parent_t, _parent_c = result.fk_edges[0]
         assert child_t == "orders"
         assert child_c == "customer_id"
         assert parent_t == "customers"

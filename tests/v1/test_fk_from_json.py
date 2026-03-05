@@ -17,6 +17,7 @@ from dbldatagen.v1 import generate
 from dbldatagen.v1.schema import DataGenPlan
 from dbldatagen.v1.validation import validate_referential_integrity
 
+
 FIXTURES = Path(__file__).parent / "fixtures"
 
 

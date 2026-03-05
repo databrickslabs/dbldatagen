@@ -14,6 +14,7 @@ import pytest
 from dbldatagen.v1.connectors.sql import extract_from_sql, sql_generate
 from dbldatagen.v1.validation import validate_referential_integrity
 
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -342,7 +343,7 @@ class TestDeterminism:
         sql = """SELECT c.name, o.amount
                  FROM customers c
                  JOIN orders o ON o.customer_id = c.id"""
-        kwargs = dict(row_counts={"customers": 50, "orders": 200}, seed=99)
+        kwargs = {"row_counts": {"customers": 50, "orders": 200}, "seed": 99}
 
         dfs1 = sql_generate(spark, sql, **kwargs)
         dfs2 = sql_generate(spark, sql, **kwargs)

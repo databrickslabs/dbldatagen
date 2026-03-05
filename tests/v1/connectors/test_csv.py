@@ -21,6 +21,7 @@ from dbldatagen.v1.schema import (
     ValuesColumn,
 )
 
+
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 USERS_CSV = FIXTURES / "users.csv"
 ORDERS_CSV = FIXTURES / "orders.csv"

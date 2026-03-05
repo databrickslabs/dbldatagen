@@ -13,11 +13,8 @@ Three Streams per batch:
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass
 
-import numpy as np
-import pandas as pd
 from pyspark.sql import Column, DataFrame, SparkSession
 from pyspark.sql import functions as F
 
@@ -25,7 +22,6 @@ from dbldatagen.v1.cdc_schema import CDCPlan, CDCTableConfig, OperationWeights
 from dbldatagen.v1.engine.cdc_state import resolve_batch_size
 from dbldatagen.v1.engine.cdc_stateless import (
     CDCPeriods,
-    batch_timestamp_str,
     birth_tick_expr,
     compute_periods,
     death_tick_expr,
@@ -37,7 +33,6 @@ from dbldatagen.v1.engine.cdc_stateless import (
     update_due_expr,
     update_indices_at_batch,
 )
-from dbldatagen.v1.engine.fk import build_fk_column
 from dbldatagen.v1.engine.generator import (
     build_all_column_exprs,
     build_all_column_exprs_case_when,
@@ -45,8 +40,8 @@ from dbldatagen.v1.engine.generator import (
     generate_table,
 )
 from dbldatagen.v1.engine.planner import FKResolution, ResolvedPlan, resolve_plan
-from dbldatagen.v1.engine.seed import compute_batch_seed, derive_column_seed, null_mask_expr
-from dbldatagen.v1.engine.utils import union_all
+from dbldatagen.v1.engine.seed import compute_batch_seed
+from dbldatagen.v1.engine.utils import apply_column_phases, create_range_df, get_pk_columns, union_all
 from dbldatagen.v1.schema import ColumnSpec, FakerColumn, SequenceColumn, TableSpec
 
 
@@ -148,7 +143,7 @@ def generate_cdc_batch_for_table(
             resolved,
             periods,
             batch_id,
-            global_seed=global_seed,
+            global_seed,
         )
         inserts = _add_cdc_metadata(inserts, "I", batch_id, batch_ts)
 
@@ -161,9 +156,9 @@ def generate_cdc_batch_for_table(
             resolved,
             periods,
             batch_id,
-            global_seed=global_seed,
-            initial_rows=initial_rows,
-            min_life=effective_config.min_life,
+            global_seed,
+            initial_rows,
+            effective_config.min_life,
         )
         deletes = _add_cdc_metadata(deletes, "D", batch_id, batch_ts)
     else:
@@ -181,9 +176,9 @@ def generate_cdc_batch_for_table(
                 resolved,
                 periods,
                 del_indices,
-                batch_id=batch_id,
-                global_seed=global_seed,
-                initial_rows=initial_rows,
+                batch_id,
+                global_seed,
+                initial_rows,
             )
             deletes = _add_cdc_metadata(deletes, "D", batch_id, batch_ts)
 
@@ -197,9 +192,9 @@ def generate_cdc_batch_for_table(
             resolved,
             periods,
             batch_id,
-            global_seed=global_seed,
-            initial_rows=initial_rows,
-            min_life=effective_config.min_life,
+            global_seed,
+            initial_rows,
+            effective_config.min_life,
             update_window=effective_config.update_window,
         )
         updates_before = _add_cdc_metadata(updates_before, "UB", batch_id, batch_ts)
@@ -210,9 +205,9 @@ def generate_cdc_batch_for_table(
             resolved,
             periods,
             batch_id,
-            global_seed=global_seed,
-            initial_rows=initial_rows,
-            min_life=effective_config.min_life,
+            global_seed,
+            initial_rows,
+            effective_config.min_life,
             update_window=effective_config.update_window,
         )
         updates_after = _add_cdc_metadata(updates_after, "U", batch_id, batch_ts)
@@ -223,7 +218,7 @@ def generate_cdc_batch_for_table(
             periods.inserts_per_batch,
             periods.death_period,
             periods.update_period,
-            min_life=effective_config.min_life,
+            effective_config.min_life,
             update_window=effective_config.update_window,
         )
         if upd_indices:
@@ -233,9 +228,9 @@ def generate_cdc_batch_for_table(
                 resolved,
                 periods,
                 upd_indices,
-                batch_id=batch_id,
-                global_seed=global_seed,
-                initial_rows=initial_rows,
+                batch_id,
+                global_seed,
+                initial_rows,
             )
             updates_before = _add_cdc_metadata(updates_before, "UB", batch_id, batch_ts)
 
@@ -245,9 +240,9 @@ def generate_cdc_batch_for_table(
                 resolved,
                 periods,
                 upd_indices,
-                batch_id=batch_id,
-                global_seed=global_seed,
-                initial_rows=initial_rows,
+                batch_id,
+                global_seed,
+                initial_rows,
             )
             updates_after = _add_cdc_metadata(updates_after, "U", batch_id, batch_ts)
 
@@ -272,7 +267,6 @@ def _generate_insert_stream(
     resolved_plan: ResolvedPlan | None,
     periods: CDCPeriods,
     batch_id: int,
-    *,
     global_seed: int,
 ) -> DataFrame | None:
     """Generate insert rows using spark.range(start_k, end_k).
@@ -280,6 +274,8 @@ def _generate_insert_stream(
     New rows use the batch-specific seed so values differ from initial load.
     PK sequences continue from the correct offset.
     """
+    from dbldatagen.v1.schema import ColumnSpec
+
     initial_rows = int(table_spec.rows)
     start_k, end_k = insert_range(batch_id, initial_rows, periods.inserts_per_batch)
     insert_count = end_k - start_k
@@ -290,9 +286,7 @@ def _generate_insert_stream(
 
     # Build columns -- for PKs we need to continue the sequence
     new_columns = []
-    pk_cols = set()
-    if table_spec.primary_key:
-        pk_cols = set(table_spec.primary_key.columns)
+    pk_cols = get_pk_columns(table_spec)
 
     for col in table_spec.columns:
         if col.name in pk_cols and isinstance(col.gen, SequenceColumn):
@@ -332,7 +326,6 @@ def _generate_pre_image_for_indices(
     resolved_plan: ResolvedPlan | None,
     periods: CDCPeriods,
     row_indices: list[int],
-    *,
     batch_id: int,
     global_seed: int,
     initial_rows: int,
@@ -369,7 +362,6 @@ def _generate_delete_stream(
     resolved_plan: ResolvedPlan | None,
     periods: CDCPeriods,
     del_indices: list[int],
-    *,
     batch_id: int,
     global_seed: int,
     initial_rows: int,
@@ -381,9 +373,9 @@ def _generate_delete_stream(
         resolved_plan,
         periods,
         del_indices,
-        batch_id=batch_id,
-        global_seed=global_seed,
-        initial_rows=initial_rows,
+        batch_id,
+        global_seed,
+        initial_rows,
     )
 
 
@@ -398,7 +390,6 @@ def _generate_update_before_stream(
     resolved_plan: ResolvedPlan | None,
     periods: CDCPeriods,
     upd_indices: list[int],
-    *,
     batch_id: int,
     global_seed: int,
     initial_rows: int,
@@ -410,9 +401,9 @@ def _generate_update_before_stream(
         resolved_plan,
         periods,
         upd_indices,
-        batch_id=batch_id,
-        global_seed=global_seed,
-        initial_rows=initial_rows,
+        batch_id,
+        global_seed,
+        initial_rows,
     )
 
 
@@ -422,7 +413,6 @@ def _generate_update_after_stream(
     resolved_plan: ResolvedPlan | None,
     periods: CDCPeriods,
     upd_indices: list[int],
-    *,
     batch_id: int,
     global_seed: int,
     initial_rows: int,
@@ -469,16 +459,7 @@ def generate_for_indices(
         row_count=row_count,
     )
 
-    df = df.select(id_col, *col_exprs)
-
-    for col_name, col_expr in udf_columns:
-        df = df.withColumn(col_name, col_expr)
-
-    for col_name, col_expr in seeded_columns:
-        df = df.withColumn(col_name, col_expr)
-
-    df = df.drop("_synth_row_id")
-    return df
+    return apply_column_phases(df, id_col, col_exprs, udf_columns, seeded_columns)
 
 
 # ---------------------------------------------------------------------------
@@ -499,6 +480,8 @@ def _precompute_write_batches(batch_id: int, update_period: int | float) -> list
     update_period.  This is at most ``up`` values and avoids a Spark
     ``.collect()`` round-trip.
     """
+    import math
+
     if math.isinf(update_period):
         # No updates — pre-image is always birth_tick.
         # Possible birth_ticks: 0 .. batch_id-1
@@ -515,7 +498,6 @@ def _generate_delete_stream_native(
     resolved_plan: ResolvedPlan | None,
     periods: CDCPeriods,
     batch_id: int,
-    *,
     global_seed: int,
     initial_rows: int,
     min_life: int,
@@ -529,8 +511,7 @@ def _generate_delete_stream_native(
     if upper_k <= 0:
         return None
 
-    df = spark.range(upper_k).withColumnRenamed("id", "_synth_row_id")
-    id_col = F.col("_synth_row_id")
+    df, id_col = create_range_df(spark, upper_k)
 
     # Filter: death_tick(k) == batch_id
     dt_expr = death_tick_expr(
@@ -554,7 +535,7 @@ def _generate_delete_stream_native(
 
     # Build columns with CASE WHEN on _write_batch for seed selection
     wbs = _precompute_write_batches(batch_id, periods.update_period)
-    result = _apply_columns_with_write_batch(
+    df = _apply_columns_with_write_batch(
         df,
         table_spec,
         resolved_plan,
@@ -563,7 +544,7 @@ def _generate_delete_stream_native(
         unique_wbs=wbs,
         row_count=upper_k,
     )
-    return result
+    return df
 
 
 def _generate_update_before_stream_native(
@@ -572,7 +553,6 @@ def _generate_update_before_stream_native(
     resolved_plan: ResolvedPlan | None,
     periods: CDCPeriods,
     batch_id: int,
-    *,
     global_seed: int,
     initial_rows: int,
     min_life: int,
@@ -587,8 +567,7 @@ def _generate_update_before_stream_native(
     if upper_k <= 0:
         return None
 
-    df = spark.range(upper_k).withColumnRenamed("id", "_synth_row_id")
-    id_col = F.col("_synth_row_id")
+    df, id_col = create_range_df(spark, upper_k)
 
     # Filter: update_due(k, batch_id)
     ud_expr = update_due_expr(
@@ -597,8 +576,8 @@ def _generate_update_before_stream_native(
         initial_rows,
         periods.inserts_per_batch,
         periods.death_period,
-        update_period=periods.update_period,
-        min_life=min_life,
+        periods.update_period,
+        min_life,
         update_window=update_window,
     )
     df = df.filter(ud_expr)
@@ -615,7 +594,7 @@ def _generate_update_before_stream_native(
 
     # Build columns with CASE WHEN on _write_batch
     wbs = _precompute_write_batches(batch_id, periods.update_period)
-    result = _apply_columns_with_write_batch(
+    df = _apply_columns_with_write_batch(
         df,
         table_spec,
         resolved_plan,
@@ -624,7 +603,7 @@ def _generate_update_before_stream_native(
         unique_wbs=wbs,
         row_count=upper_k,
     )
-    return result
+    return df
 
 
 def _generate_update_after_stream_native(
@@ -633,7 +612,6 @@ def _generate_update_after_stream_native(
     resolved_plan: ResolvedPlan | None,
     periods: CDCPeriods,
     batch_id: int,
-    *,
     global_seed: int,
     initial_rows: int,
     min_life: int,
@@ -648,8 +626,7 @@ def _generate_update_after_stream_native(
     if upper_k <= 0:
         return None
 
-    df = spark.range(upper_k).withColumnRenamed("id", "_synth_row_id")
-    id_col = F.col("_synth_row_id")
+    df, id_col = create_range_df(spark, upper_k)
 
     # Filter: update_due(k, batch_id)
     ud_expr = update_due_expr(
@@ -658,14 +635,14 @@ def _generate_update_after_stream_native(
         initial_rows,
         periods.inserts_per_batch,
         periods.death_period,
-        update_period=periods.update_period,
-        min_life=min_life,
+        periods.update_period,
+        min_life,
         update_window=update_window,
     )
     df = df.filter(ud_expr)
 
     # After-image: always current batch seed — no CASE WHEN needed
-    result = _apply_columns_with_write_batch(
+    df = _apply_columns_with_write_batch(
         df,
         table_spec,
         resolved_plan,
@@ -674,7 +651,7 @@ def _generate_update_after_stream_native(
         unique_wbs=[batch_id],
         row_count=upper_k,
     )
-    return result
+    return df
 
 
 def _apply_columns_with_write_batch(
@@ -721,7 +698,7 @@ def _apply_columns_with_write_batch(
         wb_col,
         unique_wbs,
         global_seed,
-        fk_resolutions=fk_res,
+        fk_res,
         row_count=row_count,
     )
 
@@ -755,20 +732,23 @@ def generate_fused_deletes(
     resolved_plan: ResolvedPlan | None,
     periods: CDCPeriods,
     batch_ids: list[int],
-    *,
     global_seed: int,
     initial_rows: int,
     min_life: int,
     plan: CDCPlan,
 ) -> DataFrame | None:
     """Delete rows for ALL batches in batch_ids via ONE spark.range scan."""
+    import math
+
+    if _table_has_faker_columns(table_spec):
+        return None
+
     max_batch = max(batch_ids)
     upper_k = max_k_at_batch(max_batch, initial_rows, periods.inserts_per_batch)
     if upper_k <= 0 or math.isinf(periods.death_period):
         return None
 
-    df = spark.range(upper_k).withColumnRenamed("id", "_synth_row_id")
-    id_col = F.col("_synth_row_id")
+    df, id_col = create_range_df(spark, upper_k)
 
     dt = death_tick_expr(
         id_col,
@@ -806,10 +786,10 @@ def generate_fused_deletes(
         resolved_plan,
         global_seed,
         id_col,
-        unique_wbs=sorted(all_wbs),
-        row_count=upper_k,
-        batch_ids=batch_ids,
-        plan=plan,
+        sorted(all_wbs),
+        upper_k,
+        batch_ids,
+        plan,
         op="D",
     )
 
@@ -820,7 +800,6 @@ def generate_fused_updates(
     resolved_plan: ResolvedPlan | None,
     periods: CDCPeriods,
     batch_ids: list[int],
-    *,
     global_seed: int,
     initial_rows: int,
     min_life: int,
@@ -831,6 +810,11 @@ def generate_fused_updates(
 
     Returns ``(before_df, after_df)``.
     """
+    import math
+
+    if _table_has_faker_columns(table_spec):
+        return None, None
+
     max_batch = max(batch_ids)
     min_batch = min(batch_ids)
     upper_k = max_k_at_batch(max_batch, initial_rows, periods.inserts_per_batch)
@@ -842,8 +826,7 @@ def generate_fused_updates(
     if up <= 0:
         return None, None
 
-    df = spark.range(upper_k).withColumnRenamed("id", "_synth_row_id")
-    id_col = F.col("_synth_row_id")
+    df, id_col = create_range_df(spark, upper_k)
 
     # For row k, the update batch b satisfies (b + k) % up == 0.
     # In [min_batch, max_batch]: b = ceil((min_batch + k) / up) * up - k
@@ -898,10 +881,10 @@ def generate_fused_updates(
         resolved_plan,
         global_seed,
         id_col,
-        unique_wbs=sorted(all_wbs),
-        row_count=upper_k,
-        batch_ids=batch_ids,
-        plan=plan,
+        sorted(all_wbs),
+        upper_k,
+        batch_ids,
+        plan,
         op="UB",
     )
 
@@ -916,10 +899,10 @@ def generate_fused_updates(
         resolved_plan,
         global_seed,
         id_col,
-        unique_wbs=sorted(int(b) for b in batch_ids),
-        row_count=upper_k,
-        batch_ids=batch_ids,
-        plan=plan,
+        sorted(int(b) for b in batch_ids),
+        upper_k,
+        batch_ids,
+        plan,
         op="U",
     )
 
@@ -932,7 +915,6 @@ def _build_fused_output(
     resolved_plan: ResolvedPlan | None,
     global_seed: int,
     id_col: Column,
-    *,
     unique_wbs: list[int],
     row_count: int,
     batch_ids: list[int],
@@ -957,7 +939,7 @@ def _build_fused_output(
         wb_col,
         unique_wbs,
         global_seed,
-        fk_resolutions=fk_res,
+        fk_res,
         row_count=row_count,
     )
 
@@ -965,15 +947,33 @@ def _build_fused_output(
     col_exprs.append(F.lit(op).alias("_op"))
     col_exprs.append(bid_col)
 
-    # Timestamp CASE WHEN per batch_id
-    ts_mappings = [(int(b), batch_timestamp(plan, int(b))) for b in batch_ids]
-    ts_expr = F.lit(ts_mappings[-1][1])
-    for i in range(len(ts_mappings) - 2, -1, -1):
-        ts_expr = F.when(
-            bid_col == F.lit(ts_mappings[i][0]),
-            F.lit(ts_mappings[i][1]),
-        ).otherwise(ts_expr)
-    col_exprs.append(ts_expr.cast("timestamp").alias("_ts"))
+    # PERFORMANCE NOTE — dynamic timestamp computation:
+    # Instead of a CASE WHEN with one branch per batch_id (up to 365+),
+    # compute the timestamp arithmetically: base_epoch + batch_id * interval.
+    # This keeps the plan at O(1) nodes instead of O(N_batches).  The CASE
+    # WHEN fallback is only used for single-batch or missing-interval cases.
+    if len(batch_ids) > 1 and plan.batch_interval_seconds:
+        from datetime import datetime
+
+        base_ts = datetime.fromisoformat(
+            plan.start_timestamp.replace("Z", "+00:00"),
+        )
+        base_epoch = int(base_ts.timestamp())
+        interval = plan.batch_interval_seconds
+        ts_expr = (F.lit(base_epoch).cast("long") + bid_col.cast("long") * F.lit(interval).cast("long")).cast(
+            "timestamp"
+        )
+    else:
+        # Fallback for single batch or missing interval
+        ts_mappings = [(int(b), batch_timestamp(plan, int(b))) for b in batch_ids]
+        ts_expr = F.lit(ts_mappings[-1][1])
+        for i in range(len(ts_mappings) - 2, -1, -1):
+            ts_expr = F.when(
+                bid_col == F.lit(ts_mappings[i][0]),
+                F.lit(ts_mappings[i][1]),
+            ).otherwise(ts_expr)
+        ts_expr = ts_expr.cast("timestamp")
+    col_exprs.append(ts_expr.alias("_ts"))
 
     select_list = [id_col]
     if (udf_columns or seeded_columns) and len(unique_wbs) > 1:
@@ -1064,6 +1064,8 @@ def apply_fk_delete_guard(plan: CDCPlan, table_name: str, config: CDCTableConfig
 
 def batch_timestamp(plan: CDCPlan, batch_id: int) -> str:
     """Compute the timestamp string for a given batch."""
+    from dbldatagen.v1.engine.cdc_stateless import batch_timestamp_str
+
     return batch_timestamp_str(plan.start_timestamp, plan.batch_interval_seconds, batch_id)
 
 
@@ -1078,7 +1080,6 @@ def generate_bulk_inserts(
     resolved_plan: ResolvedPlan | None,
     batch_infos: list[tuple[int, int, int]],
     global_seed: int,
-    *,
     plan: CDCPlan,
 ) -> DataFrame | None:
     """Generate inserts for multiple batches in ONE spark.range() call.
@@ -1100,15 +1101,12 @@ def generate_bulk_inserts(
     inserts_per_batch = batch_infos[0][2]
     first_start_index = batch_infos[0][1]
 
-    df = spark.range(total_inserts).withColumnRenamed("id", "_synth_row_id")
-    raw_id = F.col("_synth_row_id")
+    df, raw_id = create_range_df(spark, total_inserts)
 
     local_id = (raw_id % F.lit(inserts_per_batch)).cast("long")
     batch_offset = F.floor(raw_id.cast("double") / F.lit(inserts_per_batch)).cast("int")
 
-    pk_cols = set()
-    if table_spec.primary_key:
-        pk_cols = set(table_spec.primary_key.columns)
+    pk_cols = get_pk_columns(table_spec)
 
     col_exprs: list = []
     udf_columns: list[tuple[str, F.Column]] = []
@@ -1130,8 +1128,8 @@ def generate_bulk_inserts(
                     batch_infos,
                     table_name,
                     col_spec,
-                    global_seed=global_seed,
-                    fk_resolution=resolved_plan.fk_resolutions[fk_key],
+                    global_seed,
+                    resolved_plan.fk_resolutions[fk_key],
                 )
                 udf_columns.append((col_spec.name, combined))
             else:
@@ -1144,7 +1142,7 @@ def generate_bulk_inserts(
             batch_infos,
             table_spec,
             col_spec,
-            global_seed=global_seed,
+            global_seed,
         )
         col_exprs.append(combined.alias(col_spec.name))
 
@@ -1177,22 +1175,22 @@ def _build_case_when_column(
     batch_infos: list[tuple[int, int, int]],
     table_spec: TableSpec,
     col_spec: ColumnSpec,
-    *,
     global_seed: int,
-) -> Column:
+) -> F.Column:
     """Build CASE WHEN over batch_offset to select the correct column expression.
 
     Each batch uses a different seed, so the expression varies per batch.
     The result is: WHEN batch_offset == 0 THEN expr_0 WHEN ... ELSE expr_N.
     """
+    from dbldatagen.v1.engine.seed import derive_column_seed
+    from dbldatagen.v1.engine.utils import apply_null_fraction
+
     batch_exprs = []
     for i, (batch_id, _, insert_count) in enumerate(batch_infos):
         batch_seed = compute_batch_seed(global_seed, batch_id)
         col_seed = derive_column_seed(batch_seed, table_spec.name, col_spec.name)
         expr = build_column_expr(col_spec, local_id, col_seed, insert_count, batch_seed)
-        if col_spec.null_fraction > 0:
-            is_null = null_mask_expr(col_seed, local_id, col_spec.null_fraction)
-            expr = F.when(is_null, F.lit(None)).otherwise(expr)
+        expr = apply_null_fraction(expr, col_seed, local_id, col_spec.null_fraction)
         batch_exprs.append((i, expr))
 
     result = batch_exprs[-1][1]
@@ -1210,15 +1208,17 @@ def _build_case_when_fk(
     batch_infos: list[tuple[int, int, int]],
     table_name: str,
     col_spec: ColumnSpec,
-    *,
     global_seed: int,
     fk_resolution: FKResolution,
-) -> Column:
+) -> F.Column:
     """Build CASE WHEN over batch_offset for FK columns.
 
     Each batch derives a different column seed, producing different FK
     distribution samples. Returns a UDF column (applied via withColumn).
     """
+    from dbldatagen.v1.engine.fk import build_fk_column
+    from dbldatagen.v1.engine.seed import derive_column_seed
+
     batch_exprs = []
     for i, (batch_id, _, _) in enumerate(batch_infos):
         batch_seed = compute_batch_seed(global_seed, batch_id)
@@ -1235,7 +1235,7 @@ def _build_case_when_fk(
     return result
 
 
-def _build_case_when_lit(batch_offset: Column, mappings: list[tuple[int, object]]) -> Column:
+def _build_case_when_lit(batch_offset: Column, mappings: list[tuple[int, object]]) -> F.Column:
     """Build CASE WHEN for simple literal values (batch_id, timestamp)."""
     result = F.lit(mappings[-1][1])
     for idx in range(len(mappings) - 2, -1, -1):
@@ -1257,7 +1257,6 @@ def generate_bulk_changes(
     resolved_plan: ResolvedPlan | None,
     change_infos: list[dict],
     global_seed: int,
-    *,
     plan: CDCPlan,
 ) -> DataFrame | None:
     """Generate update-before, update-after, and delete rows in bulk.
@@ -1276,6 +1275,9 @@ def generate_bulk_changes(
     Returns None if there are no update/delete rows, or if the table has
     Faker columns (caller should fall back to per-batch generation).
     """
+    import numpy as np
+    import pandas as pd
+
     # Check for Faker columns -- can't bulk-fuse
     for col_spec in table_spec.columns:
         if isinstance(col_spec.gen, FakerColumn):

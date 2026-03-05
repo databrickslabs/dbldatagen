@@ -29,18 +29,16 @@ customisation is available via ``CDCPlan``.
 
 from __future__ import annotations
 
-import math
 from collections.abc import Iterator
 from dataclasses import dataclass, field
-from typing import overload
 
-import numpy as np
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
 
 from dbldatagen.v1.cdc_schema import BatchPlan, CDCFormat, CDCPlan
 from dbldatagen.v1.engine.cdc_formats import apply_format
 from dbldatagen.v1.engine.cdc_generator import (
+    _table_has_faker_columns,
     apply_fk_delete_guard,
     batch_timestamp,
     compute_periods_from_config,
@@ -53,13 +51,11 @@ from dbldatagen.v1.engine.cdc_generator import (
 )
 from dbldatagen.v1.engine.cdc_state import resolve_batch_size
 from dbldatagen.v1.engine.cdc_stateless import (
-    birth_tick,
     delete_indices_at_batch_fast,
     insert_range,
     is_alive,
     max_k_at_batch,
     pre_image_batch,
-    update_due,
     update_indices_at_batch,
 )
 from dbldatagen.v1.engine.generator import generate_table
@@ -87,13 +83,7 @@ class _LazyBatchList:
         self._fmt_name = fmt_name
         self._cache: dict[int, dict[str, DataFrame]] = {}
 
-    @overload
-    def __getitem__(self, index: int) -> dict[str, DataFrame]: ...
-
-    @overload
-    def __getitem__(self, index: slice) -> list[dict[str, DataFrame]]: ...
-
-    def __getitem__(self, index: int | slice) -> dict[str, DataFrame] | list[dict[str, DataFrame]]:
+    def __getitem__(self, index: int) -> dict[str, DataFrame]:
         if isinstance(index, slice):
             indices = range(*index.indices(len(self)))
             return [self[i] for i in indices]
@@ -143,13 +133,7 @@ class _LazyChunkList:
         self._chunk_size = chunk_size
         self._cache: dict[int, dict[str, DataFrame]] = {}
 
-    @overload
-    def __getitem__(self, index: int) -> dict[str, DataFrame]: ...
-
-    @overload
-    def __getitem__(self, index: slice) -> list[dict[str, DataFrame]]: ...
-
-    def __getitem__(self, index: int | slice) -> dict[str, DataFrame] | list[dict[str, DataFrame]]:
+    def __getitem__(self, index: int) -> dict[str, DataFrame]:
         if isinstance(index, slice):
             indices = range(*index.indices(len(self)))
             return [self[i] for i in indices]
@@ -166,7 +150,7 @@ class _LazyChunkList:
             yield self[i]
 
     def __len__(self) -> int:
-        return math.ceil(self._plan.num_batches / self._chunk_size)
+        return -(-self._plan.num_batches // self._chunk_size)  # ceil division  # noqa: PLE0303
 
     def _build_chunk(self, chunk_index: int) -> dict[str, DataFrame]:
         """Build one chunk: bulk insert fusion + per-batch updates/deletes."""
@@ -214,7 +198,7 @@ class CDCStream:
     """
 
     initial: dict[str, DataFrame] = field(default_factory=dict)
-    batches: _LazyBatchList | _LazyChunkList | list[dict[str, DataFrame]] = field(default_factory=list)
+    batches: _LazyBatchList | list[dict[str, DataFrame]] = field(default_factory=list)
     plan: CDCPlan | None = None
 
 
@@ -222,7 +206,7 @@ def generate_cdc(
     spark: SparkSession,
     plan_or_base: CDCPlan | DataGenPlan,
     num_batches: int | None = None,
-    fmt: str | CDCFormat | None = None,
+    format: str | CDCFormat | None = None,
 ) -> CDCStream:
     """Generate a complete CDC stream.
 
@@ -237,7 +221,7 @@ def generate_cdc(
         Number of change batches.  Overrides ``plan.num_batches`` if
         the first argument is a ``CDCPlan``.  Required if passing a
         ``DataGenPlan``.
-    fmt :
+    format :
         Output format.  One of 'raw', 'delta_cdf', 'sql_server',
         'debezium'.  Defaults to 'raw'.
 
@@ -245,7 +229,7 @@ def generate_cdc(
     -------
     CDCStream with initial snapshot and lazy per-batch access.
     """
-    plan = _normalize_plan(plan_or_base, num_batches, fmt)
+    plan = _normalize_plan(plan_or_base, num_batches, format)
 
     fmt_name = plan.format.value
 
@@ -260,7 +244,7 @@ def generate_cdc_bulk(
     spark: SparkSession,
     plan_or_base: CDCPlan | DataGenPlan,
     num_batches: int | None = None,
-    fmt: str | CDCFormat | None = None,
+    format: str | CDCFormat | None = None,
     chunk_size: int | None = None,
 ) -> CDCStream:
     """Generate a CDC stream optimised for large-scale cluster execution.
@@ -289,7 +273,7 @@ def generate_cdc_bulk(
         Either a ``CDCPlan`` or a ``DataGenPlan``.
     num_batches :
         Override for ``plan.num_batches``.
-    fmt :
+    format :
         Output format override.
     chunk_size :
         Number of logical batches per chunk.  Auto-calculated if None
@@ -299,7 +283,7 @@ def generate_cdc_bulk(
     -------
     CDCStream with initial snapshot and chunked batch access.
     """
-    plan = _normalize_plan(plan_or_base, num_batches, fmt)
+    plan = _normalize_plan(plan_or_base, num_batches, format)
 
     fmt_name = plan.format.value
 
@@ -317,7 +301,7 @@ def generate_cdc_batch(
     spark: SparkSession,
     plan_or_base: CDCPlan | DataGenPlan,
     batch_id: int,
-    fmt: str | CDCFormat | None = None,
+    format: str | CDCFormat | None = None,
 ) -> dict[str, DataFrame]:
     """Generate a single CDC batch independently.
 
@@ -329,9 +313,9 @@ def generate_cdc_batch(
     else:
         plan = plan_or_base
 
-    if fmt is not None:
-        resolved_fmt = CDCFormat(fmt) if isinstance(fmt, str) else fmt
-        plan = plan.model_copy(update={"format": resolved_fmt})
+    if format is not None:
+        fmt = CDCFormat(format) if isinstance(format, str) else format
+        plan = plan.model_copy(update={"format": fmt})
 
     fmt_name = plan.format.value
     return _generate_batch(spark, plan, batch_id, fmt_name)
@@ -354,7 +338,6 @@ def generate_expected_state(
     driver-side state needed.
     """
     if isinstance(plan_or_stream, CDCStream):
-        assert plan_or_stream.plan is not None, "CDCStream.plan must be set"
         plan = plan_or_stream.plan
     elif isinstance(plan_or_stream, DataGenPlan):
         plan = CDCPlan(base_plan=plan_or_stream)
@@ -385,13 +368,17 @@ def generate_expected_state(
             initial_rows,
             periods.inserts_per_batch,
             periods.death_period,
-            min_life=config.min_life,
+            config.min_life,
         )
     ]
 
     if len(live_indices) == 0:
         full = generate_table(spark, table_spec, resolved)
         return full.limit(0)
+
+    import math
+
+    from dbldatagen.v1.engine.cdc_stateless import birth_tick, update_due
 
     batch_groups: dict[int, list[int]] = {}
     for k in live_indices:
@@ -401,8 +388,8 @@ def generate_expected_state(
             initial_rows,
             periods.inserts_per_batch,
             periods.death_period,
-            update_period=periods.update_period,
-            min_life=config.min_life,
+            periods.update_period,
+            config.min_life,
             update_window=config.update_window,
         ):
             batch_groups.setdefault(batch_id, []).append(k)
@@ -461,23 +448,23 @@ def _generate_batch(
 def _normalize_plan(
     plan_or_base: CDCPlan | DataGenPlan,
     num_batches: int | None,
-    fmt: str | CDCFormat | None,
+    format: str | CDCFormat | None,
 ) -> CDCPlan:
     """Normalise input to a CDCPlan, applying overrides."""
     if isinstance(plan_or_base, DataGenPlan):
         kwargs: dict = {"base_plan": plan_or_base}
         if num_batches is not None:
             kwargs["num_batches"] = num_batches
-        if fmt is not None:
-            kwargs["format"] = CDCFormat(fmt) if isinstance(fmt, str) else fmt
+        if format is not None:
+            kwargs["format"] = CDCFormat(format) if isinstance(format, str) else format
         return CDCPlan(**kwargs)
     else:
         plan = plan_or_base
         if num_batches is not None:
             plan = plan.model_copy(update={"num_batches": num_batches})
-        if fmt is not None:
-            resolved_fmt = CDCFormat(fmt) if isinstance(fmt, str) else fmt
-            plan = plan.model_copy(update={"format": resolved_fmt})
+        if format is not None:
+            fmt = CDCFormat(format) if isinstance(format, str) else format
+            plan = plan.model_copy(update={"format": fmt})
         return plan
 
 
@@ -518,6 +505,11 @@ def _generate_chunk_for_table(
 
     table_map = {t.name: t for t in plan.base_plan.tables}
     table_spec = table_map[table_name]
+
+    # Faker columns require per-batch generation (Python UDF pools vary per batch)
+    if _table_has_faker_columns(table_spec):
+        return _generate_chunk_per_batch(spark, plan, table_name, batch_ids, fmt_name)
+
     config = plan.config_for(table_name)
     global_seed = plan.base_plan.seed
     initial_rows = int(table_spec.rows)
@@ -545,17 +537,7 @@ def _generate_chunk_for_table(
             resolved,
             insert_infos,
             global_seed,
-            plan=plan,
-        )
-
-    if insert_df is None and insert_infos:
-        # Faker fallback: per-batch approach for entire chunk
-        return _generate_chunk_per_batch(
-            spark,
             plan,
-            table_name,
-            batch_ids,
-            fmt_name,
         )
 
     parts: list[DataFrame] = []
@@ -569,10 +551,10 @@ def _generate_chunk_for_table(
         resolved,
         periods,
         batch_ids,
-        global_seed=global_seed,
-        initial_rows=initial_rows,
-        min_life=effective_config.min_life,
-        plan=plan,
+        global_seed,
+        initial_rows,
+        effective_config.min_life,
+        plan,
     )
     if del_df is not None:
         parts.append(apply_format(del_df, fmt_name))
@@ -584,10 +566,10 @@ def _generate_chunk_for_table(
         resolved,
         periods,
         batch_ids,
-        global_seed=global_seed,
-        initial_rows=initial_rows,
-        min_life=effective_config.min_life,
-        plan=plan,
+        global_seed,
+        initial_rows,
+        effective_config.min_life,
+        plan,
         update_window=effective_config.update_window,
     )
     if ub_df is not None:
@@ -650,7 +632,7 @@ def _generate_single_batch_for_table(
 def precompute_cdc_plans(
     plan_or_base: CDCPlan | DataGenPlan,
     num_batches: int | None = None,
-    fmt: str | CDCFormat | None = None,
+    format: str | CDCFormat | None = None,
 ) -> dict[str, list[BatchPlan]]:
     """Pre-compute all batch plans for a CDC stream (pure Python, no Spark).
 
@@ -663,15 +645,18 @@ def precompute_cdc_plans(
         A ``CDCPlan`` or ``DataGenPlan``.
     num_batches :
         Override for ``plan.num_batches``.
-    fmt :
+    format :
         Output format override (only affects timestamp computation).
 
     Returns
     -------
     dict mapping table_name -> list of BatchPlan (one per batch).
     """
-    plan = _normalize_plan(plan_or_base, num_batches, fmt)
+    import numpy as np
+
+    plan = _normalize_plan(plan_or_base, num_batches, format)
     table_map = {t.name: t for t in plan.base_plan.tables}
+
     all_plans: dict[str, list[BatchPlan]] = {}
 
     for table_name in plan.cdc_tables:
@@ -698,7 +683,7 @@ def precompute_cdc_plans(
                 periods.inserts_per_batch,
                 periods.death_period,
                 periods.update_period,
-                min_life=config.min_life,
+                config.min_life,
                 update_window=config.update_window,
             )
             del_indices = delete_indices_at_batch_fast(
@@ -758,7 +743,7 @@ def write_cdc_to_delta(
     catalog: str,
     schema: str,
     num_batches: int | None = None,
-    fmt: str | CDCFormat | None = None,
+    format: str | CDCFormat | None = None,
     chunk_size: int | None = None,
 ) -> dict[str, str]:
     """Generate a CDC stream and write it to Delta tables in one call.
@@ -782,7 +767,7 @@ def write_cdc_to_delta(
         Unity Catalog schema name.
     num_batches :
         Override for ``plan.num_batches``.
-    fmt :
+    format :
         Output format override.
     chunk_size :
         Batches per Delta version.  Default ``None`` = auto-calculate
@@ -793,7 +778,7 @@ def write_cdc_to_delta(
     -------
     dict mapping table_name -> fully qualified UC table path.
     """
-    plan = _normalize_plan(plan_or_base, num_batches, fmt)
+    plan = _normalize_plan(plan_or_base, num_batches, format)
     stream = generate_cdc_bulk(spark, plan, chunk_size=chunk_size)
 
     uc_tables: dict[str, str] = {}

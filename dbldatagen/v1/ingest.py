@@ -32,7 +32,6 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from dataclasses import dataclass, field
-from typing import overload
 
 from pyspark.sql import DataFrame, SparkSession
 
@@ -72,13 +71,7 @@ class _LazyIngestBatchList:
         self._plan = plan
         self._cache: dict[int, dict[str, DataFrame]] = {}
 
-    @overload
-    def __getitem__(self, index: int) -> dict[str, DataFrame]: ...
-
-    @overload
-    def __getitem__(self, index: slice) -> list[dict[str, DataFrame]]: ...
-
-    def __getitem__(self, index: int | slice) -> dict[str, DataFrame] | list[dict[str, DataFrame]]:
+    def __getitem__(self, index: int) -> dict[str, DataFrame]:
         if isinstance(index, slice):
             indices = range(*index.indices(len(self)))
             return [self[i] for i in indices]
@@ -286,7 +279,9 @@ def write_ingest_to_delta(
 
     # Batches
     n = len(stream.batches)
+    total_chunks = -(-n // chunk_size)
     for i in range(0, n, chunk_size):
+        chunk_idx = i // chunk_size + 1
         batch_dfs: dict[str, list[DataFrame]] = {t: [] for t in plan.ingest_tables}
         for j in range(i, min(i + chunk_size, n)):
             batch = stream.batches[j]
@@ -299,8 +294,6 @@ def write_ingest_to_delta(
             if parts:
                 (union_all(parts).write.format("delta").mode("append").saveAsTable(uc_tables[table_name]))
 
-        chunk_idx = i // chunk_size + 1
-        total_chunks = -(-n // chunk_size)
         print(f"  chunk {chunk_idx}/{total_chunks} written")
 
     print(f"Done! {n + 1} Delta versions per table.")
@@ -358,7 +351,7 @@ def _normalize_plan(
         return IngestPlan(**kwargs)
     else:
         plan = plan_or_base
-        updates: dict[str, object] = {}
+        updates = {}
         if num_batches is not None:
             updates["num_batches"] = num_batches
         if mode is not None:

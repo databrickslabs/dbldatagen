@@ -53,6 +53,7 @@ from dbldatagen.v1.schema import (
     ValuesColumn,
 )
 
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -152,7 +153,7 @@ def _run_legacy_batch(
             resolved,
             periods,
             batch_id,
-            global_seed=global_seed,
+            global_seed,
         )
         inserts = (
             inserts.withColumn("_op", F.lit("I"))
@@ -176,9 +177,9 @@ def _run_legacy_batch(
             resolved,
             periods,
             del_indices,
-            batch_id=batch_id,
-            global_seed=global_seed,
-            initial_rows=initial_rows,
+            batch_id,
+            global_seed,
+            initial_rows,
         )
         deletes = (
             deletes.withColumn("_op", F.lit("D"))
@@ -195,7 +196,7 @@ def _run_legacy_batch(
         periods.inserts_per_batch,
         periods.death_period,
         periods.update_period,
-        min_life=config.min_life,
+        config.min_life,
     )
     if upd_indices:
         updates_before = _generate_update_before_stream(
@@ -204,9 +205,9 @@ def _run_legacy_batch(
             resolved,
             periods,
             upd_indices,
-            batch_id=batch_id,
-            global_seed=global_seed,
-            initial_rows=initial_rows,
+            batch_id,
+            global_seed,
+            initial_rows,
         )
         updates_before = (
             updates_before.withColumn("_op", F.lit("UB"))
@@ -219,9 +220,9 @@ def _run_legacy_batch(
             resolved,
             periods,
             upd_indices,
-            batch_id=batch_id,
-            global_seed=global_seed,
-            initial_rows=initial_rows,
+            batch_id,
+            global_seed,
+            initial_rows,
         )
         updates_after = (
             updates_after.withColumn("_op", F.lit("U"))
@@ -267,7 +268,7 @@ def _run_native_batch(
             resolved,
             periods,
             batch_id,
-            global_seed=global_seed,
+            global_seed,
         )
         inserts = (
             inserts.withColumn("_op", F.lit("I"))
@@ -282,9 +283,9 @@ def _run_native_batch(
         resolved,
         periods,
         batch_id,
-        global_seed=global_seed,
-        initial_rows=initial_rows,
-        min_life=config.min_life,
+        global_seed,
+        initial_rows,
+        config.min_life,
     )
     if deletes is not None:
         deletes = (
@@ -300,9 +301,9 @@ def _run_native_batch(
         resolved,
         periods,
         batch_id,
-        global_seed=global_seed,
-        initial_rows=initial_rows,
-        min_life=config.min_life,
+        global_seed,
+        initial_rows,
+        config.min_life,
     )
     if updates_before is not None:
         updates_before = (
@@ -317,9 +318,9 @@ def _run_native_batch(
         resolved,
         periods,
         batch_id,
-        global_seed=global_seed,
-        initial_rows=initial_rows,
-        min_life=config.min_life,
+        global_seed,
+        initial_rows,
+        config.min_life,
     )
     if updates_after is not None:
         updates_after = (

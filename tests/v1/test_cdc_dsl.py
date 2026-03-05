@@ -106,7 +106,7 @@ class TestCDCPlanDSL:
         assert "users" in p.cdc_tables
 
     def test_with_format(self):
-        p = cdc_plan(_base(), fmt="delta_cdf")
+        p = cdc_plan(_base(), format="delta_cdf")
         assert p.format == CDCFormat.DELTA_CDF
 
     def test_with_table_config(self):

@@ -47,7 +47,7 @@ def _nested_plan(rows=100, seed=42):
                         [
                             text("city", ["Austin", "NYC", "LA", "Chicago"]),
                             text("state", ["TX", "NY", "CA", "IL"]),
-                            integer("zip", min_val=10000, max_val=99999),
+                            integer("zip", min=10000, max=99999),
                         ],
                     ),
                     array(
@@ -56,7 +56,7 @@ def _nested_plan(rows=100, seed=42):
                         min_length=1,
                         max_length=4,
                     ),
-                    integer("price", min_val=1, max_val=500),
+                    integer("price", min=1, max=500),
                 ],
             ),
         ],
@@ -161,7 +161,7 @@ class TestNestedStruct:
                                         gen=StructColumn(
                                             fields=[
                                                 text("city", ["Austin", "NYC"]),
-                                                integer("zip", min_val=10000, max_val=99999),
+                                                integer("zip", min=10000, max=99999),
                                             ]
                                         ),
                                     ),
@@ -304,7 +304,7 @@ class TestSchemaSerialize:
         plan = _nested_plan(rows=10)
         data = plan.model_dump(mode="json")
         plan2 = DataGenPlan.model_validate(data)
-        struct_col = [c for c in plan2.tables[0].columns if c.name == "address"][0]
+        struct_col = next(c for c in plan2.tables[0].columns if c.name == "address")
         assert isinstance(struct_col.gen, StructColumn)
         assert len(struct_col.gen.fields) == 3
 
@@ -312,7 +312,7 @@ class TestSchemaSerialize:
         plan = _nested_plan(rows=10)
         data = plan.model_dump(mode="json")
         plan2 = DataGenPlan.model_validate(data)
-        arr_col = [c for c in plan2.tables[0].columns if c.name == "tags"][0]
+        arr_col = next(c for c in plan2.tables[0].columns if c.name == "tags")
         assert isinstance(arr_col.gen, ArrayColumn)
         assert arr_col.gen.min_length == 1
         assert arr_col.gen.max_length == 4

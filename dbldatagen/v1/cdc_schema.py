@@ -4,10 +4,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import TYPE_CHECKING
 
-import numpy as np
 from pydantic import BaseModel, model_validator
-from typing_extensions import Self
+
+
+if TYPE_CHECKING:
+    import numpy as np
 
 from dbldatagen.v1.schema import DataGenPlan, parse_human_count
 
@@ -32,15 +35,13 @@ class OperationWeights(BaseModel):
     delete: float = 2.0
 
     @model_validator(mode="after")
-    def validate_positive(self) -> Self:
-        """Ensure at least one operation weight is positive."""
+    def validate_positive(self) -> OperationWeights:
         if self.insert + self.update + self.delete <= 0:
             raise ValueError("At least one operation weight must be positive")
         return self
 
     @property
     def fractions(self) -> tuple[float, float, float]:
-        """Return normalised (insert, update, delete) fractions."""
         total = self.insert + self.update + self.delete
         return self.insert / total, self.update / total, self.delete / total
 
@@ -66,8 +67,7 @@ class CDCTableConfig(BaseModel):
     update_window: int | None = None
 
     @model_validator(mode="after")
-    def resolve_batch_size(self) -> Self:
-        """Resolve string batch_size values and validate float range."""
+    def resolve_batch_size(self) -> CDCTableConfig:
         if isinstance(self.batch_size, str):
             self.batch_size = parse_human_count(self.batch_size)
         if isinstance(self.batch_size, float) and self.batch_size > 1.0:
@@ -95,8 +95,7 @@ class CDCPlan(BaseModel):
     cdc_tables: list[str] = []
 
     @model_validator(mode="after")
-    def validate_table_refs(self) -> Self:
-        """Validate that all table references exist in the base plan."""
+    def validate_table_refs(self) -> CDCPlan:
         valid = {t.name for t in self.base_plan.tables}
         for name in self.table_configs:
             if name not in valid:
@@ -107,8 +106,7 @@ class CDCPlan(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def populate_cdc_tables(self) -> Self:
-        """Default cdc_tables to all tables in the base plan."""
+    def populate_cdc_tables(self) -> CDCPlan:
         if not self.cdc_tables:
             self.cdc_tables = [t.name for t in self.base_plan.tables]
         return self
@@ -119,6 +117,8 @@ class CDCPlan(BaseModel):
 
 
 def _empty_int64_array() -> np.ndarray:
+    import numpy as np
+
     return np.array([], dtype=np.int64)
 
 

@@ -127,7 +127,7 @@ class TestStatelessIncrementalBasic:
             1,
         )
         df = result["transactions"]
-        actions = set(r._action for r in df.select("_action").collect())
+        actions = {r._action for r in df.select("_action").collect()}
         assert actions.issubset({"I", "U", "D"})
 
     def test_insert_count(self, spark):
@@ -265,7 +265,7 @@ class TestStatelessNoPKOverlap:
                 batch_id,
             )
             df = result["transactions"]
-            insert_pks = set(r.txn_id for r in df.filter(df._action == "I").select("txn_id").collect())
+            insert_pks = {r.txn_id for r in df.filter(df._action == "I").select("txn_id").collect()}
             overlap = all_insert_pks & insert_pks
             assert not overlap, f"Batch {batch_id} has PK overlap: {overlap}"
             all_insert_pks |= insert_pks

@@ -21,18 +21,18 @@ from dbldatagen.v1.schema import (
 
 def _col(**overrides) -> InferredColumn:
     """Shorthand for building an InferredColumn with defaults."""
-    defaults = dict(
-        name="col",
-        native_type="TEXT",
-        synth_dtype=DataType.STRING,
-        nullable=False,
-        is_primary_key=False,
-        is_foreign_key=False,
-        fk_references=None,
-        unique=False,
-        sample_values=[],
-        distinct_count=None,
-    )
+    defaults = {
+        "name": "col",
+        "native_type": "TEXT",
+        "synth_dtype": DataType.STRING,
+        "nullable": False,
+        "is_primary_key": False,
+        "is_foreign_key": False,
+        "fk_references": None,
+        "unique": False,
+        "sample_values": [],
+        "distinct_count": None,
+    }
     defaults.update(overrides)
     return InferredColumn(**defaults)
 

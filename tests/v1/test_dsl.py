@@ -29,6 +29,7 @@ from dbldatagen.v1.schema import (
     Zipf,
 )
 
+
 # ---------------------------------------------------------------------------
 # Primary key helpers
 # ---------------------------------------------------------------------------
@@ -150,7 +151,7 @@ class TestInteger:
         assert col.dtype == DataType.INT
 
     def test_strategy_is_range(self):
-        col = integer("age", min_val=18, max_val=90)
+        col = integer("age", min=18, max=90)
         assert isinstance(col.gen, RangeColumn)
         assert col.gen.min == 18
         assert col.gen.max == 90
@@ -171,7 +172,7 @@ class TestDecimal:
         assert col.dtype == DataType.DOUBLE
 
     def test_strategy_is_range(self):
-        col = decimal("price", min_val=1.99, max_val=999.99)
+        col = decimal("price", min=1.99, max=999.99)
         assert isinstance(col.gen, RangeColumn)
         assert col.gen.min == 1.99
         assert col.gen.max == 999.99

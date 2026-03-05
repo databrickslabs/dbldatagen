@@ -4,6 +4,7 @@ import pytest
 
 from dbldatagen.v1.connectors.sql.parser import SQLParseError, parse_sql
 
+
 # ---------------------------------------------------------------------------
 # Simple table extraction
 # ---------------------------------------------------------------------------

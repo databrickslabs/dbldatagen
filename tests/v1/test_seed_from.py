@@ -57,7 +57,7 @@ def _make_plan_with_seed_from():
                         values=["Apple", "Samsung", "Google"],
                         seed_from="device_id",
                     ),
-                    integer("value", min_val=1, max_val=1000),  # no seed_from — varies per row
+                    integer("value", min=1, max=1000),  # no seed_from — varies per row
                 ],
                 primary_key=PrimaryKey(columns=["id"]),
             ),
@@ -246,7 +246,7 @@ def test_seed_from_nonexistent_column_raises(spark):
             ),
         ],
     )
-    with pytest.raises(Exception):
+    with pytest.raises(Exception):  # noqa: B017
         # Spark will raise AnalysisException when the column doesn't exist
         results = generate(spark, plan)
         results["t"].collect()
@@ -309,10 +309,10 @@ def test_dsl_seed_from_passthrough(spark):
                 rows=50,
                 columns=[
                     pk_auto("id"),
-                    integer("group_id", min_val=1, max_val=5),
+                    integer("group_id", min=1, max=5),
                     text("label", values=["A", "B", "C"], seed_from="group_id"),
-                    integer("score", min_val=0, max_val=100, seed_from="group_id"),
-                    decimal("amount", min_val=0.0, max_val=100.0, seed_from="group_id"),
+                    integer("score", min=0, max=100, seed_from="group_id"),
+                    decimal("amount", min=0.0, max=100.0, seed_from="group_id"),
                     timestamp("ts", seed_from="group_id"),
                 ],
                 primary_key=PrimaryKey(columns=["id"]),

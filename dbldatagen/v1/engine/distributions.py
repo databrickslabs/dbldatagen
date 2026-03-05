@@ -16,6 +16,7 @@ from dbldatagen.v1.schema import (
     LogNormal,
     Normal,
     Uniform,
+    WeightedValues,
     Zipf,
 )
 
@@ -134,7 +135,7 @@ def exponential_sample_expr(
         return F.lit(0)
     u = (F.abs(cell_seed_col) % F.lit(1000000)).cast("double") / F.lit(1000000.0)
     u = F.least(u, F.lit(0.999999))  # avoid log(0)
-    x = -F.log(F.lit(1.0) - u) / F.lit(rate)  # pylint: disable=invalid-unary-operand-type
+    x = -F.log(F.lit(1.0) - u) / F.lit(rate)
     # Normalise to [0, n): map [0, inf) to [0, n) via modulo
     idx = F.floor(x * F.lit(float(n) / 5.0)).cast("long")  # /5 to spread nicely
     return F.abs(idx) % F.lit(n)
@@ -145,7 +146,7 @@ def exponential_sample_expr(
 # ---------------------------------------------------------------------------
 
 
-def apply_distribution(
+def apply_distribution(  # noqa: PLR0911
     cell_seed_col: Column,
     n: int,
     distribution: Distribution | None,
@@ -168,7 +169,10 @@ def apply_distribution(
     if isinstance(distribution, LogNormal):
         # Use exponential as a stand-in; lognormal is similar in shape
         return exponential_sample_expr(cell_seed_col, n, distribution.stddev or 1.0)
-    # WeightedValues is handled at a higher level (needs value list); fallback to uniform
+    if isinstance(distribution, WeightedValues):
+        # WeightedValues is handled at a higher level (needs value list)
+        return uniform_sample(cell_seed_col, n)
+    # Fallback
     return uniform_sample(cell_seed_col, n)
 
 

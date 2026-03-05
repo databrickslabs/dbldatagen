@@ -7,19 +7,11 @@ Strategy:
 For Spark Connect compatibility: pool is passed via closure (not sc.broadcast).
 """
 
-from __future__ import annotations
-
 import numpy as np
 import pandas as pd
 from pyspark.sql import Column
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
-
-
-try:
-    from faker import Faker
-except ImportError:
-    Faker = None  # type: ignore[assignment,misc]
 
 
 def build_faker_column(
@@ -28,7 +20,6 @@ def build_faker_column(
     provider: str,
     kwargs: dict | None = None,
     locale: str | None = None,
-    *,
     pool_size: int = 10_000,
 ) -> Column:
     """Generate realistic text using a pre-computed Faker pool.
@@ -38,11 +29,13 @@ def build_faker_column(
 
     Raises ImportError if faker is not installed.
     """
-    if Faker is None:
+    try:
+        from faker import Faker
+    except ImportError:
         raise ImportError(
             "The 'faker' package is required for FakerColumn generation. "
             "Install it with: pip install dbldatagen[v1-faker]"
-        )
+        ) from None
 
     if kwargs is None:
         kwargs = {}
@@ -75,5 +68,4 @@ def build_faker_column(
         indices = np.abs(x) % _pool_size
         return pd.Series(pool_array[indices.astype(np.intp)])
 
-    result: Column = _faker_pool_udf(id_col)
-    return result
+    return _faker_pool_udf(id_col)

@@ -63,7 +63,7 @@ _PLACEHOLDER_RE = re.compile(r"\{(seq|uuid|digit|alpha|hex):?(\d+)?[a-z]?\}")
 
 def build_pattern_column(
     id_col: Column | str,
-    column_seed: int,
+    column_seed: int | Column,
     template: str,
 ) -> Column:
     """Generate strings from a template like ``'ORD-{digit:4}-{alpha:3}'``.
@@ -110,28 +110,47 @@ def build_pattern_column(
     return F.concat(*parts)
 
 
-def _random_digits(id_col: Column, column_seed: int, idx: int, width: int) -> Column:
+def _seed_xor(column_seed: int | Column, constant: int) -> int | Column:
+    """XOR a column seed (int or Column) with a constant.
+
+    PERFORMANCE NOTE: The ``int | Column`` path is required for fused
+    multi-batch CDC where column_seed is a Column from map-based lookup
+    (see ``column_seed_map`` in seed.py).  Do not simplify to int-only.
+    """
+    if isinstance(column_seed, Column):
+        return column_seed.bitwiseXOR(F.lit(constant).cast("long"))
+    return column_seed ^ constant
+
+
+def _random_digits(
+    id_col: Column,
+    column_seed: int | Column,
+    idx: int,
+    width: int,
+) -> Column:
     """Generate *width* random digits from the cell seed."""
-    seed = cell_seed_expr(column_seed ^ ((idx + 1) * 0x9E3779B9), id_col)
+    seed = cell_seed_expr(_seed_xor(column_seed, (idx + 1) * 0x9E3779B9), id_col)
     # Take abs, convert to string, pad/truncate to width
     raw = F.abs(seed).cast("string")
     return F.rpad(F.substring(raw, 1, width), width, "0")
 
 
-def _random_alpha(id_col: Column, column_seed: int, idx: int, width: int) -> Column:
+def _random_alpha(
+    id_col: Column,
+    column_seed: int | Column,
+    idx: int,
+    width: int,
+) -> Column:
     """Generate *width* random uppercase letters.
 
     Each character is derived from a separate hash to ensure independence.
     """
+    mixed_seed = _seed_xor(column_seed, (idx + 1) * 0x9E3779B9)
+    seed_col = mixed_seed if isinstance(mixed_seed, Column) else F.lit(mixed_seed).cast("long")
     chars: list[Column] = []
     for i in range(width):
-        h = F.xxhash64(
-            F.lit(column_seed ^ ((idx + 1) * 0x9E3779B9)).cast("long"),
-            id_col,
-            F.lit(i).cast("long"),
-        )
-        # Map to A-Z (26 chars) — use substring from literal alphabet for
-        # compatibility with PySpark < 4.0 (which lacks F.chr).
+        h = F.xxhash64(seed_col, id_col, F.lit(i).cast("long"))
+        # Map to A-Z (26 chars)
         char_idx = (F.abs(h) % F.lit(26)).cast("int")
         chars.append(F.substring(F.lit("ABCDEFGHIJKLMNOPQRSTUVWXYZ"), char_idx + F.lit(1), 1))
     if len(chars) == 1:
@@ -139,9 +158,14 @@ def _random_alpha(id_col: Column, column_seed: int, idx: int, width: int) -> Col
     return F.concat(*chars)
 
 
-def _random_hex(id_col: Column, column_seed: int, idx: int, width: int) -> Column:
+def _random_hex(
+    id_col: Column,
+    column_seed: int | Column,
+    idx: int,
+    width: int,
+) -> Column:
     """Generate *width* random hexadecimal characters."""
-    seed = cell_seed_expr(column_seed ^ ((idx + 1) * 0x9E3779B9), id_col)
+    seed = cell_seed_expr(_seed_xor(column_seed, (idx + 1) * 0x9E3779B9), id_col)
     raw = F.hex(F.abs(seed))
     return F.lower(F.rpad(F.substring(raw, 1, width), width, "0"))
 
@@ -151,7 +175,7 @@ def _random_hex(id_col: Column, column_seed: int, idx: int, width: int) -> Colum
 # ---------------------------------------------------------------------------
 
 
-def build_constant_column(value: str | int | float | bool | None) -> Column:
+def build_constant_column(value: object) -> Column:
     """Return a literal Spark column with a fixed value for every row."""
     return F.lit(value)
 

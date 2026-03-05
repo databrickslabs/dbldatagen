@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import re
-import warnings
 from collections import deque
 from dataclasses import dataclass
 
@@ -67,6 +65,9 @@ def resolve_plan(plan: DataGenPlan) -> ResolvedPlan:
     table_map: dict[str, TableSpec] = {t.name: t for t in plan.tables}
     all_table_names = list(table_map.keys())
 
+    # Pre-build column lookup dicts for O(1) access (avoids O(N) scan per FK)
+    table_col_maps: dict[str, dict[str, object]] = {t.name: {c.name: c for c in t.columns} for t in plan.tables}
+
     # Collect all FK references and validate them
     fk_resolutions: dict[tuple[str, str], FKResolution] = {}
 
@@ -93,12 +94,8 @@ def resolve_plan(plan: DataGenPlan) -> ResolvedPlan:
 
             parent_table = table_map[parent_table_name]
 
-            # Validate parent column exists
-            parent_col = None
-            for pc in parent_table.columns:
-                if pc.name == parent_col_name:
-                    parent_col = pc
-                    break
+            # Validate parent column exists (O(1) lookup via pre-built dict)
+            parent_col = table_col_maps[parent_table_name].get(parent_col_name)
             if parent_col is None:
                 raise ValueError(
                     f"FK reference '{ref}' in {table_spec.name}.{col_spec.name}: "
@@ -252,6 +249,9 @@ def _extract_pk_metadata(table_spec: TableSpec, pk_col_spec: ColumnSpec, plan_se
 
 def _validate_expression_columns(plan: DataGenPlan) -> None:
     """Warn if ExpressionColumn references look like undefined column names."""
+    import re
+    import warnings
+
     for table_spec in plan.tables:
         col_names = {c.name for c in table_spec.columns}
         for col_spec in table_spec.columns:

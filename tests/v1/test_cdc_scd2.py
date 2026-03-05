@@ -94,7 +94,7 @@ class TestSCD2DimensionTracking:
         expected_live = sum(
             1
             for k in range(upper_k)
-            if is_alive(k, batch_id, initial_rows, periods.inserts_per_batch, periods.death_period, min_life=config.min_life)
+            if is_alive(k, batch_id, initial_rows, periods.inserts_per_batch, periods.death_period, config.min_life)
         )
 
         df_state = generate_expected_state(spark, plan, "dim_product", batch_id=batch_id)

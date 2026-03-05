@@ -18,7 +18,7 @@ from dbldatagen.v1.engine.seed import cell_seed_expr, null_mask_expr
 
 def build_fk_column(
     id_col: Column,
-    column_seed: int,
+    column_seed: int | Column,
     fk_resolution: FKResolution,
 ) -> Column:
     """Generate FK values that are guaranteed to be valid parent PKs.
@@ -63,7 +63,6 @@ def _reconstruct_parent_pk(parent_index_col: Column, meta: PKMetadata) -> Column
     if meta.pk_type == "pattern":
         # Pattern PKs use build_pattern_column with the parent's column seed
         # parent_index_col acts as the "id" the parent would have used
-        assert meta.pk_template is not None, "pk_template required for pattern PKs"
         return build_pattern_column(parent_index_col, meta.pk_seed, meta.pk_template)
 
     if meta.pk_type == "uuid":

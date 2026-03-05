@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from pyspark.sql import DataFrame
+from pyspark.sql import Column, DataFrame, SparkSession
+from pyspark.sql import functions as F
+
+from dbldatagen.v1.schema import TableSpec
 
 
 def split_with_remainder(
@@ -62,3 +65,67 @@ def union_all(
     for df in dfs[1:]:
         result = result.unionByName(df, allowMissingColumns=allow_missing_columns)
     return result
+
+
+def create_range_df(
+    spark: SparkSession,
+    row_count: int,
+) -> tuple[DataFrame, Column]:
+    """Create a range DataFrame with ``_synth_row_id`` column.
+
+    Renames ``spark.range()``'s default ``id`` column to avoid collisions
+    with user columns named ``id``.
+
+    Returns ``(df, id_col)`` where ``id_col`` is ``F.col("_synth_row_id")``.
+    """
+    df = spark.range(row_count).withColumnRenamed("id", "_synth_row_id")
+    return df, F.col("_synth_row_id")
+
+
+def apply_null_fraction(
+    expr: Column,
+    column_seed: int,
+    id_col: Column,
+    null_fraction: float,
+) -> Column:
+    """Wrap *expr* with a null mask when *null_fraction* > 0.
+
+    Returns *expr* unchanged when ``null_fraction <= 0``.
+    """
+    if null_fraction <= 0:
+        return expr
+    from dbldatagen.v1.engine.seed import null_mask_expr
+
+    is_null = null_mask_expr(column_seed, id_col, null_fraction)
+    return F.when(is_null, F.lit(None)).otherwise(expr)
+
+
+def apply_column_phases(
+    df: DataFrame,
+    id_col: Column,
+    col_exprs: list[Column],
+    udf_columns: list[tuple[str, Column]],
+    seeded_columns: list[tuple[str, Column]],
+) -> DataFrame:
+    """Apply the three-phase column application pattern and drop ``_synth_row_id``.
+
+    Phase 1: flat ``select`` for Spark SQL expressions.
+    Phase 2: ``withColumn`` for UDF-based columns (FK, Faker).
+    Phase 3: ``withColumn`` for seed_from columns.
+    """
+    df = df.select(id_col, *col_exprs)
+
+    for col_name, col_expr in udf_columns:
+        df = df.withColumn(col_name, col_expr)
+
+    for col_name, col_expr in seeded_columns:
+        df = df.withColumn(col_name, col_expr)
+
+    return df.drop("_synth_row_id")
+
+
+def get_pk_columns(table_spec: TableSpec) -> set[str]:
+    """Extract primary key column names as a set."""
+    if table_spec.primary_key:
+        return set(table_spec.primary_key.columns)
+    return set()

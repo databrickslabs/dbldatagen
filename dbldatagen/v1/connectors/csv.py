@@ -4,7 +4,7 @@ Reads one or more CSV files, infers column types via pandas, and produces a
 :class:`~dbldatagen.v1.schema.DataGenPlan` (or YAML file) ready for synthetic
 data generation.
 
-Requires the ``csv`` extra::
+Requires the ``v1-csv`` extra::
 
     pip install 'dbldatagen[v1-csv]'
 """
@@ -30,11 +30,6 @@ try:
     import pandas as pd
 except ImportError:
     raise ImportError("CSV connector requires pandas. Install with: pip install 'dbldatagen[v1-csv]'") from None
-
-try:
-    import yaml
-except ImportError:
-    yaml = None  # type: ignore[assignment,unused-ignore]
 
 
 def _table_name_from_path(path: str | Path) -> str:
@@ -144,7 +139,7 @@ class CSVConnector:
         self,
         paths: str | Path | list[str | Path],
         default_rows: int = 1000,
-        **pandas_kwargs: str | int | bool | list[str] | None,
+        **pandas_kwargs: Any,  # noqa: ANN401
     ) -> None:
         if isinstance(paths, (str, Path)):
             paths = [paths]
@@ -165,18 +160,20 @@ class CSVConnector:
 
     def to_yaml(self, output_path: str) -> None:
         """Extract the plan and write it as YAML to *output_path*."""
-        if yaml is None:
-            raise ImportError("YAML export requires PyYAML. Install with: pip install pyyaml")
+        try:
+            import yaml
+        except ImportError:
+            raise ImportError("YAML export requires PyYAML. Install with: pip install pyyaml") from None
         plan = self.extract()
         data = plan.model_dump(mode="json")
-        with open(output_path, "w", encoding="utf-8") as f:
+        with open(output_path, "w") as f:
             yaml.dump(data, f, default_flow_style=False, sort_keys=False)
 
 
 def extract_from_csv(
     paths: str | Path | list[str | Path],
     default_rows: int = 1000,
-    **pandas_kwargs: str | int | bool | list[str] | None,
+    **pandas_kwargs: Any,  # noqa: ANN401
 ) -> DataGenPlan:
     """Convenience function: extract a DataGenPlan from CSV file(s).
 

@@ -32,7 +32,6 @@ def build_timestamp_column(
     start: str = "2020-01-01",
     end: str = "2025-12-31",
     distribution: Distribution | None = None,
-    *,
     cell_seed_override: Column | None = None,
 ) -> Column:
     """Generate timestamps in [start, end] range.
@@ -61,7 +60,6 @@ def build_date_column(
     start: str = "2020-01-01",
     end: str = "2025-12-31",
     distribution: Distribution | None = None,
-    *,
     cell_seed_override: Column | None = None,
 ) -> Column:
     """Generate dates in [start, end] range.

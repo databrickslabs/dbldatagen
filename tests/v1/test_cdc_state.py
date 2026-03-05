@@ -20,6 +20,7 @@ from dbldatagen.v1.engine.cdc_stateless import (
     update_indices_at_batch,
 )
 
+
 # ---------------------------------------------------------------------------
 # Batch size resolution
 # ---------------------------------------------------------------------------

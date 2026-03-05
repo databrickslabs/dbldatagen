@@ -21,7 +21,6 @@ import numpy as np
 from dbldatagen.v1.cdc_schema import BatchPlan, CDCTableConfig, OperationWeights
 from dbldatagen.v1.engine.columns.pk import feistel_permute_batch
 from dbldatagen.v1.engine.seed import derive_column_seed
-from dbldatagen.v1.engine.utils import split_with_remainder
 
 
 # ---------------------------------------------------------------------------
@@ -56,7 +55,6 @@ class TableState:
     _deleted_flags: np.ndarray | None = field(default=None, repr=False, init=False)
     _delete_count: int = field(default=0, repr=False, init=False)
     _max_rows: int = field(default=0, repr=False, init=False)
-    _memmap_gen: int = field(default=0, repr=False, init=False)
 
     def __post_init__(self) -> None:
         if self.initial_rows >= MEMMAP_THRESHOLD:
@@ -90,11 +88,8 @@ class TableState:
 
     def _grow_memmaps(self, needed: int) -> None:
         """Grow memmap files to accommodate *needed* rows."""
-        assert self._memmap_dir is not None
-        assert self._row_last_write is not None
-        assert self._deleted_flags is not None
         new_max = max(needed, int(self._max_rows * 1.5))
-        gen = self._memmap_gen + 1
+        gen = getattr(self, "_memmap_gen", 0) + 1
         self._memmap_gen = gen
 
         # Grow _row_last_write
@@ -141,19 +136,16 @@ class TableState:
 
     @property
     def total_rows_ever(self) -> int:
-        """Return the total number of rows ever created (initial + inserts)."""
         return self.initial_rows + self.cumulative_inserts
 
     @property
     def live_row_count(self) -> int:
-        """Return the number of currently live (non-deleted) rows."""
         if self._using_memmap:
             return self.total_rows_ever - self._delete_count
         return self.total_rows_ever - len(self.deleted_indices)
 
     @property
     def has_deletes(self) -> bool:
-        """Return True if any rows have been deleted."""
         if self._using_memmap:
             return self._delete_count > 0
         return len(self.deleted_indices) > 0
@@ -174,7 +166,6 @@ class TableState:
             return
 
         if self._using_memmap:
-            assert self._row_last_write is not None
             needed = self.total_rows_ever
             if needed > self._max_rows:
                 self._grow_memmaps(needed)
@@ -194,7 +185,6 @@ class TableState:
     def record_delete(self, row_index: int) -> None:
         """Record that *row_index* has been deleted."""
         if self._using_memmap:
-            assert self._deleted_flags is not None
             if self._deleted_flags[row_index] == 0:
                 self._deleted_flags[row_index] = 1
                 self._delete_count += 1
@@ -218,9 +208,8 @@ class TableState:
 
     def _get_live_indices_chunked(self) -> np.ndarray:
         """Chunked scanner for memmap state.  Memory: O(chunk_size)."""
-        assert self._deleted_flags is not None
         n = self.total_rows_ever
-        flags_len = len(self._deleted_flags)
+        flags_len = len(self._deleted_flags) if self._deleted_flags is not None else 0
         scan_end = min(n, flags_len)
         chunk_size = 10_000_000
         if not self.has_deletes:
@@ -285,8 +274,7 @@ def map_positions_to_absolute(
 
     # Small in-memory table — full array is fine
     live = state.get_live_indices()
-    result: np.ndarray = live[positions]
-    return result
+    return live[positions]
 
 
 def _rejection_position_mapper(
@@ -302,7 +290,6 @@ def _rejection_position_mapper(
     positions in a 258M-row table scans ~50-100 blocks instead of all 258.
     """
     n = state.total_rows_ever
-    assert state._deleted_flags is not None
     flags = state._deleted_flags
 
     # Build prefix live-count at block boundaries — O(n) but only once
@@ -326,10 +313,10 @@ def _rejection_position_mapper(
 
     # Process positions block-by-block (only load each block once)
     current_block = -1
-    live_mask: np.ndarray = np.array([], dtype=np.int64)
+    live_mask = None
     block_start = 0
 
-    for idx, pos_val in enumerate(sorted_pos):
+    for idx in range(len(sorted_pos)):
         bi = int(block_indices[idx])
         if bi != current_block:
             current_block = bi
@@ -337,7 +324,7 @@ def _rejection_position_mapper(
             block_end = min(block_start + block_size, n)
             live_mask = np.where(flags[block_start:block_end] == 0)[0]
 
-        local_offset = int(pos_val - prefix_live[bi])
+        local_offset = int(sorted_pos[idx] - prefix_live[bi])
         result[idx] = block_start + live_mask[local_offset]
 
     # Restore original order
@@ -359,9 +346,8 @@ def _chunked_position_mapper(
     Rows beyond the ``_deleted_flags`` array are treated as live (they are
     recently inserted rows that cannot have been deleted yet).
     """
-    assert state._deleted_flags is not None
     n = state.total_rows_ever
-    flags_len = len(state._deleted_flags)
+    flags_len = len(state._deleted_flags) if state._deleted_flags is not None else 0
     scan_end = min(n, flags_len)
     chunk_size = 10_000_000
 
@@ -431,7 +417,6 @@ def select_rows_for_batch(
     state: TableState,
     batch_size: int,
     op_weights: OperationWeights,
-    *,
     global_seed: int,
 ) -> tuple[np.ndarray, np.ndarray, int]:
     """Determine which rows are updated, deleted, and how many are inserted.
@@ -447,6 +432,8 @@ def select_rows_for_batch(
     n_live = state.live_row_count
     if n_live == 0:
         return np.array([], dtype=np.int64), np.array([], dtype=np.int64), batch_size
+
+    from dbldatagen.v1.engine.utils import split_with_remainder
 
     ins_frac, upd_frac, del_frac = op_weights.fractions
     insert_count, update_count, delete_count = split_with_remainder(
@@ -505,10 +492,8 @@ def select_rows_for_batch(
 # ---------------------------------------------------------------------------
 
 
-def resolve_batch_size(batch_size_spec: int | float | str, initial_rows: int) -> int:
-    """Convert a batch_size spec (int, float fraction, or str) to an absolute count."""
-    if isinstance(batch_size_spec, str):
-        batch_size_spec = int(batch_size_spec)
+def resolve_batch_size(batch_size_spec: int | float, initial_rows: int) -> int:
+    """Convert a batch_size spec (int or float fraction) to an absolute count."""
     if isinstance(batch_size_spec, float) and batch_size_spec < 1.0:
         return max(1, int(initial_rows * batch_size_spec))
     return int(batch_size_spec)
@@ -533,7 +518,7 @@ def advance_table_state(
         state,
         bs,
         config.operations,
-        global_seed=global_seed,
+        global_seed,
     )
     state.record_updates(updates, batch_id)
     for idx in deletes:
@@ -547,7 +532,6 @@ def create_batch_plan(
     state: TableState,
     config: CDCTableConfig,
     global_seed: int,
-    *,
     timestamp: str = "",
 ) -> BatchPlan:
     """Create a ``BatchPlan`` for one batch from the current state.
@@ -562,7 +546,7 @@ def create_batch_plan(
         state,
         batch_size,
         config.operations,
-        global_seed=global_seed,
+        global_seed,
     )
     insert_start_index = state.total_rows_ever
 

@@ -12,7 +12,6 @@ from collections.abc import Callable
 from pyspark.sql import Column, DataFrame, SparkSession
 from pyspark.sql import functions as F
 
-from dbldatagen.v1.engine.columns.faker_pool import build_faker_column
 from dbldatagen.v1.engine.columns.numeric import build_range_column
 from dbldatagen.v1.engine.columns.pk import (
     build_sequential_pk,
@@ -25,9 +24,20 @@ from dbldatagen.v1.engine.columns.string import (
 )
 from dbldatagen.v1.engine.columns.temporal import build_date_column, build_timestamp_column
 from dbldatagen.v1.engine.columns.uuid import build_uuid_column
-from dbldatagen.v1.engine.fk import build_fk_column
 from dbldatagen.v1.engine.planner import FKResolution, ResolvedPlan
-from dbldatagen.v1.engine.seed import cell_seed_expr, compute_batch_seed, derive_column_seed, null_mask_expr
+from dbldatagen.v1.engine.seed import (
+    column_seed_lookup,
+    column_seed_map,
+    compute_batch_seed,
+    derive_column_seed,
+    null_mask_expr,
+)
+from dbldatagen.v1.engine.utils import (
+    apply_column_phases,
+    apply_null_fraction,
+    create_range_df,
+    get_pk_columns,
+)
 from dbldatagen.v1.schema import (
     ArrayColumn,
     ColumnSpec,
@@ -70,10 +80,7 @@ def generate_table(
     global_seed = table_spec.seed if table_spec.seed is not None else 42
 
     # 1. Base DataFrame with deterministic row IDs
-    #    Rename spark.range's "id" to "_synth_row_id" to avoid collisions
-    #    with user columns named "id".
-    df = spark.range(row_count).withColumnRenamed("id", "_synth_row_id")
-    id_col = F.col("_synth_row_id")
+    df, id_col = create_range_df(spark, row_count)
 
     # 2. Build column expressions
     fk_res = resolved_plan.fk_resolutions if resolved_plan is not None else None
@@ -85,21 +92,8 @@ def generate_table(
         row_count=row_count,
     )
 
-    # 3. Single flat select for non-UDF columns (avoids O(n^2) withColumn planning)
-    df = df.select(id_col, *col_exprs)
-
-    # 4. Apply UDF-based columns (FK, Faker) via withColumn
-    for col_name, col_expr in udf_columns:
-        df = df.withColumn(col_name, col_expr)
-
-    # 5. Apply seed_from columns (depend on other columns being present)
-    for col_name, col_expr in seeded_columns:
-        df = df.withColumn(col_name, col_expr)
-
-    # 6. Drop internal row-id column (never part of the output schema)
-    df = df.drop("_synth_row_id")
-
-    return df
+    # 3. Flat select + withColumn phases + drop _synth_row_id
+    return apply_column_phases(df, id_col, col_exprs, udf_columns, seeded_columns)
 
 
 def build_all_column_exprs(
@@ -153,15 +147,15 @@ def build_all_column_exprs(
 
         # FK columns
         if col_spec.foreign_key is not None:
-            fk_result = _build_fk_column_expr(
+            result = _build_fk_column_expr(
                 col_spec,
                 table_name,
                 id_col,
                 column_seed,
                 fk_resolutions,
             )
-            if fk_result is not None:
-                udf_columns.append(fk_result)
+            if result is not None:
+                udf_columns.append(result)
             else:
                 col_exprs.append(F.lit(None).alias(col_spec.name))
             continue
@@ -178,7 +172,7 @@ def build_all_column_exprs(
             column_seed,
             row_count,
             seed,
-            cell_seed_fn=cell_seed_fn,
+            cell_seed_fn,
         )
         if expr is not None:
             col_exprs.append(expr.alias(col_spec.name))
@@ -193,16 +187,13 @@ def _build_seed_from_column(
     row_count: int,
 ) -> tuple[str, Column]:
     """Build expression for a column with seed_from."""
-    assert col_spec.seed_from is not None
     effective_id = F.col(col_spec.seed_from)
 
     if isinstance(col_spec.gen, FakerColumn):
         return _build_faker_expr(col_spec, effective_id, column_seed)
 
     expr = build_column_expr(col_spec, effective_id, column_seed, row_count, global_seed)
-    if col_spec.null_fraction > 0:
-        is_null = null_mask_expr(column_seed, effective_id, col_spec.null_fraction)
-        expr = F.when(is_null, F.lit(None)).otherwise(expr)
+    expr = apply_null_fraction(expr, column_seed, effective_id, col_spec.null_fraction)
     return (col_spec.name, expr.alias(col_spec.name))
 
 
@@ -216,6 +207,8 @@ def _build_fk_column_expr(
     """Build FK column expression, returning (name, expr) or None."""
     fk_key = (table_name, col_spec.name)
     if fk_resolutions and fk_key in fk_resolutions:
+        from dbldatagen.v1.engine.fk import build_fk_column
+
         fk_expr = build_fk_column(id_col, column_seed, fk_resolutions[fk_key])
         return (col_spec.name, fk_expr)
     return None
@@ -227,18 +220,16 @@ def _build_faker_expr(
     column_seed: int,
 ) -> tuple[str, Column]:
     """Build a Faker pool UDF expression."""
-    gen = col_spec.gen
-    assert isinstance(gen, FakerColumn)
+    from dbldatagen.v1.engine.columns.faker_pool import build_faker_column
+
     faker_expr = build_faker_column(
         id_col,
         column_seed,
-        provider=gen.provider,
-        kwargs=gen.kwargs or None,
-        locale=gen.locale,
+        provider=col_spec.gen.provider,
+        kwargs=col_spec.gen.kwargs or None,
+        locale=col_spec.gen.locale,
     )
-    if col_spec.null_fraction > 0:
-        is_null = null_mask_expr(column_seed, id_col, col_spec.null_fraction)
-        faker_expr = F.when(is_null, F.lit(None)).otherwise(faker_expr)
+    faker_expr = apply_null_fraction(faker_expr, column_seed, id_col, col_spec.null_fraction)
     return (col_spec.name, faker_expr)
 
 
@@ -248,7 +239,6 @@ def _build_regular_column_expr(
     column_seed: int,
     row_count: int,
     global_seed: int,
-    *,
     cell_seed_fn: Callable[[int, Column, ColumnSpec], Column | None] | None = None,
 ) -> Column | None:
     """Build a regular (non-FK, non-seed_from) column expression."""
@@ -262,11 +252,7 @@ def _build_regular_column_expr(
         cell_seed_override=cell_override,
     )
 
-    if col_spec.null_fraction > 0:
-        is_null = null_mask_expr(column_seed, id_col, col_spec.null_fraction)
-        expr = F.when(is_null, F.lit(None)).otherwise(expr)
-
-    return expr
+    return apply_null_fraction(expr, column_seed, id_col, col_spec.null_fraction)
 
 
 def build_all_column_exprs_case_when(
@@ -275,80 +261,187 @@ def build_all_column_exprs_case_when(
     wb_col: Column,
     unique_wbs: list[int],
     global_seed: int,
-    *,
     fk_resolutions: dict[tuple[str, str], FKResolution] | None = None,
+    *,
     row_count: int = 0,
 ) -> tuple[list[Column], list[tuple[str, Column]], list[tuple[str, Column]]]:
-    """Build column expressions with CASE WHEN per write-batch seed.
+    """Build column expressions for fused multi-batch CDC DataFrames.
 
-    PK sequence columns are computed directly from row_id (no CASE WHEN).
-    FK and regular columns get a CASE WHEN that selects the expression
-    based on the write-batch value.
+    PERFORMANCE-CRITICAL FUNCTION — read before modifying:
+        When there are many unique write-batch values (>1), seeds are resolved
+        via a Spark **map literal** (``column_seed_map`` + ``element_at``),
+        producing O(1) plan nodes per column regardless of batch count.
 
-    Returns ``(col_exprs, udf_columns, seeded_columns)`` like
-    ``build_all_column_exprs``.
+        The naive approach (CASE WHEN per write-batch per column) produced
+        O(N_batches x N_columns) expression branches -- e.g. 365 batches x 10
+        columns = 3,650+ nodes -- causing Catalyst to stall for minutes while
+        the cluster sat at ~10% CPU utilization.  The map-based approach was
+        verified at 500M-3B rows with full cluster utilization.
+
+        Do not refactor ``_build_exprs_dynamic`` back to CASE WHEN.  See
+        ``column_seed_map`` in seed.py for additional context.
+
+    Returns ``(col_exprs, udf_columns, seeded_columns)``.
     """
+    # Fast path: single write-batch (no CASE WHEN needed)
+    if len(unique_wbs) == 1:
+        return _build_exprs_scalar(
+            table_spec,
+            id_col,
+            unique_wbs[0],
+            global_seed,
+            fk_resolutions,
+            row_count=row_count,
+        )
+
+    # Map-based seed lookup: precompute seeds, O(1) lookup per row at runtime
+    return _build_exprs_dynamic(
+        table_spec,
+        id_col,
+        wb_col,
+        unique_wbs,
+        global_seed,
+        fk_resolutions,
+        row_count=row_count,
+    )
+
+
+def _build_exprs_scalar(
+    table_spec: TableSpec,
+    id_col: Column,
+    wb: int,
+    global_seed: int,
+    fk_resolutions: dict[tuple[str, str], FKResolution] | None,
+    *,
+    row_count: int = 0,
+) -> tuple[list[Column], list[tuple[str, Column]], list[tuple[str, Column]]]:
+    """Build column expressions using a single scalar write-batch seed."""
     table_name = table_spec.name
-    pk_cols = set()
-    if table_spec.primary_key:
-        pk_cols = set(table_spec.primary_key.columns)
+    pk_cols = get_pk_columns(table_spec)
+    s = compute_batch_seed(global_seed, wb)
 
     col_exprs: list[Column] = []
     udf_columns: list[tuple[str, Column]] = []
     seeded_columns: list[tuple[str, Column]] = []
 
     for col_spec in table_spec.columns:
-        # PK sequence: deterministic from row_id, seed-independent
         if col_spec.name in pk_cols and isinstance(col_spec.gen, SequenceColumn):
             pk_expr = (id_col * F.lit(col_spec.gen.step) + F.lit(col_spec.gen.start)).cast("long")
             col_exprs.append(pk_expr.alias(col_spec.name))
             continue
 
-        # Defer seed_from columns to phase 3
+        col_seed = derive_column_seed(s, table_name, col_spec.name)
+
         if col_spec.seed_from is not None:
             effective_id = F.col(col_spec.seed_from)
-            wb_exprs = []
-            for wb in unique_wbs:
-                s = compute_batch_seed(global_seed, wb)
-                col_seed = derive_column_seed(s, table_name, col_spec.name)
-                expr = build_column_expr(col_spec, effective_id, col_seed, row_count, s)
-                if col_spec.null_fraction > 0:
-                    is_null = null_mask_expr(col_seed, effective_id, col_spec.null_fraction)
-                    expr = F.when(is_null, F.lit(None)).otherwise(expr)
-                wb_exprs.append((wb, expr))
-            combined = _build_write_batch_case_when(wb_col, wb_exprs)
-            seeded_columns.append((col_spec.name, combined.alias(col_spec.name)))
+            expr = build_column_expr(col_spec, effective_id, col_seed, row_count, s)
+            if col_spec.null_fraction > 0:
+                is_null = null_mask_expr(col_seed, effective_id, col_spec.null_fraction)
+                expr = F.when(is_null, F.lit(None)).otherwise(expr)
+            seeded_columns.append((col_spec.name, expr.alias(col_spec.name)))
             continue
 
-        # FK columns
         if col_spec.foreign_key is not None:
             fk_key = (table_name, col_spec.name)
             if fk_resolutions and fk_key in fk_resolutions:
-                wb_exprs = []
-                for wb in unique_wbs:
-                    s = compute_batch_seed(global_seed, wb)
-                    col_seed = derive_column_seed(s, table_name, col_spec.name)
-                    expr = build_fk_column(id_col, col_seed, fk_resolutions[fk_key])
-                    wb_exprs.append((wb, expr))
-                combined = _build_write_batch_case_when(wb_col, wb_exprs)
-                udf_columns.append((col_spec.name, combined))
+                from dbldatagen.v1.engine.fk import build_fk_column
+
+                expr = build_fk_column(id_col, col_seed, fk_resolutions[fk_key])
+                udf_columns.append((col_spec.name, expr))
             else:
                 col_exprs.append(F.lit(None).alias(col_spec.name))
             continue
 
-        # Regular columns: CASE WHEN per write_batch for seed
-        wb_exprs = []
-        for wb in unique_wbs:
-            s = compute_batch_seed(global_seed, wb)
-            col_seed = derive_column_seed(s, table_name, col_spec.name)
-            expr = build_column_expr(col_spec, id_col, col_seed, row_count, s)
-            if col_spec.null_fraction > 0:
-                is_null = null_mask_expr(col_seed, id_col, col_spec.null_fraction)
-                expr = F.when(is_null, F.lit(None)).otherwise(expr)
-            wb_exprs.append((wb, expr))
+        expr = build_column_expr(col_spec, id_col, col_seed, row_count, s)
+        if col_spec.null_fraction > 0:
+            is_null = null_mask_expr(col_seed, id_col, col_spec.null_fraction)
+            expr = F.when(is_null, F.lit(None)).otherwise(expr)
+        col_exprs.append(expr.alias(col_spec.name))
 
-        combined = _build_write_batch_case_when(wb_col, wb_exprs)
-        col_exprs.append(combined.alias(col_spec.name))
+    return col_exprs, udf_columns, seeded_columns
+
+
+def _build_exprs_dynamic(
+    table_spec: TableSpec,
+    id_col: Column,
+    wb_col: Column,
+    unique_wbs: list[int],
+    global_seed: int,
+    fk_resolutions: dict[tuple[str, str], FKResolution] | None,
+    *,
+    row_count: int = 0,
+) -> tuple[list[Column], list[tuple[str, Column]], list[tuple[str, Column]]]:
+    """Build column expressions using map-based seed lookup from ``_write_batch``.
+
+    PERFORMANCE NOTE — do not convert back to CASE WHEN:
+        Instead of a CASE WHEN with N branches per column (where N can be
+        365+), the column seed is precomputed for each write-batch value and
+        stored in a Spark **map literal**.  At execution time,
+        ``element_at(map, _write_batch)`` gives O(1) seed lookup — one
+        expression node per column instead of N CASE WHEN branches.  This
+        eliminates the Catalyst plan compilation bottleneck that caused the
+        cluster to idle at ~10% CPU at scale.  See ``column_seed_map`` in
+        seed.py for the full rationale.
+    """
+    table_name = table_spec.name
+    pk_cols = get_pk_columns(table_spec)
+
+    col_exprs: list[Column] = []
+    udf_columns: list[tuple[str, Column]] = []
+    seeded_columns: list[tuple[str, Column]] = []
+
+    for col_spec in table_spec.columns:
+        if col_spec.name in pk_cols and isinstance(col_spec.gen, SequenceColumn):
+            pk_expr = (id_col * F.lit(col_spec.gen.step) + F.lit(col_spec.gen.start)).cast("long")
+            col_exprs.append(pk_expr.alias(col_spec.name))
+            continue
+
+        # Build a map literal: write_batch → column_seed
+        seed_map = column_seed_map(
+            global_seed,
+            unique_wbs,
+            table_name,
+            col_spec.name,
+        )
+        col_seed_col = column_seed_lookup(seed_map, wb_col)
+
+        if col_spec.seed_from is not None:
+            effective_id = F.col(col_spec.seed_from)
+            expr = build_column_expr(
+                col_spec,
+                effective_id,
+                col_seed_col,
+                row_count,
+                global_seed,
+            )
+            if col_spec.null_fraction > 0:
+                is_null = null_mask_expr(col_seed_col, effective_id, col_spec.null_fraction)
+                expr = F.when(is_null, F.lit(None)).otherwise(expr)
+            seeded_columns.append((col_spec.name, expr.alias(col_spec.name)))
+            continue
+
+        if col_spec.foreign_key is not None:
+            fk_key = (table_name, col_spec.name)
+            if fk_resolutions and fk_key in fk_resolutions:
+                from dbldatagen.v1.engine.fk import build_fk_column
+
+                expr = build_fk_column(id_col, col_seed_col, fk_resolutions[fk_key])
+                udf_columns.append((col_spec.name, expr))
+            else:
+                col_exprs.append(F.lit(None).alias(col_spec.name))
+            continue
+
+        expr = build_column_expr(
+            col_spec,
+            id_col,
+            col_seed_col,
+            row_count,
+            global_seed,
+        )
+        if col_spec.null_fraction > 0:
+            is_null = null_mask_expr(col_seed_col, id_col, col_spec.null_fraction)
+            expr = F.when(is_null, F.lit(None)).otherwise(expr)
+        col_exprs.append(expr.alias(col_spec.name))
 
     return col_exprs, udf_columns, seeded_columns
 
@@ -371,29 +464,10 @@ def _build_write_batch_case_when(wb_col: Column, wb_exprs: list[tuple[int, Colum
     return result
 
 
-def _build_timestamp_or_date(
-    col_spec: ColumnSpec,
-    gen: TimestampColumn,
-    id_col: Column,
-    column_seed: int,
-    cell_seed_override: Column | None,
-) -> Column:
-    """Build a date or timestamp column depending on dtype."""
-    builder = build_date_column if col_spec.dtype == DataType.DATE else build_timestamp_column
-    return builder(
-        id_col,
-        column_seed,
-        gen.start,
-        gen.end,
-        gen.distribution,
-        cell_seed_override=cell_seed_override,
-    )
-
-
-def build_column_expr(
+def build_column_expr(  # noqa: PLR0911
     col_spec: ColumnSpec,
     id_col: Column,
-    column_seed: int,
+    column_seed: int | Column,
     row_count: int,
     global_seed: int,
     *,
@@ -403,6 +477,12 @@ def build_column_expr(
 
     Parameters
     ----------
+    column_seed :
+        Per-column seed.  May be a scalar ``int`` (planning-time constant)
+        or a ``Column`` (dynamic seed derived from ``_write_batch`` via
+        map-based lookup).  The ``int | Column`` type is required for the
+        fused multi-batch CDC path — see ``_build_exprs_dynamic`` and
+        ``column_seed_map`` in seed.py for the performance rationale.
     cell_seed_override :
         If provided, used as the per-cell seed instead of the default
         ``cell_seed_expr(column_seed, id_col)``.  Useful for snapshot
@@ -431,25 +511,51 @@ def build_column_expr(
             cell_seed_override=cell_seed_override,
         )
 
-    if isinstance(gen, (PatternColumn, SequenceColumn, UUIDColumn, ExpressionColumn, ConstantColumn)):
-        simple_dispatch = {
-            PatternColumn: lambda g: build_pattern_column(id_col, column_seed, g.template),
-            SequenceColumn: lambda g: build_sequential_pk(id_col, start=g.start, step=g.step),
-            UUIDColumn: lambda g: build_uuid_column(id_col, column_seed),
-            ExpressionColumn: lambda g: build_expression_column(g.expr),
-            ConstantColumn: lambda g: build_constant_column(g.value),
-        }
-        return simple_dispatch[type(gen)](gen)
+    if isinstance(gen, PatternColumn):
+        return build_pattern_column(id_col, column_seed, gen.template)
+
+    if isinstance(gen, SequenceColumn):
+        return build_sequential_pk(id_col, start=gen.start, step=gen.step)
+
+    if isinstance(gen, UUIDColumn):
+        return build_uuid_column(id_col, column_seed)
+
+    if isinstance(gen, ExpressionColumn):
+        return build_expression_column(gen.expr)
 
     if isinstance(gen, TimestampColumn):
-        return _build_timestamp_or_date(col_spec, gen, id_col, column_seed, cell_seed_override)
+        if col_spec.dtype == DataType.DATE:
+            return build_date_column(
+                id_col,
+                column_seed,
+                gen.start,
+                gen.end,
+                gen.distribution,
+                cell_seed_override=cell_seed_override,
+            )
+        return build_timestamp_column(
+            id_col,
+            column_seed,
+            gen.start,
+            gen.end,
+            gen.distribution,
+            cell_seed_override=cell_seed_override,
+        )
 
-    if isinstance(gen, (StructColumn, ArrayColumn)):
-        builder = _build_struct_column if isinstance(gen, StructColumn) else _build_array_column
-        return builder(gen, id_col, column_seed, row_count, global_seed)  # type: ignore[arg-type]
+    if isinstance(gen, ConstantColumn):
+        return build_constant_column(gen.value)
 
-    # Unsupported strategy fallback
-    return F.lit(f"<unsupported:{gen.strategy}>")
+    if isinstance(gen, StructColumn):
+        return _build_struct_column(gen, id_col, column_seed, row_count, global_seed)
+
+    if isinstance(gen, ArrayColumn):
+        return _build_array_column(gen, id_col, column_seed, row_count, global_seed)
+
+    raise ValueError(
+        f"Unsupported column strategy '{gen.strategy}' for column '{col_spec.name}'. "
+        f"Supported: range, values, faker, pattern, sequence, uuid, expression, "
+        f"timestamp, constant, struct, array."
+    )
 
 
 def _build_struct_column(
@@ -470,9 +576,7 @@ def _build_struct_column(
             row_count,
             global_seed,
         )
-        if field_spec.null_fraction > 0:
-            is_null = null_mask_expr(child_seed, id_col, field_spec.null_fraction)
-            child_expr = F.when(is_null, F.lit(None)).otherwise(child_expr)
+        child_expr = apply_null_fraction(child_expr, child_seed, id_col, field_spec.null_fraction)
         field_cols.append(child_expr.alias(field_spec.name))
     return F.struct(*field_cols)
 
@@ -485,6 +589,8 @@ def _build_array_column(
     global_seed: int,
 ) -> Column:
     """Build a variable-length Spark array from an inner strategy."""
+    from dbldatagen.v1.engine.seed import cell_seed_expr
+
     # Generate max_length elements, each with a unique seed offset
     element_cols: list[Column] = []
     dummy_spec = ColumnSpec(name="_elem", gen=gen.element)

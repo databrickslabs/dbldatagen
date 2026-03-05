@@ -21,7 +21,6 @@ def build_range_column(
     min_val: float | int,
     max_val: float | int,
     distribution: Distribution | None = None,
-    *,
     dtype: DataType | None = None,
     cell_seed_override: Column | None = None,
 ) -> Column:

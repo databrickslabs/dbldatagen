@@ -7,6 +7,7 @@ from dbldatagen.v1.connectors.sql import extract_from_sql, sql_to_yaml
 from dbldatagen.v1.connectors.sql.parser import SQLParseError
 from dbldatagen.v1.schema import DataGenPlan
 
+
 # ---------------------------------------------------------------------------
 # extract_from_sql  end-to-end
 # ---------------------------------------------------------------------------

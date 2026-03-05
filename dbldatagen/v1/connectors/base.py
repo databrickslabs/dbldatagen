@@ -27,8 +27,6 @@ class InferredColumn:
 class SchemaConnector(Protocol):
     """Protocol for schema extraction connectors."""
 
-    def extract(self) -> DataGenPlan:
-        """Extract schema and return a DataGenPlan."""
+    def extract(self) -> DataGenPlan: ...
 
-    def to_yaml(self, output_path: str) -> None:
-        """Extract the plan and write it as YAML to *output_path*."""
+    def to_yaml(self, output_path: str) -> None: ...

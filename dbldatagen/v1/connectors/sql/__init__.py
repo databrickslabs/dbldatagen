@@ -15,15 +15,14 @@ from typing import TYPE_CHECKING
 
 import yaml
 
-from dbldatagen.v1 import generate
+
+if TYPE_CHECKING:
+    from pyspark.sql import SparkSession
+
 from dbldatagen.v1.connectors.sql.inference import infer_schema
 from dbldatagen.v1.connectors.sql.parser import SQLParseError, parse_sql
 from dbldatagen.v1.connectors.sql.plan_builder import build_plan
 from dbldatagen.v1.schema import DataGenPlan
-
-
-if TYPE_CHECKING:
-    from pyspark.sql import DataFrame, SparkSession
 
 
 def extract_from_sql(
@@ -64,11 +63,13 @@ def sql_generate(
     row_counts: dict[str, int | str] | None = None,
     seed: int = 42,
     register_temp_views: bool = True,
-) -> dict[str, DataFrame]:
+) -> dict:
     """One-shot: parse SQL, generate data, optionally register as temp views.
 
     Returns ``dict[str, DataFrame]`` keyed by table name.
     """
+    from dbldatagen.v1 import generate
+
     plan = extract_from_sql(sql, dialect=dialect, row_counts=row_counts, seed=seed)
     dfs = generate(spark, plan)
     if register_temp_views:
@@ -86,12 +87,11 @@ def sql_to_yaml(
 ) -> str:
     """Parse SQL and return the equivalent YAML plan string."""
     plan = extract_from_sql(sql, dialect=dialect, row_counts=row_counts, seed=seed)
-    result: str = yaml.dump(
+    return yaml.dump(
         plan.model_dump(mode="json", exclude_defaults=False),
         default_flow_style=False,
         sort_keys=False,
     )
-    return result
 
 
 __all__ = ["SQLParseError", "extract_from_sql", "sql_generate", "sql_to_yaml"]

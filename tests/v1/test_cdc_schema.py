@@ -24,6 +24,7 @@ from dbldatagen.v1.schema import (
     ValuesColumn,
 )
 
+
 FIXTURES = Path(__file__).parent / "fixtures"
 
 

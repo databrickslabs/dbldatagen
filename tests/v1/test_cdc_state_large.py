@@ -22,6 +22,7 @@ from dbldatagen.v1.engine.cdc_stateless import (
 )
 from dbldatagen.v1.engine.seed import compute_batch_seed
 
+
 # Large row count -- exercises the fast stride-scanning paths
 LARGE_ROWS = 100_000
 
@@ -53,7 +54,7 @@ class TestLargeScaleLifecycle:
         periods = compute_periods(LARGE_ROWS, 1000, 0.0, 0.0, 1.0)
         # After enough batches, some rows should be dead
         batch_n = 10
-        upper_k = max_k_at_batch(batch_n, LARGE_ROWS, periods.inserts_per_batch)
+        _upper_k = max_k_at_batch(batch_n, LARGE_ROWS, periods.inserts_per_batch)
         del_indices = delete_indices_at_batch_fast(
             batch_n,
             LARGE_ROWS,
@@ -335,7 +336,7 @@ class TestPrecomputePlansLargeScale:
         deleted_ever: set[int] = set()
         for bp in plans:
             # No deleted row should appear in updates of this or later batches
-            upd_set = set(int(i) for i in bp.update_indices)
+            upd_set = {int(i) for i in bp.update_indices}
             overlap = deleted_ever & upd_set
             assert len(overlap) == 0, f"Batch {bp.batch_id}: previously deleted rows in updates: {overlap}"
             deleted_ever.update(int(i) for i in bp.delete_indices)

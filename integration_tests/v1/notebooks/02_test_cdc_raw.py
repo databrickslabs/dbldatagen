@@ -147,7 +147,7 @@ def build_employee_plan():
 
 plan = build_employee_plan()
 start = time.time()
-stream = generate_cdc(spark, plan, num_batches=NUM_BATCHES, fmt="raw")
+stream = generate_cdc(spark, plan, num_batches=NUM_BATCHES, format="raw")
 gen_time = time.time() - start
 print(f"CDC generation (lazy) took {gen_time:.1f}s")
 

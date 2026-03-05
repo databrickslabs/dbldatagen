@@ -108,7 +108,7 @@ def _map_sql_type(sql_type: str) -> DataType:
     return _SQL_TYPE_MAP.get(key, DataType.STRING)
 
 
-def infer_column_type(col: ExtractedColumn) -> tuple[DataType, float]:
+def infer_column_type(col: ExtractedColumn) -> tuple[DataType, float]:  # noqa: PLR0911
     """Infer the DataType and confidence for a parsed column."""
     # Signal 1: explicit CAST
     if col.cast_type:
@@ -117,15 +117,14 @@ def infer_column_type(col: ExtractedColumn) -> tuple[DataType, float]:
     # Signal 2: comparison with literal
     if col.compared_to_literal is not None:
         lit = col.compared_to_literal
-        _LITERAL_TYPE_MAP: dict[type, DataType] = {
-            bool: DataType.BOOLEAN,
-            int: DataType.LONG,
-            float: DataType.DOUBLE,
-            str: DataType.STRING,
-        }
-        for lit_type, dtype in _LITERAL_TYPE_MAP.items():
-            if isinstance(lit, lit_type):
-                return dtype, 0.8
+        if isinstance(lit, bool):
+            return DataType.BOOLEAN, 0.8
+        if isinstance(lit, int):
+            return DataType.LONG, 0.8
+        if isinstance(lit, float):
+            return DataType.DOUBLE, 0.8
+        if isinstance(lit, str):
+            return DataType.STRING, 0.8
 
     # Signal 3: aggregate context (SUM/AVG suggests numeric)
     if col.aggregated:

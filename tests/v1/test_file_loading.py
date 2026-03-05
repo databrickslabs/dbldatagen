@@ -21,6 +21,7 @@ from dbldatagen.v1.schema import (
 )
 from dbldatagen.v1.validation import validate_referential_integrity
 
+
 FIXTURES = Path(__file__).parent / "fixtures"
 
 

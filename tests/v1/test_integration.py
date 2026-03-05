@@ -163,7 +163,7 @@ class TestGenerateAPI:
         assert "orders" in dfs
 
         # Each value is a DataFrame
-        for name, df in dfs.items():
+        for _name, df in dfs.items():
             assert df.count() > 0
 
 
