@@ -408,6 +408,8 @@ exclude = [
     "examples",
     "tests/test_",
     "tests/__init__\\.py",
+    "tests/v1/",
+    "integration_tests/",
     "tutorial",
     "dbldatagen/datasets",
     "dbldatagen/__init__.py",
