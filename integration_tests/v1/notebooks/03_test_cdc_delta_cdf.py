@@ -54,6 +54,7 @@ NUM_BATCHES = 10
 
 # COMMAND ----------
 
+
 def build_employee_plan():
     return DataGenPlan(
         seed=42,
@@ -64,14 +65,36 @@ def build_employee_plan():
                 primary_key=PrimaryKey(columns=["dept_id"]),
                 columns=[
                     pk_auto("dept_id"),
-                    text("name", values=[
-                        "Engineering", "Sales", "Marketing", "Finance", "HR",
-                        "Legal", "Operations", "Support", "Research", "Product",
-                    ]),
-                    text("location", values=[
-                        "New York", "San Francisco", "Chicago", "Austin", "Seattle",
-                        "Boston", "Denver", "Miami", "Portland", "Atlanta",
-                    ]),
+                    text(
+                        "name",
+                        values=[
+                            "Engineering",
+                            "Sales",
+                            "Marketing",
+                            "Finance",
+                            "HR",
+                            "Legal",
+                            "Operations",
+                            "Support",
+                            "Research",
+                            "Product",
+                        ],
+                    ),
+                    text(
+                        "location",
+                        values=[
+                            "New York",
+                            "San Francisco",
+                            "Chicago",
+                            "Austin",
+                            "Seattle",
+                            "Boston",
+                            "Denver",
+                            "Miami",
+                            "Portland",
+                            "Atlanta",
+                        ],
+                    ),
                     integer("budget", min=100_000, max=10_000_000, distribution=LogNormal()),
                 ],
             ),
@@ -112,10 +135,19 @@ def build_employee_plan():
                     fk("emp_id", "employees.emp_id"),
                     fk("project_id", "projects.project_id"),
                     timestamp("assigned_date", start="2020-01-01", end="2025-12-31"),
-                    text("role", values=[
-                        "developer", "designer", "tester", "analyst", "lead",
-                        "manager", "consultant", "reviewer",
-                    ]),
+                    text(
+                        "role",
+                        values=[
+                            "developer",
+                            "designer",
+                            "tester",
+                            "analyst",
+                            "lead",
+                            "manager",
+                            "consultant",
+                            "reviewer",
+                        ],
+                    ),
                     integer("hours_allocated", min=10, max=500),
                 ],
             ),
@@ -128,15 +160,22 @@ def build_employee_plan():
                     fk("emp_id", "employees.emp_id"),
                     timestamp("review_date", start="2020-01-01", end="2025-12-31"),
                     integer("rating", min=1, max=5),
-                    text("comments", values=[
-                        "Exceeds expectations", "Meets expectations",
-                        "Needs improvement", "Outstanding performance",
-                        "Satisfactory", "Below average",
-                    ]),
+                    text(
+                        "comments",
+                        values=[
+                            "Exceeds expectations",
+                            "Meets expectations",
+                            "Needs improvement",
+                            "Outstanding performance",
+                            "Satisfactory",
+                            "Below average",
+                        ],
+                    ),
                 ],
             ),
         ],
     )
+
 
 # COMMAND ----------
 
@@ -212,11 +251,18 @@ for table_name, expected in EXPECTED_ROWS.items():
     initial_df = spark.table(fqn).filter(F.col("_commit_version") == 0)
     actual = initial_df.count()
     passed = actual == expected
-    summary_rows.append((
-        TEST_NAME, table_name, "row_count", actual, expected, passed,
-        json.dumps({"scope": "initial_snapshot", "commit_version": 0}),
-        datetime.now(),
-    ))
+    summary_rows.append(
+        (
+            TEST_NAME,
+            table_name,
+            "row_count",
+            actual,
+            expected,
+            passed,
+            json.dumps({"scope": "initial_snapshot", "commit_version": 0}),
+            datetime.now(),
+        )
+    )
     print(f"  {table_name}: initial row_count={actual}, expected={expected}, passed={passed}")
 
 # COMMAND ----------
@@ -227,12 +273,18 @@ for table_name, pk_col in PK_COLS.items():
     initial_df = spark.table(fqn).filter(F.col("_commit_version") == 0)
     dup_count = initial_df.groupBy(pk_col).count().filter("count > 1").count()
     passed = dup_count == 0
-    summary_rows.append((
-        TEST_NAME, table_name, "pk_unique", initial_df.count(),
-        EXPECTED_ROWS[table_name], passed,
-        json.dumps({"pk_col": pk_col, "duplicate_groups": dup_count, "scope": "initial_snapshot"}),
-        datetime.now(),
-    ))
+    summary_rows.append(
+        (
+            TEST_NAME,
+            table_name,
+            "pk_unique",
+            initial_df.count(),
+            EXPECTED_ROWS[table_name],
+            passed,
+            json.dumps({"pk_col": pk_col, "duplicate_groups": dup_count, "scope": "initial_snapshot"}),
+            datetime.now(),
+        )
+    )
     print(f"  {table_name}: pk_unique ({pk_col}), duplicates={dup_count}, passed={passed}")
 
 # COMMAND ----------
@@ -243,23 +295,35 @@ for child_table, fk_col, parent_table, pk_col in FK_CHECKS:
     parent_fqn = f"{CATALOG}.{SCHEMA}.{TABLE_PREFIX}{parent_table}"
     child_df = spark.table(child_fqn).filter(F.col("_commit_version") == 0)
     parent_df = spark.table(parent_fqn).filter(F.col("_commit_version") == 0)
-    orphans = child_df.select(fk_col).join(
-        parent_df.select(pk_col),
-        child_df[fk_col] == parent_df[pk_col],
-        "left_anti",
-    ).count()
+    orphans = (
+        child_df.select(fk_col)
+        .join(
+            parent_df.select(pk_col),
+            child_df[fk_col] == parent_df[pk_col],
+            "left_anti",
+        )
+        .count()
+    )
     passed = orphans == 0
-    summary_rows.append((
-        TEST_NAME, child_table, "fk_integrity", child_df.count(),
-        EXPECTED_ROWS[child_table], passed,
-        json.dumps({
-            "child": f"{child_table}.{fk_col}",
-            "parent": f"{parent_table}.{pk_col}",
-            "orphan_count": orphans,
-            "scope": "initial_snapshot",
-        }),
-        datetime.now(),
-    ))
+    summary_rows.append(
+        (
+            TEST_NAME,
+            child_table,
+            "fk_integrity",
+            child_df.count(),
+            EXPECTED_ROWS[child_table],
+            passed,
+            json.dumps(
+                {
+                    "child": f"{child_table}.{fk_col}",
+                    "parent": f"{parent_table}.{pk_col}",
+                    "orphan_count": orphans,
+                    "scope": "initial_snapshot",
+                }
+            ),
+            datetime.now(),
+        )
+    )
     print(f"  {child_table}.{fk_col} -> {parent_table}.{pk_col}: orphans={orphans}, passed={passed}")
 
 # COMMAND ----------
@@ -276,54 +340,83 @@ for table_name in EXPECTED_ROWS:
 
     # Check CDF columns present
     cdf_present = CDF_REQUIRED_COLS.issubset(cols)
-    summary_rows.append((
-        TEST_NAME, table_name, "cdf_columns_present", len(cols), 0, cdf_present,
-        json.dumps({
-            "expected": sorted(CDF_REQUIRED_COLS),
-            "found": sorted(cols & CDF_REQUIRED_COLS),
-            "missing": sorted(CDF_REQUIRED_COLS - cols),
-        }),
-        datetime.now(),
-    ))
+    summary_rows.append(
+        (
+            TEST_NAME,
+            table_name,
+            "cdf_columns_present",
+            len(cols),
+            0,
+            cdf_present,
+            json.dumps(
+                {
+                    "expected": sorted(CDF_REQUIRED_COLS),
+                    "found": sorted(cols & CDF_REQUIRED_COLS),
+                    "missing": sorted(CDF_REQUIRED_COLS - cols),
+                }
+            ),
+            datetime.now(),
+        )
+    )
 
     # Check raw columns absent
     raw_absent = len(RAW_COLS & cols) == 0
-    summary_rows.append((
-        TEST_NAME, table_name, "raw_columns_absent", 0, 0, raw_absent,
-        json.dumps({
-            "raw_cols_should_be_absent": sorted(RAW_COLS),
-            "found": sorted(RAW_COLS & cols),
-        }),
-        datetime.now(),
-    ))
+    summary_rows.append(
+        (
+            TEST_NAME,
+            table_name,
+            "raw_columns_absent",
+            0,
+            0,
+            raw_absent,
+            json.dumps(
+                {
+                    "raw_cols_should_be_absent": sorted(RAW_COLS),
+                    "found": sorted(RAW_COLS & cols),
+                }
+            ),
+            datetime.now(),
+        )
+    )
 
     # Check valid change_type values
-    change_types = sorted([
-        r["_change_type"] for r in full_df.select("_change_type").distinct().collect()
-    ])
+    change_types = sorted([r["_change_type"] for r in full_df.select("_change_type").distinct().collect()])
     invalid_types = [ct for ct in change_types if ct not in VALID_CHANGE_TYPES]
     passed_types = len(invalid_types) == 0
-    summary_rows.append((
-        TEST_NAME, table_name, "change_types_valid", len(change_types), 0, passed_types,
-        json.dumps({"change_types": change_types, "invalid": invalid_types}),
-        datetime.now(),
-    ))
+    summary_rows.append(
+        (
+            TEST_NAME,
+            table_name,
+            "change_types_valid",
+            len(change_types),
+            0,
+            passed_types,
+            json.dumps({"change_types": change_types, "invalid": invalid_types}),
+            datetime.now(),
+        )
+    )
 
     # Check initial commit_version=0 rows are all inserts
     initial_rows = full_df.filter(F.col("_commit_version") == 0)
-    initial_types = sorted([
-        r["_change_type"] for r in initial_rows.select("_change_type").distinct().collect()
-    ])
+    initial_types = sorted([r["_change_type"] for r in initial_rows.select("_change_type").distinct().collect()])
     passed_initial = initial_types == ["insert"]
-    summary_rows.append((
-        TEST_NAME, table_name, "initial_all_inserts", initial_rows.count(),
-        EXPECTED_ROWS[table_name], passed_initial,
-        json.dumps({"initial_change_types": initial_types}),
-        datetime.now(),
-    ))
+    summary_rows.append(
+        (
+            TEST_NAME,
+            table_name,
+            "initial_all_inserts",
+            initial_rows.count(),
+            EXPECTED_ROWS[table_name],
+            passed_initial,
+            json.dumps({"initial_change_types": initial_types}),
+            datetime.now(),
+        )
+    )
 
-    print(f"  {table_name}: cdf_cols={cdf_present}, raw_absent={raw_absent}, "
-          f"types={change_types}, initial_inserts={passed_initial}")
+    print(
+        f"  {table_name}: cdf_cols={cdf_present}, raw_absent={raw_absent}, "
+        f"types={change_types}, initial_inserts={passed_initial}"
+    )
 
 # COMMAND ----------
 
@@ -341,16 +434,18 @@ from pyspark.sql.types import (
     TimestampType,
 )
 
-summary_schema = StructType([
-    StructField("test_name", StringType()),
-    StructField("table_name", StringType()),
-    StructField("check_name", StringType()),
-    StructField("row_count", LongType()),
-    StructField("expected_row_count", LongType()),
-    StructField("passed", BooleanType()),
-    StructField("details", StringType()),
-    StructField("timestamp", TimestampType()),
-])
+summary_schema = StructType(
+    [
+        StructField("test_name", StringType()),
+        StructField("table_name", StringType()),
+        StructField("check_name", StringType()),
+        StructField("row_count", LongType()),
+        StructField("expected_row_count", LongType()),
+        StructField("passed", BooleanType()),
+        StructField("details", StringType()),
+        StructField("timestamp", TimestampType()),
+    ]
+)
 
 summary_df = spark.createDataFrame(summary_rows, schema=summary_schema)
 summary_df.write.format("delta").mode("append").saveAsTable(SUMMARY_TABLE)

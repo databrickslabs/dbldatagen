@@ -219,6 +219,7 @@ ignore = [
 "examples/*" = ["ALL"]
 "tutorial/*" = ["ALL"]
 "docs/*" = ["ALL"]
+"integration_tests/*" = ["ALL"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["dbldatagen"]

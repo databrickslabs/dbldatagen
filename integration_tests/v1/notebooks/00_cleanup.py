@@ -35,7 +35,8 @@ print(f"Dropped {len(dropped)} tables: {dropped}")
 
 # COMMAND ----------
 
-spark.sql(f"""
+spark.sql(
+    f"""
 CREATE TABLE IF NOT EXISTS {CATALOG}.{SCHEMA}.{PREFIX}test_summary (
     test_name STRING,
     table_name STRING,
@@ -46,6 +47,7 @@ CREATE TABLE IF NOT EXISTS {CATALOG}.{SCHEMA}.{PREFIX}test_summary (
     details STRING,
     timestamp TIMESTAMP
 )
-""")
+"""
+)
 
 print(f"Summary table ready: {CATALOG}.{SCHEMA}.{PREFIX}test_summary")

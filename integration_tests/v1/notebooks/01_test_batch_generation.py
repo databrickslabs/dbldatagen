@@ -52,6 +52,7 @@ SUMMARY_TABLE = f"{CATALOG}.{SCHEMA}.{PREFIX}test_summary"
 
 # COMMAND ----------
 
+
 def build_employee_plan():
     return DataGenPlan(
         seed=42,
@@ -62,14 +63,36 @@ def build_employee_plan():
                 primary_key=PrimaryKey(columns=["dept_id"]),
                 columns=[
                     pk_auto("dept_id"),
-                    text("name", values=[
-                        "Engineering", "Sales", "Marketing", "Finance", "HR",
-                        "Legal", "Operations", "Support", "Research", "Product",
-                    ]),
-                    text("location", values=[
-                        "New York", "San Francisco", "Chicago", "Austin", "Seattle",
-                        "Boston", "Denver", "Miami", "Portland", "Atlanta",
-                    ]),
+                    text(
+                        "name",
+                        values=[
+                            "Engineering",
+                            "Sales",
+                            "Marketing",
+                            "Finance",
+                            "HR",
+                            "Legal",
+                            "Operations",
+                            "Support",
+                            "Research",
+                            "Product",
+                        ],
+                    ),
+                    text(
+                        "location",
+                        values=[
+                            "New York",
+                            "San Francisco",
+                            "Chicago",
+                            "Austin",
+                            "Seattle",
+                            "Boston",
+                            "Denver",
+                            "Miami",
+                            "Portland",
+                            "Atlanta",
+                        ],
+                    ),
                     integer("budget", min=100_000, max=10_000_000, distribution=LogNormal()),
                 ],
             ),
@@ -110,10 +133,19 @@ def build_employee_plan():
                     fk("emp_id", "employees.emp_id"),
                     fk("project_id", "projects.project_id"),
                     timestamp("assigned_date", start="2020-01-01", end="2025-12-31"),
-                    text("role", values=[
-                        "developer", "designer", "tester", "analyst", "lead",
-                        "manager", "consultant", "reviewer",
-                    ]),
+                    text(
+                        "role",
+                        values=[
+                            "developer",
+                            "designer",
+                            "tester",
+                            "analyst",
+                            "lead",
+                            "manager",
+                            "consultant",
+                            "reviewer",
+                        ],
+                    ),
                     integer("hours_allocated", min=10, max=500),
                 ],
             ),
@@ -126,15 +158,22 @@ def build_employee_plan():
                     fk("emp_id", "employees.emp_id"),
                     timestamp("review_date", start="2020-01-01", end="2025-12-31"),
                     integer("rating", min=1, max=5),
-                    text("comments", values=[
-                        "Exceeds expectations", "Meets expectations",
-                        "Needs improvement", "Outstanding performance",
-                        "Satisfactory", "Below average",
-                    ]),
+                    text(
+                        "comments",
+                        values=[
+                            "Exceeds expectations",
+                            "Meets expectations",
+                            "Needs improvement",
+                            "Outstanding performance",
+                            "Satisfactory",
+                            "Below average",
+                        ],
+                    ),
                 ],
             ),
         ],
     )
+
 
 # COMMAND ----------
 
@@ -196,11 +235,18 @@ for table_name, expected in EXPECTED_ROWS.items():
     fqn = f"{CATALOG}.{SCHEMA}.{PREFIX}{table_name}"
     actual = spark.table(fqn).count()
     passed = actual == expected
-    summary_rows.append((
-        TEST_NAME, table_name, "row_count", actual, expected, passed,
-        json.dumps({"generation_time_s": round(gen_time, 2)}),
-        datetime.now(),
-    ))
+    summary_rows.append(
+        (
+            TEST_NAME,
+            table_name,
+            "row_count",
+            actual,
+            expected,
+            passed,
+            json.dumps({"generation_time_s": round(gen_time, 2)}),
+            datetime.now(),
+        )
+    )
     print(f"  {table_name}: row_count={actual}, expected={expected}, passed={passed}")
 
 # COMMAND ----------
@@ -211,11 +257,18 @@ for table_name, pk_col in PK_COLS.items():
     df = spark.table(fqn)
     dup_count = df.groupBy(pk_col).count().filter("count > 1").count()
     passed = dup_count == 0
-    summary_rows.append((
-        TEST_NAME, table_name, "pk_unique", df.count(), EXPECTED_ROWS[table_name], passed,
-        json.dumps({"pk_col": pk_col, "duplicate_groups": dup_count}),
-        datetime.now(),
-    ))
+    summary_rows.append(
+        (
+            TEST_NAME,
+            table_name,
+            "pk_unique",
+            df.count(),
+            EXPECTED_ROWS[table_name],
+            passed,
+            json.dumps({"pk_col": pk_col, "duplicate_groups": dup_count}),
+            datetime.now(),
+        )
+    )
     print(f"  {table_name}: pk_unique ({pk_col}), duplicates={dup_count}, passed={passed}")
 
 # COMMAND ----------
@@ -226,22 +279,34 @@ for child_table, fk_col, parent_table, pk_col in FK_CHECKS:
     parent_fqn = f"{CATALOG}.{SCHEMA}.{PREFIX}{parent_table}"
     child_df = spark.table(child_fqn)
     parent_df = spark.table(parent_fqn)
-    orphans = child_df.select(fk_col).join(
-        parent_df.select(pk_col),
-        child_df[fk_col] == parent_df[pk_col],
-        "left_anti",
-    ).count()
+    orphans = (
+        child_df.select(fk_col)
+        .join(
+            parent_df.select(pk_col),
+            child_df[fk_col] == parent_df[pk_col],
+            "left_anti",
+        )
+        .count()
+    )
     passed = orphans == 0
-    summary_rows.append((
-        TEST_NAME, child_table, "fk_integrity", child_df.count(),
-        EXPECTED_ROWS[child_table], passed,
-        json.dumps({
-            "child": f"{child_table}.{fk_col}",
-            "parent": f"{parent_table}.{pk_col}",
-            "orphan_count": orphans,
-        }),
-        datetime.now(),
-    ))
+    summary_rows.append(
+        (
+            TEST_NAME,
+            child_table,
+            "fk_integrity",
+            child_df.count(),
+            EXPECTED_ROWS[child_table],
+            passed,
+            json.dumps(
+                {
+                    "child": f"{child_table}.{fk_col}",
+                    "parent": f"{parent_table}.{pk_col}",
+                    "orphan_count": orphans,
+                }
+            ),
+            datetime.now(),
+        )
+    )
     print(f"  {child_table}.{fk_col} -> {parent_table}.{pk_col}: orphans={orphans}, passed={passed}")
 
 # COMMAND ----------
@@ -260,16 +325,18 @@ from pyspark.sql.types import (
     TimestampType,
 )
 
-summary_schema = StructType([
-    StructField("test_name", StringType()),
-    StructField("table_name", StringType()),
-    StructField("check_name", StringType()),
-    StructField("row_count", LongType()),
-    StructField("expected_row_count", LongType()),
-    StructField("passed", BooleanType()),
-    StructField("details", StringType()),
-    StructField("timestamp", TimestampType()),
-])
+summary_schema = StructType(
+    [
+        StructField("test_name", StringType()),
+        StructField("table_name", StringType()),
+        StructField("check_name", StringType()),
+        StructField("row_count", LongType()),
+        StructField("expected_row_count", LongType()),
+        StructField("passed", BooleanType()),
+        StructField("details", StringType()),
+        StructField("timestamp", TimestampType()),
+    ]
+)
 
 summary_df = spark.createDataFrame(summary_rows, schema=summary_schema)
 summary_df.write.format("delta").mode("append").saveAsTable(SUMMARY_TABLE)
