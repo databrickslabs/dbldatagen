@@ -61,8 +61,8 @@ jobs:
           python-version: '3.10'
 
       - name: Install Hatch
-        # click 8.3+ introduced bug for hatch
-        run: pip install "hatch==1.13.0" "click<8.3"
+        # click 8.3+ introduced bug for hatch; virtualenv 21 removed propose_interpreters
+        run: pip install "hatch==1.13.0" "click<8.3" "virtualenv<21"
 
       - name: Run v0 unit tests
         run: make dev test
