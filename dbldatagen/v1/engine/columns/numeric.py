@@ -17,7 +17,7 @@ from dbldatagen.v1.schema import DataType, Distribution, Normal
 
 def build_range_column(
     id_col: Column | str,
-    column_seed: int,
+    column_seed: int | Column,
     min_val: float | int,
     max_val: float | int,
     distribution: Distribution | None = None,

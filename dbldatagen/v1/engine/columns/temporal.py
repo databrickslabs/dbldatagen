@@ -28,7 +28,7 @@ def _parse_epoch(dt_str: str) -> int:
 
 def build_timestamp_column(
     id_col: Column | str,
-    column_seed: int,
+    column_seed: int | Column,
     start: str = "2020-01-01",
     end: str = "2025-12-31",
     distribution: Distribution | None = None,
@@ -56,7 +56,7 @@ def build_timestamp_column(
 
 def build_date_column(
     id_col: Column | str,
-    column_seed: int,
+    column_seed: int | Column,
     start: str = "2020-01-01",
     end: str = "2025-12-31",
     distribution: Distribution | None = None,

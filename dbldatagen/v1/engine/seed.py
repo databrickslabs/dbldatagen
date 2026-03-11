@@ -71,6 +71,7 @@ def null_mask_expr(
         return F.lit(True)
     if isinstance(id_col, str):
         id_col = F.col(id_col)
+    null_seed: int | Column
     if isinstance(column_seed, Column):
         null_seed = column_seed.bitwiseXOR(F.lit(0xDEADBEEF).cast("long"))
     else:

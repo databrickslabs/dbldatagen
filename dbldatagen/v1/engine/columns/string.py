@@ -26,7 +26,7 @@ from dbldatagen.v1.schema import Distribution, WeightedValues
 
 def build_values_column(
     id_col: Column | str,
-    column_seed: int,
+    column_seed: int | Column,
     values_list: list,
     distribution: Distribution | None = None,
     cell_seed_override: Column | None = None,

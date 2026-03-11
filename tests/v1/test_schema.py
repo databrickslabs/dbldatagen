@@ -263,7 +263,7 @@ class TestDataType:
 
     def test_integer_alias(self):
         assert DataType.INTEGER.value == "int"
-        assert DataType.INTEGER == DataType.INT
+        assert DataType.INTEGER == DataType.INT  # type: ignore[comparison-overlap]
 
 
 # ---------------------------------------------------------------------------
@@ -478,7 +478,7 @@ class TestJsonRoundTrip:
             ConstantColumn(value=42),
         ]
         for i, strat in enumerate(strategies):
-            col = ColumnSpec(name=f"col_{i}", gen=strat)
+            col = ColumnSpec(name=f"col_{i}", gen=strat)  # type: ignore[arg-type]
             json_str = col.model_dump_json()
             restored = ColumnSpec.model_validate_json(json_str)
             assert restored == col, f"Round-trip failed for {type(strat).__name__}"
@@ -494,7 +494,7 @@ class TestJsonRoundTrip:
             WeightedValues(weights={"x": 0.6, "y": 0.4}),
         ]
         for dist in distributions:
-            col = ColumnSpec(name="x", gen=RangeColumn(distribution=dist))
+            col = ColumnSpec(name="x", gen=RangeColumn(distribution=dist))  # type: ignore[arg-type]
             json_str = col.model_dump_json()
             restored = ColumnSpec.model_validate_json(json_str)
             assert restored == col, f"Round-trip failed for {type(dist).__name__}"

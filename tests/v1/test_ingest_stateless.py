@@ -24,11 +24,13 @@ from dbldatagen.v1.ingest import generate_ingest
 from dbldatagen.v1.ingest_schema import (
     IngestMode,
     IngestPlan,
+    IngestStrategy,
     IngestTableConfig,
 )
 from dbldatagen.v1.schema import (
     ColumnSpec,
     DataGenPlan,
+    DataType,
     PrimaryKey,
     RangeColumn,
     SequenceColumn,
@@ -58,11 +60,11 @@ def _simple_plan(rows=100) -> DataGenPlan:
                 rows=rows,
                 primary_key=PrimaryKey(columns=["txn_id"]),
                 columns=[
-                    ColumnSpec(name="txn_id", dtype="long", gen=SequenceColumn(start=1)),
-                    ColumnSpec(name="amount", dtype="double", gen=RangeColumn(min=5.0, max=5000.0)),
+                    ColumnSpec(name="txn_id", dtype=DataType.LONG, gen=SequenceColumn(start=1)),
+                    ColumnSpec(name="amount", dtype=DataType.DOUBLE, gen=RangeColumn(min=5.0, max=5000.0)),
                     ColumnSpec(
                         name="status",
-                        dtype="string",
+                        dtype=DataType.STRING,
                         gen=ValuesColumn(values=["pending", "open", "settled", "closed"]),
                     ),
                 ],
@@ -79,7 +81,7 @@ class TestStatelessIncrementalBasic:
             base_plan=_simple_plan(),
             num_batches=10,
             mode=IngestMode.INCREMENTAL,
-            strategy="stateless",
+            strategy=IngestStrategy.STATELESS,
             table_configs={
                 "transactions": IngestTableConfig(
                     batch_size=10,
@@ -110,7 +112,7 @@ class TestStatelessIncrementalBasic:
         plan = IngestPlan(
             base_plan=_simple_plan(),
             num_batches=10,
-            strategy="stateless",
+            strategy=IngestStrategy.STATELESS,
             table_configs={
                 "transactions": IngestTableConfig(
                     batch_size=10,
@@ -135,7 +137,7 @@ class TestStatelessIncrementalBasic:
         plan = IngestPlan(
             base_plan=_simple_plan(rows=100),
             num_batches=5,
-            strategy="stateless",
+            strategy=IngestStrategy.STATELESS,
             table_configs={
                 "transactions": IngestTableConfig(
                     batch_size=10,
@@ -160,7 +162,7 @@ class TestStatelessIncrementalBasic:
         plan = IngestPlan(
             base_plan=_simple_plan(rows=100),
             num_batches=5,
-            strategy="stateless",
+            strategy=IngestStrategy.STATELESS,
             table_configs={
                 "transactions": IngestTableConfig(
                     batch_size=10,
@@ -189,7 +191,7 @@ class TestStatelessDeterminism:
         plan = IngestPlan(
             base_plan=_simple_plan(),
             num_batches=5,
-            strategy="stateless",
+            strategy=IngestStrategy.STATELESS,
             table_configs={
                 "transactions": IngestTableConfig(
                     batch_size=10,
@@ -216,7 +218,7 @@ class TestStatelessBatchIndependence:
         plan = IngestPlan(
             base_plan=_simple_plan(),
             num_batches=10,
-            strategy="stateless",
+            strategy=IngestStrategy.STATELESS,
             table_configs={
                 "transactions": IngestTableConfig(
                     batch_size=10,
@@ -245,7 +247,7 @@ class TestStatelessNoPKOverlap:
         plan = IngestPlan(
             base_plan=_simple_plan(rows=100),
             num_batches=5,
-            strategy="stateless",
+            strategy=IngestStrategy.STATELESS,
             table_configs={
                 "transactions": IngestTableConfig(
                     batch_size=10,
@@ -256,7 +258,7 @@ class TestStatelessNoPKOverlap:
             },
         )
 
-        all_insert_pks = set()
+        all_insert_pks: set[int] = set()
         for batch_id in range(1, 6):
             result = generate_stateless_incremental_batch(
                 spark,
@@ -280,7 +282,7 @@ class TestStatelessWithDeletes:
         plan = IngestPlan(
             base_plan=_simple_plan(rows=100),
             num_batches=20,
-            strategy="stateless",
+            strategy=IngestStrategy.STATELESS,
             table_configs={
                 "transactions": IngestTableConfig(
                     batch_size=10,
@@ -315,7 +317,7 @@ class TestStatelessWithDeletes:
         plan = IngestPlan(
             base_plan=_simple_plan(rows=100),
             num_batches=10,
-            strategy="stateless",
+            strategy=IngestStrategy.STATELESS,
             table_configs={
                 "transactions": IngestTableConfig(
                     batch_size=10,
@@ -345,7 +347,7 @@ class TestStatelessUpdateWindow:
         plan = IngestPlan(
             base_plan=_simple_plan(rows=100),
             num_batches=10,
-            strategy="stateless",
+            strategy=IngestStrategy.STATELESS,
             table_configs={
                 "transactions": IngestTableConfig(
                     batch_size=10,
@@ -376,7 +378,7 @@ class TestStatelessSnapshot:
         plan = IngestPlan(
             base_plan=_simple_plan(rows=100),
             num_batches=5,
-            strategy="stateless",
+            strategy=IngestStrategy.STATELESS,
             table_configs={
                 "transactions": IngestTableConfig(
                     batch_size=10,
@@ -400,7 +402,7 @@ class TestStatelessSnapshot:
         plan = IngestPlan(
             base_plan=_simple_plan(rows=100),
             num_batches=5,
-            strategy="stateless",
+            strategy=IngestStrategy.STATELESS,
             table_configs={
                 "transactions": IngestTableConfig(
                     batch_size=10,
@@ -427,7 +429,7 @@ class TestStatelessSnapshot:
         plan = IngestPlan(
             base_plan=_simple_plan(rows=100),
             num_batches=10,
-            strategy="stateless",
+            strategy=IngestStrategy.STATELESS,
             table_configs={
                 "transactions": IngestTableConfig(
                     batch_size=10,
@@ -454,7 +456,7 @@ class TestStatelessSnapshot:
         plan = IngestPlan(
             base_plan=_simple_plan(rows=100),
             num_batches=5,
-            strategy="stateless",
+            strategy=IngestStrategy.STATELESS,
             table_configs={
                 "transactions": IngestTableConfig(
                     batch_size=10,
@@ -481,7 +483,7 @@ class TestStatelessPublicAPI:
         plan = IngestPlan(
             base_plan=_simple_plan(),
             num_batches=3,
-            strategy="stateless",
+            strategy=IngestStrategy.STATELESS,
             table_configs={
                 "transactions": IngestTableConfig(
                     batch_size=10,
@@ -508,7 +510,7 @@ class TestStatelessPublicAPI:
         plan = IngestPlan(
             base_plan=_simple_plan(),
             num_batches=10,
-            strategy="stateless",
+            strategy=IngestStrategy.STATELESS,
             table_configs={
                 "transactions": IngestTableConfig(
                     batch_size=10,

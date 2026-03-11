@@ -31,6 +31,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from dataclasses import dataclass, field
+from typing import overload
 
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
@@ -83,7 +84,13 @@ class _LazyBatchList:
         self._fmt_name = fmt_name
         self._cache: dict[int, dict[str, DataFrame]] = {}
 
-    def __getitem__(self, index: int) -> dict[str, DataFrame]:
+    @overload
+    def __getitem__(self, index: int) -> dict[str, DataFrame]: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> list[dict[str, DataFrame]]: ...
+
+    def __getitem__(self, index: int | slice) -> dict[str, DataFrame] | list[dict[str, DataFrame]]:
         if isinstance(index, slice):
             indices = range(*index.indices(len(self)))
             return [self[i] for i in indices]
@@ -133,7 +140,13 @@ class _LazyChunkList:
         self._chunk_size = chunk_size
         self._cache: dict[int, dict[str, DataFrame]] = {}
 
-    def __getitem__(self, index: int) -> dict[str, DataFrame]:
+    @overload
+    def __getitem__(self, index: int) -> dict[str, DataFrame]: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> list[dict[str, DataFrame]]: ...
+
+    def __getitem__(self, index: int | slice) -> dict[str, DataFrame] | list[dict[str, DataFrame]]:
         if isinstance(index, slice):
             indices = range(*index.indices(len(self)))
             return [self[i] for i in indices]
@@ -198,7 +211,7 @@ class CDCStream:
     """
 
     initial: dict[str, DataFrame] = field(default_factory=dict)
-    batches: _LazyBatchList | list[dict[str, DataFrame]] = field(default_factory=list)
+    batches: _LazyBatchList | _LazyChunkList | list[dict[str, DataFrame]] = field(default_factory=list)
     plan: CDCPlan | None = None
 
 
@@ -344,6 +357,8 @@ def generate_expected_state(
     else:
         plan = plan_or_stream
 
+    if plan is None:
+        raise ValueError("CDCStream.plan must be set before calling generate_expected_state")
     table_map = {t.name: t for t in plan.base_plan.tables}
     table_spec = table_map[table_name]
     config = plan.config_for(table_name)

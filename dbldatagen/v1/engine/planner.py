@@ -66,7 +66,7 @@ def resolve_plan(plan: DataGenPlan) -> ResolvedPlan:
     all_table_names = list(table_map.keys())
 
     # Pre-build column lookup dicts for O(1) access (avoids O(N) scan per FK)
-    table_col_maps: dict[str, dict[str, object]] = {t.name: {c.name: c for c in t.columns} for t in plan.tables}
+    table_col_maps: dict[str, dict[str, ColumnSpec]] = {t.name: {c.name: c for c in t.columns} for t in plan.tables}
 
     # Collect all FK references and validate them
     fk_resolutions: dict[tuple[str, str], FKResolution] = {}

@@ -13,6 +13,7 @@ from dbldatagen.v1.ingest_schema import (
 from dbldatagen.v1.schema import (
     ColumnSpec,
     DataGenPlan,
+    DataType,
     PrimaryKey,
     RangeColumn,
     SequenceColumn,
@@ -28,8 +29,8 @@ def _simple_plan():
                 rows=1000,
                 primary_key=PrimaryKey(columns=["order_id"]),
                 columns=[
-                    ColumnSpec(name="order_id", dtype="long", gen=SequenceColumn(start=1)),
-                    ColumnSpec(name="amount", dtype="double", gen=RangeColumn(min=1.0, max=100.0)),
+                    ColumnSpec(name="order_id", dtype=DataType.LONG, gen=SequenceColumn(start=1)),
+                    ColumnSpec(name="amount", dtype=DataType.DOUBLE, gen=RangeColumn(min=1.0, max=100.0)),
                 ],
             ),
         ],
@@ -137,12 +138,12 @@ class TestIngestPlan:
                 TableSpec(
                     name="t1",
                     rows=100,
-                    columns=[ColumnSpec(name="a", dtype="int", gen=RangeColumn())],
+                    columns=[ColumnSpec(name="a", dtype=DataType.INT, gen=RangeColumn())],
                 ),
                 TableSpec(
                     name="t2",
                     rows=200,
-                    columns=[ColumnSpec(name="b", dtype="int", gen=RangeColumn())],
+                    columns=[ColumnSpec(name="b", dtype=DataType.INT, gen=RangeColumn())],
                 ),
             ],
         )
@@ -155,12 +156,12 @@ class TestIngestPlan:
                 TableSpec(
                     name="t1",
                     rows=100,
-                    columns=[ColumnSpec(name="a", dtype="int", gen=RangeColumn())],
+                    columns=[ColumnSpec(name="a", dtype=DataType.INT, gen=RangeColumn())],
                 ),
                 TableSpec(
                     name="t2",
                     rows=200,
-                    columns=[ColumnSpec(name="b", dtype="int", gen=RangeColumn())],
+                    columns=[ColumnSpec(name="b", dtype=DataType.INT, gen=RangeColumn())],
                 ),
             ],
         )
@@ -174,11 +175,11 @@ class TestIngestPlan:
 
 class TestIngestMode:
     def test_enum_values(self):
-        assert IngestMode.INCREMENTAL == "incremental"
-        assert IngestMode.SNAPSHOT == "snapshot"
+        assert IngestMode.INCREMENTAL.value == "incremental"
+        assert IngestMode.SNAPSHOT.value == "snapshot"
 
 
 class TestIngestStrategy:
     def test_enum_values(self):
-        assert IngestStrategy.SYNTHETIC == "synthetic"
-        assert IngestStrategy.DELTA == "delta"
+        assert IngestStrategy.SYNTHETIC.value == "synthetic"
+        assert IngestStrategy.DELTA.value == "delta"

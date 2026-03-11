@@ -68,4 +68,4 @@ def build_faker_column(
         indices = np.abs(x) % _pool_size
         return pd.Series(pool_array[indices.astype(np.intp)])
 
-    return _faker_pool_udf(id_col)
+    return _faker_pool_udf(id_col)  # type: ignore[no-any-return]

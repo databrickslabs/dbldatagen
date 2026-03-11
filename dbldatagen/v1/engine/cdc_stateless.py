@@ -90,12 +90,14 @@ def compute_periods(
     # through k-space with period = ceil(initial_rows / D).
     # Using initial_rows as the base for period calculation keeps the
     # stride constant across batches.
+    death_period: int | float
     if deletes_per_batch > 0:
         death_period = max(1, initial_rows // deletes_per_batch)
     else:
         death_period = math.inf
 
     # update_period: how many batches between updates for a given row
+    update_period: int | float
     if updates_per_batch > 0 and initial_rows > 0:
         update_period = max(1, initial_rows // updates_per_batch)
     else:
@@ -505,9 +507,9 @@ def birth_tick_expr(id_col: Column | str, initial_rows: int, inserts_per_batch: 
     # k < initial_rows -> 0
     # k >= initial_rows -> ((k - initial_rows) // inserts_per_batch) + 1
     if inserts_per_batch <= 0:
-        return F.lit(0).cast("long")
+        return F.lit(0).cast("long")  # type: ignore[no-any-return]
 
-    return F.when(
+    return F.when(  # type: ignore[no-any-return]
         id_col < F.lit(initial_rows).cast("long"),
         F.lit(0).cast("long"),
     ).otherwise(
@@ -537,16 +539,16 @@ def death_tick_expr(
     INF_SUBSTITUTE = 2**62  # Large enough to never be reached
 
     if math.isinf(death_period):
-        return F.lit(INF_SUBSTITUTE).cast("long")
+        return F.lit(INF_SUBSTITUTE).cast("long")  # type: ignore[no-any-return]
 
     dp = int(death_period)
     if dp <= 0:
-        return F.lit(INF_SUBSTITUTE).cast("long")
+        return F.lit(INF_SUBSTITUTE).cast("long")  # type: ignore[no-any-return]
 
     t_birth = birth_tick_expr(id_col, initial_rows, inserts_per_batch)
 
     # death_tick = birth_tick + min_life + (k % death_period)
-    return (t_birth + F.lit(min_life).cast("long") + (id_col % F.lit(dp).cast("long"))).cast("long")
+    return (t_birth + F.lit(min_life).cast("long") + (id_col % F.lit(dp).cast("long"))).cast("long")  # type: ignore[no-any-return]
 
 
 def is_alive_expr(
@@ -569,7 +571,7 @@ def is_alive_expr(
     t_death = death_tick_expr(id_col, initial_rows, inserts_per_batch, death_period, min_life)
 
     batch_lit = F.lit(batch_n).cast("long")
-    return (t_birth <= batch_lit) & (batch_lit < t_death)
+    return (t_birth <= batch_lit) & (batch_lit < t_death)  # type: ignore[no-any-return]
 
 
 def update_due_expr(
@@ -596,11 +598,11 @@ def update_due_expr(
         id_col = F.col(id_col)
 
     if math.isinf(update_period):
-        return F.lit(False)
+        return F.lit(False)  # type: ignore[no-any-return]
 
     up = int(update_period)
     if up <= 0:
-        return F.lit(False)
+        return F.lit(False)  # type: ignore[no-any-return]
 
     t_birth = birth_tick_expr(id_col, initial_rows, inserts_per_batch)
     t_death = death_tick_expr(id_col, initial_rows, inserts_per_batch, death_period, min_life)
@@ -620,7 +622,7 @@ def update_due_expr(
         recency = age <= F.lit(update_window).cast("long")
         result = result & recency
 
-    return result
+    return result  # type: ignore[no-any-return]
 
 
 def pre_image_batch_expr(
@@ -685,4 +687,4 @@ def pre_image_batch_expr(
     )
 
     # return max(prev, t_birth)
-    return F.greatest(prev, t_birth).cast("long")
+    return F.greatest(prev, t_birth).cast("long")  # type: ignore[no-any-return]

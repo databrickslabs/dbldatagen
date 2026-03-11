@@ -7,7 +7,9 @@ clean:
 	rm -fr **/*.pyc
 
 .venv/bin/python:
-	pip install "hatch==1.13.0" "click<8.3" "virtualenv<21"
+	pip install "hatch==1.13.0" "click<8.3"
+	python3.10 -m venv .venv
+	.venv/bin/pip install --upgrade pip
 	hatch env create
 
 dev: .venv/bin/python

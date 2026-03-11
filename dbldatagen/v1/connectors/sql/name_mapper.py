@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 
 from dbldatagen.v1.schema import (
     ColumnSpec,
@@ -60,7 +61,7 @@ def _pattern(name: str, template: str) -> ColumnSpec:
 
 
 # Each rule: (compiled regex, callable(col_name) -> ColumnSpec)
-_NAME_RULES: list[tuple[re.Pattern, callable]] = [
+_NAME_RULES: list[tuple[re.Pattern[str], Callable[[str], ColumnSpec]]] = [
     # --- Boolean (before contact to prevent has_email matching _email$) ---
     (re.compile(r"^is_|^has_|_flag$|^active$|^enabled$|^verified$|^deleted$", re.I), lambda n: _boolean(n)),
     # --- Contact info (Faker) ---

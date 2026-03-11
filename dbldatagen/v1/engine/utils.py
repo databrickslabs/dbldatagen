@@ -84,7 +84,7 @@ def create_range_df(
 
 def apply_null_fraction(
     expr: Column,
-    column_seed: int,
+    column_seed: int | Column,
     id_col: Column,
     null_fraction: float,
 ) -> Column:

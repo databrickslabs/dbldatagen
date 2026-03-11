@@ -343,10 +343,10 @@ class TestDeterminism:
         sql = """SELECT c.name, o.amount
                  FROM customers c
                  JOIN orders o ON o.customer_id = c.id"""
-        kwargs = {"row_counts": {"customers": 50, "orders": 200}, "seed": 99}
+        row_counts: dict[str, int | str] = {"customers": 50, "orders": 200}
 
-        dfs1 = sql_generate(spark, sql, **kwargs)
-        dfs2 = sql_generate(spark, sql, **kwargs)
+        dfs1 = sql_generate(spark, sql, row_counts=row_counts, seed=99)
+        dfs2 = sql_generate(spark, sql, row_counts=row_counts, seed=99)
 
         for name in ["customers", "orders"]:
             rows1 = sorted(dfs1[name].collect(), key=lambda r: r[0])

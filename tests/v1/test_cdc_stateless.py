@@ -197,7 +197,7 @@ class TestDeathTick:
 
     def test_death_tick_uniqueness_per_k(self):
         """Each k should have a unique death tick assignment."""
-        deaths = {}
+        deaths: dict[float, list[int]] = {}
         for k in range(100):
             t = death_tick(k, 100, 10, 10, min_life=3)
             deaths.setdefault(t, []).append(k)

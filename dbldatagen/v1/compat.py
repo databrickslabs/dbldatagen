@@ -21,10 +21,11 @@ Usage::
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from dbldatagen.v1.schema import (
     ColumnSpec,
+    ColumnStrategy,
     ConstantColumn,
     DataGenPlan,
     DataType,
@@ -112,7 +113,7 @@ def _map_distribution(v0_dist: object) -> Normal | Exponential | None:
 # ---------------------------------------------------------------------------
 
 
-def _get_option(spec: ColumnGenerationSpec, key: str, default: object = None) -> object:
+def _get_option(spec: ColumnGenerationSpec, key: str, default: Any = None) -> Any:
     """Safely read a v0 column option."""
     try:
         val = spec[key]
@@ -217,7 +218,7 @@ def _convert_column(spec: ColumnGenerationSpec) -> list[ColumnSpec]:
         max_val = adjusted_max
 
     # --- Determine generation strategy ---
-    gen = None
+    gen: ColumnStrategy | None = None
 
     # 1. Expression columns
     if expr_val:
@@ -370,7 +371,7 @@ def from_data_generator(
     >>> result["users"].count()
     1000
     """
-    name = table_name or getattr(dg, "name", "table")
+    name: str = table_name or str(getattr(dg, "name", "table"))
     rows = getattr(dg, "_rowCount", 1000)
     v0_seed = getattr(dg, "_randomSeed", 42)
     global_seed = seed if seed is not None else (v0_seed if isinstance(v0_seed, int) else 42)

@@ -115,11 +115,14 @@ class TestFk:
 
     def test_default_distribution_is_zipf(self):
         col = fk("cid", "c.id")
+        assert col.foreign_key is not None
         assert isinstance(col.foreign_key.distribution, Zipf)
         assert col.foreign_key.distribution.exponent == 1.2
 
     def test_custom_distribution(self):
         col = fk("cid", "c.id", distribution=Zipf(exponent=2.0))
+        assert col.foreign_key is not None
+        assert isinstance(col.foreign_key.distribution, Zipf)
         assert col.foreign_key.distribution.exponent == 2.0
 
     def test_placeholder_gen_is_constant(self):
@@ -129,10 +132,12 @@ class TestFk:
 
     def test_nullable_passthrough(self):
         col = fk("cid", "c.id", nullable=True)
+        assert col.foreign_key is not None
         assert col.foreign_key.nullable is True
 
     def test_null_fraction_passthrough(self):
         col = fk("cid", "c.id", null_fraction=0.05)
+        assert col.foreign_key is not None
         assert col.foreign_key.null_fraction == 0.05
 
 
@@ -158,6 +163,7 @@ class TestInteger:
 
     def test_defaults(self):
         col = integer("x")
+        assert isinstance(col.gen, RangeColumn)
         assert col.gen.min == 0
         assert col.gen.max == 100
 
@@ -179,6 +185,7 @@ class TestDecimal:
 
     def test_defaults(self):
         col = decimal("x")
+        assert isinstance(col.gen, RangeColumn)
         assert col.gen.min == 0.0
         assert col.gen.max == 1000.0
 
@@ -218,10 +225,12 @@ class TestFaker:
 
     def test_locale(self):
         col = faker("name", "name", locale="de_DE")
+        assert isinstance(col.gen, FakerColumn)
         assert col.gen.locale == "de_DE"
 
     def test_kwargs_passthrough(self):
         col = faker("dob", "date_of_birth", minimum_age=18, maximum_age=80)
+        assert isinstance(col.gen, FakerColumn)
         assert col.gen.kwargs == {"minimum_age": 18, "maximum_age": 80}
 
 
@@ -242,6 +251,7 @@ class TestTimestamp:
 
     def test_defaults(self):
         col = timestamp("ts")
+        assert isinstance(col.gen, TimestampColumn)
         assert col.gen.start == "2020-01-01"
         assert col.gen.end == "2025-12-31"
 

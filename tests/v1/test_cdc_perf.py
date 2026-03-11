@@ -147,7 +147,7 @@ def _run_legacy_batch(
     # Inserts (same path for both)
     inserts = None
     if periods.inserts_per_batch > 0:
-        inserts = _generate_insert_stream(
+        inserts_df = _generate_insert_stream(
             spark,
             table_spec,
             resolved,
@@ -155,8 +155,9 @@ def _run_legacy_batch(
             batch_id,
             global_seed,
         )
+        assert inserts_df is not None, f"generate_inserts returned None for batch {batch_id}"
         inserts = (
-            inserts.withColumn("_op", F.lit("I"))
+            inserts_df.withColumn("_op", F.lit("I"))
             .withColumn("_batch_id", F.lit(batch_id))
             .withColumn("_ts", F.lit(batch_ts).cast("timestamp"))
         )
@@ -262,7 +263,7 @@ def _run_native_batch(
     # Inserts (same path for both)
     inserts = None
     if periods.inserts_per_batch > 0:
-        inserts = _generate_insert_stream(
+        inserts_df = _generate_insert_stream(
             spark,
             table_spec,
             resolved,
@@ -270,8 +271,9 @@ def _run_native_batch(
             batch_id,
             global_seed,
         )
+        assert inserts_df is not None, f"generate_inserts returned None for batch {batch_id}"
         inserts = (
-            inserts.withColumn("_op", F.lit("I"))
+            inserts_df.withColumn("_op", F.lit("I"))
             .withColumn("_batch_id", F.lit(batch_id))
             .withColumn("_ts", F.lit(batch_ts).cast("timestamp"))
         )

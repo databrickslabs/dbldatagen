@@ -15,6 +15,7 @@ from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
 
 from dbldatagen.v1.engine.generator import build_all_column_exprs
+from dbldatagen.v1.engine.planner import FKResolution
 from dbldatagen.v1.engine.utils import get_pk_columns
 from dbldatagen.v1.schema import (
     PatternColumn,
@@ -67,7 +68,7 @@ def generate_stream(
     global_seed = table_spec.seed if table_spec.seed is not None else 42
 
     # Resolve FK metadata if parent_specs provided
-    fk_resolutions: dict[tuple[str, str], object] = {}
+    fk_resolutions: dict[tuple[str, str], FKResolution] = {}
     if parent_specs:
         fk_resolutions = _resolve_streaming_fk(table_spec, parent_specs, global_seed)
 
@@ -98,14 +99,14 @@ def _resolve_streaming_fk(
     table_spec: TableSpec,
     parent_specs: dict[str, TableSpec],
     global_seed: int,
-) -> dict[tuple[str, str], object]:
+) -> dict[tuple[str, str], FKResolution]:
     """Build FKResolution objects for FK columns using parent_specs metadata.
 
     Reuses ``_extract_pk_metadata`` from the planner to derive parent PK
     metadata, then constructs ``FKResolution`` objects identical to those
     produced by ``resolve_plan`` in batch mode.
     """
-    from dbldatagen.v1.engine.planner import FKResolution, _extract_pk_metadata
+    from dbldatagen.v1.engine.planner import _extract_pk_metadata
 
     resolutions: dict[tuple[str, str], FKResolution] = {}
     for col_spec in table_spec.columns:

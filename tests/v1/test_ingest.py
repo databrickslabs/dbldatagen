@@ -30,6 +30,7 @@ from dbldatagen.v1.ingest_schema import (
 from dbldatagen.v1.schema import (
     ColumnSpec,
     DataGenPlan,
+    DataType,
     PrimaryKey,
     RangeColumn,
     SequenceColumn,
@@ -59,11 +60,11 @@ def _simple_plan(rows=100) -> DataGenPlan:
                 rows=rows,
                 primary_key=PrimaryKey(columns=["order_id"]),
                 columns=[
-                    ColumnSpec(name="order_id", dtype="long", gen=SequenceColumn(start=1)),
-                    ColumnSpec(name="amount", dtype="double", gen=RangeColumn(min=1.0, max=1000.0)),
+                    ColumnSpec(name="order_id", dtype=DataType.LONG, gen=SequenceColumn(start=1)),
+                    ColumnSpec(name="amount", dtype=DataType.DOUBLE, gen=RangeColumn(min=1.0, max=1000.0)),
                     ColumnSpec(
                         name="status",
-                        dtype="string",
+                        dtype=DataType.STRING,
                         gen=ValuesColumn(values=["pending", "open", "settled", "closed"]),
                     ),
                 ],

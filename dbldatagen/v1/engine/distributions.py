@@ -69,9 +69,10 @@ def weighted_sample_expr(
         if expr is None:
             expr = F.lit(val)
         else:
-            expr = F.when(frac < F.lit(cum_w), F.lit(val)).otherwise(expr)
+            expr = F.when(frac < F.lit(cum_w), F.lit(val)).otherwise(expr)  # type: ignore[unreachable]
     return expr  # type: ignore[return-value]
-
+ # mypy incorrectly narrows expr to non-None after the first loop iteration
+# and marks this else branch as unreachable — it runs on every iteration after the first
 
 def normal_sample_expr(
     cell_seed_col: Column,
@@ -173,7 +174,7 @@ def apply_distribution(  # noqa: PLR0911
         # WeightedValues is handled at a higher level (needs value list)
         return uniform_sample(cell_seed_col, n)
     # Fallback
-    return uniform_sample(cell_seed_col, n)
+    return uniform_sample(cell_seed_col, n)  # type: ignore[unreachable]
 
 
 # ---------------------------------------------------------------------------

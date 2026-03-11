@@ -162,7 +162,7 @@ class TestCDCPlanValidation:
         assert plan.format == CDCFormat.RAW
 
     def test_custom_format(self):
-        plan = CDCPlan(base_plan=_simple_base_plan(), format="delta_cdf")
+        plan = CDCPlan(base_plan=_simple_base_plan(), format=CDCFormat.DELTA_CDF)
         assert plan.format == CDCFormat.DELTA_CDF
 
     def test_invalid_table_config_ref(self):
@@ -207,7 +207,7 @@ class TestCDCPlanSerialization:
         plan = CDCPlan(
             base_plan=_simple_base_plan(),
             num_batches=3,
-            format="delta_cdf",
+            format=CDCFormat.DELTA_CDF,
             table_configs={"users": CDCTableConfig(batch_size=20)},
         )
         data = json.loads(plan.model_dump_json())
@@ -246,7 +246,7 @@ class TestCDCPlanFromYAML:
         plan = CDCPlan(
             base_plan=_simple_base_plan(),
             num_batches=5,
-            format="raw",
+            format=CDCFormat.RAW,
         )
         yaml_str = yaml.dump(plan.model_dump(mode="json"), default_flow_style=False)
         plan2 = CDCPlan.model_validate(yaml.safe_load(yaml_str))

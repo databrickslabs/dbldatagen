@@ -408,7 +408,6 @@ exclude = [
     "examples",
     "tests/test_",
     "tests/__init__\\.py",
-    "tests/v1/",
     "integration_tests/",
     "tutorial",
     "dbldatagen/datasets",
@@ -447,6 +446,15 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = [
-    "dbldatagen.v1.*",
+    "dbldatagen.column_generation_spec",
+    "dbldatagen.column_spec_options",
+    "dbldatagen.datagen_constants",
+    "dbldatagen.schema_parser",
+    "dbldatagen.serialization",
+    "dbldatagen.utils",
+    "dbldatagen.datasets.*",
+    "dbldatagen.datasets_object",
+    "dbldatagen.constraints.*",
+    "dbldatagen.distributions.*",
 ]
 ignore_errors = true

@@ -535,7 +535,7 @@ def _generate_delete_stream_native(
 
     # Build columns with CASE WHEN on _write_batch for seed selection
     wbs = _precompute_write_batches(batch_id, periods.update_period)
-    df = _apply_columns_with_write_batch(
+    result = _apply_columns_with_write_batch(
         df,
         table_spec,
         resolved_plan,
@@ -544,7 +544,7 @@ def _generate_delete_stream_native(
         unique_wbs=wbs,
         row_count=upper_k,
     )
-    return df
+    return result
 
 
 def _generate_update_before_stream_native(
@@ -594,7 +594,7 @@ def _generate_update_before_stream_native(
 
     # Build columns with CASE WHEN on _write_batch
     wbs = _precompute_write_batches(batch_id, periods.update_period)
-    df = _apply_columns_with_write_batch(
+    result = _apply_columns_with_write_batch(
         df,
         table_spec,
         resolved_plan,
@@ -603,7 +603,7 @@ def _generate_update_before_stream_native(
         unique_wbs=wbs,
         row_count=upper_k,
     )
-    return df
+    return result
 
 
 def _generate_update_after_stream_native(
@@ -642,7 +642,7 @@ def _generate_update_after_stream_native(
     df = df.filter(ud_expr)
 
     # After-image: always current batch seed — no CASE WHEN needed
-    df = _apply_columns_with_write_batch(
+    result = _apply_columns_with_write_batch(
         df,
         table_spec,
         resolved_plan,
@@ -651,7 +651,7 @@ def _generate_update_after_stream_native(
         unique_wbs=[batch_id],
         row_count=upper_k,
     )
-    return df
+    return result
 
 
 def _apply_columns_with_write_batch(

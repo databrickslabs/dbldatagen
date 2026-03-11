@@ -251,7 +251,7 @@ class TestBaseColumnToSeedFrom:
             DataGenerator(spark, rows=10, name="t")
             .withColumn("a", IntegerType(), minValue=1, maxValue=10)
             .withColumn("c", IntegerType(), minValue=1, maxValue=10)
-            .withColumn("b", IntegerType(), baseColumn=["a", "c"], minValue=1, maxValue=5)
+            .withColumn("b", IntegerType(), baseColumn=["a", "c"], minValue=1, maxValue=5)  # type: ignore[arg-type]
         )
         plan = from_data_generator(dg)
         col_b = next(c for c in plan.tables[0].columns if c.name == "b")
@@ -343,6 +343,7 @@ class TestUnsupportedWarnings:
             assert len(uv_warnings) > 0
         # Also verify the range was adjusted
         col = next(c for c in plan.tables[0].columns if c.name == "x")
+        assert isinstance(col.gen, RangeColumn)
         assert col.gen.max == 50.0  # 1 + (50-1) * 1 = 50
 
     def test_constraints_warns(self, spark):
@@ -417,6 +418,7 @@ class TestEndToEnd:
 
         # id starts at 0, b should be id + 1
         row = df.filter("id = 0").first()
+        assert row is not None
         assert row.b == 1
 
     def test_determinism(self, spark):

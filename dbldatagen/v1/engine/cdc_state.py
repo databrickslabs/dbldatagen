@@ -88,12 +88,14 @@ class TableState:
 
     def _grow_memmaps(self, needed: int) -> None:
         """Grow memmap files to accommodate *needed* rows."""
+        assert self._memmap_dir is not None, "_grow_memmaps called but memmap dir was never initialised"
         new_max = max(needed, int(self._max_rows * 1.5))
         gen = getattr(self, "_memmap_gen", 0) + 1
         self._memmap_gen = gen
 
         # Grow _row_last_write
         old_lw = self._row_last_write
+        assert old_lw is not None, "_row_last_write must exist before growing memmaps"
         lw_path = self._memmap_dir / f"last_write_{gen}.bin"
         new_lw = np.memmap(lw_path, dtype=np.int16, mode="w+", shape=(new_max,))
         new_lw[: self._max_rows] = old_lw[: self._max_rows]
@@ -106,6 +108,7 @@ class TableState:
 
         # Grow _deleted_flags
         old_df = self._deleted_flags
+        assert old_df is not None, "_deleted_flags must exist before growing memmaps"
         df_path = self._memmap_dir / f"deleted_{gen}.bin"
         new_df = np.memmap(df_path, dtype=np.uint8, mode="w+", shape=(new_max,))
         new_df[: self._max_rows] = old_df[: self._max_rows]
@@ -169,6 +172,7 @@ class TableState:
             needed = self.total_rows_ever
             if needed > self._max_rows:
                 self._grow_memmaps(needed)
+            assert self._row_last_write is not None, "memmap _row_last_write not initialised"
             self._row_last_write[indices.astype(np.int64)] = np.int16(batch_id)
             return
 
@@ -185,6 +189,7 @@ class TableState:
     def record_delete(self, row_index: int) -> None:
         """Record that *row_index* has been deleted."""
         if self._using_memmap:
+            assert self._deleted_flags is not None, "memmap _deleted_flags not initialised"
             if self._deleted_flags[row_index] == 0:
                 self._deleted_flags[row_index] = 1
                 self._delete_count += 1
@@ -215,6 +220,7 @@ class TableState:
         if not self.has_deletes:
             return np.arange(n, dtype=np.int64)
         live_chunks: list[np.ndarray] = []
+        assert self._deleted_flags is not None, "memmap _deleted_flags not initialised"
         for start in range(0, scan_end, chunk_size):
             end = min(start + chunk_size, scan_end)
             mask = self._deleted_flags[start:end] == 0
@@ -274,7 +280,7 @@ def map_positions_to_absolute(
 
     # Small in-memory table — full array is fine
     live = state.get_live_indices()
-    return live[positions]
+    return live[positions]  # type: ignore[no-any-return]
 
 
 def _rejection_position_mapper(
@@ -291,6 +297,7 @@ def _rejection_position_mapper(
     """
     n = state.total_rows_ever
     flags = state._deleted_flags
+    assert flags is not None, "memmap _deleted_flags not initialised — cannot map positions"
 
     # Build prefix live-count at block boundaries — O(n) but only once
     block_size = 1_000_000
@@ -325,6 +332,7 @@ def _rejection_position_mapper(
             live_mask = np.where(flags[block_start:block_end] == 0)[0]
 
         local_offset = int(sorted_pos[idx] - prefix_live[bi])
+        assert live_mask is not None, "live_mask not set — block index out of range"
         result[idx] = block_start + live_mask[local_offset]
 
     # Restore original order
@@ -360,6 +368,7 @@ def _chunked_position_mapper(
     live_count = 0
 
     # Phase 1: scan _deleted_flags for rows [0, scan_end)
+    assert state._deleted_flags is not None
     for start in range(0, scan_end, chunk_size):
         if pos_cursor >= len(sorted_pos):
             break
@@ -492,8 +501,12 @@ def select_rows_for_batch(
 # ---------------------------------------------------------------------------
 
 
-def resolve_batch_size(batch_size_spec: int | float, initial_rows: int) -> int:
-    """Convert a batch_size spec (int or float fraction) to an absolute count."""
+def resolve_batch_size(batch_size_spec: int | float | str, initial_rows: int) -> int:
+    """Convert a batch_size spec (int, float fraction, or human string) to an absolute count."""
+    if isinstance(batch_size_spec, str):
+        from dbldatagen.v1.schema import parse_human_count
+
+        batch_size_spec = parse_human_count(batch_size_spec)
     if isinstance(batch_size_spec, float) and batch_size_spec < 1.0:
         return max(1, int(initial_rows * batch_size_spec))
     return int(batch_size_spec)

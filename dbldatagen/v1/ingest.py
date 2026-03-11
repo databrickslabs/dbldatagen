@@ -32,6 +32,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from dataclasses import dataclass, field
+from typing import overload
 
 from pyspark.sql import DataFrame, SparkSession
 
@@ -71,7 +72,13 @@ class _LazyIngestBatchList:
         self._plan = plan
         self._cache: dict[int, dict[str, DataFrame]] = {}
 
-    def __getitem__(self, index: int) -> dict[str, DataFrame]:
+# Overloads let mypy know that int indexing returns a single batch dict,
+# while slice indexing returns a list of batch dicts.
+    @overload
+    def __getitem__(self, index: int) -> dict[str, DataFrame]: ...
+    @overload
+    def __getitem__(self, index: slice) -> list[dict[str, DataFrame]]: ...
+    def __getitem__(self, index: int | slice) -> dict[str, DataFrame] | list[dict[str, DataFrame]]:
         if isinstance(index, slice):
             indices = range(*index.indices(len(self)))
             return [self[i] for i in indices]
@@ -351,7 +358,7 @@ def _normalize_plan(
         return IngestPlan(**kwargs)
     else:
         plan = plan_or_base
-        updates = {}
+        updates: dict[str, object] = {}
         if num_batches is not None:
             updates["num_batches"] = num_batches
         if mode is not None:

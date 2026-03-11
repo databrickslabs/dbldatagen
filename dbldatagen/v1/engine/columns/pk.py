@@ -158,4 +158,4 @@ def build_random_unique_pk_udf(N: int, seed: int) -> Callable[..., Column]:
         permuted = feistel_permute_batch(ids, N, seed)
         return pd.Series(permuted, dtype="int64")
 
-    return _feistel_pk
+    return _feistel_pk  # type: ignore[no-any-return]

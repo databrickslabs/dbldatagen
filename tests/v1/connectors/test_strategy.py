@@ -19,9 +19,9 @@ from dbldatagen.v1.schema import (
 )
 
 
-def _col(**overrides) -> InferredColumn:
+def _col(**overrides: object) -> InferredColumn:
     """Shorthand for building an InferredColumn with defaults."""
-    defaults = {
+    defaults: dict[str, object] = {
         "name": "col",
         "native_type": "TEXT",
         "synth_dtype": DataType.STRING,
@@ -34,7 +34,7 @@ def _col(**overrides) -> InferredColumn:
         "distinct_count": None,
     }
     defaults.update(overrides)
-    return InferredColumn(**defaults)
+    return InferredColumn(**defaults)  # type: ignore[arg-type]
 
 
 class TestPKStrategy:

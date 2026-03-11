@@ -147,15 +147,15 @@ def build_all_column_exprs(
 
         # FK columns
         if col_spec.foreign_key is not None:
-            result = _build_fk_column_expr(
+            fk_result = _build_fk_column_expr(
                 col_spec,
                 table_name,
                 id_col,
                 column_seed,
                 fk_resolutions,
             )
-            if result is not None:
-                udf_columns.append(result)
+            if fk_result is not None:
+                udf_columns.append(fk_result)
             else:
                 col_exprs.append(F.lit(None).alias(col_spec.name))
             continue
@@ -187,6 +187,7 @@ def _build_seed_from_column(
     row_count: int,
 ) -> tuple[str, Column]:
     """Build expression for a column with seed_from."""
+    assert col_spec.seed_from is not None, f"_build_seed_from_column called for '{col_spec.name}' but seed_from is None"
     effective_id = F.col(col_spec.seed_from)
 
     if isinstance(col_spec.gen, FakerColumn):
@@ -222,6 +223,7 @@ def _build_faker_expr(
     """Build a Faker pool UDF expression."""
     from dbldatagen.v1.engine.columns.faker_pool import build_faker_column
 
+    assert isinstance(col_spec.gen, FakerColumn)
     faker_expr = build_faker_column(
         id_col,
         column_seed,
@@ -561,22 +563,24 @@ def build_column_expr(  # noqa: PLR0911
 def _build_struct_column(
     gen: StructColumn,
     id_col: Column,
-    parent_seed: int,
+    parent_seed: int | Column,
     row_count: int,
     global_seed: int,
 ) -> Column:
     """Build a Spark struct from child ColumnSpecs."""
     field_cols: list[Column] = []
     for field_spec in gen.fields:
-        child_seed = derive_column_seed(parent_seed, "", field_spec.name)
+        child_seed = (
+            derive_column_seed(parent_seed, "", field_spec.name) if isinstance(parent_seed, int) else parent_seed
+        )
         child_expr = build_column_expr(
             field_spec,
             id_col,
-            child_seed,
+            child_seed,  # type: ignore[arg-type]
             row_count,
             global_seed,
         )
-        child_expr = apply_null_fraction(child_expr, child_seed, id_col, field_spec.null_fraction)
+        child_expr = apply_null_fraction(child_expr, child_seed, id_col, field_spec.null_fraction)  # type: ignore[arg-type]
         field_cols.append(child_expr.alias(field_spec.name))
     return F.struct(*field_cols)
 
@@ -584,7 +588,7 @@ def _build_struct_column(
 def _build_array_column(
     gen: ArrayColumn,
     id_col: Column,
-    column_seed: int,
+    column_seed: int | Column,
     row_count: int,
     global_seed: int,
 ) -> Column:
@@ -595,10 +599,13 @@ def _build_array_column(
     element_cols: list[Column] = []
     dummy_spec = ColumnSpec(name="_elem", gen=gen.element)
     for i in range(gen.max_length):
-        elem_seed = column_seed ^ ((i + 1) * 0x9E3779B9)
-        # Keep elem_seed in signed 64-bit range
-        if elem_seed >= 0x8000000000000000:
-            elem_seed -= 0x10000000000000000
+        if isinstance(column_seed, int):
+            elem_seed: int | Column = column_seed ^ ((i + 1) * 0x9E3779B9)
+            # Keep elem_seed in signed 64-bit range
+            if elem_seed >= 0x8000000000000000:
+                elem_seed -= 0x10000000000000000
+        else:
+            elem_seed = column_seed.bitwiseXOR(F.lit((i + 1) * 0x9E3779B9).cast("long"))
         elem_expr = build_column_expr(
             dummy_spec,
             id_col,

@@ -22,11 +22,13 @@ from dbldatagen.v1.ingest import detect_changes
 from dbldatagen.v1.ingest_schema import (
     IngestMode,
     IngestPlan,
+    IngestStrategy,
     IngestTableConfig,
 )
 from dbldatagen.v1.schema import (
     ColumnSpec,
     DataGenPlan,
+    DataType,
     PrimaryKey,
     RangeColumn,
     SequenceColumn,
@@ -56,11 +58,11 @@ def _simple_plan(rows=10) -> DataGenPlan:
                 rows=rows,
                 primary_key=PrimaryKey(columns=["txn_id"]),
                 columns=[
-                    ColumnSpec(name="txn_id", dtype="long", gen=SequenceColumn(start=1)),
-                    ColumnSpec(name="amount", dtype="double", gen=RangeColumn(min=5.0, max=5000.0)),
+                    ColumnSpec(name="txn_id", dtype=DataType.LONG, gen=SequenceColumn(start=1)),
+                    ColumnSpec(name="amount", dtype=DataType.DOUBLE, gen=RangeColumn(min=5.0, max=5000.0)),
                     ColumnSpec(
                         name="status",
-                        dtype="string",
+                        dtype=DataType.STRING,
                         gen=ValuesColumn(values=["pending", "open", "settled", "closed"]),
                     ),
                 ],
@@ -77,7 +79,7 @@ class TestDeltaIncremental:
             base_plan=_simple_plan(),
             num_batches=10,
             mode=IngestMode.INCREMENTAL,
-            strategy="delta",
+            strategy=IngestStrategy.DELTA,
             table_configs={
                 "transactions": IngestTableConfig(
                     batch_size=10,
@@ -110,7 +112,7 @@ class TestDeltaIncremental:
             base_plan=_simple_plan(),
             num_batches=3,
             mode=IngestMode.INCREMENTAL,
-            strategy="delta",
+            strategy=IngestStrategy.DELTA,
             table_configs={
                 "transactions": IngestTableConfig(
                     batch_size=10,
@@ -161,7 +163,7 @@ class TestDeltaIncremental:
         plan = IngestPlan(
             base_plan=_simple_plan(),
             num_batches=3,
-            strategy="delta",
+            strategy=IngestStrategy.DELTA,
             table_configs={
                 "transactions": IngestTableConfig(
                     batch_size=10,
@@ -211,7 +213,7 @@ class TestDeltaIncremental:
         plan = IngestPlan(
             base_plan=_simple_plan(),
             num_batches=3,
-            strategy="delta",
+            strategy=IngestStrategy.DELTA,
             table_configs={
                 "transactions": IngestTableConfig(
                     batch_size=10,
