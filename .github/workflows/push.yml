@@ -10,31 +10,38 @@ jobs:
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      v1: ${{ steps.filter.outputs.v1 }}
-      v2: ${{ steps.filter.outputs.v2 }}
-      shared: ${{ steps.filter.outputs.shared }}
+      v1: ${{ steps.check.outputs.v1 }}
+      v2: ${{ steps.check.outputs.v2 }}
+      shared: ${{ steps.check.outputs.shared }}
     steps:
       - uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          # Use local git diff instead of GitHub API (org IP allow list blocks API calls)
-          base: ${{ github.event.pull_request.base.sha || github.event.before }}
-          filters: |
-            v1:
-              - 'dbldatagen/v1/**'
-              - 'tests/v1/**'
-            v2:
-              - 'dbldatagen/**'
-              - '!dbldatagen/v1/**'
-              - 'tests/**'
-              - '!tests/v1/**'
-            shared:
-              - 'pyproject.toml'
-              - 'Makefile'
-              - '.github/workflows/**'
+      - name: Detect changed paths
+        id: check
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE=${{ github.event.pull_request.base.sha }}
+          else
+            BASE=${{ github.event.before }}
+          fi
+          CHANGED=$(git diff --name-only "$BASE"..HEAD)
+          echo "Changed files:"
+          echo "$CHANGED"
+
+          v1=false
+          v2=false
+          shared=false
+
+          echo "$CHANGED" | grep -qE '^dbldatagen/v1/|^tests/v1/' && v1=true
+          echo "$CHANGED" | grep -qE '^dbldatagen/(?!v1/)' && v2=true
+          echo "$CHANGED" | grep -qE '^tests/(?!v1/)' && v2=true
+          echo "$CHANGED" | grep -qE '^pyproject\.toml$|^Makefile$|^\.github/workflows/' && shared=true
+
+          echo "v1=$v1" >> "$GITHUB_OUTPUT"
+          echo "v2=$v2" >> "$GITHUB_OUTPUT"
+          echo "shared=$shared" >> "$GITHUB_OUTPUT"
+          echo "Results: v1=$v1 v2=$v2 shared=$shared"
 
   fmt:
     runs-on: ubuntu-latest
