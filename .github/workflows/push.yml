@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       v1: ${{ steps.check.outputs.v1 }}
-      v2: ${{ steps.check.outputs.v2 }}
+      v0: ${{ steps.check.outputs.v0 }}
       shared: ${{ steps.check.outputs.shared }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -30,18 +30,18 @@ jobs:
           echo "$CHANGED"
 
           v1=false
-          v2=false
+          v0=false
           shared=false
 
           echo "$CHANGED" | grep -qE '^dbldatagen/v1/|^tests/v1/' && v1=true
-          echo "$CHANGED" | grep -qE '^dbldatagen/(?!v1/)' && v2=true
-          echo "$CHANGED" | grep -qE '^tests/(?!v1/)' && v2=true
+          echo "$CHANGED" | grep -qE '^dbldatagen/(?!v1/)' && v0=true
+          echo "$CHANGED" | grep -qE '^tests/(?!v1/)' && v0=true
           echo "$CHANGED" | grep -qE '^pyproject\.toml$|^Makefile$|^\.github/workflows/' && shared=true
 
           echo "v1=$v1" >> "$GITHUB_OUTPUT"
-          echo "v2=$v2" >> "$GITHUB_OUTPUT"
+          echo "v0=$v0" >> "$GITHUB_OUTPUT"
           echo "shared=$shared" >> "$GITHUB_OUTPUT"
-          echo "Results: v1=$v1 v2=$v2 shared=$shared"
+          echo "Results: v1=$v1 v0=$v0 shared=$shared"
 
   fmt:
     runs-on: ubuntu-latest
@@ -55,9 +55,9 @@ jobs:
       - name: Fail on differences
         run: git diff --exit-code
 
-  test-v2:
+  test-v0:
     needs: detect-changes
-    if: needs.detect-changes.outputs.v2 == 'true' || needs.detect-changes.outputs.shared == 'true'
+    if: needs.detect-changes.outputs.v0 == 'true' || needs.detect-changes.outputs.shared == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -82,14 +82,14 @@ jobs:
         # click 8.3+ introduced bug for hatch; virtualenv 21 removed propose_interpreters
         run: pip install "hatch==1.13.0" "click<8.3" "virtualenv<21"
 
-      - name: Run v2 unit tests
-        run: hatch run v2:test
+      - name: Run v0 unit tests
+        run: hatch run v0:test
 
       - name: Publish test coverage
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          name: dbldatagen-v2
+          name: dbldatagen-v0
           files: ./coverage.xml
 
   test-v1:
@@ -123,7 +123,7 @@ jobs:
 
   # Gate job for branch protection — single status check that covers both test suites
   tests:
-    needs: [fmt, test-v1, test-v2]
+    needs: [fmt, test-v1, test-v0]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -133,8 +133,8 @@ jobs:
             echo "fmt failed"
             exit 1
           fi
-          if [[ "${{ needs.test-v2.result }}" == "failure" ]]; then
-            echo "test-v2 failed"
+          if [[ "${{ needs.test-v0.result }}" == "failure" ]]; then
+            echo "test-v0 failed"
             exit 1
           fi
           if [[ "${{ needs.test-v1.result }}" == "failure" ]]; then

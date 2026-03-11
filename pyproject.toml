@@ -140,8 +140,8 @@ verify      = ["black --check .",
                "mypy .",
                "pylint --output-format=colorized -j 0 dbldatagen tests"]
 
-# v2 env: tests for the original (non-v1) codebase
-[tool.hatch.envs.v2]
+# v0 env: tests for the original (non-v1) codebase
+[tool.hatch.envs.v0]
 dependencies = [
     "chispa~=0.10.1",
     "coverage[toml]~=7.4.4",
@@ -164,7 +164,7 @@ dependencies = [
 
 python = "3.10"
 
-[tool.hatch.envs.v2.scripts]
+[tool.hatch.envs.v0.scripts]
 test     = "pytest tests/ --ignore=tests/v1/ --timeout 600 --durations 20"
 test-cov = "pytest tests/ --ignore=tests/v1/ --timeout 600 --durations 20 --cov=dbldatagen --cov-config=.coveragerc --cov-report=term-missing:skip-covered --cov-report=xml --cov-report=html --cov-fail-under=80"
 
