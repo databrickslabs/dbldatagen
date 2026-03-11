@@ -13,10 +13,6 @@ __pycache__
 *.py[cod]
 *$py.class
 
-# Virtual environments
-.venv/
-venv/
-
 # Distribution / packaging
 env/
 build/
@@ -52,3 +48,14 @@ htmlcov/
 # Cursor is an AI-powered code editor. The .cursor/ directory contains IDE-specific
 # settings and configurations similar to other IDEs.
 .cursor/
+
+# Personal notes
+notes/
+
+# Docusaurus
+docs/dbldatagen/node_modules/
+docs/dbldatagen/build/
+docs/dbldatagen/.docusaurus/
+docs/dbldatagen/docs/
+docs/dbldatagen/static/public_docs/
+docs/public_docs/

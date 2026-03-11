@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B0F19" />
+      <stop offset="100%" stop-color="#040508" />
+    </linearGradient>
+    <linearGradient id="dbTop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF5A5F" />
+      <stop offset="100%" stop-color="#E02E24" />
+    </linearGradient>
+    <linearGradient id="dbLeft" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#C22015" />
+      <stop offset="100%" stop-color="#8A150D" />
+    </linearGradient>
+    <linearGradient id="dbRight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#9C1A11" />
+      <stop offset="100%" stop-color="#5E0E08" />
+    </linearGradient>
+    <filter id="neonGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="1.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="120" height="120" rx="28" fill="url(#bgGrad)" />
+  <g stroke="rgba(0, 210, 255, 0.15)" stroke-width="1" fill="none">
+    <path d="M 60,85 L 90,70 L 60,55 L 30,70 Z" stroke-dasharray="2 4" />
+    <path d="M 60,105 L 120,75 L 60,45 L 0,75 Z" stroke-dasharray="4 6" opacity="0.5"/>
+  </g>
+  <g>
+    <path d="M 22,46 L 44,35 L 66,46 L 44,57 Z" fill="url(#dbTop)" />
+    <path d="M 22,46 L 44,57 L 44,75 L 22,64 Z" fill="url(#dbLeft)" />
+    <path d="M 66,46 L 44,57 L 44,75 L 66,64 Z" fill="url(#dbRight)" />
+  </g>
+  <g>
+    <path d="M 54,62 L 76,51 L 98,62 L 76,73 Z" fill="url(#dbTop)" />
+    <path d="M 54,62 L 76,73 L 76,91 L 54,80 Z" fill="url(#dbLeft)" />
+    <path d="M 98,62 L 76,73 L 76,91 L 98,80 Z" fill="url(#dbRight)" />
+  </g>
+  <g filter="url(#neonGlow)">
+    <g stroke="#FFFFFF" stroke-width="1.5" stroke-dasharray="2 3" opacity="0.6">
+      <path d="M 38,32 L 38,12" />
+      <path d="M 82,32 L 82,12" />
+      <path d="M 60,43 L 60,23" />
+    </g>
+    <path d="M 38,32 L 60,21 L 82,32 L 60,43 Z" fill="rgba(0, 210, 255, 0.15)" stroke="#00D2FF" stroke-width="1.5"/>
+    <path d="M 38,22 L 60,11 L 82,22 L 60,33 Z" fill="rgba(176, 38, 255, 0.15)" stroke="#B026FF" stroke-width="1.5"/>
+    <path d="M 38,12 L 60,1 L 82,12 L 60,23 Z" fill="rgba(0, 255, 136, 0.15)" stroke="#00FF88" stroke-width="1.5"/>
+  </g>
+  <g stroke-width="1" fill="none" stroke-dasharray="3 3" opacity="0.7">
+    <path d="M 60,12 C 45,5 30,12 22,22" stroke="#B026FF" />
+    <path d="M 60,12 C 75,5 90,12 98,22" stroke="#00FF88" />
+    <path d="M 60,12 C 60,0 60,-5 60,-10" stroke="#00D2FF" />
+  </g>
+  <g transform="translate(18, 22) scale(0.8)" filter="url(#softGlow)">
+    <path d="M 0,0 L 5,-2.5 L 10,0 L 5,2.5 Z" fill="#E066FF" />
+    <path d="M 0,0 L 5,2.5 L 5,7 L 0,4.5 Z" fill="#B026FF" />
+    <path d="M 10,0 L 5,2.5 L 5,7 L 10,4.5 Z" fill="#7A00CC" />
+  </g>
+  <g transform="translate(94, 22) scale(0.9)" filter="url(#softGlow)">
+    <path d="M 0,0 L 5,-2.5 L 10,0 L 5,2.5 Z" fill="#66FFB2" />
+    <path d="M 0,0 L 5,2.5 L 5,7 L 0,4.5 Z" fill="#00FF88" />
+    <path d="M 10,0 L 5,2.5 L 5,7 L 10,4.5 Z" fill="#00B259" />
+  </g>
+  <g transform="translate(56, -6) scale(0.8)" filter="url(#softGlow)">
+    <path d="M 0,0 L 5,-2.5 L 10,0 L 5,2.5 Z" fill="#66E0FF" />
+    <path d="M 0,0 L 5,2.5 L 5,7 L 0,4.5 Z" fill="#00D2FF" />
+    <path d="M 10,0 L 5,2.5 L 5,7 L 10,4.5 Z" fill="#0088CC" />
+  </g>
+  <circle cx="35" cy="15" r="1.5" fill="#B026FF" filter="url(#neonGlow)"/>
+  <circle cx="85" cy="12" r="1.5" fill="#00FF88" filter="url(#neonGlow)"/>
+  <g transform="translate(92, 92)">
+    <circle cx="10" cy="10" r="14" fill="#06080D" stroke="#00FF88" stroke-width="1" opacity="0.9" />
+    <g filter="url(#softGlow)">
+      <path d="M 6,9 L 6,5 A 4,4 0 0,1 14,5" fill="none" stroke="#00FF88" stroke-width="1.5" stroke-linecap="round" />
+      <rect x="2" y="9" width="16" height="11" rx="2" fill="rgba(0, 255, 136, 0.2)" stroke="#00FF88" stroke-width="1.5" />
+      <circle cx="10" cy="13" r="1.2" fill="#00FF88" />
+      <rect x="9.4" y="14" width="1.2" height="3" fill="#00FF88" rx="0.5"/>
+    </g>
+  </g>
+</svg>

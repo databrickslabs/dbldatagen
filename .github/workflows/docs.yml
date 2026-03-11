@@ -1,0 +1,50 @@
+name: Deploy Docs
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Sphinx dependencies
+        run: pip install sphinx sphinx-rtd-theme sphinx-copybutton roman recommonmark
+
+      - name: Install dbldatagen
+        run: pip install -e .
+
+      - name: Build Sphinx docs
+        working-directory: docs
+        run: make public-docs
+
+      - name: Copy Sphinx HTML into Docusaurus static
+        run: cp -R docs/public_docs/ docs/dbldatagen/static/public_docs/
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: docs/dbldatagen/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: docs/dbldatagen
+
+      - name: Build Docusaurus
+        run: npx docusaurus build
+        working-directory: docs/dbldatagen
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/dbldatagen/build
