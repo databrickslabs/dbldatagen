@@ -35,9 +35,11 @@ def build_uuid_column(id_col: Column | str, column_seed: int | Column) -> Column
     hi = F.xxhash64(seed_col, id_col)
     lo = F.xxhash64(seed_col_plus1, id_col)
 
-    # Convert each 64-bit hash to a 16-char lowercase hex string
-    hi_hex = F.lower(F.lpad(F.hex(F.abs(hi)), 16, "0"))
-    lo_hex = F.lower(F.lpad(F.hex(F.abs(lo)), 16, "0"))
+    # Convert each 64-bit hash to a 16-char lowercase hex string.
+    # Use two's-complement hex directly — no abs(), which would halve
+    # the output space and mishandle Long.MIN_VALUE.
+    hi_hex = F.lower(F.lpad(F.hex(hi), 16, "0"))
+    lo_hex = F.lower(F.lpad(F.hex(lo), 16, "0"))
 
     # Format as UUID: 8-4-4-4-12
     return F.concat(
