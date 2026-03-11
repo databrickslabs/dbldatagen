@@ -41,7 +41,7 @@ def get_version(version: str) -> VersionInfo:
     return version_info
 
 
-__version__ = "0.4.0post2"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpversion
+__version__ = "1.0.0"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpversion
 __version_info__ = get_version(__version__)
 
 

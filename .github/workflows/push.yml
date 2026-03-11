@@ -115,7 +115,7 @@ jobs:
         run: hatch run v1:test
 
   # Gate job for branch protection — single status check that covers both test suites
-  tests-pass:
+  tests:
     needs: [fmt, test-v1, test-v2]
     if: always()
     runs-on: ubuntu-latest
