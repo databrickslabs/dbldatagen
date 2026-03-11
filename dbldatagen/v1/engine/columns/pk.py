@@ -138,7 +138,7 @@ def _feistel_round(
     for r in range(rounds):
         new_left = right
         new_right = left ^ (_mix64_vec(right, keys[r]) & mask)
-        left, right = new_left, new_right
+        left, right = new_left, new_right  # type: ignore[assignment,unused-ignore]
     return (left << np.int64(half)) | right
 
 

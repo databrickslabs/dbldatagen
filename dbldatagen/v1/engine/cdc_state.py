@@ -273,7 +273,7 @@ def map_positions_to_absolute(
     For small in-memory tables, uses the full ``get_live_indices()``.
     """
     if not state.has_deletes:
-        return positions.copy()
+        return positions.copy()  # type: ignore[no-any-return,unused-ignore]
 
     if state._using_memmap:
         return _chunked_position_mapper(state, positions)

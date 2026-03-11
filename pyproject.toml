@@ -456,5 +456,6 @@ module = [
     "dbldatagen.datasets_object",
     "dbldatagen.constraints.*",
     "dbldatagen.distributions.*",
+    "dbldatagen.text_generators",
 ]
 ignore_errors = true
