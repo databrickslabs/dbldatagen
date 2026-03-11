@@ -7,6 +7,31 @@ on:
     branches: [master]
 
 jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      v1: ${{ steps.filter.outputs.v1 }}
+      v2: ${{ steps.filter.outputs.v2 }}
+      shared: ${{ steps.filter.outputs.shared }}
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            v1:
+              - 'dbldatagen/v1/**'
+              - 'tests/v1/**'
+            v2:
+              - 'dbldatagen/**'
+              - '!dbldatagen/v1/**'
+              - 'tests/**'
+              - '!tests/v1/**'
+            shared:
+              - 'pyproject.toml'
+              - 'Makefile'
+              - '.github/workflows/**'
+
   fmt:
     runs-on: ubuntu-latest
     steps:
@@ -19,8 +44,9 @@ jobs:
       - name: Fail on differences
         run: git diff --exit-code
 
-  tests:
-    # Ubuntu latest no longer installs Python 3.9 by default so install it
+  test-v2:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.v2 == 'true' || needs.detect-changes.outputs.shared == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -28,30 +54,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      # - name: Cache packages
-      #   uses: actions/cache@v2
-      #   with:
-      #     path: |
-      #       ~/go/pkg/mod
-      #       ~/.cache/go-build
-      #       vendor
-      #     key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-go-
-
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'   # Can also use 'zulu', 'adopt', etc.
+          distribution: 'temurin'
           java-version: '17'
-
-      - name: Get Java version
-        run: java -version
-
-      #- name: Set Java 8
-      #  run: |
-      #    sudo update-alternatives --set java /usr/lib/jvm/temurin-8-jdk-amd64/bin/java
-      #    java -version
 
       - name: Install Python
         uses: actions/setup-python@v5
@@ -64,16 +71,63 @@ jobs:
         # click 8.3+ introduced bug for hatch; virtualenv 21 removed propose_interpreters
         run: pip install "hatch==1.13.0" "click<8.3" "virtualenv<21"
 
-      - name: Run v0 unit tests
-        run: make dev test
+      - name: Run v2 unit tests
+        run: hatch run v2:test
 
-      - name: Run v1 unit tests
-        run: make test-v1
-
-      - name: Publish test coverage to coverage site
+      - name: Publish test coverage
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          name: dbldatagen
+          name: dbldatagen-v2
           files: ./coverage.xml
 
+  test-v1:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.v1 == 'true' || needs.detect-changes.outputs.shared == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          cache: 'pip'
+          cache-dependency-path: '**/pyproject.toml'
+          python-version: '3.10'
+
+      - name: Install Hatch
+        run: pip install "hatch==1.13.0" "click<8.3" "virtualenv<21"
+
+      - name: Run v1 unit tests
+        run: hatch run v1:test
+
+  # Gate job for branch protection — single status check that covers both test suites
+  tests-pass:
+    needs: [fmt, test-v1, test-v2]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check results
+        run: |
+          if [[ "${{ needs.fmt.result }}" == "failure" ]]; then
+            echo "fmt failed"
+            exit 1
+          fi
+          if [[ "${{ needs.test-v2.result }}" == "failure" ]]; then
+            echo "test-v2 failed"
+            exit 1
+          fi
+          if [[ "${{ needs.test-v1.result }}" == "failure" ]]; then
+            echo "test-v1 failed"
+            exit 1
+          fi
+          echo "All checks passed (or were skipped due to no changes)"

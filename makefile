@@ -22,22 +22,23 @@ fmt:
 	hatch run fmt
 
 test:
-	hatch run test
+	hatch run v2:test
 
 test-v1:
-	hatch run test-v1
+	hatch run v1:test
 
 test-v1-cov:
-	hatch run test-v1-cov
+	hatch run v1:test-cov
 
 test-all:
-	hatch run test-all
+	hatch run v2:test
+	hatch run v1:test
 
 test-cov:
-	hatch run test-cov
+	hatch run v2:test-cov
 
 test-coverage:
-	hatch run test-cov && open htmlcov/index.html
+	hatch run v2:test-cov && open htmlcov/index.html
 
 build:
 	hatch build

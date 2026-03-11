@@ -32,7 +32,6 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "databricks-sdk~=0.57",
     "jmespath>=1.0.0",
     "pyparsing>=3.0.0",
 ]
@@ -89,23 +88,26 @@ include = [
     "/MANIFEST.in",
 ]
 
+# Default env: local development (lint + test + all runtime deps for IDE support)
 [tool.hatch.envs.default]
 dependencies = [
+    # Lint and format
     "black~=25.12.0",
-    "chispa~=0.10.1",
-    "coverage[toml]~=7.4.4",
     "mypy~=1.9.0",
     "pylint~=3.3.1",
     "pylint-pytest==2.0.0a0",
+    "ruff~=0.13.0",
+    "types-PyYAML~=6.0.12",
+    "types-requests~=2.31.0",
+    # Test
+    "chispa~=0.10.1",
+    "coverage[toml]~=7.4.4",
     "pytest~=8.3.3",
     "pytest-cov~=4.1.0",
     "pytest-mock~=3.14.0",
     "pytest-timeout~=2.3.1",
     "pytest-xdist~=3.5.0",
-    "ruff~=0.13.0",
-    "types-PyYAML~=6.0.12",
-    "types-requests~=2.31.0",
-    "databricks-sdk~=0.57",
+    # Runtime deps (all v1 + v2 so IDE resolves everything)
     "numpy>=1.21.5",
     "pandas>=1.4.4",
     "pyarrow>=8.0.0",
@@ -123,18 +125,12 @@ dependencies = [
     "pyyaml>=6.0",
 ]
 
-python="3.10"
+python = "3.10"
 
 # store virtual env as the child of this folder. Helps VSCode (and PyCharm) to run better
 path = ".venv"
 
 [tool.hatch.envs.default.scripts]
-test    = "pytest tests/ --ignore=tests/v1/ --timeout 600 --durations 20"
-test-cov = "pytest tests/ --ignore=tests/v1/ --timeout 600 --durations 20 --cov=dbldatagen --cov-config=.coveragerc --cov-report=term-missing:skip-covered --cov-report=xml --cov-report=html --cov-fail-under=80"
-test-v1 = "pytest tests/v1/ --timeout 600 --durations 20 --no-header -q"
-test-v1-cov = "pytest tests/v1/ --timeout 600 --durations 20 --no-header -q --cov=dbldatagen/v1 --cov-config=.coveragerc-v1 --cov-report=term-missing:skip-covered --cov-report=html:htmlcov-v1 --ignore=tests/v1/test_faker_pool.py --ignore=tests/v1/test_streaming.py --ignore=tests/v1/connectors/test_sql_spark.py"
-test-all = ["pytest tests/ --ignore=tests/v1/ --timeout 600 --durations 20",
-             "pytest tests/v1/ --timeout 600 --durations 20 --no-header -q"]
 fmt         = ["black .",
                "ruff check . --fix",
                "mypy .",
@@ -143,6 +139,60 @@ verify      = ["black --check .",
                "ruff check .",
                "mypy .",
                "pylint --output-format=colorized -j 0 dbldatagen tests"]
+
+# v2 env: tests for the original (non-v1) codebase
+[tool.hatch.envs.v2]
+dependencies = [
+    "chispa~=0.10.1",
+    "coverage[toml]~=7.4.4",
+    "pytest~=8.3.3",
+    "pytest-cov~=4.1.0",
+    "pytest-mock~=3.14.0",
+    "pytest-timeout~=2.3.1",
+    "pytest-xdist~=3.5.0",
+    "numpy>=1.21.5",
+    "pandas>=1.4.4",
+    "pyarrow>=8.0.0",
+    "pyspark[sql]>=3.4.1",
+    "python-dateutil>=2.8.2",
+    "six>=1.16.0",
+    "pyparsing>=3.0.9",
+    "jmespath>=0.10.0",
+    "py4j>=0.10.9",
+    "pickleshare>=0.7.5",
+]
+
+python = "3.10"
+
+[tool.hatch.envs.v2.scripts]
+test     = "pytest tests/ --ignore=tests/v1/ --timeout 600 --durations 20"
+test-cov = "pytest tests/ --ignore=tests/v1/ --timeout 600 --durations 20 --cov=dbldatagen --cov-config=.coveragerc --cov-report=term-missing:skip-covered --cov-report=xml --cov-report=html --cov-fail-under=80"
+
+# v1 env: tests for the v1 module
+[tool.hatch.envs.v1]
+dependencies = [
+    "coverage[toml]~=7.4.4",
+    "pytest~=8.3.3",
+    "pytest-cov~=4.1.0",
+    "pytest-mock~=3.14.0",
+    "pytest-timeout~=2.3.1",
+    "pytest-xdist~=3.5.0",
+    "numpy>=1.21.5",
+    "pandas>=1.4.4",
+    "pyspark[sql]>=3.4.1",
+    "pydantic>=2.0",
+    "faker>=20.0",
+    "sqlalchemy>=2.0",
+    "sqlglot>=20.0",
+    "pyyaml>=6.0",
+    "py4j>=0.10.9",
+]
+
+python = "3.10"
+
+[tool.hatch.envs.v1.scripts]
+test     = "pytest tests/v1/ --timeout 600 --durations 20 --no-header -q"
+test-cov = "pytest tests/v1/ --timeout 600 --durations 20 --no-header -q --cov=dbldatagen/v1 --cov-config=.coveragerc-v1 --cov-report=term-missing:skip-covered --cov-report=html:htmlcov-v1 --ignore=tests/v1/test_faker_pool.py --ignore=tests/v1/test_streaming.py --ignore=tests/v1/connectors/test_sql_spark.py"
 
 [tool.black]
 target-version = ["py310"]
