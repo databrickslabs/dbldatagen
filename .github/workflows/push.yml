@@ -15,9 +15,13 @@ jobs:
       shared: ${{ steps.filter.outputs.shared }}
     steps:
       - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
       - uses: dorny/paths-filter@v3
         id: filter
         with:
+          # Use local git diff instead of GitHub API (org IP allow list blocks API calls)
+          base: ${{ github.event.pull_request.base.sha || github.event.before }}
           filters: |
             v1:
               - 'dbldatagen/v1/**'
