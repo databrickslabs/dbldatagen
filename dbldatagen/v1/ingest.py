@@ -72,8 +72,8 @@ class _LazyIngestBatchList:
         self._plan = plan
         self._cache: dict[int, dict[str, DataFrame]] = {}
 
-# Overloads let mypy know that int indexing returns a single batch dict,
-# while slice indexing returns a list of batch dicts.
+    # Overloads let mypy know that int indexing returns a single batch dict,
+    # while slice indexing returns a list of batch dicts.
     @overload
     def __getitem__(self, index: int) -> dict[str, DataFrame]: ...
     @overload

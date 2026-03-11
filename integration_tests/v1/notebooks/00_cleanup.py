@@ -6,8 +6,11 @@
 
 # COMMAND ----------
 
-CATALOG = "anup_kalburgi"
-SCHEMA = "datagen_demo"
+dbutils.widgets.text("catalog", "anup_kalburgi", "Catalog")
+dbutils.widgets.text("schema", "datagen_demo", "Schema")
+
+CATALOG = dbutils.widgets.get("catalog")
+SCHEMA = dbutils.widgets.get("schema")
 PREFIX = "dbldatagen_v1_"
 
 # COMMAND ----------

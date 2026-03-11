@@ -85,7 +85,7 @@ def decimal(
 ) -> ColumnSpec:
     return ColumnSpec(
         name=name,
-        dtype=DataType.DOUBLE,
+        dtype=DataType.DECIMAL,
         gen=RangeColumn(min=min, max=max, **kw),
         seed_from=seed_from,
     )

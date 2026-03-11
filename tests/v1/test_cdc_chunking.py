@@ -6,7 +6,7 @@ identical data but different work unit sizes.
 
 Run with::
 
-    pytest tests/test_cdc_chunking.py -v -s
+    pytest tests/v1/test_cdc_chunking.py -v -s
 
 The ``-s`` flag shows chunk sizing output.
 """

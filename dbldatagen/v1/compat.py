@@ -113,7 +113,7 @@ def _map_distribution(v0_dist: object) -> Normal | Exponential | None:
 # ---------------------------------------------------------------------------
 
 
-def _get_option(spec: ColumnGenerationSpec, key: str, default: Any = None) -> Any:
+def _get_option(spec: ColumnGenerationSpec, key: str, default: Any = None) -> Any:  # noqa: ANN401
     """Safely read a v0 column option."""
     try:
         val = spec[key]

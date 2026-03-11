@@ -5,7 +5,6 @@ from dbldatagen.v1.connectors.sql.plan_builder import (
     CHILD_MULTIPLIER,
     DEFAULT_BASE_ROWS,
     _compute_row_counts,
-    _resolve_row_count,
     _topo_sort,
     build_plan,
 )
@@ -13,41 +12,42 @@ from dbldatagen.v1.schema import (
     DataGenPlan,
     DataType,
     SequenceColumn,
+    parse_human_count,
 )
 
 
 # ---------------------------------------------------------------------------
-# _resolve_row_count
+# parse_human_count
 # ---------------------------------------------------------------------------
 
 
 class TestResolveRowCount:
     def test_int_passthrough(self):
-        assert _resolve_row_count(500) == 500
+        assert parse_human_count(500) == 500
 
     def test_string_int(self):
-        assert _resolve_row_count("500") == 500
+        assert parse_human_count("500") == 500
 
     def test_k_suffix(self):
-        assert _resolve_row_count("10K") == 10_000
+        assert parse_human_count("10K") == 10_000
 
     def test_k_suffix_lower(self):
-        assert _resolve_row_count("10k") == 10_000
+        assert parse_human_count("10k") == 10_000
 
     def test_m_suffix(self):
-        assert _resolve_row_count("2M") == 2_000_000
+        assert parse_human_count("2M") == 2_000_000
 
     def test_b_suffix(self):
-        assert _resolve_row_count("1B") == 1_000_000_000
+        assert parse_human_count("1B") == 1_000_000_000
 
     def test_fractional_k(self):
-        assert _resolve_row_count("1.5K") == 1500
+        assert parse_human_count("1.5K") == 1500
 
     def test_fractional_m(self):
-        assert _resolve_row_count("0.5M") == 500_000
+        assert parse_human_count("0.5M") == 500_000
 
     def test_whitespace_handling(self):
-        assert _resolve_row_count("  10K  ") == 10_000
+        assert parse_human_count("  10K  ") == 10_000
 
 
 # ---------------------------------------------------------------------------

@@ -14,6 +14,7 @@ from dbldatagen.v1.schema import (
     SequenceColumn,
     TableSpec,
     Zipf,
+    parse_human_count,
 )
 
 
@@ -24,18 +25,6 @@ CHILD_MULTIPLIER = 5
 # ---------------------------------------------------------------------------
 # Row count helpers
 # ---------------------------------------------------------------------------
-
-
-def _resolve_row_count(val: int | str) -> int:
-    """Resolve a row count that may be a string shorthand like '10K'."""
-    if isinstance(val, int):
-        return val
-    s = str(val).strip().upper()
-    suffixes = {"K": 1_000, "M": 1_000_000, "B": 1_000_000_000}
-    for suffix, mult in suffixes.items():
-        if s.endswith(suffix):
-            return int(float(s[: -len(suffix)]) * mult)
-    return int(s)
 
 
 def _topo_sort(
@@ -82,7 +71,7 @@ def _compute_row_counts(
     # 1. Apply user overrides
     if user_overrides:
         for table, count in user_overrides.items():
-            counts[table] = _resolve_row_count(count)
+            counts[table] = parse_human_count(count)
 
     # 2. Get parent relationships
     parent_map: dict[str, set[str]] = {}

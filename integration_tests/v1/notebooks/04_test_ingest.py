@@ -7,7 +7,12 @@
 
 # COMMAND ----------
 
-# MAGIC %pip install /Volumes/anup_kalburgi/datagen_demo/dbldatagen/lib/dbldatagen-latest-py3-none-any.whl --quiet
+dbutils.widgets.text("wheel_volume_path", "anup_kalburgi/datagen_demo/dbldatagen/lib", "Wheel Volume Path")
+dbutils.widgets.text("catalog", "anup_kalburgi", "Catalog")
+
+# COMMAND ----------
+
+# MAGIC %pip install /Volumes/${wheel_volume_path}/dbldatagen-latest-py3-none-any.whl --quiet
 # MAGIC %pip install faker --quiet
 
 # COMMAND ----------
@@ -42,7 +47,7 @@ from dbldatagen.v1.schema import LogNormal
 
 # COMMAND ----------
 
-CATALOG = "anup_kalburgi"
+CATALOG = dbutils.widgets.get("catalog")
 SCHEMA = "datagen_demo"
 PREFIX = "dbldatagen_v1_"
 TABLE_PREFIX = f"{PREFIX}ingest_"

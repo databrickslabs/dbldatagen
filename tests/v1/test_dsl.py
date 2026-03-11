@@ -173,9 +173,9 @@ class TestDecimal:
         col = decimal("price")
         assert isinstance(col, ColumnSpec)
 
-    def test_dtype_is_double(self):
+    def test_dtype_is_decimal(self):
         col = decimal("price")
-        assert col.dtype == DataType.DOUBLE
+        assert col.dtype == DataType.DECIMAL
 
     def test_strategy_is_range(self):
         col = decimal("price", min=1.99, max=999.99)

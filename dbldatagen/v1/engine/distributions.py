@@ -46,7 +46,7 @@ def weighted_sample_expr(
     """Build a CASE/WHEN chain that selects from *values* using cumulative weights.
 
     ``weights`` maps value (as string key) to a relative weight.  Values not
-    present in *weights* get equal share of any remaining weight.
+    present in *weights* receive zero weight and will never be selected.
     """
     # Normalise weights so they sum to 1.0
     total = sum(weights.values())
@@ -71,8 +71,11 @@ def weighted_sample_expr(
         else:
             expr = F.when(frac < F.lit(cum_w), F.lit(val)).otherwise(expr)  # type: ignore[unreachable]
     return expr  # type: ignore[return-value]
- # mypy incorrectly narrows expr to non-None after the first loop iteration
+
+
+# mypy incorrectly narrows expr to non-None after the first loop iteration
 # and marks this else branch as unreachable — it runs on every iteration after the first
+
 
 def normal_sample_expr(
     cell_seed_col: Column,
