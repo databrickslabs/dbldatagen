@@ -192,7 +192,7 @@ python = "3.10"
 
 [tool.hatch.envs.v1.scripts]
 test     = "pytest tests/v1/ --timeout 600 --durations 20 --no-header -q"
-test-cov = "pytest tests/v1/ --timeout 600 --durations 20 --no-header -q --cov=dbldatagen/v1 --cov-config=.coveragerc-v1 --cov-report=term-missing:skip-covered --cov-report=xml --cov-report=html:htmlcov-v1 --ignore=tests/v1/test_faker_pool.py --ignore=tests/v1/test_streaming.py --ignore=tests/v1/connectors/test_sql_spark.py"
+test-cov = "pytest tests/v1/ --timeout 600 --durations 20 --no-header -q --cov=dbldatagen/v1 --cov-config=.coveragerc-v1 --cov-report=term-missing:skip-covered --cov-report=xml --cov-report=html:htmlcov-v1 --ignore=tests/v1/test_faker_pool.py --ignore=tests/v1/connectors/test_sql_spark.py"
 
 [tool.black]
 target-version = ["py310"]
