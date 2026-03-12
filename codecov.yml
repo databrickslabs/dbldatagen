@@ -1,0 +1,20 @@
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 2%
+    patch:
+      default:
+        target: 70%
+
+flags:
+  v0:
+    paths:
+      - dbldatagen/
+      - "!dbldatagen/v1/"
+    carryforward: true
+  v1:
+    paths:
+      - dbldatagen/v1/
+    carryforward: true

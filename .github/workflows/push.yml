@@ -90,6 +90,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           name: dbldatagen-v0
+          flags: v0
           files: ./coverage.xml
 
   test-v1:
@@ -126,6 +127,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           name: dbldatagen-v1
+          flags: v1
           files: ./coverage.xml
 
   # Gate job for branch protection — single status check that covers both test suites
