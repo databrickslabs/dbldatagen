@@ -1,13 +1,3 @@
-coverage:
-  status:
-    project:
-      default:
-        target: auto
-        threshold: 2%
-    patch:
-      default:
-        target: 70%
-
 flags:
   v0:
     paths:
