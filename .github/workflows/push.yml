@@ -83,7 +83,7 @@ jobs:
         run: pip install "hatch==1.13.0" "click<8.3" "virtualenv<21"
 
       - name: Run v0 unit tests
-        run: hatch run v0:test
+        run: hatch run v0:test-cov
 
       - name: Publish test coverage
         uses: codecov/codecov-action@v4
@@ -119,7 +119,14 @@ jobs:
         run: pip install "hatch==1.13.0" "click<8.3" "virtualenv<21"
 
       - name: Run v1 unit tests
-        run: hatch run v1:test
+        run: hatch run v1:test-cov
+
+      - name: Publish test coverage
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          name: dbldatagen-v1
+          files: ./coverage.xml
 
   # Gate job for branch protection — single status check that covers both test suites
   tests:
