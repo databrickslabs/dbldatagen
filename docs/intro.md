@@ -30,5 +30,5 @@ df.show()
 ## Documentation
 
 - **[V0 Docs & API Reference](/dbldatagen/public_docs/)** — current stable documentation
-- **[V1 Docs](/docs/v1/overview)** — next-generation engine (preview)
-- **[Migration Guide](/docs/v1/migration)** — upgrading from V0 to V1
+- **[V1 Docs](/docs/v1/getting-started/overview)** — next-generation engine (preview)
+- **[Migration Guide](/docs/v1/reference/migration)** — upgrading from V0 to V1

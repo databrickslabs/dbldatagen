@@ -84,6 +84,11 @@ const config: Config = {
           label: 'V1 Docs (Preview)',
         },
         {
+          to: '/docs/v1/guides/basic',
+          position: 'left',
+          label: 'Guides',
+        },
+        {
           href: 'https://github.com/databrickslabs/dbldatagen',
           label: 'GitHub',
           position: 'right',
@@ -102,7 +107,11 @@ const config: Config = {
             },
             {
               label: 'V1 Docs',
-              to: '/docs/v1/overview',
+              to: '/docs/v1/getting-started/overview',
+            },
+            {
+              label: 'Guides & Examples',
+              to: '/docs/v1/guides/basic',
             },
           ],
         },

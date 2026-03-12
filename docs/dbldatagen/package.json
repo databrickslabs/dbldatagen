@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
-    "prebuild": "cp -R ../intro.md ../v1 ./docs/ && cd .. && make public-docs && cp -R public_docs/ dbldatagen/static/public_docs/",
-    "prestart": "cp -R ../intro.md ../v1 ./docs/ && cd .. && make public-docs && cp -R public_docs/ dbldatagen/static/public_docs/",
+    "prebuild": "rm -rf ./docs/v1 && cp -R ../intro.md ../v1 ./docs/ && cd .. && make public-docs && cp -R public_docs/ dbldatagen/static/public_docs/",
+    "prestart": "rm -rf ./docs/v1 && cp -R ../intro.md ../v1 ./docs/ && cd .. && make public-docs && cp -R public_docs/ dbldatagen/static/public_docs/",
     "start": "docusaurus start",
     "build": "docusaurus build",
     "swizzle": "docusaurus swizzle",

@@ -1,3 +1,8 @@
+---
+sidebar_position: 5
+title: "Migration from V0"
+---
+
 # Migrating from dbldatagen v0 to v1
 
 ## Overview
@@ -11,16 +16,16 @@
 pip install dbldatagen
 
 # v0 + v1 core
-pip install dbldatagen[v1]
+pip install "dbldatagen[v1]"
 
 # v0 + v1 + all optional extras
-pip install dbldatagen[v1-dev]
+pip install "dbldatagen[v1-dev]"
 
 # Individual v1 extras
-pip install dbldatagen[v1-faker]   # Faker-based text generation
-pip install dbldatagen[v1-csv]     # CSV schema inference
-pip install dbldatagen[v1-jdbc]    # Database schema extraction
-pip install dbldatagen[v1-sql]     # SQL query parsing
+pip install "dbldatagen[v1-faker]"   # Faker-based text generation
+pip install "dbldatagen[v1-csv]"     # CSV schema inference
+pip install "dbldatagen[v1-jdbc]"    # Database schema extraction
+pip install "dbldatagen[v1-sql]"     # SQL query parsing
 ```
 
 ## Quick Start: Automatic Conversion
@@ -329,7 +334,7 @@ faker("address", provider="street_address")
 faker("phone", provider="phone_number")
 ```
 
-Requires: `pip install dbldatagen[v1-faker]`
+Requires: `pip install "dbldatagen[v1-faker]"`
 
 ### CDC (Change Data Capture)
 
@@ -358,7 +363,7 @@ from dbldatagen.v1.connectors import extract_from_sql_query
 plan = extract_from_sql_query("SELECT id, name, amount FROM customers JOIN orders ON ...")
 ```
 
-Requires: `pip install dbldatagen[v1-sql]`
+Requires: `pip install "dbldatagen[v1-sql]"`
 
 ## Features Not Supported in v1
 

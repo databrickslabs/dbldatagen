@@ -1,6 +1,6 @@
 ---
-title: DSL Reference
-sidebar_position: 3
+sidebar_position: 4
+title: "DSL Reference"
 ---
 
 # V1 DSL Reference
@@ -78,7 +78,7 @@ expression("total", "quantity * unit_price", dtype=DataType.DOUBLE)
 
 ### `faker(name, provider, **kwargs)`
 
-Generate values using a Faker provider. Requires `pip install dbldatagen[v1-faker]`.
+Generate values using a Faker provider. Requires `pip install "dbldatagen[v1-faker]"`.
 
 ```python
 from dbldatagen.v1.dsl import faker
