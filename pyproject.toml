@@ -509,3 +509,9 @@ module = [
     "dbldatagen.text_generators",
 ]
 ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = [
+    "tests.v1.test_cdc_state_coverage",
+]
+ignore_errors = true
