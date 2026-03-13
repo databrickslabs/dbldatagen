@@ -16,14 +16,12 @@ import pytest
 from dbldatagen.v1.ingest import (
     _generate_ingest_batch,
     _normalize_plan,
-    generate_ingest,
     write_ingest_to_delta,
 )
 from dbldatagen.v1.ingest_schema import (
     IngestMode,
     IngestPlan,
     IngestStrategy,
-    IngestTableConfig,
 )
 from dbldatagen.v1.schema import (
     ColumnSpec,
@@ -33,7 +31,6 @@ from dbldatagen.v1.schema import (
     RangeColumn,
     SequenceColumn,
     TableSpec,
-    ValuesColumn,
 )
 
 
@@ -151,8 +148,10 @@ class TestWriteIngestToDelta:
 
         mock_spark = MagicMock()
 
-        with patch("dbldatagen.v1.ingest.generate_ingest", return_value=mock_stream), \
-             patch("dbldatagen.v1.ingest.union_all", return_value=mock_df):
+        with (
+            patch("dbldatagen.v1.ingest.generate_ingest", return_value=mock_stream),
+            patch("dbldatagen.v1.ingest.union_all", return_value=mock_df),
+        ):
             result = write_ingest_to_delta(
                 mock_spark,
                 _simple_plan(rows=20),
@@ -185,8 +184,10 @@ class TestWriteIngestToDelta:
 
         mock_spark = MagicMock()
 
-        with patch("dbldatagen.v1.ingest.generate_ingest", return_value=mock_stream), \
-             patch("dbldatagen.v1.ingest.union_all", return_value=mock_df):
+        with (
+            patch("dbldatagen.v1.ingest.generate_ingest", return_value=mock_stream),
+            patch("dbldatagen.v1.ingest.union_all", return_value=mock_df),
+        ):
             result = write_ingest_to_delta(
                 mock_spark,
                 _simple_plan(rows=20),

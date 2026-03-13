@@ -197,7 +197,7 @@ class TestConstantFallback:
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            specs = _convert_column(MockSpec())
+            specs = _convert_column(MockSpec())  # type: ignore[arg-type]
             assert len(specs) == 1
             assert isinstance(specs[0].gen, ConstantColumn)
             const_warnings = [x for x in w if "could not determine" in str(x.message)]
