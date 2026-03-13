@@ -4,11 +4,9 @@ from __future__ import annotations
 
 import warnings
 
-import pytest
 from pyspark.sql.types import (
     ArrayType,
     IntegerType,
-    LongType,
     MapType,
     StringType,
 )
@@ -25,9 +23,6 @@ from dbldatagen.v1.schema import (
     DataType,
     Exponential,
     Normal,
-    PatternColumn,
-    RangeColumn,
-    SequenceColumn,
 )
 
 
@@ -145,7 +140,7 @@ class TestEmptyDataGenerator:
     def test_no_columns_warns(self, spark):
         """DataGenerator with no withColumn calls warns about no columns."""
         dg = DataGenerator(spark, rows=10, name="empty")
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True) as _w:
             warnings.simplefilter("always")
             plan = from_data_generator(dg)
             # Should have the seed column at minimum
@@ -193,6 +188,7 @@ class TestConstantFallback:
             def __init__(self):
                 # Mock datatype as something that maps to DATE but with no begin/end
                 from pyspark.sql.types import DateType
+
                 self.datatype = DateType()
 
             def __getitem__(self, key):

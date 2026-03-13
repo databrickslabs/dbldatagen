@@ -6,9 +6,9 @@ import pytest
 from pyspark.sql import functions as F
 
 from dbldatagen.v1.engine.generator import (
+    _build_exprs_scalar,
     build_all_column_exprs,
     build_column_expr,
-    _build_exprs_scalar,
 )
 from dbldatagen.v1.engine.seed import derive_column_seed
 from dbldatagen.v1.engine.utils import create_range_df
@@ -46,9 +46,13 @@ class TestSeedFromWithFaker:
                 ),
             ],
         )
-        df, id_col = create_range_df(spark, 50)
-        col_exprs, udf_columns, seeded_columns = build_all_column_exprs(
-            spec, id_col, None, seed=42, row_count=50,
+        _df, id_col = create_range_df(spark, 50)
+        _col_exprs, _udf_columns, seeded_columns = build_all_column_exprs(
+            spec,
+            id_col,
+            None,
+            seed=42,
+            row_count=50,
         )
         # seed_from columns go into seeded_columns
         assert len(seeded_columns) == 1
@@ -71,9 +75,14 @@ class TestSeedFromWithFaker:
                 ),
             ],
         )
-        df, id_col = create_range_df(spark, 20)
-        col_exprs, udf_columns, seeded_columns = _build_exprs_scalar(
-            spec, id_col, 0, 42, None, row_count=20,
+        _df, id_col = create_range_df(spark, 20)
+        _col_exprs, _udf_columns, seeded_columns = _build_exprs_scalar(
+            spec,
+            id_col,
+            0,
+            42,
+            None,
+            row_count=20,
         )
         # seed_from column should be in seeded_columns
         assert len(seeded_columns) == 1
@@ -101,6 +110,7 @@ class TestDateTypeColumn:
         row = result.first()
         assert row is not None
         import datetime
+
         assert isinstance(row.d, datetime.date)
 
 
@@ -112,6 +122,7 @@ class TestDateTypeColumn:
 class TestUnsupportedStrategy:
     def test_unsupported_strategy_raises(self):
         """Passing an unknown strategy type raises ValueError."""
+
         # Create a mock strategy-like object that isn't any known type
         class FakeStrategy:
             strategy = "bogus"
@@ -155,8 +166,8 @@ class TestArrayColumnVariableLength:
         # Should have at least 2 different lengths (probabilistic but very likely with 200 rows)
         assert len(length_set) > 1
         # All lengths should be in [min_length, max_length]
-        for l in length_set:
-            assert 1 <= l <= 4, f"Array length {l} outside [1, 4]"
+        for length in length_set:
+            assert 1 <= length <= 4, f"Array length {length} outside [1, 4]"
 
     def test_array_fixed_length(self, spark):
         """Array with min_length == max_length produces fixed-length arrays."""
