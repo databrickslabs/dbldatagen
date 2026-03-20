@@ -283,7 +283,7 @@ def _build_faker_expr(
     assert isinstance(col_spec.gen, FakerColumn)
     faker_expr = build_faker_column(
         id_col,
-        column_seed,
+        column_seed,  # type: ignore[arg-type]  # always int (Faker tables excluded from batch paths)
         provider=col_spec.gen.provider,
         kwargs=col_spec.gen.kwargs or None,
         locale=col_spec.gen.locale,
@@ -301,7 +301,7 @@ def _build_regular_column_expr(
     cell_seed_fn: Callable[[int, Column, ColumnSpec], Column | None] | None = None,
 ) -> Column | None:
     """Build a regular (non-FK, non-seed_from) column expression."""
-    cell_override = cell_seed_fn(column_seed, id_col, col_spec) if cell_seed_fn is not None else None
+    cell_override = cell_seed_fn(column_seed, id_col, col_spec) if cell_seed_fn is not None else None  # type: ignore[arg-type]  # always int when cell_seed_fn is provided
     expr = build_column_expr(
         col_spec,
         id_col,
