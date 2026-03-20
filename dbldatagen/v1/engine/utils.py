@@ -2,10 +2,60 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterator
+from typing import Generic, TypeVar, overload
+
 from pyspark.sql import Column, DataFrame, SparkSession
 from pyspark.sql import functions as F
 
 from dbldatagen.v1.schema import TableSpec
+
+T = TypeVar("T")
+
+
+class _LazyList(Generic[T]):
+    """Cached lazy list: generates items on first access, caches for reuse.
+
+    Supports indexing (including negative and slices), iteration,
+    and ``len()``.
+
+    Parameters
+    ----------
+    length :
+        Total number of items.
+    generator :
+        ``(index) -> T`` — called on cache miss.  *index* is the
+        zero-based position in the list.
+    """
+
+    def __init__(self, length: int, generator: Callable[[int], T]) -> None:
+        self._length = length
+        self._generator = generator
+        self._cache: dict[int, T] = {}
+
+    @overload
+    def __getitem__(self, index: int) -> T: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> list[T]: ...
+
+    def __getitem__(self, index: int | slice) -> T | list[T]:
+        if isinstance(index, slice):
+            return [self[i] for i in range(*index.indices(self._length))]
+        if index < 0:
+            index += self._length
+        if index < 0 or index >= self._length:
+            raise IndexError(f"index {index} out of range")
+        if index not in self._cache:
+            self._cache[index] = self._generator(index)
+        return self._cache[index]
+
+    def __iter__(self) -> Iterator[T]:
+        for i in range(self._length):
+            yield self[i]
+
+    def __len__(self) -> int:
+        return self._length
 
 
 def split_with_remainder(

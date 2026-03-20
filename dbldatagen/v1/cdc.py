@@ -29,9 +29,7 @@ customisation is available via ``CDCPlan``.
 
 from __future__ import annotations
 
-from collections.abc import Iterator
 from dataclasses import dataclass, field
-from typing import overload
 
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
@@ -62,136 +60,61 @@ from dbldatagen.v1.engine.cdc_stateless import (
 from dbldatagen.v1.engine.generator import generate_table
 from dbldatagen.v1.engine.planner import resolve_plan
 from dbldatagen.v1.engine.seed import compute_batch_seed
-from dbldatagen.v1.engine.utils import union_all
+from dbldatagen.v1.engine.utils import _LazyList, union_all
 from dbldatagen.v1.schema import DataGenPlan
 
 
-class _LazyBatchList:
-    """List-like wrapper that generates CDC batches on-demand.
+def _make_lazy_batch_list(
+    spark: SparkSession,
+    plan: CDCPlan,
+    fmt_name: str,
+) -> _LazyList[dict[str, DataFrame]]:
+    """Create a lazy list that generates CDC batches on-demand."""
 
-    Supports indexing (``batches[5]``), iteration, and ``len()``.
-    Generated batches are cached so repeated access is free.
-    """
+    def _gen(index: int) -> dict[str, DataFrame]:
+        return _generate_batch(spark, plan, index + 1, fmt_name)
 
-    def __init__(
-        self,
-        spark: SparkSession,
-        plan: CDCPlan,
-        fmt_name: str,
-    ) -> None:
-        self._spark = spark
-        self._plan = plan
-        self._fmt_name = fmt_name
-        self._cache: dict[int, dict[str, DataFrame]] = {}
-
-    @overload
-    def __getitem__(self, index: int) -> dict[str, DataFrame]: ...
-
-    @overload
-    def __getitem__(self, index: slice) -> list[dict[str, DataFrame]]: ...
-
-    def __getitem__(self, index: int | slice) -> dict[str, DataFrame] | list[dict[str, DataFrame]]:
-        if isinstance(index, slice):
-            indices = range(*index.indices(len(self)))
-            return [self[i] for i in indices]
-        if index < 0:
-            index += len(self)
-        if index < 0 or index >= len(self):
-            raise IndexError(f"batch index {index} out of range")
-        if index not in self._cache:
-            batch_id = index + 1  # batches[0] → batch_id 1
-            self._cache[index] = _generate_batch(
-                self._spark,
-                self._plan,
-                batch_id,
-                self._fmt_name,
-            )
-        return self._cache[index]
-
-    def __iter__(self) -> Iterator[dict[str, DataFrame]]:
-        for i in range(len(self)):
-            yield self[i]
-
-    def __len__(self) -> int:
-        return self._plan.num_batches
+    return _LazyList(plan.num_batches, _gen)
 
 
-class _LazyChunkList:
-    """List-like wrapper that groups CDC batches into larger chunks.
+def _make_lazy_chunk_list(
+    spark: SparkSession,
+    plan: CDCPlan,
+    fmt_name: str,
+    chunk_size: int,
+) -> _LazyList[dict[str, DataFrame]]:
+    """Create a lazy list that groups CDC batches into larger chunks."""
+    num_chunks = -(-plan.num_batches // chunk_size)  # ceil division
 
-    Each element is a ``dict[str, DataFrame]`` containing multiple batches
-    unioned together, so one ``.write()`` call triggers one large Spark job
-    instead of many tiny ones.  This lets Spark distribute work across all
-    cluster nodes.
-
-    Supports indexing, iteration, and ``len()``.
-    """
-
-    def __init__(
-        self,
-        spark: SparkSession,
-        plan: CDCPlan,
-        fmt_name: str,
-        chunk_size: int,
-    ) -> None:
-        self._spark = spark
-        self._plan = plan
-        self._fmt_name = fmt_name
-        self._chunk_size = chunk_size
-        self._cache: dict[int, dict[str, DataFrame]] = {}
-
-    @overload
-    def __getitem__(self, index: int) -> dict[str, DataFrame]: ...
-
-    @overload
-    def __getitem__(self, index: slice) -> list[dict[str, DataFrame]]: ...
-
-    def __getitem__(self, index: int | slice) -> dict[str, DataFrame] | list[dict[str, DataFrame]]:
-        if isinstance(index, slice):
-            indices = range(*index.indices(len(self)))
-            return [self[i] for i in indices]
-        if index < 0:
-            index += len(self)
-        if index < 0 or index >= len(self):
-            raise IndexError(f"chunk index {index} out of range")
-        if index not in self._cache:
-            self._cache[index] = self._build_chunk(index)
-        return self._cache[index]
-
-    def __iter__(self) -> Iterator[dict[str, DataFrame]]:
-        for i in range(len(self)):
-            yield self[i]
-
-    def __len__(self) -> int:
-        return -(-self._plan.num_batches // self._chunk_size)  # ceil division  # noqa: PLE0303
-
-    def _build_chunk(self, chunk_index: int) -> dict[str, DataFrame]:
+    def _build_chunk(chunk_index: int) -> dict[str, DataFrame]:
         """Build one chunk: bulk insert fusion + per-batch updates/deletes."""
-        start_batch = chunk_index * self._chunk_size + 1  # batch_ids are 1-based
-        end_batch = min(start_batch + self._chunk_size, self._plan.num_batches + 1)
+        start_batch = chunk_index * chunk_size + 1  # batch_ids are 1-based
+        end_batch = min(start_batch + chunk_size, plan.num_batches + 1)
         batch_ids = list(range(start_batch, end_batch))
 
         chunk_tables: dict[str, DataFrame] = {}
-        for table_name in self._plan.cdc_tables:
+        for table_name in plan.cdc_tables:
             chunk_df = _generate_chunk_for_table(
-                self._spark,
-                self._plan,
+                spark,
+                plan,
                 table_name,
                 batch_ids,
-                self._fmt_name,
+                fmt_name,
             )
             if chunk_df is not None:
                 chunk_tables[table_name] = chunk_df
             else:
-                table_map = {t.name: t for t in self._plan.base_plan.tables}
-                resolved = resolve_plan(self._plan.base_plan)
+                table_map = {t.name: t for t in plan.base_plan.tables}
+                resolved = resolve_plan(plan.base_plan)
                 chunk_tables[table_name] = generate_table(
-                    self._spark,
+                    spark,
                     table_map[table_name],
                     resolved,
                 ).limit(0)
 
         return chunk_tables
+
+    return _LazyList(num_chunks, _build_chunk)
 
 
 @dataclass
@@ -249,7 +172,7 @@ def generate_cdc(
     initial_raw = generate_initial_snapshot(spark, plan)
     initial = {name: apply_format(df, fmt_name) for name, df in initial_raw.items()}
 
-    batches = _LazyBatchList(spark, plan, fmt_name)
+    batches = _make_lazy_batch_list(spark, plan, fmt_name)
     return CDCStream(initial=initial, batches=batches, plan=plan)
 
 
@@ -306,7 +229,7 @@ def generate_cdc_bulk(
     initial_raw = generate_initial_snapshot(spark, plan)
     initial = {name: apply_format(df, fmt_name) for name, df in initial_raw.items()}
 
-    batches = _LazyChunkList(spark, plan, fmt_name, chunk_size)
+    batches = _make_lazy_chunk_list(spark, plan, fmt_name, chunk_size)
     return CDCStream(initial=initial, batches=batches, plan=plan)
 
 

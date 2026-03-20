@@ -30,9 +30,7 @@ Change detection between two snapshots::
 
 from __future__ import annotations
 
-from collections.abc import Iterator
 from dataclasses import dataclass, field
-from typing import overload
 
 from pyspark.sql import DataFrame, SparkSession
 
@@ -46,7 +44,7 @@ from dbldatagen.v1.engine.ingest_generator import (
     generate_synthetic_incremental_batch,
     generate_synthetic_snapshot_batch,
 )
-from dbldatagen.v1.engine.utils import union_all
+from dbldatagen.v1.engine.utils import _LazyList, union_all
 from dbldatagen.v1.ingest_schema import (
     IngestMode,
     IngestPlan,
@@ -60,47 +58,16 @@ from dbldatagen.v1.schema import DataGenPlan
 # ---------------------------------------------------------------------------
 
 
-class _LazyIngestBatchList:
-    """List-like wrapper that generates ingest batches on-demand."""
+def _make_lazy_ingest_batch_list(
+    spark: SparkSession,
+    plan: IngestPlan,
+) -> _LazyList[dict[str, DataFrame]]:
+    """Create a lazy list that generates ingest batches on-demand."""
 
-    def __init__(
-        self,
-        spark: SparkSession,
-        plan: IngestPlan,
-    ) -> None:
-        self._spark = spark
-        self._plan = plan
-        self._cache: dict[int, dict[str, DataFrame]] = {}
+    def _gen(index: int) -> dict[str, DataFrame]:
+        return _generate_ingest_batch(spark, plan, index + 1)
 
-    # Overloads let mypy know that int indexing returns a single batch dict,
-    # while slice indexing returns a list of batch dicts.
-    @overload
-    def __getitem__(self, index: int) -> dict[str, DataFrame]: ...
-    @overload
-    def __getitem__(self, index: slice) -> list[dict[str, DataFrame]]: ...
-    def __getitem__(self, index: int | slice) -> dict[str, DataFrame] | list[dict[str, DataFrame]]:
-        if isinstance(index, slice):
-            indices = range(*index.indices(len(self)))
-            return [self[i] for i in indices]
-        if index < 0:
-            index += len(self)
-        if index < 0 or index >= len(self):
-            raise IndexError(f"batch index {index} out of range")
-        if index not in self._cache:
-            batch_id = index + 1  # batches[0] → batch_id 1
-            self._cache[index] = _generate_ingest_batch(
-                self._spark,
-                self._plan,
-                batch_id,
-            )
-        return self._cache[index]
-
-    def __iter__(self) -> Iterator[dict[str, DataFrame]]:
-        for i in range(len(self)):
-            yield self[i]
-
-    def __len__(self) -> int:
-        return self._plan.num_batches
+    return _LazyList(plan.num_batches, _gen)
 
 
 # ---------------------------------------------------------------------------
@@ -209,7 +176,7 @@ def generate_ingest(
     plan = _normalize_plan(plan_or_base, num_batches, mode, strategy)
 
     initial = generate_initial_snapshot(spark, plan)
-    batches = _LazyIngestBatchList(spark, plan)
+    batches = _make_lazy_ingest_batch_list(spark, plan)
     return IngestStream(initial=initial, batches=batches, plan=plan)
 
 
