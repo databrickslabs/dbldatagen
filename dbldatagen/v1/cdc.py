@@ -383,7 +383,7 @@ def _generate_batch(
     batch_tables: dict[str, DataFrame] = {}
 
     for table_name in plan.cdc_tables:
-        result = generate_cdc_batch_for_table(spark, plan, table_name, batch_id)
+        result = generate_cdc_batch_for_table(spark, plan, table_name, batch_id, resolved_plan=resolved)
         combined = result.to_dataframe()
 
         if combined is not None:

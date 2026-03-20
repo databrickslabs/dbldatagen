@@ -119,11 +119,19 @@ def generate_cdc_batch_for_table(
     plan: CDCPlan,
     table_name: str,
     batch_id: int,
+    resolved_plan: ResolvedPlan | None = None,
 ) -> RawBatchResult:
     """Generate one batch of CDC changes for a single table.
 
     Uses three disjoint streams (inserts, deletes, updates) computed
     from modular-recurrence functions.  Zero driver-side state.
+
+    Parameters
+    ----------
+    resolved_plan :
+        Pre-resolved plan.  If ``None``, ``resolve_plan`` is called
+        internally.  Pass this when generating multiple batches to
+        avoid redundant FK validation and topological sorts.
 
     Returns a ``RawBatchResult`` with separate DataFrames for inserts,
     update before-images, update after-images, and deletes.
@@ -139,7 +147,7 @@ def generate_cdc_batch_for_table(
 
     batch_size = resolve_batch_size(effective_config.batch_size, initial_rows)
     periods = compute_periods_from_config(initial_rows, batch_size, effective_config)
-    resolved = resolve_plan(plan.base_plan)
+    resolved = resolved_plan if resolved_plan is not None else resolve_plan(plan.base_plan)
     batch_ts = batch_timestamp(plan, batch_id)
     use_native = not _table_has_faker_columns(table_spec)
 
