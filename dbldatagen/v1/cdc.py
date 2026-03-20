@@ -340,11 +340,30 @@ def generate_expected_state(
     table_name: str,
     batch_id: int,
 ) -> DataFrame:
-    """Generate the expected table state at a given batch.
+    """Generate the expected table state at a given batch (test oracle).
 
     Returns a DataFrame representing all live rows at ``batch_id``,
-    with their current column values.  Useful for verifying that a
-    downstream pipeline correctly applied all CDC changes.
+    with their current column values.  Primarily useful as a **test
+    oracle** for verifying that a downstream pipeline correctly
+    applied all CDC changes.
+
+    .. warning:: O(N) Python loop
+
+        This function iterates every row index on the driver via
+        ``is_alive()`` and ``update_due()`` Python calls.  At test
+        scale (hundreds of rows) this is fine and keeps the logic
+        easy to verify.  For production snapshots at scale, use
+        ``generate_stateless_snapshot_batch`` in
+        ``ingest_generator.py`` which pushes all logic to Spark
+        expressions.
+
+    .. note:: Candidate for removal
+
+        The only production caller is the ``SYNTHETIC + SNAPSHOT``
+        ingest path (``generate_synthetic_snapshot_batch``).  The
+        ``STATELESS`` strategy already provides a Spark-native
+        equivalent.  This function may be removed in a future
+        release once callers are migrated.
 
     Uses the stateless modular-recurrence model: each row's lifecycle
     is computed from its index k and the batch number, with no
