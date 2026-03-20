@@ -18,6 +18,25 @@ from dbldatagen.v1.schema import (
 )
 
 
+# Common SQL functions, keywords, and type names excluded when checking
+# ExpressionColumn references for undefined column names.
+_SQL_BUILTINS: frozenset[str] = frozenset({
+    # Functions
+    "abs", "cast", "ceil", "coalesce", "concat", "current_date",
+    "current_timestamp", "date_format", "floor", "length", "lit", "lower",
+    "otherwise", "replace", "round", "substring", "to_date", "to_timestamp",
+    "trim", "upper", "when",
+    # Keywords / operators
+    "and", "as", "between", "case", "else", "end", "in", "is", "like",
+    "not", "or", "then",
+    # Literals
+    "false", "null", "true",
+    # Type names
+    "array", "boolean", "date", "double", "float", "int", "long", "map",
+    "string", "struct", "timestamp",
+})
+
+
 @dataclass
 class PKMetadata:
     """Metadata about a parent table's primary key needed for FK generation."""
@@ -259,57 +278,7 @@ def _validate_expression_columns(plan: DataGenPlan) -> None:
                 continue
             # Extract bare identifiers from the expression (heuristic)
             tokens = set(re.findall(r"\b([a-zA-Z_]\w*)\b", col_spec.gen.expr))
-            # Exclude common SQL functions/keywords
-            sql_builtins = {
-                "concat",
-                "coalesce",
-                "cast",
-                "when",
-                "otherwise",
-                "lit",
-                "upper",
-                "lower",
-                "trim",
-                "length",
-                "substring",
-                "replace",
-                "round",
-                "floor",
-                "ceil",
-                "abs",
-                "current_timestamp",
-                "current_date",
-                "date_format",
-                "to_date",
-                "to_timestamp",
-                "null",
-                "true",
-                "false",
-                "and",
-                "or",
-                "not",
-                "is",
-                "in",
-                "between",
-                "like",
-                "case",
-                "then",
-                "else",
-                "end",
-                "as",
-                "int",
-                "long",
-                "string",
-                "double",
-                "float",
-                "boolean",
-                "date",
-                "timestamp",
-                "array",
-                "struct",
-                "map",
-            }
-            candidates = tokens - sql_builtins - col_names
+            candidates = tokens - _SQL_BUILTINS - col_names
             for candidate in candidates:
                 # Only warn for tokens that look like column names (not numbers)
                 if not candidate[0].isdigit():
