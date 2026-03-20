@@ -33,6 +33,7 @@ from dbldatagen.v1.engine.generator import (
     build_all_column_exprs,
     build_column_expr,
 )
+from dbldatagen.v1.engine.utils import case_when_chain
 from dbldatagen.v1.engine.ingest_generator import (
     _mutate_selected_rows,
     _select_rows_deterministic,
@@ -318,6 +319,39 @@ class TestBuildWriteBatchCaseWhen:
             [(0, e0), (1, e1), (2, e2)],
         )
         df = spark.createDataFrame([(0,), (1,), (2,)], ["wb"])
+        out = df.select(result.alias("v")).collect()
+        values = {r.v for r in out}
+        assert values == {10, 20, 30}
+
+
+# ===================================================================
+# utils.py: case_when_chain
+# ===================================================================
+
+
+class TestCaseWhenChain:
+    def test_single_branch_returns_expr_directly(self, spark):
+        """Single branch skips CASE WHEN, returns expression directly."""
+        expr = F.lit(99)
+        result = case_when_chain(F.col("disc"), [(0, expr)])
+        df = spark.range(3).withColumn("disc", F.lit(0))
+        out = df.select(result.alias("v")).collect()
+        assert all(r.v == 99 for r in out)
+
+    def test_two_branches(self, spark):
+        """Two branches produce correct dispatch."""
+        result = case_when_chain(F.col("disc"), [(0, F.lit("a")), (1, F.lit("b"))])
+        df = spark.createDataFrame([(0,), (1,)], ["disc"])
+        out = {r.v for r in df.select(result.alias("v")).collect()}
+        assert out == {"a", "b"}
+
+    def test_three_branches(self, spark):
+        """Three branches produce correct dispatch for all values."""
+        result = case_when_chain(
+            F.col("disc"),
+            [(0, F.lit(10)), (1, F.lit(20)), (2, F.lit(30))],
+        )
+        df = spark.createDataFrame([(0,), (1,), (2,)], ["disc"])
         out = df.select(result.alias("v")).collect()
         values = {r.v for r in out}
         assert values == {10, 20, 30}

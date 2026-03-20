@@ -34,6 +34,7 @@ from dbldatagen.v1.engine.seed import (
 from dbldatagen.v1.engine.utils import (
     apply_column_phases,
     apply_null_fraction,
+    case_when_chain,
     create_range_df,
     get_pk_columns,
 )
@@ -411,16 +412,7 @@ def _build_write_batch_case_when(wb_col: Column, wb_exprs: list[tuple[int, Colum
     When there's only one batch value, returns the expression directly
     (no CASE WHEN needed).
     """
-    if len(wb_exprs) == 1:
-        return wb_exprs[0][1]
-
-    result = wb_exprs[-1][1]
-    for i in range(len(wb_exprs) - 2, -1, -1):
-        result = F.when(
-            wb_col == F.lit(wb_exprs[i][0]).cast("long"),
-            wb_exprs[i][1],
-        ).otherwise(result)
-    return result
+    return case_when_chain(wb_col, wb_exprs)
 
 
 def build_column_expr(  # noqa: PLR0911

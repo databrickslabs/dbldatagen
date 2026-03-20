@@ -124,6 +124,28 @@ def apply_column_phases(
     return df.drop("_synth_row_id")
 
 
+def case_when_chain(
+    discriminator: Column,
+    branches: list[tuple[int, Column]],
+) -> Column:
+    """Build a CASE WHEN chain over *discriminator* for a list of ``(key, expr)`` pairs.
+
+    Returns ``WHEN disc == k0 THEN v0 WHEN disc == k1 THEN v1 ... ELSE v_last``.
+    When there is exactly one branch, returns the expression directly
+    (no CASE WHEN needed).
+    """
+    if len(branches) == 1:
+        return branches[0][1]
+
+    result = branches[-1][1]
+    for idx in range(len(branches) - 2, -1, -1):
+        result = F.when(
+            discriminator == F.lit(branches[idx][0]),
+            branches[idx][1],
+        ).otherwise(result)
+    return result
+
+
 def get_pk_columns(table_spec: TableSpec) -> set[str]:
     """Extract primary key column names as a set."""
     if table_spec.primary_key:

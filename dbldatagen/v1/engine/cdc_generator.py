@@ -1183,7 +1183,7 @@ def _build_case_when_column(
     The result is: WHEN batch_offset == 0 THEN expr_0 WHEN ... ELSE expr_N.
     """
     from dbldatagen.v1.engine.seed import derive_column_seed
-    from dbldatagen.v1.engine.utils import apply_null_fraction
+    from dbldatagen.v1.engine.utils import apply_null_fraction, case_when_chain
 
     batch_exprs = []
     for i, (batch_id, _, insert_count) in enumerate(batch_infos):
@@ -1193,13 +1193,7 @@ def _build_case_when_column(
         expr = apply_null_fraction(expr, col_seed, local_id, col_spec.null_fraction)
         batch_exprs.append((i, expr))
 
-    result = batch_exprs[-1][1]
-    for idx in range(len(batch_exprs) - 2, -1, -1):
-        result = F.when(
-            batch_offset == F.lit(batch_exprs[idx][0]),
-            batch_exprs[idx][1],
-        ).otherwise(result)
-    return result
+    return case_when_chain(batch_offset, batch_exprs)
 
 
 def _build_case_when_fk(
@@ -1218,6 +1212,7 @@ def _build_case_when_fk(
     """
     from dbldatagen.v1.engine.fk import build_fk_column
     from dbldatagen.v1.engine.seed import derive_column_seed
+    from dbldatagen.v1.engine.utils import case_when_chain
 
     batch_exprs = []
     for i, (batch_id, _, _) in enumerate(batch_infos):
@@ -1226,24 +1221,15 @@ def _build_case_when_fk(
         expr = build_fk_column(local_id, col_seed, fk_resolution)
         batch_exprs.append((i, expr))
 
-    result = batch_exprs[-1][1]
-    for idx in range(len(batch_exprs) - 2, -1, -1):
-        result = F.when(
-            batch_offset == F.lit(batch_exprs[idx][0]),
-            batch_exprs[idx][1],
-        ).otherwise(result)
-    return result
+    return case_when_chain(batch_offset, batch_exprs)
 
 
 def _build_case_when_lit(batch_offset: Column, mappings: list[tuple[int, object]]) -> F.Column:
     """Build CASE WHEN for simple literal values (batch_id, timestamp)."""
-    result = F.lit(mappings[-1][1])
-    for idx in range(len(mappings) - 2, -1, -1):
-        result = F.when(
-            batch_offset == F.lit(mappings[idx][0]),
-            F.lit(mappings[idx][1]),
-        ).otherwise(result)
-    return result
+    from dbldatagen.v1.engine.utils import case_when_chain
+
+    branches = [(k, F.lit(v)) for k, v in mappings]
+    return case_when_chain(batch_offset, branches)
 
 
 # ---------------------------------------------------------------------------
