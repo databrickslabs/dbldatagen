@@ -26,6 +26,7 @@ from dbldatagen.v1.engine.columns.temporal import build_date_column, build_times
 from dbldatagen.v1.engine.columns.uuid import build_uuid_column
 from dbldatagen.v1.engine.planner import FKResolution, ResolvedPlan
 from dbldatagen.v1.engine.seed import (
+    GOLDEN_RATIO_HASH,
     column_seed_lookup,
     column_seed_map,
     compute_batch_seed,
@@ -549,12 +550,12 @@ def _build_array_column(
     dummy_spec = ColumnSpec(name="_elem", gen=gen.element)
     for i in range(gen.max_length):
         if isinstance(column_seed, int):
-            elem_seed: int | Column = column_seed ^ ((i + 1) * 0x9E3779B9)
+            elem_seed: int | Column = column_seed ^ ((i + 1) * GOLDEN_RATIO_HASH)
             # Keep elem_seed in signed 64-bit range
             if elem_seed >= 0x8000000000000000:
                 elem_seed -= 0x10000000000000000
         else:
-            elem_seed = column_seed.bitwiseXOR(F.lit((i + 1) * 0x9E3779B9).cast("long"))
+            elem_seed = column_seed.bitwiseXOR(F.lit((i + 1) * GOLDEN_RATIO_HASH).cast("long"))
         elem_expr = build_column_expr(
             dummy_spec,
             id_col,

@@ -15,7 +15,7 @@ from dbldatagen.v1.engine.distributions import (
     apply_distribution,
     weighted_sample_expr,
 )
-from dbldatagen.v1.engine.seed import cell_seed_expr
+from dbldatagen.v1.engine.seed import GOLDEN_RATIO_HASH, cell_seed_expr
 from dbldatagen.v1.schema import Distribution, WeightedValues
 
 
@@ -129,7 +129,7 @@ def _random_digits(
     width: int,
 ) -> Column:
     """Generate *width* random digits from the cell seed."""
-    seed = cell_seed_expr(_seed_xor(column_seed, (idx + 1) * 0x9E3779B9), id_col)
+    seed = cell_seed_expr(_seed_xor(column_seed, (idx + 1) * GOLDEN_RATIO_HASH), id_col)
     # Take abs, convert to string, pad/truncate to width
     raw = F.abs(seed).cast("string")
     return F.rpad(F.substring(raw, 1, width), width, "0")
@@ -145,7 +145,7 @@ def _random_alpha(
 
     Each character is derived from a separate hash to ensure independence.
     """
-    mixed_seed = _seed_xor(column_seed, (idx + 1) * 0x9E3779B9)
+    mixed_seed = _seed_xor(column_seed, (idx + 1) * GOLDEN_RATIO_HASH)
     seed_col = mixed_seed if isinstance(mixed_seed, Column) else F.lit(mixed_seed).cast("long")
     chars: list[Column] = []
     for i in range(width):
@@ -165,7 +165,7 @@ def _random_hex(
     width: int,
 ) -> Column:
     """Generate *width* random hexadecimal characters."""
-    seed = cell_seed_expr(_seed_xor(column_seed, (idx + 1) * 0x9E3779B9), id_col)
+    seed = cell_seed_expr(_seed_xor(column_seed, (idx + 1) * GOLDEN_RATIO_HASH), id_col)
     raw = F.hex(F.abs(seed))
     return F.lower(F.rpad(F.substring(raw, 1, width), width, "0"))
 

@@ -10,7 +10,11 @@ from pyspark.sql import Column
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 
-from dbldatagen.v1.engine.distributions import apply_distribution, normal_sample_expr
+from dbldatagen.v1.engine.distributions import (
+    _CONTINUOUS_PRECISION,
+    apply_distribution,
+    normal_sample_expr,
+)
 from dbldatagen.v1.engine.seed import cell_seed_expr
 from dbldatagen.v1.schema import DataType, Distribution, Normal
 
@@ -86,7 +90,7 @@ def _build_float_range(
         result = F.greatest(F.lit(min_val), F.least(raw, F.lit(max_val)))
     else:
         # Map seed to [0, 1) then scale
-        frac = (F.abs(seed_col) % F.lit(1000000)).cast("double") / F.lit(1000000.0)
+        frac = (F.abs(seed_col) % F.lit(_CONTINUOUS_PRECISION)).cast("double") / F.lit(float(_CONTINUOUS_PRECISION))
         result = frac * F.lit(span) + F.lit(min_val)
 
     spark_type = _resolve_spark_type(dtype, integer=False)

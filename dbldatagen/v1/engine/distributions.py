@@ -21,6 +21,15 @@ from dbldatagen.v1.schema import (
 )
 
 
+# Precision for mapping a seed hash to [0, 1): abs(seed) % P / P.
+# 10000 gives 0.01% granularity (used for weighted-values selection).
+_UNIFORM_PRECISION = 10_000
+
+# Higher precision for continuous distributions (normal, exponential,
+# log-normal) and range column fractional mapping.
+_CONTINUOUS_PRECISION = 1_000_000
+
+
 # ---------------------------------------------------------------------------
 # Core sampling helpers
 # ---------------------------------------------------------------------------
@@ -61,8 +70,8 @@ def weighted_sample_expr(
         cum += w
         thresholds.append((cum, v))
 
-    # Map seed to [0, 1) range: abs(seed) % 10000 / 10000
-    frac = (F.abs(cell_seed_col) % F.lit(10000)).cast("double") / F.lit(10000.0)
+    # Map seed to [0, 1) range
+    frac = (F.abs(cell_seed_col) % F.lit(_UNIFORM_PRECISION)).cast("double") / F.lit(float(_UNIFORM_PRECISION))
 
     expr = None
     for cum_w, val in reversed(thresholds):
@@ -95,7 +104,7 @@ def normal_sample_expr(
     for i in range(12):
         # Derive an independent uniform [0, 1) from the cell seed
         h = F.xxhash64(cell_seed_col, F.lit(i).cast("long"))
-        u = (F.abs(h) % F.lit(1000000)).cast("double") / F.lit(1000000.0)
+        u = (F.abs(h) % F.lit(_CONTINUOUS_PRECISION)).cast("double") / F.lit(float(_CONTINUOUS_PRECISION))
         accum = u if accum is None else accum + u
 
     # accum ~ sum of 12 Uniform(0,1) => approx Normal(6, 1)
@@ -112,7 +121,7 @@ def zipf_sample_expr(cell_seed_col: Column, n: int, exponent: float = 1.5) -> Co
     """
     if n <= 1:
         return F.lit(0)
-    u = (F.abs(cell_seed_col) % F.lit(1000000)).cast("double") / F.lit(1000000.0)
+    u = (F.abs(cell_seed_col) % F.lit(_CONTINUOUS_PRECISION)).cast("double") / F.lit(float(_CONTINUOUS_PRECISION))
     # Shift u away from 0 to avoid log(0)
     u = F.greatest(u, F.lit(1e-9))
     if exponent <= 1.0:
@@ -137,7 +146,7 @@ def exponential_sample_expr(
     """
     if n <= 1:
         return F.lit(0)
-    u = (F.abs(cell_seed_col) % F.lit(1000000)).cast("double") / F.lit(1000000.0)
+    u = (F.abs(cell_seed_col) % F.lit(_CONTINUOUS_PRECISION)).cast("double") / F.lit(float(_CONTINUOUS_PRECISION))
     u = F.least(u, F.lit(0.999999))  # avoid log(0)
     x = -F.log(F.lit(1.0) - u) / F.lit(rate)
     # Normalise to [0, n): map [0, inf) to [0, n) via modulo

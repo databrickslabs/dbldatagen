@@ -425,9 +425,14 @@ def _normalize_plan(
         return plan
 
 
+# Target rows per chunk for auto-sizing: large enough for cluster
+# utilization, small enough to avoid OOM on wide schemas.
+_AUTO_CHUNK_TARGET_ROWS = 20_000_000
+
+
 def _auto_chunk_size(plan: CDCPlan) -> int:
-    """Pick chunk_size so each chunk has ~20M rows."""
-    target_rows = 20_000_000
+    """Pick chunk_size so each chunk has ~_AUTO_CHUNK_TARGET_ROWS rows."""
+    target_rows = _AUTO_CHUNK_TARGET_ROWS
     max_rows_per_batch = 1
     for table_name in plan.cdc_tables:
         config = plan.config_for(table_name)

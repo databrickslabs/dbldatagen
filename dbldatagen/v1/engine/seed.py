@@ -14,6 +14,21 @@ from pyspark.sql import Column
 from pyspark.sql import functions as F
 
 
+# Stride between consecutive batch seeds; large enough to avoid overlap
+# between per-column seeds within a single batch.
+_BATCH_SEED_STRIDE = 10000
+
+# Precision for null fraction mapping: null_fraction is quantized to
+# 1/_NULL_PRECISION granularity (0.01% with default 10000).
+_NULL_PRECISION = 10000
+
+# XOR constant to decorrelate the null mask seed from the value seed.
+_NULL_SEED_XOR = 0xDEADBEEF
+
+# Golden ratio hash constant (2^32 / phi) for mixing element/segment seeds.
+GOLDEN_RATIO_HASH = 0x9E3779B9
+
+
 def derive_column_seed(global_seed: int, table_name: str, column_name: str) -> int:
     """Derive a per-column seed from global seed + table + column identity.
 
@@ -73,12 +88,12 @@ def null_mask_expr(
         id_col = F.col(id_col)
     null_seed: int | Column
     if isinstance(column_seed, Column):
-        null_seed = column_seed.bitwiseXOR(F.lit(0xDEADBEEF).cast("long"))
+        null_seed = column_seed.bitwiseXOR(F.lit(_NULL_SEED_XOR).cast("long"))
     else:
-        null_seed = column_seed ^ 0xDEADBEEF
+        null_seed = column_seed ^ _NULL_SEED_XOR
     null_hash = cell_seed_expr(null_seed, id_col)
-    threshold = int(null_fraction * 10000)
-    return (F.abs(null_hash) % F.lit(10000)) < F.lit(threshold)
+    threshold = int(null_fraction * _NULL_PRECISION)
+    return (F.abs(null_hash) % F.lit(_NULL_PRECISION)) < F.lit(threshold)
 
 
 def mix64(key: int, index: int) -> int:
@@ -98,11 +113,11 @@ def compute_batch_seed(global_seed: int, batch_id: int) -> int:
     """Compute the seed for a given batch.
 
     Batch 0 uses global_seed directly.
-    Batch n uses global_seed + n * 10000 (wrapped to signed 64-bit).
+    Batch n uses global_seed + n * _BATCH_SEED_STRIDE (wrapped to signed 64-bit).
     """
     if batch_id == 0:
         return global_seed
-    raw = global_seed + batch_id * 10000
+    raw = global_seed + batch_id * _BATCH_SEED_STRIDE
     return _to_signed64(raw)
 
 
