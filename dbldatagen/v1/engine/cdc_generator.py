@@ -670,6 +670,7 @@ def _apply_columns_with_write_batch(
     *,
     unique_wbs: list[int] | None = None,
     row_count: int | None = None,
+    extra_exprs: list[Column] | None = None,
 ) -> DataFrame | None:
     """Apply column expressions using CASE WHEN on _write_batch for seed selection.
 
@@ -683,6 +684,9 @@ def _apply_columns_with_write_batch(
     row_count : int | None
         Upper bound on row IDs.  If ``None``, falls back to a
         ``.collect()`` on ``max(_synth_row_id)``.
+    extra_exprs : list[Column] | None
+        Additional Column expressions (e.g. metadata columns) to include
+        in the flat ``select`` alongside the data columns.
     """
     wb_col = F.col("_write_batch")
 
@@ -708,6 +712,9 @@ def _apply_columns_with_write_batch(
         fk_res,
         row_count=row_count,
     )
+
+    if extra_exprs:
+        col_exprs.extend(extra_exprs)
 
     select_list = [id_col]
     # Keep _write_batch only when UDF columns need it AND there are
@@ -931,28 +938,16 @@ def _build_fused_output(
     """Build column expressions + metadata for a fused multi-batch DataFrame.
 
     The input ``df`` must have ``_synth_row_id``, ``_batch_id``, and
-    ``_write_batch`` columns.
+    ``_write_batch`` columns.  Delegates to ``_apply_columns_with_write_batch``
+    with metadata columns passed via ``extra_exprs``.
     """
-    if not unique_wbs:
-        return None
-
-    wb_col = F.col("_write_batch")
     bid_col = F.col("_batch_id")
 
-    fk_res = resolved_plan.fk_resolutions if resolved_plan is not None else None
-    col_exprs, udf_columns, seeded_columns = build_all_column_exprs_case_when(
-        table_spec,
-        id_col,
-        wb_col,
-        unique_wbs,
-        global_seed,
-        fk_res,
-        row_count=row_count,
-    )
-
-    # Metadata columns
-    col_exprs.append(F.lit(op).alias("_op"))
-    col_exprs.append(bid_col)
+    # --- Metadata columns (included in the same flat select) ---
+    meta: list[Column] = [
+        F.lit(op).alias("_op"),
+        bid_col,
+    ]
 
     # PERFORMANCE NOTE — dynamic timestamp computation:
     # Instead of a CASE WHEN with one branch per batch_id (up to 365+),
@@ -967,35 +962,26 @@ def _build_fused_output(
         )
         base_epoch = int(base_ts.timestamp())
         interval = plan.batch_interval_seconds
-        ts_expr = (F.lit(base_epoch).cast("long") + bid_col.cast("long") * F.lit(interval).cast("long")).cast(
-            "timestamp"
-        )
+        ts_expr = (
+            F.lit(base_epoch).cast("long")
+            + bid_col.cast("long") * F.lit(interval).cast("long")
+        ).cast("timestamp")
     else:
         # Fallback for single batch or missing interval
-        ts_mappings = [(int(b), batch_timestamp(plan, int(b))) for b in batch_ids]
-        ts_expr = F.lit(ts_mappings[-1][1])
-        for i in range(len(ts_mappings) - 2, -1, -1):
-            ts_expr = F.when(
-                bid_col == F.lit(ts_mappings[i][0]),
-                F.lit(ts_mappings[i][1]),
-            ).otherwise(ts_expr)
-        ts_expr = ts_expr.cast("timestamp")
-    col_exprs.append(ts_expr.alias("_ts"))
+        ts_mappings = [(int(b), F.lit(batch_timestamp(plan, int(b)))) for b in batch_ids]
+        ts_expr = case_when_chain(bid_col, ts_mappings).cast("timestamp")
+    meta.append(ts_expr.alias("_ts"))
 
-    select_list = [id_col]
-    if (udf_columns or seeded_columns) and len(unique_wbs) > 1:
-        select_list.append(wb_col)
-    select_list.extend(col_exprs)
-    df = df.select(*select_list)
-
-    for col_name, col_expr in udf_columns:
-        df = df.withColumn(col_name, col_expr)
-
-    for col_name, col_expr in seeded_columns:
-        df = df.withColumn(col_name, col_expr)
-
-    df = df.drop("_synth_row_id", "_write_batch")
-    return df
+    return _apply_columns_with_write_batch(
+        df,
+        table_spec,
+        resolved_plan,
+        global_seed,
+        id_col,
+        unique_wbs=unique_wbs,
+        row_count=row_count,
+        extra_exprs=meta,
+    )
 
 
 # ---------------------------------------------------------------------------
