@@ -22,6 +22,7 @@ from dbldatagen.v1.cdc_schema import CDCPlan, CDCTableConfig, OperationWeights
 from dbldatagen.v1.engine.cdc_state import resolve_batch_size
 from dbldatagen.v1.engine.cdc_stateless import (
     CDCPeriods,
+    batch_timestamp_str,
     birth_tick_expr,
     compute_periods,
     death_tick_expr,
@@ -33,6 +34,7 @@ from dbldatagen.v1.engine.cdc_stateless import (
     update_due_expr,
     update_indices_at_batch,
 )
+from dbldatagen.v1.engine.fk import build_fk_column
 from dbldatagen.v1.engine.generator import (
     build_all_column_exprs,
     build_all_column_exprs_case_when,
@@ -40,8 +42,15 @@ from dbldatagen.v1.engine.generator import (
     generate_table,
 )
 from dbldatagen.v1.engine.planner import FKResolution, ResolvedPlan, resolve_plan
-from dbldatagen.v1.engine.seed import compute_batch_seed
-from dbldatagen.v1.engine.utils import apply_column_phases, create_range_df, get_pk_columns, union_all
+from dbldatagen.v1.engine.seed import compute_batch_seed, derive_column_seed
+from dbldatagen.v1.engine.utils import (
+    apply_column_phases,
+    apply_null_fraction,
+    case_when_chain,
+    create_range_df,
+    get_pk_columns,
+    union_all,
+)
 from dbldatagen.v1.schema import ColumnSpec, FakerColumn, SequenceColumn, TableSpec
 
 
@@ -274,8 +283,6 @@ def _generate_insert_stream(
     New rows use the batch-specific seed so values differ from initial load.
     PK sequences continue from the correct offset.
     """
-    from dbldatagen.v1.schema import ColumnSpec
-
     initial_rows = int(table_spec.rows)
     start_k, end_k = insert_range(batch_id, initial_rows, periods.inserts_per_batch)
     insert_count = end_k - start_k
@@ -1064,8 +1071,6 @@ def apply_fk_delete_guard(plan: CDCPlan, table_name: str, config: CDCTableConfig
 
 def batch_timestamp(plan: CDCPlan, batch_id: int) -> str:
     """Compute the timestamp string for a given batch."""
-    from dbldatagen.v1.engine.cdc_stateless import batch_timestamp_str
-
     return batch_timestamp_str(plan.start_timestamp, plan.batch_interval_seconds, batch_id)
 
 
@@ -1182,9 +1187,6 @@ def _build_case_when_column(
     Each batch uses a different seed, so the expression varies per batch.
     The result is: WHEN batch_offset == 0 THEN expr_0 WHEN ... ELSE expr_N.
     """
-    from dbldatagen.v1.engine.seed import derive_column_seed
-    from dbldatagen.v1.engine.utils import apply_null_fraction, case_when_chain
-
     batch_exprs = []
     for i, (batch_id, _, insert_count) in enumerate(batch_infos):
         batch_seed = compute_batch_seed(global_seed, batch_id)
@@ -1210,10 +1212,6 @@ def _build_case_when_fk(
     Each batch derives a different column seed, producing different FK
     distribution samples. Returns a UDF column (applied via withColumn).
     """
-    from dbldatagen.v1.engine.fk import build_fk_column
-    from dbldatagen.v1.engine.seed import derive_column_seed
-    from dbldatagen.v1.engine.utils import case_when_chain
-
     batch_exprs = []
     for i, (batch_id, _, _) in enumerate(batch_infos):
         batch_seed = compute_batch_seed(global_seed, batch_id)
@@ -1226,8 +1224,6 @@ def _build_case_when_fk(
 
 def _build_case_when_lit(batch_offset: Column, mappings: list[tuple[int, object]]) -> F.Column:
     """Build CASE WHEN for simple literal values (batch_id, timestamp)."""
-    from dbldatagen.v1.engine.utils import case_when_chain
-
     branches = [(k, F.lit(v)) for k, v in mappings]
     return case_when_chain(batch_offset, branches)
 
