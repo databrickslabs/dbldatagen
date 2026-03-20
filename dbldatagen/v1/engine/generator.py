@@ -30,7 +30,6 @@ from dbldatagen.v1.engine.seed import (
     column_seed_map,
     compute_batch_seed,
     derive_column_seed,
-    null_mask_expr,
 )
 from dbldatagen.v1.engine.utils import (
     apply_column_phases,
@@ -132,27 +131,74 @@ def build_all_column_exprs(
         Default: ``None`` (standard xxhash64).
     """
     table_name = table_spec.name
+
+    def _default_resolver(cs: ColumnSpec) -> int:
+        return derive_column_seed(seed, table_name, cs.name)
+
+    resolver = seed_fn if seed_fn is not None else _default_resolver
+
+    return _build_column_exprs_loop(
+        table_spec, id_col, resolver, seed, row_count, fk_resolutions,
+        cell_seed_fn=cell_seed_fn,
+    )
+
+
+def _build_column_exprs_loop(
+    table_spec: TableSpec,
+    id_col: Column,
+    seed_resolver: Callable[[ColumnSpec], int | Column],
+    effective_global_seed: int,
+    row_count: int,
+    fk_resolutions: dict[tuple[str, str], FKResolution] | None,
+    *,
+    pk_cols: set[str] | None = None,
+    cell_seed_fn: Callable[[int, Column, ColumnSpec], Column | None] | None = None,
+) -> tuple[list[Column], list[tuple[str, Column]], list[tuple[str, Column]]]:
+    """Unified column-building loop.
+
+    Iterates ``table_spec.columns``, classifies each column, and routes
+    to the appropriate builder.  The *seed_resolver* callable is the only
+    injection point — it controls how column seeds are derived (scalar,
+    batch-aware scalar, or map-based Column expression).
+
+    Parameters
+    ----------
+    seed_resolver :
+        ``(col_spec) -> int | Column`` — returns the column seed.
+    effective_global_seed :
+        Passed through to ``build_column_expr`` as ``global_seed``.
+        For the scalar batch path this is the batch-shifted seed;
+        for the simple and dynamic paths it is the original seed.
+    pk_cols :
+        If provided, PK sequence columns are short-circuited with
+        inline arithmetic instead of routing through ``build_column_expr``.
+    cell_seed_fn :
+        Optional per-cell seed override (used by snapshot generation).
+    """
+    table_name = table_spec.name
     col_exprs: list[Column] = []
     udf_columns: list[tuple[str, Column]] = []
     seeded_columns: list[tuple[str, Column]] = []
 
     for col_spec in table_spec.columns:
-        column_seed = seed_fn(col_spec) if seed_fn is not None else derive_column_seed(seed, table_name, col_spec.name)
+        # PK sequence short-circuit (batch paths)
+        if pk_cols and col_spec.name in pk_cols and isinstance(col_spec.gen, SequenceColumn):
+            pk_expr = (id_col * F.lit(col_spec.gen.step) + F.lit(col_spec.gen.start)).cast("long")
+            col_exprs.append(pk_expr.alias(col_spec.name))
+            continue
+
+        column_seed = seed_resolver(col_spec)
 
         # Defer seed_from columns to phase 3
         if col_spec.seed_from is not None:
-            result = _build_seed_from_column(col_spec, column_seed, seed, row_count)
+            result = _build_seed_from_column(col_spec, column_seed, effective_global_seed, row_count)
             seeded_columns.append(result)
             continue
 
         # FK columns
         if col_spec.foreign_key is not None:
             fk_result = _build_fk_column_expr(
-                col_spec,
-                table_name,
-                id_col,
-                column_seed,
-                fk_resolutions,
+                col_spec, table_name, id_col, column_seed, fk_resolutions,
             )
             if fk_result is not None:
                 udf_columns.append(fk_result)
@@ -167,12 +213,7 @@ def build_all_column_exprs(
 
         # Regular columns
         expr = _build_regular_column_expr(
-            col_spec,
-            id_col,
-            column_seed,
-            row_count,
-            seed,
-            cell_seed_fn,
+            col_spec, id_col, column_seed, row_count, effective_global_seed, cell_seed_fn,
         )
         if expr is not None:
             col_exprs.append(expr.alias(col_spec.name))
@@ -182,7 +223,7 @@ def build_all_column_exprs(
 
 def _build_seed_from_column(
     col_spec: ColumnSpec,
-    column_seed: int,
+    column_seed: int | Column,
     global_seed: int,
     row_count: int,
 ) -> tuple[str, Column]:
@@ -202,7 +243,7 @@ def _build_fk_column_expr(
     col_spec: ColumnSpec,
     table_name: str,
     id_col: Column,
-    column_seed: int,
+    column_seed: int | Column,
     fk_resolutions: dict[tuple[str, str], FKResolution] | None,
 ) -> tuple[str, Column] | None:
     """Build FK column expression, returning (name, expr) or None."""
@@ -218,7 +259,7 @@ def _build_fk_column_expr(
 def _build_faker_expr(
     col_spec: ColumnSpec,
     id_col: Column,
-    column_seed: int,
+    column_seed: int | Column,
 ) -> tuple[str, Column]:
     """Build a Faker pool UDF expression."""
     from dbldatagen.v1.engine.columns.faker_pool import build_faker_column
@@ -238,7 +279,7 @@ def _build_faker_expr(
 def _build_regular_column_expr(
     col_spec: ColumnSpec,
     id_col: Column,
-    column_seed: int,
+    column_seed: int | Column,
     row_count: int,
     global_seed: int,
     cell_seed_fn: Callable[[int, Column, ColumnSpec], Column | None] | None = None,
@@ -319,48 +360,15 @@ def _build_exprs_scalar(
 ) -> tuple[list[Column], list[tuple[str, Column]], list[tuple[str, Column]]]:
     """Build column expressions using a single scalar write-batch seed."""
     table_name = table_spec.name
-    pk_cols = get_pk_columns(table_spec)
     s = compute_batch_seed(global_seed, wb)
 
-    col_exprs: list[Column] = []
-    udf_columns: list[tuple[str, Column]] = []
-    seeded_columns: list[tuple[str, Column]] = []
+    def resolver(cs: ColumnSpec) -> int:
+        return derive_column_seed(s, table_name, cs.name)
 
-    for col_spec in table_spec.columns:
-        if col_spec.name in pk_cols and isinstance(col_spec.gen, SequenceColumn):
-            pk_expr = (id_col * F.lit(col_spec.gen.step) + F.lit(col_spec.gen.start)).cast("long")
-            col_exprs.append(pk_expr.alias(col_spec.name))
-            continue
-
-        col_seed = derive_column_seed(s, table_name, col_spec.name)
-
-        if col_spec.seed_from is not None:
-            effective_id = F.col(col_spec.seed_from)
-            expr = build_column_expr(col_spec, effective_id, col_seed, row_count, s)
-            if col_spec.null_fraction > 0:
-                is_null = null_mask_expr(col_seed, effective_id, col_spec.null_fraction)
-                expr = F.when(is_null, F.lit(None)).otherwise(expr)
-            seeded_columns.append((col_spec.name, expr.alias(col_spec.name)))
-            continue
-
-        if col_spec.foreign_key is not None:
-            fk_key = (table_name, col_spec.name)
-            if fk_resolutions and fk_key in fk_resolutions:
-                from dbldatagen.v1.engine.fk import build_fk_column
-
-                expr = build_fk_column(id_col, col_seed, fk_resolutions[fk_key])
-                udf_columns.append((col_spec.name, expr))
-            else:
-                col_exprs.append(F.lit(None).alias(col_spec.name))
-            continue
-
-        expr = build_column_expr(col_spec, id_col, col_seed, row_count, s)
-        if col_spec.null_fraction > 0:
-            is_null = null_mask_expr(col_seed, id_col, col_spec.null_fraction)
-            expr = F.when(is_null, F.lit(None)).otherwise(expr)
-        col_exprs.append(expr.alias(col_spec.name))
-
-    return col_exprs, udf_columns, seeded_columns
+    return _build_column_exprs_loop(
+        table_spec, id_col, resolver, s, row_count, fk_resolutions,
+        pk_cols=get_pk_columns(table_spec),
+    )
 
 
 def _build_exprs_dynamic(
@@ -386,66 +394,15 @@ def _build_exprs_dynamic(
         seed.py for the full rationale.
     """
     table_name = table_spec.name
-    pk_cols = get_pk_columns(table_spec)
 
-    col_exprs: list[Column] = []
-    udf_columns: list[tuple[str, Column]] = []
-    seeded_columns: list[tuple[str, Column]] = []
+    def resolver(cs: ColumnSpec) -> Column:
+        seed_map = column_seed_map(global_seed, unique_wbs, table_name, cs.name)
+        return column_seed_lookup(seed_map, wb_col)
 
-    for col_spec in table_spec.columns:
-        if col_spec.name in pk_cols and isinstance(col_spec.gen, SequenceColumn):
-            pk_expr = (id_col * F.lit(col_spec.gen.step) + F.lit(col_spec.gen.start)).cast("long")
-            col_exprs.append(pk_expr.alias(col_spec.name))
-            continue
-
-        # Build a map literal: write_batch → column_seed
-        seed_map = column_seed_map(
-            global_seed,
-            unique_wbs,
-            table_name,
-            col_spec.name,
-        )
-        col_seed_col = column_seed_lookup(seed_map, wb_col)
-
-        if col_spec.seed_from is not None:
-            effective_id = F.col(col_spec.seed_from)
-            expr = build_column_expr(
-                col_spec,
-                effective_id,
-                col_seed_col,
-                row_count,
-                global_seed,
-            )
-            if col_spec.null_fraction > 0:
-                is_null = null_mask_expr(col_seed_col, effective_id, col_spec.null_fraction)
-                expr = F.when(is_null, F.lit(None)).otherwise(expr)
-            seeded_columns.append((col_spec.name, expr.alias(col_spec.name)))
-            continue
-
-        if col_spec.foreign_key is not None:
-            fk_key = (table_name, col_spec.name)
-            if fk_resolutions and fk_key in fk_resolutions:
-                from dbldatagen.v1.engine.fk import build_fk_column
-
-                expr = build_fk_column(id_col, col_seed_col, fk_resolutions[fk_key])
-                udf_columns.append((col_spec.name, expr))
-            else:
-                col_exprs.append(F.lit(None).alias(col_spec.name))
-            continue
-
-        expr = build_column_expr(
-            col_spec,
-            id_col,
-            col_seed_col,
-            row_count,
-            global_seed,
-        )
-        if col_spec.null_fraction > 0:
-            is_null = null_mask_expr(col_seed_col, id_col, col_spec.null_fraction)
-            expr = F.when(is_null, F.lit(None)).otherwise(expr)
-        col_exprs.append(expr.alias(col_spec.name))
-
-    return col_exprs, udf_columns, seeded_columns
+    return _build_column_exprs_loop(
+        table_spec, id_col, resolver, global_seed, row_count, fk_resolutions,
+        pk_cols=get_pk_columns(table_spec),
+    )
 
 
 def _build_write_batch_case_when(wb_col: Column, wb_exprs: list[tuple[int, Column]]) -> Column:
