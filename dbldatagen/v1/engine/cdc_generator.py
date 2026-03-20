@@ -970,10 +970,9 @@ def _build_fused_output(
         )
         base_epoch = int(base_ts.timestamp())
         interval = plan.batch_interval_seconds
-        ts_expr = (
-            F.lit(base_epoch).cast("long")
-            + bid_col.cast("long") * F.lit(interval).cast("long")
-        ).cast("timestamp")
+        ts_expr = (F.lit(base_epoch).cast("long") + bid_col.cast("long") * F.lit(interval).cast("long")).cast(
+            "timestamp"
+        )
     else:
         # Fallback for single batch or missing interval
         ts_mappings = [(int(b), F.lit(batch_timestamp(plan, int(b)))) for b in batch_ids]

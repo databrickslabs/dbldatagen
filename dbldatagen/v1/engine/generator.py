@@ -140,7 +140,12 @@ def build_all_column_exprs(
     resolver = seed_fn if seed_fn is not None else _default_resolver
 
     return _build_column_exprs_loop(
-        table_spec, id_col, resolver, seed, row_count, fk_resolutions,
+        table_spec,
+        id_col,
+        resolver,
+        seed,
+        row_count,
+        fk_resolutions,
         cell_seed_fn=cell_seed_fn,
     )
 
@@ -200,7 +205,11 @@ def _build_column_exprs_loop(
         # FK columns
         if col_spec.foreign_key is not None:
             fk_result = _build_fk_column_expr(
-                col_spec, table_name, id_col, column_seed, fk_resolutions,
+                col_spec,
+                table_name,
+                id_col,
+                column_seed,
+                fk_resolutions,
             )
             if fk_result is not None:
                 udf_columns.append(fk_result)
@@ -215,7 +224,12 @@ def _build_column_exprs_loop(
 
         # Regular columns
         expr = _build_regular_column_expr(
-            col_spec, id_col, column_seed, row_count, effective_global_seed, cell_seed_fn,
+            col_spec,
+            id_col,
+            column_seed,
+            row_count,
+            effective_global_seed,
+            cell_seed_fn,
         )
         if expr is not None:
             col_exprs.append(expr.alias(col_spec.name))
@@ -368,7 +382,12 @@ def _build_exprs_scalar(
         return derive_column_seed(s, table_name, cs.name)
 
     return _build_column_exprs_loop(
-        table_spec, id_col, resolver, s, row_count, fk_resolutions,
+        table_spec,
+        id_col,
+        resolver,
+        s,
+        row_count,
+        fk_resolutions,
         pk_cols=get_pk_columns(table_spec),
     )
 
@@ -402,7 +421,12 @@ def _build_exprs_dynamic(
         return column_seed_lookup(seed_map, wb_col)
 
     return _build_column_exprs_loop(
-        table_spec, id_col, resolver, global_seed, row_count, fk_resolutions,
+        table_spec,
+        id_col,
+        resolver,
+        global_seed,
+        row_count,
+        fk_resolutions,
         pk_cols=get_pk_columns(table_spec),
     )
 

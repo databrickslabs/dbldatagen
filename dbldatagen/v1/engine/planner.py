@@ -20,21 +20,61 @@ from dbldatagen.v1.schema import (
 
 # Common SQL functions, keywords, and type names excluded when checking
 # ExpressionColumn references for undefined column names.
-_SQL_BUILTINS: frozenset[str] = frozenset({
-    # Functions
-    "abs", "cast", "ceil", "coalesce", "concat", "current_date",
-    "current_timestamp", "date_format", "floor", "length", "lit", "lower",
-    "otherwise", "replace", "round", "substring", "to_date", "to_timestamp",
-    "trim", "upper", "when",
-    # Keywords / operators
-    "and", "as", "between", "case", "else", "end", "in", "is", "like",
-    "not", "or", "then",
-    # Literals
-    "false", "null", "true",
-    # Type names
-    "array", "boolean", "date", "double", "float", "int", "long", "map",
-    "string", "struct", "timestamp",
-})
+_SQL_BUILTINS: frozenset[str] = frozenset(
+    {
+        # Functions
+        "abs",
+        "cast",
+        "ceil",
+        "coalesce",
+        "concat",
+        "current_date",
+        "current_timestamp",
+        "date_format",
+        "floor",
+        "length",
+        "lit",
+        "lower",
+        "otherwise",
+        "replace",
+        "round",
+        "substring",
+        "to_date",
+        "to_timestamp",
+        "trim",
+        "upper",
+        "when",
+        # Keywords / operators
+        "and",
+        "as",
+        "between",
+        "case",
+        "else",
+        "end",
+        "in",
+        "is",
+        "like",
+        "not",
+        "or",
+        "then",
+        # Literals
+        "false",
+        "null",
+        "true",
+        # Type names
+        "array",
+        "boolean",
+        "date",
+        "double",
+        "float",
+        "int",
+        "long",
+        "map",
+        "string",
+        "struct",
+        "timestamp",
+    }
+)
 
 
 @dataclass

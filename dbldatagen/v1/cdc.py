@@ -134,7 +134,7 @@ class CDCStream:
     """
 
     initial: dict[str, DataFrame] = field(default_factory=dict)
-    batches: _LazyBatchList | _LazyChunkList | list[dict[str, DataFrame]] = field(default_factory=list)
+    batches: _LazyList[dict[str, DataFrame]] | list[dict[str, DataFrame]] = field(default_factory=list)
     plan: CDCPlan | None = None
 
 

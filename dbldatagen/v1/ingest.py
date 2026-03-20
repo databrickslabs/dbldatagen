@@ -90,7 +90,7 @@ class IngestStream:
     """
 
     initial: dict[str, DataFrame] = field(default_factory=dict)
-    batches: _LazyIngestBatchList | list[dict[str, DataFrame]] = field(default_factory=list)
+    batches: _LazyList[dict[str, DataFrame]] | list[dict[str, DataFrame]] = field(default_factory=list)
     plan: IngestPlan | None = None
 
 
