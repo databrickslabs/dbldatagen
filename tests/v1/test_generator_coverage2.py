@@ -33,7 +33,6 @@ from dbldatagen.v1.engine.generator import (
     build_all_column_exprs,
     build_column_expr,
 )
-from dbldatagen.v1.engine.utils import case_when_chain
 from dbldatagen.v1.engine.ingest_generator import (
     _mutate_selected_rows,
     _select_rows_deterministic,
@@ -44,7 +43,7 @@ from dbldatagen.v1.engine.ingest_generator import (
     generate_stateless_incremental_batch,
     generate_stateless_snapshot_batch,
 )
-from dbldatagen.v1.engine.utils import create_range_df
+from dbldatagen.v1.engine.utils import case_when_chain, create_range_df
 from dbldatagen.v1.ingest_schema import (
     IngestMode,
     IngestPlan,

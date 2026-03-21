@@ -217,7 +217,7 @@ def _extract_columns(
         if eq_parent:
             for child in eq_parent.iter_expressions():
                 if child is not col_node and not isinstance(child, exp.Column):
-                    val = _extract_literal_value(child)
+                    val = _extract_literal_value(child)  # type: ignore[arg-type]
                     if val is not None:
                         ec.compared_to_literal = val
 
@@ -329,20 +329,20 @@ def parse_sql(sql: str, *, dialect: str | None = None) -> ExtractedSchema:
     for ast in statements:
         if ast is None:
             continue
-        ctes = _cte_names(ast)
-        alias_map = _alias_map_from_ast(ast)
+        ctes = _cte_names(ast)  # type: ignore[arg-type]
+        alias_map = _alias_map_from_ast(ast)  # type: ignore[arg-type]
 
         # Extract tables
-        stmt_tables = _extract_tables(ast, ctes)
+        stmt_tables = _extract_tables(ast, ctes)  # type: ignore[arg-type]
         for name, table in stmt_tables.items():
             if name not in all_tables:
                 all_tables[name] = table
 
         # Extract columns into tables
-        _extract_columns(ast, alias_map, ctes, all_tables)
+        _extract_columns(ast, alias_map, ctes, all_tables)  # type: ignore[arg-type]
 
         # Extract joins
-        stmt_joins = _extract_joins(ast, alias_map, ctes)
+        stmt_joins = _extract_joins(ast, alias_map, ctes)  # type: ignore[arg-type]
         all_joins.extend(stmt_joins)
 
     if not all_tables:

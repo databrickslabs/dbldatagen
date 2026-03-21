@@ -10,6 +10,7 @@ from pyspark.sql import functions as F
 
 from dbldatagen.v1.schema import TableSpec
 
+
 T = TypeVar("T")
 
 

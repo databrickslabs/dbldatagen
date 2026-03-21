@@ -515,3 +515,9 @@ module = [
     "tests.v1.test_cdc_state_coverage",
 ]
 ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = [
+    "dbldatagen.v1.connectors.sql.parser",
+]
+warn_unused_ignores = false
