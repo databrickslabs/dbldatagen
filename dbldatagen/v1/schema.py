@@ -26,6 +26,12 @@ class Normal(BaseModel):
     mean: float = 0.0
     stddev: float = 1.0
 
+    @model_validator(mode="after")
+    def validate_params(self) -> Normal:
+        if self.stddev < 0:
+            raise ValueError(f"stddev must be >= 0, got {self.stddev}")
+        return self
+
 
 class LogNormal(BaseModel):
     """Log-normal distribution."""
@@ -34,12 +40,24 @@ class LogNormal(BaseModel):
     mean: float = 0.0
     stddev: float = 1.0
 
+    @model_validator(mode="after")
+    def validate_params(self) -> LogNormal:
+        if self.stddev < 0:
+            raise ValueError(f"stddev must be >= 0, got {self.stddev}")
+        return self
+
 
 class Zipf(BaseModel):
     """Zipfian/power-law distribution -- common for realistic cardinality skew."""
 
     type: Literal["zipf"] = "zipf"
     exponent: float = 1.5
+
+    @model_validator(mode="after")
+    def validate_params(self) -> Zipf:
+        if self.exponent <= 0:
+            raise ValueError(f"exponent must be > 0, got {self.exponent}")
+        return self
 
 
 class Exponential(BaseModel):
@@ -48,12 +66,26 @@ class Exponential(BaseModel):
     type: Literal["exponential"] = "exponential"
     rate: float = 1.0
 
+    @model_validator(mode="after")
+    def validate_params(self) -> Exponential:
+        if self.rate <= 0:
+            raise ValueError(f"rate must be > 0, got {self.rate}")
+        return self
+
 
 class WeightedValues(BaseModel):
     """Explicit weighted selection from a list of values."""
 
     type: Literal["weighted"] = "weighted"
     weights: dict[str, float]
+
+    @model_validator(mode="after")
+    def validate_weights(self) -> WeightedValues:
+        if not self.weights:
+            raise ValueError("weights must not be empty")
+        if any(w < 0 for w in self.weights.values()):
+            raise ValueError("weights must be non-negative")
+        return self
 
 
 Distribution = Annotated[
@@ -76,6 +108,14 @@ class RangeColumn(BaseModel):
     step: float | int | None = None
     distribution: Distribution = Uniform()
 
+    @model_validator(mode="after")
+    def validate_range(self) -> RangeColumn:
+        if self.min > self.max:
+            raise ValueError(f"min ({self.min}) must be <= max ({self.max})")
+        if self.step is not None and self.step <= 0:
+            raise ValueError(f"step must be > 0, got {self.step}")
+        return self
+
 
 class ValuesColumn(BaseModel):
     """Pick from an explicit list of allowed values."""
@@ -83,6 +123,12 @@ class ValuesColumn(BaseModel):
     strategy: Literal["values"] = "values"
     values: list[Any]
     distribution: Distribution = Uniform()
+
+    @model_validator(mode="after")
+    def validate_values(self) -> ValuesColumn:
+        if not self.values:
+            raise ValueError("values list must not be empty")
+        return self
 
 
 class FakerColumn(BaseModel):
@@ -117,6 +163,12 @@ class SequenceColumn(BaseModel):
     start: int = 1
     step: int = 1
 
+    @model_validator(mode="after")
+    def validate_step(self) -> SequenceColumn:
+        if self.step == 0:
+            raise ValueError("step must not be 0")
+        return self
+
 
 class UUIDColumn(BaseModel):
     """Deterministic UUID generation (v5 from seed + row index)."""
@@ -150,15 +202,18 @@ class TimestampColumn(BaseModel):
     def validate_timestamps(self) -> TimestampColumn:
         from datetime import datetime
 
+        parsed = {}
         for field_name in ("start", "end"):
             val = getattr(self, field_name)
             try:
-                datetime.fromisoformat(val)
+                parsed[field_name] = datetime.fromisoformat(val)
             except ValueError:
                 raise ValueError(
                     f"TimestampColumn.{field_name}='{val}' is not a valid ISO timestamp. "
                     f"Expected format: 'YYYY-MM-DD' or 'YYYY-MM-DD HH:MM:SS'."
                 ) from None
+        if parsed["start"] > parsed["end"]:
+            raise ValueError(f"start ({self.start}) must be <= end ({self.end})")
         return self
 
 
@@ -202,6 +257,8 @@ class ArrayColumn(BaseModel):
 
     @model_validator(mode="after")
     def validate_lengths(self) -> ArrayColumn:
+        if self.min_length < 0:
+            raise ValueError(f"min_length must be >= 0, got {self.min_length}")
         if self.min_length > self.max_length:
             raise ValueError(f"min_length ({self.min_length}) must be <= max_length ({self.max_length})")
         return self
@@ -275,6 +332,8 @@ class ForeignKeyRef(BaseModel):
     def validate_ref_format(self) -> ForeignKeyRef:
         if "." not in self.ref:
             raise ValueError(f"ForeignKeyRef.ref='{self.ref}' must use 'table.column' format.")
+        if not 0.0 <= self.null_fraction <= 1.0:
+            raise ValueError(f"null_fraction must be in [0.0, 1.0], got {self.null_fraction}")
         return self
 
 
@@ -302,6 +361,8 @@ class ColumnSpec(BaseModel):
 
     @model_validator(mode="after")
     def validate_null_fraction(self) -> ColumnSpec:
+        if not 0.0 <= self.null_fraction <= 1.0:
+            raise ValueError(f"null_fraction must be in [0.0, 1.0], got {self.null_fraction}")
         if self.null_fraction > 0 and not self.nullable:
             self.nullable = True
         return self
@@ -347,6 +408,8 @@ class TableSpec(BaseModel):
     @model_validator(mode="after")
     def resolve_row_count(self) -> TableSpec:
         self.rows = parse_human_count(self.rows)
+        if self.rows <= 0:
+            raise ValueError(f"rows must be > 0, got {self.rows}")
         return self
 
 

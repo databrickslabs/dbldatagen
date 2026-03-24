@@ -187,8 +187,10 @@ def resolve_plan(plan: DataGenPlan) -> ResolvedPlan:
                 null_fraction=null_fraction,
             )
 
-    # Warn about potentially invalid ExpressionColumn references
+    # Validate cross-column references
     _validate_expression_columns(plan)
+    _validate_seed_from(plan)
+    _validate_primary_keys(plan)
 
     # Build dependency graph and topological sort
     dep_graph = _build_dependency_graph(plan)
@@ -307,9 +309,8 @@ def _extract_pk_metadata(table_spec: TableSpec, pk_col_spec: ColumnSpec, plan_se
 
 
 def _validate_expression_columns(plan: DataGenPlan) -> None:
-    """Warn if ExpressionColumn references look like undefined column names."""
+    """Raise if ExpressionColumn references undefined column names."""
     import re
-    import warnings
 
     for table_spec in plan.tables:
         col_names = {c.name for c in table_spec.columns}
@@ -320,12 +321,38 @@ def _validate_expression_columns(plan: DataGenPlan) -> None:
             tokens = set(re.findall(r"\b([a-zA-Z_]\w*)\b", col_spec.gen.expr))
             candidates = tokens - _SQL_BUILTINS - col_names
             for candidate in candidates:
-                # Only warn for tokens that look like column names (not numbers)
+                # Only flag tokens that look like column names (not numbers)
                 if not candidate[0].isdigit():
-                    warnings.warn(
+                    raise ValueError(
                         f"ExpressionColumn '{col_spec.name}' in table "
                         f"'{table_spec.name}' references '{candidate}' "
                         f"which is not a column in this table. "
-                        f"Available columns: {sorted(col_names)}",
-                        stacklevel=3,
+                        f"Available columns: {sorted(col_names)}"
                     )
+
+
+def _validate_seed_from(plan: DataGenPlan) -> None:
+    """Validate that seed_from references exist as columns in the same table."""
+    for table_spec in plan.tables:
+        col_names = {c.name for c in table_spec.columns}
+        for col_spec in table_spec.columns:
+            if col_spec.seed_from and col_spec.seed_from not in col_names:
+                raise ValueError(
+                    f"Column '{col_spec.name}' in table '{table_spec.name}' "
+                    f"has seed_from='{col_spec.seed_from}' but that column "
+                    f"does not exist. Available: {sorted(col_names)}"
+                )
+
+
+def _validate_primary_keys(plan: DataGenPlan) -> None:
+    """Validate that PK columns exist in their table."""
+    for table_spec in plan.tables:
+        if table_spec.primary_key is None:
+            continue
+        col_names = {c.name for c in table_spec.columns}
+        for pk_col in table_spec.primary_key.columns:
+            if pk_col not in col_names:
+                raise ValueError(
+                    f"Primary key column '{pk_col}' not found in table "
+                    f"'{table_spec.name}'. Available: {sorted(col_names)}"
+                )

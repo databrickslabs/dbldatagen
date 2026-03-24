@@ -1,6 +1,9 @@
 """Tests for dbldatagen.v1.schema Pydantic models."""
 
+import pytest
+
 from dbldatagen.v1.schema import (
+    ArrayColumn,
     ColumnSpec,
     ConstantColumn,
     DataGenPlan,
@@ -498,3 +501,128 @@ class TestJsonRoundTrip:
             json_str = col.model_dump_json()
             restored = ColumnSpec.model_validate_json(json_str)
             assert restored == col, f"Round-trip failed for {type(dist).__name__}"
+
+
+# ---------------------------------------------------------------------------
+# Input validation tests
+# ---------------------------------------------------------------------------
+
+
+class TestDistributionValidation:
+    def test_normal_negative_stddev(self):
+        with pytest.raises(ValueError, match="stddev must be >= 0"):
+            Normal(stddev=-1.0)
+
+    def test_lognormal_negative_stddev(self):
+        with pytest.raises(ValueError, match="stddev must be >= 0"):
+            LogNormal(stddev=-0.5)
+
+    def test_zipf_zero_exponent(self):
+        with pytest.raises(ValueError, match="exponent must be > 0"):
+            Zipf(exponent=0)
+
+    def test_zipf_negative_exponent(self):
+        with pytest.raises(ValueError, match="exponent must be > 0"):
+            Zipf(exponent=-1.0)
+
+    def test_exponential_zero_rate(self):
+        with pytest.raises(ValueError, match="rate must be > 0"):
+            Exponential(rate=0)
+
+    def test_exponential_negative_rate(self):
+        with pytest.raises(ValueError, match="rate must be > 0"):
+            Exponential(rate=-0.5)
+
+    def test_weighted_empty(self):
+        with pytest.raises(ValueError, match="weights must not be empty"):
+            WeightedValues(weights={})
+
+    def test_weighted_negative(self):
+        with pytest.raises(ValueError, match="weights must be non-negative"):
+            WeightedValues(weights={"a": 0.5, "b": -0.3})
+
+    def test_normal_zero_stddev_ok(self):
+        n = Normal(stddev=0.0)
+        assert n.stddev == 0.0
+
+
+class TestRangeColumnValidation:
+    def test_min_greater_than_max(self):
+        with pytest.raises(ValueError, match=r"min.*must be <= max"):
+            RangeColumn(min=100, max=50)
+
+    def test_min_equals_max_ok(self):
+        r = RangeColumn(min=5, max=5)
+        assert r.min == r.max
+
+    def test_step_zero(self):
+        with pytest.raises(ValueError, match="step must be > 0"):
+            RangeColumn(step=0)
+
+    def test_step_negative(self):
+        with pytest.raises(ValueError, match="step must be > 0"):
+            RangeColumn(step=-1)
+
+
+class TestValuesColumnValidation:
+    def test_empty_values(self):
+        with pytest.raises(ValueError, match="values list must not be empty"):
+            ValuesColumn(values=[])
+
+
+class TestSequenceColumnValidation:
+    def test_step_zero(self):
+        with pytest.raises(ValueError, match="step must not be 0"):
+            SequenceColumn(step=0)
+
+    def test_negative_step_ok(self):
+        s = SequenceColumn(step=-1)
+        assert s.step == -1
+
+
+class TestTimestampColumnValidation:
+    def test_start_after_end(self):
+        with pytest.raises(ValueError, match=r"start.*must be <= end"):
+            TimestampColumn(start="2025-01-01", end="2020-01-01")
+
+    def test_equal_dates_ok(self):
+        t = TimestampColumn(start="2025-01-01", end="2025-01-01")
+        assert t.start == t.end
+
+
+class TestArrayColumnValidation:
+    def test_negative_min_length(self):
+        with pytest.raises(ValueError, match="min_length must be >= 0"):
+            ArrayColumn(element=RangeColumn(), min_length=-1, max_length=5)
+
+    def test_zero_min_length_ok(self):
+        a = ArrayColumn(element=RangeColumn(), min_length=0, max_length=3)
+        assert a.min_length == 0
+
+
+class TestNullFractionValidation:
+    def test_column_spec_above_one(self):
+        with pytest.raises(ValueError, match="null_fraction must be in"):
+            ColumnSpec(name="x", gen=RangeColumn(), null_fraction=1.5)
+
+    def test_column_spec_negative(self):
+        with pytest.raises(ValueError, match="null_fraction must be in"):
+            ColumnSpec(name="x", gen=RangeColumn(), null_fraction=-0.1)
+
+    def test_fk_null_fraction_above_one(self):
+        with pytest.raises(ValueError, match="null_fraction must be in"):
+            ForeignKeyRef(ref="t.c", null_fraction=1.5)
+
+    def test_fk_null_fraction_negative(self):
+        with pytest.raises(ValueError, match="null_fraction must be in"):
+            ForeignKeyRef(ref="t.c", null_fraction=-0.1)
+
+
+class TestTableSpecValidation:
+    def test_rows_zero(self):
+        with pytest.raises(ValueError, match="rows must be > 0"):
+            TableSpec(name="t", columns=[ColumnSpec(name="x", gen=RangeColumn())], rows=0)
+
+    def test_rows_negative(self):
+        with pytest.raises(ValueError, match="rows must be > 0"):
+            TableSpec(name="t", columns=[ColumnSpec(name="x", gen=RangeColumn())], rows=-10)

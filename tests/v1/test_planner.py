@@ -11,9 +11,11 @@ from dbldatagen.v1.schema import (
     ColumnSpec,
     ConstantColumn,
     DataGenPlan,
+    ExpressionColumn,
     ForeignKeyRef,
     PatternColumn,
     PrimaryKey,
+    RangeColumn,
     SequenceColumn,
     TableSpec,
     UUIDColumn,
@@ -278,3 +280,95 @@ class TestPKMetadataExtraction:
 
         assert meta.pk_type == "uuid"
         assert meta.row_count == 300
+
+
+# ---------------------------------------------------------------------------
+# Validation tests
+# ---------------------------------------------------------------------------
+
+
+class TestExpressionColumnValidation:
+    def test_undefined_reference_raises(self):
+        plan = DataGenPlan(
+            tables=[
+                TableSpec(
+                    name="t",
+                    rows=10,
+                    columns=[
+                        ColumnSpec(name="a", gen=RangeColumn(min=1, max=10)),
+                        ColumnSpec(name="b", gen=ExpressionColumn(expr="unknown_col + 1")),
+                    ],
+                )
+            ]
+        )
+        with pytest.raises(ValueError, match="references 'unknown_col'"):
+            resolve_plan(plan)
+
+    def test_valid_reference_ok(self):
+        plan = DataGenPlan(
+            tables=[
+                TableSpec(
+                    name="t",
+                    rows=10,
+                    columns=[
+                        ColumnSpec(name="a", gen=RangeColumn(min=1, max=10)),
+                        ColumnSpec(name="b", gen=ExpressionColumn(expr="a + 1")),
+                    ],
+                )
+            ]
+        )
+        resolved = resolve_plan(plan)
+        assert "t" in resolved.generation_order
+
+
+class TestSeedFromValidation:
+    def test_nonexistent_seed_from_raises(self):
+        plan = DataGenPlan(
+            tables=[
+                TableSpec(
+                    name="t",
+                    rows=10,
+                    columns=[
+                        ColumnSpec(name="a", gen=RangeColumn(min=1, max=10)),
+                        ColumnSpec(name="b", gen=RangeColumn(min=1, max=10), seed_from="nonexistent"),
+                    ],
+                )
+            ]
+        )
+        with pytest.raises(ValueError, match="seed_from='nonexistent'"):
+            resolve_plan(plan)
+
+    def test_valid_seed_from_ok(self):
+        plan = DataGenPlan(
+            tables=[
+                TableSpec(
+                    name="t",
+                    rows=10,
+                    columns=[
+                        ColumnSpec(name="a", gen=RangeColumn(min=1, max=10)),
+                        ColumnSpec(name="b", gen=RangeColumn(min=1, max=10), seed_from="a"),
+                    ],
+                )
+            ]
+        )
+        resolved = resolve_plan(plan)
+        assert "t" in resolved.generation_order
+
+
+class TestPrimaryKeyValidation:
+    def test_pk_column_not_in_table_raises(self):
+        plan = DataGenPlan(
+            tables=[
+                TableSpec(
+                    name="t",
+                    rows=10,
+                    primary_key=PrimaryKey(columns=["id", "missing"]),
+                    columns=[
+                        ColumnSpec(name="id", gen=SequenceColumn()),
+                        ColumnSpec(name="val", gen=RangeColumn(min=1, max=10)),
+                    ],
+                )
+            ]
+        )
+        with pytest.raises(ValueError, match="Primary key column 'missing'"):
+            resolve_plan(plan)

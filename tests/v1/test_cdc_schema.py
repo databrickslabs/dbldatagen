@@ -252,3 +252,51 @@ class TestCDCPlanFromYAML:
         plan2 = CDCPlan.model_validate(yaml.safe_load(yaml_str))
         assert plan2.num_batches == 5
         assert plan2.cdc_tables == ["users"]
+
+
+# ---------------------------------------------------------------------------
+# Input validation tests
+# ---------------------------------------------------------------------------
+
+
+class TestMutationSpecValidation:
+    def test_fraction_above_one(self):
+        with pytest.raises(ValueError, match="fraction must be in"):
+            MutationSpec(fraction=1.5)
+
+    def test_fraction_negative(self):
+        with pytest.raises(ValueError, match="fraction must be in"):
+            MutationSpec(fraction=-0.1)
+
+
+class TestOperationWeightsValidation:
+    def test_negative_weight(self):
+        with pytest.raises(ValueError, match="non-negative"):
+            OperationWeights(insert=-1.0, update=5.0, delete=2.0)
+
+
+class TestCDCTableConfigValidation:
+    def test_negative_min_life(self):
+        with pytest.raises(ValueError, match="min_life must be >= 0"):
+            CDCTableConfig(min_life=-1)
+
+    def test_zero_update_window(self):
+        with pytest.raises(ValueError, match="update_window must be > 0"):
+            CDCTableConfig(update_window=0)
+
+    def test_negative_update_window(self):
+        with pytest.raises(ValueError, match="update_window must be > 0"):
+            CDCTableConfig(update_window=-5)
+
+
+class TestCDCMutationColumnValidation:
+    def test_unknown_mutation_column(self):
+        with pytest.raises(ValueError, match="Mutation column 'nonexistent'"):
+            CDCPlan(
+                base_plan=_simple_base_plan(),
+                table_configs={
+                    "users": CDCTableConfig(
+                        mutations=MutationSpec(columns=["nonexistent"]),
+                    )
+                },
+            )

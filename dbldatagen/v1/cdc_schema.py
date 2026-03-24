@@ -36,6 +36,8 @@ class OperationWeights(BaseModel):
 
     @model_validator(mode="after")
     def validate_positive(self) -> OperationWeights:
+        if self.insert < 0 or self.update < 0 or self.delete < 0:
+            raise ValueError("Operation weights must be non-negative")
         if self.insert + self.update + self.delete <= 0:
             raise ValueError("At least one operation weight must be positive")
         return self
@@ -55,6 +57,12 @@ class MutationSpec(BaseModel):
 
     columns: list[str] | None = None
     fraction: float = 0.5
+
+    @model_validator(mode="after")
+    def validate_fraction(self) -> MutationSpec:
+        if not 0.0 <= self.fraction <= 1.0:
+            raise ValueError(f"fraction must be in [0.0, 1.0], got {self.fraction}")
+        return self
 
 
 class CDCTableConfig(BaseModel):
@@ -76,6 +84,10 @@ class CDCTableConfig(BaseModel):
                 f"(interpreted as a fraction of initial rows). "
                 f"Use an integer for absolute batch sizes."
             )
+        if self.min_life < 0:
+            raise ValueError(f"min_life must be >= 0, got {self.min_life}")
+        if self.update_window is not None and self.update_window <= 0:
+            raise ValueError(f"update_window must be > 0, got {self.update_window}")
         return self
 
 
@@ -103,6 +115,18 @@ class CDCPlan(BaseModel):
         for name in self.cdc_tables:
             if name not in valid:
                 raise ValueError(f"cdc_tables references unknown table '{name}'")
+        # Validate mutation columns exist in their table
+        table_map = {t.name: t for t in self.base_plan.tables}
+        for table_name, config in self.table_configs.items():
+            if config.mutations.columns is None:
+                continue
+            col_names = {c.name for c in table_map[table_name].columns}
+            for mut_col in config.mutations.columns:
+                if mut_col not in col_names:
+                    raise ValueError(
+                        f"Mutation column '{mut_col}' not found in table "
+                        f"'{table_name}'. Available: {sorted(col_names)}"
+                    )
         return self
 
     @model_validator(mode="after")
