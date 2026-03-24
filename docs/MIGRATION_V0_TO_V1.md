@@ -350,16 +350,6 @@ sdf = generate_stream(spark, table_spec, rows_per_second=100)
 # Returns a Spark Structured Streaming DataFrame
 ```
 
-### Schema Inference from SQL
-
-```python
-from dbldatagen.v1.connectors import extract_from_sql_query
-
-plan = extract_from_sql_query("SELECT id, name, amount FROM customers JOIN orders ON ...")
-```
-
-Requires: `pip install dbldatagen[v1-sql]`
-
 ## Features Not Supported in v1
 
 These v0 features have no v1 equivalent:
