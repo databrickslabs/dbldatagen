@@ -36,14 +36,6 @@ resources:
             source: WORKSPACE
           environment_key: default
 
-        - task_key: test_ingest
-          depends_on:
-            - task_key: cleanup
-          notebook_task:
-            notebook_path: ./notebooks/04_test_ingest.py
-            source: WORKSPACE
-          environment_key: default
-
         - task_key: test_determinism
           depends_on:
             - task_key: cleanup

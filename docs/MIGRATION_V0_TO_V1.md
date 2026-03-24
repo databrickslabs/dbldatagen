@@ -18,39 +18,7 @@ pip install dbldatagen[v1-dev]
 
 # Individual v1 extras
 pip install dbldatagen[v1-faker]   # Faker-based text generation
-pip install dbldatagen[v1-csv]     # CSV schema inference
-pip install dbldatagen[v1-jdbc]    # Database schema extraction
-pip install dbldatagen[v1-sql]     # SQL query parsing
 ```
-
-## Quick Start: Automatic Conversion
-
-The fastest migration path is the built-in converter:
-
-```python
-from dbldatagen import DataGenerator
-from pyspark.sql.types import IntegerType, StringType, DoubleType, LongType
-from dbldatagen.v1.compat import from_data_generator
-from dbldatagen.v1 import generate
-
-# Your existing v0 code
-dg = (
-    DataGenerator(spark, rows=10000, name="orders")
-    .withColumn("order_id", LongType(), minValue=1, maxValue=10000)
-    .withColumn("status", StringType(), values=["pending", "shipped", "delivered"])
-    .withColumn("amount", DoubleType(), minValue=10.0, maxValue=500.0)
-    .withColumn("priority", StringType(), values=["low", "med", "high"], weights=[60, 30, 10])
-)
-
-# Convert to v1
-plan = from_data_generator(dg)
-
-# Generate with v1 engine
-result = generate(spark, plan)
-df = result["orders"]
-```
-
-The converter handles most common patterns automatically and emits warnings for anything it can't convert.
 
 ## Manual Conversion Reference
 
@@ -339,15 +307,6 @@ from dbldatagen.v1.cdc import generate_cdc
 stream = generate_cdc(spark, plan, num_batches=10)
 initial_df = stream.initial["orders"]
 batch_1 = stream.batches[0]["orders"]  # Contains _op column: I/U/D
-```
-
-### Streaming
-
-```python
-from dbldatagen.v1 import generate_stream
-
-sdf = generate_stream(spark, table_spec, rows_per_second=100)
-# Returns a Spark Structured Streaming DataFrame
 ```
 
 ## Features Not Supported in v1
