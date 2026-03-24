@@ -257,6 +257,9 @@ def generate_cdc_batch(
     return _generate_batch(spark, plan, batch_id, fmt_name)
 
 
+_MAX_EXPECTED_STATE_ROWS = 100_000
+
+
 def generate_expected_state(
     spark: SparkSession,
     plan_or_stream: CDCPlan | CDCStream | DataGenPlan,
@@ -265,33 +268,40 @@ def generate_expected_state(
 ) -> DataFrame:
     """Generate the expected table state at a given batch (test oracle).
 
-    Returns a DataFrame representing all live rows at ``batch_id``,
-    with their current column values.  Primarily useful as a **test
-    oracle** for verifying that a downstream pipeline correctly
-    applied all CDC changes.
+    .. warning:: Driver-side O(N) — for test use only.
 
-    .. warning:: O(N) Python loop
-
-        This function iterates every row index on the driver via
-        ``is_alive()`` and ``update_due()`` Python calls.  At test
-        scale (hundreds of rows) this is fine and keeps the logic
-        easy to verify.  For production snapshots at scale, use
-        ``generate_stateless_snapshot_batch`` in
-        ``ingest_generator.py`` which pushes all logic to Spark
-        expressions.
-
-    .. note:: Candidate for removal
-
-        The only production caller is the ``SYNTHETIC + SNAPSHOT``
-        ingest path (``generate_synthetic_snapshot_batch``).  The
-        ``STATELESS`` strategy already provides a Spark-native
-        equivalent.  This function may be removed in a future
-        release once callers are migrated.
-
-    Uses the stateless modular-recurrence model: each row's lifecycle
-    is computed from its index k and the batch number, with no
-    driver-side state needed.
+        Iterates every row index on the driver.  Raises ``ValueError``
+        if the table has more than 100K initial rows.  For production
+        snapshots at scale, use Spark-native generation paths.
     """
+    if isinstance(plan_or_stream, CDCStream):
+        plan = plan_or_stream.plan
+    elif isinstance(plan_or_stream, DataGenPlan):
+        plan = CDCPlan(base_plan=plan_or_stream)
+    else:
+        plan = plan_or_stream
+
+    if plan is not None:
+        table_map = {t.name: t for t in plan.base_plan.tables}
+        if table_name in table_map:
+            row_count = int(table_map[table_name].rows)
+            if row_count > _MAX_EXPECTED_STATE_ROWS:
+                raise ValueError(
+                    f"generate_expected_state is a driver-side O(N) test oracle and "
+                    f"is not suitable for {row_count:,} rows (max {_MAX_EXPECTED_STATE_ROWS:,}). "
+                    f"Use Spark-native generation paths for large tables."
+                )
+
+    return _generate_expected_state_driver(spark, plan_or_stream, table_name, batch_id)
+
+
+def _generate_expected_state_driver(
+    spark: SparkSession,
+    plan_or_stream: CDCPlan | CDCStream | DataGenPlan,
+    table_name: str,
+    batch_id: int,
+) -> DataFrame:
+    """Internal driver-side implementation of generate_expected_state."""
     if isinstance(plan_or_stream, CDCStream):
         plan = plan_or_stream.plan
     elif isinstance(plan_or_stream, DataGenPlan):
@@ -745,7 +755,7 @@ def write_cdc_to_delta(
 
     uc_tables: dict[str, str] = {}
     for table_name in plan.cdc_tables:
-        uc_table = f"{catalog}.{schema}.{table_name}"
+        uc_table = f"`{catalog}`.`{schema}`.`{table_name}`"
         uc_tables[table_name] = uc_table
 
         # Initial snapshot

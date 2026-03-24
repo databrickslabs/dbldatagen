@@ -309,8 +309,14 @@ def _extract_pk_metadata(table_spec: TableSpec, pk_col_spec: ColumnSpec, plan_se
 
 
 def _validate_expression_columns(plan: DataGenPlan) -> None:
-    """Raise if ExpressionColumn references undefined column names."""
+    """Warn if ExpressionColumn references look like undefined column names.
+
+    This is a best-effort heuristic — Spark SQL is too rich for a regex
+    to parse reliably, so we warn rather than error.  Spark itself gives
+    clear errors at runtime for genuinely invalid expressions.
+    """
     import re
+    import warnings
 
     for table_spec in plan.tables:
         col_names = {c.name for c in table_spec.columns}
@@ -321,13 +327,13 @@ def _validate_expression_columns(plan: DataGenPlan) -> None:
             tokens = set(re.findall(r"\b([a-zA-Z_]\w*)\b", col_spec.gen.expr))
             candidates = tokens - _SQL_BUILTINS - col_names
             for candidate in candidates:
-                # Only flag tokens that look like column names (not numbers)
                 if not candidate[0].isdigit():
-                    raise ValueError(
+                    warnings.warn(
                         f"ExpressionColumn '{col_spec.name}' in table "
                         f"'{table_spec.name}' references '{candidate}' "
                         f"which is not a column in this table. "
-                        f"Available columns: {sorted(col_names)}"
+                        f"Available columns: {sorted(col_names)}",
+                        stacklevel=3,
                     )
 
 

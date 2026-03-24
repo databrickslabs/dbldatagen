@@ -487,23 +487,27 @@ def _table_has_faker_columns(table_spec: TableSpec) -> bool:
     return any(isinstance(col.gen, FakerColumn) for col in table_spec.columns)
 
 
-def _precompute_write_batches(batch_id: int, update_period: int | float) -> list[int]:
+def _precompute_write_batches(batch_id: int, update_period: int | float) -> list[int] | None:
     """Compute the superset of possible pre_image_batch values on the driver.
 
     The pre_image_batch formula produces values in
     ``range(max(0, batch_id - up), batch_id)`` where ``up`` is the
     update_period.  This is at most ``up`` values and avoids a Spark
     ``.collect()`` round-trip.
+
+    When ``update_period`` is infinite (no updates), the pre-image is
+    always the birth_tick.  Rather than enumerating all possible birth
+    ticks (which grows with ``batch_id``), returns ``None`` to signal
+    callers to collect distinct values from the DataFrame instead.
     """
     import math
 
     if math.isinf(update_period):
-        # No updates — pre-image is always birth_tick.
-        # Possible birth_ticks: 0 .. batch_id-1
-        return list(range(batch_id))
+        # No updates — birth_tick range is unbounded.  Let caller collect.
+        return None
     up = int(update_period)
     if up <= 0:
-        return list(range(batch_id))
+        return None
     return list(range(max(0, batch_id - up), batch_id))
 
 
@@ -798,9 +802,13 @@ def generate_fused_deletes(
         ).otherwise(batch_n_col - remainder)
         df = df.withColumn("_write_batch", F.greatest(prev, t_birth).cast("long"))
 
-    all_wbs = set()
+    all_wbs: set[int] | None = set()
     for b in batch_ids:
-        all_wbs.update(_precompute_write_batches(b, periods.update_period))
+        wbs = _precompute_write_batches(b, periods.update_period)
+        if wbs is None:
+            all_wbs = None
+            break
+        all_wbs.update(wbs)
 
     return _build_fused_output(
         df,
@@ -808,7 +816,7 @@ def generate_fused_deletes(
         resolved_plan,
         global_seed,
         id_col,
-        sorted(all_wbs),
+        sorted(all_wbs) if all_wbs is not None else None,
         upper_k,
         batch_ids,
         plan,
@@ -893,9 +901,13 @@ def generate_fused_updates(
     ).otherwise(batch_n_col - remainder)
     df = df.withColumn("_write_batch", F.greatest(prev, t_birth).cast("long"))
 
-    all_wbs = set()
+    all_wbs_before: set[int] | None = set()
     for b in batch_ids:
-        all_wbs.update(_precompute_write_batches(b, periods.update_period))
+        wbs = _precompute_write_batches(b, periods.update_period)
+        if wbs is None:
+            all_wbs_before = None
+            break
+        all_wbs_before.update(wbs)
 
     before_df = _build_fused_output(
         df,
@@ -903,7 +915,7 @@ def generate_fused_updates(
         resolved_plan,
         global_seed,
         id_col,
-        sorted(all_wbs),
+        sorted(all_wbs_before) if all_wbs_before is not None else None,
         upper_k,
         batch_ids,
         plan,
@@ -937,7 +949,7 @@ def _build_fused_output(
     resolved_plan: ResolvedPlan | None,
     global_seed: int,
     id_col: Column,
-    unique_wbs: list[int],
+    unique_wbs: list[int] | None,
     row_count: int,
     batch_ids: list[int],
     plan: CDCPlan,

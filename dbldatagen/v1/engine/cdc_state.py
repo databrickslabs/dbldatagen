@@ -507,7 +507,7 @@ def resolve_batch_size(batch_size_spec: int | float | str, initial_rows: int) ->
         from dbldatagen.v1.schema import parse_human_count
 
         batch_size_spec = parse_human_count(batch_size_spec)
-    if isinstance(batch_size_spec, float) and batch_size_spec < 1.0:
+    if isinstance(batch_size_spec, float) and batch_size_spec <= 1.0:
         return max(1, int(initial_rows * batch_size_spec))
     return int(batch_size_spec)
 

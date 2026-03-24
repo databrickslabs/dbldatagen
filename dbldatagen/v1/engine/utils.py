@@ -20,6 +20,13 @@ class _LazyList(Generic[T]):
     Supports indexing (including negative and slices), iteration,
     and ``len()``.
 
+    .. note:: Memory
+
+        The cache grows unboundedly — every accessed item is retained.
+        For long CDC streams (1000+ batches), iterating all batches
+        keeps all generated DataFrames in memory.  Access individual
+        batches and discard references when memory is a concern.
+
     Parameters
     ----------
     length :

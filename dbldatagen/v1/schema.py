@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import re
 from enum import Enum
 from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+
+_IDENTIFIER_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
 
 # ---------------------------------------------------------------------------
@@ -363,6 +367,8 @@ class ColumnSpec(BaseModel):
     def validate_null_fraction(self) -> ColumnSpec:
         if not 0.0 <= self.null_fraction <= 1.0:
             raise ValueError(f"null_fraction must be in [0.0, 1.0], got {self.null_fraction}")
+        # Convenience: setting null_fraction > 0 implies nullable=True.
+        # This avoids requiring users to always set both fields explicitly.
         if self.null_fraction > 0 and not self.nullable:
             self.nullable = True
         return self
@@ -404,6 +410,14 @@ class TableSpec(BaseModel):
     rows: int | str
     primary_key: PrimaryKey | None = None
     seed: int | None = None
+
+    @model_validator(mode="after")
+    def validate_name(self) -> TableSpec:
+        if not _IDENTIFIER_RE.match(self.name):
+            raise ValueError(
+                f"Table name '{self.name}' is not a valid identifier. " f"Must match [a-zA-Z_][a-zA-Z0-9_]*."
+            )
+        return self
 
     @model_validator(mode="after")
     def resolve_row_count(self) -> TableSpec:

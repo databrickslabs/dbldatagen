@@ -289,6 +289,20 @@ class TestCDCTableConfigValidation:
             CDCTableConfig(update_window=-5)
 
 
+class TestCDCNumBatchesValidation:
+    def test_zero_batches(self):
+        with pytest.raises(ValueError, match="num_batches must be > 0"):
+            CDCPlan(base_plan=_simple_base_plan(), num_batches=0)
+
+    def test_exceeds_int16_max(self):
+        with pytest.raises(ValueError, match="exceeds maximum"):
+            CDCPlan(base_plan=_simple_base_plan(), num_batches=40000)
+
+    def test_at_limit_ok(self):
+        plan = CDCPlan(base_plan=_simple_base_plan(), num_batches=32767)
+        assert plan.num_batches == 32767
+
+
 class TestCDCMutationColumnValidation:
     def test_unknown_mutation_column(self):
         with pytest.raises(ValueError, match="Mutation column 'nonexistent'"):

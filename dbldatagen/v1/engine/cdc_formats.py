@@ -93,6 +93,13 @@ def to_debezium(df: DataFrame) -> DataFrame:
     and ``after_*`` columns rather than nested structs.  Update rows
     (op='u') carry ``after_*`` columns; delete rows (op='d') carry
     ``before_*`` columns.  Insert rows (op='c') carry ``after_*`` columns.
+
+    .. warning:: Limitation — update before-images are dropped.
+
+        Real Debezium events nest ``before`` and ``after`` fields in a
+        single record.  This simplified format drops UB (update before)
+        rows entirely.  Pipelines that rely on ``before`` fields for
+        update events will see incomplete data.
     """
     op_col = (
         F.when(F.col("_op") == "I", F.lit("c"))

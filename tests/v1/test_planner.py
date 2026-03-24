@@ -288,7 +288,9 @@ class TestPKMetadataExtraction:
 
 
 class TestExpressionColumnValidation:
-    def test_undefined_reference_raises(self):
+    def test_undefined_reference_warns(self):
+        import warnings
+
         plan = DataGenPlan(
             tables=[
                 TableSpec(
@@ -301,8 +303,10 @@ class TestExpressionColumnValidation:
                 )
             ]
         )
-        with pytest.raises(ValueError, match="references 'unknown_col'"):
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
             resolve_plan(plan)
+            assert any("unknown_col" in str(warning.message) for warning in w)
 
     def test_valid_reference_ok(self):
         plan = DataGenPlan(
