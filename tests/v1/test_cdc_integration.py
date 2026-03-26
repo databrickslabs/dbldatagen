@@ -646,3 +646,74 @@ class TestCDCBulkGeneration:
             assert pr.txn_id == br.txn_id
             assert pr.account_id == br.account_id
             assert pr.status == br.status
+
+
+class TestMultiTableSeedConsistency:
+    """Verify that CDC pre-images match initial snapshot for multi-table plans.
+
+    Regression test for seed mismatch: generate_initial_snapshot uses
+    table_spec.seed (plan.seed + i) but generate_cdc_batch_for_table
+    was using plan.base_plan.seed for all tables.
+    """
+
+    def test_second_table_delete_preimage_matches_initial(self, spark):
+        """Delete pre-image for 2nd table must match its initial snapshot values."""
+        # Two tables — the bug only manifests for table index > 0
+        base = DataGenPlan(
+            seed=42,
+            tables=[
+                TableSpec(
+                    name="customers",
+                    rows=50,
+                    primary_key=PrimaryKey(columns=["cid"]),
+                    columns=[
+                        ColumnSpec(name="cid", gen=SequenceColumn()),
+                        ColumnSpec(name="tier", gen=ValuesColumn(values=["gold", "silver", "bronze"])),
+                    ],
+                ),
+                TableSpec(
+                    name="orders",
+                    rows=100,
+                    primary_key=PrimaryKey(columns=["oid"]),
+                    columns=[
+                        ColumnSpec(name="oid", gen=SequenceColumn()),
+                        ColumnSpec(name="amount", dtype=DataType.INT, gen=RangeColumn(min=10, max=500)),
+                    ],
+                ),
+            ],
+        )
+        plan = CDCPlan(
+            base_plan=base,
+            num_batches=5,
+            table_configs={
+                "orders": CDCTableConfig(
+                    batch_size=20,
+                    operations=OperationWeights(insert=1, update=0, delete=5),
+                ),
+            },
+        )
+        stream = generate_cdc(spark, plan)
+
+        # Get initial values for "orders" (2nd table, index=1)
+        initial_orders = stream.initial["orders"].drop("_op", "_batch_id", "_ts")
+        initial_map = {r.oid: r.amount for r in initial_orders.collect()}
+
+        # Find deletes in first few batches — these should have pre-image
+        # values matching the initial snapshot
+        for batch_id in range(1, 4):
+            batch = stream.batches[batch_id - 1]
+            if "orders" not in batch:
+                continue
+            deletes = batch["orders"].filter("_op = 'D'")
+            if deletes.count() == 0:
+                continue
+            for row in deletes.collect():
+                if row.oid in initial_map:
+                    assert row.amount == initial_map[row.oid], (
+                        f"Delete pre-image mismatch for oid={row.oid} at batch {batch_id}: "
+                        f"initial={initial_map[row.oid]}, delete pre-image={row.amount}. "
+                        f"This indicates a seed mismatch between initial snapshot and CDC generation."
+                    )
+            return  # Found deletes, test passed
+        # If no deletes found in 3 batches with delete weight=5, something is wrong
+        raise AssertionError("No deletes found for orders table in first 3 batches")
