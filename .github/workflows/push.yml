@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2.2.2
 
       - name: Format files
         run: make dev fmt
@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2.2.2
         with:
           fetch-depth: 0
 
@@ -40,7 +40,7 @@ jobs:
       #       ${{ runner.os }}-go-
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654  # v5.2.0
         with:
           distribution: 'temurin'   # Can also use 'zulu', 'adopt', etc.
           java-version: '17'
@@ -54,7 +54,7 @@ jobs:
       #    java -version
 
       - name: Install Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
         with:
           cache: 'pip'
           cache-dependency-path: '**/pyproject.toml'
@@ -68,7 +68,7 @@ jobs:
         run: make dev test
 
       - name: Publish test coverage to coverage site
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de  # v5.5.2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           name: dbldatagen
