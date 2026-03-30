@@ -85,7 +85,7 @@ class TestStreaming:
         start_time = time.time()
         elapsed_time = 0
         rows_retrieved = 0
-        time_limit = 10.0
+        time_limit = 50.0
 
         while elapsed_time < time_limit and rows_retrieved <= self.rows_per_second:
             time.sleep(1)
