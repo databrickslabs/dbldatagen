@@ -7,6 +7,7 @@ This module defines the ``DataAnalyzer`` class.
 
 This code is experimental and both APIs and code generated is liable to change in future versions.
 """
+
 import logging
 from typing import SupportsFloat, SupportsIndex
 

@@ -1,7 +1,3 @@
-[build-system]
-requires = ["hatchling", "hatch-fancy-pypi-readme"]
-build-backend = "hatchling.build"
-
 [project]
 name = "dbldatagen"
 dynamic = ["version"]
@@ -33,8 +29,8 @@ classifiers = [
 ]
 dependencies = [
     "databricks-sdk~=0.57",
-    "jmespath>=1.0.0",
-    "pyparsing>=3.0.0",
+    "jmespath>=0.10.0,<1.1.0",
+    "pyparsing>=3.0.0,<3.3.0",
 ]
 
 [project.urls]
@@ -44,22 +40,50 @@ Documentation = "https://databrickslabs.github.io/dbldatagen/public_docs/index.h
 Homepage = "https://github.com/databrickslabs/dbldatagen"
 Repository = "https://github.com/databrickslabs/dbldatagen.git"
 
-[project.optional-dependencies]
+[dependency-groups]
+dev = [
+    "black~=25.12.0",
+    "chispa~=0.10.1",
+    "coverage[toml]~=7.4.4",
+    "mypy~=1.9.0",
+    "pylint~=3.3.1",
+    "pylint-pytest==2.0.0a0",
+    "pytest~=8.3.3",
+    "pytest-cov~=4.1.0",
+    "pytest-mock~=3.14.0",
+    "pytest-timeout~=2.3.1",
+    "pytest-xdist~=3.5.0",
+    "ruff~=0.13.0",
+    "types-PyYAML~=6.0.12",
+    "types-requests~=2.31.0",
+    "databricks-sdk~=0.57",
+    "numpy>=1.21.5,<2.4",
+    "pandas>=1.4.4,<3",
+    "pyarrow>=8.0.0,<23.0.0",
+    "pyspark[sql]>=3.4.1,<4.2",
+    "python-dateutil>=2.8.2,<2.9.0",
+    "six~=1.16.0",
+    "pyparsing>=3.0.0,<3.3.0",
+    "jmespath>=0.10.0,<1.1.0",
+    "py4j~=0.10.9",
+    "pickleshare>=0.7.5,<0.8",
+]
 docs = [
-    "sphinx>=7.0.0",
+    "sphinx~=7.0.0",
     "sphinx-rtd-theme",
     "nbsphinx",
-    "numpydoc>=0.8",
+    "numpydoc~=0.8",
     "pypandoc",
-    "ipython>=7.32.0",
+    "ipython~=7.32.0",
     "recommonmark",
     "sphinx-markdown-builder",
     "Jinja2<3.1",
     "sphinx-copybutton",
 ]
 
-[tool.hatch.build]
-include = ["dbldatagen"]
+[build-system]
+requires = ["hatchling==1.29.0"]
+build-backend = "hatchling.build"
 
 [tool.hatch.version]
 path = "dbldatagen/_version.py"
@@ -82,51 +106,6 @@ include = [
     "/CONTRIBUTING.md",
     "/MANIFEST.in",
 ]
-
-[tool.hatch.envs.default]
-dependencies = [
-    "black~=25.12.0",
-    "chispa~=0.10.1",
-    "coverage[toml]~=7.4.4",
-    "mypy~=1.9.0",
-    "pylint~=3.3.1",
-    "pylint-pytest==2.0.0a0",
-    "pytest~=8.3.3",
-    "pytest-cov~=4.1.0",
-    "pytest-mock~=3.14.0",
-    "pytest-timeout~=2.3.1",
-    "pytest-xdist~=3.5.0",
-    "ruff~=0.13.0",
-    "types-PyYAML~=6.0.12",
-    "types-requests~=2.31.0",
-    "databricks-sdk~=0.57",
-    "numpy>=1.21.5",
-    "pandas>=1.4.4",
-    "pyarrow>=8.0.0",
-    "pyspark[sql]>=3.4.1",
-    "python-dateutil>=2.8.2",
-    "six>=1.16.0",
-    "pyparsing>=3.0.9",
-    "jmespath>=0.10.0",
-    "py4j>=0.10.9",
-    "pickleshare>=0.7.5",
-]
-
-python="3.10"
-
-# store virtual env as the child of this folder. Helps VSCode (and PyCharm) to run better
-path = ".venv"
-
-[tool.hatch.envs.default.scripts]
-test    = "pytest tests/ -n 10 --cov --cov-report=html --timeout 600 --durations 20"
-fmt         = ["black .",
-               "ruff check . --fix",
-               "mypy .",
-               "pylint --output-format=colorized -j 0 dbldatagen tests"]
-verify      = ["black --check .",
-               "ruff check .",
-               "mypy .",
-               "pylint --output-format=colorized -j 0 dbldatagen tests"]
 
 [tool.black]
 target-version = ["py310"]

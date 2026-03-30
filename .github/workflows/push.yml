@@ -28,17 +28,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      # - name: Cache packages
-      #   uses: actions/cache@v2
-      #   with:
-      #     path: |
-      #       ~/go/pkg/mod
-      #       ~/.cache/go-build
-      #       vendor
-      #     key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-go-
-
       - name: Set up JDK 17
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654  # v5.2.0
         with:
@@ -48,21 +37,11 @@ jobs:
       - name: Get Java version
         run: java -version
 
-      #- name: Set Java 8
-      #  run: |
-      #    sudo update-alternatives --set java /usr/lib/jvm/temurin-8-jdk-amd64/bin/java
-      #    java -version
-
-      - name: Install Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78
         with:
-          cache: 'pip'
-          cache-dependency-path: '**/pyproject.toml'
-          python-version: '3.10'
-
-      - name: Install Hatch
-        # click 8.3+ introduced bug for hatch
-        run: pip install "hatch==1.13.0" "click<8.3"
+          version: "0.8.4"
+          enable-cache: true
 
       - name: Run unit tests
         run: make dev test
@@ -73,4 +52,3 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           name: dbldatagen
           files: ./coverage.xml
-
