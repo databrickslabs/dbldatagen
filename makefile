@@ -30,8 +30,13 @@ test-coverage:
 build:
 	uv build
 
-docs:
-	cd docs && make docs
+docs-build:
+	uv sync --group docs
+	uv run sphinx-build -M html docs/source docs/build
+
+docs-clean:
+	rm -rf docs/build
 
 docs-serve:
-	cd docs && make docs && open build/html/index.html
+	make docs-build
+	open docs/build/html/index.html

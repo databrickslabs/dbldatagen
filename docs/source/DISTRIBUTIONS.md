@@ -30,7 +30,7 @@ The following distributions are supported:
 > to the underlying distribution.
 
 
-### Examples 
+## Examples 
 
 In the following example (taken from the section on date ranges), we will simulate returns and 
 ensure the return date is after the purchase date.

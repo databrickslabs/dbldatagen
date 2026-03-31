@@ -6,7 +6,7 @@ While **dbldatagen** cannot accept direct contribution from external contributor
 ### Setup
 To set up your local environment:
 
-1. Ensure any [Non-Python Dependencies](#other-dependencies) are installed locally.
+1. Ensure any [Non-Python Dependencies](#non-python-dependencies) are installed locally.
 2. Clone the repository:
    ```bash
    git clone "repository URL"

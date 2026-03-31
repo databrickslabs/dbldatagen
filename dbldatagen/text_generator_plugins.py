@@ -68,22 +68,22 @@ class PyfuncText(TextGenerator):  # lgtm [py/missing-equals]
     The context is initialized with the property `textGenerator` prior to being initialized which is a reference to the
     enclosing text generator.
 
-    .. note::
-      There are no expectations of repeatability of data generation when using external code
-      or external libraries to generate text.
+    ..  note::
+        There are no expectations of repeatability of data generation when using external code or external libraries
+        to generate text.
 
-      However, custom code can call the base class method to get a Numpy random
-      number generator instance. This will have been seeded using the ``dbldatagen``
-      random number seed if one was specified, so random numbers generated from this will be repeatable.
+        However, custom code can call the base class method to get a Numpy random number generator instance. This will
+        have been seeded using the ``dbldatagen`` random number seed if one was specified, so random numbers generated
+        from this will be repeatable.
 
-      The custom code may call the property ``randomSeed`` on the text generator object to get the random seed
-      which may be used to seed library specific initialization.
+        The custom code may call the property ``randomSeed`` on the text generator object to get the random seed which
+        may be used to seed library specific initialization.
 
-      This random seed property may have the values ``None`` or ``-1`` which should be treated as meaning dont
-      use a random seed.
+        This random seed property may have the values ``None`` or ``-1`` which should be treated as meaning don't use
+        a random seed.
 
-      The code does not guarantee thread or cross process safety. If a new instance of the random number
-      generator is needed, you may call the base class method with the argument `forceNewInstance` set to True.
+        The code does not guarantee thread or cross process safety. If a new instance of the random number generator
+        is needed, you may call the base class method with the argument `forceNewInstance` set to True.
     """
 
     _name: str
@@ -322,8 +322,8 @@ class FakerTextFactory(PyfuncTextFactory):
     :param lib: Optional import alias of Faker library (dfault is ``"faker"``)
     :param rootClass: Optional name of the root object class (default is ``"Faker"``)
 
-    ..note ::
-       Both the library name and root object class can be overridden - this is primarily for internal testing purposes.
+    ..  note ::
+        Both the library name and root object class can be overridden - this is primarily for internal testing purposes.
     """
 
     _defaultFakerTextFactory: Optional["FakerTextFactory"] = None
@@ -440,11 +440,12 @@ def fakerText(mname: str, *args, _lib: str | None = None, _rootClass: str | None
     Creates a faker text generator object using the default ``FakerTextFactory`` instance. Calling this method is
     equivalent to calling ``FakerTextFactory()("sentence")``.
 
-       :param mname: Method name to invoke
-       :param args: Positional argumentss to pass to the Faker text generation method
-       :param _lib: Optional import alias of Faker library (default is ``"faker"``)
-       :param _rootClass: Optional name of the root object class (default is ``"Faker"``)
-       :returns : ``PyfuncText`` for use with Faker
+    :param mname: Method name to invoke
+    :param args: Positional argumentss to pass to the Faker text generation method
+    :param _lib: Optional import alias of Faker library (default is ``"faker"``)
+    :param _rootClass: Optional name of the root object class (default is ``"Faker"``)
+
+    :returns : ``PyfuncText`` for use with Faker
     """
     default_factory = FakerTextFactory._getDefaultFactory(lib=_lib, rootClass=_rootClass)
     return default_factory(mname, *args, **kwargs)  # pylint: disable=not-callable

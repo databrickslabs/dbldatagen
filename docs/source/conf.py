@@ -25,7 +25,7 @@ from dbldatagen.datasets import *
 # -- Project information -----------------------------------------------------
 
 project = 'Databricks Labs Data Generator'
-copyright = '2022 - 2024, Databricks Inc'
+copyright = '2022 - 2026, Databricks Inc'
 author = 'Databricks Inc'
 
 # The full version, including alpha/beta/rc tags
@@ -43,9 +43,10 @@ extensions = [
     # 'sphinx.ext.autosummary',
     'sphinx.ext.viewcode',  # add links to source code
     # 'numpydoc',  # handle NumPy documentation formatted docstrings. Needs to install
-    'recommonmark',  # allow including Commonmark markdown in sources
+    # 'recommonmark',  # allow including Commonmark markdown in sources
     'sphinx_rtd_theme',
     'sphinx_copybutton',
+    'myst_parser'
 ]
 
 source_suffix = {'.rst': 'restructuredtext', '.md': 'markdown'}
@@ -121,3 +122,6 @@ numpydoc_show_class_members = True
 numpydoc_show_inherited_class_members = False
 numpydoc_class_members_toctree = False
 numpydoc_attributes_as_param_list = True
+
+# Create headers automatically down to level 3 for myst
+myst_heading_anchors = 3

@@ -70,15 +70,17 @@ dev = [
 ]
 docs = [
     "sphinx~=7.0.0",
-    "sphinx-rtd-theme",
-    "nbsphinx",
-    "numpydoc~=0.8",
-    "pypandoc",
-    "ipython~=7.32.0",
-    "recommonmark",
-    "sphinx-markdown-builder",
-    "Jinja2<3.1",
-    "sphinx-copybutton",
+    "sphinx-rtd-theme~=3.1",
+    "nbsphinx~=0.9.8",
+    "numpydoc~=1.8",
+    "pypandoc~=1.13",
+    "ipython~=8.10",
+    "myst-parser~=3.0",
+    #"recommonmark~=0.7.1",
+    "sphinx-markdown-builder~=0.6.10",
+    "Jinja2>3.1,<4",
+    "sphinx-copybutton~=0.5.2",
+    "rst2pdf[sphinx]~=0.102",
 ]
 
 [build-system]
