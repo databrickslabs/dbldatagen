@@ -1,0 +1,27 @@
+flags:
+  v0:
+    paths:
+      - dbldatagen/
+      - "!dbldatagen/v1/"
+    carryforward: true
+  v1:
+    paths:
+      - dbldatagen/v1/
+    carryforward: true
+
+coverage:
+  status:
+    project:
+      v0:
+        flags:
+          - v0
+      v1:
+        flags:
+          - v1
+    patch:
+      v0:
+        flags:
+          - v0
+      v1:
+        flags:
+          - v1

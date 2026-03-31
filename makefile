@@ -1,4 +1,4 @@
-.PHONY: dev test lint fmt clean build docs
+.PHONY: dev test test-cov test-v1 test-v1-cov test-all lint fmt clean build docs
 
 all: clean dev lint fmt test
 
@@ -24,8 +24,18 @@ fmt:
 test:
 	uv run pytest tests/ -n 10 --cov --cov-report=html --timeout 600 --durations 20
 
+test-v1:
+	uv run pytest tests/v1/ --timeout 600 --durations 20 --no-header -q
+
+test-v1-cov:
+	uv run pytest tests/v1/ --timeout 600 --durations 20 --no-header -q --cov=dbldatagen/v1 --cov-config=.coveragerc-v1 --cov-report=term-missing:skip-covered --cov-report=xml --cov-report=html:htmlcov-v1 --ignore=tests/v1/test_faker_pool.py
+
+test-all:
+	uv run pytest tests/ --ignore=tests/v1/ -n 10 --timeout 600 --durations 20
+	uv run pytest tests/v1/ --timeout 600 --durations 20 --no-header -q
+
 test-coverage:
-	make test && open htmlcov/index.html
+	uv run pytest tests/ --ignore=tests/v1/ --cov --cov-report=html --timeout 600 --durations 20 && open htmlcov/index.html
 
 build:
 	uv build

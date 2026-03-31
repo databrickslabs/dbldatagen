@@ -7,11 +7,47 @@ on:
     branches: [master]
 
 jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      v1: ${{ steps.check.outputs.v1 }}
+      v0: ${{ steps.check.outputs.v0 }}
+      shared: ${{ steps.check.outputs.shared }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          fetch-depth: 0
+      - name: Detect changed paths
+        id: check
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE=${{ github.event.pull_request.base.sha }}
+          else
+            BASE=${{ github.event.before }}
+          fi
+          CHANGED=$(git diff --name-only "$BASE"..HEAD)
+          echo "Changed files:"
+          echo "$CHANGED"
+
+          v1=false
+          v0=false
+          shared=false
+
+          echo "$CHANGED" | grep -qE '^dbldatagen/v1/|^tests/v1/' && v1=true
+          echo "$CHANGED" | grep -qE '^dbldatagen/(?!v1/)' && v0=true
+          echo "$CHANGED" | grep -qE '^tests/(?!v1/)' && v0=true
+          echo "$CHANGED" | grep -qE '^pyproject\.toml$|^Makefile$|^\.github/workflows/' && shared=true
+
+          echo "v1=$v1" >> "$GITHUB_OUTPUT"
+          echo "v0=$v0" >> "$GITHUB_OUTPUT"
+          echo "shared=$shared" >> "$GITHUB_OUTPUT"
+          echo "Results: v1=$v1 v0=$v0 shared=$shared"
+
   fmt:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2.2.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
       - name: Format files
         run: make dev fmt
@@ -19,19 +55,20 @@ jobs:
       - name: Fail on differences
         run: git diff --exit-code
 
-  tests:
-    # Ubuntu latest no longer installs Python 3.9 by default so install it
+  test-v0:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.v0 == 'true' || needs.detect-changes.outputs.shared == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2.2.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654  # v5.2.0
         with:
-          distribution: 'temurin'   # Can also use 'zulu', 'adopt', etc.
+          distribution: 'temurin'
           java-version: '17'
 
       - name: Get Java version
@@ -43,12 +80,68 @@ jobs:
           version: "0.8.4"
           enable-cache: true
 
-      - name: Run unit tests
-        run: make dev test
+      - name: Run v0 unit tests
+        run: hatch run v0:test-cov
 
       - name: Publish test coverage to coverage site
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de  # v5.5.2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          name: dbldatagen
+          name: dbldatagen-v0
+          flags: v0
           files: ./coverage.xml
+
+  test-v1:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.v1 == 'true' || needs.detect-changes.outputs.shared == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654  # v5.2.0
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78
+        with:
+          version: "0.8.4"
+          enable-cache: true
+
+      - name: Run v1 unit tests
+        run: hatch run v1:test-cov
+
+      - name: Publish test coverage
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de  # v5.5.2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          name: dbldatagen-v1
+          flags: v1
+          files: ./coverage.xml
+
+  # Gate job for branch protection — single status check that covers both test suites
+  tests:
+    needs: [fmt, test-v1, test-v0]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check results
+        run: |
+          if [[ "${{ needs.fmt.result }}" == "failure" ]]; then
+            echo "fmt failed"
+            exit 1
+          fi
+          if [[ "${{ needs.test-v0.result }}" == "failure" ]]; then
+            echo "test-v0 failed"
+            exit 1
+          fi
+          if [[ "${{ needs.test-v1.result }}" == "failure" ]]; then
+            echo "test-v1 failed"
+            exit 1
+          fi
+          echo "All checks passed (or were skipped due to no changes)"

@@ -1,0 +1,61 @@
+{
+  "tables": [
+    {
+      "name": "customers",
+      "rows": 200,
+      "primary_key": { "columns": ["customer_id"] },
+      "columns": [
+        {
+          "name": "customer_id",
+          "gen": { "strategy": "sequence", "start": 1, "step": 1 }
+        },
+        {
+          "name": "name",
+          "dtype": "string",
+          "gen": { "strategy": "values", "values": ["Alice", "Bob", "Carol", "Dave"] }
+        },
+        {
+          "name": "signup_date",
+          "gen": { "strategy": "timestamp", "start": "2022-01-01", "end": "2024-12-31" }
+        }
+      ]
+    },
+    {
+      "name": "orders",
+      "rows": 1000,
+      "primary_key": { "columns": ["order_id"] },
+      "columns": [
+        {
+          "name": "order_id",
+          "gen": { "strategy": "sequence", "start": 1, "step": 1 }
+        },
+        {
+          "name": "customer_id",
+          "gen": { "strategy": "constant", "value": null },
+          "foreign_key": {
+            "ref": "customers.customer_id",
+            "distribution": { "type": "zipf", "exponent": 1.2 }
+          }
+        },
+        {
+          "name": "amount",
+          "dtype": "double",
+          "gen": { "strategy": "range", "min": 5.0, "max": 500.0 }
+        },
+        {
+          "name": "status",
+          "dtype": "string",
+          "gen": {
+            "strategy": "values",
+            "values": ["pending", "shipped", "delivered", "cancelled"],
+            "distribution": {
+              "type": "weighted",
+              "weights": { "pending": 0.1, "shipped": 0.2, "delivered": 0.6, "cancelled": 0.1 }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "seed": 42
+}

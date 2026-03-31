@@ -82,6 +82,9 @@ docs = [
     "sphinx-copybutton~=0.5.2",
     "rst2pdf[sphinx]~=0.102",
 ]
+v1 = ["pydantic>=2.0"]
+v1-faker = ["pydantic>=2.0", "faker>=20.0"]
+v1-dev = ["pydantic>=2.0", "faker>=20.0", "pyyaml>=6.0"]
 
 [build-system]
 requires = ["hatchling==1.29.0"]
@@ -109,6 +112,30 @@ include = [
     "/MANIFEST.in",
 ]
 
+
+[tool.hatch.envs.v1]
+dependencies = [
+    "coverage[toml]~=7.4.4",
+    "pytest~=8.3.3",
+    "pytest-cov~=4.1.0",
+    "pytest-mock~=3.14.0",
+    "pytest-timeout~=2.3.1",
+    "pytest-xdist~=3.5.0",
+    "numpy>=1.21.5",
+    "pandas>=1.4.4",
+    "pyspark[sql]>=3.4.1",
+    "pydantic>=2.0",
+    "faker>=20.0",
+    "pyyaml>=6.0",
+    "py4j>=0.10.9",
+]
+
+python = "3.10"
+
+[tool.hatch.envs.v1.scripts]
+test     = "pytest tests/v1/ --timeout 600 --durations 20 --no-header -q"
+test-cov = "pytest tests/v1/ --timeout 600 --durations 20 --no-header -q --cov=dbldatagen/v1 --cov-config=.coveragerc-v1 --cov-report=term-missing:skip-covered --cov-report=xml --cov-report=html:htmlcov-v1 --ignore=tests/v1/test_faker_pool.py"
+
 [tool.black]
 target-version = ["py310"]
 line-length = 120
@@ -132,7 +159,8 @@ exclude = [
     "docs/build",
     "tutorial",
     "examples",
-    "tests",
+    "tests/test_*.py",
+    "tests/__init__.py",
     "dbldatagen/__init__.py",
     "dbldatagen/constraints/__init__.py",
     "dbldatagen/distributions/__init__.py",
@@ -178,9 +206,12 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["PLR2004", "S101", "TID252"]
+"dbldatagen/v1/*" = ["PLC0415"]
+"tests/v1/*" = ["ANN", "PLC0415", "PLR2004", "S101", "TID252", "B905"]
 "examples/*" = ["ALL"]
 "tutorial/*" = ["ALL"]
 "docs/*" = ["ALL"]
+"integration_tests/*" = ["ALL"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["dbldatagen"]
@@ -207,7 +238,6 @@ ignore = [
     "docs/build",
     "tutorial",
     "examples",
-    "tests",
     "dbldatagen/datasets",
     "dbldatagen/__init__.py",
     "dbldatagen/constraints/__init__.py",
@@ -238,7 +268,8 @@ ignore-paths = [
     "docs/build",
     "tutorial",
     "examples",
-    "tests",
+    "tests/test_.*",
+    "tests/__init__\\.py",
     "dbldatagen/datasets",
     "dbldatagen/distributions",
     "dbldatagen/__init__.py",
@@ -298,14 +329,12 @@ addopts = [
     "-ra",
     "--strict-markers",
     "--strict-config",
-    "--cov=dbldatagen",
-    "--cov-report=term-missing:skip-covered",
-    "--cov-report=xml",
-    "--cov-report=html",
-    "--cov-fail-under=80",
     "-p", "no:warnings",
 ]
 testpaths = ["tests"]
+markers = [
+    "perf: performance benchmarks (deselect with '-m not perf')",
+]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -331,9 +360,17 @@ omit = [
     "*/examples/*",
     "*/tutorial/*",
     "*/docs/*",
+    "*/v1/*",
+    "dbldatagen/v1/*",
+    "dbldatagen/v1/**/*",
 ]
 
 [tool.coverage.report]
+omit = [
+    "*/v1/*",
+    "dbldatagen/v1/*",
+    "dbldatagen/v1/**/*",
+]
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",
@@ -361,9 +398,10 @@ exclude = [
     "build",
     "docs",
     "examples",
-    "tests",
+    "tests/test_",
+    "tests/__init__\\.py",
+    "integration_tests/",
     "tutorial",
-    "tests",
     "dbldatagen/datasets",
     "dbldatagen/__init__.py",
     "dbldatagen/constraints/__init__.py",
@@ -397,3 +435,26 @@ module = [
     "numpy.*",
 ]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "dbldatagen.column_generation_spec",
+    "dbldatagen.column_spec_options",
+    "dbldatagen.datagen_constants",
+    "dbldatagen.schema_parser",
+    "dbldatagen.serialization",
+    "dbldatagen.utils",
+    "dbldatagen.datasets.*",
+    "dbldatagen.datasets_object",
+    "dbldatagen.constraints.*",
+    "dbldatagen.distributions.*",
+    "dbldatagen.text_generators",
+]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = [
+    "tests.v1.test_cdc_state_coverage",
+]
+ignore_errors = true
+
