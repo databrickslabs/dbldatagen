@@ -52,3 +52,6 @@ htmlcov/
 # Cursor is an AI-powered code editor. The .cursor/ directory contains IDE-specific
 # settings and configurations similar to other IDEs.
 .cursor/
+
+# UV-specific
+uv.toml

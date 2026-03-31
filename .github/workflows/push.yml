@@ -14,7 +14,7 @@ jobs:
       v0: ${{ steps.check.outputs.v0 }}
       shared: ${{ steps.check.outputs.shared }}
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           fetch-depth: 0
       - name: Detect changed paths
@@ -47,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
       - name: Format files
         run: make dev fmt
@@ -61,32 +61,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           fetch-depth: 0
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654  # v5.2.0
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install Python
-        uses: actions/setup-python@v5
-        with:
-          cache: 'pip'
-          cache-dependency-path: '**/pyproject.toml'
-          python-version: '3.10'
+      - name: Get Java version
+        run: java -version
 
-      - name: Install Hatch
-        # click 8.3+ introduced bug for hatch; virtualenv 21 removed propose_interpreters
-        run: pip install "hatch==1.13.0" "click<8.3" "virtualenv<21"
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78
+        with:
+          version: "0.8.4"
+          enable-cache: true
 
       - name: Run v0 unit tests
         run: hatch run v0:test-cov
 
-      - name: Publish test coverage
-        uses: codecov/codecov-action@v4
+      - name: Publish test coverage to coverage site
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de  # v5.5.2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           name: dbldatagen-v0
@@ -99,31 +97,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           fetch-depth: 0
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654  # v5.2.0
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78
         with:
-          cache: 'pip'
-          cache-dependency-path: '**/pyproject.toml'
-          python-version: '3.10'
-
-      - name: Install Hatch
-        run: pip install "hatch==1.13.0" "click<8.3" "virtualenv<21"
+          version: "0.8.4"
+          enable-cache: true
 
       - name: Run v1 unit tests
         run: hatch run v1:test-cov
 
       - name: Publish test coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de  # v5.5.2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           name: dbldatagen-v1

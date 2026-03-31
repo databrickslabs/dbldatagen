@@ -6,45 +6,47 @@ clean:
 	rm -fr .venv clean htmlcov .mypy_cache .pytest_cache .ruff_cache .coverage coverage.xml
 	rm -fr **/*.pyc
 
-.venv/bin/python:
-	pip install "hatch==1.13.0" "click<8.3" "virtualenv<21"
-	python3 -m venv .venv
-	.venv/bin/pip install --upgrade pip
-	hatch env create
-
-dev: .venv/bin/python
-	@hatch run which python
+dev:
+	uv sync --group dev
 
 lint:
-	hatch run verify
+	uv run black --check .
+	uv run ruff check .
+	uv run mypy .
+	uv run pylint --output-format=colorized -j 0 dbldatagen tests
 
 fmt:
-	hatch run fmt
+	uv run black .
+	uv run ruff check . --fix
+	uv run mypy .
+	uv run pylint --output-format=colorized -j 0 dbldatagen tests
 
 test:
-	hatch run v0:test
+	uv run pytest tests/ -n 10 --cov --cov-report=html --timeout 600 --durations 20
 
 test-v1:
-	hatch run v1:test
+	uv run pytest tests/v1/ --timeout 600 --durations 20 --no-header -q
 
 test-v1-cov:
-	hatch run v1:test-cov
+	uv run pytest tests/v1/ --timeout 600 --durations 20 --no-header -q --cov=dbldatagen/v1 --cov-config=.coveragerc-v1 --cov-report=term-missing:skip-covered --cov-report=xml --cov-report=html:htmlcov-v1 --ignore=tests/v1/test_faker_pool.py
 
 test-all:
-	hatch run v0:test
-	hatch run v1:test
-
-test-cov:
-	hatch run v0:test-cov
+	uv run pytest tests/ --ignore=tests/v1/ -n 10 --timeout 600 --durations 20
+	uv run pytest tests/v1/ --timeout 600 --durations 20 --no-header -q
 
 test-coverage:
-	hatch run v0:test-cov && open htmlcov/index.html
+	uv run pytest tests/ --ignore=tests/v1/ --cov --cov-report=html --timeout 600 --durations 20 && open htmlcov/index.html
 
 build:
-	hatch build
+	uv build
 
-docs:
-	cd docs && make docs
+docs-build:
+	uv sync --group docs
+	uv run sphinx-build -M html docs/source docs/build
+
+docs-clean:
+	rm -rf docs/build
 
 docs-serve:
-	cd docs && make docs && open build/html/index.html
+	make docs-build
+	open docs/build/html/index.html
