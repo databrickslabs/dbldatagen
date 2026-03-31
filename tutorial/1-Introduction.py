@@ -88,7 +88,6 @@ from datetime import timedelta, datetime
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType
 import dbldatagen as dg
 
-
 interval = timedelta(days=1, hours=1)
 start = datetime(2017, 10, 1, 0, 0, 0)
 end = datetime(2018, 10, 1, 6, 0, 0)

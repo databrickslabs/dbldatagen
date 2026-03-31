@@ -5,6 +5,7 @@
 """
 This module defines the Constraint class
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
