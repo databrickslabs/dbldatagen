@@ -498,3 +498,80 @@ class TestDistributions:
         exp = dist.Exponential()
         with pytest.raises(ValueError, match="Cannot compute value for 'scale'; Missing value for 'rate'"):
             _ = exp.generateNormalizedDistributionSample()
+
+    def test_distribution_string_normal(self):
+        """Test that 'normal' string resolves to a Normal distribution."""
+        data_generator = (
+            dg.DataGenerator(sparkSession=spark, name="test_normal_str", rows=100, seedMethod='hash_fieldname')
+            .withIdOutput()
+            .withColumn("code1", "integer", minValue=1, maxValue=20, step=1, random=True, distribution="normal")
+        )
+        df = data_generator.build()
+        assert df.count() == 100
+
+    def test_distribution_string_beta(self):
+        """Test that 'beta' string resolves to a Beta distribution."""
+        data_generator = (
+            dg.DataGenerator(sparkSession=spark, name="test_beta_str", rows=100, seedMethod='hash_fieldname')
+            .withIdOutput()
+            .withColumn("code1", "integer", minValue=1, maxValue=20, step=1, random=True, distribution="beta")
+        )
+        df = data_generator.build()
+        assert df.count() == 100
+
+    def test_distribution_string_gamma(self):
+        """Test that 'gamma' string resolves to a Gamma distribution."""
+        data_generator = (
+            dg.DataGenerator(sparkSession=spark, name="test_gamma_str", rows=100, seedMethod='hash_fieldname')
+            .withIdOutput()
+            .withColumn("code1", "integer", minValue=1, maxValue=20, step=1, random=True, distribution="gamma")
+        )
+        df = data_generator.build()
+        assert df.count() == 100
+
+    def test_distribution_string_exponential(self):
+        """Test that 'exponential' string resolves to an Exponential distribution."""
+        data_generator = (
+            dg.DataGenerator(sparkSession=spark, name="test_exp_str", rows=100, seedMethod='hash_fieldname')
+            .withIdOutput()
+            .withColumn("code1", "integer", minValue=1, maxValue=20, step=1, random=True, distribution="exponential")
+        )
+        df = data_generator.build()
+        assert df.count() == 100
+
+    def test_distribution_string_case_insensitive(self):
+        """Test that distribution string matching is case-insensitive."""
+        data_generator = (
+            dg.DataGenerator(sparkSession=spark, name="test_case", rows=100, seedMethod='hash_fieldname')
+            .withIdOutput()
+            .withColumn("code1", "integer", minValue=1, maxValue=20, step=1, random=True, distribution="Normal")
+        )
+        df = data_generator.build()
+        assert df.count() == 100
+
+    def test_distribution_string_invalid_raises_error(self):
+        """Test that an invalid distribution string raises a clear ValueError."""
+        with pytest.raises(ValueError, match="Unknown distribution 'uniform'"):
+            dg.DataGenerator(
+                sparkSession=spark, name="test_invalid", rows=100, seedMethod='hash_fieldname'
+            ).withIdOutput().withColumn(
+                "code1", "integer", minValue=1, maxValue=20, step=1, random=True, distribution="uniform"
+            )
+
+    def test_distribution_string_invalid_lists_valid_options(self):
+        """Test that the error message for an invalid distribution lists valid options."""
+        with pytest.raises(ValueError, match="Valid distribution names are: beta, exponential, gamma, normal"):
+            dg.DataGenerator(
+                sparkSession=spark, name="test_invalid2", rows=100, seedMethod='hash_fieldname'
+            ).withIdOutput().withColumn(
+                "code1", "integer", minValue=1, maxValue=20, step=1, random=True, distribution="foo"
+            )
+
+    def test_distribution_string_invalid_empty(self):
+        """Test that an empty distribution string raises a clear ValueError."""
+        with pytest.raises(ValueError, match="Unknown distribution"):
+            dg.DataGenerator(
+                sparkSession=spark, name="test_empty", rows=100, seedMethod='hash_fieldname'
+            ).withIdOutput().withColumn(
+                "code1", "integer", minValue=1, maxValue=20, step=1, random=True, distribution=""
+            )
