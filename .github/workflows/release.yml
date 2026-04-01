@@ -24,7 +24,7 @@ jobs:
           sudo update-alternatives --set java /usr/lib/jvm/temurin-8-jdk-amd64/bin/java
           java -version
 
-      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78
+      - uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57
         with:
           version: "0.8.4"
 
