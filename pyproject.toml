@@ -49,7 +49,7 @@ dev = [
     "pylint~=3.3.1",
     "pylint-pytest==2.0.0a0",
     "pytest~=8.3.3",
-    "pytest-cov~=4.1.0",
+    "pytest-cov~=7.1.0",
     "pytest-mock~=3.14.0",
     "pytest-timeout~=2.3.1",
     "pytest-xdist~=3.5.0",
