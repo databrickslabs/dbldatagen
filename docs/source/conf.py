@@ -46,7 +46,7 @@ extensions = [
     # 'recommonmark',  # allow including Commonmark markdown in sources
     'sphinx_rtd_theme',
     'sphinx_copybutton',
-    'myst_parser'
+    'myst_parser',
 ]
 
 source_suffix = {'.rst': 'restructuredtext', '.md': 'markdown'}
