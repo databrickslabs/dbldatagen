@@ -1,0 +1,28 @@
+name: no-cheat
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  no-pylint-disable:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Verify no lint is disabled in the new code
+        run: |
+          git fetch origin $GITHUB_BASE_REF:$GITHUB_BASE_REF
+          git diff $GITHUB_BASE_REF...$(git branch --show-current) >> diff_data.txt
+          python tests/unit/no_cheat.py diff_data.txt >> cheats.txt
+          COUNT=$(cat cheats.txt | wc -c)
+          if [ ${COUNT} -gt 1 ]; then
+            cat cheats.txt
+            exit 1
+          fi

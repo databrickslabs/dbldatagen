@@ -12,13 +12,20 @@
 name: "CodeQL"
 
 on:
-  schedule:
-    - cron: '0 12 * * 1'
+  # Disabled for now, pending further work.
+  # schedule:
+  #   - cron: '0 12 * * 1'
+
+permissions:
+  contents: read
 
 jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-22.04
+    permissions:
+      # Required for CodeQL to upload results.
+      security-events: write
 
     strategy:
       fail-fast: false
