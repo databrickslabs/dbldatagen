@@ -1,0 +1,13 @@
+{
+  "version": {
+    "dbldatagen/_version.py": "__version__ = \"$VERSION\""
+  },
+  "toolchain": {
+    "required": ["make", "uv"],
+    "pre_setup": ["make dev"],
+    "prepend_path": ".venv/bin",
+    "test": [
+      "make test"
+    ]
+  }
+}

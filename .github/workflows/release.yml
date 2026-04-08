@@ -1,6 +1,6 @@
 name: release
 
-on:
+on: {}
   # Disabled for now, pending further work.
   #release:
   #  types:
