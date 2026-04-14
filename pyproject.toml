@@ -80,7 +80,7 @@ docs = [
     "sphinx-markdown-builder~=0.6.10",
     "Jinja2>3.1,<4",
     "sphinx-copybutton~=0.5.2",
-    "rst2pdf[sphinx]~=0.102",
+    "rst2pdf[sphinx]~=0.105",
 ]
 
 [build-system]
