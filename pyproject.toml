@@ -46,7 +46,7 @@ dev = [
     "chispa~=0.10.1",
     "coverage[toml]~=7.4.4",
     "mypy~=1.9.0",
-    "pylint~=3.3.1",
+    "pylint~=4.0.5",
     "pylint-pytest==2.0.0a0",
     "pytest~=8.3.3",
     "pytest-cov~=4.1.0",
