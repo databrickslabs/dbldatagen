@@ -48,7 +48,7 @@ dev = [
     "mypy~=1.9.0",
     "pylint~=3.3.1",
     "pylint-pytest==2.0.0a0",
-    "pytest~=8.3.3",
+    "pytest~=9.0.3",
     "pytest-cov~=4.1.0",
     "pytest-mock~=3.14.0",
     "pytest-timeout~=2.3.1",
