@@ -11,7 +11,10 @@ permissions:
 
 jobs:
   fmt:
-    if: github.event_name == 'pull_request' && !github.event.pull_request.draft && !github.event.pull_request.head.repo.fork
+    if: |
+      (github.event_name == 'push' || github.event_name == 'pull_request') 
+      && !github.event.pull_request.draft 
+      && !github.event.pull_request.head.repo.fork
     runs-on:
       group: databrickslabs-protected-runner-group
       labels: linux-ubuntu-latest
@@ -37,7 +40,10 @@ jobs:
         run: git diff --exit-code
 
   tests:
-    if: github.event_name == 'pull_request' && !github.event.pull_request.draft && !github.event.pull_request.head.repo.fork
+    if: |
+      (github.event_name == 'push' || github.event_name == 'pull_request') 
+      && !github.event.pull_request.draft 
+      && !github.event.pull_request.head.repo.fork
     runs-on:
       group: databrickslabs-protected-runner-group
       labels: linux-ubuntu-latest
