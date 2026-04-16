@@ -92,8 +92,8 @@ All development tools are configured in `pyproject.toml`.
 ### Python Dependencies
 All Python dependencies are defined in `pyproject.toml`:
 
-1. `[project.dependencies]` lists dependencies installed with the `dbldatagen` library
-2. `[tool.hatch.envs.default]` lists the default environment necessary to develop, test, and build the `dbldatagen` library
+1. `[project.dependencies]` lists runtime dependencies installed with the `dbldatagen` library
+2. `[dependency-groups]` lists development, linting, and testing dependencies managed by uv
 
 ### Non-Python Dependencies
 dbldatagen is tested against Databricks Runtime version 13.3LTS and OpenJDK 17. 

@@ -1,0 +1,50 @@
+name: 'Authenticate for JFrog'
+description: 'Authenticate with JFrog using OIDC based on the GitHub repository.'
+# TODO: Factor out into an external action, once releases are allowed.
+outputs:
+  jfrog-access-token:
+    description: "Access token for JFrog"
+    value: "${{ steps.jfrog-auth.outputs.jfrog-access-token }}"
+runs:
+  using: "composite"
+  steps:
+    - id: jfrog-auth
+      name: Authenticate against JFrog
+      shell: bash
+      run: |
+        "${GITHUB_ACTION_PATH}/jfrog-auth" "${ACTIONS_ID_TOKEN_REQUEST_URL}" "${ACTIONS_ID_TOKEN_REQUEST_TOKEN}"
+
+    - id: detect-cmds
+      name: Detecting python package/project managers.
+      shell: bash
+      run: |
+        for cmd in pip3 uv
+        do
+          command -v "${cmd}" > /dev/null && found=true || found=false
+          printf '::debug::%s\n' "Found ${cmd}: ${found}"
+          printf '%s=%s\n' "command_${cmd}" "${found}" >> "${GITHUB_OUTPUT}"
+        done
+
+    - name: Configure pip for JFrog
+      if: "${{ steps.detect-cmds.outputs.command_pip3 == 'true' }}"
+      shell: bash
+      env:
+        JFROG_ACCESS_TOKEN: "${{ steps.jfrog-auth.outputs.jfrog-access-token }}"
+      run: |
+        umask 077
+        cat > "$RUNNER_TEMP/.pip.conf" <<EOF
+        [global]
+        index-url = https://gha-service-account:${JFROG_ACCESS_TOKEN}@databricks.jfrog.io/artifactory/api/pypi/db-pypi/simple
+        EOF
+        printf '%s=%s\n' 'PIP_CONFIG_FILE' "${RUNNER_TEMP}/.pip.conf" >> "${GITHUB_ENV}"
+
+    - name: Configure uv for JFrog
+      if: "${{ steps.detect-cmds.outputs.command_uv == 'true' }}"
+      shell: bash
+      env:
+        JFROG_ACCESS_TOKEN: "${{ steps.jfrog-auth.outputs.jfrog-access-token }}"
+        UV_INDEX_URL: 'https://databricks.jfrog.io/artifactory/api/pypi/db-pypi/simple'
+      run: |
+        uv auth login "${UV_INDEX_URL}" --username gha-service-account --password "${JFROG_ACCESS_TOKEN}"
+        printf "%s=%s\n" 'UV_INDEX_URL' "${UV_INDEX_URL}" >> "${GITHUB_ENV}"
+        printf "%s=%s\n" 'UV_FROZEN' '1' >> "${GITHUB_ENV}"
