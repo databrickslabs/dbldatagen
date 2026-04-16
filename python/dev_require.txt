@@ -13,7 +13,7 @@ jmespath==0.10.0
 
 # The following packages are required for development only
 wheel==0.37.1
-setuptools==63.4.1
+setuptools==82.0.1
 bumpversion
 pytest
 pytest-cov
