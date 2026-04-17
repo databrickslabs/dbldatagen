@@ -1,4 +1,4 @@
-name: build
+name: tests
 
 on:
   pull_request:
@@ -16,8 +16,8 @@ jobs:
       && !github.event.pull_request.draft 
       && !github.event.pull_request.head.repo.fork
     runs-on:
-      group: databrickslabs-protected-runner-group
-      labels: linux-ubuntu-latest
+      group: larger-runners
+      labels: larger
     permissions:
       id-token: write
     steps:
@@ -39,14 +39,14 @@ jobs:
       - name: Fail on differences
         run: git diff --exit-code
 
-  tests:
+  test-version:
     if: |
       (github.event_name == 'push' || github.event_name == 'pull_request') 
       && !github.event.pull_request.draft 
       && !github.event.pull_request.head.repo.fork
     runs-on:
-      group: databrickslabs-protected-runner-group
-      labels: linux-ubuntu-latest
+      group: larger-runners
+      labels: larger
     permissions:
       id-token: write
     strategy:
@@ -84,3 +84,17 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           name: dbldatagen
           files: ./coverage.xml
+
+  tests:
+    needs: [fmt, test-version]
+    runs-on:
+      group: larger-runners
+      labels: larger
+
+    steps:
+      - run: |
+          if [[ "${{ needs.fmt.result }}" == "success" && "${{ needs.test-version.result }}" == "success" ]]; then
+            exit 0
+          else
+            exit 1
+          fi
