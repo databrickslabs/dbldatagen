@@ -6,47 +6,79 @@ on:
   push:
     branches: [master]
 
+permissions:
+  contents: read
+
 jobs:
   fmt:
-    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'push' || github.event_name == 'pull_request') 
+      && !github.event.pull_request.draft 
+      && !github.event.pull_request.head.repo.fork
+    runs-on:
+      group: databrickslabs-protected-runner-group
+      labels: linux-ubuntu-latest
+    permissions:
+      id-token: write
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2.2.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
-      - name: Format files
+      - name: Setup uv
+        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098  # v7.3.1
+        with:
+          version: "0.11.2"
+          checksum: "7ac2ca0449c8d68dae9b99e635cd3bc9b22a4cb1de64b7c43716398447d42981"
+
+      - name: Setup for JFrog
+        uses: ./.github/actions/jfrog-auth
+
+      - name: Format check
         run: make dev fmt
 
       - name: Fail on differences
         run: git diff --exit-code
 
   tests:
-    # Ubuntu latest no longer installs Python 3.9 by default so install it
-    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'push' || github.event_name == 'pull_request') 
+      && !github.event.pull_request.draft 
+      && !github.event.pull_request.head.repo.fork
+    runs-on:
+      group: databrickslabs-protected-runner-group
+      labels: linux-ubuntu-latest
+    permissions:
+      id-token: write
+    strategy:
+      matrix:
+        python: ['3.10', '3.11', '3.12']
+    env:
+      UV_PYTHON: "${{ matrix.python }}"
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2.2.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654  # v5.2.0
         with:
-          distribution: 'temurin'   # Can also use 'zulu', 'adopt', etc.
+          distribution: 'temurin'
           java-version: '17'
 
-      - name: Get Java version
-        run: java -version
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78
+      - name: Setup uv
+        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098  # v7.3.1
         with:
-          version: "0.8.4"
-          enable-cache: true
+          version: "0.11.2"
+          checksum: "7ac2ca0449c8d68dae9b99e635cd3bc9b22a4cb1de64b7c43716398447d42981"
+
+      - name: Setup for JFrog
+        uses: ./.github/actions/jfrog-auth
 
       - name: Run unit tests
         run: make dev test
 
-      - name: Publish test coverage to coverage site
+      - name: Publish test coverage
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de  # v5.5.2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
