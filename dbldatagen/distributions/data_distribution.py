@@ -22,7 +22,8 @@ and no further scaling is needed.
 
 import copy
 from abc import ABC, abstractmethod
-from typing import Callable
+from collections.abc import Callable
+from typing import ClassVar
 
 import numpy as np
 from pyspark.sql import Column
@@ -38,7 +39,7 @@ class DataDistribution(SerializableToDict, ABC):
 
     # Registry of lowercase name -> factory returning a default-parameterized instance.
     # Populated by the `@register_distribution(name, ...)` decorator on subclasses.
-    _registry: dict[str, Callable[[], "DataDistribution"]] = {}
+    _registry: ClassVar[dict[str, Callable[[], "DataDistribution"]]] = {}
 
     @classmethod
     def fromName(cls, name: str) -> "DataDistribution":
