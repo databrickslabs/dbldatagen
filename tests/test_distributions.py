@@ -569,9 +569,74 @@ class TestDistributions:
 
     def test_distribution_string_invalid_empty(self):
         """Test that an empty distribution string raises a clear ValueError."""
-        with pytest.raises(ValueError, match="Unknown distribution"):
+        with pytest.raises(ValueError, match="Invalid distribution spec"):
             dg.DataGenerator(
                 sparkSession=spark, name="test_empty", rows=100, seedMethod='hash_fieldname'
             ).withIdOutput().withColumn(
                 "code1", "integer", minValue=1, maxValue=20, step=1, random=True, distribution=""
             )
+
+    def test_distribution_string_with_kwargs(self):
+        """Test that a parameterized distribution spec overrides default kwargs."""
+        beta = dist.DataDistribution.fromName("beta(alpha=3.0, beta=7.0)")
+        assert isinstance(beta, dist.Beta)
+        assert beta.alpha == 3.0
+        assert beta.beta == 7.0
+
+    def test_distribution_string_with_partial_kwargs(self):
+        """Test that a parameterized spec overrides only the supplied kwargs."""
+        beta = dist.DataDistribution.fromName("beta(alpha=4.0)")
+        assert beta.alpha == 4.0
+        assert beta.beta == 5.0  # registered default
+
+    def test_distribution_string_kwargs_case_insensitive_name(self):
+        """Test that the name portion of a parameterized spec is case-insensitive."""
+        normal = dist.DataDistribution.fromName("Normal(mean=5, stddev=2)")
+        assert normal.mean == 5
+        assert normal.stddev == 2
+
+    def test_distribution_string_kwargs_negative_value(self):
+        """Test that negative numeric values are accepted in parameterized specs."""
+        normal = dist.DataDistribution.fromName("normal(mean=-3.5, stddev=1)")
+        assert normal.mean == -3.5
+
+    def test_distribution_string_unknown_kwarg_raises(self):
+        """Test that a kwarg not accepted by the constructor raises ValueError."""
+        with pytest.raises(ValueError, match="Unknown keyword argument"):
+            dist.DataDistribution.fromName("beta(gobble=5)")
+
+    def test_distribution_string_non_numeric_value_raises(self):
+        """Test that a non-numeric value raises ValueError."""
+        with pytest.raises(ValueError, match="Invalid value 'gobble' for 'alpha'"):
+            dist.DataDistribution.fromName("beta(alpha=gobble)")
+
+    def test_distribution_string_unbalanced_paren_raises(self):
+        """Test that an unbalanced parenthesis raises ValueError."""
+        with pytest.raises(ValueError, match="Invalid distribution spec"):
+            dist.DataDistribution.fromName("beta(")
+
+    def test_distribution_string_missing_value_raises(self):
+        """Test that a missing value after '=' raises ValueError."""
+        with pytest.raises(ValueError, match="Missing value for keyword 'alpha'"):
+            dist.DataDistribution.fromName("beta(alpha=)")
+
+    def test_distribution_string_missing_key_raises(self):
+        """Test that a missing key before '=' raises ValueError."""
+        with pytest.raises(ValueError, match="Missing keyword for value '5'"):
+            dist.DataDistribution.fromName("beta(=5)")
+
+    def test_distribution_string_duplicate_kwarg_raises(self):
+        """Test that duplicate kwargs in a spec raise ValueError."""
+        with pytest.raises(ValueError, match="Duplicate keyword 'alpha'"):
+            dist.DataDistribution.fromName("beta(alpha=1, alpha=2)")
+
+    def test_distribution_string_boolean_value_raises(self):
+        """Test that a boolean literal is rejected as a non-numeric value."""
+        with pytest.raises(ValueError, match="Invalid value 'True'"):
+            dist.DataDistribution.fromName("beta(alpha=True)")
+
+    def test_distribution_string_empty_args(self):
+        """Test that an empty argument list falls back to registered defaults."""
+        beta = dist.DataDistribution.fromName("beta()")
+        assert beta.alpha == 2.0
+        assert beta.beta == 5.0
