@@ -41,7 +41,7 @@ from .datagen_constants import (
 )
 
 from .daterange import DateRange
-from .distributions import Normal, DataDistribution, Beta, Gamma, Exponential
+from .distributions import Normal, DataDistribution
 from .nrange import NRange
 from .serialization import SerializableToDict
 from .text_generators import TemplateGenerator
@@ -297,26 +297,10 @@ class ColumnGenerationSpec(SerializableToDict):
 
         self.distribution = self["distribution"]
 
-        # Map of recognized distribution name strings to default distribution instances
-        _KNOWN_DISTRIBUTIONS = {
-            "normal": Normal.standardNormal(),
-            "beta": Beta(alpha=2.0, beta=5.0),
-            "gamma": Gamma(shape=1.0, scale=1.0),
-            "exponential": Exponential(rate=1.0),
-        }
-
-        # if distribution is specified as a string, resolve it to a distribution object
+        # if distribution is specified as a string, resolve it to a distribution object via the
+        # name registry populated by the @register_distribution decorator on DataDistribution subclasses
         if isinstance(self.distribution, str):
-            dist_name = self.distribution.strip().lower()
-            if dist_name not in _KNOWN_DISTRIBUTIONS:
-                valid_names = ", ".join(sorted(_KNOWN_DISTRIBUTIONS.keys()))
-                raise ValueError(
-                    f"Unknown distribution '{self.distribution}'. "
-                    f"Valid distribution names are: {valid_names}. "
-                    f"Alternatively, pass a distribution object directly "
-                    f"(e.g., dist.Normal(), dist.Beta(alpha=2, beta=5))."
-                )
-            self.distribution = _KNOWN_DISTRIBUTIONS[dist_name]
+            self.distribution = DataDistribution.fromName(self.distribution)
 
         # specify random seed for distribution if one is in effect
         if self.distribution is not None and self._randomSeed is not None:

@@ -22,6 +22,7 @@ and no further scaling is needed.
 
 import copy
 from abc import ABC, abstractmethod
+from typing import Callable
 
 import numpy as np
 from pyspark.sql import Column
@@ -34,6 +35,38 @@ class DataDistribution(SerializableToDict, ABC):
 
     _randomSeed: int | np.int32 | np.int64 | None = None
     _rounding: bool = False
+
+    # Registry of lowercase name -> factory returning a default-parameterized instance.
+    # Populated by the `@register_distribution(name, ...)` decorator on subclasses.
+    _registry: dict[str, Callable[[], "DataDistribution"]] = {}
+
+    @classmethod
+    def fromName(cls, name: str) -> "DataDistribution":
+        """Resolves a distribution name string to a default-parameterized instance.
+
+        :param name: Case-insensitive distribution name (e.g., ``"normal"``, ``"beta"``)
+        :return: New instance of the named distribution with default parameters
+        :raises ValueError: If the name is not a registered distribution
+        """
+        key = name.strip().lower()
+        factory = cls._registry.get(key)
+        if factory is None:
+            valid_names = ", ".join(sorted(cls._registry.keys()))
+            raise ValueError(
+                f"Unknown distribution '{name}'. "
+                f"Valid distribution names are: {valid_names}. "
+                f"Alternatively, pass a distribution object directly "
+                f"(e.g., dist.Normal(), dist.Beta(alpha=2, beta=5))."
+            )
+        return factory()
+
+    @classmethod
+    def registeredNames(cls) -> list[str]:
+        """Returns a sorted list of registered distribution names.
+
+        :return: Sorted list of lowercase name strings recognized by :meth:`fromName`
+        """
+        return sorted(cls._registry.keys())
 
     @staticmethod
     def get_np_random_generator(random_seed: int | np.int32 | np.int64 | None) -> np.random.Generator:
@@ -93,3 +126,30 @@ class DataDistribution(SerializableToDict, ABC):
         :return: Random seed attribute
         """
         return self._randomSeed
+
+
+def register_distribution(name: str, **default_kwargs) -> Callable[[type], type]:
+    """Registers a :class:`DataDistribution` subclass under a string name.
+
+    The registered factory instantiates the decorated class with ``**default_kwargs``.
+    Callers resolve a name to a default-parameterized instance via
+    :meth:`DataDistribution.fromName`.
+
+    Example::
+
+        @register_distribution("beta", alpha=2.0, beta=5.0)
+        class Beta(DataDistribution):
+            ...
+
+    :param name: Case-insensitive name to register under (e.g., ``"normal"``)
+    :param default_kwargs: Keyword arguments passed to the class constructor when
+        resolving the name to an instance
+    :return: Class decorator that registers the class and returns it unchanged
+    """
+    key = name.strip().lower()
+
+    def _register(cls: type) -> type:
+        DataDistribution._registry[key] = lambda: cls(**default_kwargs)
+        return cls
+
+    return _register
