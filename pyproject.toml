@@ -92,12 +92,11 @@ yq = [
 ]
 
 [build-system]
-requires = ["hatchling==1.29.0"]
+requires = ["hatchling>=1.9.0,<2.0"]
 build-backend = "hatchling.build"
 
 # uv configuration
 [tool.uv]
-exclude-newer = "7 days"
 exclude-newer-package = { "databricks-sdk" = false }
 required-version = "~= 0.11.0"
 
