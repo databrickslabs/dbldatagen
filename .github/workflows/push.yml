@@ -86,14 +86,14 @@ jobs:
           files: ./coverage.xml
 
   tests:
-    needs: test-version
+    needs: [fmt, test-version]
     runs-on:
       group: larger-runners
       labels: larger
 
     steps:
       - run: |
-          if [[ "${{ needs.test-version.result }}" == "success" ]]; then
+          if [[ "${{ needs.fmt.result }}" == "success" && "${{ needs.test-version.result }}" == "success" ]]; then
             exit 0
           else
             exit 1
