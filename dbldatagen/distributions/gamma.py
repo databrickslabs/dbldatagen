@@ -14,10 +14,11 @@ from pyspark.sql import Column
 from pyspark.sql.types import FloatType
 
 from dbldatagen.datagen_types import NumericLike
-from dbldatagen.distributions.data_distribution import DataDistribution
+from dbldatagen.distributions.data_distribution import DataDistribution, register_distribution
 from dbldatagen.serialization import SerializableToDict
 
 
+@register_distribution("gamma", shape=1.0, scale=1.0)
 class Gamma(DataDistribution):
     """Specifies that random samples should be drawn from the gamma distribution parameterized by shape
     and scale. See https://en.wikipedia.org/wiki/Gamma_distribution.
