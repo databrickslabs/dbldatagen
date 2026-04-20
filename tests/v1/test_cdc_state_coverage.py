@@ -107,6 +107,8 @@ class TestMemmapLifecycle:
         # Use a small threshold workaround: manually init memmap on a small state
         state = TableState(initial_rows=100)
         state._init_memmap()
+        assert state._row_last_write is not None
+        assert state._deleted_flags is not None
         try:
             # Write some data before growing
             state._row_last_write[0] = 5
@@ -130,6 +132,8 @@ class TestMemmapLifecycle:
         """live_row_count uses _delete_count for memmap (lines 146-148)."""
         state = TableState(initial_rows=100)
         state._init_memmap()
+        assert state._row_last_write is not None
+        assert state._deleted_flags is not None
         try:
             assert state.live_row_count == 100
             state._deleted_flags[10] = 1
@@ -142,6 +146,8 @@ class TestMemmapLifecycle:
         """has_deletes uses _delete_count for memmap (lines 152-154)."""
         state = TableState(initial_rows=100)
         state._init_memmap()
+        assert state._row_last_write is not None
+        assert state._deleted_flags is not None
         try:
             assert not state.has_deletes
             state._delete_count = 1
@@ -201,6 +207,7 @@ class TestRecordUpdatesInMemory:
         """Array grows when total_rows_ever exceeds current length (lines 183-186)."""
         state = TableState(initial_rows=5)
         state.record_updates(np.array([0], dtype=np.int64), 1)
+        assert state._row_last_write is not None
         assert len(state._row_last_write) == 5
 
         state.cumulative_inserts = 10  # total_rows_ever = 15
@@ -221,6 +228,8 @@ class TestRecordUpdatesMemmap:
         """Updates on memmap-backed state (lines 171-177)."""
         state = TableState(initial_rows=100)
         state._init_memmap()
+        assert state._row_last_write is not None
+        assert state._deleted_flags is not None
         try:
             state.record_updates(np.array([10, 20], dtype=np.int64), 3)
             assert state._row_last_write[10] == 3
@@ -232,6 +241,8 @@ class TestRecordUpdatesMemmap:
         """Memmap grow is triggered when total_rows_ever > _max_rows (lines 172-174)."""
         state = TableState(initial_rows=100)
         state._init_memmap()
+        assert state._row_last_write is not None
+        assert state._deleted_flags is not None
         try:
             # Force total_rows_ever to exceed _max_rows
             state.cumulative_inserts = state._max_rows + 100
@@ -257,6 +268,8 @@ class TestRecordDelete:
         """Memmap delete sets flag and increments count (lines 191-195)."""
         state = TableState(initial_rows=100)
         state._init_memmap()
+        assert state._row_last_write is not None
+        assert state._deleted_flags is not None
         try:
             state.record_delete(42)
             assert state._deleted_flags[42] == 1
@@ -292,6 +305,8 @@ class TestGetLiveIndices:
         """Memmap path calls _get_live_indices_chunked (line 205-206)."""
         state = TableState(initial_rows=100)
         state._init_memmap()
+        assert state._row_last_write is not None
+        assert state._deleted_flags is not None
         try:
             state._deleted_flags[10] = 1
             state._deleted_flags[50] = 1
@@ -314,6 +329,8 @@ class TestGetLiveIndicesChunked:
         """No deletes in memmap returns full arange (line 220-221)."""
         state = TableState(initial_rows=100)
         state._init_memmap()
+        assert state._row_last_write is not None
+        assert state._deleted_flags is not None
         try:
             live = state._get_live_indices_chunked()
             np.testing.assert_array_equal(live, np.arange(100))
@@ -324,6 +341,8 @@ class TestGetLiveIndicesChunked:
         """Deletes are excluded in chunked scanner (lines 222-233)."""
         state = TableState(initial_rows=50)
         state._init_memmap()
+        assert state._row_last_write is not None
+        assert state._deleted_flags is not None
         try:
             for i in [5, 15, 25]:
                 state._deleted_flags[i] = 1
@@ -339,6 +358,8 @@ class TestGetLiveIndicesChunked:
         """Rows beyond _deleted_flags length are treated as live (lines 229-230)."""
         state = TableState(initial_rows=50)
         state._init_memmap()
+        assert state._row_last_write is not None
+        assert state._deleted_flags is not None
         try:
             # Simulate inserts beyond the flags array
             state.cumulative_inserts = state._max_rows + 10
@@ -383,6 +404,8 @@ class TestTableStateCopy:
         """Copy raises NotImplementedError for memmap state (line 242-245)."""
         state = TableState(initial_rows=100)
         state._init_memmap()
+        assert state._row_last_write is not None
+        assert state._deleted_flags is not None
         try:
             with pytest.raises(NotImplementedError, match="memmap-backed"):
                 state.copy()
@@ -419,6 +442,8 @@ class TestMapPositionsToAbsolute:
         """Memmap table with deletes uses chunked mapper (lines 278-279)."""
         state = TableState(initial_rows=50)
         state._init_memmap()
+        assert state._row_last_write is not None
+        assert state._deleted_flags is not None
         try:
             state._deleted_flags[10] = 1
             state._delete_count = 1
@@ -443,6 +468,8 @@ class TestRejectionPositionMapper:
         """Block-indexed binary search maps positions correctly (lines 298-341)."""
         state = TableState(initial_rows=50)
         state._init_memmap()
+        assert state._row_last_write is not None
+        assert state._deleted_flags is not None
         try:
             # Delete indices 5, 10, 15
             for i in [5, 10, 15]:
@@ -465,6 +492,8 @@ class TestRejectionPositionMapper:
         """Output preserves input order even when positions unsorted (lines 338-341)."""
         state = TableState(initial_rows=20)
         state._init_memmap()
+        assert state._row_last_write is not None
+        assert state._deleted_flags is not None
         try:
             state._deleted_flags[5] = 1
             state._delete_count = 1
@@ -491,6 +520,8 @@ class TestChunkedPositionMapper:
         """Chunked mapper resolves positions through deleted flags (lines 357-415)."""
         state = TableState(initial_rows=30)
         state._init_memmap()
+        assert state._row_last_write is not None
+        assert state._deleted_flags is not None
         try:
             state._deleted_flags[3] = 1
             state._deleted_flags[7] = 1
@@ -510,6 +541,8 @@ class TestChunkedPositionMapper:
         """Phase 2: rows beyond _deleted_flags are all live (lines 391-400)."""
         state = TableState(initial_rows=20)
         state._init_memmap()
+        assert state._row_last_write is not None
+        assert state._deleted_flags is not None
         try:
             state.cumulative_inserts = state._max_rows + 50
             state._deleted_flags[0] = 1
@@ -526,6 +559,8 @@ class TestChunkedPositionMapper:
         """Unresolved positions raise RuntimeError (lines 403-410)."""
         state = TableState(initial_rows=10)
         state._init_memmap()
+        assert state._row_last_write is not None
+        assert state._deleted_flags is not None
         try:
             # Request position beyond live range
             positions = np.array([100], dtype=np.int64)
@@ -538,6 +573,8 @@ class TestChunkedPositionMapper:
         """Output preserves original order (lines 412-415)."""
         state = TableState(initial_rows=20)
         state._init_memmap()
+        assert state._row_last_write is not None
+        assert state._deleted_flags is not None
         try:
             state._deleted_flags[5] = 1
             state._delete_count = 1

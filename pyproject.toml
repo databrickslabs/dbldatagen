@@ -393,14 +393,16 @@ exclude = [
     "integration_tests/",
     "tutorial",
     "dbldatagen/datasets",
+    "dbldatagen/datasets_object.py",
+    "dbldatagen/constraints",
+    "dbldatagen/distributions",
     "dbldatagen/__init__.py",
-    "dbldatagen/constraints/__init__.py",
-    "dbldatagen/distributions/__init__.py",
     "dbldatagen/column_generation_spec.py",
     "dbldatagen/column_spec_options.py",
     "dbldatagen/datagen_constants.py",
     "dbldatagen/schema_parser.py",
     "dbldatagen/serialization.py",
+    "dbldatagen/text_generators.py",
     "dbldatagen/utils.py"
 ]
 warn_return_any = true
@@ -425,26 +427,4 @@ module = [
     "numpy.*",
 ]
 ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = [
-    "dbldatagen.column_generation_spec",
-    "dbldatagen.column_spec_options",
-    "dbldatagen.datagen_constants",
-    "dbldatagen.schema_parser",
-    "dbldatagen.serialization",
-    "dbldatagen.utils",
-    "dbldatagen.datasets.*",
-    "dbldatagen.datasets_object",
-    "dbldatagen.constraints.*",
-    "dbldatagen.distributions.*",
-    "dbldatagen.text_generators",
-]
-ignore_errors = true
-
-[[tool.mypy.overrides]]
-module = [
-    "tests.v1.test_cdc_state_coverage",
-]
-ignore_errors = true
 
