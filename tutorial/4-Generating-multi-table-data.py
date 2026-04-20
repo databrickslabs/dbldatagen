@@ -339,7 +339,6 @@ display(df_customer_pricing)
 
 import pyspark.sql.functions as F
 
-
 # lets compute the summary minutes messages and bytes transferred
 df_enriched_events = (
     df_events.withColumn("message_count", F.expr("case when event_type='sms' then 1 else 0 end"))

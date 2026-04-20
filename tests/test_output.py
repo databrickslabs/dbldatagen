@@ -8,7 +8,6 @@ from pyspark.sql.types import IntegerType, StringType, FloatType
 
 import dbldatagen as dg
 
-
 spark = dg.SparkSingleton.getLocalInstance("output tests")
 
 

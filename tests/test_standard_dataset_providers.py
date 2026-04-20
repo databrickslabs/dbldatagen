@@ -239,7 +239,7 @@ class TestStandardDatasetProviders:
         startTimestamp = providerOptions.get("startTimestamp", "2024-01-01 00:00:00")
         endTimestamp = providerOptions.get("endTimestamp", "2024-02-01 00:00:00")
         if startTimestamp > endTimestamp:
-            (startTimestamp, endTimestamp) = (endTimestamp, startTimestamp)
+            startTimestamp, endTimestamp = (endTimestamp, startTimestamp)
         assert df.where(f'ts < "{startTimestamp}"').count() == 0
         assert df.where(f'ts > "{endTimestamp}"').count() == 0
 
@@ -514,7 +514,7 @@ class TestStandardDatasetProviders:
         if maxLat < -90.0:
             maxLat = -89.0
         if minLat > maxLat:
-            (minLat, maxLat) = (maxLat, minLat)
+            minLat, maxLat = (maxLat, minLat)
         assert df.where(f'lat < {minLat}').count() == 0
         assert df.where(f'lat > {maxLat}').count() == 0
 
@@ -527,14 +527,14 @@ class TestStandardDatasetProviders:
         if maxLon < -180.0:
             maxLon = -179.0
         if minLon > maxLon:
-            (minLon, maxLon) = (maxLon, minLon)
+            minLon, maxLon = (maxLon, minLon)
         assert df.where(f'lon < {minLon}').count() == 0
         assert df.where(f'lon > {maxLon}').count() == 0
 
         startTimestamp = providerOptions.get("startTimestamp", "2024-01-01 00:00:00")
         endTimestamp = providerOptions.get("endTimestamp", "2024-02-01 00:00:00")
         if startTimestamp > endTimestamp:
-            (startTimestamp, endTimestamp) = (endTimestamp, startTimestamp)
+            startTimestamp, endTimestamp = (endTimestamp, startTimestamp)
         assert df.where(f'ts < "{startTimestamp}"').count() == 0
         assert df.where(f'ts > "{endTimestamp}"').count() == 0
 

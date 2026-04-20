@@ -25,6 +25,7 @@ class BasicStockTickerProvider(DatasetProvider.NoAssociatedDatasetsMixin, Datase
         - numSymbols: number of unique stock ticker symbols
         - startDate: first date for stock ticker data
         - endDate: last date for stock ticker data
+
     As the data specification is a DataGenerator object, you can add further columns to the data set and
     add constraints (when the feature is available)
 

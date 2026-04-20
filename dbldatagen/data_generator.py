@@ -5,6 +5,7 @@
 """
 This file defines the `DataGenError` and `DataGenerator` classes
 """
+
 import contextlib
 import copy
 import json
