@@ -10,7 +10,7 @@ export UV_BUILD_CONSTRAINT := .build-constraints.txt
 # No-op on Linux/CI.
 export OBJC_DISABLE_INITIALIZE_FORK_SAFETY := YES
 
-UV_RUN := uv run --exact --all-extras
+UV_RUN := uv run --exact --all-extras --all-groups
 UV_TEST := $(UV_RUN) pytest -n 2 --timeout 600 --durations 20
 
 clean:
@@ -18,7 +18,7 @@ clean:
 	find . -name '__pycache__' -print0 | xargs -0 rm -fr
 
 dev:
-	uv sync --all-extras
+	uv sync --all-extras --all-groups
 
 lint:
 	$(UV_RUN) black --check .
