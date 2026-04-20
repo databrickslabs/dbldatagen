@@ -640,3 +640,19 @@ class TestDistributions:
         beta = dist.DataDistribution.fromName("beta()")
         assert beta.alpha == 2.0
         assert beta.beta == 5.0
+
+    def test_registered_names(self):
+        """Test that registeredNames returns a sorted list of all registered names."""
+        assert dist.DataDistribution.registeredNames() == ["beta", "exponential", "gamma", "normal"]
+
+    def test_distribution_string_missing_equals_raises(self):
+        """Test that a bare token with no '=' inside the argument list raises ValueError."""
+        with pytest.raises(ValueError, match="Invalid keyword argument 'alpha'"):
+            dist.DataDistribution.fromName("beta(alpha)")
+
+    def test_standard_normal_factory(self):
+        """Test that Normal.standardNormal returns a Normal(mean=0.0, stddev=1.0)."""
+        n = dist.Normal.standardNormal()
+        assert isinstance(n, dist.Normal)
+        assert n.mean == 0.0
+        assert n.stddev == 1.0
