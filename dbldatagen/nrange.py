@@ -284,4 +284,4 @@ class NRange(DataRange):
         }
         if isinstance(ctype, DecimalType):
             return 0.0, math.pow(10, ctype.precision - ctype.scale) - 1.0
-        return value_ranges.get(type(ctype), None)
+        return value_ranges.get(type(ctype))

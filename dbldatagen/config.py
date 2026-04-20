@@ -5,6 +5,7 @@
 """
 This module implements configuration classes for writing generated data.
 """
+
 from dataclasses import dataclass
 
 

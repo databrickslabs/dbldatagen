@@ -19,6 +19,7 @@ For some distributions, there may be alternative more efficient mechanisms for s
 Some data distributions are scaled to the [0,1] interval as part of their data generation
 and no further scaling is needed.
 """
+
 import copy
 from abc import ABC, abstractmethod
 

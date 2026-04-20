@@ -5,6 +5,7 @@
 """
 This module defines the ChainedRelation class
 """
+
 from typing import Any
 
 import pyspark.sql.functions as F

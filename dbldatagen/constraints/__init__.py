@@ -30,7 +30,6 @@ from .ranged_values_constraint import RangedValues
 from .sql_expr import SqlExpr
 from .unique_combinations import UniqueCombinations
 
-
 __all__ = [
     "chained_relation",
     "constraint",

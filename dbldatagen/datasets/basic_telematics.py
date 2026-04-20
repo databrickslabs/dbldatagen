@@ -112,10 +112,10 @@ class BasicTelematicsProvider(DatasetProvider.NoAssociatedDatasetsMixin, Dataset
             maxLon = 180.0
             w.warn("Received an invalid maxLon value; Setting to 180.0", stacklevel=2)
         if minLon > maxLon:
-            (minLon, maxLon) = (maxLon, minLon)
+            minLon, maxLon = (maxLon, minLon)
             w.warn("Received minLon > maxLon; Swapping values", stacklevel=2)
         if minLat > maxLat:
-            (minLat, maxLat) = (maxLat, minLat)
+            minLat, maxLat = (maxLat, minLat)
             w.warn("Received minLat > maxLat; Swapping values", stacklevel=2)
         df_spec = (
             dg.DataGenerator(

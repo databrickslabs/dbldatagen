@@ -5,6 +5,7 @@
 """
 This module defines the NegativeValues class
 """
+
 import pyspark.sql.functions as F
 from pyspark.sql import Column
 

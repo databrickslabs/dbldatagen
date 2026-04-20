@@ -6,7 +6,6 @@ import pyspark.sql as ssql
 
 import dbldatagen as dg
 
-
 spark = dg.SparkSingleton.getLocalInstance("unit tests")
 
 
