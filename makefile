@@ -48,8 +48,7 @@ lock-dependencies:
 	perl -pi -e 's|registry = "https://[^"]*"|registry = "https://pypi.org/simple"|g' uv.lock
 
 docs-build:
-	uv sync --group docs
-	$(UV_RUN) sphinx-build -M html docs/source docs/build
+	$(UV_RUN) --group docs sphinx-build -M html docs/source docs/build
 
 docs-clean:
 	rm -rf docs/build

@@ -175,7 +175,7 @@ class DataDistribution(SerializableToDict, ABC):
             )
         distribution_name = match.group("distribution")
         arguments = match.group("args")
-        overrides = {}
+        overrides: dict[str, float] = {}
         if arguments is None or not arguments.strip():
             return distribution_name, overrides
         for part in arguments.split(","):

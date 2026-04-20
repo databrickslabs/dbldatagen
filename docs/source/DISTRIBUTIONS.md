@@ -96,3 +96,40 @@ Use the plot options to plot the delay as a bar chart.
 
 Specify the key as `delay`, the values as `delay` and the aggregation as `COUNT` to see the data 
 distribution.
+
+## Specifying distributions as strings
+
+As an alternative to passing a distribution object (e.g. `dist.Normal()` or `dist.Gamma(1.0, 2.0)`), 
+you can pass the distribution as a string. This is convenient for quick exploration and when specs 
+are built dynamically from configuration.
+
+Matching is case-insensitive — `"Normal"` and `"NORMAL"` are equivalent.
+
+```python
+.withColumn("value", "float", minValue=0, maxValue=100, 
+            random=True, distribution="normal")
+```
+
+### Specifying keyword arguments
+
+To specify keyword arguments, use the `name(key=value, ...)` syntax. Values should be numeric 
+literals (int or float; negatives are allowed). Argument names must match the distribution's 
+constructor parameters.
+
+```python
+.withColumn("x", "float", minValue=0, maxValue=100, random=True,
+            distribution="normal(mean=5.0, stddev=2.0)")
+
+.withColumn("y", "float", minValue=0, maxValue=100, random=True,
+            distribution="beta(alpha=3.0, beta=7.0)")
+
+.withColumn("z", "float", minValue=0, maxValue=100, random=True,
+            distribution="gamma(shape=2.0, scale=0.5)")
+
+.withColumn("w", "float", minValue=0, maxValue=100, random=True,
+            distribution="exponential(rate=1.5)")
+```
+
+Note that partial overrides are supported. Any arguments you omit fall back to their default 
+values. For example, `"gamma(shape=2.0)"` will create a distribution with the default value 
+`scale=1.0`.
