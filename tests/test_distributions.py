@@ -607,7 +607,7 @@ class TestDistributions:
 
     def test_distribution_string_non_numeric_value_raises(self):
         """Test that a non-numeric value raises ValueError."""
-        with pytest.raises(ValueError, match="Invalid value 'gobble' for 'alpha'"):
+        with pytest.raises(ValueError, match="Invalid value 'gobble' for argument 'alpha'"):
             dist.DataDistribution.fromName("beta(alpha=gobble)")
 
     def test_distribution_string_unbalanced_paren_raises(self):

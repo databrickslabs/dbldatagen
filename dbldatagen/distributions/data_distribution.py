@@ -34,16 +34,17 @@ from pyspark.sql import Column
 from dbldatagen.serialization import SerializableToDict
 
 
-# Matches a bare name like "normal" or a parameterized spec like "normal(mean=0, stddev=1)".
-# Whitespace is permitted around all tokens; the name is a Python identifier.
-_SPEC_PATTERN = re.compile(r"^\s*(?P<name>\w+)\s*(?:\((?P<args>[^)]*)\))?\s*$")
+# Matches a bare distribution name like "normal" or a parameterized spec like
+# "beta(alpha=5.0, beta=2.0)". Whitespace is permitted around all tokens; the name
+# is a Python identifier.
+_SPEC_PATTERN = re.compile(r"^\s*(?P<distribution>\w+)\s*(?:\((?P<args>[^)]*)\))?\s*$")
 
-# Matches a single `key=value` pair. The key and value groups may be empty — callers
-# check each side separately so they can produce targeted error messages for a missing
-# key or missing value. Numeric validation of the value happens downstream.
+# Matches a single `key=value` pair. The key and value groups may be empty. Callers
+# check each side separately to produce error messages for missing keys or values.
+# Numeric validation of parsed values happens downstream.
 _KWARG_PATTERN = re.compile(r"^\s*(?P<key>\w*)\s*=\s*(?P<value>.*?)\s*$")
 
-# Registry of lowercase name -> (subclass, default kwargs). Populated by the
+# Registry of distribution name -> (subclass, default kwargs). Populated by the
 # `@register_distribution(name, ...)` decorator on `DataDistribution` subclasses.
 # Bare-name lookups instantiate with the registered defaults; parameterized specs
 # override them. Module-private; access via `DataDistribution.fromName` etc.
@@ -60,43 +61,42 @@ class DataDistribution(SerializableToDict, ABC):
     def fromName(cls, spec: str) -> "DataDistribution":
         """Resolves a distribution spec string to an instance.
 
-        The spec is either a bare name (e.g., ``"normal"``) or a name with keyword
-        arguments (e.g., ``"normal(mean=5, stddev=2)"``). Bare names use the defaults
-        registered via :func:`register_distribution`; explicit kwargs override those
-        defaults. Matching is case-insensitive on the name; values must be numeric
-        literals.
+        The spec is either a distribution name (e.g., ``"normal"``) or a name with keyword
+        arguments (e.g., ``"beta(alpha=5.0, beta=2.0)"``). Distribution names are registered
+        using :func:`register_distribution`; explicit kwargs override those defaults.
+        Matching is case-insensitive on the name; values must be numeric literals.
 
-        :param spec: Distribution spec string
+        :param spec: Distribution specification string (e.g. ``"beta(alpha=5.0, beta=2.0)"``)
         :return: New instance of the named distribution
-        :raises ValueError: If the name is not registered, the spec is malformed,
-            a keyword is not accepted by the constructor, or a value is non-numeric
+        :raises ValueError: If the distribution is not registered, the specification is malformed,
+            a keyword argument is not accepted by the constructor, or an argument value is non-numeric
         """
-        name, overrides = cls._parseSpec(spec)
-        entry = _REGISTRY.get(name.lower())
+        distribution_name, distribution_args = cls._parseSpec(spec)
+        entry = _REGISTRY.get(distribution_name.lower())
         if entry is None:
             valid_names = ", ".join(sorted(_REGISTRY.keys()))
             raise ValueError(
-                f"Unknown distribution '{name}'. "
+                f"Unknown distribution '{distribution_name}'. "
                 f"Valid distribution names are: {valid_names}. "
                 f"Alternatively, pass a distribution object directly "
-                f"(e.g., dist.Normal(), dist.Beta(alpha=2, beta=5))."
+                f"(e.g., dist.Normal(), dist.Beta(alpha=5.0, beta=2.0))."
             )
         subclass, default_kwargs = entry
-        if overrides:
+        if distribution_args:
             valid_kwargs = {p.name for p in inspect.signature(subclass).parameters.values() if p.name != "self"}
-            unknown = sorted(set(overrides) - valid_kwargs)
-            if unknown:
+            unknown_args = sorted(set(distribution_args) - valid_kwargs)
+            if unknown_args:
                 raise ValueError(
-                    f"Unknown keyword argument(s) for distribution '{name}': {unknown}. "
+                    f"Unknown keyword argument(s) for distribution '{distribution_name}': {unknown_args}. "
                     f"Valid keyword arguments are: {sorted(valid_kwargs)}."
                 )
-        return subclass(**{**default_kwargs, **overrides})
+        return subclass(**{**default_kwargs, **distribution_args})
 
     @classmethod
     def registeredNames(cls) -> list[str]:
         """Returns a sorted list of registered distribution names.
 
-        :return: Sorted list of lowercase name strings recognized by :meth:`fromName`
+        :return: Sorted list of lowercase distribution names recognized by :meth:`fromName`
         """
         return sorted(_REGISTRY.keys())
 
@@ -161,60 +161,62 @@ class DataDistribution(SerializableToDict, ABC):
 
     @staticmethod
     def _parseSpec(spec: str) -> tuple[str, dict[str, float]]:
-        """Parses a distribution spec into a name and keyword overrides.
+        """Parses a distribution specification to get the distribution name and keyword arguments.
 
-        :param spec: Spec of the form ``"name"`` or ``"name(key=value, ...)"``
-        :return: Tuple of (name, parsed keyword overrides)
-        :raises ValueError: If the spec is malformed or a value is not a numeric literal
+        :param spec: Spec of the form ``"distribution"`` or ``"distribution(key=value, ...)"``
+        :return: Tuple of (distribution, keyword arguments)
+        :raises ValueError: If the specification is malformed or an argument value is not a numeric literal
         """
         match = _SPEC_PATTERN.match(spec)
         if not match:
             raise ValueError(
-                f"Invalid distribution spec '{spec}'. " f"Expected format: 'name' or 'name(key=value, ...)'."
+                f"Invalid distribution spec '{spec}'. "
+                f"Expected format: 'distribution' or 'distribution(key=value, ...)'."
             )
-        name = match.group("name")
-        args = match.group("args")
-        overrides: dict[str, float] = {}
-        if args is None or not args.strip():
-            return name, overrides
-        for part in args.split(","):
-            kwarg_match = _KWARG_PATTERN.match(part)
-            if not kwarg_match:
+        distribution_name = match.group("distribution")
+        arguments = match.group("args")
+        overrides = {}
+        if arguments is None or not arguments.strip():
+            return distribution_name, overrides
+        for part in arguments.split(","):
+            matched_arg = _KWARG_PATTERN.match(part)
+            if not matched_arg:
                 raise ValueError(
                     f"Invalid keyword argument '{part.strip()}' in distribution spec '{spec}'. "
                     f"Expected 'key=value' with a numeric value."
                 )
-            key = kwarg_match.group("key")
-            value = kwarg_match.group("value")
-            if not key:
-                raise ValueError(f"Missing keyword for value '{value}' in distribution spec '{spec}'.")
-            if not value:
-                raise ValueError(f"Missing value for keyword '{key}' in distribution spec '{spec}'.")
-            if key in overrides:
-                raise ValueError(f"Duplicate keyword '{key}' in distribution spec '{spec}'.")
-            overrides[key] = DataDistribution._parseNumericValue(value, key, spec)
-        return name, overrides
+            arg_key = matched_arg.group("key")
+            arg_value = matched_arg.group("value")
+            if not arg_key:
+                raise ValueError(f"Missing keyword for value '{arg_value}' in distribution spec '{spec}'.")
+            if not arg_value:
+                raise ValueError(f"Missing value for keyword '{arg_key}' in distribution spec '{spec}'.")
+            if arg_key in overrides:
+                raise ValueError(f"Duplicate keyword '{arg_key}' in distribution spec '{spec}'.")
+            overrides[arg_key] = DataDistribution._parseNumericValue(arg_value, arg_key, spec)
+        return distribution_name, overrides
 
     @staticmethod
     def _parseNumericValue(raw: str, key: str, spec: str) -> int | float:
         """Parses a numeric literal from a distribution spec value.
 
-        :param raw: Raw value token (e.g., ``"2.5"``, ``"-3"``)
-        :param key: Keyword name the value is bound to (used for error messages)
+        :param raw: Raw value string (e.g., ``"2.5"``, ``"-3"``)
+        :param key: Argument name the value is bound to (used for error messages)
         :param spec: Full spec string (used for error messages)
-        :return: Parsed int or float
-        :raises ValueError: If ``raw`` is not a numeric literal
+        :return: Parsed argument value as an integer or float
+        :raises ValueError: If ``raw`` cannot be parsed to a numeric literal value
         """
         try:
             parsed = ast.literal_eval(raw)
         except (ValueError, SyntaxError) as e:
             raise ValueError(
-                f"Invalid value '{raw}' for '{key}' in distribution spec '{spec}'. " f"Expected a numeric literal."
+                f"Invalid value '{raw}' for argument '{key}' in distribution spec '{spec}'. "
+                f"Expected a numeric literal."
             ) from e
         if isinstance(parsed, float | int) and not isinstance(parsed, bool):
             return parsed
         raise ValueError(
-            f"Invalid value '{raw}' for '{key}' in distribution spec '{spec}'. " f"Expected a numeric literal."
+            f"Invalid value '{raw}' for argument '{key}' in distribution spec '{spec}'. " f"Expected a numeric literal."
         )
 
 
