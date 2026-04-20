@@ -33,7 +33,8 @@ fmt:
 	$(UV_RUN) pylint --output-format=colorized -j 0 dbldatagen
 
 test:
-	hatch run v0:test-cov
+	$(UV_TEST) --cov=dbldatagen --cov-config=.coveragerc --cov-report=term-missing:skip-covered --cov-report=xml --cov-report=html --cov-fail-under=80 --ignore=tests/v1/ tests/
+	$(UV_RUN) pytest tests/v1/ --timeout 600 --durations 20 --no-header -q --ignore=tests/v1/test_faker_pool.py
 
 coverage:
 	$(UV_TEST) --cov=dbldatagen --cov-report=html --ignore=tests/v1/ tests/
