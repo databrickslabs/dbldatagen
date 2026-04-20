@@ -92,7 +92,7 @@ yq = [
 ]
 
 [build-system]
-requires = ["hatchling>=1.9.0,<2.0"]
+requires = ["hatchling>=1.29.0,<2.0"]
 build-backend = "hatchling.build"
 
 # uv configuration
