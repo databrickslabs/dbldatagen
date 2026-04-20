@@ -41,25 +41,21 @@ coverage:
 	open htmlcov/index.html
 
 test-v0:
-	hatch run v0:test-cov
+	$(UV_TEST) --cov=dbldatagen --cov-config=.coveragerc --cov-report=term-missing:skip-covered --cov-report=xml --cov-report=html --cov-fail-under=80 --ignore=tests/v1/ tests/
 
 test-v1:
-	hatch run v1:test-cov
+	$(UV_RUN) pytest tests/v1/ --timeout 600 --durations 20 --no-header -q --cov=dbldatagen/v1 --cov-config=.coveragerc-v1 --cov-report=term-missing:skip-covered --cov-report=xml --cov-report=html:htmlcov-v1 --ignore=tests/v1/test_faker_pool.py
 
-# Mirror CI exactly: hatch envs, sequential pytest, no -n parallelism
 test-ci:
-	hatch run v0:test-cov
-	hatch run v1:test-cov
-
-test-v1-cov:
-	uv run pytest tests/v1/ --timeout 600 --durations 20 --no-header -q --cov=dbldatagen/v1 --cov-config=.coveragerc-v1 --cov-report=term-missing:skip-covered --cov-report=xml --cov-report=html:htmlcov-v1 --ignore=tests/v1/test_faker_pool.py
+	$(MAKE) test-v0
+	$(MAKE) test-v1
 
 test-all:
-	uv run pytest tests/ --ignore=tests/v1/ -n 2 --timeout 600 --durations 20
-	uv run pytest tests/v1/ --timeout 600 --durations 20 --no-header -q
+	$(UV_RUN) pytest tests/ --ignore=tests/v1/ -n 2 --timeout 600 --durations 20
+	$(UV_RUN) pytest tests/v1/ --timeout 600 --durations 20 --no-header -q
 
 test-coverage:
-	uv run pytest tests/ --ignore=tests/v1/ --cov --cov-report=html --timeout 600 --durations 20 && open htmlcov/index.html
+	$(UV_RUN) pytest tests/ --ignore=tests/v1/ --cov --cov-report=html --timeout 600 --durations 20 && open htmlcov/index.html
 
 build:
 	uv build --require-hashes --build-constraints=.build-constraints.txt
@@ -83,4 +79,4 @@ docs-serve:
 	open docs/build/html/index.html
 
 .DEFAULT: all
-.PHONY: all clean dev lint fmt test coverage build lock-dependencies docs-build docs-clean docs-serve test-v0 test-v1 test-v1-cov test-all test-coverage test-ci
+.PHONY: all clean dev lint fmt test coverage build lock-dependencies docs-build docs-clean docs-serve test-v0 test-v1 test-all test-coverage test-ci
