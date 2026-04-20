@@ -297,9 +297,10 @@ class ColumnGenerationSpec(SerializableToDict):
 
         self.distribution = self["distribution"]
 
-        # if distribution is just specified as `normal` use standard normal distribution
-        if self.distribution == "normal":
-            self.distribution = Normal.standardNormal()
+        # if distribution is specified as a string, resolve it to a distribution object via the
+        # name registry populated by the @register_distribution decorator on DataDistribution subclasses
+        if isinstance(self.distribution, str):
+            self.distribution = DataDistribution.fromName(self.distribution)
 
         # specify random seed for distribution if one is in effect
         if self.distribution is not None and self._randomSeed is not None:

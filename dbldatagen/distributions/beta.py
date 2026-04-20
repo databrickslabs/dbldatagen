@@ -13,10 +13,11 @@ from pyspark.sql import Column
 from pyspark.sql.types import FloatType
 
 from dbldatagen.datagen_types import NumericLike
-from dbldatagen.distributions.data_distribution import DataDistribution
+from dbldatagen.distributions.data_distribution import DataDistribution, register_distribution
 from dbldatagen.serialization import SerializableToDict
 
 
+@register_distribution("beta", alpha=2.0, beta=5.0)
 class Beta(DataDistribution):
     """Specify that random samples should be drawn from the Beta distribution parameterized by alpha and beta. By
     default the Beta distribution produces values between 0 and 1 so no scaling is needed. See
