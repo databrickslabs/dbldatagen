@@ -1,822 +1,704 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # Akamai WAF Security Scenarios
+# MAGIC # Akamai WAF Security Scenario Synthetic Data
 # MAGIC
-# MAGIC Generates records for each security scenario:
-# MAGIC 1. SQL Injection attacks
-# MAGIC 2. Cross-Site Scripting (XSS) attacks
-# MAGIC 3. Remote File Inclusion (RFI) / Local File Inclusion (LFI)
-# MAGIC 4. DDoS / Rate limiting events
-# MAGIC 5. Bot detection and mitigation
-# MAGIC 6. API abuse and anomalous requests
+# MAGIC This notebook uses **[dbldatagen](https://databrickslabs.github.io/dbldatagen/)** to simulate
+# MAGIC Akamai SIEM Integration API logs containing common web-attack patterns. The scenarios modelled here are:
 # MAGIC
-# MAGIC Based on Akamai SIEM Integration API log format
+# MAGIC 1. **SQL Injection attacks** - malicious SQL payloads in query parameters and bodies.
+# MAGIC 2. **Cross-Site Scripting (XSS) attacks** - reflected and stored script injection attempts.
+# MAGIC 3. **Remote/Local File Inclusion (RFI/LFI)** - path traversal and remote file loads.
+# MAGIC 4. **DDoS and rate limiting** - high-volume bursts from a small set of IPs.
+# MAGIC 5. **Bot detection** - web scrapers, headless browsers, and automation tooling.
+# MAGIC 6. **API abuse** - credential enumeration and anomalous API access patterns.
+# MAGIC
+# MAGIC Each scenario is saved as a Delta table and optionally exported to JSON, which you can
+# MAGIC replay into a SIEM or any tool that ingests Akamai SIEM logs.
 
 # COMMAND ----------
 
 # MAGIC %pip install dbldatagen
-# MAGIC dbutils.library.restartPython()
+# MAGIC %restart_python
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 📋 Configuration Parameters
+# MAGIC ## Configuration
 # MAGIC
-# MAGIC This notebook uses **Databricks Widgets** to make it flexible and reusable. You can customize the following parameters:
+# MAGIC Set the following parameters using widgets at the top of the notebook:
 # MAGIC
-# MAGIC - **`catalog_name`**: The Unity Catalog name where tables will be created (default: `aa_catalog`)
-# MAGIC - **`schema_name`**: The schema/database name within the catalog (default: `datagen`)
-# MAGIC - **`base_rows`**: Number of records to generate per security scenario (default: `10000`)
-# MAGIC - **`partitions`**: Number of data partitions/files to generate - controls parallelism (default: `4`)
-# MAGIC
-# MAGIC ### Impact:
-# MAGIC - All Delta tables will be saved to: `{catalog_name}.{schema_name}.akamai_*`
-# MAGIC - JSON exports will be saved to: `/Volumes/{catalog_name}/{schema_name}/akamai_waf/`
-# MAGIC - Total records generated: `{base_rows} × 6 scenarios`
-# MAGIC - Data parallelism: Higher partition count = more parallel processing but more output files
-# MAGIC
-# MAGIC You can modify these values using the widgets at the top of the notebook.
-# MAGIC
+# MAGIC | Widget         | What it controls                                                         |
+# MAGIC | -------------- | ------------------------------------------------------------------------ |
+# MAGIC | `catalog_name` | Catalog where Delta tables are written                                   |
+# MAGIC | `schema_name`  | Schema where Delta tables are written (tables are named `akamai_*`)      |
+# MAGIC | `base_rows`    | Rows generated per scenario                                              |
+# MAGIC | `partitions`   | Number of Spark partitions used when generating data                     |
 
 # COMMAND ----------
 
-# Configure notebook parameters using widgets
-# These widgets allow you to customize the notebook execution without modifying code
-
-# Widget 1: Unity Catalog name - defines where Delta tables are stored
-dbutils.widgets.text("catalog_name", "aa_catalog", "Catalog Name")
-
-# Widget 2: Schema/database name - organizes tables within the catalog
+dbutils.widgets.text("catalog_name", "main", "Catalog Name")
 dbutils.widgets.text("schema_name", "datagen", "Schema Name")
+dbutils.widgets.text("base_rows", "10000", "Rows per scenario")
+dbutils.widgets.text("partitions", "4", "Spark partitions")
 
-# Widget 3: Number of records per scenario - controls data volume (e.g., 10000 = 60K total records for 6 scenarios)
-dbutils.widgets.text("base_rows", "10000", "Number of Records per Scenario")
-
-# Widget 4: Number of partitions - controls parallelism and output file count
-dbutils.widgets.text("partitions", "4", "Number of data partitions / files to generate")
-
-# COMMAND ----------
-
-# Retrieve widget values and convert to appropriate types
 catalog_name = dbutils.widgets.get("catalog_name")
 schema_name = dbutils.widgets.get("schema_name")
-base_rows = int(dbutils.widgets.get("base_rows"))  # Convert to integer for numeric operations
-partitions = int(dbutils.widgets.get("partitions"))  # Convert to integer for Spark partitioning
+base_rows = int(dbutils.widgets.get("base_rows"))
+partitions = int(dbutils.widgets.get("partitions"))
 
-
-# COMMAND ----------
-
-# List all widget names and their values
-widgets = dbutils.widgets.getAll()
-
-# Print the variables to verify
-for name, value in widgets.items():
-    print(f"{name}: {eval(name)}")
-
+print(f"catalog_name: {catalog_name}")
+print(f"schema_name:  {schema_name}")
+print(f"base_rows:    {base_rows}")
+print(f"partitions:   {partitions}")
 
 # COMMAND ----------
 
 from dbldatagen import DataGenerator
-from pyspark.sql.functions import col, struct, when, lit, array, expr, base64, monotonically_increasing_id, split, concat
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType, LongType
-import random
+from pyspark.sql import DataFrame
+from pyspark.sql.functions import col, struct, when, lit, expr
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Mock Geolocation Data for Akamai WAF
+# MAGIC ## Scenario 1: SQL injection attacks
+# MAGIC
+# MAGIC **Attack pattern:**
+# MAGIC SQL injection attempts to escape out of query parameters and into the underlying query,
+# MAGIC tacking on logical tautologies (`OR '1'='1'`), UNION SELECTs, or destructive DDL
+# MAGIC (`DROP TABLE users`). Effective WAFs block the vast majority of these; the remaining
+# MAGIC fraction escapes as alerts and is logged for investigation.
+# MAGIC
+# MAGIC **What this cell generates:**
+# MAGIC ~85% `deny` outcomes, ~15% `alert`, six canonical SQLi payloads distributed across query
+# MAGIC parameters on four hostnames, and an `sqlmap` user-agent mixed in to mimic automated tooling.
 
 # COMMAND ----------
 
-# Create geolocation data for attack sources
-attack_geo_locations = [
-    # Normal traffic (legitimate users)
-    ("192.168.1.*", "11734", "Northport", "ZZ", "NP", "normal"),
-    ("10.0.0.*", "7922", "Westbridge", "ZZ", "WB", "normal"),
-    ("172.16.0.*", "20940", "Centralview", "ZZ", "CV", "normal"),
-    # Suspicious/Attack sources (fictitious locations)
-    ("203.0.113.*", "12876", "Shadowmere", "XX", "SM", "suspicious"),
-    ("198.51.100.*", "4134", "Darkwater", "XX", "DW", "suspicious"),
-    ("45.33.32.*", "24940", "Greystone", "XX", "GS", "suspicious"),
-    ("185.220.101.*", "63023", "Phantom Bay", "XX", "PB", "suspicious"),  # Common VPN/Tor exit
-    ("91.108.56.*", "15895", "Nebula City", "XX", "NC", "suspicious"),
-    ("104.244.42.*", "29465", "Voidhaven", "XX", "VH", "suspicious"),
-]
-
-geo_df = spark.createDataFrame(attack_geo_locations, ["ip_pattern", "asn", "city", "country", "regionCode", "risk_category"])
-geo_df.createOrReplaceTempView("akamai_geolocation")
-
-display(geo_df)
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ## Scenario 1: SQL Injection Attacks
-
-# COMMAND ----------
-
-def generate_sql_injection_scenario(spark, num_records=10000, partitions=4):
-    """
-    Scenario: SQL Injection attack attempts
-    - 85% denied by WAF
-    - Various SQL injection patterns
-    - Multiple attack vectors
-    """
-    
-    # SQL injection patterns - properly escaped for SQL
-    sql_injection_patterns = [
-        "\\' OR \\'1\\'=\\'1",
-        "\\' OR 1=1--",
-        "\\'; DROP TABLE users--",
-        "\\' UNION SELECT NULL--",
-        "admin\\'--",
-        "\\' OR \\'1\\'=\\'1\\' /*"
-    ]
-    
-    data_gen = (
-        DataGenerator(spark, rows=num_records, partitions=partitions)
-        .withColumn("type", "string", values=["akamai_siem"])
-        .withColumn("format", "string", values=["json"])
-        .withColumn("version", "string", values=["1.0"])
-        
-        # Attack data
-        .withColumn("_clientIP", "string",
-                   expr="concat(case cast(rand() * 5 as int) " +
-                        "when 0 then '203.0.113.' " +
-                        "when 1 then '198.51.100.' " +
-                        "when 2 then '45.33.32.' " +
-                        "when 3 then '185.220.101.' " +
-                        "else '192.168.1.' end, cast(rand() * 254 + 1 as int))")
-        
-        .withColumn("_configId", "string",
-                   expr="concat('waf_config_', cast(rand() * 10000 + 10000 as int))")
-        .withColumn("_policyId", "string",
-                   expr="concat('sqli_policy_', cast(rand() * 100 as int))")
-        
-        # 85% denied
-        .withColumn("_ruleActions", "string",
-                   expr="case when rand() < 0.85 then 'deny' else 'alert' end")
-        
-        # SQL injection patterns - use values instead of expr to avoid escaping issues
-        .withColumn("_sqlPattern", "string",
-                   values=["' OR '1'='1", "' OR 1=1--", "'; DROP TABLE users--", 
-                          "' UNION SELECT NULL--", "admin'--", "' OR '1'='1' /*"])
-        
-        .withColumn("_ruleData", "string",
-                   expr="concat('SQL Injection detected in query parameter: ', _sqlPattern)")
-        .withColumn("_ruleMessages", "string",
-                   expr="concat('Attack detected - SQL Injection pattern: ', _sqlPattern)")
-        .withColumn("_ruleTags", "string", values=["SQL_INJECTION/WEB_ATTACK/SQLI"])
-        .withColumn("_rules", "string", values=["950901", "981242", "981243", "981244"])
-        
-        # HTTP request details
-        .withColumn("_method", "string",
-                   expr="case cast(rand() * 3 as int) when 0 then 'GET' when 1 then 'POST' else 'PUT' end")
-        .withColumn("_host", "string",
-                   expr="case cast(rand() * 4 as int) " +
-                        "when 0 then 'api.example.com' " +
-                        "when 1 then 'www.example.com' " +
-                        "when 2 then 'shop.example.com' " +
-                        "else 'admin.example.com' end")
-        .withColumn("_path", "string",
-                   expr="case cast(rand() * 5 as int) " +
-                        "when 0 then '/search' " +
-                        "when 1 then '/login' " +
-                        "when 2 then '/api/users' " +
-                        "when 3 then '/products' " +
-                        "else '/admin/dashboard' end")
-        .withColumn("_query", "string",
-                   expr="concat('q=', _sqlPattern, '&page=1')")
-        .withColumn("_protocol", "string", values=["HTTP/1.1", "HTTP/2"])
-        .withColumn("_status", "integer",
-                   expr="case when _ruleActions = 'deny' then 403 when rand() < 0.3 then 500 else 200 end")
-        .withColumn("_bytes", "integer", expr="cast(rand() * 5000 + 500 as int)")
-        .withColumn("_userAgent", "string",
-                   values=["Mozilla/5.0 (Windows NT 10.0; Win64; x64)", 
-                          "Python-urllib/3.8",
-                          "curl/7.68.0",
-                          "sqlmap/1.5"])
-        
-        # Event type
-        .withColumn("_eventTypeId", "string", values=["1001"])
-        .withColumn("_eventTypeName", "string", values=["SQL Injection"])
-        .withColumn("_eventName", "string", values=["SQL Injection Attack Detected"])
-        
-        .withColumn("_timestamp", "long",
-                   expr="cast((unix_timestamp(current_timestamp()) - cast(rand() * 3600 as int)) * 1000 as long)")
+sql_injection_attack_logs = (
+    DataGenerator(spark, rows=base_rows, partitions=partitions)
+    .withColumn("type", "string", values=["akamai_siem"])
+    .withColumn("format", "string", values=["json"])
+    .withColumn("version", "string", values=["1.0"])
+    .withColumn(
+        "ipPrefix", "string",
+        values=["203.0.113.", "198.51.100.", "45.33.32.", "185.220.101.", "192.168.1."],
+        random=True, omit=True,
     )
-    
-    df = data_gen.build()
-    
-    # Add geolocation using split to get first 3 octets
-    # Split IP by '.', take first 3 parts, and add '.*' pattern
-    ip_parts = split(col("_clientIP"), "\\.")
-    df_with_geo = df.withColumn("ip_prefix", 
-        concat(ip_parts[0], lit("."), ip_parts[1], lit("."), ip_parts[2], lit(".*")))
-    
-    df_with_geo = df_with_geo.join(
-        spark.table("akamai_geolocation"),
-        df_with_geo["ip_prefix"] == col("ip_pattern"),
-        "left"
-    ).drop("ip_prefix", "ip_pattern", "risk_category")
-    
-    return df_with_geo
+    .withColumn(
+        "clientIP", "string", baseColumn="ipPrefix",
+        expr="concat(ipPrefix, cast(rand() * 254 + 1 as int))",
+    )
+    .withColumn("configId", "string", expr="concat('waf_config_', cast(rand() * 10000 + 10000 as int))")
+    .withColumn("policyId", "string", expr="concat('sqli_policy_', cast(rand() * 100 as int))")
+    # 85% denied by the WAF, 15% logged as alerts only.
+    .withColumn("ruleActions", "string", values=["deny", "alert"], weights=[85, 15], random=True)
+    .withColumn(
+        "sqlPattern", "string",
+        values=[
+            "' OR '1'='1",
+            "' OR 1=1--",
+            "'; DROP TABLE users--",
+            "' UNION SELECT NULL--",
+            "admin'--",
+            "' OR '1'='1' /*",
+        ],
+        random=True, omit=True,
+    )
+    .withColumn(
+        "ruleData", "string", baseColumn="sqlPattern",
+        expr="concat('SQL Injection detected in query parameter: ', sqlPattern)",
+    )
+    .withColumn(
+        "ruleMessages", "string", baseColumn="sqlPattern",
+        expr="concat('Attack detected - SQL Injection pattern: ', sqlPattern)",
+    )
+    .withColumn("ruleTags", "string", values=["SQL_INJECTION/WEB_ATTACK/SQLI"])
+    .withColumn("rules", "string", values=["950901", "981242", "981243", "981244"], random=True)
+    .withColumn("method", "string", values=["GET", "POST", "PUT"], random=True)
+    .withColumn(
+        "host", "string",
+        values=["api.example.com", "www.example.com", "shop.example.com", "admin.example.com"],
+        random=True,
+    )
+    .withColumn(
+        "path", "string",
+        values=["/search", "/login", "/api/users", "/products", "/admin/dashboard"],
+        random=True,
+    )
+    .withColumn(
+        "query", "string", baseColumn="sqlPattern",
+        expr="concat('q=', sqlPattern, '&page=1')",
+    )
+    .withColumn("protocol", "string", values=["HTTP/1.1", "HTTP/2"], random=True)
+    # 403 when denied, occasional 500 (rule reached the backend), 200 for alerts.
+    .withColumn(
+        "status", "integer", baseColumn="ruleActions",
+        expr="case when ruleActions = 'deny' then 403 when rand() < 0.3 then 500 else 200 end",
+    )
+    .withColumn("bytes", "integer", expr="cast(rand() * 5000 + 500 as int)")
+    .withColumn(
+        "userAgent", "string",
+        values=[
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+            "Python-urllib/3.8",
+            "curl/7.68.0",
+            "sqlmap/1.5",
+        ],
+        random=True,
+    )
+    .withColumn("eventTypeId", "string", values=["1001"])
+    .withColumn("eventTypeName", "string", values=["SQL Injection"])
+    .withColumn("eventName", "string", values=["SQL Injection Attack Detected"])
+    .withColumn(
+        "timestamp", "long",
+        expr="cast((unix_timestamp(current_timestamp()) - cast(rand() * 3600 as int)) * 1000 as long)",
+    )
+).build()
 
-# Generate SQL injection attack attempts (malicious SQL in HTTP requests)
-sql_injection_attack_logs = generate_sql_injection_scenario(spark, base_rows, partitions)
 display(sql_injection_attack_logs)
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Scenario 2: Cross-Site Scripting (XSS) Attacks
+# MAGIC ## Scenario 2: Cross-Site Scripting (XSS) attacks
+# MAGIC
+# MAGIC **Attack pattern:**
+# MAGIC XSS tries to smuggle JavaScript through form fields, query parameters, or URL fragments so
+# MAGIC that the resulting page executes attacker-controlled code in another user's browser.
+# MAGIC Payloads range from plain `<script>` tags to obfuscated `onerror`/`onload` event handlers
+# MAGIC on benign-looking HTML.
+# MAGIC
+# MAGIC **What this cell generates:**
+# MAGIC ~80% `deny`, ~20% `alert`, six representative payloads spread across user-generated-content
+# MAGIC endpoints (comments, profiles, posts, feedback, search).
 
 # COMMAND ----------
 
-def generate_xss_scenario(spark, num_records=10000, partitions=4):
-    """
-    Scenario: XSS attack attempts
-    - 80% blocked
-    - Various XSS payloads
-    - Reflected and stored XSS patterns
-    """
-    
-    data_gen = (
-        DataGenerator(spark, rows=num_records, partitions=partitions)
-        .withColumn("type", "string", values=["akamai_siem"])
-        .withColumn("format", "string", values=["json"])
-        .withColumn("version", "string", values=["1.0"])
-        
-        .withColumn("_clientIP", "string",
-                   expr="concat(case cast(rand() * 6 as int) " +
-                        "when 0 then '203.0.113.' " +
-                        "when 1 then '198.51.100.' " +
-                        "when 2 then '45.33.32.' " +
-                        "when 3 then '185.220.101.' " +
-                        "when 4 then '91.108.56.' " +
-                        "else '192.168.1.' end, cast(rand() * 254 + 1 as int))")
-        
-        .withColumn("_configId", "string",
-                   expr="concat('waf_config_', cast(rand() * 10000 + 10000 as int))")
-        .withColumn("_policyId", "string",
-                   expr="concat('xss_policy_', cast(rand() * 100 as int))")
-        
-        # 80% blocked
-        .withColumn("_ruleActions", "string",
-                   expr="case when rand() < 0.8 then 'deny' else 'alert' end")
-        
-        # XSS payloads - use values to avoid escaping issues
-        .withColumn("_xssPayload", "string",
-                   values=["<script>alert('XSS')</script>",
-                          "<img src=x onerror=alert('XSS')>",
-                          "<svg onload=alert('XSS')>",
-                          "javascript:alert('XSS')",
-                          "<iframe src=javascript:alert('XSS')>",
-                          "<body onload=alert('XSS')>"])
-        
-        .withColumn("_ruleData", "string",
-                   expr="concat('XSS attack detected in input: ', _xssPayload)")
-        .withColumn("_ruleMessages", "string",
-                   expr="concat('Cross-Site Scripting attempt blocked: ', _xssPayload)")
-        .withColumn("_ruleTags", "string", values=["XSS/WEB_ATTACK/CROSS_SITE_SCRIPTING"])
-        .withColumn("_rules", "string", values=["941100", "941110", "941120", "941130"])
-        
-        .withColumn("_method", "string",
-                   expr="case cast(rand() * 3 as int) when 0 then 'GET' when 1 then 'POST' else 'PUT' end")
-        .withColumn("_host", "string",
-                   values=["www.example.com", "blog.example.com", "forum.example.com", "shop.example.com"])
-        .withColumn("_path", "string",
-                   expr="case cast(rand() * 5 as int) " +
-                        "when 0 then '/comment' " +
-                        "when 1 then '/search' " +
-                        "when 2 then '/profile' " +
-                        "when 3 then '/post' " +
-                        "else '/feedback' end")
-        .withColumn("_query", "string",
-                   expr="concat('input=', replace(_xssPayload, ' ', '%20'))")
-        .withColumn("_protocol", "string", values=["HTTP/1.1", "HTTP/2"])
-        .withColumn("_status", "integer",
-                   expr="case when _ruleActions = 'deny' then 403 else 200 end")
-        .withColumn("_bytes", "integer", expr="cast(rand() * 3000 + 300 as int)")
-        .withColumn("_userAgent", "string",
-                   values=["Mozilla/5.0 (Windows NT 10.0; Win64; x64)", 
-                          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
-                          "curl/7.68.0"])
-        
-        .withColumn("_eventTypeId", "string", values=["1002"])
-        .withColumn("_eventTypeName", "string", values=["Cross-Site Scripting"])
-        .withColumn("_eventName", "string", values=["XSS Attack Detected"])
-        
-        .withColumn("_timestamp", "long",
-                   expr="cast((unix_timestamp(current_timestamp()) - cast(rand() * 7200 as int)) * 1000 as long)")
+xss_attack_logs = (
+    DataGenerator(spark, rows=base_rows, partitions=partitions)
+    .withColumn("type", "string", values=["akamai_siem"])
+    .withColumn("format", "string", values=["json"])
+    .withColumn("version", "string", values=["1.0"])
+    .withColumn(
+        "ipPrefix", "string",
+        values=[
+            "203.0.113.", "198.51.100.", "45.33.32.",
+            "185.220.101.", "91.108.56.", "192.168.1.",
+        ],
+        random=True, omit=True,
     )
-    
-    df = data_gen.build()
-    
-    # Add geolocation using split to get first 3 octets
-    # Split IP by '.', take first 3 parts, and add '.*' pattern
-    ip_parts = split(col("_clientIP"), "\\.")
-    df_with_geo = df.withColumn("ip_prefix", 
-        concat(ip_parts[0], lit("."), ip_parts[1], lit("."), ip_parts[2], lit(".*")))
-    
-    df_with_geo = df_with_geo.join(
-        spark.table("akamai_geolocation"),
-        df_with_geo["ip_prefix"] == col("ip_pattern"),
-        "left"
-    ).drop("ip_prefix", "ip_pattern", "risk_category")
-    
-    return df_with_geo
+    .withColumn(
+        "clientIP", "string", baseColumn="ipPrefix",
+        expr="concat(ipPrefix, cast(rand() * 254 + 1 as int))",
+    )
+    .withColumn("configId", "string", expr="concat('waf_config_', cast(rand() * 10000 + 10000 as int))")
+    .withColumn("policyId", "string", expr="concat('xss_policy_', cast(rand() * 100 as int))")
+    .withColumn("ruleActions", "string", values=["deny", "alert"], weights=[80, 20], random=True)
+    .withColumn(
+        "xssPayload", "string",
+        values=[
+            "<script>alert('XSS')</script>",
+            "<img src=x onerror=alert('XSS')>",
+            "<svg onload=alert('XSS')>",
+            "javascript:alert('XSS')",
+            "<iframe src=javascript:alert('XSS')>",
+            "<body onload=alert('XSS')>",
+        ],
+        random=True, omit=True,
+    )
+    .withColumn(
+        "ruleData", "string", baseColumn="xssPayload",
+        expr="concat('XSS attack detected in input: ', xssPayload)",
+    )
+    .withColumn(
+        "ruleMessages", "string", baseColumn="xssPayload",
+        expr="concat('Cross-Site Scripting attempt blocked: ', xssPayload)",
+    )
+    .withColumn("ruleTags", "string", values=["XSS/WEB_ATTACK/CROSS_SITE_SCRIPTING"])
+    .withColumn("rules", "string", values=["941100", "941110", "941120", "941130"], random=True)
+    .withColumn("method", "string", values=["GET", "POST", "PUT"], random=True)
+    .withColumn(
+        "host", "string",
+        values=["www.example.com", "blog.example.com", "forum.example.com", "shop.example.com"],
+        random=True,
+    )
+    .withColumn(
+        "path", "string",
+        values=["/comment", "/search", "/profile", "/post", "/feedback"],
+        random=True,
+    )
+    .withColumn(
+        "query", "string", baseColumn="xssPayload",
+        expr="concat('input=', replace(xssPayload, ' ', '%20'))",
+    )
+    .withColumn("protocol", "string", values=["HTTP/1.1", "HTTP/2"], random=True)
+    .withColumn(
+        "status", "integer", baseColumn="ruleActions",
+        expr="case when ruleActions = 'deny' then 403 else 200 end",
+    )
+    .withColumn("bytes", "integer", expr="cast(rand() * 3000 + 300 as int)")
+    .withColumn(
+        "userAgent", "string",
+        values=[
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+            "curl/7.68.0",
+        ],
+        random=True,
+    )
+    .withColumn("eventTypeId", "string", values=["1002"])
+    .withColumn("eventTypeName", "string", values=["Cross-Site Scripting"])
+    .withColumn("eventName", "string", values=["XSS Attack Detected"])
+    .withColumn(
+        "timestamp", "long",
+        expr="cast((unix_timestamp(current_timestamp()) - cast(rand() * 7200 as int)) * 1000 as long)",
+    )
+).build()
 
-# Generate cross-site scripting (XSS) attack attempts (malicious JavaScript)
-xss_attack_logs = generate_xss_scenario(spark, base_rows, partitions)
 display(xss_attack_logs)
 
 # COMMAND ----------
 
 # MAGIC %md
 # MAGIC ## Scenario 3: Remote/Local File Inclusion (RFI/LFI)
+# MAGIC
+# MAGIC **Attack pattern:**
+# MAGIC File-inclusion attacks try to coax a server into reading files outside the web root
+# MAGIC (`../../../../etc/passwd`, Windows SAM) or executing code loaded from a remote URL. They
+# MAGIC usually target endpoints that take a filename or path as a parameter.
+# MAGIC
+# MAGIC **What this cell generates:**
+# MAGIC ~90% `deny` (WAF rules for this class tend to be aggressive), six classic payloads, and
+# MAGIC tooling user-agents (Python, curl, wget) that scanners prefer.
 
 # COMMAND ----------
 
-def generate_file_inclusion_scenario(spark, num_records=10000, partitions=4):
-    """
-    Scenario: RFI/LFI attack attempts
-    - 90% blocked
-    - Path traversal attempts
-    - Remote file inclusion
-    """
-    
-    data_gen = (
-        DataGenerator(spark, rows=num_records, partitions=partitions)
-        .withColumn("type", "string", values=["akamai_siem"])
-        .withColumn("format", "string", values=["json"])
-        .withColumn("version", "string", values=["1.0"])
-        
-        .withColumn("_clientIP", "string",
-                   expr="concat(case cast(rand() * 5 as int) " +
-                        "when 0 then '203.0.113.' " +
-                        "when 1 then '198.51.100.' " +
-                        "when 2 then '45.33.32.' " +
-                        "when 3 then '185.220.101.' " +
-                        "else '104.244.42.' end, cast(rand() * 254 + 1 as int))")
-        
-        .withColumn("_configId", "string",
-                   expr="concat('waf_config_', cast(rand() * 10000 + 10000 as int))")
-        .withColumn("_policyId", "string",
-                   expr="concat('rfi_policy_', cast(rand() * 100 as int))")
-        
-        # 90% denied
-        .withColumn("_ruleActions", "string",
-                   expr="case when rand() < 0.9 then 'deny' else 'alert' end")
-        
-        # File inclusion patterns - use values to avoid escaping issues
-        .withColumn("_filePattern", "string",
-                   values=["../../../../etc/passwd",
-                          "../../../../../../windows/system32/config/sam",
-                          "http://evil.com/shell.txt",
-                          "php://filter/convert.base64-encode/resource=index.php",
-                          "file:///etc/passwd",
-                          "....//....//....//etc/passwd"])
-        
-        .withColumn("_ruleData", "string",
-                   expr="concat('File Inclusion attack detected: ', _filePattern)")
-        .withColumn("_ruleMessages", "string",
-                   expr="concat('RFI/LFI attempt blocked - path traversal: ', _filePattern)")
-        .withColumn("_ruleTags", "string", values=["FILE_INCLUSION/RFI/LFI/PATH_TRAVERSAL"])
-        .withColumn("_rules", "string", values=["930100", "930110", "930120", "930130"])
-        
-        .withColumn("_method", "string", values=["GET", "POST"])
-        .withColumn("_host", "string",
-                   values=["api.example.com", "www.example.com", "files.example.com"])
-        .withColumn("_path", "string",
-                   expr="case cast(rand() * 4 as int) " +
-                        "when 0 then '/download' " +
-                        "when 1 then '/include' " +
-                        "when 2 then '/file' " +
-                        "else '/page' end")
-        .withColumn("_query", "string",
-                   expr="concat('file=', replace(_filePattern, '/', '%2F'))")
-        .withColumn("_protocol", "string", values=["HTTP/1.1"])
-        .withColumn("_status", "integer",
-                   expr="case when _ruleActions = 'deny' then 403 else 500 end")
-        .withColumn("_bytes", "integer", expr="cast(rand() * 2000 + 200 as int)")
-        .withColumn("_userAgent", "string",
-                   values=["Python-urllib/3.8", "curl/7.68.0", "Wget/1.20.3"])
-        
-        .withColumn("_eventTypeId", "string", values=["1003"])
-        .withColumn("_eventTypeName", "string", values=["File Inclusion"])
-        .withColumn("_eventName", "string", values=["RFI/LFI Attack Detected"])
-        
-        .withColumn("_timestamp", "long",
-                   expr="cast((unix_timestamp(current_timestamp()) - cast(rand() * 1800 as int)) * 1000 as long)")
+file_inclusion_attack_logs = (
+    DataGenerator(spark, rows=base_rows, partitions=partitions)
+    .withColumn("type", "string", values=["akamai_siem"])
+    .withColumn("format", "string", values=["json"])
+    .withColumn("version", "string", values=["1.0"])
+    .withColumn(
+        "ipPrefix", "string",
+        values=["203.0.113.", "198.51.100.", "45.33.32.", "185.220.101.", "104.244.42."],
+        random=True, omit=True,
     )
-    
-    df = data_gen.build()
-    
-    # Add geolocation using split to get first 3 octets
-    # Split IP by '.', take first 3 parts, and add '.*' pattern
-    ip_parts = split(col("_clientIP"), "\\.")
-    df_with_geo = df.withColumn("ip_prefix", 
-        concat(ip_parts[0], lit("."), ip_parts[1], lit("."), ip_parts[2], lit(".*")))
-    
-    df_with_geo = df_with_geo.join(
-        spark.table("akamai_geolocation"),
-        df_with_geo["ip_prefix"] == col("ip_pattern"),
-        "left"
-    ).drop("ip_prefix", "ip_pattern", "risk_category")
-    
-    return df_with_geo
+    .withColumn(
+        "clientIP", "string", baseColumn="ipPrefix",
+        expr="concat(ipPrefix, cast(rand() * 254 + 1 as int))",
+    )
+    .withColumn("configId", "string", expr="concat('waf_config_', cast(rand() * 10000 + 10000 as int))")
+    .withColumn("policyId", "string", expr="concat('rfi_policy_', cast(rand() * 100 as int))")
+    .withColumn("ruleActions", "string", values=["deny", "alert"], weights=[90, 10], random=True)
+    .withColumn(
+        "filePattern", "string",
+        values=[
+            "../../../../etc/passwd",
+            "../../../../../../windows/system32/config/sam",
+            "http://evil.com/shell.txt",
+            "php://filter/convert.base64-encode/resource=index.php",
+            "file:///etc/passwd",
+            "....//....//....//etc/passwd",
+        ],
+        random=True, omit=True,
+    )
+    .withColumn(
+        "ruleData", "string", baseColumn="filePattern",
+        expr="concat('File Inclusion attack detected: ', filePattern)",
+    )
+    .withColumn(
+        "ruleMessages", "string", baseColumn="filePattern",
+        expr="concat('RFI/LFI attempt blocked - path traversal: ', filePattern)",
+    )
+    .withColumn("ruleTags", "string", values=["FILE_INCLUSION/RFI/LFI/PATH_TRAVERSAL"])
+    .withColumn("rules", "string", values=["930100", "930110", "930120", "930130"], random=True)
+    .withColumn("method", "string", values=["GET", "POST"], random=True)
+    .withColumn("host", "string", values=["api.example.com", "www.example.com", "files.example.com"], random=True)
+    .withColumn("path", "string", values=["/download", "/include", "/file", "/page"], random=True)
+    .withColumn(
+        "query", "string", baseColumn="filePattern",
+        expr="concat('file=', replace(filePattern, '/', '%2F'))",
+    )
+    .withColumn("protocol", "string", values=["HTTP/1.1"])
+    .withColumn(
+        "status", "integer", baseColumn="ruleActions",
+        expr="case when ruleActions = 'deny' then 403 else 500 end",
+    )
+    .withColumn("bytes", "integer", expr="cast(rand() * 2000 + 200 as int)")
+    .withColumn(
+        "userAgent", "string",
+        values=["Python-urllib/3.8", "curl/7.68.0", "Wget/1.20.3"],
+        random=True,
+    )
+    .withColumn("eventTypeId", "string", values=["1003"])
+    .withColumn("eventTypeName", "string", values=["File Inclusion"])
+    .withColumn("eventName", "string", values=["RFI/LFI Attack Detected"])
+    .withColumn(
+        "timestamp", "long",
+        expr="cast((unix_timestamp(current_timestamp()) - cast(rand() * 1800 as int)) * 1000 as long)",
+    )
+).build()
 
-# Generate file inclusion attacks (path traversal, remote file inclusion)
-file_inclusion_attack_logs = generate_file_inclusion_scenario(spark, base_rows, partitions)
 display(file_inclusion_attack_logs)
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Scenario 4: DDoS / Rate Limiting
+# MAGIC ## Scenario 4: DDoS and rate limiting
+# MAGIC
+# MAGIC **Attack pattern:**
+# MAGIC Volumetric attacks concentrate a high request rate on a small number of source IPs,
+# MAGIC overwhelming origin infrastructure or saturating bandwidth. Rate-limiting rules fire in
+# MAGIC response and emit a burst of `429 Too Many Requests` responses before the traffic ever
+# MAGIC reaches the backend.
+# MAGIC
+# MAGIC **What this cell generates:**
+# MAGIC 90% of events come from four attacker IPs; ~95% hit rate-limit rules (status 429). Requests
+# MAGIC target a handful of hot endpoints, which mimics a volumetric attack on a specific resource.
 
 # COMMAND ----------
 
-def generate_ddos_rate_limiting_scenario(spark, num_records=10000, partitions=4):
-    """
-    Scenario: DDoS and rate limiting events
-    - High request rate from few IPs
-    - 95% rate limited
-    - Burst traffic patterns
-    """
-    
-    ddos_ips = ["203.0.113.10", "198.51.100.20", "45.33.32.30", "185.220.101.40"]
-    
-    data_gen = (
-        DataGenerator(spark, rows=num_records, partitions=partitions)
-        .withColumn("type", "string", values=["akamai_siem"])
-        .withColumn("format", "string", values=["json"])
-        .withColumn("version", "string", values=["1.0"])
-        
-        # 90% from attacking IPs
-        .withColumn("_clientIP", "string",
-                   expr="case when rand() < 0.9 then " +
-                        f"case cast(rand() * 4 as int) " +
-                        f"when 0 then '{ddos_ips[0]}' " +
-                        f"when 1 then '{ddos_ips[1]}' " +
-                        f"when 2 then '{ddos_ips[2]}' " +
-                        f"else '{ddos_ips[3]}' end " +
-                        "else concat('192.168.1.', cast(rand() * 254 + 1 as int)) end")
-        
-        .withColumn("_configId", "string",
-                   expr="concat('waf_config_', cast(rand() * 10000 + 10000 as int))")
-        .withColumn("_policyId", "string",
-                   expr="concat('rate_limit_policy_', cast(rand() * 50 as int))")
-        
-        # 95% rate limited
-        .withColumn("_ruleActions", "string",
-                   expr="case when rand() < 0.95 then 'rate_limit' else 'allow' end")
-        
-        .withColumn("_ruleData", "string",
-                   expr="concat('Rate limit exceeded - ', cast(rand() * 1000 + 1000 as int), ' requests/minute')")
-        .withColumn("_ruleMessages", "string",
-                   expr="concat('Client ', _clientIP, ' exceeded rate limit threshold')")
-        .withColumn("_ruleTags", "string", values=["RATE_LIMIT/DDOS/BURST_TRAFFIC"])
-        .withColumn("_rules", "string", values=["RATE-LIMIT-001", "RATE-LIMIT-002"])
-        
-        .withColumn("_method", "string",
-                   expr="case cast(rand() * 4 as int) when 0 then 'GET' when 1 then 'POST' when 2 then 'HEAD' else 'OPTIONS' end")
-        .withColumn("_host", "string", values=["api.example.com", "www.example.com"])
-        .withColumn("_path", "string",
-                   expr="case cast(rand() * 5 as int) " +
-                        "when 0 then '/api/v1/users' " +
-                        "when 1 then '/api/v1/products' " +
-                        "when 2 then '/search' " +
-                        "when 3 then '/' " +
-                        "else '/api/v1/orders' end")
-        .withColumn("_query", "string",
-                   expr="concat('page=', cast(rand() * 100 as int))")
-        .withColumn("_protocol", "string", values=["HTTP/1.1", "HTTP/2"])
-        .withColumn("_status", "integer",
-                   expr="case when _ruleActions = 'rate_limit' then 429 else 200 end")
-        .withColumn("_bytes", "integer", expr="cast(rand() * 1000 + 100 as int)")
-        .withColumn("_userAgent", "string",
-                   values=["Mozilla/5.0 (compatible; bot/1.0)", 
-                          "Python-requests/2.28.0",
-                          "Apache-HttpClient/4.5.13",
-                          "Go-http-client/1.1"])
-        
-        .withColumn("_eventTypeId", "string", values=["1004"])
-        .withColumn("_eventTypeName", "string", values=["Rate Limiting"])
-        .withColumn("_eventName", "string", values=["Rate Limit Exceeded"])
-        
-        .withColumn("_timestamp", "long",
-                   expr="cast((unix_timestamp(current_timestamp()) - cast(rand() * 300 as int)) * 1000 as long)")
-    )
-    
-    df = data_gen.build()
-    
-    # Add geolocation using split to get first 3 octets
-    # Split IP by '.', take first 3 parts, and add '.*' pattern
-    ip_parts = split(col("_clientIP"), "\\.")
-    df_with_geo = df.withColumn("ip_prefix", 
-        concat(ip_parts[0], lit("."), ip_parts[1], lit("."), ip_parts[2], lit(".*")))
-    
-    df_with_geo = df_with_geo.join(
-        spark.table("akamai_geolocation"),
-        df_with_geo["ip_prefix"] == col("ip_pattern"),
-        "left"
-    ).drop("ip_prefix", "ip_pattern", "risk_category")
-    
-    return df_with_geo
+ddos_attacker_ips = ["203.0.113.10", "198.51.100.20", "45.33.32.30", "185.220.101.40"]
+ddos_normal_prefixes = ["192.168.1."]
 
-# Generate DDoS and rate limiting events (high volume traffic from single IPs)
-ddos_rate_limiting_logs = generate_ddos_rate_limiting_scenario(spark, base_rows, partitions)
+ddos_rate_limiting_logs = (
+    DataGenerator(spark, rows=base_rows, partitions=partitions)
+    .withColumn("type", "string", values=["akamai_siem"])
+    .withColumn("format", "string", values=["json"])
+    .withColumn("version", "string", values=["1.0"])
+    .withColumn(
+        "ipSource", "string",
+        values=ddos_attacker_ips + ddos_normal_prefixes,
+        weights=[23, 23, 23, 23, 10],
+        random=True, omit=True,
+    )
+    .withColumn(
+        "clientIP", "string", baseColumn="ipSource",
+        expr="case when ipSource like '%.' then concat(ipSource, cast(rand() * 254 + 1 as int)) else ipSource end",
+    )
+    .withColumn("configId", "string", expr="concat('waf_config_', cast(rand() * 10000 + 10000 as int))")
+    .withColumn("policyId", "string", expr="concat('rate_limit_policy_', cast(rand() * 50 as int))")
+    .withColumn("ruleActions", "string", values=["rate_limit", "allow"], weights=[95, 5], random=True)
+    .withColumn(
+        "ruleData", "string",
+        expr="concat('Rate limit exceeded - ', cast(rand() * 1000 + 1000 as int), ' requests/minute')",
+    )
+    .withColumn(
+        "ruleMessages", "string", baseColumn="clientIP",
+        expr="concat('Client ', clientIP, ' exceeded rate limit threshold')",
+    )
+    .withColumn("ruleTags", "string", values=["RATE_LIMIT/DDOS/BURST_TRAFFIC"])
+    .withColumn("rules", "string", values=["RATE-LIMIT-001", "RATE-LIMIT-002"], random=True)
+    .withColumn("method", "string", values=["GET", "POST", "HEAD", "OPTIONS"], random=True)
+    .withColumn("host", "string", values=["api.example.com", "www.example.com"], random=True)
+    .withColumn(
+        "path", "string",
+        values=["/api/v1/users", "/api/v1/products", "/search", "/", "/api/v1/orders"],
+        random=True,
+    )
+    .withColumn("query", "string", expr="concat('page=', cast(rand() * 100 as int))")
+    .withColumn("protocol", "string", values=["HTTP/1.1", "HTTP/2"], random=True)
+    .withColumn(
+        "status", "integer", baseColumn="ruleActions",
+        expr="case when ruleActions = 'rate_limit' then 429 else 200 end",
+    )
+    .withColumn("bytes", "integer", expr="cast(rand() * 1000 + 100 as int)")
+    .withColumn(
+        "userAgent", "string",
+        values=[
+            "Mozilla/5.0 (compatible; bot/1.0)",
+            "Python-requests/2.28.0",
+            "Apache-HttpClient/4.5.13",
+            "Go-http-client/1.1",
+        ],
+        random=True,
+    )
+    .withColumn("eventTypeId", "string", values=["1004"])
+    .withColumn("eventTypeName", "string", values=["Rate Limiting"])
+    .withColumn("eventName", "string", values=["Rate Limit Exceeded"])
+    .withColumn(
+        "timestamp", "long",
+        expr="cast((unix_timestamp(current_timestamp()) - cast(rand() * 300 as int)) * 1000 as long)",
+    )
+).build()
+
 display(ddos_rate_limiting_logs)
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Scenario 5: Bot Detection and Mitigation
+# MAGIC ## Scenario 5: Bot detection
+# MAGIC
+# MAGIC **Attack pattern:**
+# MAGIC Automated clients — scrapers, headless browsers, and traffic-inflating bots — identify
+# MAGIC themselves through user-agent strings, predictable request cadence, or missing cookies.
+# MAGIC WAFs catch many of these via signature matches; the rest are served a JavaScript
+# MAGIC challenge (`429`).
+# MAGIC
+# MAGIC **What this cell generates:**
+# MAGIC ~70% outright `deny`, ~30% `challenge`. Traffic targets catalog / price-scraping endpoints
+# MAGIC that are common bot targets on e-commerce sites.
 
 # COMMAND ----------
 
-def generate_bot_detection_scenario(spark, num_records=10000, partitions=4):
-    """
-    Scenario: Malicious bot activity
-    - Web scraping bots
-    - Automated attacks
-    - 70% blocked
-    """
-    
-    data_gen = (
-        DataGenerator(spark, rows=num_records, partitions=partitions)
-        .withColumn("type", "string", values=["akamai_siem"])
-        .withColumn("format", "string", values=["json"])
-        .withColumn("version", "string", values=["1.0"])
-        
-        .withColumn("_clientIP", "string",
-                   expr="concat(case cast(rand() * 5 as int) " +
-                        "when 0 then '203.0.113.' " +
-                        "when 1 then '198.51.100.' " +
-                        "when 2 then '91.108.56.' " +
-                        "when 3 then '185.220.101.' " +
-                        "else '104.244.42.' end, cast(rand() * 254 + 1 as int))")
-        
-        .withColumn("_configId", "string",
-                   expr="concat('waf_config_', cast(rand() * 10000 + 10000 as int))")
-        .withColumn("_policyId", "string",
-                   expr="concat('bot_policy_', cast(rand() * 100 as int))")
-        
-        # 70% blocked
-        .withColumn("_ruleActions", "string",
-                   expr="case when rand() < 0.7 then 'deny' else 'challenge' end")
-        
-        # Bot user agents - use values to avoid escaping issues
-        .withColumn("_botUserAgent", "string",
-                   values=["scrapy-bot/1.0",
-                          "python-requests/2.28.0",
-                          "Selenium/4.0",
-                          "PhantomJS/2.1.1",
-                          "HeadlessChrome/96.0",
-                          "curl/7.68.0"])
-        
-        .withColumn("_ruleData", "string",
-                   expr="concat('Malicious bot detected - User-Agent: ', _botUserAgent)")
-        .withColumn("_ruleMessages", "string",
-                   expr="concat('Bot signature matched: ', _botUserAgent, ' - Blocking automated traffic')")
-        .withColumn("_ruleTags", "string", values=["BOT_DETECTION/AUTOMATED_TRAFFIC/WEB_SCRAPING"])
-        .withColumn("_rules", "string", values=["BOT-001", "BOT-002", "BOT-003"])
-        
-        .withColumn("_method", "string", values=["GET", "POST"])
-        .withColumn("_host", "string",
-                   values=["www.example.com", "shop.example.com", "api.example.com"])
-        .withColumn("_path", "string",
-                   expr="case cast(rand() * 6 as int) " +
-                        "when 0 then '/products' " +
-                        "when 1 then '/search' " +
-                        "when 2 then '/api/catalog' " +
-                        "when 3 then '/prices' " +
-                        "when 4 then '/inventory' " +
-                        "else '/sitemap.xml' end")
-        .withColumn("_query", "string",
-                   expr="concat('page=', cast(rand() * 1000 as int))")
-        .withColumn("_protocol", "string", values=["HTTP/1.1", "HTTP/2"])
-        .withColumn("_status", "integer",
-                   expr="case when _ruleActions = 'deny' then 403 when _ruleActions = 'challenge' then 429 else 200 end")
-        .withColumn("_bytes", "integer", expr="cast(rand() * 8000 + 500 as int)")
-        .withColumn("_userAgent", "string", expr="_botUserAgent")
-        
-        .withColumn("_eventTypeId", "string", values=["1005"])
-        .withColumn("_eventTypeName", "string", values=["Bot Detection"])
-        .withColumn("_eventName", "string", values=["Malicious Bot Detected"])
-        
-        .withColumn("_timestamp", "long",
-                   expr="cast((unix_timestamp(current_timestamp()) - cast(rand() * 900 as int)) * 1000 as long)")
+bot_detection_logs = (
+    DataGenerator(spark, rows=base_rows, partitions=partitions)
+    .withColumn("type", "string", values=["akamai_siem"])
+    .withColumn("format", "string", values=["json"])
+    .withColumn("version", "string", values=["1.0"])
+    .withColumn(
+        "ipPrefix", "string",
+        values=["203.0.113.", "198.51.100.", "91.108.56.", "185.220.101.", "104.244.42."],
+        random=True, omit=True,
     )
-    
-    df = data_gen.build()
-    
-    # Add geolocation using split to get first 3 octets
-    # Split IP by '.', take first 3 parts, and add '.*' pattern
-    ip_parts = split(col("_clientIP"), "\\.")
-    df_with_geo = df.withColumn("ip_prefix", 
-        concat(ip_parts[0], lit("."), ip_parts[1], lit("."), ip_parts[2], lit(".*")))
-    
-    df_with_geo = df_with_geo.join(
-        spark.table("akamai_geolocation"),
-        df_with_geo["ip_prefix"] == col("ip_pattern"),
-        "left"
-    ).drop("ip_prefix", "ip_pattern", "risk_category")
-    
-    return df_with_geo
+    .withColumn(
+        "clientIP", "string", baseColumn="ipPrefix",
+        expr="concat(ipPrefix, cast(rand() * 254 + 1 as int))",
+    )
+    .withColumn("configId", "string", expr="concat('waf_config_', cast(rand() * 10000 + 10000 as int))")
+    .withColumn("policyId", "string", expr="concat('bot_policy_', cast(rand() * 100 as int))")
+    .withColumn("ruleActions", "string", values=["deny", "challenge"], weights=[70, 30], random=True)
+    .withColumn(
+        "botUserAgent", "string",
+        values=[
+            "scrapy-bot/1.0",
+            "python-requests/2.28.0",
+            "Selenium/4.0",
+            "PhantomJS/2.1.1",
+            "HeadlessChrome/96.0",
+            "curl/7.68.0",
+        ],
+        random=True, omit=True,
+    )
+    .withColumn(
+        "ruleData", "string", baseColumn="botUserAgent",
+        expr="concat('Malicious bot detected - User-Agent: ', botUserAgent)",
+    )
+    .withColumn(
+        "ruleMessages", "string", baseColumn="botUserAgent",
+        expr="concat('Bot signature matched: ', botUserAgent, ' - Blocking automated traffic')",
+    )
+    .withColumn("ruleTags", "string", values=["BOT_DETECTION/AUTOMATED_TRAFFIC/WEB_SCRAPING"])
+    .withColumn("rules", "string", values=["BOT-001", "BOT-002", "BOT-003"], random=True)
+    .withColumn("method", "string", values=["GET", "POST"], random=True)
+    .withColumn("host", "string", values=["www.example.com", "shop.example.com", "api.example.com"], random=True)
+    .withColumn(
+        "path", "string",
+        values=["/products", "/search", "/api/catalog", "/prices", "/inventory", "/sitemap.xml"],
+        random=True,
+    )
+    .withColumn("query", "string", expr="concat('page=', cast(rand() * 1000 as int))")
+    .withColumn("protocol", "string", values=["HTTP/1.1", "HTTP/2"], random=True)
+    .withColumn(
+        "status", "integer", baseColumn="ruleActions",
+        expr="case ruleActions when 'deny' then 403 when 'challenge' then 429 else 200 end",
+    )
+    .withColumn("bytes", "integer", expr="cast(rand() * 8000 + 500 as int)")
+    # The request's user-agent header is the bot signature we classified on.
+    .withColumn("userAgent", "string", baseColumn="botUserAgent", expr="botUserAgent")
+    .withColumn("eventTypeId", "string", values=["1005"])
+    .withColumn("eventTypeName", "string", values=["Bot Detection"])
+    .withColumn("eventName", "string", values=["Malicious Bot Detected"])
+    .withColumn(
+        "timestamp", "long",
+        expr="cast((unix_timestamp(current_timestamp()) - cast(rand() * 900 as int)) * 1000 as long)",
+    )
+).build()
 
-# Generate bot detection events (automated traffic, web scrapers, malicious bots)
-bot_detection_logs = generate_bot_detection_scenario(spark, base_rows, partitions)
 display(bot_detection_logs)
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Scenario 6: API Abuse and Anomalous Requests
+# MAGIC ## Scenario 6: API abuse and anomalous requests
+# MAGIC
+# MAGIC **Attack pattern:**
+# MAGIC API abuse covers a grab bag: scripts that enumerate user IDs, clients reusing stolen API
+# MAGIC keys, attackers probing endpoints for misconfigured authorization. These usually hit
+# MAGIC `/api/*` paths and carry tool-style user agents (Postman, Insomnia, `axios`, `requests`).
+# MAGIC
+# MAGIC **What this cell generates:**
+# MAGIC ~75% `deny`. Five canonical abuse categories distributed across auth, user, token, and
+# MAGIC admin endpoints.
 
 # COMMAND ----------
 
-def generate_api_abuse_scenario(spark, num_records=10000, partitions=4):
-    """
-    Scenario: API abuse and anomalous requests
-    - Unusual API patterns
-    - Credential stuffing on APIs
-    - 75% blocked
-    """
-    
-    data_gen = (
-        DataGenerator(spark, rows=num_records, partitions=partitions)
-        .withColumn("type", "string", values=["akamai_siem"])
-        .withColumn("format", "string", values=["json"])
-        .withColumn("version", "string", values=["1.0"])
-        
-        .withColumn("_clientIP", "string",
-                   expr="concat(case cast(rand() * 6 as int) " +
-                        "when 0 then '203.0.113.' " +
-                        "when 1 then '198.51.100.' " +
-                        "when 2 then '45.33.32.' " +
-                        "when 3 then '91.108.56.' " +
-                        "when 4 then '185.220.101.' " +
-                        "else '192.168.1.' end, cast(rand() * 254 + 1 as int))")
-        
-        .withColumn("_configId", "string",
-                   expr="concat('waf_config_', cast(rand() * 10000 + 10000 as int))")
-        .withColumn("_policyId", "string",
-                   expr="concat('api_abuse_policy_', cast(rand() * 50 as int))")
-        
-        # 75% blocked
-        .withColumn("_ruleActions", "string",
-                   expr="case when rand() < 0.75 then 'deny' else 'alert' end")
-        
-        .withColumn("_apiAbuse", "string",
-                   expr="case cast(rand() * 5 as int) " +
-                        "when 0 then 'Excessive API calls - credential enumeration' " +
-                        "when 1 then 'Invalid API key usage pattern' " +
-                        "when 2 then 'Suspicious parameter manipulation' " +
-                        "when 3 then 'API endpoint scanning' " +
-                        "else 'Unauthorized API access attempt' end")
-        
-        .withColumn("_ruleData", "string", expr="_apiAbuse")
-        .withColumn("_ruleMessages", "string",
-                   expr="concat('API abuse detected: ', _apiAbuse)")
-        .withColumn("_ruleTags", "string", values=["API_ABUSE/CREDENTIAL_STUFFING/ENUMERATION"])
-        .withColumn("_rules", "string", values=["API-001", "API-002", "API-003"])
-        
-        .withColumn("_method", "string",
-                   expr="case cast(rand() * 4 as int) when 0 then 'POST' when 1 then 'GET' when 2 then 'PUT' else 'DELETE' end")
-        .withColumn("_host", "string",
-                   values=["api.example.com", "api-v2.example.com", "rest.example.com"])
-        .withColumn("_path", "string",
-                   expr="case cast(rand() * 7 as int) " +
-                        "when 0 then '/api/v1/auth/login' " +
-                        "when 1 then '/api/v1/users' " +
-                        "when 2 then '/api/v1/accounts' " +
-                        "when 3 then '/api/v2/payment' " +
-                        "when 4 then '/api/v1/admin' " +
-                        "when 5 then '/api/v1/tokens' " +
-                        "else '/api/v1/data' end")
-        .withColumn("_query", "string",
-                   expr="concat('apikey=', substring(md5(cast(rand() as string)), 1, 16))")
-        .withColumn("_protocol", "string", values=["HTTP/1.1", "HTTP/2"])
-        .withColumn("_status", "integer",
-                   expr="case when _ruleActions = 'deny' then case cast(rand() * 3 as int) when 0 then 401 when 1 then 403 else 429 end else 200 end")
-        .withColumn("_bytes", "integer", expr="cast(rand() * 3000 + 200 as int)")
-        .withColumn("_userAgent", "string",
-                   values=["PostmanRuntime/7.29.0", 
-                          "insomnia/2022.7.0",
-                          "Python-requests/2.28.0",
-                          "curl/7.68.0",
-                          "axios/0.27.2"])
-        
-        .withColumn("_eventTypeId", "string", values=["1006"])
-        .withColumn("_eventTypeName", "string", values=["API Abuse"])
-        .withColumn("_eventName", "string", values=["API Abuse Pattern Detected"])
-        
-        .withColumn("_timestamp", "long",
-                   expr="cast((unix_timestamp(current_timestamp()) - cast(rand() * 1200 as int)) * 1000 as long)")
+api_abuse_logs = (
+    DataGenerator(spark, rows=base_rows, partitions=partitions)
+    .withColumn("type", "string", values=["akamai_siem"])
+    .withColumn("format", "string", values=["json"])
+    .withColumn("version", "string", values=["1.0"])
+    .withColumn(
+        "ipPrefix", "string",
+        values=[
+            "203.0.113.", "198.51.100.", "45.33.32.",
+            "91.108.56.", "185.220.101.", "192.168.1.",
+        ],
+        random=True, omit=True,
     )
-    
-    df = data_gen.build()
-    
-    # Add geolocation using split to get first 3 octets
-    # Split IP by '.', take first 3 parts, and add '.*' pattern
-    ip_parts = split(col("_clientIP"), "\\.")
-    df_with_geo = df.withColumn("ip_prefix", 
-        concat(ip_parts[0], lit("."), ip_parts[1], lit("."), ip_parts[2], lit(".*")))
-    
-    df_with_geo = df_with_geo.join(
-        spark.table("akamai_geolocation"),
-        df_with_geo["ip_prefix"] == col("ip_pattern"),
-        "left"
-    ).drop("ip_prefix", "ip_pattern", "risk_category")
-    
-    return df_with_geo
+    .withColumn(
+        "clientIP", "string", baseColumn="ipPrefix",
+        expr="concat(ipPrefix, cast(rand() * 254 + 1 as int))",
+    )
+    .withColumn("configId", "string", expr="concat('waf_config_', cast(rand() * 10000 + 10000 as int))")
+    .withColumn("policyId", "string", expr="concat('api_abuse_policy_', cast(rand() * 50 as int))")
+    .withColumn("ruleActions", "string", values=["deny", "alert"], weights=[75, 25], random=True)
+    .withColumn(
+        "apiAbuse", "string",
+        values=[
+            "Excessive API calls - credential enumeration",
+            "Invalid API key usage pattern",
+            "Suspicious parameter manipulation",
+            "API endpoint scanning",
+            "Unauthorized API access attempt",
+        ],
+        random=True,
+    )
+    .withColumn("ruleData", "string", baseColumn="apiAbuse", expr="apiAbuse")
+    .withColumn(
+        "ruleMessages", "string", baseColumn="apiAbuse",
+        expr="concat('API abuse detected: ', apiAbuse)",
+    )
+    .withColumn("ruleTags", "string", values=["API_ABUSE/CREDENTIAL_STUFFING/ENUMERATION"])
+    .withColumn("rules", "string", values=["API-001", "API-002", "API-003"], random=True)
+    .withColumn("method", "string", values=["POST", "GET", "PUT", "DELETE"], random=True)
+    .withColumn("host", "string", values=["api.example.com", "api-v2.example.com", "rest.example.com"], random=True)
+    .withColumn(
+        "path", "string",
+        values=[
+            "/api/v1/auth/login", "/api/v1/users", "/api/v1/accounts",
+            "/api/v2/payment", "/api/v1/admin", "/api/v1/tokens", "/api/v1/data",
+        ],
+        random=True,
+    )
+    .withColumn(
+        "query", "string",
+        expr="concat('apikey=', substring(md5(cast(rand() as string)), 1, 16))",
+    )
+    .withColumn("protocol", "string", values=["HTTP/1.1", "HTTP/2"], random=True)
+    # 401/403/429 when denied (credential, permission, and rate-limit failures respectively),
+    # 200 otherwise.
+    .withColumn(
+        "status", "integer", baseColumn="ruleActions",
+        expr="case when ruleActions = 'deny' then element_at(array(401, 403, 429), cast(rand() * 3 as int) + 1) else 200 end",
+    )
+    .withColumn("bytes", "integer", expr="cast(rand() * 3000 + 200 as int)")
+    .withColumn(
+        "userAgent", "string",
+        values=[
+            "PostmanRuntime/7.29.0",
+            "insomnia/2022.7.0",
+            "Python-requests/2.28.0",
+            "curl/7.68.0",
+            "axios/0.27.2",
+        ],
+        random=True,
+    )
+    .withColumn("eventTypeId", "string", values=["1006"])
+    .withColumn("eventTypeName", "string", values=["API Abuse"])
+    .withColumn("eventName", "string", values=["API Abuse Pattern Detected"])
+    .withColumn(
+        "timestamp", "long",
+        expr="cast((unix_timestamp(current_timestamp()) - cast(rand() * 1200 as int)) * 1000 as long)",
+    )
+).build()
 
-# Generate API abuse events (credential enumeration, suspicious API patterns)
-api_abuse_logs = generate_api_abuse_scenario(spark, base_rows, partitions)
 display(api_abuse_logs)
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Add Akamai SIEM JSON Structures
+# MAGIC ## Wrap each scenario in the Akamai SIEM envelope
+# MAGIC
+# MAGIC Real Akamai SIEM records nest the raw columns into `attackData`, `httpMessage`, `eventType`,
+# MAGIC and `geo` structs. The helper below performs a geolocation join (so every record carries
+# MAGIC ASN / city / country) and then projects the final SIEM shape on top of the flat generated
+# MAGIC columns. The lookup itself is a small static table built here - the locations are fictitious
+# MAGIC ("Region Alpha" benign; "Region Beta" / "Region Gamma" suspicious) so the notebook runs
+# MAGIC anywhere without a real GeoIP dataset.
 
 # COMMAND ----------
 
-def add_akamai_structs(df):
-    """Add proper Akamai SIEM log nested structures"""
-    
-    df_final = df.select(
+attack_geo_locations = [
+    # (ip_pattern,         asn,      city,            country, regionCode, risk_category)
+    # Normal - legitimate internal traffic
+    ("192.168.1.*",        "11734",  "Northport",     "ZZ",    "NP",       "normal"),
+    ("10.0.0.*",           "7922",   "Westbridge",    "ZZ",    "WB",       "normal"),
+    ("172.16.0.*",         "20940",  "Centralview",   "ZZ",    "CV",       "normal"),
+    # Suspicious - commonly-seen attack source ranges in real threat intel
+    ("203.0.113.*",        "12876",  "Shadowmere",    "XX",    "SM",       "suspicious"),
+    ("198.51.100.*",       "4134",   "Darkwater",     "XX",    "DW",       "suspicious"),
+    ("45.33.32.*",         "24940",  "Greystone",     "XX",    "GS",       "suspicious"),
+    ("185.220.101.*",      "63023",  "Phantom Bay",   "XX",    "PB",       "suspicious"),
+    ("91.108.56.*",        "15895",  "Nebula City",   "XX",    "NC",       "suspicious"),
+    ("104.244.42.*",       "29465",  "Voidhaven",     "XX",    "VH",       "suspicious"),
+]
+
+geo_df = spark.createDataFrame(
+    attack_geo_locations,
+    ["ip_pattern", "asn", "city", "country", "regionCode", "risk_category"],
+)
+geo_df.createOrReplaceTempView("akamai_geolocation")
+
+display(geo_df)
+
+# COMMAND ----------
+
+
+def add_akamai_structs(df: DataFrame) -> DataFrame:
+    """Attaches geolocation data and wraps the flat generated columns in Akamai SIEM's nested shape."""
+    df_with_geo = (
+        df
+        .withColumn(
+            "ip_prefix",
+            expr(
+                "concat(split(clientIP, '\\\\.')[0], '.', "
+                "split(clientIP, '\\\\.')[1], '.', "
+                "split(clientIP, '\\\\.')[2], '.*')"
+            ),
+        )
+        .join(spark.table("akamai_geolocation"), col("ip_prefix") == col("ip_pattern"), "left")
+        .drop("ip_prefix", "ip_pattern", "risk_category")
+    )
+    return df_with_geo.select(
         col("type"),
         col("format"),
         col("version"),
-        
-        # attackData struct
         struct(
-            col("_clientIP").alias("clientIP"),
-            col("_configId").alias("configId"),
-            col("_policyId").alias("policyId"),
-            col("_ruleActions").alias("ruleActions"),
-            col("_ruleData").alias("ruleData"),
-            col("_ruleMessages").alias("ruleMessages"),
-            col("_ruleTags").alias("ruleTags"),
-            col("_rules").alias("rules")
+            col("clientIP"),
+            col("configId"),
+            col("policyId"),
+            col("ruleActions"),
+            col("ruleData"),
+            col("ruleMessages"),
+            col("ruleTags"),
+            col("rules"),
         ).alias("attackData"),
-        
-        # geo struct
-        when(col("asn").isNotNull(),
-            struct(
-                col("asn").alias("asn"),
-                col("city").alias("city"),
-                col("country").alias("country"),
-                col("regionCode").alias("regionCode")
-            )
+        when(
+            col("asn").isNotNull(),
+            struct(col("asn"), col("city"), col("country"), col("regionCode")),
         ).alias("geo"),
-        
-        # httpMessage struct
         struct(
-            col("_method").alias("method"),
-            col("_host").alias("host"),
-            col("_path").alias("path"),
-            col("_query").alias("query"),
-            col("_protocol").alias("protocol"),
-            col("_status").cast("string").alias("status"),
-            col("_bytes").cast("string").alias("bytes"),
-            col("_userAgent").alias("userAgent")
+            col("method"),
+            col("host"),
+            col("path"),
+            col("query"),
+            col("protocol"),
+            col("status").cast("string").alias("status"),
+            col("bytes").cast("string").alias("bytes"),
+            col("userAgent"),
         ).alias("httpMessage"),
-        
-        # eventType struct
         struct(
-            col("_eventTypeId").alias("eventTypeId"),
-            col("_eventTypeName").alias("eventTypeName"),
-            col("_eventName").alias("eventName")
+            col("eventTypeId"),
+            col("eventTypeName"),
+            col("eventName"),
         ).alias("eventType"),
-        
-        col("_timestamp").alias("timestamp")
-        
-    ).drop("_clientIP", "_configId", "_policyId", "_ruleActions", "_ruleData", 
-           "_ruleMessages", "_ruleTags", "_rules", "_method", "_host", "_path",
-           "_query", "_protocol", "_status", "_bytes", "_userAgent", "_eventTypeId",
-           "_eventTypeName", "_eventName", "_sqlPattern", "_xssPayload", "_filePattern",
-           "_botUserAgent", "_apiAbuse", "asn", "city", "country", "regionCode")
-    
-    return df_final
+        col("timestamp"),
+    )
+
 
 # COMMAND ----------
 
-# MAGIC %md
-# MAGIC ## Save All Scenarios to Delta Tables
-
-# COMMAND ----------
-
-# Create schema if not exists
-spark.sql(f"CREATE SCHEMA IF NOT EXISTS {catalog_name}.{schema_name}")
-
-# COMMAND ----------
-
-# Transform raw logs into proper Akamai SIEM schema with nested structures
 sql_injection_with_structs = add_akamai_structs(sql_injection_attack_logs)
 xss_attack_with_structs = add_akamai_structs(xss_attack_logs)
 file_inclusion_with_structs = add_akamai_structs(file_inclusion_attack_logs)
@@ -826,171 +708,220 @@ api_abuse_with_structs = add_akamai_structs(api_abuse_logs)
 
 # COMMAND ----------
 
-# Save Scenario 1: SQL Injection Attacks
-sql_injection_with_structs.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(f"{catalog_name}.{schema_name}.akamai_sql_injection")
+# MAGIC %md
+# MAGIC ## Save each dataset to a Delta table
 
 # COMMAND ----------
 
-# Save Scenario 2: XSS Attacks
-xss_attack_with_structs.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(f"{catalog_name}.{schema_name}.akamai_xss")
+spark.sql(f"CREATE SCHEMA IF NOT EXISTS {catalog_name}.{schema_name}")
 
 # COMMAND ----------
 
-# Save Scenario 3: File Inclusion Attacks
-file_inclusion_with_structs.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(f"{catalog_name}.{schema_name}.akamai_file_inclusion")
+# Scenario 1: SQL injection attacks
+(
+    sql_injection_with_structs
+    .write
+    .format("delta")
+    .mode("overwrite")
+    .option("overwriteSchema", "true")
+    .saveAsTable(f"{catalog_name}.{schema_name}.akamai_sql_injection")
+)
 
 # COMMAND ----------
 
-# Save Scenario 4: DDoS / Rate Limiting
-ddos_rate_limiting_with_structs.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(f"{catalog_name}.{schema_name}.akamai_ddos_rate_limit")
+# Scenario 2: cross-site scripting
+(
+    xss_attack_with_structs
+    .write
+    .format("delta")
+    .mode("overwrite")
+    .option("overwriteSchema", "true")
+    .saveAsTable(f"{catalog_name}.{schema_name}.akamai_xss")
+)
 
 # COMMAND ----------
 
-# Save Scenario 5: Bot Detection
-bot_detection_with_structs.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(f"{catalog_name}.{schema_name}.akamai_bot_detection")
+# Scenario 3: file inclusion
+(
+    file_inclusion_with_structs
+    .write
+    .format("delta")
+    .mode("overwrite")
+    .option("overwriteSchema", "true")
+    .saveAsTable(f"{catalog_name}.{schema_name}.akamai_file_inclusion")
+)
 
 # COMMAND ----------
 
-# Save Scenario 6: API Abuse
-api_abuse_with_structs.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(f"{catalog_name}.{schema_name}.akamai_api_abuse")
+# Scenario 4: DDoS / rate limiting
+(
+    ddos_rate_limiting_with_structs
+    .write
+    .format("delta")
+    .mode("overwrite")
+    .option("overwriteSchema", "true")
+    .saveAsTable(f"{catalog_name}.{schema_name}.akamai_ddos_rate_limit")
+)
+
+# COMMAND ----------
+
+# Scenario 5: bot detection
+(
+    bot_detection_with_structs
+    .write
+    .format("delta")
+    .mode("overwrite")
+    .option("overwriteSchema", "true")
+    .saveAsTable(f"{catalog_name}.{schema_name}.akamai_bot_detection")
+)
+
+# COMMAND ----------
+
+# Scenario 6: API abuse
+(
+    api_abuse_with_structs
+    .write
+    .format("delta")
+    .mode("overwrite")
+    .option("overwriteSchema", "true")
+    .saveAsTable(f"{catalog_name}.{schema_name}.akamai_api_abuse")
+)
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Summary Statistics
+# MAGIC ## Summary statistics
+# MAGIC
+# MAGIC One SQL roll-up per scenario so you can eyeball that the intended proportions
+# MAGIC (85% SQLi deny rate, 95% rate limited, etc.) actually showed up in the generated data.
 
 # COMMAND ----------
 
-## Scenario 1: SQL Injection
-display(spark.sql(f"""SELECT 
-  'SQL Injection' as scenario,
-  COUNT(*) as total_records,
-  COUNT(DISTINCT attackData.clientIP) as unique_ips,
-  SUM(CASE WHEN attackData.ruleActions = 'deny' THEN 1 ELSE 0 END) as blocked,
-  ROUND(100.0 * SUM(CASE WHEN attackData.ruleActions = 'deny' THEN 1 ELSE 0 END) / COUNT(*), 2) as block_rate_pct
-FROM {catalog_name}.{schema_name}.akamai_sql_injection"""))
+# Scenario 1: SQL injection
+display(spark.sql(f"""
+  SELECT
+    'SQL Injection' AS scenario,
+    COUNT(*) AS total_records,
+    COUNT(DISTINCT attackData.clientIP) AS unique_ips,
+    SUM(CASE WHEN attackData.ruleActions = 'deny' THEN 1 ELSE 0 END) AS blocked,
+    ROUND(100.0 * SUM(CASE WHEN attackData.ruleActions = 'deny' THEN 1 ELSE 0 END) / COUNT(*), 2) AS block_rate_pct
+  FROM {catalog_name}.{schema_name}.akamai_sql_injection
+"""))
 
 # COMMAND ----------
 
-## Scenario 2: XSS
-display(spark.sql(f"""SELECT 
-  'Cross-Site Scripting' as scenario,
-  COUNT(*) as total_records,
-  COUNT(DISTINCT attackData.clientIP) as unique_ips,
-  SUM(CASE WHEN attackData.ruleActions = 'deny' THEN 1 ELSE 0 END) as blocked,
-  ROUND(100.0 * SUM(CASE WHEN attackData.ruleActions = 'deny' THEN 1 ELSE 0 END) / COUNT(*), 2) as block_rate_pct
-FROM {catalog_name}.{schema_name}.akamai_xss"""))
+# Scenario 2: cross-site scripting
+display(spark.sql(f"""
+  SELECT
+    'Cross-Site Scripting' AS scenario,
+    COUNT(*) AS total_records,
+    COUNT(DISTINCT attackData.clientIP) AS unique_ips,
+    SUM(CASE WHEN attackData.ruleActions = 'deny' THEN 1 ELSE 0 END) AS blocked,
+    ROUND(100.0 * SUM(CASE WHEN attackData.ruleActions = 'deny' THEN 1 ELSE 0 END) / COUNT(*), 2) AS block_rate_pct
+  FROM {catalog_name}.{schema_name}.akamai_xss
+"""))
 
 # COMMAND ----------
 
-## Scenario 3: File Inclusion
-display(spark.sql(f"""SELECT 
-  'File Inclusion (RFI/LFI)' as scenario,
-  COUNT(*) as total_records,
-  COUNT(DISTINCT attackData.clientIP) as unique_ips,
-  SUM(CASE WHEN attackData.ruleActions = 'deny' THEN 1 ELSE 0 END) as blocked,
-  ROUND(100.0 * SUM(CASE WHEN attackData.ruleActions = 'deny' THEN 1 ELSE 0 END) / COUNT(*), 2) as block_rate_pct
-FROM {catalog_name}.{schema_name}.akamai_file_inclusion"""))
+# Scenario 3: file inclusion
+display(spark.sql(f"""
+  SELECT
+    'File Inclusion (RFI/LFI)' AS scenario,
+    COUNT(*) AS total_records,
+    COUNT(DISTINCT attackData.clientIP) AS unique_ips,
+    SUM(CASE WHEN attackData.ruleActions = 'deny' THEN 1 ELSE 0 END) AS blocked,
+    ROUND(100.0 * SUM(CASE WHEN attackData.ruleActions = 'deny' THEN 1 ELSE 0 END) / COUNT(*), 2) AS block_rate_pct
+  FROM {catalog_name}.{schema_name}.akamai_file_inclusion
+"""))
 
 # COMMAND ----------
 
-## Scenario 4: DDoS/Rate Limiting
-display(spark.sql(f"""SELECT 
-  'DDoS / Rate Limiting' as scenario,
-  COUNT(*) as total_records,
-  COUNT(DISTINCT attackData.clientIP) as unique_ips,
-  SUM(CASE WHEN attackData.ruleActions = 'rate_limit' THEN 1 ELSE 0 END) as rate_limited,
-  ROUND(100.0 * SUM(CASE WHEN attackData.ruleActions = 'rate_limit' THEN 1 ELSE 0 END) / COUNT(*), 2) as rate_limit_pct
-FROM {catalog_name}.{schema_name}.akamai_ddos_rate_limit"""))
+# Scenario 4: DDoS / rate limiting
+display(spark.sql(f"""
+  SELECT
+    'DDoS / Rate Limiting' AS scenario,
+    COUNT(*) AS total_records,
+    COUNT(DISTINCT attackData.clientIP) AS unique_ips,
+    SUM(CASE WHEN attackData.ruleActions = 'rate_limit' THEN 1 ELSE 0 END) AS rate_limited,
+    ROUND(100.0 * SUM(CASE WHEN attackData.ruleActions = 'rate_limit' THEN 1 ELSE 0 END) / COUNT(*), 2) AS rate_limit_pct
+  FROM {catalog_name}.{schema_name}.akamai_ddos_rate_limit
+"""))
 
 # COMMAND ----------
 
-## Scenario 5: Bot Detection
-display(spark.sql(f"""SELECT 
-  'Bot Detection' as scenario,
-  COUNT(*) as total_records,
-  COUNT(DISTINCT attackData.clientIP) as unique_ips,
-  SUM(CASE WHEN attackData.ruleActions = 'deny' THEN 1 ELSE 0 END) as blocked,
-  ROUND(100.0 * SUM(CASE WHEN attackData.ruleActions = 'deny' THEN 1 ELSE 0 END) / COUNT(*), 2) as block_rate_pct
-FROM {catalog_name}.{schema_name}.akamai_bot_detection"""))
+# Scenario 5: bot detection
+display(spark.sql(f"""
+  SELECT
+    'Bot Detection' AS scenario,
+    COUNT(*) AS total_records,
+    COUNT(DISTINCT attackData.clientIP) AS unique_ips,
+    SUM(CASE WHEN attackData.ruleActions = 'deny' THEN 1 ELSE 0 END) AS blocked,
+    ROUND(100.0 * SUM(CASE WHEN attackData.ruleActions = 'deny' THEN 1 ELSE 0 END) / COUNT(*), 2) AS block_rate_pct
+  FROM {catalog_name}.{schema_name}.akamai_bot_detection
+"""))
 
 # COMMAND ----------
 
-## Scenario 6: API Abuse
-display(spark.sql(f"""SELECT 
-  'API Abuse' as scenario,
-  COUNT(*) as total_records,
-  COUNT(DISTINCT attackData.clientIP) as unique_ips,
-  SUM(CASE WHEN attackData.ruleActions = 'deny' THEN 1 ELSE 0 END) as blocked,
-  ROUND(100.0 * SUM(CASE WHEN attackData.ruleActions = 'deny' THEN 1 ELSE 0 END) / COUNT(*), 2) as block_rate_pct
-FROM {catalog_name}.{schema_name}.akamai_api_abuse"""))
+# Scenario 6: API abuse
+display(spark.sql(f"""
+  SELECT
+    'API Abuse' AS scenario,
+    COUNT(*) AS total_records,
+    COUNT(DISTINCT attackData.clientIP) AS unique_ips,
+    SUM(CASE WHEN attackData.ruleActions = 'deny' THEN 1 ELSE 0 END) AS blocked,
+    ROUND(100.0 * SUM(CASE WHEN attackData.ruleActions = 'deny' THEN 1 ELSE 0 END) / COUNT(*), 2) AS block_rate_pct
+  FROM {catalog_name}.{schema_name}.akamai_api_abuse
+"""))
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## ✅ Complete!
+# MAGIC ## Output Data
 # MAGIC
-# MAGIC Generated 6 Akamai WAF security scenarios records each:
+# MAGIC Six tables have been written in the output location:
 # MAGIC
-# MAGIC 1. **akamai_sql_injection** - SQL Injection attacks
-# MAGIC 2. **akamai_xss_10k** - Cross-Site Scripting (XSS)
-# MAGIC 3. **akamai_file_inclusion** - RFI/LFI attacks
-# MAGIC 4. **akamai_ddos_rate_limit** - DDoS and rate limiting
-# MAGIC 5. **akamai_bot_detection** - Malicious bot activity
-# MAGIC 6. **akamai_api_abuse** - API abuse patterns
+# MAGIC | Table                             | Scenario                                   |
+# MAGIC | --------------------------------- | ------------------------------------------ |
+# MAGIC | `akamai_sql_injection`            | SQL injection attacks                      |
+# MAGIC | `akamai_xss`                      | Cross-Site Scripting (XSS)                 |
+# MAGIC | `akamai_file_inclusion`           | Remote/Local File Inclusion (RFI/LFI)      |
+# MAGIC | `akamai_ddos_rate_limit`          | DDoS / rate-limited traffic                |
+# MAGIC | `akamai_bot_detection`            | Malicious bot activity                     |
+# MAGIC | `akamai_api_abuse`                | API abuse and anomalous requests           |
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Export to JSON Files (Akamai SIEM Format)
+# MAGIC ## Export to JSON (Akamai SIEM format)
 # MAGIC
-# MAGIC Export each table to a Volume as JSON files compatible with Akamai SIEM Integration API
+# MAGIC Writes each dataset to a Unity Catalog Volume as JSON, the format Akamai SIEM delivers.
+# MAGIC Replay these files into your SIEM or analytics pipeline.
 
 # COMMAND ----------
 
-# Base path for JSON exports
 base_path = f"/Volumes/{catalog_name}/{schema_name}/akamai_waf/"
 
-# Table configurations
 tables = [
     (f"{catalog_name}.{schema_name}.akamai_sql_injection", "sql_injection"),
     (f"{catalog_name}.{schema_name}.akamai_xss", "xss"),
     (f"{catalog_name}.{schema_name}.akamai_file_inclusion", "file_inclusion"),
     (f"{catalog_name}.{schema_name}.akamai_ddos_rate_limit", "ddos_rate_limit"),
     (f"{catalog_name}.{schema_name}.akamai_bot_detection", "bot_detection"),
-    (f"{catalog_name}.{schema_name}.akamai_api_abuse", "api_abuse")
+    (f"{catalog_name}.{schema_name}.akamai_api_abuse", "api_abuse"),
 ]
-
-print("Exporting Akamai WAF data to JSON files...")
-print("=" * 60)
 
 for table_name, file_name in tables:
     output_path = f"{base_path}{file_name}"
-    print(f"\n📄 Exporting: {table_name}")
-    print(f"   → {output_path}")
-    
-    # Read table
-    df = spark.table(table_name)
-    
-    # Write as JSON
-    df.write.format("json").mode("overwrite").save(output_path)
-    
-    print(f"   ✅ Exported successfully!")
+    print(f"Exporting {table_name} -> {output_path}")
+    (
+        spark
+        .table(table_name)
+        .write
+        .format("json")
+        .mode("overwrite")
+        .save(output_path)
+    )
 
-print("\n" + "=" * 60)
-print("✅ All Akamai WAF exports complete!")
-print("\nJSON files available at:")
+print("\nAll exports complete. Files are at:")
 for _, file_name in tables:
-    print(f"  - {base_path}{file_name}/")
-print("\nThese JSON files can be used with:")
-print("  • Akamai SIEM Integration API")
-print("  • Splunk (with Akamai Add-on)")
-print("  • SumoLogic")
-print("  • QRadar")
-print("  • ArcSight")
-print("  • Any SIEM tool supporting Akamai log format")
-
-
-
-# COMMAND ----------
-
+    print(f"  {base_path}{file_name}/")
