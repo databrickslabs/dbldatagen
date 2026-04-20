@@ -322,9 +322,6 @@ addopts = [
     "-p", "no:warnings",
 ]
 testpaths = ["tests"]
-markers = [
-    "perf: performance benchmarks (deselect with '-m not perf')",
-]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]

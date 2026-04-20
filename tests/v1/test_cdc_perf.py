@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import time
 
-import pytest
 from pyspark.sql import SparkSession
 
 from dbldatagen.v1.cdc_schema import CDCPlan, CDCTableConfig, OperationWeights
@@ -386,10 +385,6 @@ def _benchmark_batches(
 # ---------------------------------------------------------------------------
 # Scenarios
 # ---------------------------------------------------------------------------
-
-# Mark all tests in this module so they can be deselected easily:
-#   pytest tests/ -q --ignore=tests/test_cdc_perf.py
-pytestmark = pytest.mark.perf
 
 
 SCENARIOS = {
