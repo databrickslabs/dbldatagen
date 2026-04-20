@@ -6,9 +6,12 @@ all: clean lint fmt test coverage
 export UV_FROZEN := 1
 # Ensure that hatchling is pinned when builds are needed.
 export UV_BUILD_CONSTRAINT := .build-constraints.txt
+# macOS: prevent Python worker SEGVs in PySpark UDFs from fork() + native libs.
+# No-op on Linux/CI.
+export OBJC_DISABLE_INITIALIZE_FORK_SAFETY := YES
 
 UV_RUN := uv run --exact --all-extras
-UV_TEST := $(UV_RUN) pytest -n 10 --timeout 600 --durations 20
+UV_TEST := $(UV_RUN) pytest -n 2 --timeout 600 --durations 20
 
 clean:
 	rm -fr .venv clean htmlcov .mypy_cache .pytest_cache .ruff_cache .coverage coverage.xml
@@ -30,20 +33,28 @@ fmt:
 	$(UV_RUN) pylint --output-format=colorized -j 0 dbldatagen
 
 test:
-	$(UV_TEST) --cov=dbldatagen --cov-report=xml tests/
+	hatch run v0:test-cov
 
 coverage:
-	$(UV_TEST) --cov=dbldatagen --cov-report=html tests/
+	$(UV_TEST) --cov=dbldatagen --cov-report=html --ignore=tests/v1/ tests/
 	open htmlcov/index.html
 
+test-v0:
+	hatch run v0:test-cov
+
 test-v1:
-	uv run pytest tests/v1/ --timeout 600 --durations 20 --no-header -q
+	hatch run v1:test-cov
+
+# Mirror CI exactly: hatch envs, sequential pytest, no -n parallelism
+test-ci:
+	hatch run v0:test-cov
+	hatch run v1:test-cov
 
 test-v1-cov:
 	uv run pytest tests/v1/ --timeout 600 --durations 20 --no-header -q --cov=dbldatagen/v1 --cov-config=.coveragerc-v1 --cov-report=term-missing:skip-covered --cov-report=xml --cov-report=html:htmlcov-v1 --ignore=tests/v1/test_faker_pool.py
 
 test-all:
-	uv run pytest tests/ --ignore=tests/v1/ -n 10 --timeout 600 --durations 20
+	uv run pytest tests/ --ignore=tests/v1/ -n 2 --timeout 600 --durations 20
 	uv run pytest tests/v1/ --timeout 600 --durations 20 --no-header -q
 
 test-coverage:
@@ -72,4 +83,4 @@ docs-serve:
 	open docs/build/html/index.html
 
 .DEFAULT: all
-.PHONY: all clean dev lint fmt test coverage build lock-dependencies docs-build docs-clean docs-serve test-v1 test-v1-cov test-all test-coverage
+.PHONY: all clean dev lint fmt test coverage build lock-dependencies docs-build docs-clean docs-serve test-v0 test-v1 test-v1-cov test-all test-coverage test-ci
