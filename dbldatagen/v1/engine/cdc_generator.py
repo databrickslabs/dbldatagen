@@ -802,11 +802,12 @@ def generate_fused_deletes(
         ).otherwise(batch_n_col - remainder)
         df = df.withColumn("_write_batch", F.greatest(prev, t_birth).cast("long"))
 
-    all_wbs: set[int] | None = set()
+    all_wbs: set[int] = set()
+    all_wbs_finite = True
     for b in batch_ids:
         wbs = _precompute_write_batches(b, periods.update_period)
         if wbs is None:
-            all_wbs = None
+            all_wbs_finite = False
             break
         all_wbs.update(wbs)
 
@@ -816,7 +817,7 @@ def generate_fused_deletes(
         resolved_plan,
         global_seed,
         id_col,
-        sorted(all_wbs) if all_wbs is not None else None,
+        sorted(all_wbs) if all_wbs_finite else None,
         upper_k,
         batch_ids,
         plan,
@@ -901,11 +902,12 @@ def generate_fused_updates(
     ).otherwise(batch_n_col - remainder)
     df = df.withColumn("_write_batch", F.greatest(prev, t_birth).cast("long"))
 
-    all_wbs_before: set[int] | None = set()
+    all_wbs_before: set[int] = set()
+    all_wbs_before_finite = True
     for b in batch_ids:
         wbs = _precompute_write_batches(b, periods.update_period)
         if wbs is None:
-            all_wbs_before = None
+            all_wbs_before_finite = False
             break
         all_wbs_before.update(wbs)
 
@@ -915,7 +917,7 @@ def generate_fused_updates(
         resolved_plan,
         global_seed,
         id_col,
-        sorted(all_wbs_before) if all_wbs_before is not None else None,
+        sorted(all_wbs_before) if all_wbs_before_finite else None,
         upper_k,
         batch_ids,
         plan,

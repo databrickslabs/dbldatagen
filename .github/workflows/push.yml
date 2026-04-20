@@ -1,13 +1,10 @@
-name: tests
+name: build
 
 on:
   pull_request:
     types: [opened, synchronize]
   push:
     branches: [master]
-
-permissions:
-  contents: read
 
 jobs:
   detect-changes:
@@ -47,29 +44,12 @@ jobs:
           echo "Results: v1=$v1 v0=$v0 shared=$shared"
 
   fmt:
-    if: |
-      (github.event_name == 'push' || github.event_name == 'pull_request') 
-      && !github.event.pull_request.draft 
-      && !github.event.pull_request.head.repo.fork
-    runs-on:
-      group: larger-runners
-      labels: larger
-    permissions:
-      id-token: write
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
-      - name: Setup uv
-        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098  # v7.3.1
-        with:
-          version: "0.11.2"
-          checksum: "7ac2ca0449c8d68dae9b99e635cd3bc9b22a4cb1de64b7c43716398447d42981"
-
-      - name: Setup for JFrog
-        uses: ./.github/actions/jfrog-auth
-
-      - name: Format check
+      - name: Format files
         run: make dev fmt
 
       - name: Fail on differences
@@ -91,19 +71,19 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup uv
-        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098  # v7.3.1
-        with:
-          version: "0.11.2"
-          checksum: "7ac2ca0449c8d68dae9b99e635cd3bc9b22a4cb1de64b7c43716398447d42981"
+      - name: Get Java version
+        run: java -version
 
-      - name: Setup for JFrog
-        uses: ./.github/actions/jfrog-auth
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78
+        with:
+          version: "0.8.4"
+          enable-cache: true
 
       - name: Run v0 unit tests
         run: hatch run v0:test-cov
 
-      - name: Publish test coverage
+      - name: Publish test coverage to coverage site
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de  # v5.5.2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
