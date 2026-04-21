@@ -2,11 +2,11 @@ flags:
   v0:
     paths:
       - dbldatagen/
-      - "!dbldatagen/v1/"
+      - "!dbldatagen/core/"
     carryforward: true
-  v1:
+  core:
     paths:
-      - dbldatagen/v1/
+      - dbldatagen/core/
     carryforward: true
 
 coverage:
@@ -15,13 +15,13 @@ coverage:
       v0:
         flags:
           - v0
-      v1:
+      core:
         flags:
-          - v1
+          - core
     patch:
       v0:
         flags:
           - v0
-      v1:
+      core:
         flags:
-          - v1
+          - core

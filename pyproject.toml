@@ -87,9 +87,9 @@ docs = [
     "sphinx-copybutton~=0.5.2",
     "rst2pdf[sphinx]~=0.102",
 ]
-v1 = ["pydantic>=2.0"]
-v1-faker = ["pydantic>=2.0", "faker>=20.0"]
-v1-dev = ["pydantic>=2.0", "faker>=20.0", "pyyaml>=6.0"]
+core = ["pydantic>=2.0"]
+core-faker = ["pydantic>=2.0", "faker>=20.0"]
+core-dev = ["pydantic>=2.0", "faker>=20.0", "pyyaml>=6.0"]
 yq = [
     "yq~=3.4.3",
 ]
@@ -196,8 +196,8 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["PLR2004", "S101", "TID252"]
-"dbldatagen/v1/*" = ["PLC0415"]
-"tests/v1/*" = ["ANN", "PLC0415", "PLR2004", "S101", "TID252", "B905"]
+"dbldatagen/core/*" = ["PLC0415"]
+"tests/core/*" = ["ANN", "PLC0415", "PLR2004", "S101", "TID252", "B905"]
 "examples/*" = ["ALL"]
 "tutorial/*" = ["ALL"]
 "docs/*" = ["ALL"]
@@ -347,16 +347,16 @@ omit = [
     "*/examples/*",
     "*/tutorial/*",
     "*/docs/*",
-    "*/v1/*",
-    "dbldatagen/v1/*",
-    "dbldatagen/v1/**/*",
+    "*/core/*",
+    "dbldatagen/core/*",
+    "dbldatagen/core/**/*",
 ]
 
 [tool.coverage.report]
 omit = [
-    "*/v1/*",
-    "dbldatagen/v1/*",
-    "dbldatagen/v1/**/*",
+    "*/core/*",
+    "dbldatagen/core/*",
+    "dbldatagen/core/**/*",
 ]
 exclude_lines = [
     "pragma: no cover",

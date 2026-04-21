@@ -566,15 +566,15 @@ test = [
     { name = "python-dateutil" },
     { name = "six" },
 ]
-v1 = [
+core = [
     { name = "pydantic" },
 ]
-v1-dev = [
+core-dev = [
     { name = "faker" },
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
-v1-faker = [
+core-faker = [
     { name = "faker" },
     { name = "pydantic" },
 ]
@@ -657,13 +657,13 @@ test = [
     { name = "python-dateutil", specifier = ">=2.8.2,<2.9.0" },
     { name = "six", specifier = "~=1.16.0" },
 ]
-v1 = [{ name = "pydantic", specifier = ">=2.0" }]
-v1-dev = [
+core = [{ name = "pydantic", specifier = ">=2.0" }]
+core-dev = [
     { name = "faker", specifier = ">=20.0" },
     { name = "pydantic", specifier = ">=2.0" },
     { name = "pyyaml", specifier = ">=6.0" },
 ]
-v1-faker = [
+core-faker = [
     { name = "faker", specifier = ">=20.0" },
     { name = "pydantic", specifier = ">=2.0" },
 ]

@@ -33,8 +33,8 @@ fmt:
 	$(UV_RUN) pylint --output-format=colorized -j 0 dbldatagen
 
 test:
-	$(UV_TEST) --cov=dbldatagen --cov-config=.coveragerc --cov-report= --ignore=tests/v1/ tests/
-	$(UV_RUN) pytest tests/v1/ --cov=dbldatagen/v1 --cov-config=.coveragerc-v1 --cov-append --cov-report= --timeout 600 --durations 20 --no-header -q --ignore=tests/v1/test_faker_pool.py
+	$(UV_TEST) --cov=dbldatagen --cov-config=.coveragerc --cov-report= --ignore=tests/core/ tests/
+	$(UV_RUN) pytest tests/core/ --cov=dbldatagen/core --cov-config=.coveragerc-core --cov-append --cov-report= --timeout 600 --durations 20 --no-header -q --ignore=tests/core/engine/test_faker_pool.py
 	$(UV_RUN) coverage xml --rcfile=.coveragerc-all
 	$(UV_RUN) coverage html --rcfile=.coveragerc-all
 	$(UV_RUN) coverage report --rcfile=.coveragerc-all --fail-under=80 --skip-covered
@@ -44,21 +44,21 @@ coverage:
 	open htmlcov/index.html
 
 test-v0:
-	$(UV_TEST) --cov=dbldatagen --cov-config=.coveragerc --cov-report=term-missing:skip-covered --cov-report=xml --cov-report=html --cov-fail-under=80 --ignore=tests/v1/ tests/
+	$(UV_TEST) --cov=dbldatagen --cov-config=.coveragerc --cov-report=term-missing:skip-covered --cov-report=xml --cov-report=html --cov-fail-under=80 --ignore=tests/core/ tests/
 
-test-v1:
-	$(UV_RUN) pytest tests/v1/ --timeout 600 --durations 20 --no-header -q --cov=dbldatagen/v1 --cov-config=.coveragerc-v1 --cov-report=term-missing:skip-covered --cov-report=xml --cov-report=html:htmlcov-v1 --ignore=tests/v1/test_faker_pool.py
+test-core:
+	$(UV_RUN) pytest tests/core/ --timeout 600 --durations 20 --no-header -q --cov=dbldatagen/core --cov-config=.coveragerc-core --cov-report=term-missing:skip-covered --cov-report=xml --cov-report=html:htmlcov-core --ignore=tests/core/engine/test_faker_pool.py
 
 test-ci:
 	$(MAKE) test-v0
-	$(MAKE) test-v1
+	$(MAKE) test-core
 
 test-all:
-	$(UV_RUN) pytest tests/ --ignore=tests/v1/ -n 2 --timeout 600 --durations 20
-	$(UV_RUN) pytest tests/v1/ --timeout 600 --durations 20 --no-header -q
+	$(UV_RUN) pytest tests/ --ignore=tests/core/ -n 2 --timeout 600 --durations 20
+	$(UV_RUN) pytest tests/core/ --timeout 600 --durations 20 --no-header -q
 
 test-coverage:
-	$(UV_RUN) pytest tests/ --ignore=tests/v1/ --cov --cov-report=html --timeout 600 --durations 20 && open htmlcov/index.html
+	$(UV_RUN) pytest tests/ --ignore=tests/core/ --cov --cov-report=html --timeout 600 --durations 20 && open htmlcov/index.html
 
 build:
 	uv build --require-hashes --build-constraints=.build-constraints.txt
@@ -82,4 +82,4 @@ docs-serve:
 	open docs/build/html/index.html
 
 .DEFAULT: all
-.PHONY: all clean dev lint fmt test coverage build lock-dependencies docs-build docs-clean docs-serve test-v0 test-v1 test-all test-coverage test-ci
+.PHONY: all clean dev lint fmt test coverage build lock-dependencies docs-build docs-clean docs-serve test-v0 test-core test-all test-coverage test-ci
