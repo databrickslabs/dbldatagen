@@ -102,7 +102,7 @@ def build_all_column_exprs(
     id_col: Column,
     fk_resolutions: dict[tuple[str, str], FKResolution] | None = None,
     *,
-    seed: int = 42,
+    seed: int,
     row_count: int = 0,
     seed_fn: Callable[[ColumnSpec], int] | None = None,
     cell_seed_fn: Callable[[int, Column, ColumnSpec], Column | None] | None = None,
@@ -121,7 +121,9 @@ def build_all_column_exprs(
         Dict mapping ``(table_name, col_name)`` to ``FKResolution``.
     seed :
         Base seed used for default column-seed derivation and passed
-        through to ``build_column_expr`` as ``global_seed``.
+        through to ``build_column_expr`` as ``global_seed``. Required —
+        callers must derive this from ``table_spec.seed`` so reruns
+        don't silently desynchronise.
     row_count :
         Row count passed through to ``build_column_expr``.
     seed_fn :
