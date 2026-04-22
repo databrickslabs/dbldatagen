@@ -332,11 +332,34 @@ class TestExpressionColumnValidation:
         resolve_plan(self._plan("case when a is not null and a between 1 and 10 then true else false end"))
 
     def test_multiple_unknowns_reported(self):
+        """Error message must list ALL unknowns, not just the first."""
         with pytest.raises(ValueError) as exc:
             resolve_plan(self._plan("typo1 + typo2"))
         msg = str(exc.value)
-        assert "typo1" in msg
-        assert "typo2" in msg
+        assert "['typo1', 'typo2']" in msg, f"expected sorted list, got: {msg}"
+
+    def test_interval_expression_not_flagged(self):
+        """``interval 1 day`` — unit keywords must not false-positive."""
+        resolve_plan(self._plan("a + interval 1 day"))
+        resolve_plan(self._plan("a - interval 3 months"))
+        resolve_plan(self._plan("a + interval 2 quarters"))
+
+    def test_current_date_bare_not_flagged(self):
+        """``current_date`` / ``current_timestamp`` are legal without parens."""
+        resolve_plan(self._plan("current_date"))
+        resolve_plan(self._plan("case when a > 0 then current_timestamp else current_date end"))
+
+    def test_double_quoted_string_contents_not_flagged(self):
+        """Double-quoted strings are Spark string literals (ANSI default off)."""
+        resolve_plan(self._plan('concat(cast(a as string), "unknown_label")'))
+
+    def test_backtick_identifier_contents_not_flagged(self):
+        """Backtick-quoted identifier contents must be stripped before tokenizing."""
+        resolve_plan(self._plan("a + `some external col with space`"))
+
+    def test_sql_escaped_quote_in_string_not_flagged(self):
+        """SQL doubles a quote to escape: ``'it''s'`` is one literal, not two."""
+        resolve_plan(self._plan("case when a > 0 then 'it''s unknown_word here' else 'x' end"))
 
 
 class TestSeedFromValidation:

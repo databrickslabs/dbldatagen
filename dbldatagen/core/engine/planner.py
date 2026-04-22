@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections import deque
 from dataclasses import dataclass
 
@@ -18,11 +19,17 @@ from dbldatagen.core.spec.schema import (
 )
 
 
-# SQL keywords, literals, and type names that are not columns and not
-# function names — these do not drift as Spark adds builtins.  Function
-# names are intentionally NOT listed here: we distinguish function calls
-# from column references by the "followed by ``(``" heuristic in
-# ``_extract_column_references`` below.
+# SQL keywords, literals, and type names that appear as bare tokens in
+# ExpressionColumn expressions.  Function names are intentionally NOT
+# listed: the "followed by ``(``" heuristic in
+# ``_extract_column_references`` handles function calls generically so
+# this set does not drift as Spark adds builtins.
+#
+# Trade-off: entries like ``year``/``month``/``day`` are legal bare in
+# ``interval`` literals but also collide with common column-name stems.
+# If a user types ``year`` meaning ``year_val`` the typo slips past the
+# validator — we accept that to avoid false-positives on every interval
+# expression.  Spark's UNRESOLVED_COLUMN at job time is the backstop.
 _SQL_KEYWORDS: frozenset[str] = frozenset(
     {
         # Keywords / operators
@@ -41,11 +48,38 @@ _SQL_KEYWORDS: frozenset[str] = frozenset(
         "or",
         "rlike",
         "then",
+        "unknown",
         "when",
-        # Literals
+        # Literals / special constants (callable without parens)
+        "current_date",
+        "current_timestamp",
+        "current_user",
         "false",
         "null",
         "true",
+        # Interval units (legal as bare tokens inside ``interval`` literals)
+        "day",
+        "days",
+        "hour",
+        "hours",
+        "microsecond",
+        "microseconds",
+        "millisecond",
+        "milliseconds",
+        "minute",
+        "minutes",
+        "month",
+        "months",
+        "nanosecond",
+        "nanoseconds",
+        "quarter",
+        "quarters",
+        "second",
+        "seconds",
+        "week",
+        "weeks",
+        "year",
+        "years",
         # Type names
         "array",
         "bigint",
@@ -67,6 +101,16 @@ _SQL_KEYWORDS: frozenset[str] = frozenset(
         "timestamp",
         "tinyint",
     }
+)
+
+
+# Quoted segments whose contents must be stripped before identifier
+# tokenization.  Each alternative matches one quoted form with its
+# SQL-style doubled-quote escape (e.g. ``'it''s'``).
+_QUOTED_SEGMENT = re.compile(
+    r"'(?:[^']|'')*'"  # single-quoted string literal
+    r'|"(?:[^"]|"")*"'  # double-quoted string literal (ANSI default off)
+    r"|`(?:[^`]|``)*`"  # backtick-quoted identifier
 )
 
 
@@ -301,16 +345,16 @@ def _extract_column_references(expr: str) -> set[str]:
 
     Filters out function calls (identifier immediately followed by ``(``),
     qualified field access (identifier preceded by ``.``), and a small
-    set of SQL keywords / literals / type names.  String literals are
-    stripped before tokenizing so their contents do not false-positive.
+    set of SQL keywords / literals / type names.  Single-quoted string
+    literals, double-quoted string literals, and backtick-quoted
+    identifiers are all stripped before tokenizing so their contents do
+    not false-positive.
 
     Intentionally does NOT maintain a list of Spark function names: the
     "followed by ``(``" test works for any function Spark adds without
     the allowlist drifting out of date.
     """
-    import re
-
-    cleaned = re.sub(r"'[^']*'", "", expr)
+    cleaned = _QUOTED_SEGMENT.sub("", expr)
 
     references: set[str] = set()
     for match in re.finditer(r"\b([a-zA-Z_]\w*)\b", cleaned):
