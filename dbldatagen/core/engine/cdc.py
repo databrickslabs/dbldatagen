@@ -38,7 +38,6 @@ from dbldatagen.core.engine.cdc_formats import apply_format
 from dbldatagen.core.engine.cdc_generator import (
     _table_has_faker_columns,
     apply_fk_delete_guard,
-    batch_timestamp,
     compute_periods_from_config,
     generate_bulk_inserts,
     generate_cdc_batch_for_table,
@@ -48,18 +47,15 @@ from dbldatagen.core.engine.cdc_generator import (
     generate_initial_snapshot,
 )
 from dbldatagen.core.engine.cdc_stateless import (
-    delete_indices_at_batch_fast,
     insert_range,
     is_alive,
     max_k_at_batch,
-    pre_image_batch,
-    update_indices_at_batch,
 )
 from dbldatagen.core.engine.generator import generate_table
 from dbldatagen.core.engine.planner import resolve_plan
 from dbldatagen.core.engine.seed import compute_batch_seed
 from dbldatagen.core.engine.utils import _LazyList, resolve_batch_size, union_all
-from dbldatagen.core.spec.cdc_schema import BatchPlan, CDCFormat, CDCPlan
+from dbldatagen.core.spec.cdc_schema import CDCFormat, CDCPlan
 from dbldatagen.core.spec.schema import DataGenPlan
 
 
@@ -593,113 +589,6 @@ def _generate_single_batch_for_table(
     if combined is None:
         return None
     return apply_format(combined, fmt_name)
-
-
-# ---------------------------------------------------------------------------
-# Pre-computation API for large-scale CDC
-# ---------------------------------------------------------------------------
-
-
-def precompute_cdc_plans(
-    plan_or_base: CDCPlan | DataGenPlan,
-    num_batches: int | None = None,
-    format: str | CDCFormat | None = None,
-) -> dict[str, list[BatchPlan]]:
-    """Pre-compute all batch plans for a CDC stream (pure Python, no Spark).
-
-    Uses stateless modular-recurrence functions to compute row indices
-    for each batch.  O(1) per row, no driver-side state required.
-
-    Parameters
-    ----------
-    plan_or_base :
-        A ``CDCPlan`` or ``DataGenPlan``.
-    num_batches :
-        Override for ``plan.num_batches``.
-    format :
-        Output format override (only affects timestamp computation).
-
-    Returns
-    -------
-    dict mapping table_name -> list of BatchPlan (one per batch).
-    """
-    import numpy as np
-
-    plan = _normalize_plan(plan_or_base, num_batches, format)
-    table_map = {t.name: t for t in plan.base_plan.tables}
-
-    all_plans: dict[str, list[BatchPlan]] = {}
-
-    for table_name in plan.cdc_tables:
-        table_spec = table_map[table_name]
-        config = plan.config_for(table_name)
-        initial_rows = int(table_spec.rows)
-
-        # Apply FK parent delete guard (must match generation path)
-        config = apply_fk_delete_guard(plan, table_name, config)
-
-        batch_size = resolve_batch_size(config.batch_size, initial_rows)
-        periods = compute_periods_from_config(initial_rows, batch_size, config)
-
-        batch_plans: list[BatchPlan] = []
-        for batch_id in range(1, plan.num_batches + 1):
-            ts = batch_timestamp(plan, batch_id)
-
-            start_k, end_k = insert_range(batch_id, initial_rows, periods.inserts_per_batch)
-            ins_count = end_k - start_k
-
-            upd_indices = update_indices_at_batch(
-                batch_id,
-                initial_rows,
-                periods.inserts_per_batch,
-                periods.death_period,
-                periods.update_period,
-                config.min_life,
-                update_window=config.update_window,
-            )
-            del_indices = delete_indices_at_batch_fast(
-                batch_id,
-                initial_rows,
-                periods.inserts_per_batch,
-                periods.death_period,
-                config.min_life,
-            )
-
-            row_last_write: dict[int, int] = {}
-            for k in upd_indices:
-                row_last_write[k] = pre_image_batch(
-                    k,
-                    batch_id,
-                    initial_rows,
-                    periods.inserts_per_batch,
-                    periods.update_period,
-                )
-            for k in del_indices:
-                row_last_write[k] = pre_image_batch(
-                    k,
-                    batch_id,
-                    initial_rows,
-                    periods.inserts_per_batch,
-                    periods.update_period,
-                )
-
-            batch_plans.append(
-                BatchPlan(
-                    batch_id=batch_id,
-                    table_name=table_name,
-                    update_indices=np.array(upd_indices, dtype=np.int64),
-                    delete_indices=np.array(del_indices, dtype=np.int64),
-                    insert_count=ins_count,
-                    insert_start_index=start_k,
-                    row_last_write=row_last_write,
-                    batch_size=batch_size,
-                    timestamp=ts,
-                )
-            )
-
-        all_plans[table_name] = batch_plans
-
-    return all_plans
 
 
 # ---------------------------------------------------------------------------

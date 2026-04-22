@@ -12,6 +12,14 @@ except ImportError:
 
 from typing import TYPE_CHECKING
 
+from dbldatagen.core.engine.cdc import (
+    CDCStream,
+    generate_cdc,
+    generate_cdc_batch,
+    generate_cdc_bulk,
+    generate_expected_state,
+    write_cdc_to_delta,
+)
 from dbldatagen.core.engine.generator import generate_table as _generate_table
 from dbldatagen.core.engine.planner import resolve_plan as _resolve_plan
 from dbldatagen.core.spec import (
@@ -34,6 +42,13 @@ from dbldatagen.core.spec import (
     struct,
     text,
     timestamp,
+)
+from dbldatagen.core.spec.cdc_schema import (
+    CDCFormat,
+    CDCPlan,
+    CDCTableConfig,
+    MutationSpec,
+    OperationWeights,
 )
 
 
@@ -58,10 +73,16 @@ def generate(spark: SparkSession, plan: DataGenPlan) -> dict[str, DataFrame]:
 
 
 __all__ = [
+    "CDCFormat",
+    "CDCPlan",
+    "CDCStream",
+    "CDCTableConfig",
     "ColumnSpec",
     "DataGenPlan",
     "DataType",
     "ForeignKeyRef",
+    "MutationSpec",
+    "OperationWeights",
     "PrimaryKey",
     "TableSpec",
     "array",
@@ -70,6 +91,10 @@ __all__ = [
     "faker",
     "fk",
     "generate",
+    "generate_cdc",
+    "generate_cdc_batch",
+    "generate_cdc_bulk",
+    "generate_expected_state",
     "integer",
     "pattern",
     "pk_auto",
@@ -78,4 +103,5 @@ __all__ = [
     "struct",
     "text",
     "timestamp",
+    "write_cdc_to_delta",
 ]

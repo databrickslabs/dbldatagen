@@ -2,15 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, model_validator
-
-
-if TYPE_CHECKING:
-    import numpy as np
 
 from dbldatagen.core.spec.schema import DataGenPlan, parse_human_count
 
@@ -146,30 +140,3 @@ class CDCPlan(BaseModel):
     def config_for(self, table_name: str) -> CDCTableConfig:
         """Return the CDC config for *table_name*, falling back to defaults."""
         return self.table_configs.get(table_name, self.default_config)
-
-
-def _empty_int64_array() -> np.ndarray:
-    import numpy as np
-
-    return np.array([], dtype=np.int64)
-
-
-@dataclass
-class BatchPlan:
-    """Pre-computed plan for generating one CDC batch.
-
-    Contains everything the generator needs for a single batch.  The
-    ``row_last_write`` dict is *sparse* -- it only contains entries for
-    rows in ``update_indices`` and ``delete_indices``, not for all rows
-    in the table.
-    """
-
-    batch_id: int
-    table_name: str
-    update_indices: np.ndarray = field(default_factory=_empty_int64_array)
-    delete_indices: np.ndarray = field(default_factory=_empty_int64_array)
-    insert_count: int = 0
-    insert_start_index: int = 0
-    row_last_write: dict[int, int] = field(default_factory=dict)
-    batch_size: int = 0
-    timestamp: str = ""
