@@ -133,8 +133,6 @@ class CDCPlan(BaseModel):
     def _validate_num_batches(self) -> CDCPlan:
         if self.num_batches <= 0:
             raise ValueError(f"num_batches must be > 0, got {self.num_batches}")
-        if self.num_batches > 32767:
-            raise ValueError(f"num_batches={self.num_batches} exceeds maximum 32767 (int16)")
         return self
 
     def config_for(self, table_name: str) -> CDCTableConfig:
