@@ -18,7 +18,6 @@ from dataclasses import dataclass
 from pyspark.sql import Column, DataFrame, SparkSession
 from pyspark.sql import functions as F
 
-from dbldatagen.core.engine.cdc_state import resolve_batch_size
 from dbldatagen.core.engine.cdc_stateless import (
     CDCPeriods,
     batch_timestamp_str,
@@ -48,6 +47,7 @@ from dbldatagen.core.engine.utils import (
     case_when_chain,
     create_range_df,
     get_pk_columns,
+    resolve_batch_size,
     union_all,
 )
 from dbldatagen.core.spec.cdc_schema import CDCPlan, CDCTableConfig, OperationWeights

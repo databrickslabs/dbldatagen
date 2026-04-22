@@ -32,12 +32,12 @@ from dbldatagen.core.engine.cdc_generator import (
     batch_timestamp,
     compute_periods_from_config,
 )
-from dbldatagen.core.engine.cdc_state import resolve_batch_size
 from dbldatagen.core.engine.cdc_stateless import (
     delete_indices_at_batch_fast,
     update_indices_at_batch,
 )
 from dbldatagen.core.engine.planner import resolve_plan
+from dbldatagen.core.engine.utils import resolve_batch_size
 from dbldatagen.core.spec.cdc_schema import CDCPlan, CDCTableConfig, OperationWeights
 from dbldatagen.core.spec.schema import (
     ColumnSpec,

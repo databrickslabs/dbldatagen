@@ -158,10 +158,10 @@ def _empty_int64_array() -> np.ndarray:
 class BatchPlan:
     """Pre-computed plan for generating one CDC batch.
 
-    Contains everything the generator needs for a single batch without
-    accessing the full ``TableState``.  The ``row_last_write`` dict is
-    *sparse* -- it only contains entries for rows in ``update_indices``
-    and ``delete_indices``, not for all rows in the table.
+    Contains everything the generator needs for a single batch.  The
+    ``row_last_write`` dict is *sparse* -- it only contains entries for
+    rows in ``update_indices`` and ``delete_indices``, not for all rows
+    in the table.
     """
 
     batch_id: int

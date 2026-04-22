@@ -47,7 +47,6 @@ from dbldatagen.core.engine.cdc_generator import (
     generate_fused_updates,
     generate_initial_snapshot,
 )
-from dbldatagen.core.engine.cdc_state import resolve_batch_size
 from dbldatagen.core.engine.cdc_stateless import (
     delete_indices_at_batch_fast,
     insert_range,
@@ -59,7 +58,7 @@ from dbldatagen.core.engine.cdc_stateless import (
 from dbldatagen.core.engine.generator import generate_table
 from dbldatagen.core.engine.planner import resolve_plan
 from dbldatagen.core.engine.seed import compute_batch_seed
-from dbldatagen.core.engine.utils import _LazyList, union_all
+from dbldatagen.core.engine.utils import _LazyList, resolve_batch_size, union_all
 from dbldatagen.core.spec.cdc_schema import BatchPlan, CDCFormat, CDCPlan
 from dbldatagen.core.spec.schema import DataGenPlan
 

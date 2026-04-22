@@ -1,8 +1,8 @@
 """Stateless CDC lifecycle engine using Modular Recurrence.
 
-Replaces the stateful ``TableState`` class with pure mathematical functions
-that derive row lifecycle from the row's private index ``k`` and batch
-number ``t``.  Zero driver-side state -- all computation is O(1) per row.
+Pure mathematical functions that derive row lifecycle from the row's private
+index ``k`` and batch number ``t``.  Zero driver-side state -- all
+computation is O(1) per row.
 
 The "Three Clocks" model:
     birth_tick(k)  -- batch when row k is created (0 for initial rows)

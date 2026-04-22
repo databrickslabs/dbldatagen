@@ -66,6 +66,17 @@ class _LazyList(Generic[T]):
         return self._length
 
 
+def resolve_batch_size(batch_size_spec: int | float | str, initial_rows: int) -> int:
+    """Convert a batch_size spec (int, float fraction, or human string) to an absolute count."""
+    if isinstance(batch_size_spec, str):
+        from dbldatagen.core.spec.schema import parse_human_count
+
+        batch_size_spec = parse_human_count(batch_size_spec)
+    if isinstance(batch_size_spec, float) and batch_size_spec <= 1.0:
+        return max(1, int(initial_rows * batch_size_spec))
+    return int(batch_size_spec)
+
+
 def split_with_remainder(
     total: int,
     fractions: tuple[float, float, float],

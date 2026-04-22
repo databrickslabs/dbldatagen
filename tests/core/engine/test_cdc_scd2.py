@@ -69,12 +69,12 @@ class TestSCD2DimensionTracking:
 
     def test_expected_state_count_matches_tracking(self, spark):
         """Expected state row count should match stateless lifecycle model."""
-        from dbldatagen.core.engine.cdc_state import resolve_batch_size
         from dbldatagen.core.engine.cdc_stateless import (
             compute_periods,
             is_alive,
             max_k_at_batch,
         )
+        from dbldatagen.core.engine.utils import resolve_batch_size
 
         plan = CDCPlan(base_plan=_dim_product(rows=100), num_batches=5)
         config = plan.config_for("dim_product")

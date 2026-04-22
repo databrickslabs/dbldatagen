@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import math
 
-from dbldatagen.core.engine.cdc_state import resolve_batch_size
 from dbldatagen.core.engine.cdc_stateless import (
     birth_tick,
     compute_periods,
@@ -19,6 +18,7 @@ from dbldatagen.core.engine.cdc_stateless import (
     max_k_at_batch,
     update_indices_at_batch,
 )
+from dbldatagen.core.engine.utils import resolve_batch_size
 
 
 # ---------------------------------------------------------------------------

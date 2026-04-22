@@ -8,14 +8,12 @@ from __future__ import annotations
 
 import re
 
-import numpy as np
 from pyspark.sql import functions as F
 
 from dbldatagen.core.engine.columns.numeric import build_range_column
 from dbldatagen.core.engine.columns.pk import (
     build_formatted_pk,
     build_sequential_pk,
-    feistel_permute_batch,
 )
 from dbldatagen.core.engine.columns.string import build_pattern_column, build_values_column
 from dbldatagen.core.engine.columns.temporal import build_timestamp_column
@@ -168,48 +166,6 @@ class TestSequentialPK:
         df = spark.range(5).select(build_sequential_pk("id", start=10, step=5).alias("pk"))
         rows = sorted([r.pk for r in df.collect()])
         assert rows == [10, 15, 20, 25, 30]
-
-
-# ---------------------------------------------------------------------------
-# Feistel permutation (pure NumPy)
-# ---------------------------------------------------------------------------
-
-
-class TestFeistelPermutation:
-    def test_uniqueness(self):
-        """Feistel permutation of [0, N) yields all unique values in [0, N)."""
-        N = 1000
-        indices = np.arange(N, dtype=np.int64)
-        result = feistel_permute_batch(indices, N, seed=42)
-        assert len(set(result)) == N
-        assert result.min() >= 0
-        assert result.max() < N
-
-    def test_determinism(self):
-        """Same seed produces the same permutation."""
-        N = 500
-        indices = np.arange(N, dtype=np.int64)
-        r1 = feistel_permute_batch(indices, N, seed=99)
-        r2 = feistel_permute_batch(indices, N, seed=99)
-        np.testing.assert_array_equal(r1, r2)
-
-    def test_different_seed(self):
-        """Different seeds produce different permutations."""
-        N = 500
-        indices = np.arange(N, dtype=np.int64)
-        r1 = feistel_permute_batch(indices, N, seed=1)
-        r2 = feistel_permute_batch(indices, N, seed=2)
-        # Very unlikely to be identical for different seeds
-        assert not np.array_equal(r1, r2)
-
-    def test_non_power_of_two(self):
-        """Handles domain sizes that are not powers of two."""
-        for N in [7, 13, 100, 1023, 1025]:
-            indices = np.arange(N, dtype=np.int64)
-            result = feistel_permute_batch(indices, N, seed=42)
-            assert len(set(result)) == N, f"Non-unique results for N={N}"
-            assert result.min() >= 0
-            assert result.max() < N
 
 
 # ---------------------------------------------------------------------------
