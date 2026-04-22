@@ -26,7 +26,7 @@ def spark():
     # Local — create a minimal session for testing
     session = (
         SparkSession.builder.master("local[2]")
-        .appName("dbldatagen_v1_test")
+        .appName("dbldatagen_core_test")
         .config("spark.sql.shuffle.partitions", "2")
         .config("spark.sql.session.timeZone", "UTC")
         .config("spark.ui.enabled", "false")

@@ -34,7 +34,7 @@ def build_faker_column(
     except ImportError:
         raise ImportError(
             "The 'faker' package is required for FakerColumn generation. "
-            "Install it with: pip install dbldatagen[v1-faker]"
+            "Install it with: pip install dbldatagen[core-faker]"
         ) from None
 
     if kwargs is None:

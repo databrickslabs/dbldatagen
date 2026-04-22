@@ -1,8 +1,8 @@
-# Migrating from dbldatagen v0 to v1
+# Migrating from dbldatagen v0 to core
 
 ## Overview
 
-`dbldatagen.core` is a next-generation synthetic data engine that lives alongside the existing v0 API. Both work independently -- you can use v0 and v1 in the same project without conflicts.
+`dbldatagen.core` is a next-generation synthetic data engine that lives alongside the existing v0 API. Both work independently -- you can use v0 and core in the same project without conflicts.
 
 ## Installation
 
@@ -10,14 +10,14 @@
 # v0 only (existing behavior)
 pip install dbldatagen
 
-# v0 + v1 core
+# v0 + core engine
 pip install dbldatagen[core]
 
-# v0 + v1 + all optional extras
-pip install dbldatagen[v1-dev]
+# v0 + core + all optional extras
+pip install dbldatagen[core-dev]
 
-# Individual v1 extras
-pip install dbldatagen[v1-faker]   # Faker-based text generation
+# Individual core extras
+pip install dbldatagen[core-faker]   # Faker-based text generation
 ```
 
 ## Manual Conversion Reference
@@ -29,7 +29,7 @@ pip install dbldatagen[v1-faker]   # Faker-based text generation
 dg = DataGenerator(spark, rows=10000, name="orders", randomSeed=42)
 df = dg.build()
 
-# v1
+# core
 from dbldatagen.core import generate
 from dbldatagen.core.spec.schema import DataGenPlan, TableSpec, PrimaryKey
 
@@ -51,11 +51,11 @@ df = result["orders"]
 # v0
 .withColumn("age", IntegerType(), minValue=18, maxValue=90)
 
-# v1 (schema)
+# core (schema)
 from dbldatagen.core.spec.schema import ColumnSpec, DataType, RangeColumn
 ColumnSpec(name="age", dtype=DataType.INT, gen=RangeColumn(min=18, max=90))
 
-# v1 (DSL shorthand)
+# core (DSL shorthand)
 from dbldatagen.core.spec.dsl import integer
 integer("age", min=18, max=90)
 ```
@@ -66,7 +66,7 @@ integer("age", min=18, max=90)
 # v0
 .withColumn("amount", DoubleType(), minValue=10.0, maxValue=500.0)
 
-# v1
+# core
 from dbldatagen.core.spec.dsl import decimal
 decimal("amount", min=10.0, max=500.0)
 ```
@@ -77,7 +77,7 @@ decimal("amount", min=10.0, max=500.0)
 # v0
 .withColumn("status", StringType(), values=["active", "inactive", "pending"])
 
-# v1
+# core
 from dbldatagen.core.spec.dsl import text
 text("status", values=["active", "inactive", "pending"])
 ```
@@ -90,7 +90,7 @@ text("status", values=["active", "inactive", "pending"])
             values=["free", "basic", "premium"],
             weights=[70, 20, 10])
 
-# v1
+# core
 from dbldatagen.core.spec.schema import ColumnSpec, DataType, ValuesColumn, WeightedValues
 ColumnSpec(
     name="tier",
@@ -102,7 +102,7 @@ ColumnSpec(
 )
 ```
 
-Note: v0 uses a list of weights (position-matched). v1 uses a dict (name-matched).
+Note: v0 uses a list of weights (position-matched). core uses a dict (name-matched).
 
 #### Timestamp/Date Range
 
@@ -111,7 +111,7 @@ Note: v0 uses a list of weights (position-matched). v1 uses a dict (name-matched
 .withColumn("created_at", TimestampType(),
             begin="2020-01-01 00:00:00", end="2025-12-31 23:59:59")
 
-# v1
+# core
 from dbldatagen.core.spec.dsl import timestamp
 timestamp("created_at", start="2020-01-01", end="2025-12-31")
 ```
@@ -122,7 +122,7 @@ timestamp("created_at", start="2020-01-01", end="2025-12-31")
 # v0
 .withColumn("is_active", BooleanType())
 
-# v1
+# core
 from dbldatagen.core.spec.schema import ColumnSpec, DataType, ValuesColumn
 ColumnSpec(name="is_active", dtype=DataType.BOOLEAN, gen=ValuesColumn(values=[True, False]))
 ```
@@ -133,7 +133,7 @@ ColumnSpec(name="is_active", dtype=DataType.BOOLEAN, gen=ValuesColumn(values=[Tr
 # v0
 .withColumn("total", DoubleType(), expr="quantity * unit_price")
 
-# v1
+# core
 from dbldatagen.core.spec.dsl import expression
 expression("total", "quantity * unit_price", dtype=DataType.DOUBLE)
 ```
@@ -144,12 +144,12 @@ expression("total", "quantity * unit_price", dtype=DataType.DOUBLE)
 # v0 (regex-style)
 .withColumn("code", StringType(), template=r"ORD-\d{4}")
 
-# v1 (placeholder-style)
+# core (placeholder-style)
 from dbldatagen.core.spec.dsl import pattern
 pattern("code", template="ORD-{digit:4}")
 ```
 
-v1 template placeholders: `{digit:N}`, `{alpha:N}`, `{hex:N}`, `{seq}`, `{uuid}`
+core template placeholders: `{digit:N}`, `{alpha:N}`, `{hex:N}`, `{seq}`, `{uuid}`
 
 #### Prefix/Suffix
 
@@ -157,7 +157,7 @@ v1 template placeholders: `{digit:N}`, `{alpha:N}`, `{hex:N}`, `{seq}`, `{uuid}`
 # v0
 .withColumn("sku", StringType(), prefix="SKU-")
 
-# v1
+# core
 pattern("sku", template="SKU-{digit:6}")
 ```
 
@@ -167,7 +167,7 @@ pattern("sku", template="SKU-{digit:6}")
 # v0 (implicit -- the 'id' column is auto-generated)
 dg = DataGenerator(spark, rows=1000)
 
-# v1 (explicit)
+# core (explicit)
 from dbldatagen.core.spec.dsl import pk_auto, pk_uuid, pk_pattern
 
 pk_auto("id")                          # Sequential integer (1, 2, 3, ...)
@@ -181,7 +181,7 @@ pk_pattern("id", "ORD-{digit:6}")      # Patterned string
 # v0
 .withColumn("email", StringType(), percentNulls=0.2)
 
-# v1
+# core
 ColumnSpec(name="email", dtype=DataType.STRING, gen=..., nullable=True, null_fraction=0.2)
 ```
 
@@ -194,7 +194,7 @@ ColumnSpec(name="email", dtype=DataType.STRING, gen=..., nullable=True, null_fra
             baseColumn="device_id",
             values=["US", "DE", "JP", "BR"])
 
-# v1 -- seed_from is the direct equivalent
+# core -- seed_from is the direct equivalent
 integer("device_id", min=1, max=50)
 text("country", values=["US", "DE", "JP", "BR"], seed_from="device_id")
 ```
@@ -205,7 +205,7 @@ text("country", values=["US", "DE", "JP", "BR"], seed_from="device_id")
 # v0 -- generates feature_0, feature_1, feature_2
 .withColumn("feature", IntegerType(), minValue=0, maxValue=100, numColumns=3)
 
-# v1 -- define each column explicitly
+# core -- define each column explicitly
 integer("feature_0", min=0, max=100)
 integer("feature_1", min=0, max=100)
 integer("feature_2", min=0, max=100)
@@ -219,7 +219,7 @@ The automatic converter expands `numColumns` for you.
 # v0 -- constrain to exactly 50 distinct values
 .withColumn("category", IntegerType(), minValue=1, maxValue=1000, uniqueValues=50)
 
-# v1 -- adjust range to match cardinality: max = min + (N-1) * step
+# core -- adjust range to match cardinality: max = min + (N-1) * step
 integer("category", min=1, max=50)
 ```
 
@@ -230,7 +230,7 @@ integer("category", min=1, max=50)
 from dbldatagen.distributions import Normal
 .withColumn("score", DoubleType(), minValue=0, maxValue=100, distribution=Normal(50, 10))
 
-# v1
+# core
 from dbldatagen.core.spec.schema import Normal, RangeColumn, ColumnSpec, DataType
 ColumnSpec(
     name="score",
@@ -241,11 +241,11 @@ ColumnSpec(
 
 Available in both: `Normal`, `Exponential`
 v0 only: `Beta`, `Gamma`
-v1 only: `LogNormal`, `Zipf`, `WeightedValues`
+core only: `LogNormal`, `Zipf`, `WeightedValues`
 
-## v1-Only Features (No v0 Equivalent)
+## Core-Only Features (No v0 Equivalent)
 
-These features are new in v1 and have no v0 equivalent:
+These features are new in core and have no v0 equivalent:
 
 ### Foreign Keys
 
@@ -297,7 +297,7 @@ faker("address", provider="street_address")
 faker("phone", provider="phone_number")
 ```
 
-Requires: `pip install dbldatagen[v1-faker]`
+Requires: `pip install dbldatagen[core-faker]`
 
 ### CDC (Change Data Capture)
 
@@ -309,22 +309,22 @@ initial_df = stream.initial["orders"]
 batch_1 = stream.batches[0]["orders"]  # Contains _op column: I/U/D
 ```
 
-## Features Not Supported in v1
+## Features Not Supported in Core
 
-These v0 features have no v1 equivalent:
+These v0 features have no core equivalent:
 
 | v0 Feature | Recommendation |
 |-----------|----------------|
 | `format` (printf-style `%05d`) | Use `PatternColumn(template="{digit:5}")` or `ExpressionColumn(expr="format_string(...)")` |
 | `text=ILText(...)` (Lorem Ipsum) | Use `FakerColumn(provider="paragraph")` |
-| `withConstraint(SqlExpr(...))` | Design generation to naturally satisfy rules; v1 doesn't do post-hoc filtering |
+| `withConstraint(SqlExpr(...))` | Design generation to naturally satisfy rules; core doesn't do post-hoc filtering |
 | `Beta` / `Gamma` distributions | Use `Normal` or `LogNormal` as approximation |
 
 ## What the Converter Handles
 
 When using `from_data_generator()`, here's what converts automatically:
 
-| v0 Feature | v1 Result | Status |
+| v0 Feature | Core Result | Status |
 |-----------|-----------|--------|
 | `minValue`/`maxValue` | `RangeColumn(min, max)` | Automatic |
 | `values` | `ValuesColumn(values)` | Automatic |
