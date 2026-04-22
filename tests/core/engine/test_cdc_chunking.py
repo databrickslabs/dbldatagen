@@ -13,7 +13,10 @@ The ``-s`` flag shows chunk sizing output.
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
+from pyspark.sql import SparkSession
 
 from dbldatagen.core.engine.cdc import (
     _auto_chunk_size,
@@ -31,6 +34,11 @@ from dbldatagen.core.spec.schema import (
     TableSpec,
     ValuesColumn,
 )
+
+
+# Sentinel for tests that assert identifier validation raises before any
+# Spark call — see TestWriteCDCIdentifierValidation's class docstring.
+_NO_SPARK = cast(SparkSession, None)
 
 
 def _mastercard_plan(
@@ -213,12 +221,12 @@ class TestWriteCDCIdentifierValidation:
     @pytest.mark.parametrize("bad", ["evil`cat", "cat.sch", "1cat", "cat-name", "", "cat name"])
     def test_rejects_bad_catalog(self, bad):
         with pytest.raises(ValueError, match="invalid UC catalog"):
-            write_cdc_to_delta(None, self._plan(), catalog=bad, schema="s")
+            write_cdc_to_delta(_NO_SPARK, self._plan(), catalog=bad, schema="s")
 
     @pytest.mark.parametrize("bad", ["evil`sch", "sch.x", "2s", "s-ch", "", "s ch"])
     def test_rejects_bad_schema(self, bad):
         with pytest.raises(ValueError, match="invalid UC schema"):
-            write_cdc_to_delta(None, self._plan(), catalog="c", schema=bad)
+            write_cdc_to_delta(_NO_SPARK, self._plan(), catalog="c", schema=bad)
 
     @pytest.mark.parametrize("bad", ["evil`tbl", "tbl.x", "3t", "t-bl", "", "t bl", "x\n"])
     def test_rejects_bad_table_name(self, bad):
@@ -228,9 +236,9 @@ class TestWriteCDCIdentifierValidation:
         plan = self._plan()
         plan.cdc_tables = [bad]
         with pytest.raises(ValueError, match="invalid UC table"):
-            write_cdc_to_delta(None, plan, catalog="c", schema="s")
+            write_cdc_to_delta(_NO_SPARK, plan, catalog="c", schema="s")
 
     def test_rejects_trailing_newline(self):
         """Trailing \\n bypasses `re.match` + $ but not `fullmatch`."""
         with pytest.raises(ValueError, match="invalid UC catalog"):
-            write_cdc_to_delta(None, self._plan(), catalog="cat\n", schema="s")
+            write_cdc_to_delta(_NO_SPARK, self._plan(), catalog="cat\n", schema="s")
