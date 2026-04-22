@@ -9,10 +9,6 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 * Refactored `DataAnalyzer` and `BasicStockTickerProvider` to comply with ANSI SQL standards
 * Refactored `Constraint` to treat `_filterExpression` and `_calculatedFilterExpression` as instance variables
 * Removed internal modification of `SparkSession`
-* Fixed `build_uuid_column` overflow at `column_seed == Long.MAX_VALUE` — both int and Column branches now wrap MAX → MIN instead of rejecting `2**63` (int branch) or raising `ARITHMETIC_OVERFLOW` under Spark ANSI (Column branch)
-* Replaced `F.abs(x) % N` with `F.pmod(x, N)` across all seed→index call sites (null mask, uniform/normal/zipf/exponential samplers, range builders, pattern length, array index, faker pool). `abs(Long.MIN_VALUE)` overflows under ANSI and Spark's `%` on a negative dividend returns a negative remainder, both of which violated the `[0, N)` invariant downstream consumers assumed
-* Dropped stranded `num_batches > 32767` cap on `CDCPlan` — an artifact of the removed `cdc_state` module's int16 packing
-* `ExpressionColumn` plan-time validation now raises `ValueError` (previously a silently-swallowed `warnings.warn`) and no longer false-positives on Spark builtins — function calls are detected by an "identifier followed by `(`" heuristic instead of a hand-maintained allowlist that drifts
 
 #### Changed
 * Added type hints for modules and classes
@@ -24,14 +20,11 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 * Updated Git actions
 * Updated [makefile](makefile)
 * Updated [CONTRIBUTING.md](CONTRIBUTING.md)
-* **Breaking — reproducibility**: the `F.abs(x) % N` → `F.pmod(x, N)` fix changes output values for rows whose seed hash is negative (`abs(-5) % 3 = 2` vs `pmod(-5, 3) = 1`), so roughly half of rows produce a different generated value for the same seed. Users with golden-value fixtures keyed to pre-patch seeds need to regenerate them. The fix is necessary regardless — keeping the old behavior means hard-failing under ANSI and silently producing wrong values under non-ANSI
-* Documented SQL Server `__$seqval` deviation: the synthetic value is `xxhash64(_batch_id, *data_cols)`, deterministic per row but unordered within a batch. Consumers using seqval for dedup are unaffected; consumers relying on within-transaction ordering must apply a rank-based seqval downstream
 
 #### Added
 * Added support for serialization to/from JSON format
 * Added Ruff and mypy tooling
 * Added `OutputDataset` class and the ability to save a `DataGenerator` to an output table or files
-* Added optional `precision` and `scale` fields to `ColumnSpec` for DECIMAL columns. `decimal("rate", precision=10, scale=4)` and `decimal("balance", precision=38, scale=8)` now work natively; both unset preserves the historical `DecimalType(18, 2)` default. Plan-time validator rejects out-of-range precision, mismatched scale, and ranges that don't fit in the declared type, so AI agents generating plans get an actionable `ValueError` instead of a Spark `NUMERIC_VALUE_OUT_OF_RANGE` at materialization
 
 
 ### Version 0.4.0 Hotfix 2
