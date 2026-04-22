@@ -621,5 +621,5 @@ def _build_array_column(
     # Random length per row in [min_length, max_length]
     range_size = gen.max_length - gen.min_length + 1
     seed_col = cell_seed_expr(column_seed, id_col)
-    rand_len = (F.abs(seed_col) % F.lit(range_size)).cast("int") + F.lit(gen.min_length)
+    rand_len = F.pmod(seed_col, F.lit(range_size)).cast("int") + F.lit(gen.min_length)
     return F.slice(full_array, 1, rand_len)

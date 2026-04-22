@@ -282,6 +282,67 @@ class TestDecimalPrecisionScale:
 
 
 # ===================================================================
+# pmod sweep: F.abs(x) % n → F.pmod(x, n)
+# ===================================================================
+
+
+class TestPmodForLongMinValueSweep:
+    """Regression tests for the F.abs(x) % n → F.pmod(x, n) migration.
+
+    The old pattern broke at Long.MIN_VALUE: ``abs(-2**63)`` overflows
+    (raises ARITHMETIC_OVERFLOW under ANSI, silently stays negative
+    without), and Spark's ``%`` on a negative dividend returns a negative
+    remainder — either way the ``[0, N)`` invariant downstream code
+    assumed could be violated.  pmod fixes both by computing
+    ``((x % n) + n) % n`` with no abs.
+    """
+
+    def test_uniform_sample_at_long_min_value_under_ansi(self, spark):
+        """Passes Long.MIN_VALUE directly through ``uniform_sample``.
+
+        Exercises the first post-sweep site (``distributions.py:uniform_sample``).
+        Before the fix, ``F.abs(Long.MIN_VALUE) % n`` under ANSI raised
+        ARITHMETIC_OVERFLOW — this test's query would have failed to
+        complete.  After the sweep, ``pmod`` returns a value in [0, n).
+        """
+        from dbldatagen.core.engine.distributions import uniform_sample
+
+        long_min = -(2**63)
+        prev_ansi = spark.conf.get("spark.sql.ansi.enabled", "false")
+        spark.conf.set("spark.sql.ansi.enabled", "true")
+        try:
+            n = 10000
+            df = spark.range(5).withColumn("h", F.lit(long_min).cast("long"))
+            rows = df.select(uniform_sample(F.col("h"), n).alias("r")).collect()
+            for r in rows:
+                assert 0 <= r.r < n, f"uniform_sample produced out-of-range {r.r}"
+        finally:
+            spark.conf.set("spark.sql.ansi.enabled", prev_ansi)
+
+    def test_null_mask_runs_under_ansi_mode(self, spark):
+        """null_mask_expr used to be ``abs(null_hash) % N < threshold``.
+
+        Under ANSI any row whose xxhash64 yielded Long.MIN_VALUE would
+        raise ARITHMETIC_OVERFLOW.  With the pmod sweep the expression
+        is total over all signed-64 inputs, so a mask evaluated with
+        ANSI enabled must run without raising.
+        """
+        from dbldatagen.core.engine.seed import null_mask_expr
+
+        prev_ansi = spark.conf.get("spark.sql.ansi.enabled", "false")
+        spark.conf.set("spark.sql.ansi.enabled", "true")
+        try:
+            df = spark.range(10000)
+            mask = null_mask_expr(column_seed=42, id_col="id", null_fraction=0.3)
+            null_count = df.select(mask.alias("is_null")).filter("is_null").count()
+            # Not asserting an exact ratio (stat variance); just that
+            # the query ran to completion without ANSI overflow.
+            assert 0 < null_count < 10000, f"unexpected null_count {null_count}"
+        finally:
+            spark.conf.set("spark.sql.ansi.enabled", prev_ansi)
+
+
+# ===================================================================
 # uuid.py coverage
 # ===================================================================
 

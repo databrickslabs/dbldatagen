@@ -105,7 +105,7 @@ def _build_float_range(
         result = F.greatest(F.lit(min_val), F.least(raw, F.lit(max_val)))
     else:
         # Map seed to [0, 1) then scale
-        frac = (F.abs(seed_col) % F.lit(_CONTINUOUS_PRECISION)).cast("double") / F.lit(float(_CONTINUOUS_PRECISION))
+        frac = F.pmod(seed_col, F.lit(_CONTINUOUS_PRECISION)).cast("double") / F.lit(float(_CONTINUOUS_PRECISION))
         result = frac * F.lit(span) + F.lit(min_val)
 
     spark_type = _resolve_spark_type(dtype, integer=False, precision=precision, scale=scale)

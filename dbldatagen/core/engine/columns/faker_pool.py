@@ -61,11 +61,15 @@ def build_faker_column(
     @F.pandas_udf(T.StringType())  # type: ignore[call-overload]
     def _faker_pool_udf(id_series: pd.Series) -> pd.Series:
         ids = id_series.values.astype(np.int64)
-        # Use xxhash-style mixing to select from pool
-        # Simple deterministic index: abs(mix(seed, id)) % pool_size
+        # Deterministic index: non-negative pmod of mix(seed, id) over pool_size.
+        # ``np.abs(np.iinfo(np.int64).min)`` silently wraps (NumPy does not
+        # raise) so the old ``np.abs(x) % N`` produced negative indices on
+        # the Long.MIN_VALUE row, which pandas then interpreted as Python
+        # negative indexing.  ``np.mod`` uses Python-semantics modulo and
+        # is always non-negative when the divisor is positive.
         x = ids ^ np.int64(_column_seed)
         x = x * np.int64(6364136223846793005) + np.int64(1442695040888963407)
-        indices = np.abs(x) % _pool_size
+        indices = np.mod(x, _pool_size)
         return pd.Series(pool_array[indices.astype(np.intp)])
 
     return _faker_pool_udf(id_col)  # type: ignore[no-any-return]

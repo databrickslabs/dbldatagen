@@ -40,13 +40,16 @@ _CONTINUOUS_PRECISION = 1_000_000
 def uniform_sample(cell_seed_col: Column, n: int) -> Column:
     """Map a seed column to a uniform index in [0, n).
 
-    Uses ``abs(seed) % n`` which has negligible bias for n << 2^63.
+    Uses ``pmod(seed, n)`` (not ``abs(seed) % n``) because
+    ``abs(Long.MIN_VALUE)`` overflows under Spark ANSI mode and Spark's
+    ``%`` on a negative dividend returns a negative remainder.  Bias is
+    negligible for ``n << 2^63``.
     """
     if n <= 0:
         raise ValueError("n must be positive")
     if n == 1:
         return F.lit(0)
-    return F.abs(cell_seed_col) % F.lit(n)
+    return F.pmod(cell_seed_col, F.lit(n))
 
 
 def weighted_sample_expr(
@@ -72,8 +75,8 @@ def weighted_sample_expr(
         cum += w
         thresholds.append((cum, v))
 
-    # Map seed to [0, 1) range
-    frac = (F.abs(cell_seed_col) % F.lit(_UNIFORM_PRECISION)).cast("double") / F.lit(float(_UNIFORM_PRECISION))
+    # Map seed to [0, 1) range.  pmod avoids abs(Long.MIN_VALUE) overflow.
+    frac = F.pmod(cell_seed_col, F.lit(_UNIFORM_PRECISION)).cast("double") / F.lit(float(_UNIFORM_PRECISION))
 
     expr = None
     for cum_w, val in reversed(thresholds):
@@ -106,7 +109,7 @@ def normal_sample_expr(
     for i in range(12):
         # Derive an independent uniform [0, 1) from the cell seed
         h = F.xxhash64(cell_seed_col, F.lit(i).cast("long"))
-        u = (F.abs(h) % F.lit(_CONTINUOUS_PRECISION)).cast("double") / F.lit(float(_CONTINUOUS_PRECISION))
+        u = F.pmod(h, F.lit(_CONTINUOUS_PRECISION)).cast("double") / F.lit(float(_CONTINUOUS_PRECISION))
         accum = u if accum is None else accum + u
 
     # accum ~ sum of 12 Uniform(0,1) => approx Normal(6, 1)
@@ -123,7 +126,7 @@ def zipf_sample_expr(cell_seed_col: Column, n: int, exponent: float = 1.5) -> Co
     """
     if n <= 1:
         return F.lit(0)
-    u = (F.abs(cell_seed_col) % F.lit(_CONTINUOUS_PRECISION)).cast("double") / F.lit(float(_CONTINUOUS_PRECISION))
+    u = F.pmod(cell_seed_col, F.lit(_CONTINUOUS_PRECISION)).cast("double") / F.lit(float(_CONTINUOUS_PRECISION))
     # Shift u away from 0 to avoid log(0)
     u = F.greatest(u, F.lit(1e-9))
     if exponent <= 1.0:
@@ -151,7 +154,7 @@ def exponential_sample_expr(
     """
     if n <= 1:
         return F.lit(0)
-    u = (F.abs(cell_seed_col) % F.lit(_CONTINUOUS_PRECISION)).cast("double") / F.lit(float(_CONTINUOUS_PRECISION))
+    u = F.pmod(cell_seed_col, F.lit(_CONTINUOUS_PRECISION)).cast("double") / F.lit(float(_CONTINUOUS_PRECISION))
     u = F.least(u, F.lit(0.999999))  # avoid log(0)
     x = -F.log(F.lit(1.0) - u) / F.lit(rate)
     # Scale so that ~99% of draws (for rate=1) land within [0, n) before clipping.
@@ -225,5 +228,5 @@ def apply_distribution(  # noqa: PLR0911
 def _array_index(cell_seed_col: Column, values: list) -> Column:
     """Pick from a Python list using cell seed as index."""
     arr = F.array(*[F.lit(v) for v in values])
-    idx = F.abs(cell_seed_col) % F.lit(len(values))
+    idx = F.pmod(cell_seed_col, F.lit(len(values)))
     return arr[idx.cast("int")]
