@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import re
 
+import pytest
 from pyspark.sql import functions as F
 
 from dbldatagen.core.engine.columns.numeric import build_range_column
@@ -185,6 +186,31 @@ class TestPatternColumn:
             assert len(suffix) == 4, f"Bad digit width: {v}"
             assert suffix.isdigit(), f"Non-digit suffix: {v}"
 
+    def test_digit_pattern_is_uniform(self, spark):
+        """Digits should be uniformly distributed, not Benford-biased.
+
+        Regression for: ``F.substring(F.abs(seed).cast("string"), 1, w)``
+        takes *leading* decimal digits of an int64, which Benford-biases
+        toward 1 and 2 (1 alone appears ~30% of the time). ``pmod``
+        gives trailing uniform bits instead.
+        """
+        col_seed = derive_column_seed(42, "t", "pk")
+        n_rows = 10_000
+        df = spark.range(n_rows).select(build_pattern_column("id", col_seed, "{digit:1}").alias("d"))
+        values = [r.d for r in df.collect()]
+
+        # No '-' leaked from Long.MIN_VALUE wraparound.
+        assert all(
+            v.isdigit() for v in values
+        ), f"non-digit char in output: {[v for v in values if not v.isdigit()][:5]}"
+
+        # Each digit 0-9 should hit ~10%. Benford would give 1→30%, 9→4.6%.
+        # Tolerance is +/-3% (generous ~3 stddev on n=10_000 binomial).
+        counts = {d: values.count(d) for d in "0123456789"}
+        expected = n_rows / 10
+        for d, c in counts.items():
+            assert abs(c - expected) < 0.03 * n_rows, f"digit {d} appeared {c} times (expected ~{expected})"
+
     def test_seq_pattern(self, spark):
         """Pattern '{seq:4}' produces zero-padded sequential IDs."""
         col_seed = derive_column_seed(42, "t", "store_id")
@@ -207,6 +233,35 @@ class TestPatternColumn:
         for v in values:
             assert len(v) == 3, f"Bad length: {v}"
             assert v.isalpha() and v.isupper(), f"Not uppercase alpha: {v}"
+
+    def test_hex_pattern_is_uniform(self, spark):
+        """Hex chars should be uniformly distributed across 0-9a-f.
+
+        Regression for: ``F.substring(F.hex(F.abs(seed)), 1, w)`` takes
+        the *leading* hex nibble of a positive int64 — whose top bit is
+        always clear, so nibbles ``8-f`` never appear as the leading
+        hex char of ``abs(seed)``. ``pmod(seed, 16**w)`` gives the
+        uniform trailing hex bits.
+        """
+        col_seed = derive_column_seed(42, "t", "pk")
+        n_rows = 10_000
+        df = spark.range(n_rows).select(build_pattern_column("id", col_seed, "{hex:1}").alias("h"))
+        values = [r.h for r in df.collect()]
+
+        counts = {c: values.count(c) for c in "0123456789abcdef"}
+        expected = n_rows / 16
+        for c, cnt in counts.items():
+            assert abs(cnt - expected) < 0.03 * n_rows, f"hex {c} appeared {cnt} times (expected ~{expected})"
+
+    def test_digit_width_cap(self):
+        """{digit:N} with N > 18 is rejected up-front (10**19 overflows int64)."""
+        with pytest.raises(ValueError, match=r"digit:N.*width must be <= 18"):
+            build_pattern_column("id", 0, "{digit:19}")
+
+    def test_hex_width_cap(self):
+        """{hex:N} with N > 15 is rejected up-front (16**16 overflows int64)."""
+        with pytest.raises(ValueError, match=r"hex:N.*width must be <= 15"):
+            build_pattern_column("id", 0, "{hex:16}")
 
 
 # ---------------------------------------------------------------------------

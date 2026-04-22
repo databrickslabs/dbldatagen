@@ -60,6 +60,14 @@ def build_values_column(
 
 _PLACEHOLDER_RE = re.compile(r"\{(seq|uuid|digit|alpha|hex):?(\d+)?[a-z]?\}")
 
+# Max widths for {digit:N} and {hex:N}: both use pmod(seed, base**width),
+# and F.lit(base**width) must fit in int64. 10**18 and 16**15 do; 10**19
+# and 16**16 don't. These ceilings are comfortably above any realistic
+# PK-pattern use; the guard gives a clear error instead of a py4j long
+# conversion failure.
+_MAX_DIGIT_WIDTH = 18
+_MAX_HEX_WIDTH = 15
+
 
 def build_pattern_column(
     id_col: Column | str,
@@ -128,11 +136,19 @@ def _random_digits(
     idx: int,
     width: int,
 ) -> Column:
-    """Generate *width* random digits from the cell seed."""
+    """Generate *width* uniform decimal digits via ``pmod(seed, 10**width)``.
+
+    Leading decimal digits of an int64 are Benford-biased (digit 0 never
+    appears as a leading digit of a positive int; 1 and 2 dominate);
+    trailing digits via ``pmod`` are uniform. ``pmod`` is non-negative
+    for every int64 including ``Long.MIN_VALUE``, so ``'-'`` can't leak
+    into the output. Matters on the ``pk_pattern`` FK critical path.
+    """
+    if width > _MAX_DIGIT_WIDTH:
+        raise ValueError(f"{{digit:N}} width must be <= {_MAX_DIGIT_WIDTH} (got {width})")
     seed = cell_seed_expr(_seed_xor(column_seed, (idx + 1) * GOLDEN_RATIO_HASH), id_col)
-    # Take abs, convert to string, pad/truncate to width
-    raw = F.abs(seed).cast("string")
-    return F.rpad(F.substring(raw, 1, width), width, "0")
+    digits = F.pmod(seed, F.lit(10**width))
+    return F.lpad(digits.cast("string"), width, "0")
 
 
 def _random_alpha(
@@ -150,8 +166,10 @@ def _random_alpha(
     chars: list[Column] = []
     for i in range(width):
         h = F.xxhash64(seed_col, id_col, F.lit(i).cast("long"))
-        # Map to A-Z (26 chars)
-        char_idx = (F.abs(h) % F.lit(26)).cast("int")
+        # pmod is non-negative for every int64 including Long.MIN_VALUE;
+        # the older (abs(h) % 26) pattern returns a negative index for
+        # Long.MIN_VALUE and raises ARITHMETIC_OVERFLOW under ANSI.
+        char_idx = F.pmod(h, F.lit(26)).cast("int")
         chars.append(F.substring(F.lit("ABCDEFGHIJKLMNOPQRSTUVWXYZ"), char_idx + F.lit(1), 1))
     if len(chars) == 1:
         return chars[0]
@@ -164,10 +182,19 @@ def _random_hex(
     idx: int,
     width: int,
 ) -> Column:
-    """Generate *width* random hexadecimal characters."""
+    """Generate *width* uniform hexadecimal characters via ``pmod(seed, 16**width)``.
+
+    Same bug class as ``_random_digits``: a positive int64 has its top
+    bit clear, so its hex representation's leading nibble is always in
+    ``0-7`` — digits ``8-f`` never appear as the leading hex char of
+    ``abs(seed)``. Uses ``pmod`` so Long.MIN_VALUE can't leak and all
+    16 hex characters are equally likely at every position.
+    """
+    if width > _MAX_HEX_WIDTH:
+        raise ValueError(f"{{hex:N}} width must be <= {_MAX_HEX_WIDTH} (got {width})")
     seed = cell_seed_expr(_seed_xor(column_seed, (idx + 1) * GOLDEN_RATIO_HASH), id_col)
-    raw = F.hex(F.abs(seed))
-    return F.lower(F.rpad(F.substring(raw, 1, width), width, "0"))
+    value = F.pmod(seed, F.lit(16**width))
+    return F.lower(F.lpad(F.hex(value), width, "0"))
 
 
 # ---------------------------------------------------------------------------
