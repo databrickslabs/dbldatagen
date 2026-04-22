@@ -81,13 +81,27 @@ def integer(name: str, min: float | int = 0, max: float | int = 100, seed_from: 
 
 
 def decimal(
-    name: str, min: float | int = 0.0, max: float | int = 1000.0, seed_from: str | None = None, **kw
+    name: str,
+    min: float | int = 0.0,
+    max: float | int = 1000.0,
+    seed_from: str | None = None,
+    precision: int | None = None,
+    scale: int | None = None,
+    **kw,
 ) -> ColumnSpec:
+    """Build a DECIMAL column spec.
+
+    ``precision`` and ``scale`` default to ``None``; when unset the engine
+    uses ``DecimalType(18, 2)`` (the historical default).  Pass both to
+    pick a different shape, e.g. ``decimal("rate", precision=10, scale=4)``.
+    """
     return ColumnSpec(
         name=name,
         dtype=DataType.DECIMAL,
         gen=RangeColumn(min=min, max=max, **kw),
         seed_from=seed_from,
+        precision=precision,
+        scale=scale,
     )
 
 

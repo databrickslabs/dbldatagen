@@ -377,6 +377,58 @@ class ColumnSpec(BaseModel):
     null_fraction: float = 0.0
     foreign_key: ForeignKeyRef | None = None
     seed_from: str | None = None
+    precision: int | None = None
+    scale: int | None = None
+
+    @model_validator(mode="after")
+    def validate_decimal_precision_scale(self) -> ColumnSpec:
+        """Precision/scale are only meaningful for DECIMAL and must go together.
+
+        Defaults (when both unset on a DECIMAL column) are applied at the
+        engine layer as ``(18, 2)``; the schema stores ``None`` to keep
+        existing serialized plans byte-identical.
+        """
+        has_precision = self.precision is not None
+        has_scale = self.scale is not None
+        if not (has_precision or has_scale):
+            return self
+        if self.dtype != DataType.DECIMAL:
+            raise ValueError(
+                f"Column '{self.name}': precision/scale are only valid when "
+                f"dtype=DECIMAL, got dtype={self.dtype}"
+            )
+        if has_precision ^ has_scale:
+            raise ValueError(
+                f"Column '{self.name}': precision and scale must be set together "
+                f"(got precision={self.precision}, scale={self.scale})"
+            )
+        # Spark DecimalType: 1 <= precision <= 38, 0 <= scale <= precision.
+        if not 1 <= self.precision <= 38:
+            raise ValueError(
+                f"Column '{self.name}': precision must be in [1, 38], got {self.precision}"
+            )
+        if not 0 <= self.scale <= self.precision:
+            raise ValueError(
+                f"Column '{self.name}': scale must be in [0, precision] "
+                f"(0..{self.precision}), got {self.scale}"
+            )
+        # Range fit: catch at plan time rather than deferring to Spark's
+        # ARITHMETIC_OVERFLOW / NUMERIC_VALUE_OUT_OF_RANGE at materialization.
+        # Max magnitude representable in DecimalType(p, s) is just under
+        # 10**(p-s); anything >= that overflows after cast.  Only checked
+        # when precision/scale are explicit — the None/None default path
+        # preserves existing behavior for pre-existing plans.
+        if isinstance(self.gen, RangeColumn):
+            limit = 10 ** (self.precision - self.scale)
+            max_abs = max(abs(self.gen.min), abs(self.gen.max))
+            if max_abs >= limit:
+                max_repr = limit - 10**-self.scale
+                raise ValueError(
+                    f"Column '{self.name}': range [{self.gen.min}, {self.gen.max}] "
+                    f"does not fit in decimal({self.precision}, {self.scale}) "
+                    f"(max representable magnitude is {max_repr})"
+                )
+        return self
 
     @model_validator(mode="after")
     def validate_null_fraction(self) -> ColumnSpec:

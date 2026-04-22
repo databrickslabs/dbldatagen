@@ -479,6 +479,8 @@ def build_column_expr(  # noqa: PLR0911
             distribution=gen.distribution,
             dtype=col_spec.dtype,
             cell_seed_override=cell_seed_override,
+            precision=col_spec.precision,
+            scale=col_spec.scale,
         )
 
     if isinstance(gen, ValuesColumn):

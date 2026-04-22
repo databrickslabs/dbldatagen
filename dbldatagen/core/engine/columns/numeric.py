@@ -19,6 +19,13 @@ from dbldatagen.core.engine.seed import cell_seed_expr
 from dbldatagen.core.spec.schema import DataType, Distribution, Normal
 
 
+# Default DECIMAL shape when a DECIMAL column has no explicit precision/scale.
+# Kept as (18, 2) for backward compatibility with plans authored before
+# precision/scale were user-configurable.
+_DEFAULT_DECIMAL_PRECISION = 18
+_DEFAULT_DECIMAL_SCALE = 2
+
+
 def build_range_column(
     id_col: Column | str,
     column_seed: int | Column,
@@ -27,11 +34,15 @@ def build_range_column(
     distribution: Distribution | None = None,
     dtype: DataType | None = None,
     cell_seed_override: Column | None = None,
+    precision: int | None = None,
+    scale: int | None = None,
 ) -> Column:
     """Generate numeric values in [min_val, max_val] using Spark SQL expressions.
 
     For integer types the range is discrete; for float/double/decimal the values
-    are continuous.
+    are continuous.  ``precision`` / ``scale`` are only honoured when
+    ``dtype == DataType.DECIMAL``; if either is ``None`` the engine falls back
+    to ``DecimalType(18, 2)``.
     """
     if isinstance(id_col, str):
         id_col = F.col(id_col)
@@ -48,7 +59,9 @@ def build_range_column(
     if is_integer:
         return _build_integer_range(seed_col, int(min_val), int(max_val), distribution, dtype)
     else:
-        return _build_float_range(seed_col, float(min_val), float(max_val), distribution, dtype)
+        return _build_float_range(
+            seed_col, float(min_val), float(max_val), distribution, dtype, precision, scale
+        )
 
 
 def _build_integer_range(
@@ -76,6 +89,8 @@ def _build_float_range(
     max_val: float,
     distribution: Distribution | None,
     dtype: DataType | None,
+    precision: int | None = None,
+    scale: int | None = None,
 ) -> Column:
     """Generate floating-point values in [min_val, max_val]."""
     span = max_val - min_val
@@ -93,22 +108,32 @@ def _build_float_range(
         frac = (F.abs(seed_col) % F.lit(_CONTINUOUS_PRECISION)).cast("double") / F.lit(float(_CONTINUOUS_PRECISION))
         result = frac * F.lit(span) + F.lit(min_val)
 
-    spark_type = _resolve_spark_type(dtype, integer=False)
+    spark_type = _resolve_spark_type(dtype, integer=False, precision=precision, scale=scale)
     if dtype == DataType.DECIMAL:
-        return F.round(result, 2).cast(spark_type)
+        effective_scale = scale if scale is not None else _DEFAULT_DECIMAL_SCALE
+        return F.round(result, effective_scale).cast(spark_type)
     return result.cast(spark_type)
 
 
-def _resolve_spark_type(dtype: DataType | None, integer: bool = True) -> T.DataType:
+def _resolve_spark_type(
+    dtype: DataType | None,
+    integer: bool = True,
+    precision: int | None = None,
+    scale: int | None = None,
+) -> T.DataType:
     """Map a DataType enum to a PySpark DataType."""
     if dtype is None:
         return T.LongType() if integer else T.DoubleType()
+    if dtype == DataType.DECIMAL:
+        return T.DecimalType(
+            precision if precision is not None else _DEFAULT_DECIMAL_PRECISION,
+            scale if scale is not None else _DEFAULT_DECIMAL_SCALE,
+        )
     mapping = {
         DataType.INT: T.IntegerType(),
         DataType.INTEGER: T.IntegerType(),
         DataType.LONG: T.LongType(),
         DataType.FLOAT: T.FloatType(),
         DataType.DOUBLE: T.DoubleType(),
-        DataType.DECIMAL: T.DecimalType(18, 2),
     }
     return mapping.get(dtype, T.LongType() if integer else T.DoubleType())

@@ -188,6 +188,17 @@ class TestDecimal:
         assert col.gen.min == 0.0
         assert col.gen.max == 1000.0
 
+    def test_precision_scale_default_none(self):
+        """Unset precision/scale stay None so the engine applies (18, 2)."""
+        col = decimal("price")
+        assert col.precision is None
+        assert col.scale is None
+
+    def test_precision_scale_passed_through(self):
+        col = decimal("rate", precision=10, scale=4)
+        assert col.precision == 10
+        assert col.scale == 4
+
 
 class TestText:
     def test_returns_column_spec(self):
