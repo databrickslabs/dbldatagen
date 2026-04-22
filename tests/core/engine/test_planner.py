@@ -289,41 +289,54 @@ class TestPKMetadataExtraction:
 
 
 class TestExpressionColumnValidation:
-    def test_undefined_reference_warns(self):
-        import warnings
+    @staticmethod
+    def _plan(expr: str, extra_cols: list[ColumnSpec] | None = None) -> DataGenPlan:
+        cols = [ColumnSpec(name="a", gen=RangeColumn(min=1, max=10))]
+        if extra_cols:
+            cols.extend(extra_cols)
+        cols.append(ColumnSpec(name="b", gen=ExpressionColumn(expr=expr)))
+        return DataGenPlan(tables=[TableSpec(name="t", rows=10, columns=cols)])
 
-        plan = DataGenPlan(
-            tables=[
-                TableSpec(
-                    name="t",
-                    rows=10,
-                    columns=[
-                        ColumnSpec(name="a", gen=RangeColumn(min=1, max=10)),
-                        ColumnSpec(name="b", gen=ExpressionColumn(expr="unknown_col + 1")),
-                    ],
-                )
-            ]
-        )
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            resolve_plan(plan)
-            assert any("unknown_col" in str(warning.message) for warning in w)
+    def test_undefined_reference_raises(self):
+        with pytest.raises(ValueError, match="unknown_col"):
+            resolve_plan(self._plan("unknown_col + 1"))
+
+    def test_error_lists_available_columns(self):
+        with pytest.raises(ValueError, match=r"Available columns: \['a', 'b'\]"):
+            resolve_plan(self._plan("typo + 1"))
 
     def test_valid_reference_ok(self):
-        plan = DataGenPlan(
-            tables=[
-                TableSpec(
-                    name="t",
-                    rows=10,
-                    columns=[
-                        ColumnSpec(name="a", gen=RangeColumn(min=1, max=10)),
-                        ColumnSpec(name="b", gen=ExpressionColumn(expr="a + 1")),
-                    ],
-                )
-            ]
-        )
-        resolved = resolve_plan(plan)
+        resolved = resolve_plan(self._plan("a + 1"))
         assert "t" in resolved.generation_order
+
+    def test_spark_function_not_flagged(self):
+        """Spark builtins like year() are function calls, not column refs."""
+        cols = [ColumnSpec(name="d", gen=RangeColumn(min=1, max=10))]
+        resolve_plan(self._plan("year(d) + 1", extra_cols=cols))
+
+    def test_nested_function_calls_not_flagged(self):
+        resolve_plan(self._plan("coalesce(cast(a as string), 'x')"))
+
+    def test_string_literal_contents_not_flagged(self):
+        """Identifiers inside single-quoted strings should not trigger validation."""
+        resolve_plan(self._plan("case when a > 0 then 'unknown_text_here' else 'other' end"))
+
+    def test_struct_field_access_not_flagged(self):
+        """``struct_col.field`` should not flag ``field`` as an unknown column."""
+        resolve_plan(self._plan("a.some_field + 1"))
+
+    def test_cast_with_type_name_not_flagged(self):
+        resolve_plan(self._plan("cast(a as bigint) + 1"))
+
+    def test_keywords_and_literals_not_flagged(self):
+        resolve_plan(self._plan("case when a is not null and a between 1 and 10 then true else false end"))
+
+    def test_multiple_unknowns_reported(self):
+        with pytest.raises(ValueError) as exc:
+            resolve_plan(self._plan("typo1 + typo2"))
+        msg = str(exc.value)
+        assert "typo1" in msg
+        assert "typo2" in msg
 
 
 class TestSeedFromValidation:

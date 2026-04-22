@@ -18,61 +18,54 @@ from dbldatagen.core.spec.schema import (
 )
 
 
-# Common SQL functions, keywords, and type names excluded when checking
-# ExpressionColumn references for undefined column names.
-_SQL_BUILTINS: frozenset[str] = frozenset(
+# SQL keywords, literals, and type names that are not columns and not
+# function names — these do not drift as Spark adds builtins.  Function
+# names are intentionally NOT listed here: we distinguish function calls
+# from column references by the "followed by ``(``" heuristic in
+# ``_extract_column_references`` below.
+_SQL_KEYWORDS: frozenset[str] = frozenset(
     {
-        # Functions
-        "abs",
-        "cast",
-        "ceil",
-        "coalesce",
-        "concat",
-        "current_date",
-        "current_timestamp",
-        "date_format",
-        "floor",
-        "length",
-        "lit",
-        "lower",
-        "otherwise",
-        "replace",
-        "round",
-        "substring",
-        "to_date",
-        "to_timestamp",
-        "trim",
-        "upper",
-        "when",
         # Keywords / operators
         "and",
         "as",
         "between",
         "case",
+        "distinct",
         "else",
         "end",
         "in",
+        "interval",
         "is",
         "like",
         "not",
         "or",
+        "rlike",
         "then",
+        "when",
         # Literals
         "false",
         "null",
         "true",
         # Type names
         "array",
+        "bigint",
+        "binary",
         "boolean",
+        "byte",
         "date",
+        "decimal",
         "double",
         "float",
         "int",
+        "integer",
         "long",
         "map",
+        "short",
+        "smallint",
         "string",
         "struct",
         "timestamp",
+        "tinyint",
     }
 )
 
@@ -303,33 +296,56 @@ def _extract_pk_metadata(table_spec: TableSpec, pk_col_spec: ColumnSpec, plan_se
     )
 
 
-def _validate_expression_columns(plan: DataGenPlan) -> None:
-    """Warn if ExpressionColumn references look like undefined column names.
+def _extract_column_references(expr: str) -> set[str]:
+    """Return identifiers in ``expr`` that look like column references.
 
-    This is a best-effort heuristic — Spark SQL is too rich for a regex
-    to parse reliably, so we warn rather than error.  Spark itself gives
-    clear errors at runtime for genuinely invalid expressions.
+    Filters out function calls (identifier immediately followed by ``(``),
+    qualified field access (identifier preceded by ``.``), and a small
+    set of SQL keywords / literals / type names.  String literals are
+    stripped before tokenizing so their contents do not false-positive.
+
+    Intentionally does NOT maintain a list of Spark function names: the
+    "followed by ``(``" test works for any function Spark adds without
+    the allowlist drifting out of date.
     """
     import re
-    import warnings
 
+    cleaned = re.sub(r"'[^']*'", "", expr)
+
+    references: set[str] = set()
+    for match in re.finditer(r"\b([a-zA-Z_]\w*)\b", cleaned):
+        token = match.group(1)
+        if cleaned[match.end() :].lstrip().startswith("("):
+            continue
+        if cleaned[: match.start()].rstrip().endswith("."):
+            continue
+        if token.lower() in _SQL_KEYWORDS:
+            continue
+        references.add(token)
+    return references
+
+
+def _validate_expression_columns(plan: DataGenPlan) -> None:
+    """Raise ValueError if an ExpressionColumn references an unknown column.
+
+    Runs at plan resolution time so callers (including AI agents building
+    plans programmatically) get a clean traceback naming the column, the
+    unknown token, and the available columns — strictly more actionable
+    than Spark's ``UNRESOLVED_COLUMN`` error raised at job execution.
+    """
     for table_spec in plan.tables:
         col_names = {c.name for c in table_spec.columns}
         for col_spec in table_spec.columns:
             if not isinstance(col_spec.gen, ExpressionColumn):
                 continue
-            # Extract bare identifiers from the expression (heuristic)
-            tokens = set(re.findall(r"\b([a-zA-Z_]\w*)\b", col_spec.gen.expr))
-            candidates = tokens - _SQL_BUILTINS - col_names
-            for candidate in candidates:
-                if not candidate[0].isdigit():
-                    warnings.warn(
-                        f"ExpressionColumn '{col_spec.name}' in table "
-                        f"'{table_spec.name}' references '{candidate}' "
-                        f"which is not a column in this table. "
-                        f"Available columns: {sorted(col_names)}",
-                        stacklevel=3,
-                    )
+            unknown = _extract_column_references(col_spec.gen.expr) - col_names
+            if unknown:
+                raise ValueError(
+                    f"ExpressionColumn '{col_spec.name}' in table "
+                    f"'{table_spec.name}' references {sorted(unknown)} "
+                    f"which are not columns in this table. "
+                    f"Available columns: {sorted(col_names)}"
+                )
 
 
 def _validate_seed_from(plan: DataGenPlan) -> None:
