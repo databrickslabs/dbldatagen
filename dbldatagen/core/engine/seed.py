@@ -96,19 +96,6 @@ def null_mask_expr(
     return (F.abs(null_hash) % F.lit(_NULL_PRECISION)) < F.lit(threshold)
 
 
-def mix64(key: int, index: int) -> int:
-    """Fast 64-bit mixing function (splitmix64-style).
-
-    For Python-side use only (e.g. generating Feistel round keys).
-    Bijective for a fixed *key*.  Returns a signed 64-bit integer.
-    """
-    x = (key ^ index) & 0xFFFFFFFFFFFFFFFF
-    x = ((x ^ (x >> 30)) * 0xBF58476D1CE4E5B9) & 0xFFFFFFFFFFFFFFFF
-    x = ((x ^ (x >> 27)) * 0x94D049BB133111EB) & 0xFFFFFFFFFFFFFFFF
-    x = (x ^ (x >> 31)) & 0xFFFFFFFFFFFFFFFF
-    return _to_signed64(x)
-
-
 def compute_batch_seed(global_seed: int, batch_id: int) -> int:
     """Compute the seed for a given batch.
 

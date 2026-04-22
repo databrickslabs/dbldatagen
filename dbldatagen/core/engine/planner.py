@@ -89,7 +89,6 @@ class PKMetadata:
     pk_start: int  # For sequence PKs: start value
     pk_step: int  # For sequence PKs: step value
     pk_template: str | None  # For pattern PKs
-    feistel_N: int | None  # For feistel PKs: domain size
 
 
 @dataclass
@@ -265,7 +264,6 @@ def _extract_pk_metadata(table_spec: TableSpec, pk_col_spec: ColumnSpec, plan_se
             pk_start=gen.start,
             pk_step=gen.step,
             pk_template=None,
-            feistel_N=None,
         )
 
     if isinstance(gen, PatternColumn):
@@ -278,7 +276,6 @@ def _extract_pk_metadata(table_spec: TableSpec, pk_col_spec: ColumnSpec, plan_se
             pk_start=0,
             pk_step=1,
             pk_template=gen.template,
-            feistel_N=None,
         )
 
     if isinstance(gen, UUIDColumn):
@@ -291,7 +288,6 @@ def _extract_pk_metadata(table_spec: TableSpec, pk_col_spec: ColumnSpec, plan_se
             pk_start=0,
             pk_step=1,
             pk_template=None,
-            feistel_N=None,
         )
 
     # Fallback: treat as sequence
@@ -304,7 +300,6 @@ def _extract_pk_metadata(table_spec: TableSpec, pk_col_spec: ColumnSpec, plan_se
         pk_start=0,
         pk_step=1,
         pk_template=None,
-        feistel_N=None,
     )
 
 
