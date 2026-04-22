@@ -11,4 +11,3 @@ omit =
     tutorial/*
     setup.py
     dbldatagen/core/engine/columns/faker_pool.py
-    dbldatagen/core/engine/columns/pk.py

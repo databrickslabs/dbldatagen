@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import time
 
+import pytest
 from pyspark.sql import SparkSession
 
 from dbldatagen.core.engine.cdc_generator import (
@@ -472,6 +473,7 @@ class TestCDCPerfLarge:
         print(f"  Native total: {native['total_time']:.2f}s")
 
 
+@pytest.mark.slow
 class TestCDCPerfXLarge:
     """10M initial rows, 500K events/batch, 3 batches."""
 
@@ -497,6 +499,7 @@ class TestCDCPerfXLarge:
         print(f"  Native total: {native['total_time']:.2f}s")
 
 
+@pytest.mark.slow
 class TestCDCPerfXXL:
     """20M initial rows, 950K events/batch, 3 batches."""
 

@@ -4,7 +4,6 @@ source = dbldatagen/core
 omit =
     ; pandas_udf files — coverage sys.settrace breaks cloudpickle serialization
     dbldatagen/core/engine/columns/faker_pool.py
-    dbldatagen/core/engine/columns/pk.py
 
 [report]
 exclude_lines =

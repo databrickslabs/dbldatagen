@@ -320,6 +320,10 @@ addopts = [
     "--strict-markers",
     "--strict-config",
     "-p", "no:warnings",
+    "-m", "not slow",
+]
+markers = [
+    "slow: long-running perf/large-row tests (excluded by default; run with -m slow)",
 ]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
@@ -336,7 +340,12 @@ filterwarnings = [
 ]
 cache_dir = ".venv/pytest-cache"
 
-# Coverage configuration
+# Coverage configuration.  The v0 lane uses .coveragerc; the core lane uses
+# .coveragerc-core (which omits faker_pool.py because coverage.py sys.settrace
+# breaks cloudpickle serialization of pandas_udf closures).  CI runs `make
+# test`, which wires both lanes and produces a single coverage.xml.
+# Bare `pytest --cov` uses only the defaults below and will CRASH on
+# test_faker_pool.py under coverage — use `make test` or `make test-fast`.
 [tool.coverage.run]
 source = ["dbldatagen"]
 branch = true
@@ -347,17 +356,9 @@ omit = [
     "*/examples/*",
     "*/tutorial/*",
     "*/docs/*",
-    "*/core/*",
-    "dbldatagen/core/*",
-    "dbldatagen/core/**/*",
 ]
 
 [tool.coverage.report]
-omit = [
-    "*/core/*",
-    "dbldatagen/core/*",
-    "dbldatagen/core/**/*",
-]
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",

@@ -44,6 +44,14 @@ To validate code locally:
 ### Testing
 dbldatagen aims to have the highest possible test coverage. Code should be tested for any new commits.
 
+The repo has three test targets:
+
+| Target | Coverage | Use when |
+|--------|----------|----------|
+| `make test` | yes, `--fail-under=80` | CI runs this; run before pushing |
+| `make test-fast` | no | fastest feedback loop while iterating |
+| `make test-coverage` | yes, + opens HTML | when you want to inspect uncovered lines |
+
 To run unit tests locally:
 
 1. Run the following terminal command in your IDE:
@@ -53,6 +61,20 @@ To run unit tests locally:
 2. Verify that all tests pass.
 3. Open the coverage report in your browser.
 4. Verify that all modified modules have full coverage.
+
+Slow perf tests (e.g. `TestCDCPerfXLarge`, `TestCDCPerfXXL` — 10M/20M rows) are marked `@pytest.mark.slow` and excluded from the default lane. Run them explicitly with `pytest -m slow`.
+
+#### Coverage gotchas with `pandas_udf`
+
+`dbldatagen/core/engine/columns/faker_pool.py` is omitted from coverage. This is because `coverage.py` installs a `sys.settrace` hook that `cloudpickle` cannot serialise, so any `pandas_udf` in a traced module fails at worker-side pickle-load time. The matching `tests/core/engine/test_faker_pool.py` is also excluded from the coverage lane in the `Makefile test` target for the same reason — it still runs under `make test-fast`.
+
+**If you add a new module that defines a `pandas_udf`**, add its path to the `omit` list in `.coveragerc-core` and `.coveragerc-all`, and skip the corresponding test file under coverage via `--ignore=...` in the `Makefile` `test` target. Otherwise the run will fail inside the UDF with an opaque cloudpickle error.
+
+Bare `pytest --cov` from the shell does NOT apply the `.coveragerc-core` overrides and will crash on `test_faker_pool.py`. Prefer `make test` (honours the overrides) or `make test-fast` (no coverage, runs all tests).
+
+#### Integration notebooks (manual only)
+
+`integration_tests/core/notebooks/*.py` are Databricks notebook-format tests orchestrated by the `integration_tests/core/databricks.yml` Databricks Asset Bundle. **They are not run in CI.** Maintainers deploy and run them manually against a Databricks workspace before releases; external contributors without a workspace cannot reproduce them.
 
 ### Submitting a PR
 To submit a pull request:
