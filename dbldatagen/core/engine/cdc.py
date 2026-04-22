@@ -313,7 +313,7 @@ def _generate_expected_state_driver(
     table_map = {t.name: t for t in plan.base_plan.tables}
     table_spec = table_map[table_name]
     config = plan.config_for(table_name)
-    global_seed = plan.base_plan.seed
+    global_seed = table_spec.seed if table_spec.seed is not None else plan.base_plan.seed
     initial_rows = int(table_spec.rows)
 
     # Apply FK parent delete guard
@@ -482,7 +482,7 @@ def _generate_chunk_for_table(
         return _generate_chunk_per_batch(spark, plan, table_name, batch_ids, fmt_name)
 
     config = plan.config_for(table_name)
-    global_seed = plan.base_plan.seed
+    global_seed = table_spec.seed if table_spec.seed is not None else plan.base_plan.seed
     initial_rows = int(table_spec.rows)
     resolved = resolve_plan(plan.base_plan)
 

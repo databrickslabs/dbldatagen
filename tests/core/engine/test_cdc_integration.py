@@ -648,58 +648,59 @@ class TestCDCBulkGeneration:
             assert pr.status == br.status
 
 
+def _multi_table_seed_plan():
+    """Two-table plan where the seed-mismatch bug only manifests for table index > 0."""
+    base = DataGenPlan(
+        seed=42,
+        tables=[
+            TableSpec(
+                name="customers",
+                rows=50,
+                primary_key=PrimaryKey(columns=["cid"]),
+                columns=[
+                    ColumnSpec(name="cid", gen=SequenceColumn()),
+                    ColumnSpec(name="tier", gen=ValuesColumn(values=["gold", "silver", "bronze"])),
+                ],
+            ),
+            TableSpec(
+                name="orders",
+                rows=100,
+                primary_key=PrimaryKey(columns=["oid"]),
+                columns=[
+                    ColumnSpec(name="oid", gen=SequenceColumn()),
+                    ColumnSpec(name="amount", dtype=DataType.INT, gen=RangeColumn(min=10, max=500)),
+                ],
+            ),
+        ],
+    )
+    return CDCPlan(
+        base_plan=base,
+        num_batches=5,
+        table_configs={
+            "orders": CDCTableConfig(
+                batch_size=20,
+                operations=OperationWeights(insert=1, update=0, delete=5),
+            ),
+        },
+    )
+
+
 class TestMultiTableSeedConsistency:
     """Verify that CDC pre-images match initial snapshot for multi-table plans.
 
     Regression test for seed mismatch: generate_initial_snapshot uses
-    table_spec.seed (plan.seed + i) but generate_cdc_batch_for_table
-    was using plan.base_plan.seed for all tables.
+    table_spec.seed (plan.seed + i) but generate_cdc_batch_for_table,
+    generate_cdc_bulk, and generate_expected_state were all using
+    plan.base_plan.seed for all tables.
     """
 
     def test_second_table_delete_preimage_matches_initial(self, spark):
-        """Delete pre-image for 2nd table must match its initial snapshot values."""
-        # Two tables — the bug only manifests for table index > 0
-        base = DataGenPlan(
-            seed=42,
-            tables=[
-                TableSpec(
-                    name="customers",
-                    rows=50,
-                    primary_key=PrimaryKey(columns=["cid"]),
-                    columns=[
-                        ColumnSpec(name="cid", gen=SequenceColumn()),
-                        ColumnSpec(name="tier", gen=ValuesColumn(values=["gold", "silver", "bronze"])),
-                    ],
-                ),
-                TableSpec(
-                    name="orders",
-                    rows=100,
-                    primary_key=PrimaryKey(columns=["oid"]),
-                    columns=[
-                        ColumnSpec(name="oid", gen=SequenceColumn()),
-                        ColumnSpec(name="amount", dtype=DataType.INT, gen=RangeColumn(min=10, max=500)),
-                    ],
-                ),
-            ],
-        )
-        plan = CDCPlan(
-            base_plan=base,
-            num_batches=5,
-            table_configs={
-                "orders": CDCTableConfig(
-                    batch_size=20,
-                    operations=OperationWeights(insert=1, update=0, delete=5),
-                ),
-            },
-        )
+        """generate_cdc: delete pre-image for 2nd table must match its initial snapshot."""
+        plan = _multi_table_seed_plan()
         stream = generate_cdc(spark, plan)
 
-        # Get initial values for "orders" (2nd table, index=1)
-        initial_orders = stream.initial["orders"].drop("_op", "_batch_id", "_ts")
-        initial_map = {r.oid: r.amount for r in initial_orders.collect()}
+        initial_map = {r.oid: r.amount for r in stream.initial["orders"].collect()}
 
-        # Find deletes in first few batches — these should have pre-image
-        # values matching the initial snapshot
         for batch_id in range(1, 4):
             batch = stream.batches[batch_id - 1]
             if "orders" not in batch:
@@ -714,6 +715,59 @@ class TestMultiTableSeedConsistency:
                         f"initial={initial_map[row.oid]}, delete pre-image={row.amount}. "
                         f"This indicates a seed mismatch between initial snapshot and CDC generation."
                     )
-            return  # Found deletes, test passed
-        # If no deletes found in 3 batches with delete weight=5, something is wrong
+            return
         raise AssertionError("No deletes found for orders table in first 3 batches")
+
+    def test_bulk_path_matches_non_bulk_for_second_table(self, spark):
+        """generate_cdc_bulk must produce the same insert values as generate_cdc.
+
+        Covers the bulk path at cdc.py:_generate_chunk_for_table, which was
+        silently using plan.base_plan.seed instead of table_spec.seed.
+        """
+        plan = _multi_table_seed_plan()
+        per_batch = generate_cdc(spark, plan)
+        bulk = generate_cdc_bulk(spark, plan, chunk_size=5)
+
+        per_inserts = {}
+        for b in per_batch.batches:
+            if "orders" not in b:
+                continue
+            for r in b["orders"].filter("_op = 'I'").collect():
+                per_inserts[r.oid] = r.amount
+
+        bulk_inserts = {}
+        for chunk in bulk.batches:
+            if "orders" not in chunk:
+                continue
+            for r in chunk["orders"].filter("_op = 'I'").collect():
+                bulk_inserts[r.oid] = r.amount
+
+        assert per_inserts, "No inserts collected from non-bulk path"
+        assert set(per_inserts.keys()) == set(bulk_inserts.keys()), (
+            "Bulk path emitted different insert PKs than the non-bulk path"
+        )
+        for oid, amount in per_inserts.items():
+            assert bulk_inserts[oid] == amount, (
+                f"Bulk vs non-bulk mismatch for oid={oid}: "
+                f"non-bulk={amount}, bulk={bulk_inserts[oid]}. "
+                f"This indicates the bulk path is using the wrong seed for table index > 0."
+            )
+
+    def test_expected_state_matches_initial_for_second_table(self, spark):
+        """generate_expected_state at batch_id=0 must match the initial snapshot.
+
+        Covers the oracle at cdc.py:_generate_expected_state_driver, which was
+        silently using plan.base_plan.seed instead of table_spec.seed.
+        """
+        plan = _multi_table_seed_plan()
+        stream = generate_cdc(spark, plan)
+
+        initial_map = {r.oid: r.amount for r in stream.initial["orders"].collect()}
+        state = generate_expected_state(spark, plan, "orders", batch_id=0)
+        state_map = {r.oid: r.amount for r in state.collect()}
+
+        assert state_map == initial_map, (
+            "generate_expected_state(batch_id=0) disagrees with the initial snapshot "
+            "for the 2nd table. This indicates the oracle is using the wrong seed "
+            "for table index > 0."
+        )
