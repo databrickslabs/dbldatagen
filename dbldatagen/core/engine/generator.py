@@ -544,17 +544,24 @@ def _build_struct_column(
     """Build a Spark struct from child ColumnSpecs."""
     field_cols: list[Column] = []
     for field_spec in gen.fields:
-        child_seed = (
-            derive_column_seed(parent_seed, "", field_spec.name) if isinstance(parent_seed, int) else parent_seed
-        )
+        child_seed: int | Column
+        if isinstance(parent_seed, int):
+            child_seed = derive_column_seed(parent_seed, "", field_spec.name)
+        else:
+            # Column seed (fused multi-batch CDC path): cannot run the
+            # polynomial hash in Spark SQL under ANSI mode, so XOR with a
+            # Python-precomputed per-field hash — same pattern as
+            # _build_array_column and null_mask_expr.
+            field_hash = derive_column_seed(0, "", field_spec.name)
+            child_seed = parent_seed.bitwiseXOR(F.lit(field_hash).cast("long"))
         child_expr = build_column_expr(
             field_spec,
             id_col,
-            child_seed,  # type: ignore[arg-type]
+            child_seed,
             row_count,
             global_seed,
         )
-        child_expr = apply_null_fraction(child_expr, child_seed, id_col, field_spec.null_fraction)  # type: ignore[arg-type]
+        child_expr = apply_null_fraction(child_expr, child_seed, id_col, field_spec.null_fraction)
         field_cols.append(child_expr.alias(field_spec.name))
     return F.struct(*field_cols)
 

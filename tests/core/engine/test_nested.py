@@ -316,3 +316,82 @@ class TestSchemaSerialize:
         assert isinstance(arr_col.gen, ArrayColumn)
         assert arr_col.gen.min_length == 1
         assert arr_col.gen.max_length == 4
+
+
+# ---------------------------------------------------------------------------
+# Regression: sibling struct fields must NOT collapse on the Column-seed path
+# ---------------------------------------------------------------------------
+
+
+class TestStructFieldSeedIndependence:
+    """Regression: ``_build_struct_column`` was passing the parent ``Column``
+    seed through unchanged to every field, so sibling fields shared a
+    per-cell seed on the fused multi-batch CDC path. Two identically-valued
+    fields would then produce 100% agreement instead of ~1/n agreement.
+    """
+
+    def test_struct_fields_independent_on_column_seed(self, spark):
+        from dbldatagen.core.engine.generator import _build_struct_column
+
+        gen = StructColumn(
+            fields=[
+                text("a", values=["x", "y", "z", "w", "v"]),
+                text("b", values=["x", "y", "z", "w", "v"]),
+            ]
+        )
+        # Mimic the fused multi-batch CDC seed: a Column, not an int.
+        parent_seed = F.xxhash64(F.lit(424242).cast("long"), F.col("id"))
+        struct_col = _build_struct_column(gen, F.col("id"), parent_seed, row_count=500, global_seed=1)
+        df = spark.range(500).select(struct_col.alias("s"))
+        rows = df.collect()
+        matches = sum(1 for r in rows if r.s.a == r.s.b)
+        # Independent fields with 5 values each should match on ~1/5 of rows.
+        # The buggy code would give 100% matches.
+        assert matches / len(rows) < 0.5, (
+            f"Sibling struct fields 'a' and 'b' agreed on {matches}/{len(rows)} rows "
+            f"(~100% indicates the Column-seed path is not mixing field names)."
+        )
+
+    def test_struct_fields_independent_in_multi_batch_cdc(self, spark):
+        """End-to-end check via generate_cdc with num_batches=3, which routes
+        through the fused multi-batch path (``_build_exprs_dynamic``).
+        """
+        from dbldatagen.core.engine.cdc import generate_cdc
+
+        plan = DataGenPlan(
+            seed=7,
+            tables=[
+                TableSpec(
+                    name="items",
+                    rows=300,
+                    primary_key=PrimaryKey(columns=["item_id"]),
+                    columns=[
+                        pk_auto("item_id"),
+                        ColumnSpec(
+                            name="payload",
+                            gen=StructColumn(
+                                fields=[
+                                    text("left", values=["x", "y", "z", "w", "v"]),
+                                    text("right", values=["x", "y", "z", "w", "v"]),
+                                ]
+                            ),
+                        ),
+                    ],
+                ),
+            ],
+        )
+        stream = generate_cdc(spark, plan, num_batches=3)
+        # Gather all insert rows across batches (batches use the Column-seed path)
+        matches = 0
+        total = 0
+        for batch in stream.batches:
+            df = batch["items"].filter("_op = 'I'")
+            for row in df.collect():
+                total += 1
+                if row.payload.left == row.payload.right:
+                    matches += 1
+        assert total > 0, "no insert rows collected from fused CDC batches"
+        assert matches / total < 0.5, (
+            f"Sibling struct fields in fused CDC agreed on {matches}/{total} inserts "
+            f"(~100% indicates struct-field seeds collapse on the Column path)."
+        )
