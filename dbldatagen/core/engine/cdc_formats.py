@@ -68,9 +68,6 @@ def to_sql_server(df: DataFrame) -> DataFrame:
     either tolerate the randomization or swap in a rank-based seqval
     downstream.  Consumers using seqval only for dedup (row identity)
     are unaffected.
-
-    See ``notes/future-work.md`` for the proposed follow-ups (opt-in
-    deterministic seqval flag, post-hoc ``reseqval`` helper).
     """
     operation = (
         F.when(F.col("_op") == "I", F.lit(2))
