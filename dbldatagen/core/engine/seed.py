@@ -41,7 +41,7 @@ def derive_column_seed(global_seed: int, table_name: str, column_name: str) -> i
         h = ((h * 31) + ord(c)) & 0xFFFFFFFFFFFFFFFF
     for c in column_name:
         h = ((h * 37) + ord(c)) & 0xFFFFFFFFFFFFFFFF
-    return _to_signed64(h)
+    return to_signed64(h)
 
 
 def cell_seed_expr(column_seed: int | Column, id_col: Column | str = "id") -> Column:
@@ -105,11 +105,11 @@ def compute_batch_seed(global_seed: int, batch_id: int) -> int:
     if batch_id == 0:
         return global_seed
     raw = global_seed + batch_id * _BATCH_SEED_STRIDE
-    return _to_signed64(raw)
+    return to_signed64(raw)
 
 
-def _to_signed64(n: int) -> int:
-    """Convert an unsigned 64-bit int to a signed 64-bit int (Java long range)."""
+def to_signed64(n: int) -> int:
+    """Convert an arbitrary Python int to a signed 64-bit int (Java long range)."""
     n = n & 0xFFFFFFFFFFFFFFFF
     if n >= 0x8000000000000000:
         return n - 0x10000000000000000

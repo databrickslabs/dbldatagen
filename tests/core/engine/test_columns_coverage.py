@@ -244,3 +244,40 @@ class TestUUIDColumnSeedAsColumn:
         uuid_re = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
         for r in result:
             assert uuid_re.match(r.uuid), f"Invalid UUID format: {r.uuid}"
+
+    def test_uuid_seed_at_long_max_produces_valid_uuids(self, spark):
+        """column_seed == Long.MAX_VALUE (int branch) must not overflow seed + 1.
+
+        Without the to_signed64 clamp, ``column_seed + 1`` = 2**63, which is
+        out of signed-64 range — F.lit/cast("long") rejects it before any rows
+        are produced.  With the clamp, MAX wraps to MIN and rows are produced
+        as valid UUIDs.
+        """
+        long_max = 2**63 - 1
+        df = spark.range(20)
+        col = build_uuid_column("id", long_max)
+        rows = df.select(col.alias("u")).collect()
+        uuid_re = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
+        for r in rows:
+            assert uuid_re.match(r.u), f"Invalid UUID format: {r.u}"
+
+    def test_uuid_column_seed_at_long_max_produces_valid_uuids(self, spark):
+        """Column-typed column_seed carrying Long.MAX_VALUE must also wrap cleanly.
+
+        ANSI is toggled on for this test so the bug actually reproduces: under
+        ANSI, a naive ``seed + 1`` on a MAX row raises ARITHMETIC_OVERFLOW in
+        Catalyst.  In non-ANSI mode (Spark 3.x default) the add silently wraps,
+        which would hide the fix — so we force ANSI here.
+        """
+        prev_ansi = spark.conf.get("spark.sql.ansi.enabled", "false")
+        spark.conf.set("spark.sql.ansi.enabled", "true")
+        try:
+            long_max = 2**63 - 1
+            df = spark.range(20).withColumn("_seed", F.lit(long_max).cast("long"))
+            col = build_uuid_column(F.col("id"), F.col("_seed"))
+            rows = df.select(col.alias("u")).collect()
+            uuid_re = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
+            for r in rows:
+                assert uuid_re.match(r.u), f"Invalid UUID format: {r.u}"
+        finally:
+            spark.conf.set("spark.sql.ansi.enabled", prev_ansi)
