@@ -12,8 +12,8 @@ from dbldatagen.core.engine.generator import generate_table
 from dbldatagen.core.engine.planner import resolve_plan
 from dbldatagen.core.spec.schema import (
     ColumnSpec,
-    ConstantColumn,
     DataGenPlan,
+    ForeignKeyColumn,
     ForeignKeyRef,
     PatternColumn,
     PrimaryKey,
@@ -51,7 +51,7 @@ class TestFKValuesAreValidPKs:
                 ColumnSpec(name="order_id", gen=SequenceColumn(start=1, step=1)),
                 ColumnSpec(
                     name="customer_id",
-                    gen=ConstantColumn(value=None),
+                    gen=ForeignKeyColumn(),
                     foreign_key=ForeignKeyRef(ref="customers.customer_id", distribution=Uniform()),
                 ),
             ],
@@ -88,7 +88,7 @@ class TestFKValuesAreValidPKs:
                 ColumnSpec(name="oid", gen=SequenceColumn(start=1, step=1)),
                 ColumnSpec(
                     name="cid",
-                    gen=ConstantColumn(value=None),
+                    gen=ForeignKeyColumn(),
                     foreign_key=ForeignKeyRef(ref="customers.cid", distribution=Uniform()),
                 ),
             ],
@@ -121,7 +121,7 @@ class TestFKValuesAreValidPKs:
                 ColumnSpec(name="oid", gen=SequenceColumn(start=1, step=1)),
                 ColumnSpec(
                     name="uid",
-                    gen=ConstantColumn(value=None),
+                    gen=ForeignKeyColumn(),
                     foreign_key=ForeignKeyRef(ref="customers.uid", distribution=Uniform()),
                 ),
             ],
@@ -155,7 +155,7 @@ class TestFKNullable:
                 ColumnSpec(name="oid", gen=SequenceColumn(start=1, step=1)),
                 ColumnSpec(
                     name="cid",
-                    gen=ConstantColumn(value=None),
+                    gen=ForeignKeyColumn(),
                     foreign_key=ForeignKeyRef(
                         ref="customers.cid",
                         nullable=True,
@@ -191,7 +191,7 @@ class TestFKDeterminism:
                 ColumnSpec(name="oid", gen=SequenceColumn(start=1, step=1)),
                 ColumnSpec(
                     name="cid",
-                    gen=ConstantColumn(value=None),
+                    gen=ForeignKeyColumn(),
                     foreign_key=ForeignKeyRef(ref="customers.cid"),
                 ),
             ],
@@ -225,7 +225,7 @@ class TestFKZipfDistribution:
                 ColumnSpec(name="oid", gen=SequenceColumn(start=1, step=1)),
                 ColumnSpec(
                     name="cid",
-                    gen=ConstantColumn(value=None),
+                    gen=ForeignKeyColumn(),
                     foreign_key=ForeignKeyRef(ref="customers.cid", distribution=Zipf(exponent=1.5)),
                 ),
             ],

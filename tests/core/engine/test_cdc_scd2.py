@@ -10,9 +10,9 @@ from dbldatagen.core.engine.cdc import generate_cdc, generate_expected_state
 from dbldatagen.core.spec.cdc_schema import CDCPlan, CDCTableConfig, OperationWeights
 from dbldatagen.core.spec.schema import (
     ColumnSpec,
-    ConstantColumn,
     DataGenPlan,
     DataType,
+    ForeignKeyColumn,
     ForeignKeyRef,
     PrimaryKey,
     RangeColumn,
@@ -196,7 +196,7 @@ class TestSCD2MultiTable:
                         ColumnSpec(name="order_id", gen=SequenceColumn()),
                         ColumnSpec(
                             name="cust_id",
-                            gen=ConstantColumn(value=None),
+                            gen=ForeignKeyColumn(),
                             foreign_key=ForeignKeyRef(ref="dim_customer.cust_id"),
                         ),
                         ColumnSpec(name="amount", dtype=DataType.INT, gen=RangeColumn(min=10, max=1000)),

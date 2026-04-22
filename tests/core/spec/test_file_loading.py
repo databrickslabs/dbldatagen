@@ -13,6 +13,7 @@ from dbldatagen.core.spec.schema import (
     ConstantColumn,
     DataGenPlan,
     DataType,
+    ForeignKeyColumn,
     ForeignKeyRef,
     PrimaryKey,
     RangeColumn,
@@ -151,7 +152,7 @@ class TestRoundTrip:
                 ColumnSpec(name="order_id", gen=SequenceColumn(start=1, step=1)),
                 ColumnSpec(
                     name="customer_id",
-                    gen=ConstantColumn(value=None),
+                    gen=ForeignKeyColumn(),
                     foreign_key=ForeignKeyRef(ref="customers.customer_id"),
                 ),
                 ColumnSpec(

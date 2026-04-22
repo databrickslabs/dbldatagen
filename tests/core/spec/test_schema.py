@@ -11,6 +11,7 @@ from dbldatagen.core.spec.schema import (
     Exponential,
     ExpressionColumn,
     FakerColumn,
+    ForeignKeyColumn,
     ForeignKeyRef,
     LogNormal,
     Normal,
@@ -238,7 +239,7 @@ class TestColumnSpec:
 
     def test_column_with_foreign_key(self):
         fk_ref = ForeignKeyRef(ref="customers.id")
-        col = ColumnSpec(name="customer_id", gen=ConstantColumn(value=None), foreign_key=fk_ref)
+        col = ColumnSpec(name="customer_id", gen=ForeignKeyColumn(), foreign_key=fk_ref)
         assert col.foreign_key is not None
         assert col.foreign_key.ref == "customers.id"
 
@@ -454,7 +455,7 @@ class TestJsonRoundTrip:
                         ColumnSpec(name="id", gen=UUIDColumn()),
                         ColumnSpec(
                             name="t1_id",
-                            gen=ConstantColumn(value=None),
+                            gen=ForeignKeyColumn(),
                             foreign_key=ForeignKeyRef(ref="t1.id"),
                         ),
                     ],

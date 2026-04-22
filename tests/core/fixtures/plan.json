@@ -31,7 +31,7 @@
         },
         {
           "name": "customer_id",
-          "gen": { "strategy": "constant", "value": null },
+          "gen": { "strategy": "foreign_key" },
           "foreign_key": {
             "ref": "customers.customer_id",
             "distribution": { "type": "zipf", "exponent": 1.2 }

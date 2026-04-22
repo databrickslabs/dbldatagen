@@ -16,10 +16,10 @@ from dbldatagen.core.engine.cdc import (
 from dbldatagen.core.spec.cdc_schema import CDCPlan, CDCTableConfig, OperationWeights
 from dbldatagen.core.spec.schema import (
     ColumnSpec,
-    ConstantColumn,
     DataGenPlan,
     DataType,
     FakerColumn,
+    ForeignKeyColumn,
     ForeignKeyRef,
     PatternColumn,
     PrimaryKey,
@@ -73,7 +73,7 @@ def _fk_plan(seed=42):
                     ColumnSpec(name="order_id", gen=SequenceColumn()),
                     ColumnSpec(
                         name="cust_id",
-                        gen=ConstantColumn(value=None),
+                        gen=ForeignKeyColumn(),
                         foreign_key=ForeignKeyRef(ref="customers.cust_id"),
                     ),
                     ColumnSpec(name="amount", dtype=DataType.INT, gen=RangeColumn(min=1, max=1000)),

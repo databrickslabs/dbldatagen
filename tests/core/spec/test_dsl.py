@@ -15,10 +15,10 @@ from dbldatagen.core.spec.dsl import (
 )
 from dbldatagen.core.spec.schema import (
     ColumnSpec,
-    ConstantColumn,
     DataType,
     ExpressionColumn,
     FakerColumn,
+    ForeignKeyColumn,
     ForeignKeyRef,
     PatternColumn,
     RangeColumn,
@@ -125,10 +125,9 @@ class TestFk:
         assert isinstance(col.foreign_key.distribution, Zipf)
         assert col.foreign_key.distribution.exponent == 2.0
 
-    def test_placeholder_gen_is_constant(self):
+    def test_gen_is_foreign_key_column(self):
         col = fk("cid", "c.id")
-        assert isinstance(col.gen, ConstantColumn)
-        assert col.gen.value is None
+        assert isinstance(col.gen, ForeignKeyColumn)
 
     def test_nullable_passthrough(self):
         col = fk("cid", "c.id", nullable=True)

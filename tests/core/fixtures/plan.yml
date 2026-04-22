@@ -34,8 +34,7 @@ tables:
           step: 1
       - name: customer_id
         gen:
-          strategy: constant
-          value: null
+          strategy: foreign_key
         foreign_key:
           ref: customers.customer_id
           distribution:

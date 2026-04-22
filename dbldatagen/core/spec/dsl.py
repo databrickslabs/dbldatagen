@@ -6,11 +6,11 @@ from dbldatagen.core.spec.schema import (
     ArrayColumn,
     ColumnSpec,
     ColumnStrategy,
-    ConstantColumn,
     DataType,
     Distribution,
     ExpressionColumn,
     FakerColumn,
+    ForeignKeyColumn,
     ForeignKeyRef,
     PatternColumn,
     RangeColumn,
@@ -56,13 +56,9 @@ def fk(
 
     The dtype and generation strategy are inferred from the referenced PK at plan resolution time.
     """
-    # TODO: Replace ConstantColumn sentinel with a dedicated ForeignKeyColumn
-    # strategy type.  Currently the generator checks `foreign_key is not None`
-    # before looking at `gen`, so this placeholder is never evaluated.  But if
-    # a future code path skips that check, the column silently becomes all NULLs.
     return ColumnSpec(
         name=name,
-        gen=ConstantColumn(value=None),  # sentinel — never evaluated; see TODO above
+        gen=ForeignKeyColumn(),
         foreign_key=ForeignKeyRef(
             ref=ref,
             nullable=nullable,

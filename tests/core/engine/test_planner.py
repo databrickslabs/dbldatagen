@@ -12,6 +12,7 @@ from dbldatagen.core.spec.schema import (
     ConstantColumn,
     DataGenPlan,
     ExpressionColumn,
+    ForeignKeyColumn,
     ForeignKeyRef,
     PatternColumn,
     PrimaryKey,
@@ -41,7 +42,7 @@ def _make_simple_plan():
             ColumnSpec(name="order_id", gen=SequenceColumn(start=1, step=1)),
             ColumnSpec(
                 name="customer_id",
-                gen=ConstantColumn(value=None),
+                gen=ForeignKeyColumn(),
                 foreign_key=ForeignKeyRef(ref="customers.customer_id"),
             ),
         ],
@@ -96,7 +97,7 @@ class TestResolveStarSchema:
                 ColumnSpec(name="order_id", gen=SequenceColumn()),
                 ColumnSpec(
                     name="customer_id",
-                    gen=ConstantColumn(value=None),
+                    gen=ForeignKeyColumn(),
                     foreign_key=ForeignKeyRef(ref="customers.customer_id"),
                 ),
             ],
@@ -109,12 +110,12 @@ class TestResolveStarSchema:
                 ColumnSpec(name="item_id", gen=SequenceColumn()),
                 ColumnSpec(
                     name="order_id",
-                    gen=ConstantColumn(value=None),
+                    gen=ForeignKeyColumn(),
                     foreign_key=ForeignKeyRef(ref="orders.order_id"),
                 ),
                 ColumnSpec(
                     name="product_id",
-                    gen=ConstantColumn(value=None),
+                    gen=ForeignKeyColumn(),
                     foreign_key=ForeignKeyRef(ref="products.product_id"),
                 ),
             ],
@@ -141,7 +142,7 @@ class TestCycleDetection:
                 ColumnSpec(name="id", gen=SequenceColumn()),
                 ColumnSpec(
                     name="b_id",
-                    gen=ConstantColumn(value=None),
+                    gen=ForeignKeyColumn(),
                     foreign_key=ForeignKeyRef(ref="b.id"),
                 ),
             ],
@@ -154,7 +155,7 @@ class TestCycleDetection:
                 ColumnSpec(name="id", gen=SequenceColumn()),
                 ColumnSpec(
                     name="a_id",
-                    gen=ConstantColumn(value=None),
+                    gen=ForeignKeyColumn(),
                     foreign_key=ForeignKeyRef(ref="a.id"),
                 ),
             ],
@@ -175,7 +176,7 @@ class TestMissingRef:
                 ColumnSpec(name="order_id", gen=SequenceColumn()),
                 ColumnSpec(
                     name="customer_id",
-                    gen=ConstantColumn(value=None),
+                    gen=ForeignKeyColumn(),
                     foreign_key=ForeignKeyRef(ref="nonexistent.id"),
                 ),
             ],
@@ -201,7 +202,7 @@ class TestMissingRef:
                 ColumnSpec(name="order_id", gen=SequenceColumn()),
                 ColumnSpec(
                     name="customer_id",
-                    gen=ConstantColumn(value=None),
+                    gen=ForeignKeyColumn(),
                     foreign_key=ForeignKeyRef(ref="customers.nonexistent"),
                 ),
             ],
@@ -240,7 +241,7 @@ class TestPKMetadataExtraction:
                 ColumnSpec(name="oid", gen=SequenceColumn()),
                 ColumnSpec(
                     name="cid",
-                    gen=ConstantColumn(value=None),
+                    gen=ForeignKeyColumn(),
                     foreign_key=ForeignKeyRef(ref="customers.cid"),
                 ),
             ],
@@ -269,7 +270,7 @@ class TestPKMetadataExtraction:
                 ColumnSpec(name="oid", gen=SequenceColumn()),
                 ColumnSpec(
                     name="uid",
-                    gen=ConstantColumn(value=None),
+                    gen=ForeignKeyColumn(),
                     foreign_key=ForeignKeyRef(ref="customers.uid"),
                 ),
             ],

@@ -228,6 +228,20 @@ class ConstantColumn(BaseModel):
     value: Any
 
 
+class ForeignKeyColumn(BaseModel):
+    """Marker strategy for columns whose values are resolved from ``foreign_key``.
+
+    The actual generation — dtype inference, distribution, null fraction,
+    and the lookup into the parent table's PK — is driven by
+    ``ColumnSpec.foreign_key`` at plan resolution time.  This strategy
+    exists so FK columns have a real type in the ``ColumnStrategy`` union
+    instead of a ``ConstantColumn(value=None)`` sentinel that would
+    silently produce all-NULL output if FK resolution were ever skipped.
+    """
+
+    strategy: Literal["foreign_key"] = "foreign_key"
+
+
 class StructColumn(BaseModel):
     """Group child columns into a Spark struct (nested object in JSON).
 
@@ -278,6 +292,7 @@ ColumnStrategy = Annotated[
     | ExpressionColumn
     | TimestampColumn
     | ConstantColumn
+    | ForeignKeyColumn
     | StructColumn
     | ArrayColumn,
     Field(discriminator="strategy"),
@@ -371,6 +386,27 @@ class ColumnSpec(BaseModel):
         # This avoids requiring users to always set both fields explicitly.
         if self.null_fraction > 0 and not self.nullable:
             self.nullable = True
+        return self
+
+    @model_validator(mode="after")
+    def validate_foreign_key_strategy(self) -> ColumnSpec:
+        # Both directions of the ForeignKeyColumn <-> foreign_key invariant:
+        # the strategy and the FK spec must travel together so legacy plans
+        # that used `ConstantColumn(value=None) + foreign_key` fail loudly
+        # at load time instead of silently working until someone drops the
+        # foreign_key and the column quietly becomes all-NULL.
+        if isinstance(self.gen, ForeignKeyColumn) and self.foreign_key is None:
+            raise ValueError(
+                f"Column '{self.name}' uses ForeignKeyColumn strategy but has no "
+                f"foreign_key set. Use the fk() helper, or set foreign_key=ForeignKeyRef(...)."
+            )
+        if self.foreign_key is not None and not isinstance(self.gen, ForeignKeyColumn):
+            raise ValueError(
+                f"Column '{self.name}' has foreign_key set but gen is "
+                f"{type(self.gen).__name__}. FK columns must use "
+                f"ForeignKeyColumn (or the fk() DSL helper); the "
+                f"old `ConstantColumn(value=None)` placeholder is no longer accepted."
+            )
         return self
 
 

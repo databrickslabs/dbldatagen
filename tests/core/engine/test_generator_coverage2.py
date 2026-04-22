@@ -26,6 +26,7 @@ from dbldatagen.core.spec.schema import (
     ColumnSpec,
     DataGenPlan,
     DataType,
+    ForeignKeyColumn,
     ForeignKeyRef,
     PrimaryKey,
     RangeColumn,
@@ -73,7 +74,7 @@ class TestFKColumnNoResolution:
                 ColumnSpec(
                     name="customer_id",
                     dtype=DataType.LONG,
-                    gen=RangeColumn(min=1, max=100),
+                    gen=ForeignKeyColumn(),
                     foreign_key=ForeignKeyRef(ref="customers.id"),
                 ),
             ],
@@ -149,7 +150,7 @@ class TestBuildExprsScalarBranches:
                 ColumnSpec(name="pk", gen=SequenceColumn(start=1, step=1)),
                 ColumnSpec(
                     name="ref_id",
-                    gen=RangeColumn(min=1, max=10),
+                    gen=ForeignKeyColumn(),
                     foreign_key=ForeignKeyRef(ref="other.id"),
                 ),
             ],
@@ -209,7 +210,7 @@ class TestBuildExprsDynamic:
                 ColumnSpec(name="pk", gen=SequenceColumn(start=1, step=1)),
                 ColumnSpec(
                     name="ref_id",
-                    gen=RangeColumn(min=1, max=10),
+                    gen=ForeignKeyColumn(),
                     foreign_key=ForeignKeyRef(ref="other.id"),
                 ),
             ],

@@ -12,6 +12,7 @@ from dbldatagen.core.spec.schema import (
     ConstantColumn,
     DataGenPlan,
     DataType,
+    ForeignKeyColumn,
     ForeignKeyRef,
     PrimaryKey,
     RangeColumn,
@@ -41,7 +42,7 @@ def _customers_orders_plan():
             ColumnSpec(name="order_id", gen=SequenceColumn(start=1, step=1)),
             ColumnSpec(
                 name="customer_id",
-                gen=ConstantColumn(value=None),
+                gen=ForeignKeyColumn(),
                 foreign_key=ForeignKeyRef(ref="customers.customer_id"),
             ),
             ColumnSpec(
@@ -102,7 +103,7 @@ class TestStarSchema:
                 ColumnSpec(name="order_id", gen=SequenceColumn(start=1, step=1)),
                 ColumnSpec(
                     name="customer_id",
-                    gen=ConstantColumn(value=None),
+                    gen=ForeignKeyColumn(),
                     foreign_key=ForeignKeyRef(ref="customers.customer_id"),
                 ),
             ],
@@ -115,12 +116,12 @@ class TestStarSchema:
                 ColumnSpec(name="item_id", gen=SequenceColumn(start=1, step=1)),
                 ColumnSpec(
                     name="order_id",
-                    gen=ConstantColumn(value=None),
+                    gen=ForeignKeyColumn(),
                     foreign_key=ForeignKeyRef(ref="orders.order_id"),
                 ),
                 ColumnSpec(
                     name="product_id",
-                    gen=ConstantColumn(value=None),
+                    gen=ForeignKeyColumn(),
                     foreign_key=ForeignKeyRef(ref="products.product_id", distribution=Zipf(exponent=1.3)),
                 ),
             ],

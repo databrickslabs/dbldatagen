@@ -8,8 +8,8 @@ from dbldatagen.core.engine.generator import generate_table
 from dbldatagen.core.engine.planner import resolve_plan
 from dbldatagen.core.spec.schema import (
     ColumnSpec,
-    ConstantColumn,
     DataGenPlan,
+    ForeignKeyColumn,
     ForeignKeyRef,
     PrimaryKey,
     SequenceColumn,
@@ -37,7 +37,7 @@ class TestValidDataPasses:
                 ColumnSpec(name="oid", gen=SequenceColumn(start=1, step=1)),
                 ColumnSpec(
                     name="cid",
-                    gen=ConstantColumn(value=None),
+                    gen=ForeignKeyColumn(),
                     foreign_key=ForeignKeyRef(ref="customers.cid"),
                 ),
             ],
@@ -71,7 +71,7 @@ class TestOrphanFKDetected:
                 ColumnSpec(name="oid", gen=SequenceColumn(start=1, step=1)),
                 ColumnSpec(
                     name="cid",
-                    gen=ConstantColumn(value=None),
+                    gen=ForeignKeyColumn(),
                     foreign_key=ForeignKeyRef(ref="customers.cid"),
                 ),
             ],
@@ -109,7 +109,7 @@ class TestMissingTable:
                 ColumnSpec(name="oid", gen=SequenceColumn(start=1, step=1)),
                 ColumnSpec(
                     name="cid",
-                    gen=ConstantColumn(value=None),
+                    gen=ForeignKeyColumn(),
                     foreign_key=ForeignKeyRef(ref="customers.cid"),
                 ),
             ],
@@ -145,7 +145,7 @@ class TestMissingParentTable:
                 ColumnSpec(name="oid", gen=SequenceColumn(start=1, step=1)),
                 ColumnSpec(
                     name="cid",
-                    gen=ConstantColumn(value=None),
+                    gen=ForeignKeyColumn(),
                     foreign_key=ForeignKeyRef(ref="customers.cid"),
                 ),
             ],

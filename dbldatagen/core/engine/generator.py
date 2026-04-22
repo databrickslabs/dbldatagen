@@ -46,6 +46,7 @@ from dbldatagen.core.spec.schema import (
     DataType,
     ExpressionColumn,
     FakerColumn,
+    ForeignKeyColumn,
     PatternColumn,
     RangeColumn,
     SequenceColumn,
@@ -523,6 +524,18 @@ def build_column_expr(  # noqa: PLR0911
     if isinstance(gen, ConstantColumn):
         return build_constant_column(gen.value)
 
+    if isinstance(gen, ForeignKeyColumn):
+        # FK columns are resolved earlier via ColumnSpec.foreign_key in
+        # _build_fk_column_expr. Reaching dispatch means either the column
+        # had no foreign_key set (should have been caught by ColumnSpec's
+        # validator) or the FK loop short-circuit was bypassed.
+        raise RuntimeError(
+            f"ForeignKeyColumn '{col_spec.name}' reached build_column_expr — "
+            f"FK resolution must run before column-strategy dispatch. "
+            f"Check that ColumnSpec.foreign_key is set and the planner has "
+            f"produced an FKResolution for this column."
+        )
+
     if isinstance(gen, StructColumn):
         return _build_struct_column(gen, id_col, column_seed, row_count, global_seed)
 
@@ -532,7 +545,7 @@ def build_column_expr(  # noqa: PLR0911
     raise ValueError(
         f"Unsupported column strategy '{gen.strategy}' for column '{col_spec.name}'. "
         f"Supported: range, values, faker, pattern, sequence, uuid, expression, "
-        f"timestamp, constant, struct, array."
+        f"timestamp, constant, foreign_key, struct, array."
     )
 
 
