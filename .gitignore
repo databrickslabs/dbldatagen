@@ -55,3 +55,9 @@ htmlcov/
 
 # UV-specific
 uv.toml
+
+# Local-only scratch: design notes, review queues, session todos
+notes/
+queue.md
+review_pr.md
+tasks/
