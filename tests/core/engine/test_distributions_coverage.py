@@ -14,6 +14,7 @@ from dbldatagen.core.engine.distributions import (
     _array_index,
     apply_distribution,
     exponential_sample_expr,
+    lognormal_sample_expr,
     normal_sample_expr,
     uniform_sample,
     weighted_sample_expr,
@@ -194,11 +195,34 @@ class TestApplyDistribution:
         assert all(0 <= v < n for v in values)
 
     def test_lognormal_distribution(self, spark):
-        """Lines 173-175: LogNormal uses exponential stand-in."""
+        """LogNormal dispatches to lognormal_sample_expr."""
         n = 20
         df = spark.range(50).select(apply_distribution(F.col("id"), n, LogNormal(stddev=1.5)).alias("val"))
         values = [row.val for row in df.collect()]
         assert all(0 <= v < n for v in values)
+
+    def test_lognormal_is_not_exponential(self, spark):
+        """Regression: LogNormal used to dispatch to exponential_sample_expr.
+
+        With identical params the two distributions must produce observably
+        different samples — otherwise the public LogNormal type in the
+        pydantic Distribution union is silently a second Exponential.
+        """
+        n = 50
+        seed = F.xxhash64(F.col("id"))
+        df = spark.range(500).select(
+            apply_distribution(seed, n, LogNormal(mean=0.0, stddev=1.0)).alias("ln"),
+            apply_distribution(seed, n, Exponential(rate=1.0)).alias("ex"),
+        )
+        rows = df.collect()
+        ln_values = [r.ln for r in rows]
+        ex_values = [r.ex for r in rows]
+        # Disagreement fraction: identical samplers would give 0%.
+        mismatches = sum(1 for a, b in zip(ln_values, ex_values) if a != b)
+        assert mismatches / len(rows) > 0.5, (
+            f"LogNormal and Exponential agreed on {len(rows) - mismatches}/{len(rows)} draws; "
+            "LogNormal is likely still dispatching to the exponential sampler."
+        )
 
     def test_weighted_values_distribution(self, spark):
         """Lines 176-178: WeightedValues falls back to uniform."""
@@ -208,6 +232,67 @@ class TestApplyDistribution:
         )
         values = [row.val for row in df.collect()]
         assert all(0 <= v < n for v in values)
+
+
+# ---------------------------------------------------------------------------
+# lognormal_sample_expr
+# ---------------------------------------------------------------------------
+
+
+class TestLogNormalSampleExpr:
+    def test_n_one_returns_zero(self, spark):
+        df = spark.range(5).select(lognormal_sample_expr(F.col("id"), n=1).alias("val"))
+        values = [row.val for row in df.collect()]
+        assert all(v == 0 for v in values)
+
+    def test_basic_lognormal(self, spark):
+        n = 50
+        seed = F.xxhash64(F.col("id"))
+        df = spark.range(300).select(lognormal_sample_expr(seed, n=n).alias("val"))
+        values = [row.val for row in df.collect()]
+        assert all(0 <= v < n for v in values)
+
+    def test_lognormal_right_skewed(self, spark):
+        """Log-normal is right-skewed: the lower half of [0, n) holds most mass."""
+        n = 100
+        seed = F.xxhash64(F.col("id"))
+        df = spark.range(1000).select(lognormal_sample_expr(seed, n=n).alias("val"))
+        values = [row.val for row in df.collect()]
+        lower_half = sum(1 for v in values if v < n // 2)
+        assert lower_half / len(values) > 0.6, (
+            f"Expected >60% of lognormal draws in the lower half, got {lower_half}/{len(values)}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Exponential shape regression (no modulo wraparound)
+# ---------------------------------------------------------------------------
+
+
+class TestExponentialShape:
+    def test_exponential_no_tail_wraparound(self, spark):
+        """Regression: the sampler used to return F.abs(idx) % n, wrapping
+        tail draws back into early bins. With proper clipping, the last
+        bin absorbs the entire right tail (P(x >= threshold)) and is
+        therefore heavier than the adjacent bin. With wraparound the tail
+        mass is sprayed into early bins instead, so the last bin only
+        holds its thin natural slice and is lighter than its neighbours.
+        """
+        n = 20
+        seed = F.xxhash64(F.col("id"))
+        df = spark.range(10000).select(exponential_sample_expr(seed, n=n, rate=1.0).alias("val"))
+        values = [row.val for row in df.collect()]
+        counts = [0] * n
+        for v in values:
+            counts[v] += 1
+        # Bin 0 should be the mode either way
+        assert counts[0] == max(counts), f"bin 0 is not the mode: counts={counts}"
+        # Under clipping the last bin ≈ 4x its wrapped counterpart
+        assert counts[-1] > counts[-2], (
+            f"Last bin count ({counts[-1]}) did not exceed bin n-2 ({counts[-2]}); "
+            f"expected the last bin to absorb tail mass under clipping. "
+            f"Likely a modulo-wraparound regression. Full histogram: {counts}"
+        )
 
 
 # ---------------------------------------------------------------------------

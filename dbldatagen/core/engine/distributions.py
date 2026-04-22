@@ -7,6 +7,8 @@ Python UDF overhead.
 
 from __future__ import annotations
 
+import math
+
 from pyspark.sql import Column
 from pyspark.sql import functions as F
 
@@ -142,16 +144,43 @@ def exponential_sample_expr(
 ) -> Column:
     """Map a seed to [0, n) with exponential distribution.
 
-    Uses the inverse CDF: x = -ln(1-u)/rate, then scales to [0, n).
+    Uses the inverse CDF: x = -ln(1-u)/rate, then scales to [0, n) and
+    clips the right tail. Clipping (not modulo) preserves the
+    monotonically-decreasing exponential shape — modulo would wrap
+    tail draws back into early bins.
     """
     if n <= 1:
         return F.lit(0)
     u = (F.abs(cell_seed_col) % F.lit(_CONTINUOUS_PRECISION)).cast("double") / F.lit(float(_CONTINUOUS_PRECISION))
     u = F.least(u, F.lit(0.999999))  # avoid log(0)
     x = -F.log(F.lit(1.0) - u) / F.lit(rate)
-    # Normalise to [0, n): map [0, inf) to [0, n) via modulo
+    # Scale so that ~99% of draws (for rate=1) land within [0, n) before clipping.
     idx = F.floor(x * F.lit(float(n) / 5.0)).cast("long")  # /5 to spread nicely
-    return F.abs(idx) % F.lit(n)
+    return F.greatest(F.lit(0), F.least(idx, F.lit(n - 1)))
+
+
+def lognormal_sample_expr(
+    cell_seed_col: Column,
+    n: int,
+    mean: float = 0.0,
+    stddev: float = 1.0,
+) -> Column:
+    """Map a seed to [0, n) with log-normal distribution.
+
+    Samples Z ~ N(mean, stddev), then returns ``floor(exp(Z) * scale)``
+    clipped to [0, n-1]. ``scale`` places the distribution's median
+    (``exp(mean)``) at roughly 10% of n so the heavy right tail fits in
+    range with minimal clipping. Note: the scale is chosen from ``mean``
+    only — very large ``stddev`` values (e.g. >= 3) will clip aggressively.
+    """
+    if n <= 1:
+        return F.lit(0)
+    z = normal_sample_expr(cell_seed_col, mean=mean, stddev=stddev)
+    x = F.exp(z)
+    median = math.exp(mean)
+    scale = float(n) / (median * 10.0)
+    idx = F.floor(x * F.lit(scale)).cast("long")
+    return F.greatest(F.lit(0), F.least(idx, F.lit(n - 1)))
 
 
 # ---------------------------------------------------------------------------
@@ -180,8 +209,7 @@ def apply_distribution(  # noqa: PLR0911
         idx = F.floor(raw).cast("long")
         return F.greatest(F.lit(0), F.least(idx, F.lit(n - 1)))
     if isinstance(distribution, LogNormal):
-        # Use exponential as a stand-in; lognormal is similar in shape
-        return exponential_sample_expr(cell_seed_col, n, distribution.stddev or 1.0)
+        return lognormal_sample_expr(cell_seed_col, n, distribution.mean, distribution.stddev)
     if isinstance(distribution, WeightedValues):
         # WeightedValues is handled at a higher level (needs value list)
         return uniform_sample(cell_seed_col, n)
