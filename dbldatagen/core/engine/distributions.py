@@ -23,7 +23,7 @@ from dbldatagen.core.spec.schema import (
 )
 
 
-# Precision for mapping a seed hash to [0, 1): abs(seed) % P / P.
+# Precision for mapping a seed hash to [0, 1): pmod(seed, P) / P.
 # 10000 gives 0.01% granularity (used for weighted-values selection).
 _UNIFORM_PRECISION = 10_000
 
@@ -42,8 +42,9 @@ def uniform_sample(cell_seed_col: Column, n: int) -> Column:
 
     Uses ``pmod(seed, n)`` (not ``abs(seed) % n``) because
     ``abs(Long.MIN_VALUE)`` overflows under Spark ANSI mode and Spark's
-    ``%`` on a negative dividend returns a negative remainder.  Bias is
-    negligible for ``n << 2^63``.
+    ``%`` on a negative dividend returns a negative remainder.  Output is
+    uniform on ``[0, n)`` up to modulo-bias of order ``n / 2**64``, which
+    is negligible for any ``n`` in practice.
     """
     if n <= 0:
         raise ValueError("n must be positive")
