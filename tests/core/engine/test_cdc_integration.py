@@ -743,9 +743,9 @@ class TestMultiTableSeedConsistency:
                 bulk_inserts[r.oid] = r.amount
 
         assert per_inserts, "No inserts collected from non-bulk path"
-        assert set(per_inserts.keys()) == set(bulk_inserts.keys()), (
-            "Bulk path emitted different insert PKs than the non-bulk path"
-        )
+        assert set(per_inserts.keys()) == set(
+            bulk_inserts.keys()
+        ), "Bulk path emitted different insert PKs than the non-bulk path"
         for oid, amount in per_inserts.items():
             assert bulk_inserts[oid] == amount, (
                 f"Bulk vs non-bulk mismatch for oid={oid}: "

@@ -259,9 +259,9 @@ class TestLogNormalSampleExpr:
         df = spark.range(1000).select(lognormal_sample_expr(seed, n=n).alias("val"))
         values = [row.val for row in df.collect()]
         lower_half = sum(1 for v in values if v < n // 2)
-        assert lower_half / len(values) > 0.6, (
-            f"Expected >60% of lognormal draws in the lower half, got {lower_half}/{len(values)}"
-        )
+        assert (
+            lower_half / len(values) > 0.6
+        ), f"Expected >60% of lognormal draws in the lower half, got {lower_half}/{len(values)}"
 
 
 # ---------------------------------------------------------------------------
