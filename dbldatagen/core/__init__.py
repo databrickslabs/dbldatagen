@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 
 from dbldatagen.core.engine.cdc import (
     CDCStream,
+    DeltaWriteResult,
     generate_cdc,
     generate_cdc_batch,
     generate_cdc_bulk,
@@ -80,6 +81,7 @@ __all__ = [
     "ColumnSpec",
     "DataGenPlan",
     "DataType",
+    "DeltaWriteResult",
     "ForeignKeyRef",
     "MutationSpec",
     "OperationWeights",

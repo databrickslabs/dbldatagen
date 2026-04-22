@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import logging
+import re
+from dataclasses import dataclass
+
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
 
@@ -15,8 +19,47 @@ from dbldatagen.core.engine.cdc_generator import (
 from dbldatagen.core.engine.generator import generate_table
 from dbldatagen.core.engine.planner import resolve_plan
 from dbldatagen.core.engine.utils import _LazyList
+from dbldatagen.core.spec.cdc_dsl import rename_cdc_columns
 from dbldatagen.core.spec.cdc_schema import CDCFormat, CDCPlan
 from dbldatagen.core.spec.schema import DataGenPlan
+
+
+logger = logging.getLogger(__name__)
+
+# Strict identifier pattern — prevents backtick/dot injection in SQL quoting.
+# Matches the table-name rule enforced elsewhere in the codebase
+# (see dbldatagen.core.spec.schema._IDENTIFIER_RE).
+_UC_IDENTIFIER_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+
+
+@dataclass(frozen=True)
+class DeltaWriteResult:
+    """Per-table result of :func:`write_cdc_to_delta`.
+
+    Attributes
+    ----------
+    uc_table :
+        Fully qualified, backtick-quoted UC table name
+        (e.g. ``` `cat`.`sch`.`orders` ```).
+    delta_version :
+        Final Delta version written. Version 0 is the initial
+        snapshot; each chunk appends one more version.
+    """
+
+    uc_table: str
+    delta_version: int
+
+
+def _validate_uc_identifier(name: str, kind: str) -> None:
+    """Reject identifiers that could escape the backtick quoting.
+
+    Allows ``[A-Za-z_][A-Za-z0-9_]*`` only — same rule as table-name
+    validation elsewhere in the codebase.  UC does accept additional
+    characters in quoted form, but this project uses the strict rule
+    consistently so users hit one policy, not two.
+    """
+    if not _UC_IDENTIFIER_RE.fullmatch(name):
+        raise ValueError(f"invalid UC {kind} identifier {name!r}: must match {_UC_IDENTIFIER_RE.pattern}")
 
 
 def _make_lazy_batch_list(
@@ -230,15 +273,22 @@ def write_cdc_to_delta(
     num_batches: int | None = None,
     format: str | CDCFormat | None = None,
     chunk_size: int | None = None,
-) -> dict[str, str]:
+) -> dict[str, DeltaWriteResult]:
     """Generate a CDC stream and write it to Delta tables in one call.
 
     Each table in the plan is written to ``{catalog}.{schema}.{table_name}``.
-    The initial snapshot is written as version 0, then each batch (or chunk)
-    is appended as a separate Delta version.
+    The initial snapshot is written as Delta version 0, then each chunk
+    is appended as one additional version.
 
-    CDC metadata columns (e.g. ``__$operation``) are automatically renamed
-    to clean, SQL-friendly names (e.g. ``cdc_operation``).
+    For the ``sql_server`` format, CDC metadata columns (``__$operation``,
+    ``__$start_lsn``, ``__$seqval``) are renamed to SQL-friendly names
+    (``cdc_operation``, ``cdc_lsn``, ``cdc_seqval``).  Other formats are
+    written as-is.
+
+    ``catalog``, ``schema``, and every CDC table name must match
+    ``[A-Za-z_][A-Za-z0-9_]*`` and are validated before any SQL is
+    issued, so a backtick or dot in the input cannot escape the
+    quoting.
 
     Parameters
     ----------
@@ -247,9 +297,9 @@ def write_cdc_to_delta(
     plan_or_base :
         A ``CDCPlan`` or ``DataGenPlan``.
     catalog :
-        Unity Catalog catalog name.
+        Unity Catalog catalog name (must match ``[A-Za-z_][A-Za-z0-9_]*``).
     schema :
-        Unity Catalog schema name.
+        Unity Catalog schema name (must match ``[A-Za-z_][A-Za-z0-9_]*``).
     num_batches :
         Override for ``plan.num_batches``.
     format :
@@ -261,9 +311,17 @@ def write_cdc_to_delta(
 
     Returns
     -------
-    dict mapping table_name -> fully qualified UC table path.
+    dict mapping ``table_name`` -> :class:`DeltaWriteResult`
+    (fully qualified UC table + final Delta version).
     """
+    _validate_uc_identifier(catalog, "catalog")
+    _validate_uc_identifier(schema, "schema")
+
     plan = _normalize_plan(plan_or_base, num_batches, format)
+    for table_name in plan.cdc_tables:
+        _validate_uc_identifier(table_name, "table")
+
+    fmt_name = plan.format.value
     stream = generate_cdc_bulk(spark, plan, chunk_size=chunk_size)
 
     uc_tables: dict[str, str] = {}
@@ -273,18 +331,19 @@ def write_cdc_to_delta(
 
         # Initial snapshot
         spark.sql(f"DROP TABLE IF EXISTS {uc_table}")
-        initial_df = stream.initial[table_name]
-        (initial_df.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(uc_table))
-
-        print(f"{table_name}: v0 -> {uc_table}")
+        initial_df = rename_cdc_columns(stream.initial[table_name], fmt_name)
+        initial_df.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(uc_table)
+        logger.info("%s: v0 -> %s", table_name, uc_table)
 
     # Batches (chunked)
     n = len(stream.batches)
     for chunk_idx, chunk in enumerate(stream.batches):
         for table_name in plan.cdc_tables:
             if table_name in chunk:
-                (chunk[table_name].write.format("delta").mode("append").saveAsTable(uc_tables[table_name]))
-        print(f"  chunk {chunk_idx + 1}/{n} written")
+                rename_cdc_columns(chunk[table_name], fmt_name).write.format("delta").mode("append").saveAsTable(
+                    uc_tables[table_name]
+                )
+        logger.info("chunk %d/%d written", chunk_idx + 1, n)
 
-    print(f"Done! {n + 1} Delta versions per table.")
-    return uc_tables
+    logger.info("Done: %d Delta versions per table.", n + 1)
+    return {name: DeltaWriteResult(uc_table=uc, delta_version=n) for name, uc in uc_tables.items()}

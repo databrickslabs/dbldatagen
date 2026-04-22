@@ -6,12 +6,14 @@ identical data but different work unit sizes.
 
 Run with::
 
-    pytest tests/v1/test_cdc_chunking.py -v -s
+    pytest tests/core/engine/test_cdc_chunking.py -v -s
 
 The ``-s`` flag shows chunk sizing output.
 """
 
 from __future__ import annotations
+
+import pytest
 
 from dbldatagen.core.engine.cdc import (
     _auto_chunk_size,
@@ -196,3 +198,39 @@ class TestWriteCDCDefaultChunkSize:
         sig = inspect.signature(write_cdc_to_delta)
         default = sig.parameters["chunk_size"].default
         assert default is None, f"write_cdc_to_delta chunk_size default should be None, got {default}"
+
+
+class TestWriteCDCIdentifierValidation:
+    """Verify write_cdc_to_delta rejects identifiers that could escape backtick quoting.
+
+    Validation happens before any Spark call, so these tests need no
+    SparkSession — ``None`` is fine as the spark argument.
+    """
+
+    def _plan(self) -> CDCPlan:
+        return _mastercard_plan(initial_rows=10, batch_size=5, num_batches=1)
+
+    @pytest.mark.parametrize("bad", ["evil`cat", "cat.sch", "1cat", "cat-name", "", "cat name"])
+    def test_rejects_bad_catalog(self, bad):
+        with pytest.raises(ValueError, match="invalid UC catalog"):
+            write_cdc_to_delta(None, self._plan(), catalog=bad, schema="s")
+
+    @pytest.mark.parametrize("bad", ["evil`sch", "sch.x", "2s", "s-ch", "", "s ch"])
+    def test_rejects_bad_schema(self, bad):
+        with pytest.raises(ValueError, match="invalid UC schema"):
+            write_cdc_to_delta(None, self._plan(), catalog="c", schema=bad)
+
+    @pytest.mark.parametrize("bad", ["evil`tbl", "tbl.x", "3t", "t-bl", "", "t bl", "x\n"])
+    def test_rejects_bad_table_name(self, bad):
+        # TableSpec.name is validated at construction, so we inject the
+        # bad name by mutating cdc_tables post-construction — the same
+        # escape hatch a mis-typed caller might hit.
+        plan = self._plan()
+        plan.cdc_tables = [bad]
+        with pytest.raises(ValueError, match="invalid UC table"):
+            write_cdc_to_delta(None, plan, catalog="c", schema="s")
+
+    def test_rejects_trailing_newline(self):
+        """Trailing \\n bypasses `re.match` + $ but not `fullmatch`."""
+        with pytest.raises(ValueError, match="invalid UC catalog"):
+            write_cdc_to_delta(None, self._plan(), catalog="cat\n", schema="s")

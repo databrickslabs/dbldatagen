@@ -31,6 +31,7 @@ from __future__ import annotations
 
 from dbldatagen.core.engine.cdc._common import CDCStream, _auto_chunk_size
 from dbldatagen.core.engine.cdc.api import (
+    DeltaWriteResult,
     generate_cdc,
     generate_cdc_batch,
     generate_cdc_bulk,
@@ -41,6 +42,7 @@ from dbldatagen.core.engine.cdc.oracle import generate_expected_state
 
 __all__ = [
     "CDCStream",
+    "DeltaWriteResult",
     "_auto_chunk_size",
     "generate_cdc",
     "generate_cdc_batch",
