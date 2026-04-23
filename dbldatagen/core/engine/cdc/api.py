@@ -264,7 +264,15 @@ def generate_cdc_batch(
         )
 
     fmt_name = plan.format.value
-    return _generate_batch(spark, plan, batch_id, fmt_name)
+    # Resolve once and thread through -- mirrors the pattern in
+    # ``generate_cdc`` / ``generate_cdc_bulk``.  Without this, every
+    # call to ``generate_cdc_batch`` re-runs ``resolve_plan`` via the
+    # ``_generate_batch`` default even though the caller already knows
+    # the plan is stable.  Harmless but wasteful, and the asymmetry
+    # was an invitation to a future bug where one entry point re-validates
+    # FKs and another doesn't.
+    resolved = resolve_plan(plan.base_plan)
+    return _generate_batch(spark, plan, batch_id, fmt_name, resolved_plan=resolved)
 
 
 def _generate_batch(
