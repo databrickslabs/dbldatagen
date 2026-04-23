@@ -49,11 +49,25 @@ def generate_expected_state(
     if plan is not None:
         table_map = {t.name: t for t in plan.base_plan.tables}
         if table_name in table_map:
-            row_count = int(table_map[table_name].rows)
-            if row_count > _MAX_EXPECTED_STATE_ROWS:
+            # Guard on ``upper_k = max_k_at_batch(batch_id, ...)``, not
+            # on ``table_spec.rows``.  The initial row count is only the
+            # lower bound — inserts accumulate per batch, so at
+            # ``batch_id=1000`` with ``batch_size=0.1`` a 50K-row table
+            # produces ``50K + 1000 * 5K = 5M`` row indices the driver
+            # would iterate.  The old guard let that through and the
+            # user then waited minutes on what looked like a small call.
+            table_spec = table_map[table_name]
+            initial_rows = int(table_spec.rows)
+            config = plan.config_for(table_name)
+            batch_size = resolve_batch_size(config.batch_size, initial_rows)
+            periods = compute_periods_from_config(initial_rows, batch_size, config)
+            upper_k = max_k_at_batch(batch_id, initial_rows, periods.inserts_per_batch)
+            if upper_k > _MAX_EXPECTED_STATE_ROWS:
                 raise ValueError(
                     f"generate_expected_state is a driver-side O(N) test oracle and "
-                    f"is not suitable for {row_count:,} rows (max {_MAX_EXPECTED_STATE_ROWS:,}). "
+                    f"is not suitable for {upper_k:,} row indices "
+                    f"(initial {initial_rows:,} + {batch_id} batches; "
+                    f"max {_MAX_EXPECTED_STATE_ROWS:,}).  "
                     f"Use Spark-native generation paths for large tables."
                 )
 
