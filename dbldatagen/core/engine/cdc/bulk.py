@@ -162,6 +162,20 @@ def _build_case_when_column(
 
     Each batch uses a different seed, so the expression varies per batch.
     The result is: WHEN batch_offset == 0 THEN expr_0 WHEN ... ELSE expr_N.
+
+    SCALING NOTE: ``build_column_expr`` is called once per batch per
+    column.  For struct / array columns this materialises a full nested
+    expression tree (one per struct field, one per array slot) inside
+    every CASE WHEN branch, so the plan-side work is
+    ``O(N_batches x N_leaf_exprs)``.  The fused path (``cdc/fused.py``)
+    solved the same scaling by pre-computing a ``column_seed_map`` and
+    having each leaf expression look up its seed by row.  Back-porting
+    that structure to the bulk path requires every batch to reuse one
+    expression tree parameterised by a runtime seed Column -- a
+    non-trivial refactor.  At ~100 batches/chunk on wide nested tables
+    Catalyst compile slows perceptibly; below that the CASE WHEN cost
+    is negligible next to the per-row execution savings.  If chunks
+    grow beyond that, revisit here.
     """
     batch_exprs = []
     for i, (batch_id, _, insert_count) in enumerate(batch_infos):
