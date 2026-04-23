@@ -66,11 +66,17 @@ def _make_lazy_batch_list(
     spark: SparkSession,
     plan: CDCPlan,
     fmt_name: str,
+    resolved_plan: ResolvedPlan,
 ) -> _LazyList[dict[str, DataFrame]]:
-    """Create a lazy list that generates CDC batches on-demand."""
+    """Create a lazy list that generates CDC batches on-demand.
+
+    Reuses the single ``resolved_plan`` that ``generate_cdc`` resolved
+    once at entry — without this, ``_generate_batch`` would re-walk
+    the plan graph and revalidate FKs for every lazy-list access.
+    """
 
     def _gen(index: int) -> dict[str, DataFrame]:
-        return _generate_batch(spark, plan, index + 1, fmt_name)
+        return _generate_batch(spark, plan, index + 1, fmt_name, resolved_plan=resolved_plan)
 
     return _LazyList(plan.num_batches, _gen)
 
@@ -80,8 +86,15 @@ def _make_lazy_chunk_list(
     plan: CDCPlan,
     fmt_name: str,
     chunk_size: int,
+    resolved_plan: ResolvedPlan,
 ) -> _LazyList[dict[str, DataFrame]]:
-    """Create a lazy list that groups CDC batches into larger chunks."""
+    """Create a lazy list that groups CDC batches into larger chunks.
+
+    ``resolved_plan`` is threaded through so the per-chunk per-table
+    calls to ``_generate_chunk_for_table`` don't each re-resolve the
+    plan — at 100 tables × 100 chunks that was 10,000 topological
+    sorts + FK validations on the driver.
+    """
     num_chunks = -(-plan.num_batches // chunk_size)  # ceil division
 
     def _build_chunk(chunk_index: int) -> dict[str, DataFrame]:
@@ -98,16 +111,16 @@ def _make_lazy_chunk_list(
                 table_name,
                 batch_ids,
                 fmt_name,
+                resolved_plan=resolved_plan,
             )
             if chunk_df is not None:
                 chunk_tables[table_name] = chunk_df
             else:
                 table_map = {t.name: t for t in plan.base_plan.tables}
-                resolved = resolve_plan(plan.base_plan)
                 chunk_tables[table_name] = generate_table(
                     spark,
                     table_map[table_name],
-                    resolved,
+                    resolved_plan,
                 ).limit(0)
 
         return chunk_tables
@@ -146,10 +159,14 @@ def generate_cdc(
 
     fmt_name = plan.format.value
 
-    initial_raw = generate_initial_snapshot(spark, plan)
+    # Resolve the plan once and thread it through every path — per-batch
+    # re-resolution was a hidden O(num_batches) driver cost.
+    resolved = resolve_plan(plan.base_plan)
+
+    initial_raw = generate_initial_snapshot(spark, plan, resolved_plan=resolved)
     initial = {name: apply_format(df, fmt_name) for name, df in initial_raw.items()}
 
-    batches = _make_lazy_batch_list(spark, plan, fmt_name)
+    batches = _make_lazy_batch_list(spark, plan, fmt_name, resolved_plan=resolved)
     return CDCStream(initial=initial, batches=batches, plan=plan)
 
 
@@ -203,10 +220,13 @@ def generate_cdc_bulk(
     if chunk_size is None:
         chunk_size = _auto_chunk_size(plan)
 
-    initial_raw = generate_initial_snapshot(spark, plan)
+    # Resolve once and reuse across every chunk × table.
+    resolved = resolve_plan(plan.base_plan)
+
+    initial_raw = generate_initial_snapshot(spark, plan, resolved_plan=resolved)
     initial = {name: apply_format(df, fmt_name) for name, df in initial_raw.items()}
 
-    batches = _make_lazy_chunk_list(spark, plan, fmt_name, chunk_size)
+    batches = _make_lazy_chunk_list(spark, plan, fmt_name, chunk_size, resolved_plan=resolved)
     return CDCStream(initial=initial, batches=batches, plan=plan)
 
 
@@ -252,9 +272,15 @@ def _generate_batch(
     plan: CDCPlan,
     batch_id: int,
     fmt_name: str,
+    resolved_plan: "ResolvedPlan | None" = None,
 ) -> dict[str, DataFrame]:
-    """Generate one batch for all CDC tables, applying the output format."""
-    resolved = resolve_plan(plan.base_plan)
+    """Generate one batch for all CDC tables, applying the output format.
+
+    ``resolved_plan`` is threaded from ``generate_cdc`` /
+    ``generate_cdc_batch`` so we don't re-walk the plan graph and
+    revalidate FKs for every batch access.
+    """
+    resolved = resolved_plan if resolved_plan is not None else resolve_plan(plan.base_plan)
     batch_tables: dict[str, DataFrame] = {}
 
     for table_name in plan.cdc_tables:

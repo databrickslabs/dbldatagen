@@ -59,13 +59,18 @@ from dbldatagen.core.spec.schema import ColumnSpec, SequenceColumn, TableSpec
 def generate_initial_snapshot(
     spark: SparkSession,
     plan: CDCPlan,
+    resolved_plan: ResolvedPlan | None = None,
 ) -> dict[str, DataFrame]:
     """Generate the initial (batch 0) snapshot for all CDC tables.
 
     This is simply the base plan generation with an ``_op`` = 'I' and
     ``_batch_id`` = 0 marker added.
+
+    ``resolved_plan`` is threaded from ``generate_cdc`` /
+    ``generate_cdc_bulk`` so the resolution work happens once and is
+    shared with the per-batch / per-chunk paths.
     """
-    resolved = resolve_plan(plan.base_plan)
+    resolved = resolved_plan if resolved_plan is not None else resolve_plan(plan.base_plan)
     table_map = {t.name: t for t in plan.base_plan.tables}
     results = {}
     for table_name in resolved.generation_order:

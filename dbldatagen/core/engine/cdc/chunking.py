@@ -14,7 +14,7 @@ from dbldatagen.core.engine.cdc.formats import apply_format
 from dbldatagen.core.engine.cdc.fused import generate_fused_deletes, generate_fused_updates
 from dbldatagen.core.engine.cdc.single_batch import generate_cdc_batch_for_table
 from dbldatagen.core.engine.cdc.stateless import insert_range
-from dbldatagen.core.engine.planner import resolve_plan
+from dbldatagen.core.engine.planner import ResolvedPlan, resolve_plan
 from dbldatagen.core.engine.utils import resolve_batch_size, union_all
 from dbldatagen.core.spec.cdc_schema import CDCPlan
 
@@ -25,6 +25,7 @@ def _generate_chunk_for_table(
     table_name: str,
     batch_ids: list[int],
     fmt_name: str,
+    resolved_plan: "ResolvedPlan | None" = None,
 ) -> DataFrame | None:
     """Generate all CDC rows for one table across multiple batches.
 
@@ -36,6 +37,11 @@ def _generate_chunk_for_table(
     3. Fused updates (ONE spark.range filtered by update_due for any batch)
 
     Falls back to per-batch generation for tables with Faker columns.
+
+    ``resolved_plan`` is threaded in so the caller can resolve once per
+    ``generate_cdc_bulk`` call and reuse across every chunk × table,
+    instead of re-walking the plan graph and revalidating FKs every
+    time this function is invoked (O(chunks × tables) driver overhead).
     """
 
     table_map = {t.name: t for t in plan.base_plan.tables}
@@ -43,12 +49,12 @@ def _generate_chunk_for_table(
 
     # Faker columns require per-batch generation (Python UDF pools vary per batch)
     if _table_has_faker_columns(table_spec):
-        return _generate_chunk_per_batch(spark, plan, table_name, batch_ids, fmt_name)
+        return _generate_chunk_per_batch(spark, plan, table_name, batch_ids, fmt_name, resolved_plan=resolved_plan)
 
     config = plan.config_for(table_name)
     global_seed = table_spec.seed if table_spec.seed is not None else plan.base_plan.seed
     initial_rows = int(table_spec.rows)
-    resolved = resolve_plan(plan.base_plan)
+    resolved = resolved_plan if resolved_plan is not None else resolve_plan(plan.base_plan)
 
     # Apply FK parent delete guard
     effective_config = apply_fk_delete_guard(plan, table_name, config)
@@ -124,6 +130,7 @@ def _generate_chunk_per_batch(
     table_name: str,
     batch_ids: list[int],
     fmt_name: str,
+    resolved_plan: ResolvedPlan | None = None,
 ) -> DataFrame | None:
     """Fallback: generate chunk using per-batch approach (for Faker tables)."""
     parts: list[DataFrame] = []
@@ -134,6 +141,7 @@ def _generate_chunk_per_batch(
             table_name,
             batch_id,
             fmt_name,
+            resolved_plan=resolved_plan,
         )
         if batch_df is not None:
             parts.append(batch_df)
@@ -150,9 +158,10 @@ def _generate_single_batch_for_table(
     table_name: str,
     batch_id: int,
     fmt_name: str,
+    resolved_plan: ResolvedPlan | None = None,
 ) -> DataFrame | None:
     """Generate one batch for one table, formatted, as a single DataFrame."""
-    result = generate_cdc_batch_for_table(spark, plan, table_name, batch_id)
+    result = generate_cdc_batch_for_table(spark, plan, table_name, batch_id, resolved_plan=resolved_plan)
     combined = result.to_dataframe()
     if combined is None:
         return None
