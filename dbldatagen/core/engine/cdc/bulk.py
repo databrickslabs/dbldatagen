@@ -55,7 +55,7 @@ def generate_bulk_inserts(
     # the chunk has the SAME insert_count so ``raw_id % inserts_per_batch``
     # and ``raw_id // inserts_per_batch`` partition the range cleanly.
     # Today the CDC engine produces uniform inserts_per_batch for any
-    # given table (derived from batch_size × operation weights, constant
+    # given table (derived from batch_size x operation weights, constant
     # per plan), and ``_generate_chunk_for_table`` filters out batches
     # with insert_count == 0.  If a future refactor breaks that invariant
     # — e.g. per-batch insert budgets, warm-up ramps, deletion-aware

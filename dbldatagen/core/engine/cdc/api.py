@@ -92,7 +92,7 @@ def _make_lazy_chunk_list(
 
     ``resolved_plan`` is threaded through so the per-chunk per-table
     calls to ``_generate_chunk_for_table`` don't each re-resolve the
-    plan — at 100 tables × 100 chunks that was 10,000 topological
+    plan — at 100 tables x 100 chunks that was 10,000 topological
     sorts + FK validations on the driver.
     """
     num_chunks = -(-plan.num_batches // chunk_size)  # ceil division
@@ -220,7 +220,7 @@ def generate_cdc_bulk(
     if chunk_size is None:
         chunk_size = _auto_chunk_size(plan)
 
-    # Resolve once and reuse across every chunk × table.
+    # Resolve once and reuse across every chunk x table.
     resolved = resolve_plan(plan.base_plan)
 
     initial_raw = generate_initial_snapshot(spark, plan, resolved_plan=resolved)

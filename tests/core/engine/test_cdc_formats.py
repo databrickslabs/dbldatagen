@@ -186,7 +186,9 @@ class TestDebeziumFormat:
         from dbldatagen.core.spec.cdc_schema import CDCPlan
 
         with pytest.raises(ValueError):
-            CDCPlan(base_plan=_plan(), format="debezium")
+            # Deliberately violating the annotation to exercise the runtime
+            # CDCFormat(str) validator — the cast is what raises.
+            CDCPlan(base_plan=_plan(), format="debezium")  # type: ignore[arg-type]
 
 
 # ---------------------------------------------------------------------------

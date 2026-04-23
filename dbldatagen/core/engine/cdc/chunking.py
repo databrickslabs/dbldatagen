@@ -39,9 +39,9 @@ def _generate_chunk_for_table(
     Falls back to per-batch generation for tables with Faker columns.
 
     ``resolved_plan`` is threaded in so the caller can resolve once per
-    ``generate_cdc_bulk`` call and reuse across every chunk × table,
+    ``generate_cdc_bulk`` call and reuse across every chunk x table,
     instead of re-walking the plan graph and revalidating FKs every
-    time this function is invoked (O(chunks × tables) driver overhead).
+    time this function is invoked (O(chunks x tables) driver overhead).
     """
 
     table_map = {t.name: t for t in plan.base_plan.tables}
