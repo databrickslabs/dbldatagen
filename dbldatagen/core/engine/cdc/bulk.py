@@ -50,7 +50,24 @@ def generate_bulk_inserts(
         if isinstance(col_spec.gen, FakerColumn):
             return None
 
+    # batch_infos is a list of (batch_id, start_k, insert_count) tuples.
+    # The local_id / batch_offset arithmetic below assumes every batch in
+    # the chunk has the SAME insert_count so ``raw_id % inserts_per_batch``
+    # and ``raw_id // inserts_per_batch`` partition the range cleanly.
+    # Today the CDC engine produces uniform inserts_per_batch for any
+    # given table (derived from batch_size × operation weights, constant
+    # per plan), and ``_generate_chunk_for_table`` filters out batches
+    # with insert_count == 0.  If a future refactor breaks that invariant
+    # — e.g. per-batch insert budgets, warm-up ramps, deletion-aware
+    # pacing — the arithmetic silently misaligns PKs and FKs.  Assert
+    # now so the break is loud, not wrong-data.
     inserts_per_batch = batch_infos[0][2]
+    assert all(info[2] == inserts_per_batch for info in batch_infos), (
+        f"generate_bulk_inserts requires uniform inserts_per_batch across "
+        f"the chunk; got {[info[2] for info in batch_infos]}.  If per-batch "
+        f"insert counts vary, the chunk needs CASE WHEN offsets instead of "
+        f"the uniform-division arithmetic used here."
+    )
     first_start_index = batch_infos[0][1]
 
     df, raw_id = create_range_df(spark, total_inserts)
