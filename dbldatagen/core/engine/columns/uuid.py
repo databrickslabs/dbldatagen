@@ -38,7 +38,11 @@ def build_uuid_column(id_col: Column | str, column_seed: int | Column) -> Column
         long_min = F.lit(-(2**63)).cast("long")
         seed_col_plus1 = F.when(seed_col == long_max, long_min).otherwise(seed_col + F.lit(1).cast("long"))
     else:
-        seed_col = F.lit(column_seed).cast("long")
+        # Clamp both ``seed`` and ``seed + 1`` through ``to_signed64``.
+        # Without the clamp on the base, a caller passing ``column_seed =
+        # 2**63`` (legal Python int, illegal int64) would raise at
+        # ``F.lit`` before the +1 branch even ran.
+        seed_col = F.lit(to_signed64(column_seed)).cast("long")
         seed_col_plus1 = F.lit(to_signed64(column_seed + 1)).cast("long")
 
     hi = F.xxhash64(seed_col, id_col)
