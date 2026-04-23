@@ -4,17 +4,16 @@ from __future__ import annotations
 
 from pyspark.sql import DataFrame, SparkSession
 
-from dbldatagen.core.engine.cdc_formats import apply_format
-from dbldatagen.core.engine.cdc_generator import (
+from dbldatagen.core.engine.cdc._common import (
     _table_has_faker_columns,
     apply_fk_delete_guard,
     compute_periods_from_config,
-    generate_bulk_inserts,
-    generate_cdc_batch_for_table,
-    generate_fused_deletes,
-    generate_fused_updates,
 )
-from dbldatagen.core.engine.cdc_stateless import insert_range
+from dbldatagen.core.engine.cdc.bulk import generate_bulk_inserts
+from dbldatagen.core.engine.cdc.formats import apply_format
+from dbldatagen.core.engine.cdc.fused import generate_fused_deletes, generate_fused_updates
+from dbldatagen.core.engine.cdc.single_batch import generate_cdc_batch_for_table
+from dbldatagen.core.engine.cdc.stateless import insert_range
 from dbldatagen.core.engine.planner import resolve_plan
 from dbldatagen.core.engine.utils import resolve_batch_size, union_all
 from dbldatagen.core.spec.cdc_schema import CDCPlan

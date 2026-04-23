@@ -29,7 +29,7 @@ customisation is available via ``CDCPlan``.
 
 from __future__ import annotations
 
-from dbldatagen.core.engine.cdc._common import CDCStream, _auto_chunk_size
+from dbldatagen.core.engine.cdc._common import CDCStream
 from dbldatagen.core.engine.cdc.api import (
     DeltaWriteResult,
     generate_cdc,
@@ -40,10 +40,13 @@ from dbldatagen.core.engine.cdc.api import (
 from dbldatagen.core.engine.cdc.oracle import generate_expected_state
 
 
+# Public surface only.  Private helpers (``_auto_chunk_size``,
+# ``_common.*``, the per-path ``single_batch``/``fused``/``bulk`` /
+# ``stateless`` / ``formats`` submodules) are accessed via their dotted
+# path when needed by tests or advanced users.
 __all__ = [
     "CDCStream",
     "DeltaWriteResult",
-    "_auto_chunk_size",
     "generate_cdc",
     "generate_cdc_batch",
     "generate_cdc_bulk",

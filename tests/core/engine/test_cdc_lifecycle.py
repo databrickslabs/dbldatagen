@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import math
 
-from dbldatagen.core.engine.cdc_stateless import (
+from dbldatagen.core.engine.cdc.stateless import (
     birth_tick,
     compute_periods,
     death_tick,

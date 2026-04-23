@@ -21,8 +21,12 @@ import time
 import pytest
 from pyspark.sql import SparkSession
 
-from dbldatagen.core.engine.cdc_generator import (
+from dbldatagen.core.engine.cdc._common import (
     RawBatchResult,
+    batch_timestamp,
+    compute_periods_from_config,
+)
+from dbldatagen.core.engine.cdc.single_batch import (
     _generate_delete_stream,
     _generate_delete_stream_native,
     _generate_insert_stream,
@@ -30,10 +34,8 @@ from dbldatagen.core.engine.cdc_generator import (
     _generate_update_after_stream_native,
     _generate_update_before_stream,
     _generate_update_before_stream_native,
-    batch_timestamp,
-    compute_periods_from_config,
 )
-from dbldatagen.core.engine.cdc_stateless import (
+from dbldatagen.core.engine.cdc.stateless import (
     delete_indices_at_batch_fast,
     update_indices_at_batch,
 )

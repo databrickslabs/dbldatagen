@@ -7,13 +7,13 @@ from __future__ import annotations
 
 from pyspark.sql import DataFrame, SparkSession
 
-from dbldatagen.core.engine.cdc._common import CDCStream
-from dbldatagen.core.engine.cdc_generator import (
+from dbldatagen.core.engine.cdc._common import (
+    CDCStream,
     apply_fk_delete_guard,
     compute_periods_from_config,
-    generate_for_indices,
 )
-from dbldatagen.core.engine.cdc_stateless import is_alive, max_k_at_batch
+from dbldatagen.core.engine.cdc.single_batch import generate_for_indices
+from dbldatagen.core.engine.cdc.stateless import is_alive, max_k_at_batch
 from dbldatagen.core.engine.generator import generate_table
 from dbldatagen.core.engine.planner import resolve_plan
 from dbldatagen.core.engine.seed import compute_batch_seed
@@ -110,7 +110,7 @@ def _generate_expected_state_driver(
 
     import math
 
-    from dbldatagen.core.engine.cdc_stateless import birth_tick, update_due
+    from dbldatagen.core.engine.cdc.stateless import birth_tick, update_due
 
     batch_groups: dict[int, list[int]] = {}
     for k in live_indices:

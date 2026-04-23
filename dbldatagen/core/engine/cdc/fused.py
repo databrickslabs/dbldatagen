@@ -11,13 +11,13 @@ from __future__ import annotations
 from pyspark.sql import Column, DataFrame, SparkSession
 from pyspark.sql import functions as F
 
-from dbldatagen.core.engine.cdc_generator._common import (
+from dbldatagen.core.engine.cdc._common import (
     _apply_columns_with_write_batch,
     _precompute_write_batches,
     _table_has_faker_columns,
     batch_timestamp,
 )
-from dbldatagen.core.engine.cdc_stateless import (
+from dbldatagen.core.engine.cdc.stateless import (
     CDCPeriods,
     birth_tick_expr,
     death_tick_expr,

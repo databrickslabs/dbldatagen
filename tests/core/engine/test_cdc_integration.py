@@ -500,7 +500,7 @@ class TestCDCBulkGeneration:
 
     def test_auto_chunk_size(self):
         """Auto chunk_size should produce reasonable values."""
-        from dbldatagen.core.engine.cdc import _auto_chunk_size
+        from dbldatagen.core.engine.cdc._common import _auto_chunk_size
 
         plan = CDCPlan(
             base_plan=_simple_plan(rows=50_000_000),

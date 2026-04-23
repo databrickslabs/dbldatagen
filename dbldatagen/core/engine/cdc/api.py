@@ -11,8 +11,8 @@ from pyspark.sql import functions as F
 
 from dbldatagen.core.engine.cdc._common import CDCStream, _auto_chunk_size, _normalize_plan
 from dbldatagen.core.engine.cdc.chunking import _generate_chunk_for_table
-from dbldatagen.core.engine.cdc_formats import apply_format
-from dbldatagen.core.engine.cdc_generator import (
+from dbldatagen.core.engine.cdc.formats import apply_format
+from dbldatagen.core.engine.cdc.single_batch import (
     generate_cdc_batch_for_table,
     generate_initial_snapshot,
 )

@@ -18,11 +18,8 @@ from typing import cast
 import pytest
 from pyspark.sql import SparkSession
 
-from dbldatagen.core.engine.cdc import (
-    _auto_chunk_size,
-    generate_cdc_bulk,
-    write_cdc_to_delta,
-)
+from dbldatagen.core.engine.cdc import generate_cdc_bulk, write_cdc_to_delta
+from dbldatagen.core.engine.cdc._common import _auto_chunk_size
 from dbldatagen.core.spec.cdc_schema import CDCPlan, CDCTableConfig, OperationWeights
 from dbldatagen.core.spec.schema import (
     ColumnSpec,

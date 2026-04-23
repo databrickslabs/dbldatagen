@@ -69,7 +69,7 @@ class TestSCD2DimensionTracking:
 
     def test_expected_state_count_matches_tracking(self, spark):
         """Expected state row count should match stateless lifecycle model."""
-        from dbldatagen.core.engine.cdc_stateless import (
+        from dbldatagen.core.engine.cdc.stateless import (
             compute_periods,
             is_alive,
             max_k_at_batch,

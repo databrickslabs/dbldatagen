@@ -134,7 +134,7 @@ class CDCPlan(BaseModel):
         """Reject FK references between two CDC tables.
 
         The engine's FK integrity guarantee (``apply_fk_delete_guard`` in
-        ``cdc_generator/_common.py``) only holds when the FK parent is
+        ``cdc/_common.py``) only holds when the FK parent is
         not also being mutated per batch: it disables deletes on parents
         of CDC children, but PK reconstruction in ``fk.build_fk_column``
         uses the plan-time row count and pk_seed, which don't reflect

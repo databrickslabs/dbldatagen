@@ -11,7 +11,7 @@ from __future__ import annotations
 from pyspark.sql import Column, DataFrame, SparkSession
 from pyspark.sql import functions as F
 
-from dbldatagen.core.engine.cdc_generator._common import batch_timestamp
+from dbldatagen.core.engine.cdc._common import batch_timestamp
 from dbldatagen.core.engine.fk import build_fk_column
 from dbldatagen.core.engine.generator import build_column_expr
 from dbldatagen.core.engine.planner import FKResolution, ResolvedPlan

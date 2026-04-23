@@ -16,7 +16,7 @@ from __future__ import annotations
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
 
-from dbldatagen.core.engine.cdc_generator._common import (
+from dbldatagen.core.engine.cdc._common import (
     RawBatchResult,
     _add_cdc_metadata,
     _apply_columns_with_write_batch,
@@ -26,7 +26,7 @@ from dbldatagen.core.engine.cdc_generator._common import (
     batch_timestamp,
     compute_periods_from_config,
 )
-from dbldatagen.core.engine.cdc_stateless import (
+from dbldatagen.core.engine.cdc.stateless import (
     CDCPeriods,
     death_tick_expr,
     delete_indices_at_batch_fast,
