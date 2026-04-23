@@ -142,7 +142,14 @@ def generate_fused_updates(
     min_b_lit = F.lit(min_batch).cast("long")
     max_b_lit = F.lit(max_batch).cast("long")
 
-    ceil_div = F.ceil((min_b_lit + id_col).cast("double") / up_lit.cast("double")).cast("long")
+    # Integer ceil-div ``(a + b - 1) div b``.  Materialize the numerator
+    # as a named column so we can apply SQL ``div`` (true integer
+    # division) — Spark's ``/`` always returns double and silently
+    # loses precision above 2**53 (~9e15), which is reachable at the
+    # 500M-3B row scale this path targets.  ``F.floor(long/long)``
+    # likewise routes through double.
+    df = df.withColumn("_ceil_num", min_b_lit + id_col + up_lit - F.lit(1).cast("long"))
+    ceil_div = F.expr(f"_ceil_num div {up}")
     candidate_b = (ceil_div * up_lit - id_col).cast("long")
 
     # Filter: candidate in range, alive, eligible for update
@@ -168,7 +175,7 @@ def generate_fused_updates(
         base_filter = base_filter & (age <= F.lit(update_window).cast("long"))
 
     df = df.filter(base_filter)
-    df = df.withColumn("_batch_id", candidate_b.cast("int"))
+    df = df.withColumn("_batch_id", candidate_b.cast("int")).drop("_ceil_num")
 
     # Before-image: _write_batch = pre_image_batch(k, candidate_b)
     batch_n_col = F.col("_batch_id").cast("long")
