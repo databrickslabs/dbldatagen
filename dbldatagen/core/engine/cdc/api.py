@@ -17,7 +17,7 @@ from dbldatagen.core.engine.cdc.single_batch import (
     generate_initial_snapshot,
 )
 from dbldatagen.core.engine.generator import generate_table
-from dbldatagen.core.engine.planner import resolve_plan
+from dbldatagen.core.engine.planner import ResolvedPlan, resolve_plan
 from dbldatagen.core.engine.utils import _LazyList
 from dbldatagen.core.spec.cdc_dsl import rename_cdc_columns
 from dbldatagen.core.spec.cdc_schema import CDCFormat, CDCPlan
@@ -272,7 +272,7 @@ def _generate_batch(
     plan: CDCPlan,
     batch_id: int,
     fmt_name: str,
-    resolved_plan: "ResolvedPlan | None" = None,
+    resolved_plan: ResolvedPlan | None = None,
 ) -> dict[str, DataFrame]:
     """Generate one batch for all CDC tables, applying the output format.
 
@@ -290,13 +290,21 @@ def _generate_batch(
         if combined is not None:
             batch_tables[table_name] = apply_format(combined, fmt_name)
         else:
-            # Empty batch — can happen when min_life delays deletes
+            # Empty batch — can happen when min_life delays deletes.
+            # Use this batch's real timestamp (not a 1970 sentinel) so
+            # ``_ts`` in the output is always session-TZ-independent and
+            # consistent with non-empty batches; downstream SQL Server
+            # CDF / Delta CDF consumers that filter on `_ts` don't see a
+            # spurious epoch-0 row.
+            from dbldatagen.core.engine.cdc._common import batch_timestamp
+
             table_map = {t.name: t for t in plan.base_plan.tables}
             empty = generate_table(spark, table_map[table_name], resolved).limit(0)
+            empty_ts_epoch = batch_timestamp(plan, batch_id)
             empty = (
                 empty.withColumn("_op", F.lit("I"))
                 .withColumn("_batch_id", F.lit(batch_id))
-                .withColumn("_ts", F.lit("1970-01-01 00:00:00").cast("timestamp"))
+                .withColumn("_ts", F.lit(empty_ts_epoch).cast("long").cast("timestamp"))
             )
             batch_tables[table_name] = apply_format(empty, fmt_name)
 

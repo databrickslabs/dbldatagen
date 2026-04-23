@@ -25,7 +25,7 @@ def _generate_chunk_for_table(
     table_name: str,
     batch_ids: list[int],
     fmt_name: str,
-    resolved_plan: "ResolvedPlan | None" = None,
+    resolved_plan: ResolvedPlan | None = None,
 ) -> DataFrame | None:
     """Generate all CDC rows for one table across multiple batches.
 
