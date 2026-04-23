@@ -5,12 +5,56 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 
 ### unreleased
 
-#### Fixed 
+#### Added
+* New `dbldatagen.core` package — a partition-independent, Pydantic-typed synthetic data
+  engine with primary keys, foreign keys, CDC (single-batch, fused multi-batch, bulk),
+  struct/array columns, Faker integration, and byte-identical determinism across all
+  generation paths.  See [`docs/MIGRATION_V0_TO_CORE.md`](docs/MIGRATION_V0_TO_CORE.md).
+  Legacy top-level API is unchanged; `dbldatagen.core` lives alongside it.
+* New optional install extras: `[core]`, `[core-faker]` (Faker provider pool),
+  `[core-dev]` (dev tooling).
+* Added `ColumnSpec.precision` and `ColumnSpec.scale` on DECIMAL columns so users can
+  express `decimal(10, 4)` or `decimal(38, 8)` natively without falling back to raw
+  SQL; defaults to the historical `DecimalType(18, 2)` when unset.
+* Added support for serialization to/from JSON format
+* Added Ruff and mypy tooling
+* Added `OutputDataset` class and the ability to save a `DataGenerator` to an output
+  table or files
+
+#### Fixed
 * Refactored `DataAnalyzer` and `BasicStockTickerProvider` to comply with ANSI SQL standards
 * Refactored `Constraint` to treat `_filterExpression` and `_calculatedFilterExpression` as instance variables
 * Removed internal modification of `SparkSession`
+* `build_uuid_column` no longer overflows when `column_seed == Long.MAX_VALUE`; both
+  the int and Column branches map MAX → MIN via two's-complement wrap.
+* Struct field seed derivation matches across all CDC paths — before-image rows emitted
+  by `generate_cdc_bulk` now carry the same struct values as the per-batch path.
+* `ColumnSpec.null_fraction` is now applied on FK columns (was silently ignored).
+* `ExpressionColumn` plan-time validation raises `ValueError` instead of emitting a
+  silently-swallowed `warnings.warn`, and no longer false-positives on Spark builtins.
+* Calling `build_column_expr` on an FK column without an `FKResolution` raises instead
+  of silently emitting an all-NULL column.
+* Dropped stranded `num_batches <= 32767` cap on `CDCPlan` (leftover from the removed
+  `cdc_state` int16 packing).
+* `generate_cdc_batch(batch_id=...)` validates the range; batches outside
+  `[1, num_batches]` now raise with a clear pointer at `.initial` for snapshots.
 
 #### Changed
+* **Breaking — reproducibility.** The `F.abs(x) % N → F.pmod(x, N)` sweep fixes a
+  silent-wrong-data bug under Spark ANSI mode but changes output values for rows whose
+  seed hash is negative (~50% of rows).  Users with golden-value fixtures keyed to
+  pre-patch seeds need to regenerate them.
+* **Breaking — `CDCFormat.DEBEZIUM` removed from the enum.**  The earlier
+  implementation silently dropped update before-images, producing structurally wrong
+  output for Debezium consumers.  Plans that specify `format="debezium"` now fail at
+  construction; use `"raw"` or `"delta_cdf"` until a faithful nested-struct
+  implementation lands.
+* **Breaking — multi-table CDC with foreign keys between CDC tables is rejected at
+  `CDCPlan` construction.**  The FK generator uses the plan-time parent row count and
+  would dangle under parent mutation; restrict to static parent + CDC child.
+* **Breaking — `ColumnSpec` name validator** rejects leading-underscore names (they
+  collide with engine metadata columns `_op`, `_batch_id`, `_ts`, `_write_batch`,
+  `_synth_row_id`) and enforces full identifier validity.
 * Added type hints for modules and classes
 * Changed base Databricks runtime version to DBR 13.3 LTS (based on Apache Spark 3.4.1) - minimum supported version
   of Python is now 3.10.12
@@ -20,11 +64,10 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 * Updated Git actions
 * Updated [makefile](makefile)
 * Updated [CONTRIBUTING.md](CONTRIBUTING.md)
-
-#### Added
-* Added support for serialization to/from JSON format
-* Added Ruff and mypy tooling
-* Added `OutputDataset` class and the ability to save a `DataGenerator` to an output table or files
+* Documented that SQL Server `__$seqval` is `xxhash64(_batch_id, *data_cols)` —
+  deterministic per row but unordered within a batch.  Consumers using seqval for
+  dedup are unaffected; consumers relying on within-transaction ordering must apply a
+  rank-based seqval downstream.
 
 
 ### Version 0.4.0 Hotfix 2
