@@ -207,19 +207,18 @@ def _build_column_exprs_loop(
             seeded_columns.append(result)
             continue
 
-        # FK columns
+        # FK columns — _build_fk_column_expr raises if the resolution
+        # is missing, so we never silently emit an all-NULL column.
         if col_spec.foreign_key is not None:
-            fk_result = _build_fk_column_expr(
-                col_spec,
-                table_name,
-                id_col,
-                column_seed,
-                fk_resolutions,
+            udf_columns.append(
+                _build_fk_column_expr(
+                    col_spec,
+                    table_name,
+                    id_col,
+                    column_seed,
+                    fk_resolutions,
+                )
             )
-            if fk_result is not None:
-                udf_columns.append(fk_result)
-            else:
-                col_exprs.append(F.lit(None).alias(col_spec.name))
             continue
 
         # Faker columns
@@ -271,15 +270,31 @@ def _build_fk_column_expr(
     id_col: Column,
     column_seed: int | Column,
     fk_resolutions: dict[tuple[str, str], FKResolution] | None,
-) -> tuple[str, Column] | None:
-    """Build FK column expression, returning (name, expr) or None."""
-    fk_key = (table_name, col_spec.name)
-    if fk_resolutions and fk_key in fk_resolutions:
-        from dbldatagen.core.engine.fk import build_fk_column
+) -> tuple[str, Column]:
+    """Build FK column expression; raise if resolution is missing.
 
-        fk_expr = build_fk_column(id_col, column_seed, fk_resolutions[fk_key])
-        return (col_spec.name, fk_expr)
-    return None
+    The ForeignKeyColumn strategy was introduced specifically to close
+    the silent-all-NULL class of bug (commit a78597b).  Returning None
+    here — which the caller previously translated into
+    ``F.lit(None).alias(...)`` — reintroduced it: a direct call to
+    ``generate_table`` without a ``ResolvedPlan`` carrying the FK map
+    silently produced an all-NULL column instead of surfacing the
+    missing resolution.  Raise a clear error that names the column and
+    the expected call sequence so the failure is impossible to miss.
+    """
+    fk_key = (table_name, col_spec.name)
+    if fk_resolutions is None or fk_key not in fk_resolutions:
+        raise RuntimeError(
+            f"FK column '{table_name}.{col_spec.name}' has no FKResolution — "
+            f"caller must resolve the plan (via ``resolve_plan`` / ``generate``) "
+            f"before reaching ``build_column_expr``.  Calling ``generate_table`` "
+            f"directly requires passing a ``ResolvedPlan`` that includes this "
+            f"column's FK."
+        )
+    from dbldatagen.core.engine.fk import build_fk_column
+
+    fk_expr = build_fk_column(id_col, column_seed, fk_resolutions[fk_key])
+    return (col_spec.name, fk_expr)
 
 
 def _build_faker_expr(

@@ -172,6 +172,32 @@ class TestFKNullable:
         fraction = null_count / 5000
         assert 0.2 < fraction < 0.4, f"Null fraction {fraction} outside expected range"
 
+    def test_generate_table_without_resolution_raises(self, spark):
+        """Calling generate_table directly on an FK-bearing spec without
+        a ResolvedPlan must raise, not silently emit an all-NULL column.
+
+        The ForeignKeyColumn strategy was added (a78597b) to close the
+        silent-NULL class; an earlier branch in _build_fk_column_expr
+        re-introduced it by returning None on missing resolution, which
+        the caller translated into ``F.lit(None)``.
+        """
+        import pytest
+
+        orders = TableSpec(
+            name="orders",
+            rows=5,
+            columns=[
+                ColumnSpec(name="oid", gen=SequenceColumn(start=1, step=1)),
+                ColumnSpec(
+                    name="cid",
+                    gen=ForeignKeyColumn(),
+                    foreign_key=ForeignKeyRef(ref="customers.cid"),
+                ),
+            ],
+        )
+        with pytest.raises(RuntimeError, match="no FKResolution"):
+            generate_table(spark, orders)
+
     def test_fk_top_level_null_fraction_applied(self, spark):
         """``ColumnSpec.null_fraction`` on an FK column must actually be applied.
 
