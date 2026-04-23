@@ -534,12 +534,16 @@ class ColumnSpec(BaseModel):
 
     @model_validator(mode="after")
     def validate_null_fraction(self) -> ColumnSpec:
+        # Validators must not mutate ``self`` -- the engine drives null
+        # injection off ``null_fraction`` directly, and a side-effect
+        # that flips ``nullable`` makes round-tripping
+        # ``dump -> validate`` non-idempotent (the dumped model has
+        # ``nullable=True`` that the user never typed).  The two fields
+        # are orthogonal: ``null_fraction`` controls how many cells get
+        # nulled at generation time, ``nullable`` is downstream schema
+        # metadata that the user sets if they want it.
         if not 0.0 <= self.null_fraction <= 1.0:
             raise ValueError(f"null_fraction must be in [0.0, 1.0], got {self.null_fraction}")
-        # Convenience: setting null_fraction > 0 implies nullable=True.
-        # This avoids requiring users to always set both fields explicitly.
-        if self.null_fraction > 0 and not self.nullable:
-            self.nullable = True
         return self
 
     @model_validator(mode="after")

@@ -246,9 +246,16 @@ class TestColumnSpec:
         with pytest.raises(ValueError, match="not a valid identifier"):
             ColumnSpec(name=bad_name, gen=RangeColumn())
 
-    def test_null_fraction_auto_sets_nullable(self):
+    def test_null_fraction_and_nullable_are_orthogonal(self):
+        """``null_fraction`` drives runtime NULL injection; ``nullable``
+        is separate schema metadata.  The validator used to mutate
+        ``nullable=True`` when ``null_fraction > 0`` -- a side-effect
+        that broke ``dump -> validate`` round-tripping (the dumped
+        model picked up a ``nullable=True`` the user never typed).
+        The fields are now fully orthogonal.
+        """
         col = ColumnSpec(name="x", gen=RangeColumn(), null_fraction=0.1)
-        assert col.nullable is True
+        assert col.nullable is False
         assert col.null_fraction == 0.1
 
     def test_zero_null_fraction_keeps_nullable_false(self):
@@ -258,6 +265,17 @@ class TestColumnSpec:
     def test_explicit_nullable_with_zero_fraction(self):
         col = ColumnSpec(name="x", gen=RangeColumn(), nullable=True, null_fraction=0.0)
         assert col.nullable is True
+
+    def test_column_spec_is_pure_under_roundtrip(self):
+        """Construct -> model_dump -> re-construct must be idempotent:
+        nothing the user didn't type appears in the re-constructed
+        spec.  Pins the fix that removed the ``nullable`` auto-flip
+        (which broke this round-trip).
+        """
+        col1 = ColumnSpec(name="x", gen=RangeColumn(), null_fraction=0.25)
+        dumped = col1.model_dump()
+        col2 = ColumnSpec.model_validate(dumped)
+        assert col1.model_dump() == col2.model_dump()
 
     def test_column_with_foreign_key(self):
         fk_ref = ForeignKeyRef(ref="customers.id")
