@@ -7,6 +7,8 @@ FK integrity, and parent delete guard.
 
 from __future__ import annotations
 
+import pytest
+
 from dbldatagen.core.engine.cdc import (
     generate_cdc,
     generate_cdc_batch,
@@ -236,6 +238,17 @@ class TestCDCBatchIndependence:
         for sr, ir in zip(stream_rows, ind_rows):
             assert sr.product_id == ir.product_id
             assert sr._op == ir._op
+
+    @pytest.mark.parametrize("bad_batch_id", [0, -1, 6, 10**6])
+    def test_out_of_range_batch_id_rejected(self, spark, bad_batch_id):
+        """``batch_id`` must be in ``[1, num_batches]``.  ``0`` is the
+        initial snapshot, values outside the range used to produce an
+        empty-but-formatted DataFrame; now raise ValueError with a clear
+        hint pointing at ``.initial`` for the snapshot case.
+        """
+        plan = CDCPlan(base_plan=_simple_plan(rows=10), num_batches=5)
+        with pytest.raises(ValueError, match=r"batch_id must be in \[1, 5\]"):
+            generate_cdc_batch(spark, plan, batch_id=bad_batch_id)
 
 
 # ---------------------------------------------------------------------------

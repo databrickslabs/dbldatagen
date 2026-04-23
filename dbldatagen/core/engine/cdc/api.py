@@ -136,7 +136,7 @@ def generate_cdc(
         ``DataGenPlan``.
     format :
         Output format.  One of 'raw', 'delta_cdf', 'sql_server',
-        'debezium'.  Defaults to 'raw'.
+        or 'delta_cdf'.  Defaults to 'raw'.
 
     Returns
     -------
@@ -220,6 +220,12 @@ def generate_cdc_batch(
 
     Useful for generating batch N without materialising batches 1..N-1.
     The state is replayed via metadata, not DataFrames.
+
+    ``batch_id`` must be in ``[1, plan.num_batches]``.  ``batch_id=0``
+    is the initial snapshot and is produced by ``generate_cdc`` /
+    ``generate_cdc_bulk`` (not by this function) — passing 0 or a
+    value outside the plan's batch range used to return an
+    empty-but-formatted DataFrame, silently masking the mistake.
     """
     if isinstance(plan_or_base, DataGenPlan):
         plan = CDCPlan(base_plan=plan_or_base)
@@ -229,6 +235,13 @@ def generate_cdc_batch(
     if format is not None:
         fmt = CDCFormat(format) if isinstance(format, str) else format
         plan = plan.model_copy(update={"format": fmt})
+
+    if not 1 <= batch_id <= plan.num_batches:
+        raise ValueError(
+            f"batch_id must be in [1, {plan.num_batches}], got {batch_id}.  "
+            f"batch_id=0 is the initial snapshot (obtain via ``generate_cdc`` "
+            f"or ``generate_cdc_bulk`` and read ``.initial``)."
+        )
 
     fmt_name = plan.format.value
     return _generate_batch(spark, plan, batch_id, fmt_name)
