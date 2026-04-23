@@ -139,6 +139,28 @@ class ValuesColumn(BaseModel):
     def validate_values(self) -> ValuesColumn:
         if not self.values:
             raise ValueError("values list must not be empty")
+        # Cross-validate: WeightedValues.weights has str keys; the engine
+        # does ``weights.get(str(v), 0.0)`` for each value, so any value
+        # whose str() isn't a weight key silently contributes zero.  If
+        # EVERY value is zero, the engine falls back to uniform without
+        # a warning — the user's weighted distribution is silently
+        # ignored.  Catch at plan time.
+        if isinstance(self.distribution, WeightedValues):
+            value_keys = {str(v) for v in self.values}
+            missing = value_keys - set(self.distribution.weights)
+            if missing:
+                raise ValueError(
+                    f"WeightedValues.weights is missing entries for values "
+                    f"{sorted(missing)}.  Every value must have a corresponding "
+                    f"weight (keyed by ``str(value)``), or the engine will "
+                    f"silently assign zero weight and fall back to uniform."
+                )
+            if sum(self.distribution.weights.get(str(v), 0.0) for v in self.values) <= 0:
+                raise ValueError(
+                    "WeightedValues.weights sum to zero across the values "
+                    "list — cumulative distribution is degenerate.  Assign "
+                    "at least one positive weight."
+                )
         return self
 
 
@@ -336,8 +358,23 @@ class DataType(str, Enum):
     TIMESTAMP = "timestamp"
     DECIMAL = "decimal"
 
-    # convenience aliases
+    # convenience aliases — Python Enum treats duplicate values as
+    # aliases of the canonical member (``DataType.INTEGER is DataType.INT``).
+    # Also accept common alternate spellings via ``_missing_`` so YAML /
+    # JSON plans written with either form round-trip cleanly.
     INTEGER = "int"
+
+    @classmethod
+    def _missing_(cls, value: object) -> DataType | None:
+        """Accept common alternate spellings (``"integer"`` → INT, etc.)."""
+        if not isinstance(value, str):
+            return None
+        aliases = {
+            "integer": cls.INT,
+            "bool": cls.BOOLEAN,
+            "str": cls.STRING,
+        }
+        return aliases.get(value.lower())
 
 
 # ---------------------------------------------------------------------------
