@@ -73,19 +73,31 @@ def generate_bulk_inserts(
 
         if col_spec.foreign_key is not None:
             fk_key = (table_name, col_spec.name)
-            if resolved_plan is not None and fk_key in resolved_plan.fk_resolutions:
-                combined = _build_case_when_fk(
-                    local_id,
-                    batch_offset,
-                    batch_infos,
-                    table_name,
-                    col_spec,
-                    global_seed,
-                    resolved_plan.fk_resolutions[fk_key],
+            if resolved_plan is None or fk_key not in resolved_plan.fk_resolutions:
+                # Same contract as generator._build_fk_column_expr — never
+                # silently emit ``F.lit(None)`` on a missing FKResolution,
+                # which reopens the silent-all-NULL class of bug the
+                # ForeignKeyColumn strategy was introduced (commit a78597b)
+                # to close.  Raise loudly so the caller sees what they
+                # forgot to thread.
+                raise RuntimeError(
+                    f"FK column '{table_name}.{col_spec.name}' has no "
+                    f"FKResolution in the bulk-inserts path — caller must "
+                    f"resolve the plan (via ``resolve_plan`` / ``generate_cdc_bulk``) "
+                    f"before reaching ``generate_bulk_inserts``.  Calling the "
+                    f"chunking path directly requires a ResolvedPlan carrying "
+                    f"this column's FK."
                 )
-                udf_columns.append((col_spec.name, combined))
-            else:
-                col_exprs.append(F.lit(None).alias(col_spec.name))
+            combined = _build_case_when_fk(
+                local_id,
+                batch_offset,
+                batch_infos,
+                table_name,
+                col_spec,
+                global_seed,
+                resolved_plan.fk_resolutions[fk_key],
+            )
+            udf_columns.append((col_spec.name, combined))
             continue
 
         combined = _build_case_when_column(
