@@ -11,6 +11,7 @@ generator.py targets:
 
 from __future__ import annotations
 
+import pytest
 from pyspark.sql import functions as F
 
 from dbldatagen.core.engine.generator import (
@@ -65,8 +66,14 @@ def _simple_plan(rows: int = 50) -> DataGenPlan:
 
 
 class TestFKColumnNoResolution:
-    def test_fk_no_resolution_falls_back_to_null(self, spark):
-        """FK column without fk_resolutions => lit(None)."""
+    def test_fk_no_resolution_raises(self, spark):
+        """FK column without fk_resolutions must raise, not silently emit NULL.
+
+        Earlier behavior returned ``lit(None)`` — re-introducing the
+        silent-NULL class of bug the ForeignKeyColumn strategy was
+        added to close.  The new contract raises a ``RuntimeError``
+        naming the column and the expected call sequence.
+        """
         spec = TableSpec(
             name="orders",
             rows=10,
@@ -80,16 +87,8 @@ class TestFKColumnNoResolution:
             ],
         )
         _df, id_col = create_range_df(spark, 10)
-        col_exprs, udf_columns, _ = build_all_column_exprs(
-            spec,
-            id_col,
-            None,
-            seed=42,
-            row_count=10,
-        )
-        # FK without resolution goes to col_exprs as lit(None)
-        assert len(col_exprs) == 1
-        assert len(udf_columns) == 0
+        with pytest.raises(RuntimeError, match="no FKResolution"):
+            build_all_column_exprs(spec, id_col, None, seed=42, row_count=10)
 
 
 # ===================================================================
@@ -141,8 +140,8 @@ class TestBuildExprsScalarBranches:
         assert len(seeded_columns) == 1
         assert seeded_columns[0][0] == "derived"
 
-    def test_scalar_fk_no_resolution(self, spark):
-        """Line 354: FK in scalar path without resolution."""
+    def test_scalar_fk_no_resolution_raises(self, spark):
+        """Scalar-path FK without resolution must raise, not silently NULL."""
         spec = TableSpec(
             name="t",
             rows=10,
@@ -157,11 +156,8 @@ class TestBuildExprsScalarBranches:
             primary_key=PrimaryKey(columns=["pk"]),
         )
         _df, id_col = create_range_df(spark, 10)
-        col_exprs, udf_cols, _ = _build_exprs_scalar(spec, id_col, 0, 42, None, row_count=10)
-        # FK without resolution goes to col_exprs as lit(None)
-        assert len(udf_cols) == 0
-        # pk + ref_id(null)
-        assert len(col_exprs) == 2
+        with pytest.raises(RuntimeError, match="no FKResolution"):
+            _build_exprs_scalar(spec, id_col, 0, 42, None, row_count=10)
 
 
 # ===================================================================
@@ -201,8 +197,8 @@ class TestBuildExprsDynamic:
         assert len(seeded) == 1
         assert seeded[0][0] == "derived"
 
-    def test_dynamic_fk_no_resolution(self, spark):
-        """Line 433: FK in dynamic path without resolution."""
+    def test_dynamic_fk_no_resolution_raises(self, spark):
+        """Dynamic-path FK without resolution must raise, not silently NULL."""
         spec = TableSpec(
             name="t",
             rows=10,
@@ -217,16 +213,16 @@ class TestBuildExprsDynamic:
             primary_key=PrimaryKey(columns=["pk"]),
         )
         _df, id_col = create_range_df(spark, 10)
-        _col_exprs, udf_cols, _ = _build_exprs_dynamic(
-            spec,
-            id_col,
-            F.col("_wb"),
-            [0, 1],
-            42,
-            None,
-            row_count=10,
-        )
-        assert len(udf_cols) == 0
+        with pytest.raises(RuntimeError, match="no FKResolution"):
+            _build_exprs_dynamic(
+                spec,
+                id_col,
+                F.col("_wb"),
+                [0, 1],
+                42,
+                None,
+                row_count=10,
+            )
 
     def test_dynamic_regular_null_fraction(self, spark):
         """Lines 443-445: regular column with null_fraction in dynamic path."""
