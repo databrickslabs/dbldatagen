@@ -263,6 +263,44 @@ class TestPatternColumn:
         with pytest.raises(ValueError, match=r"hex:N.*width must be <= 15"):
             build_pattern_column("id", 0, "{hex:16}")
 
+    def test_uuid_placeholder_emits_uuid(self, spark):
+        """``{uuid}`` produces a 36-char UUID inside a template.
+
+        Regression: the placeholder regex accepted ``uuid`` but the
+        dispatcher had no handler, so ``USER-{uuid}-x`` silently
+        collapsed to ``USER--x`` (the pos cursor advanced past the
+        match but nothing was appended).
+        """
+        col_seed = derive_column_seed(42, "t", "pk")
+        df = spark.range(20).select(build_pattern_column("id", col_seed, "USER-{uuid}-x").alias("v"))
+        values = [r.v for r in df.collect()]
+        # Template yields 36-char UUID body + 'USER-' (5) + '-x' (2) = 43 chars.
+        assert all(len(v) == 43 for v in values), f"got lens {sorted({len(v) for v in values})}"
+        assert all(v.startswith("USER-") and v.endswith("-x") for v in values)
+        uuid_bodies = [v[5:-2] for v in values]
+        assert all(UUID_RE.fullmatch(u) for u in uuid_bodies)
+        # Each row's UUID should be distinct (deterministic but unique).
+        assert len(set(uuid_bodies)) == len(uuid_bodies)
+
+    def test_multiple_uuids_in_template_are_distinct(self, spark):
+        """Two ``{uuid}`` placeholders in the same template must produce
+        different UUIDs on the same row; otherwise a naive handler that
+        forwarded the same seed twice would emit the same UUID both
+        positions (defeating the point of having two placeholders)."""
+        col_seed = derive_column_seed(42, "t", "pk")
+        df = spark.range(10).select(build_pattern_column("id", col_seed, "{uuid}:{uuid}").alias("v"))
+        for row in df.collect():
+            left, right = row.v.split(":")
+            assert UUID_RE.fullmatch(left) and UUID_RE.fullmatch(right)
+            assert left != right, f"two {{uuid}}s collided at row: {row.v}"
+
+    def test_uuid_rejects_width_modifier(self):
+        """``{uuid:8}`` is almost certainly a user bug (they want
+        ``{hex:8}`` or ``{alpha:8}``).  Reject rather than silently
+        produce a full 36-char UUID that ignores the 8."""
+        with pytest.raises(ValueError, match=r"\{uuid\} does not accept a width modifier"):
+            build_pattern_column("id", 0, "{uuid:8}")
+
 
 # ---------------------------------------------------------------------------
 # UUID column

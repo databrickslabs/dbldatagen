@@ -11,6 +11,7 @@ import re
 from pyspark.sql import Column
 from pyspark.sql import functions as F
 
+from dbldatagen.core.engine.columns.uuid import build_uuid_column
 from dbldatagen.core.engine.distributions import (
     apply_distribution,
     weighted_sample_expr,
@@ -78,6 +79,7 @@ def build_pattern_column(
 
     Supported placeholders:
         {seq}       -- row sequence number (from id)
+        {uuid}      -- deterministic UUID (36 chars, no width modifier)
         {digit:N}   -- N random digits
         {alpha:N}   -- N random uppercase alpha characters
         {hex:N}     -- N random hex characters
@@ -98,6 +100,18 @@ def build_pattern_column(
 
         if kind == "seq":
             parts.append(F.lpad((id_col + F.lit(1)).cast("string"), width, "0"))
+        elif kind == "uuid":
+            # {uuid} has no width modifier -- a 36-char UUID with the
+            # user asking for N chars is almost always a bug (they
+            # probably want {hex:N} or {alpha:N}).  Reject rather than
+            # silently ignore the width.
+            if m.group(2) is not None:
+                raise ValueError(
+                    f"{{uuid}} does not accept a width modifier (got '{m.group(0)}'). "
+                    f"UUIDs are always 36 characters; use {{hex:N}} or {{alpha:N}} for a "
+                    f"short random token."
+                )
+            parts.append(_random_uuid(id_col, column_seed, placeholder_idx))
         elif kind == "digit":
             parts.append(_random_digits(id_col, column_seed, placeholder_idx, width))
         elif kind == "alpha":
@@ -134,6 +148,21 @@ def _seed_xor(column_seed: int | Column, constant: int) -> int | Column:
     if isinstance(column_seed, Column):
         return column_seed.bitwiseXOR(F.lit(constant).cast("long"))
     return to_signed64(column_seed ^ constant)
+
+
+def _random_uuid(
+    id_col: Column,
+    column_seed: int | Column,
+    idx: int,
+) -> Column:
+    """Generate a UUID embedded inside a pattern template.
+
+    Each ``{uuid}`` in a template gets an independent seed derivation so
+    two placeholders in the same row don't emit identical UUIDs. Uses
+    the same XOR-with-(idx+1)*GOLDEN_RATIO_HASH pattern as the other
+    ``_random_*`` helpers for consistency.
+    """
+    return build_uuid_column(id_col, _seed_xor(column_seed, (idx + 1) * GOLDEN_RATIO_HASH))
 
 
 def _random_digits(
