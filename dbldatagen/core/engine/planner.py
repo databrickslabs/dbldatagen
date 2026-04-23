@@ -212,7 +212,10 @@ def resolve_plan(plan: DataGenPlan) -> ResolvedPlan:
             # Extract PK metadata
             parent_meta = _extract_pk_metadata(parent_table, parent_col, plan.seed)
 
-            null_fraction = col_spec.foreign_key.null_fraction
+            # ColumnSpec.null_fraction and ForeignKeyRef.null_fraction are
+            # both legal sources (the ColumnSpec validator rejects
+            # disagreeing non-zero values so max() here is unambiguous).
+            null_fraction = max(col_spec.null_fraction, col_spec.foreign_key.null_fraction)
             distribution = col_spec.foreign_key.distribution
 
             fk_resolutions[(table_spec.name, col_spec.name)] = FKResolution(

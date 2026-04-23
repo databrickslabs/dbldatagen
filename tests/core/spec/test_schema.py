@@ -701,6 +701,29 @@ class TestNullFractionValidation:
         with pytest.raises(ValueError, match="null_fraction must be in"):
             ForeignKeyRef(ref="t.c", null_fraction=-0.1)
 
+    def test_fk_null_fraction_on_both_disagreeing_rejected(self):
+        """ColumnSpec.null_fraction and ForeignKeyRef.null_fraction set to
+        different non-zero values must be rejected at schema validation
+        so the user's intent is unambiguous."""
+        with pytest.raises(ValueError, match="null_fraction is set on both"):
+            ColumnSpec(
+                name="cid",
+                gen=ForeignKeyColumn(),
+                null_fraction=0.3,
+                foreign_key=ForeignKeyRef(ref="t.c", null_fraction=0.7),
+            )
+
+    def test_fk_null_fraction_on_both_agreeing_ok(self):
+        col = ColumnSpec(
+            name="cid",
+            gen=ForeignKeyColumn(),
+            null_fraction=0.3,
+            foreign_key=ForeignKeyRef(ref="t.c", null_fraction=0.3),
+        )
+        assert col.null_fraction == 0.3
+        assert col.foreign_key is not None
+        assert col.foreign_key.null_fraction == 0.3
+
 
 class TestTableSpecValidation:
     def test_rows_zero(self):

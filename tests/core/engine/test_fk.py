@@ -172,6 +172,42 @@ class TestFKNullable:
         fraction = null_count / 5000
         assert 0.2 < fraction < 0.4, f"Null fraction {fraction} outside expected range"
 
+    def test_fk_top_level_null_fraction_applied(self, spark):
+        """``ColumnSpec.null_fraction`` on an FK column must actually be applied.
+
+        Prior bug: the FK path read only ``foreign_key.null_fraction``,
+        silently ignoring ``ColumnSpec.null_fraction``.  Users who set
+        the same field they use on every other column kind got 0% nulls.
+        """
+        customers = TableSpec(
+            name="customers",
+            rows=100,
+            primary_key=PrimaryKey(columns=["cid"]),
+            columns=[ColumnSpec(name="cid", gen=SequenceColumn(start=1, step=1))],
+        )
+        orders = TableSpec(
+            name="orders",
+            rows=5000,
+            columns=[
+                ColumnSpec(name="oid", gen=SequenceColumn(start=1, step=1)),
+                ColumnSpec(
+                    name="cid",
+                    gen=ForeignKeyColumn(),
+                    null_fraction=0.3,
+                    foreign_key=ForeignKeyRef(ref="customers.cid", nullable=True),
+                ),
+            ],
+        )
+        plan = DataGenPlan(tables=[customers, orders], seed=42)
+        resolved = resolve_plan(plan)
+        order_df = generate_table(spark, orders, resolved)
+
+        fraction = order_df.filter(F.col("cid").isNull()).count() / 5000
+        assert 0.2 < fraction < 0.4, (
+            f"ColumnSpec.null_fraction=0.3 on FK column produced {fraction} — "
+            f"top-level null_fraction was silently ignored before the fix"
+        )
+
 
 class TestFKDeterminism:
     def test_fk_determinism(self, spark):

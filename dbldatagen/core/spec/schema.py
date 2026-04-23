@@ -459,6 +459,24 @@ class ColumnSpec(BaseModel):
                 f"ForeignKeyColumn (or the fk() DSL helper); the "
                 f"old `ConstantColumn(value=None)` placeholder is no longer accepted."
             )
+        # null_fraction can be set on ColumnSpec (like every other column
+        # kind) or on the ForeignKeyRef.  Previously the FK path read only
+        # ForeignKeyRef.null_fraction, silently ignoring a top-level
+        # null_fraction that a user had set.  Allow either source but
+        # reject disagreeing non-zero values so the user intent is
+        # unambiguous; planner.py resolves to ``max(...)``.
+        if (
+            self.foreign_key is not None
+            and self.null_fraction > 0
+            and self.foreign_key.null_fraction > 0
+            and self.null_fraction != self.foreign_key.null_fraction
+        ):
+            raise ValueError(
+                f"Column '{self.name}': null_fraction is set on both "
+                f"ColumnSpec ({self.null_fraction}) and ForeignKeyRef "
+                f"({self.foreign_key.null_fraction}) with different values. "
+                f"Set it in exactly one place, or use the same value in both."
+            )
         return self
 
 
