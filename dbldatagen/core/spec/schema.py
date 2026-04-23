@@ -11,6 +11,16 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 _IDENTIFIER_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
+# Names that the SQL Server CDC format rewrite (``rename_cdc_columns``)
+# emits by renaming the raw ``__$operation`` / ``__$start_lsn`` /
+# ``__$seqval`` metadata columns.  A user column with one of these names
+# would silently shadow the rewritten metadata after rename, and Delta
+# would carry two identically-named columns with the user's one winning
+# in downstream reads.  Reserve at plan time so the collision fails
+# loudly where the column is defined, not at write time with an opaque
+# Delta error.
+_RESERVED_CDC_RENAME_TARGETS = frozenset({"cdc_operation", "cdc_lsn", "cdc_seqval"})
+
 # Upper bound on ArrayColumn.max_length.  Each slot materialises its own
 # Spark expression tree at plan time, so Catalyst work scales linearly
 # with this value (and with nested arrays/structs, multiplicatively).
@@ -479,6 +489,15 @@ class ColumnSpec(BaseModel):
                 f"(``_op``, ``_batch_id``, ``_ts``, ``_write_batch``, "
                 f"``_synth_row_id``).  Rename to a non-underscore-prefixed "
                 f"identifier to avoid silent shadowing."
+            )
+        if self.name in _RESERVED_CDC_RENAME_TARGETS:
+            raise ValueError(
+                f"Column name '{self.name}' is reserved for the SQL Server "
+                f"CDC format rewrite (``rename_cdc_columns`` renames "
+                f"``__$operation`` / ``__$start_lsn`` / ``__$seqval`` into "
+                f"``cdc_operation`` / ``cdc_lsn`` / ``cdc_seqval``).  A user "
+                f"column with the same name collides silently after rename -- "
+                f"rename your column to avoid the collision."
             )
         return self
 

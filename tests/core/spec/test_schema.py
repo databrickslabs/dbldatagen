@@ -246,6 +246,19 @@ class TestColumnSpec:
         with pytest.raises(ValueError, match="not a valid identifier"):
             ColumnSpec(name=bad_name, gen=RangeColumn())
 
+    @pytest.mark.parametrize("reserved_name", ["cdc_operation", "cdc_lsn", "cdc_seqval"])
+    def test_cdc_rename_target_name_rejected(self, reserved_name):
+        """``rename_cdc_columns`` rewrites ``__$operation`` / ``__$start_lsn`` /
+        ``__$seqval`` into these three names during the SQL Server CDC
+        format pass.  A user column with the same name silently shadows
+        the rewritten metadata column in Delta (two columns with the
+        same name; one wins in downstream reads, and the user's data is
+        gone without warning).  Reject at plan time where the column is
+        defined, so the failure mode names the offending column instead
+        of surfacing as an opaque Delta write error."""
+        with pytest.raises(ValueError, match="reserved for the SQL Server"):
+            ColumnSpec(name=reserved_name, gen=RangeColumn())
+
     def test_null_fraction_and_nullable_are_orthogonal(self):
         """``null_fraction`` drives runtime NULL injection; ``nullable``
         is separate schema metadata.  The validator used to mutate
