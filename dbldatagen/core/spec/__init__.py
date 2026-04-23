@@ -5,6 +5,7 @@ from __future__ import annotations
 from dbldatagen.core.spec.dsl import (
     array,
     decimal,
+    double,
     expression,
     faker,
     fk,
@@ -38,6 +39,7 @@ __all__ = [
     "TableSpec",
     "array",
     "decimal",
+    "double",
     "expression",
     "faker",
     "fk",

@@ -80,6 +80,28 @@ def integer(name: str, min: float | int = 0, max: float | int = 100, seed_from: 
     )
 
 
+def double(
+    name: str,
+    min: float | int = 0.0,
+    max: float | int = 1.0,
+    seed_from: str | None = None,
+    **kw,
+) -> ColumnSpec:
+    """Build a DOUBLE column spec.
+
+    The v0 ``DoubleType()`` / ``FloatType()`` migration target — the
+    MIGRATION doc now points here instead of the prior (wrong)
+    suggestion of ``decimal()``.  Use ``decimal()`` for fixed-precision
+    financial values with explicit ``precision`` / ``scale``.
+    """
+    return ColumnSpec(
+        name=name,
+        dtype=DataType.DOUBLE,
+        gen=RangeColumn(min=min, max=max, **kw),
+        seed_from=seed_from,
+    )
+
+
 def decimal(
     name: str,
     min: float | int = 0.0,

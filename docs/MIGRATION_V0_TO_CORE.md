@@ -67,9 +67,14 @@ integer("age", min=18, max=90)
 .withColumn("amount", DoubleType(), minValue=10.0, maxValue=500.0)
 
 # core
-from dbldatagen.core.spec.dsl import decimal
-decimal("amount", min=10.0, max=500.0)
+from dbldatagen.core import double
+double("amount", min=10.0, max=500.0)
 ```
+
+``double()`` maps to ``DataType.DOUBLE``.  Use ``decimal(name,
+precision=P, scale=S)`` only for fixed-precision financial values
+(the earlier MIGRATION doc suggested ``decimal`` here — wrong, it
+produced a different on-disk type).
 
 #### String Values (Discrete)
 
