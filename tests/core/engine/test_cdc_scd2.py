@@ -176,7 +176,12 @@ class TestSCD2MultiTable:
     """SCD2 with FK relationships — dimension + fact tables."""
 
     def test_fact_fk_integrity_across_batches(self, spark):
-        plan = DataGenPlan(
+        """Fact table (CDC) references a static dimension — the supported
+        FK pattern.  Cross-CDC FK (both dim and fact in cdc_tables) is
+        rejected at plan construction; see TestCDCCrossTableFKRejection
+        in test_cdc_schema.py.
+        """
+        base = DataGenPlan(
             seed=42,
             tables=[
                 TableSpec(
@@ -204,17 +209,22 @@ class TestSCD2MultiTable:
                 ),
             ],
         )
+        from dbldatagen.core import generate
+
+        plan = CDCPlan(base_plan=base, cdc_tables=["fact_orders"])
         stream = generate_cdc(spark, plan, num_batches=3)
 
-        # Verify dim_customer has no deletes (FK parent protection)
-        for batch in stream.batches:
-            del_count = batch["dim_customer"].filter("_op = 'D'").count()
-            assert del_count == 0
+        # Static dim isn't in the CDC stream — generate it directly.
+        dim = generate(spark, base)["dim_customer"]
+        dim_pks = {r.cust_id for r in dim.select("cust_id").collect()}
 
-        # Verify initial fact FK integrity
-        initial_cust_pks = {r.cust_id for r in stream.initial["dim_customer"].select("cust_id").collect()}
         initial_order_fks = {r.cust_id for r in stream.initial["fact_orders"].select("cust_id").collect()}
-        assert initial_order_fks.issubset(initial_cust_pks)
+        assert initial_order_fks.issubset(dim_pks)
+
+        # Every batch's fact inserts must also reference the static dim.
+        for batch in stream.batches:
+            fact_fks = {r.cust_id for r in batch["fact_orders"].filter("_op = 'I'").select("cust_id").collect()}
+            assert fact_fks.issubset(dim_pks), "fact insert references a cust_id not in the dim — FK integrity broken"
 
 
 class TestSCD2DeltaCDFFormat:

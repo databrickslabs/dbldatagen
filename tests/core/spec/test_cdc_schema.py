@@ -18,6 +18,8 @@ from dbldatagen.core.spec.cdc_schema import (
 from dbldatagen.core.spec.schema import (
     ColumnSpec,
     DataGenPlan,
+    ForeignKeyColumn,
+    ForeignKeyRef,
     PrimaryKey,
     SequenceColumn,
     TableSpec,
@@ -297,6 +299,47 @@ class TestCDCNumBatchesValidation:
     def test_negative_batches(self):
         with pytest.raises(ValueError, match="num_batches must be > 0"):
             CDCPlan(base_plan=_simple_base_plan(), num_batches=-1)
+
+
+def _two_table_plan_with_fk(child_is_cdc: bool = True) -> DataGenPlan:
+    """Parent (cdc) + child with FK to parent.  child_is_cdc toggles the child."""
+    parent = TableSpec(
+        name="parent",
+        rows=10,
+        primary_key=PrimaryKey(columns=["pid"]),
+        columns=[ColumnSpec(name="pid", gen=SequenceColumn(start=1, step=1))],
+    )
+    child = TableSpec(
+        name="child",
+        rows=20,
+        columns=[
+            ColumnSpec(name="cid", gen=SequenceColumn(start=1, step=1)),
+            ColumnSpec(
+                name="pid",
+                gen=ForeignKeyColumn(),
+                foreign_key=ForeignKeyRef(ref="parent.pid"),
+            ),
+        ],
+    )
+    return DataGenPlan(seed=42, tables=[parent, child])
+
+
+class TestCDCCrossTableFKRejection:
+    def test_two_cdc_tables_with_fk_rejected(self):
+        """CDC parent + CDC child + FK is not yet supported — raise at plan construction."""
+        with pytest.raises(ValueError, match="cross-CDC foreign keys"):
+            CDCPlan(base_plan=_two_table_plan_with_fk(), cdc_tables=["parent", "child"])
+
+    def test_default_cdc_tables_reject_fk(self):
+        """When cdc_tables is empty (defaulted to all), the FK still trips the guard."""
+        with pytest.raises(ValueError, match="cross-CDC foreign keys"):
+            CDCPlan(base_plan=_two_table_plan_with_fk())
+
+    def test_static_parent_cdc_child_allowed(self):
+        """Parent outside cdc_tables (static dimension) is fine; child's plan-time
+        snapshot of parent PK is correct because parent isn't mutated."""
+        plan = CDCPlan(base_plan=_two_table_plan_with_fk(), cdc_tables=["child"])
+        assert plan.cdc_tables == ["child"]
 
 
 class TestCDCMutationColumnValidation:

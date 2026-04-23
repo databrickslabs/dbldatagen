@@ -105,6 +105,17 @@ def apply_fk_delete_guard(plan: CDCPlan, table_name: str, config: CDCTableConfig
 
     Returns the original config if no guard is needed, or a copy
     with delete weight set to 0.
+
+    **Scope:** this guard is only reachable for plans that passed
+    ``CDCPlan._reject_cross_cdc_foreign_keys`` — FK references between
+    two CDC tables are rejected at plan-construction time today,
+    because the FK reconstruction in ``fk.build_fk_column`` uses the
+    plan-time parent row count and pk_seed rather than tracking
+    per-batch parent lifecycle.  The remaining cases this guard
+    handles (static parent → CDC child, CDC parent → non-CDC child)
+    are safe.  If we ever lift the cross-CDC restriction, this guard
+    must grow to also handle PK-changing updates and transitive
+    delete cascades.
     """
     if _table_has_fk_dependents(plan, table_name) and config.operations.delete > 0:
         return config.model_copy(

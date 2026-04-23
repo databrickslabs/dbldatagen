@@ -339,24 +339,31 @@ class TestExpectedState:
 
 
 class TestCDCFKIntegrity:
+    """CDC with FK requires the parent to be a static dimension (not in
+    ``cdc_tables``) — ``CDCPlan`` rejects cross-CDC foreign keys at
+    construction because the FK generator uses plan-time parent row
+    count and would dangle under parent mutation.  These tests pin the
+    supported case: static parent + CDC child.
+    """
+
     def test_initial_fk_valid(self, spark):
-        stream = generate_cdc(spark, _fk_plan(), num_batches=1)
-        cust_pks = {r.cust_id for r in stream.initial["customers"].select("cust_id").collect()}
+        from dbldatagen.core import generate
+
+        base = _fk_plan()
+        plan = CDCPlan(base_plan=base, cdc_tables=["orders"])
+        stream = generate_cdc(spark, plan, num_batches=1)
+
+        # Static parent isn't part of the CDC stream — materialize it directly.
+        customers = generate(spark, base)["customers"]
+        cust_pks = {r.cust_id for r in customers.select("cust_id").collect()}
         order_fks = {r.cust_id for r in stream.initial["orders"].select("cust_id").collect()}
         assert order_fks.issubset(cust_pks)
 
-    def test_parent_delete_guard(self, spark):
-        """Parent table (customers) should have 0 deletes when children exist."""
-        stream = generate_cdc(spark, _fk_plan(), num_batches=3)
-        for batch in stream.batches:
-            cust_df = batch["customers"]
-            delete_count = cust_df.filter("_op = 'D'").count()
-            assert delete_count == 0, f"Parent deletes found: {delete_count}"
-
     def test_child_deletes_allowed(self, spark):
-        """Child table (orders) should be allowed to have deletes."""
+        """CDC child with FK to a static parent is allowed to have deletes."""
         plan = CDCPlan(
             base_plan=_fk_plan(),
+            cdc_tables=["orders"],
             num_batches=5,
             table_configs={
                 "orders": CDCTableConfig(
@@ -461,21 +468,17 @@ class TestCDCBulkGeneration:
             assert pb == bk
 
     def test_bulk_fk_integrity(self, spark):
-        """FK integrity should hold in bulk mode."""
-        plan = _fk_plan()
+        """FK integrity should hold in bulk mode with a static parent."""
+        from dbldatagen.core import generate
+
+        base = _fk_plan()
+        plan = CDCPlan(base_plan=base, cdc_tables=["orders"])
         stream = generate_cdc_bulk(spark, plan, num_batches=3, chunk_size=2)
 
-        # Initial FK validity
-        cust_pks = {r.cust_id for r in stream.initial["customers"].select("cust_id").collect()}
+        customers = generate(spark, base)["customers"]
+        cust_pks = {r.cust_id for r in customers.select("cust_id").collect()}
         order_fks = {r.cust_id for r in stream.initial["orders"].select("cust_id").collect()}
         assert order_fks.issubset(cust_pks)
-
-    def test_bulk_parent_delete_guard(self, spark):
-        """Parent deletes should be suppressed in bulk mode too."""
-        stream = generate_cdc_bulk(spark, _fk_plan(), num_batches=3, chunk_size=2)
-        for chunk in stream.batches:
-            delete_count = chunk["customers"].filter("_op = 'D'").count()
-            assert delete_count == 0
 
     def test_bulk_with_deletes(self, spark):
         """Deletes should work correctly in bulk mode."""
@@ -525,26 +528,26 @@ class TestCDCBulkGeneration:
         assert "_commit_version" in cols
 
     def test_bulk_fk_matches_per_batch(self, spark):
-        """Bulk with FK tables should produce same rows as per-batch."""
-        plan = _fk_plan(seed=42)
+        """Bulk with FK (static parent) should produce same rows as per-batch."""
+        plan = CDCPlan(base_plan=_fk_plan(seed=42), cdc_tables=["orders"])
         num_b = 3
 
         per_batch = generate_cdc(spark, plan, num_batches=num_b)
         bulk = generate_cdc_bulk(spark, plan, num_batches=num_b, chunk_size=num_b)
 
-        for table in ["customers", "orders"]:
-            all_per = []
-            for b in per_batch.batches:
-                all_per.extend(b[table].orderBy("_batch_id", "_op").collect())
-            all_bulk = []
-            for chunk in bulk.batches:
-                all_bulk.extend(chunk[table].orderBy("_batch_id", "_op").collect())
-            all_per.sort(key=lambda r: (r._batch_id, r._op, r[0]))
-            all_bulk.sort(key=lambda r: (r._batch_id, r._op, r[0]))
-            assert len(all_per) == len(all_bulk), f"{table}: row count mismatch"
-            for pr, br in zip(all_per, all_bulk):
-                assert pr[0] == br[0], f"{table}: PK mismatch"
-                assert pr._op == br._op, f"{table}: _op mismatch"
+        # Only orders is CDC; customers is static (initial only, no batch events).
+        all_per = []
+        for b in per_batch.batches:
+            all_per.extend(b["orders"].orderBy("_batch_id", "_op").collect())
+        all_bulk = []
+        for chunk in bulk.batches:
+            all_bulk.extend(chunk["orders"].orderBy("_batch_id", "_op").collect())
+        all_per.sort(key=lambda r: (r._batch_id, r._op, r[0]))
+        all_bulk.sort(key=lambda r: (r._batch_id, r._op, r[0]))
+        assert len(all_per) == len(all_bulk), "orders: row count mismatch"
+        for pr, br in zip(all_per, all_bulk):
+            assert pr[0] == br[0], "orders: PK mismatch"
+            assert pr._op == br._op, "orders: _op mismatch"
 
     def test_bulk_insert_only_plan(self, spark):
         """Insert-only plan should work with bulk fusion (no updates/deletes)."""

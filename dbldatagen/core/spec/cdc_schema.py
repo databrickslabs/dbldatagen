@@ -130,6 +130,50 @@ class CDCPlan(BaseModel):
         return self
 
     @model_validator(mode="after")
+    def _reject_cross_cdc_foreign_keys(self) -> CDCPlan:
+        """Reject FK references between two CDC tables.
+
+        The engine's FK integrity guarantee (``apply_fk_delete_guard`` in
+        ``cdc_generator/_common.py``) only holds when the FK parent is
+        not also being mutated per batch: it disables deletes on parents
+        of CDC children, but PK reconstruction in ``fk.build_fk_column``
+        uses the plan-time row count and pk_seed, which don't reflect
+        per-batch insert/update lifecycles on a CDC parent.  Letting
+        such plans through today silently produces dangling child FKs
+        (the child references a parent index that was born, mutated, or
+        deleted at a different point in the CDC timeline than the
+        child's current row).
+
+        This validator raises at plan construction so the failure is
+        loud and actionable.  Static parents (``parent`` is in
+        ``base_plan.tables`` but NOT in ``cdc_tables``) are fine —
+        static parents aren't mutated per batch, so the child's
+        plan-time snapshot of the parent PK is correct.
+        """
+        cdc_table_names = set(self.cdc_tables) if self.cdc_tables else {t.name for t in self.base_plan.tables}
+        offending: list[tuple[str, str, str]] = []
+        for table_spec in self.base_plan.tables:
+            if table_spec.name not in cdc_table_names:
+                continue
+            for col_spec in table_spec.columns:
+                if col_spec.foreign_key is None:
+                    continue
+                parent_name = col_spec.foreign_key.ref.split(".", 1)[0]
+                if parent_name in cdc_table_names:
+                    offending.append((table_spec.name, col_spec.name, parent_name))
+        if offending:
+            items = ", ".join(f"{t}.{c} -> {p}" for t, c, p in offending)
+            raise ValueError(
+                f"CDCPlan rejects cross-CDC foreign keys: {items}.  "
+                f"Multi-table CDC with FKs between CDC tables is not yet "
+                f"supported — the FK generator would dangle under mutation.  "
+                f"Remove the parent from cdc_tables (make it a static "
+                f"dimension), or drop the FK and use a non-FK column for "
+                f"now.  Track the feature request in a follow-up issue."
+            )
+        return self
+
+    @model_validator(mode="after")
     def _validate_num_batches(self) -> CDCPlan:
         if self.num_batches <= 0:
             raise ValueError(f"num_batches must be > 0, got {self.num_batches}")
