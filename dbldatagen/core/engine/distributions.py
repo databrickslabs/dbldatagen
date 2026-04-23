@@ -24,12 +24,18 @@ from dbldatagen.core.spec.schema import (
 
 
 # Precision for mapping a seed hash to [0, 1): pmod(seed, P) / P.
-# 10000 gives 0.01% granularity (used for weighted-values selection).
+# 10000 gives 0.01% granularity (used for weighted-values selection,
+# where the user-facing weight resolution is already coarse).
 _UNIFORM_PRECISION = 10_000
 
-# Higher precision for continuous distributions (normal, exponential,
-# log-normal) and range column fractional mapping.
-_CONTINUOUS_PRECISION = 1_000_000
+# Precision for continuous distributions (normal, exponential,
+# log-normal) and float range fractional mapping.  Set to 2**53 so the
+# resulting double spans the full IEEE 754 mantissa -- earlier 1e6 gave
+# only ~20 bits of entropy per draw, which collided visibly at
+# n_rows > ~1M and compressed float range outputs onto a millionth-step
+# grid.  2**53 fits in a signed int64 (2**53 < 2**63 - 1) and round-trips
+# exactly through ``cast("double")``, so pmod/divide stay lossless.
+_CONTINUOUS_PRECISION = 2**53
 
 
 # ---------------------------------------------------------------------------
