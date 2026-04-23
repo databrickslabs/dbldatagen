@@ -2,7 +2,8 @@
 
 Verifies column presence, operation codes, and update row handling
 for raw, Delta CDF, and SQL Server formats.  Debezium is not yet
-supported (it raises ``NotImplementedError`` — see ``to_debezium``).
+supported — removed from the ``CDCFormat`` enum so plans using it
+fail at construction.
 """
 
 from __future__ import annotations
@@ -162,22 +163,30 @@ class TestSQLServerFormat:
 
 
 class TestDebeziumFormat:
-    """Debezium format is not yet implemented.
+    """Debezium was removed from ``CDCFormat`` entirely.
 
     The earlier flattened approximation silently dropped ``UB`` rows,
     producing structurally wrong output for real Debezium consumers
-    (Kafka Connect, Flink).  Until a faithful nested-struct
-    implementation lands, ``format="debezium"`` raises
-    ``NotImplementedError`` — callers should pick ``raw`` or
-    ``delta_cdf`` instead.
+    (Kafka Connect, Flink).  The enum member was removed so any plan
+    that references ``"debezium"`` fails at construction rather than
+    at job execution.  Re-add once a faithful nested-struct
+    implementation lands.
     """
 
-    def test_raises_not_implemented(self, spark):
-        # apply_format (and thus to_debezium) runs at stream-construction
-        # time inside generate_cdc, so the raise surfaces synchronously —
-        # no lazy Spark plan needed.
-        with pytest.raises(NotImplementedError, match="DEBEZIUM is not yet supported"):
-            generate_cdc(spark, _plan(), num_batches=1, format="debezium")
+    def test_enum_no_longer_accepts_debezium(self):
+        from dbldatagen.core.spec.cdc_schema import CDCFormat
+
+        with pytest.raises(ValueError):
+            CDCFormat("debezium")
+
+    def test_plan_rejects_debezium_at_construction(self):
+        # format="debezium" flows through CDCFormat(str) validator in
+        # generate_cdc.  With DEBEZIUM removed from the enum, the
+        # cast raises ValueError before any Spark plan is built.
+        from dbldatagen.core.spec.cdc_schema import CDCPlan
+
+        with pytest.raises(ValueError):
+            CDCPlan(base_plan=_plan(), format="debezium")
 
 
 # ---------------------------------------------------------------------------

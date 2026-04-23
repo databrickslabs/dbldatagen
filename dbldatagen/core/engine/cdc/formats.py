@@ -97,37 +97,17 @@ def to_sql_server(df: DataFrame) -> DataFrame:
     )
 
 
-def to_debezium(df: DataFrame) -> DataFrame:
-    """Not yet supported — raises NotImplementedError.
-
-    Real Debezium events nest ``before`` and ``after`` payloads in a
-    single record so downstream consumers (Kafka Connect, Flink,
-    dependent CDC pipelines) can see the full state transition for
-    each update.  The earlier implementation produced a flattened
-    approximation that silently dropped ``UB`` (update-before) rows —
-    structurally wrong output that would corrupt any pipeline
-    actually relying on Debezium semantics.  Silent misrepresentation
-    is worse than a missing feature, so the approximation is removed.
-
-    Until a faithful nested-struct implementation lands, pick
-    ``raw`` (includes UB rows explicitly) or ``delta_cdf`` (Delta Lake
-    Change Data Feed — also includes pre/post images).
-    """
-    raise NotImplementedError(
-        "CDCFormat.DEBEZIUM is not yet supported.  The earlier "
-        "implementation silently dropped update before-images, "
-        "producing output that was structurally wrong for real "
-        "Debezium consumers.  Use format='raw' (full UB/U/D event "
-        "log) or format='delta_cdf' (Delta Change Data Feed) until "
-        "a faithful nested before/after implementation lands."
-    )
-
-
 FORMAT_TRANSFORMERS = {
     "raw": to_raw,
     "delta_cdf": to_delta_cdf,
     "sql_server": to_sql_server,
-    "debezium": to_debezium,
+    # ``debezium`` is intentionally absent.  The earlier flattened
+    # approximation silently dropped update before-images — structurally
+    # wrong output for Kafka Connect / Flink consumers.  The enum
+    # member was removed from ``CDCFormat`` so misuse fails at plan
+    # construction; this dict drops the transformer so ``apply_format``
+    # with an unknown name falls through to ``to_raw``.  Re-add when a
+    # faithful nested before/after implementation lands.
 }
 
 

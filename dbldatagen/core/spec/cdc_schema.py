@@ -10,11 +10,19 @@ from dbldatagen.core.spec.schema import DataGenPlan, parse_human_count
 
 
 class CDCFormat(str, Enum):
-    """Supported CDC output formats."""
+    """Supported CDC output formats.
+
+    Debezium is not yet supported — the earlier approximation silently
+    dropped update before-images, which is structurally wrong for real
+    Debezium consumers.  The enum member was removed (rather than kept
+    as a value that raises at runtime) so misuse fails at plan
+    construction.  Use ``RAW`` (full UB/U/D event log) or ``DELTA_CDF``
+    (Delta Change Data Feed) until a faithful nested before/after
+    implementation lands.
+    """
 
     RAW = "raw"
     SQL_SERVER = "sql_server"
-    DEBEZIUM = "debezium"
     DELTA_CDF = "delta_cdf"
 
 
