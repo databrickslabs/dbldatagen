@@ -18,7 +18,7 @@ from pyspark.sql import functions as F
 
 from dbldatagen.core.engine.cdc.stateless import (
     CDCPeriods,
-    batch_timestamp_str,
+    batch_timestamp_epoch,
     compute_periods,
 )
 from dbldatagen.core.engine.generator import build_all_column_exprs_case_when
@@ -156,15 +156,20 @@ def _add_cdc_metadata(
     df: DataFrame | None,
     op: str,
     batch_id: int,
-    batch_ts: str,
+    batch_ts_epoch: int,
 ) -> DataFrame | None:
-    """Attach _op, _batch_id, _ts metadata columns to a CDC DataFrame."""
+    """Attach _op, _batch_id, _ts metadata columns to a CDC DataFrame.
+
+    ``batch_ts_epoch`` is UTC seconds — casting a long to timestamp is
+    session-timezone-independent, unlike parsing a local-naive
+    formatted string.  See ``batch_timestamp_epoch`` for rationale.
+    """
     if df is None:
         return None
     return (
         df.withColumn("_op", F.lit(op))
         .withColumn("_batch_id", F.lit(batch_id))
-        .withColumn("_ts", F.lit(batch_ts).cast("timestamp"))
+        .withColumn("_ts", F.lit(batch_ts_epoch).cast("long").cast("timestamp"))
     )
 
 
@@ -208,9 +213,15 @@ def apply_fk_delete_guard(plan: CDCPlan, table_name: str, config: CDCTableConfig
 # ---------------------------------------------------------------------------
 
 
-def batch_timestamp(plan: CDCPlan, batch_id: int) -> str:
-    """Compute the timestamp string for a given batch."""
-    return batch_timestamp_str(plan.start_timestamp, plan.batch_interval_seconds, batch_id)
+def batch_timestamp(plan: CDCPlan, batch_id: int) -> int:
+    """Compute the UTC epoch seconds for a given batch's timestamp.
+
+    Returning epoch (not a formatted string) keeps downstream
+    ``F.lit(epoch).cast("timestamp")`` calls session-TZ-independent
+    and aligned with the fused multi-batch path.  See
+    ``batch_timestamp_epoch`` for the TZ-divergence rationale.
+    """
+    return batch_timestamp_epoch(plan.start_timestamp, plan.batch_interval_seconds, batch_id)
 
 
 def compute_periods_from_config(

@@ -208,6 +208,51 @@ class TestCrossPathByteEquality:
             _assert_rows_equal(f"pk={key[0]} batch={key[1]} op={key[2]}", per_idx[key], bulk_idx[key])
 
 
+class TestCrossPathTimestampsTzIndependent:
+    """``_ts`` must agree between fused and single-batch paths under ANY
+    ``spark.sql.session.timeZone`` — not just UTC.
+
+    The fused path computes ``F.lit(base_epoch).cast("long").cast("timestamp")``
+    (session-TZ-independent because long → timestamp reads as seconds
+    UTC).  The single-batch path previously formatted the timestamp as a
+    local-naive string and cast string → timestamp (session-TZ-dependent),
+    so the two paths diverged whenever ``session.timeZone != UTC``.
+
+    Run the batch-row equality check under a non-UTC session TZ to pin
+    the fix.  Without the refactor that routed both paths through
+    ``batch_timestamp_epoch`` + long-cast, this would fail with every
+    ``_ts`` differing by the TZ offset.
+    """
+
+    def test_batch_ts_matches_under_non_utc_session(self, spark):
+        key = "spark.sql.session.timeZone"
+        prev = spark.conf.get(key, None)
+        spark.conf.set(key, "America/Los_Angeles")
+        try:
+            num_b = 3
+            per = generate_cdc(spark, _everything_plan(seed=42, rows=50), num_batches=num_b)
+            bulk = generate_cdc_bulk(
+                spark, _everything_plan(seed=42, rows=50), num_batches=num_b, chunk_size=num_b
+            )
+
+            per_idx = _collect_and_index(per.batches)
+            bulk_idx = _collect_and_index(bulk.batches)
+
+            assert per_idx and set(per_idx) == set(bulk_idx)
+
+            for key_tuple in sorted(per_idx):
+                p, b = per_idx[key_tuple], bulk_idx[key_tuple]
+                assert p._ts == b._ts, (
+                    f"_ts diverges under non-UTC session TZ at {key_tuple}: "
+                    f"scalar={p._ts} vs bulk={b._ts}"
+                )
+        finally:
+            if prev is None:
+                spark.conf.unset(key)
+            else:
+                spark.conf.set(key, prev)
+
+
 class TestOracleMatchesInitialSnapshot:
     """generate_expected_state(batch_id=0) is the driver-side reference
     for the live state at the start of the stream.  It must match the

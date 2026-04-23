@@ -458,16 +458,24 @@ def update_indices_at_batch(
 # ---------------------------------------------------------------------------
 
 
-def batch_timestamp_str(start_timestamp: str, batch_interval_seconds: int, batch_id: int) -> str:
-    """Compute the ISO-formatted timestamp string for a given batch.
+def batch_timestamp_epoch(start_timestamp: str, batch_interval_seconds: int, batch_id: int) -> int:
+    """Compute the UTC epoch seconds for a given batch's timestamp.
 
-    Shared by both CDC and ingest generators.
+    Returning an int (not a formatted string) lets downstream code
+    build the Spark timestamp via ``F.lit(epoch).cast("timestamp")``,
+    which is session-timezone-independent — ``cast(long → timestamp)``
+    treats the long as seconds-since-epoch UTC regardless of
+    ``spark.sql.session.timeZone``.  A formatted-string path was
+    TZ-dependent (``F.lit("2025-01-01 00:00:00").cast("timestamp")``
+    parses in session TZ), causing fused and single-batch CDC paths
+    to disagree on ``_ts`` whenever the session wasn't UTC — and
+    breaking the byte-equality invariant the engine advertises.
     """
     from datetime import datetime, timedelta
 
     base = datetime.fromisoformat(start_timestamp.replace("Z", "+00:00"))
     ts = base + timedelta(seconds=batch_id * batch_interval_seconds)
-    return ts.strftime("%Y-%m-%d %H:%M:%S")
+    return int(ts.timestamp())
 
 
 # ---------------------------------------------------------------------------

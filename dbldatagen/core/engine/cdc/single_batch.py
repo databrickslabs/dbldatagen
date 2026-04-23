@@ -28,6 +28,7 @@ from dbldatagen.core.engine.cdc._common import (
 )
 from dbldatagen.core.engine.cdc.stateless import (
     CDCPeriods,
+    batch_timestamp_epoch,
     death_tick_expr,
     delete_indices_at_batch_fast,
     insert_range,
@@ -78,10 +79,14 @@ def generate_initial_snapshot(
             continue
         table_spec = table_map[table_name]
         df = generate_table(spark, table_spec, resolved)
+        # batch_id=0 timestamp: compute UTC epoch and cast-from-long so
+        # the initial snapshot ``_ts`` is session-TZ-independent, matching
+        # the fused / single-batch ``batch_timestamp_epoch`` path.
+        start_epoch = batch_timestamp_epoch(plan.start_timestamp, plan.batch_interval_seconds, 0)
         df = (
             df.withColumn("_op", F.lit("I"))
             .withColumn("_batch_id", F.lit(0))
-            .withColumn("_ts", F.lit(plan.start_timestamp).cast("timestamp"))
+            .withColumn("_ts", F.lit(start_epoch).cast("long").cast("timestamp"))
         )
         results[table_name] = df
     return results
