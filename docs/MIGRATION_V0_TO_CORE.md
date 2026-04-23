@@ -211,7 +211,8 @@ integer("feature_1", min=0, max=100)
 integer("feature_2", min=0, max=100)
 ```
 
-The automatic converter expands `numColumns` for you.
+Expand `numColumns` manually when migrating; core does not provide a
+converter, and each column spec is explicit by design.
 
 ### Unique Values
 
@@ -320,27 +321,3 @@ These v0 features have no core equivalent:
 | `withConstraint(SqlExpr(...))` | Design generation to naturally satisfy rules; core doesn't do post-hoc filtering |
 | `Beta` / `Gamma` distributions | Use `Normal` or `LogNormal` as approximation |
 
-## What the Converter Handles
-
-When using `from_data_generator()`, here's what converts automatically:
-
-| v0 Feature | Core Result | Status |
-|-----------|-----------|--------|
-| `minValue`/`maxValue` | `RangeColumn(min, max)` | Automatic |
-| `values` | `ValuesColumn(values)` | Automatic |
-| `values` + `weights` | `ValuesColumn` + `WeightedValues` | Automatic |
-| `expr` | `ExpressionColumn` | Automatic |
-| `template` | `PatternColumn` | Automatic |
-| `prefix`/`suffix` | `PatternColumn` | Automatic |
-| `begin`/`end` | `TimestampColumn` | Automatic |
-| `BooleanType` | `ValuesColumn([True, False])` | Automatic |
-| `percentNulls` | `null_fraction` | Automatic |
-| `baseColumn` | `seed_from` | Automatic |
-| `uniqueValues` | Adjusted range | Automatic (with warning) |
-| `numColumns`/`numFeatures` | Expanded to N columns | Automatic |
-| `distribution=Normal(...)` | `Normal(...)` | Automatic |
-| `distribution=Exponential(...)` | `Exponential(...)` | Automatic |
-| `format` | -- | Warning emitted |
-| `text=ILText(...)` | Placeholder pattern | Warning emitted |
-| Constraints | -- | Warning emitted |
-| `Beta`/`Gamma` distributions | -- | Warning emitted |
