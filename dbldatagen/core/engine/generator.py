@@ -80,7 +80,21 @@ def generate_table(
     DataFrame with all columns generated.
     """
     row_count = int(table_spec.rows)
-    global_seed = table_spec.seed if table_spec.seed is not None else 42
+    if table_spec.seed is None:
+        # ``DataGenPlan.propagate_seeds`` assigns a per-table seed
+        # derived from the plan seed during construction, so callers
+        # who route through ``generate(plan)`` never land here.  A
+        # caller that constructs a ``TableSpec`` directly and skips
+        # the plan-level propagation (or mutates ``.seed = None``
+        # after the fact) would previously silently get a hardcoded
+        # ``42`` — breaking reproducibility claims.  Fail loudly.
+        raise ValueError(
+            f"TableSpec '{table_spec.name}'.seed is None.  Either set "
+            f"it explicitly on the TableSpec or go through a "
+            f"DataGenPlan (which propagates plan.seed to each table "
+            f"during Pydantic validation)."
+        )
+    global_seed = table_spec.seed
 
     # 1. Base DataFrame with deterministic row IDs
     df, id_col = create_range_df(spark, row_count)

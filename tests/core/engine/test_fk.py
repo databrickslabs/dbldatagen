@@ -186,6 +186,10 @@ class TestFKNullable:
         orders = TableSpec(
             name="orders",
             rows=5,
+            # ``seed`` is required on a direct ``generate_table`` call —
+            # normally ``DataGenPlan.propagate_seeds`` fills it in, but
+            # we're skipping the plan to exercise the FK-raise path.
+            seed=42,
             columns=[
                 ColumnSpec(name="oid", gen=SequenceColumn(start=1, step=1)),
                 ColumnSpec(
