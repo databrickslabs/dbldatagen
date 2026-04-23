@@ -381,6 +381,41 @@ class ColumnSpec(BaseModel):
     scale: int | None = None
 
     @model_validator(mode="after")
+    def validate_column_name(self) -> ColumnSpec:
+        """Reject column names that would collide with engine-internal metadata.
+
+        Leading-underscore names (and the specific CDC metadata
+        columns ``_op``, ``_batch_id``, ``_ts``) would silently
+        shadow or get shadowed by the internal columns the engine
+        adds during generation — e.g. a user column named ``_ts``
+        would collide with the CDC timestamp attached by
+        ``_add_cdc_metadata`` and get double-counted in
+        ``to_sql_server``'s ``__$seqval`` hash.  Internal-only
+        markers reserved here: ``_op``, ``_batch_id``, ``_ts``,
+        ``_write_batch``, ``_synth_row_id``.
+
+        The name must also be a valid SQL / Python-like identifier
+        (``[A-Za-z_][A-Za-z0-9_]*``) so it round-trips through Spark
+        without backtick quoting.
+        """
+        # fullmatch, not match: ``match`` + ``$`` allows a trailing ``\n``
+        # because ``$`` anchors before a newline in default mode.
+        if not _IDENTIFIER_RE.fullmatch(self.name):
+            raise ValueError(
+                f"Column name '{self.name}' is not a valid identifier "
+                f"(must match [A-Za-z_][A-Za-z0-9_]*)."
+            )
+        if self.name.startswith("_"):
+            raise ValueError(
+                f"Column name '{self.name}' starts with underscore, which is "
+                f"reserved for engine-internal metadata columns "
+                f"(``_op``, ``_batch_id``, ``_ts``, ``_write_batch``, "
+                f"``_synth_row_id``).  Rename to a non-underscore-prefixed "
+                f"identifier to avoid silent shadowing."
+            )
+        return self
+
+    @model_validator(mode="after")
     def validate_decimal_precision_scale(self) -> ColumnSpec:
         """Precision/scale are only meaningful for DECIMAL and must go together.
 

@@ -663,7 +663,11 @@ def _build_array_column(
 
     # Generate max_length elements, each with a unique seed offset
     element_cols: list[Column] = []
-    dummy_spec = ColumnSpec(name="_elem", gen=gen.element)
+    # ``elem`` (not ``_elem``): ColumnSpec now rejects leading-underscore
+    # names (they collide with engine metadata like ``_op`` / ``_batch_id``).
+    # This dummy spec is never surfaced to the user — it just drives the
+    # per-element builder — so any non-underscore identifier works.
+    dummy_spec = ColumnSpec(name="elem", gen=gen.element)
     for i in range(gen.max_length):
         if isinstance(column_seed, int):
             elem_seed: int | Column = column_seed ^ ((i + 1) * GOLDEN_RATIO_HASH)

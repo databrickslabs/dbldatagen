@@ -224,6 +224,28 @@ class TestColumnSpec:
         col = ColumnSpec(name="version", gen=ConstantColumn(value=1))
         assert isinstance(col.gen, ConstantColumn)
 
+    @pytest.mark.parametrize(
+        "reserved_name",
+        ["_op", "_batch_id", "_ts", "_write_batch", "_synth_row_id", "_anything"],
+    )
+    def test_leading_underscore_name_rejected(self, reserved_name):
+        """Names with a leading underscore collide with engine-internal
+        metadata columns (``_op``, ``_batch_id``, ``_ts``, etc.).
+        Rejected at construction so the collision fails loudly instead
+        of silently double-counting in CDC output."""
+        with pytest.raises(ValueError, match="reserved for engine-internal"):
+            ColumnSpec(name=reserved_name, gen=RangeColumn())
+
+    @pytest.mark.parametrize(
+        "bad_name",
+        ["1col", "col-with-dash", "col name", "col.dot", "col`tick", "", "col\n"],
+    )
+    def test_non_identifier_name_rejected(self, bad_name):
+        """Names must be valid identifiers so they round-trip through
+        Spark without backtick quoting."""
+        with pytest.raises(ValueError, match="not a valid identifier"):
+            ColumnSpec(name=bad_name, gen=RangeColumn())
+
     def test_null_fraction_auto_sets_nullable(self):
         col = ColumnSpec(name="x", gen=RangeColumn(), null_fraction=0.1)
         assert col.nullable is True
