@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from enum import Enum
 
-from pydantic import BaseModel, model_validator
+from pydantic import Field, model_validator
 
-from dbldatagen.core.spec.schema import DataGenPlan, parse_human_count
+from dbldatagen.core.spec.schema import DataGenPlan, _StrictModel, parse_human_count
 
 
 class CDCFormat(str, Enum):
@@ -26,7 +26,7 @@ class CDCFormat(str, Enum):
     DELTA_CDF = "delta_cdf"
 
 
-class OperationWeights(BaseModel):
+class OperationWeights(_StrictModel):
     """Controls the mix of insert/update/delete operations per batch.
 
     Weights are relative and normalised internally.
@@ -50,7 +50,7 @@ class OperationWeights(BaseModel):
         return self.insert / total, self.update / total, self.delete / total
 
 
-class MutationSpec(BaseModel):
+class MutationSpec(_StrictModel):
     """Controls which columns mutate on updates.
 
     If *columns* is None, all non-PK / non-FK columns are eligible.
@@ -67,7 +67,7 @@ class MutationSpec(BaseModel):
         return self
 
 
-class CDCTableConfig(BaseModel):
+class CDCTableConfig(_StrictModel):
     """Per-table CDC configuration."""
 
     operations: OperationWeights = OperationWeights()
@@ -93,7 +93,7 @@ class CDCTableConfig(BaseModel):
         return self
 
 
-class CDCPlan(BaseModel):
+class CDCPlan(_StrictModel):
     """Top-level plan for generating a CDC stream.
 
     Wraps a ``DataGenPlan`` and adds temporal / change semantics.
@@ -101,12 +101,12 @@ class CDCPlan(BaseModel):
 
     base_plan: DataGenPlan
     num_batches: int = 5
-    table_configs: dict[str, CDCTableConfig] = {}
+    table_configs: dict[str, CDCTableConfig] = Field(default_factory=dict)
     default_config: CDCTableConfig = CDCTableConfig()
     format: CDCFormat = CDCFormat.RAW
     batch_interval_seconds: int = 3600
     start_timestamp: str = "2025-01-01T00:00:00Z"
-    cdc_tables: list[str] = []
+    cdc_tables: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_table_refs(self) -> CDCPlan:

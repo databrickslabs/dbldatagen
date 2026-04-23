@@ -9,6 +9,20 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
+class _StrictModel(BaseModel):
+    """Base for every public plan model.
+
+    ``extra="forbid"`` rejects unknown fields at validation time instead
+    of silently ignoring them -- a typo like ``niull_fraction`` in a
+    YAML plan would otherwise round-trip as a legal model that silently
+    dropped the user's intent.  The cost is that loaders of pre-2026
+    plans with unknown keys now get a ValueError instead of silent
+    ignore; that's the right direction for a correctness-first engine.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+
 _IDENTIFIER_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
 # Names that the SQL Server CDC format rewrite (``rename_cdc_columns``)
@@ -34,13 +48,13 @@ _MAX_ARRAY_LENGTH = 1000
 # ---------------------------------------------------------------------------
 
 
-class Uniform(BaseModel):
+class Uniform(_StrictModel):
     """Uniform distribution (default)."""
 
     type: Literal["uniform"] = "uniform"
 
 
-class Normal(BaseModel):
+class Normal(_StrictModel):
     """Normal/Gaussian distribution."""
 
     type: Literal["normal"] = "normal"
@@ -54,7 +68,7 @@ class Normal(BaseModel):
         return self
 
 
-class LogNormal(BaseModel):
+class LogNormal(_StrictModel):
     """Log-normal distribution."""
 
     type: Literal["lognormal"] = "lognormal"
@@ -65,10 +79,26 @@ class LogNormal(BaseModel):
     def validate_params(self) -> LogNormal:
         if self.stddev < 0:
             raise ValueError(f"stddev must be >= 0, got {self.stddev}")
+        # ``lognormal_sample_expr`` computes ``math.exp(mean)`` on the
+        # driver to position the distribution's median inside ``[0, n)``.
+        # Python's ``math.exp`` overflows at mean >= 710 (raising
+        # OverflowError at plan time) and underflows to 0 at
+        # mean <= -745 (which divides the scale factor by zero and
+        # leaks ``inf`` into the Spark plan as ``F.lit(inf)``).  Cap
+        # well below both boundaries -- |mean| <= 100 covers every
+        # realistic log-normal use (median factor of ~2.7e43 is already
+        # absurd) while leaving a wide margin against float drift.
+        if not -100.0 <= self.mean <= 100.0:
+            raise ValueError(
+                f"LogNormal.mean must be in [-100, 100], got {self.mean}.  "
+                f"math.exp(mean) is computed on the driver and overflows "
+                f"around mean=710 / underflows near mean=-745; this cap keeps "
+                f"the scale factor finite and within double range."
+            )
         return self
 
 
-class Zipf(BaseModel):
+class Zipf(_StrictModel):
     """Zipfian/power-law distribution -- common for realistic cardinality skew."""
 
     type: Literal["zipf"] = "zipf"
@@ -91,7 +121,7 @@ class Zipf(BaseModel):
         return self
 
 
-class Exponential(BaseModel):
+class Exponential(_StrictModel):
     """Exponential distribution."""
 
     type: Literal["exponential"] = "exponential"
@@ -104,7 +134,7 @@ class Exponential(BaseModel):
         return self
 
 
-class WeightedValues(BaseModel):
+class WeightedValues(_StrictModel):
     """Explicit weighted selection from a list of values."""
 
     type: Literal["weighted"] = "weighted"
@@ -130,7 +160,7 @@ Distribution = Annotated[
 # ---------------------------------------------------------------------------
 
 
-class RangeColumn(BaseModel):
+class RangeColumn(_StrictModel):
     """Generate values from a numeric range."""
 
     strategy: Literal["range"] = "range"
@@ -145,10 +175,25 @@ class RangeColumn(BaseModel):
             raise ValueError(f"min ({self.min}) must be <= max ({self.max})")
         if self.step is not None and self.step <= 0:
             raise ValueError(f"step must be > 0, got {self.step}")
+        # The integer-range engine path computes ``range_size = max - min
+        # + 1`` and passes it to ``F.lit``, which only accepts signed
+        # int64 values.  A plan spanning the full int64 domain (e.g.
+        # ``min=-2**63, max=2**63-1``) overflows ``range_size`` to
+        # ``2**64`` and Py4J rejects the literal at query-build time.
+        # Cap at ``2**63 - 1`` so any range that made it past the type
+        # system also fits in the engine.
+        if isinstance(self.min, int) and isinstance(self.max, int):
+            range_size = self.max - self.min + 1
+            if range_size >= 2**63:
+                raise ValueError(
+                    f"integer range size ({range_size}) >= 2**63 overflows "
+                    f"F.lit's int64 bound.  Narrow [min, max] so "
+                    f"(max - min + 1) < 2**63."
+                )
         return self
 
 
-class ValuesColumn(BaseModel):
+class ValuesColumn(_StrictModel):
     """Pick from an explicit list of allowed values."""
 
     strategy: Literal["values"] = "values"
@@ -184,7 +229,7 @@ class ValuesColumn(BaseModel):
         return self
 
 
-class FakerColumn(BaseModel):
+class FakerColumn(_StrictModel):
     """Generate data using a Faker provider method."""
 
     strategy: Literal["faker"] = "faker"
@@ -193,7 +238,7 @@ class FakerColumn(BaseModel):
     locale: str | None = None
 
 
-class PatternColumn(BaseModel):
+class PatternColumn(_StrictModel):
     """Generate strings from a pattern template.
 
     Placeholders:
@@ -209,7 +254,7 @@ class PatternColumn(BaseModel):
     template: str
 
 
-class SequenceColumn(BaseModel):
+class SequenceColumn(_StrictModel):
     """Monotonically increasing integer sequence."""
 
     strategy: Literal["sequence"] = "sequence"
@@ -223,13 +268,13 @@ class SequenceColumn(BaseModel):
         return self
 
 
-class UUIDColumn(BaseModel):
+class UUIDColumn(_StrictModel):
     """Deterministic UUID generation (v5 from seed + row index)."""
 
     strategy: Literal["uuid"] = "uuid"
 
 
-class ExpressionColumn(BaseModel):
+class ExpressionColumn(_StrictModel):
     """Spark SQL expression referencing other columns in the same table.
 
     Example: ``"quantity * unit_price"`` or ``"concat(first_name, ' ', last_name)"``
@@ -243,7 +288,7 @@ class ExpressionColumn(BaseModel):
     expr: str
 
 
-class TimestampColumn(BaseModel):
+class TimestampColumn(_StrictModel):
     """Generate timestamps within a range."""
 
     strategy: Literal["timestamp"] = "timestamp"
@@ -270,14 +315,14 @@ class TimestampColumn(BaseModel):
         return self
 
 
-class ConstantColumn(BaseModel):
+class ConstantColumn(_StrictModel):
     """Every row gets the same value."""
 
     strategy: Literal["constant"] = "constant"
     value: Any
 
 
-class ForeignKeyColumn(BaseModel):
+class ForeignKeyColumn(_StrictModel):
     """Marker strategy for columns whose values are resolved from ``foreign_key``.
 
     The actual generation — dtype inference, distribution, null fraction,
@@ -291,7 +336,7 @@ class ForeignKeyColumn(BaseModel):
     strategy: Literal["foreign_key"] = "foreign_key"
 
 
-class StructColumn(BaseModel):
+class StructColumn(_StrictModel):
     """Group child columns into a Spark struct (nested object in JSON).
 
     Each field is a full ``ColumnSpec`` — supports range, values, faker,
@@ -305,8 +350,27 @@ class StructColumn(BaseModel):
     strategy: Literal["struct"] = "struct"
     fields: list[ColumnSpec]  # forward ref resolved by model_rebuild() below
 
+    @model_validator(mode="after")
+    def validate_unique_field_names(self) -> StructColumn:
+        # ``TableSpec.validate_unique_column_names`` only covers top-level
+        # columns; a struct with two children named ``x`` would
+        # otherwise build an invalid ``StructType`` and every
+        # ``.select("addr.x")`` against the result becomes ambiguous.
+        seen: set[str] = set()
+        dupes: list[str] = []
+        for f in self.fields:
+            if f.name in seen:
+                dupes.append(f.name)
+            seen.add(f.name)
+        if dupes:
+            raise ValueError(
+                f"StructColumn has duplicate field names: {sorted(set(dupes))}.  "
+                f"Each field must have a unique name within the struct."
+            )
+        return self
 
-class ArrayColumn(BaseModel):
+
+class ArrayColumn(_StrictModel):
     """Generate a variable-length array of values.
 
     Each element is produced from *element* with a different seed offset.
@@ -328,6 +392,19 @@ class ArrayColumn(BaseModel):
             raise ValueError(f"min_length must be >= 0, got {self.min_length}")
         if self.min_length > self.max_length:
             raise ValueError(f"min_length ({self.min_length}) must be <= max_length ({self.max_length})")
+        # ``max_length == 0`` always produces empty arrays, which hit
+        # ``F.array()`` with no element exprs -- Spark types that as
+        # ``array<nothing>`` / ``array<null>`` depending on version, and
+        # downstream schema inference gets confused.  A user who wanted
+        # "sometimes empty" sets ``min_length=0, max_length>=1``; a
+        # user who wanted "never present" should omit the column.
+        if self.max_length == 0:
+            raise ValueError(
+                "max_length must be >= 1 (max_length == 0 always produces "
+                "empty arrays with an ambiguous element type).  Omit the "
+                "column if you want no array at all, or set max_length >= 1 "
+                "and let min_length=0 produce sometimes-empty arrays."
+            )
         # ``_build_array_column`` materialises ``max_length`` element
         # expressions at plan time — one per array slot, each with its
         # own ``build_column_expr`` dispatch tree.  At ``max_length =
@@ -402,7 +479,7 @@ class DataType(str, Enum):
 # ---------------------------------------------------------------------------
 
 
-class PrimaryKey(BaseModel):
+class PrimaryKey(_StrictModel):
     """Marks a column (or set of columns) as the primary key.
 
     For single-column PKs, just set ``columns`` to a single-element list.
@@ -412,7 +489,7 @@ class PrimaryKey(BaseModel):
     columns: list[str]
 
 
-class ForeignKeyRef(BaseModel):
+class ForeignKeyRef(_StrictModel):
     """Defines a foreign key relationship to another table's primary key.
 
     ``ref`` uses the familiar "table.column" syntax.  Use ``distribution``
@@ -439,14 +516,17 @@ class ForeignKeyRef(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-class ColumnSpec(BaseModel):
+class ColumnSpec(_StrictModel):
     """A single column in a table.
 
     At minimum, specify ``name`` and one of the strategy fields.
     The ``dtype`` is inferred from the strategy when not set explicitly.
     """
 
-    model_config = ConfigDict(populate_by_name=True)
+    # Inherits extra="forbid" from _StrictModel; extend with
+    # populate_by_name so YAML plans can use either camelCase or
+    # snake_case field keys.
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     name: str
     dtype: DataType | None = None
@@ -497,7 +577,12 @@ class ColumnSpec(BaseModel):
                 f"``__$operation`` / ``__$start_lsn`` / ``__$seqval`` into "
                 f"``cdc_operation`` / ``cdc_lsn`` / ``cdc_seqval``).  A user "
                 f"column with the same name collides silently after rename -- "
-                f"rename your column to avoid the collision."
+                f"rename your column to avoid the collision.  This reservation "
+                f"is unconditional because a plan can be handed to any CDC "
+                f"format at generation time -- rejecting only for "
+                f"``format='sql_server'`` would mean a plan that validates "
+                f"today fails the moment someone picks that format, with no "
+                f"clear path back to the offending column."
             )
         return self
 
@@ -549,6 +634,33 @@ class ColumnSpec(BaseModel):
                     f"does not fit in decimal({precision}, {scale}) "
                     f"(max representable magnitude is {max_repr})"
                 )
+        return self
+
+    @model_validator(mode="after")
+    def validate_date_dtype_strategy(self) -> ColumnSpec:
+        # ``DataType.DATE`` is only dispatched by the engine when paired
+        # with ``TimestampColumn`` (``generator.py:549`` routes to
+        # ``build_date_column``).  Strategies whose output type is
+        # fixed and non-date (RangeColumn integers, PatternColumn /
+        # SequenceColumn / UUIDColumn strings/ints) silently get their
+        # native type cast and the ``DATE`` hint is dropped without
+        # warning -- produces integers or strings where the user asked
+        # for a date.
+        #
+        # FakerColumn, ConstantColumn, ValuesColumn, ExpressionColumn,
+        # and ForeignKeyColumn can all legitimately carry dates
+        # (Faker's ``date_of_birth``, a user-typed date literal, a list
+        # of date values, a CAST in SQL, or inherited from a date-typed
+        # parent PK), so they're not flagged here.
+        _non_date_strategies = (RangeColumn, PatternColumn, SequenceColumn, UUIDColumn)
+        if self.dtype == DataType.DATE and isinstance(self.gen, _non_date_strategies):
+            raise ValueError(
+                f"Column '{self.name}': dtype=DATE is not compatible with "
+                f"{type(self.gen).__name__} (which produces "
+                f"{'integers' if isinstance(self.gen, (RangeColumn, SequenceColumn)) else 'strings'}).  "
+                f"Use TimestampColumn for a deterministic random date, or drop "
+                f"``dtype=DATE`` to keep the strategy's native type."
+            )
         return self
 
     @model_validator(mode="after")
@@ -630,7 +742,7 @@ def parse_human_count(value: int | str) -> int:
         ) from None
 
 
-class TableSpec(BaseModel):
+class TableSpec(_StrictModel):
     """Defines one table to generate.
 
     ``rows`` can be an int or a string like "10M", "1B" for readability.
@@ -686,7 +798,7 @@ class TableSpec(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-class DataGenPlan(BaseModel):
+class DataGenPlan(_StrictModel):
     """Top-level plan describing all tables to generate.
 
     Tables are generated in dependency order (FK references resolved automatically).

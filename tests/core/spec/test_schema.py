@@ -801,3 +801,112 @@ class TestTableSpecValidation:
     def test_rows_negative(self):
         with pytest.raises(ValueError, match="rows must be > 0"):
             TableSpec(name="t", columns=[ColumnSpec(name="x", gen=RangeColumn())], rows=-10)
+
+
+class TestExtrasForbid:
+    """Every public plan model inherits from ``_StrictModel``, which sets
+    ``extra="forbid"``.  A YAML plan with a typo'd key round-trips
+    silently under the default ``extra="ignore"`` behaviour; the strict
+    base catches typos at load time with a clear pointer to the
+    offending key."""
+
+    def test_columnspec_rejects_unknown_field(self):
+        with pytest.raises(ValueError, match=r"[Ee]xtra"):
+            ColumnSpec(name="x", gen=RangeColumn(), niull_fraction=0.1)  # type: ignore[call-arg]
+
+    def test_tablespec_rejects_unknown_field(self):
+        with pytest.raises(ValueError, match=r"[Ee]xtra"):
+            TableSpec(  # type: ignore[call-arg]
+                name="t",
+                columns=[ColumnSpec(name="x", gen=RangeColumn())],
+                rows=10,
+                unknown_key="whoops",
+            )
+
+    def test_datagenplan_rejects_unknown_field(self):
+        with pytest.raises(ValueError, match=r"[Ee]xtra"):
+            DataGenPlan(  # type: ignore[call-arg]
+                tables=[TableSpec(name="t", columns=[ColumnSpec(name="x", gen=RangeColumn())], rows=10)],
+                typo_in_root="x",
+            )
+
+
+class TestStructColumnUniqueness:
+    def test_duplicate_field_names_rejected(self):
+        """StructColumn with two fields named ``x`` would build an
+        invalid Spark StructType and ambiguate every downstream
+        ``addr.x`` select.  Reject at plan time."""
+        from dbldatagen.core.spec.schema import StructColumn
+
+        with pytest.raises(ValueError, match="duplicate field names"):
+            StructColumn(
+                fields=[
+                    ColumnSpec(name="x", gen=RangeColumn()),
+                    ColumnSpec(name="x", gen=ValuesColumn(values=["a", "b"])),
+                ]
+            )
+
+
+class TestLogNormalMeanBound:
+    def test_mean_above_cap_rejected(self):
+        """``math.exp(710)`` overflows the double range; the validator
+        stops the plan well before Python raises at plan time."""
+        with pytest.raises(ValueError, match=r"must be in \[-100, 100\]"):
+            LogNormal(mean=150.0)
+
+    def test_mean_below_cap_rejected(self):
+        with pytest.raises(ValueError, match=r"must be in \[-100, 100\]"):
+            LogNormal(mean=-200.0)
+
+    def test_mean_at_bound_accepted(self):
+        LogNormal(mean=100.0)
+        LogNormal(mean=-100.0)
+
+
+class TestRangeColumnBounds:
+    def test_full_int64_domain_rejected(self):
+        """``max - min + 1`` for the full int64 range overflows F.lit's
+        signed-64 bound.  Reject at plan time instead of failing at
+        query build with an opaque Py4J error."""
+        with pytest.raises(ValueError, match=r"integer range size .* >= 2\*\*63"):
+            RangeColumn(min=-(2**63), max=2**63 - 1)
+
+    def test_range_just_under_cap_accepted(self):
+        # (2**63 - 1) - 0 + 1 = 2**63 -- still over, must be < 2**63.
+        RangeColumn(min=0, max=2**63 - 2)
+
+
+class TestArrayMaxLengthZero:
+    def test_max_length_zero_rejected(self):
+        """Always-empty arrays produce ``array<nothing>`` which confuses
+        downstream schema inference.  Omit the column or set
+        ``max_length >= 1``."""
+        with pytest.raises(ValueError, match=r"max_length must be >= 1"):
+            ArrayColumn(element=RangeColumn(min=1, max=5), min_length=0, max_length=0)
+
+
+class TestDateDtypeGuard:
+    @pytest.mark.parametrize(
+        ("bad_gen", "type_word"),
+        [
+            (RangeColumn(min=0, max=100), "integers"),
+            (SequenceColumn(), "integers"),
+            (PatternColumn(template="X-{digit:4}"), "strings"),
+            (UUIDColumn(), "strings"),
+        ],
+    )
+    def test_date_with_non_date_strategy_rejected(self, bad_gen, type_word):
+        """Strategies whose output type is fixed and non-date can't
+        honour ``dtype=DATE``; the dtype hint would be silently dropped
+        and the column would carry integers or strings where the user
+        asked for a date."""
+        with pytest.raises(ValueError, match=f"not compatible.*{type_word}"):
+            ColumnSpec(name="d", dtype=DataType.DATE, gen=bad_gen)
+
+    def test_date_with_timestamp_column_ok(self):
+        ColumnSpec(name="d", dtype=DataType.DATE, gen=TimestampColumn())
+
+    def test_date_with_faker_ok(self):
+        """FakerColumn can genuinely produce dates via providers like
+        ``date_of_birth`` -- leave the DATE hint alone."""
+        ColumnSpec(name="d", dtype=DataType.DATE, gen=FakerColumn(provider="date_of_birth"))
