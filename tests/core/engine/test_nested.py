@@ -262,6 +262,51 @@ class TestCDCWithNested:
         batch_df = stream.batches[0]["items"]
         assert "tags" in batch_df.columns
 
+    def test_bulk_struct_pre_image_matches_per_batch(self, spark):
+        """Pre-image struct values must agree between bulk and per-batch paths.
+
+        Per-batch (``generate_cdc``) passes a scalar int seed into
+        ``_build_struct_column``, which polynomial-hashes each field via
+        ``derive_column_seed(parent_seed, "", field)``.  Bulk
+        (``generate_cdc_bulk`` with chunk_size > 1) goes through the
+        fused multi-batch path, which previously XOR'd the field hash
+        against the parent column seed — not equivalent to the
+        polynomial-hash the scalar path uses.  Result: UB (update
+        before-image) and D rows carried different struct field values
+        on the two paths.  This test pins the cross-path equality
+        invariant on pre-image rows.
+        """
+        from dbldatagen.core.engine.cdc import generate_cdc, generate_cdc_bulk
+
+        num_b = 5
+        # Larger row count + more batches so the workload produces UB/D events.
+        per = generate_cdc(spark, _nested_plan(rows=200), num_batches=num_b)
+        bulk = generate_cdc_bulk(
+            spark, _nested_plan(rows=200), num_batches=num_b, chunk_size=num_b
+        )
+
+        def pre_image_map(stream) -> dict[tuple[int, int, str], tuple]:
+            out: dict[tuple[int, int, str], tuple] = {}
+            for b in stream.batches:
+                df = b["items"].filter("_op IN ('UB', 'D')")
+                for r in df.collect():
+                    key = (r.item_id, r._batch_id, r._op)
+                    out[key] = (r.address.city, r.address.state, r.address.zip)
+            return out
+
+        per_pre = pre_image_map(per)
+        bulk_pre = pre_image_map(bulk)
+
+        assert per_pre, "no UB/D rows collected from per-batch path — test setup too small"
+        assert set(per_pre.keys()) == set(bulk_pre.keys()), (
+            "bulk and per-batch paths emitted different pre-image (pk, batch, op) tuples"
+        )
+        for key in per_pre:
+            assert bulk_pre[key] == per_pre[key], (
+                f"struct pre-image values diverge for {key}: "
+                f"per-batch={per_pre[key]}, bulk={bulk_pre[key]}"
+            )
+
 
 # ---------------------------------------------------------------------------
 # Determinism
@@ -324,14 +369,19 @@ class TestSchemaSerialize:
 
 
 class TestStructFieldSeedIndependence:
-    """Regression: ``_build_struct_column`` was passing the parent ``Column``
-    seed through unchanged to every field, so sibling fields shared a
-    per-cell seed on the fused multi-batch CDC path. Two identically-valued
-    fields would then produce 100% agreement instead of ~1/n agreement.
+    """Regression: the Column-seed path must mix in field names so
+    sibling struct fields derive independent per-cell seeds.  An earlier
+    bug had it passing the parent seed unchanged (100% field agreement);
+    a later bug XOR'd with a per-field constant (independent from each
+    other, but divergent from the scalar path's polynomial hash).  The
+    current implementation precomputes polynomial-hashed child seeds on
+    the driver via ``struct_field_seed_map`` so the Column path matches
+    the scalar path byte-for-byte and siblings stay independent.
     """
 
     def test_struct_fields_independent_on_column_seed(self, spark):
         from dbldatagen.core.engine.generator import _build_struct_column
+        from dbldatagen.core.engine.seed import column_seed_lookup, column_seed_map
 
         gen = StructColumn(
             fields=[
@@ -339,14 +389,28 @@ class TestStructFieldSeedIndependence:
                 text("b", values=["x", "y", "z", "w", "v"]),
             ]
         )
-        # Mimic the fused multi-batch CDC seed: a Column, not an int.
-        parent_seed = F.xxhash64(F.lit(424242).cast("long"), F.col("id"))
-        struct_col = _build_struct_column(gen, F.col("id"), parent_seed, row_count=500, global_seed=1)
-        df = spark.range(500).select(struct_col.alias("s"))
-        rows = df.collect()
+        # Synthetic dyn_ctx mimicking the fused multi-batch path: one
+        # write_batch value, a ``_write_batch`` column, and a parent seed
+        # sourced from ``column_seed_map`` — the exact shape
+        # ``_build_exprs_dynamic`` hands in.
+        df = spark.range(500).withColumn("_write_batch", F.lit(0).cast("long"))
+        parent_map = column_seed_map(
+            global_seed=1, unique_wbs=[0], table_name="t", column_name="parent"
+        )
+        parent_seed = column_seed_lookup(parent_map, F.col("_write_batch"))
+        struct_col = _build_struct_column(
+            gen,
+            F.col("id"),
+            parent_seed,
+            row_count=500,
+            global_seed=1,
+            parent_col_name="parent",
+            dyn_ctx=("t", [0], F.col("_write_batch")),
+        )
+        rows = df.select(struct_col.alias("s")).collect()
         matches = sum(1 for r in rows if r.s.a == r.s.b)
         # Independent fields with 5 values each should match on ~1/5 of rows.
-        # The buggy code would give 100% matches.
+        # The buggy "pass through unchanged" code would give 100% matches.
         assert matches / len(rows) < 0.5, (
             f"Sibling struct fields 'a' and 'b' agreed on {matches}/{len(rows)} rows "
             f"(~100% indicates the Column-seed path is not mixing field names)."

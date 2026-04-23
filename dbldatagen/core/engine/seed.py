@@ -167,3 +167,31 @@ def column_seed_lookup(
 ) -> Column:
     """Look up the column seed for a given write_batch from a map literal."""
     return F.element_at(seed_map, wb_col.cast("long"))
+
+
+def struct_field_seed_map(
+    global_seed: int,
+    unique_wbs: list[int],
+    table_name: str,
+    parent_col_name: str,
+    field_name: str,
+) -> Column:
+    """Like ``column_seed_map`` but for a StructColumn child field.
+
+    Precomputes
+    ``derive_column_seed(derive_column_seed(compute_batch_seed(global_seed, wb), table, parent), "", field)``
+    for each ``wb`` on the driver and returns a Spark map literal.  Used
+    by ``_build_struct_column`` under the fused multi-batch CDC path so
+    child field seeds match the scalar path's polynomial hash exactly —
+    before this helper, the Column branch XOR'd the parent seed with a
+    per-field constant, producing different values than the scalar
+    ``derive_column_seed`` on the same (parent, field) pair.
+    """
+    entries: list[Column] = []
+    for wb in unique_wbs:
+        s = compute_batch_seed(global_seed, wb)
+        parent_seed = derive_column_seed(s, table_name, parent_col_name)
+        child_seed = derive_column_seed(parent_seed, "", field_name)
+        entries.append(F.lit(wb).cast("long"))
+        entries.append(F.lit(child_seed).cast("long"))
+    return F.create_map(*entries)

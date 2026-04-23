@@ -29,6 +29,7 @@ from dbldatagen.core.engine.seed import (
     GOLDEN_RATIO_HASH,
     column_seed_lookup,
     column_seed_map,
+    struct_field_seed_map,
     compute_batch_seed,
     derive_column_seed,
 )
@@ -163,6 +164,7 @@ def _build_column_exprs_loop(
     *,
     pk_cols: set[str] | None = None,
     cell_seed_fn: Callable[[int, Column, ColumnSpec], Column | None] | None = None,
+    dyn_struct_ctx: tuple[list[int], Column] | None = None,
 ) -> tuple[list[Column], list[tuple[str, Column]], list[tuple[str, Column]]]:
     """Unified column-building loop.
 
@@ -226,6 +228,10 @@ def _build_column_exprs_loop(
             continue
 
         # Regular columns
+        struct_ctx_for_col: tuple[str, list[int], Column] | None = None
+        if dyn_struct_ctx is not None and isinstance(col_spec.gen, StructColumn):
+            unique_wbs, wb_col = dyn_struct_ctx
+            struct_ctx_for_col = (table_name, unique_wbs, wb_col)
         expr = _build_regular_column_expr(
             col_spec,
             id_col,
@@ -233,6 +239,7 @@ def _build_column_exprs_loop(
             row_count,
             effective_global_seed,
             cell_seed_fn,
+            struct_dyn_ctx=struct_ctx_for_col,
         )
         if expr is not None:
             col_exprs.append(expr.alias(col_spec.name))
@@ -302,8 +309,15 @@ def _build_regular_column_expr(
     row_count: int,
     global_seed: int,
     cell_seed_fn: Callable[[int, Column, ColumnSpec], Column | None] | None = None,
+    struct_dyn_ctx: tuple[str, list[int], Column] | None = None,
 ) -> Column | None:
-    """Build a regular (non-FK, non-seed_from) column expression."""
+    """Build a regular (non-FK, non-seed_from) column expression.
+
+    ``struct_dyn_ctx`` is ``(table_name, unique_wbs, wb_col)``; only
+    populated by the fused multi-batch path so ``_build_struct_column``
+    can precompute polynomial-hashed child seeds that match the scalar
+    path (without it, the Column branch used XOR and diverged).
+    """
     cell_override = cell_seed_fn(column_seed, id_col, col_spec) if cell_seed_fn is not None else None  # type: ignore[arg-type]  # always int when cell_seed_fn is provided
     expr = build_column_expr(
         col_spec,
@@ -312,6 +326,7 @@ def _build_regular_column_expr(
         row_count,
         global_seed,
         cell_seed_override=cell_override,
+        struct_dyn_ctx=struct_dyn_ctx,
     )
 
     return apply_null_fraction(expr, column_seed, id_col, col_spec.null_fraction)
@@ -431,6 +446,7 @@ def _build_exprs_dynamic(
         row_count,
         fk_resolutions,
         pk_cols=get_pk_columns(table_spec),
+        dyn_struct_ctx=(unique_wbs, wb_col),
     )
 
 
@@ -451,6 +467,7 @@ def build_column_expr(  # noqa: PLR0911
     global_seed: int,
     *,
     cell_seed_override: Column | None = None,
+    struct_dyn_ctx: tuple[str, list[int], Column] | None = None,
 ) -> Column:
     """Dispatch to the appropriate column builder based on strategy type.
 
@@ -467,6 +484,11 @@ def build_column_expr(  # noqa: PLR0911
         ``cell_seed_expr(column_seed, id_col)``.  Useful for snapshot
         generation where the seed incorporates per-row state (e.g. the
         last-write batch).
+    struct_dyn_ctx :
+        ``(table_name, unique_wbs, wb_col)`` threaded from the fused
+        multi-batch path so ``_build_struct_column`` can precompute
+        polynomial-hashed child field seeds via ``struct_field_seed_map``.
+        Passed through unchanged for non-struct strategies.
     """
     gen = col_spec.gen
 
@@ -539,7 +561,10 @@ def build_column_expr(  # noqa: PLR0911
         )
 
     if isinstance(gen, StructColumn):
-        return _build_struct_column(gen, id_col, column_seed, row_count, global_seed)
+        return _build_struct_column(
+            gen, id_col, column_seed, row_count, global_seed,
+            parent_col_name=col_spec.name, dyn_ctx=struct_dyn_ctx,
+        )
 
     if isinstance(gen, ArrayColumn):
         return _build_array_column(gen, id_col, column_seed, row_count, global_seed)
@@ -557,20 +582,45 @@ def _build_struct_column(
     parent_seed: int | Column,
     row_count: int,
     global_seed: int,
+    *,
+    parent_col_name: str,
+    dyn_ctx: tuple[str, list[int], Column] | None = None,
 ) -> Column:
-    """Build a Spark struct from child ColumnSpecs."""
+    """Build a Spark struct from child ColumnSpecs.
+
+    Child field seeds are the polynomial hash
+    ``derive_column_seed(parent_seed, "", field_name)``.  In the scalar
+    (int) seed path this runs directly on the driver.  In the fused
+    multi-batch path (``parent_seed`` is a Column sourced from
+    ``column_seed_map``), we cannot evaluate ``derive_column_seed`` in
+    Spark SQL (polynomial multiplication would ``ARITHMETIC_OVERFLOW``
+    under ANSI), so we precompute the per-(batch, field) polynomial
+    hashes on the driver via ``struct_field_seed_map`` and look them up
+    against ``wb_col``.  This replaces an earlier buggy
+    ``parent_seed XOR per_field_hash`` fallback that produced values
+    different from the scalar path for the same (parent, field) pair —
+    breaking the invariant that oracle, initial snapshot, single-batch,
+    and bulk paths all emit identical bytes for the same row.
+    """
     field_cols: list[Column] = []
     for field_spec in gen.fields:
         child_seed: int | Column
         if isinstance(parent_seed, int):
             child_seed = derive_column_seed(parent_seed, "", field_spec.name)
         else:
-            # Column seed (fused multi-batch CDC path): cannot run the
-            # polynomial hash in Spark SQL under ANSI mode, so XOR with a
-            # Python-precomputed per-field hash — same pattern as
-            # _build_array_column and null_mask_expr.
-            field_hash = derive_column_seed(0, "", field_spec.name)
-            child_seed = parent_seed.bitwiseXOR(F.lit(field_hash).cast("long"))
+            if dyn_ctx is None:
+                raise RuntimeError(
+                    f"_build_struct_column for '{parent_col_name}.{field_spec.name}' "
+                    f"received a Column parent_seed but no dyn_ctx (table_name, "
+                    f"unique_wbs, wb_col) was threaded from the fused multi-batch "
+                    f"path. Without context the child seed cannot be computed "
+                    f"consistently with the scalar path."
+                )
+            table_name, unique_wbs, wb_col = dyn_ctx
+            field_map = struct_field_seed_map(
+                global_seed, unique_wbs, table_name, parent_col_name, field_spec.name
+            )
+            child_seed = column_seed_lookup(field_map, wb_col)
         child_expr = build_column_expr(
             field_spec,
             id_col,
