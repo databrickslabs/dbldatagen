@@ -394,24 +394,24 @@ class ColumnSpec(BaseModel):
             return self
         if self.dtype != DataType.DECIMAL:
             raise ValueError(
-                f"Column '{self.name}': precision/scale are only valid when "
-                f"dtype=DECIMAL, got dtype={self.dtype}"
+                f"Column '{self.name}': precision/scale are only valid when " f"dtype=DECIMAL, got dtype={self.dtype}"
             )
         if has_precision ^ has_scale:
             raise ValueError(
                 f"Column '{self.name}': precision and scale must be set together "
                 f"(got precision={self.precision}, scale={self.scale})"
             )
+        # Narrow ``int | None`` for mypy: the XOR check above guarantees
+        # both are set when we get here, but mypy doesn't track local
+        # ``has_*`` flags back to the attributes.
+        precision = self.precision
+        scale = self.scale
+        assert precision is not None and scale is not None
         # Spark DecimalType: 1 <= precision <= 38, 0 <= scale <= precision.
-        if not 1 <= self.precision <= 38:
-            raise ValueError(
-                f"Column '{self.name}': precision must be in [1, 38], got {self.precision}"
-            )
-        if not 0 <= self.scale <= self.precision:
-            raise ValueError(
-                f"Column '{self.name}': scale must be in [0, precision] "
-                f"(0..{self.precision}), got {self.scale}"
-            )
+        if not 1 <= precision <= 38:
+            raise ValueError(f"Column '{self.name}': precision must be in [1, 38], got {precision}")
+        if not 0 <= scale <= precision:
+            raise ValueError(f"Column '{self.name}': scale must be in [0, precision] (0..{precision}), got {scale}")
         # Range fit: catch at plan time rather than deferring to Spark's
         # ARITHMETIC_OVERFLOW / NUMERIC_VALUE_OUT_OF_RANGE at materialization.
         # Max magnitude representable in DecimalType(p, s) is just under
@@ -419,13 +419,13 @@ class ColumnSpec(BaseModel):
         # when precision/scale are explicit — the None/None default path
         # preserves existing behavior for pre-existing plans.
         if isinstance(self.gen, RangeColumn):
-            limit = 10 ** (self.precision - self.scale)
+            limit = 10 ** (precision - scale)
             max_abs = max(abs(self.gen.min), abs(self.gen.max))
             if max_abs >= limit:
-                max_repr = limit - 10**-self.scale
+                max_repr = limit - 10**-scale
                 raise ValueError(
                     f"Column '{self.name}': range [{self.gen.min}, {self.gen.max}] "
-                    f"does not fit in decimal({self.precision}, {self.scale}) "
+                    f"does not fit in decimal({precision}, {scale}) "
                     f"(max representable magnitude is {max_repr})"
                 )
         return self

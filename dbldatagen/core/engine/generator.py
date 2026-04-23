@@ -29,9 +29,9 @@ from dbldatagen.core.engine.seed import (
     GOLDEN_RATIO_HASH,
     column_seed_lookup,
     column_seed_map,
-    struct_field_seed_map,
     compute_batch_seed,
     derive_column_seed,
+    struct_field_seed_map,
 )
 from dbldatagen.core.engine.utils import (
     apply_column_phases,
@@ -562,8 +562,13 @@ def build_column_expr(  # noqa: PLR0911
 
     if isinstance(gen, StructColumn):
         return _build_struct_column(
-            gen, id_col, column_seed, row_count, global_seed,
-            parent_col_name=col_spec.name, dyn_ctx=struct_dyn_ctx,
+            gen,
+            id_col,
+            column_seed,
+            row_count,
+            global_seed,
+            parent_col_name=col_spec.name,
+            dyn_ctx=struct_dyn_ctx,
         )
 
     if isinstance(gen, ArrayColumn):
@@ -617,9 +622,7 @@ def _build_struct_column(
                     f"consistently with the scalar path."
                 )
             table_name, unique_wbs, wb_col = dyn_ctx
-            field_map = struct_field_seed_map(
-                global_seed, unique_wbs, table_name, parent_col_name, field_spec.name
-            )
+            field_map = struct_field_seed_map(global_seed, unique_wbs, table_name, parent_col_name, field_spec.name)
             child_seed = column_seed_lookup(field_map, wb_col)
         child_expr = build_column_expr(
             field_spec,

@@ -59,9 +59,7 @@ def build_range_column(
     if is_integer:
         return _build_integer_range(seed_col, int(min_val), int(max_val), distribution, dtype)
     else:
-        return _build_float_range(
-            seed_col, float(min_val), float(max_val), distribution, dtype, precision, scale
-        )
+        return _build_float_range(seed_col, float(min_val), float(max_val), distribution, dtype, precision, scale)
 
 
 def _build_integer_range(

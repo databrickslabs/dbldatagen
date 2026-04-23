@@ -245,8 +245,11 @@ class TestColumnSpec:
 
     def test_decimal_precision_scale_stored(self):
         col = ColumnSpec(
-            name="rate", dtype=DataType.DECIMAL, gen=RangeColumn(min=0, max=1),
-            precision=10, scale=4,
+            name="rate",
+            dtype=DataType.DECIMAL,
+            gen=RangeColumn(min=0, max=1),
+            precision=10,
+            scale=4,
         )
         assert col.precision == 10
         assert col.scale == 4
@@ -267,52 +270,51 @@ class TestColumnSpec:
 
     def test_precision_scale_on_non_decimal_rejected(self):
         with pytest.raises(ValueError, match="precision/scale are only valid when dtype=DECIMAL"):
-            ColumnSpec(
-                name="x", dtype=DataType.INT, gen=RangeColumn(), precision=10, scale=4
-            )
+            ColumnSpec(name="x", dtype=DataType.INT, gen=RangeColumn(), precision=10, scale=4)
 
     def test_precision_out_of_range_rejected(self):
         with pytest.raises(ValueError, match=r"precision must be in \[1, 38\]"):
-            ColumnSpec(
-                name="x", dtype=DataType.DECIMAL, gen=RangeColumn(), precision=39, scale=2
-            )
+            ColumnSpec(name="x", dtype=DataType.DECIMAL, gen=RangeColumn(), precision=39, scale=2)
         with pytest.raises(ValueError, match=r"precision must be in \[1, 38\]"):
-            ColumnSpec(
-                name="x", dtype=DataType.DECIMAL, gen=RangeColumn(), precision=0, scale=0
-            )
+            ColumnSpec(name="x", dtype=DataType.DECIMAL, gen=RangeColumn(), precision=0, scale=0)
 
     def test_scale_greater_than_precision_rejected(self):
         with pytest.raises(ValueError, match=r"scale must be in \[0, precision\]"):
-            ColumnSpec(
-                name="x", dtype=DataType.DECIMAL, gen=RangeColumn(), precision=5, scale=6
-            )
+            ColumnSpec(name="x", dtype=DataType.DECIMAL, gen=RangeColumn(), precision=5, scale=6)
 
     def test_scale_negative_rejected(self):
         with pytest.raises(ValueError, match=r"scale must be in \[0, precision\]"):
-            ColumnSpec(
-                name="x", dtype=DataType.DECIMAL, gen=RangeColumn(), precision=10, scale=-1
-            )
+            ColumnSpec(name="x", dtype=DataType.DECIMAL, gen=RangeColumn(), precision=10, scale=-1)
 
     def test_range_exceeds_precision_rejected(self):
         """decimal(5,2) holds up to 999.99; max=10000 must fail at plan time."""
         with pytest.raises(ValueError, match="does not fit in decimal"):
             ColumnSpec(
-                name="x", dtype=DataType.DECIMAL,
-                gen=RangeColumn(min=0, max=10000), precision=5, scale=2,
+                name="x",
+                dtype=DataType.DECIMAL,
+                gen=RangeColumn(min=0, max=10000),
+                precision=5,
+                scale=2,
             )
 
     def test_range_negative_exceeds_precision_rejected(self):
         with pytest.raises(ValueError, match="does not fit in decimal"):
             ColumnSpec(
-                name="x", dtype=DataType.DECIMAL,
-                gen=RangeColumn(min=-10000, max=0), precision=5, scale=2,
+                name="x",
+                dtype=DataType.DECIMAL,
+                gen=RangeColumn(min=-10000, max=0),
+                precision=5,
+                scale=2,
             )
 
     def test_range_at_max_representable_ok(self):
         """999.99 is the max representable in decimal(5, 2); must not false-fail."""
         col = ColumnSpec(
-            name="x", dtype=DataType.DECIMAL,
-            gen=RangeColumn(min=0, max=999.99), precision=5, scale=2,
+            name="x",
+            dtype=DataType.DECIMAL,
+            gen=RangeColumn(min=0, max=999.99),
+            precision=5,
+            scale=2,
         )
         assert col.precision == 5
 
@@ -321,9 +323,7 @@ class TestColumnSpec:
         range fit is not enforced so pre-existing plans don't regress."""
         # Max 10**17 would overflow DecimalType(18, 2), but with no explicit
         # precision/scale we preserve old behaviour (Spark errors at runtime).
-        col = ColumnSpec(
-            name="x", dtype=DataType.DECIMAL, gen=RangeColumn(min=0, max=10**17)
-        )
+        col = ColumnSpec(name="x", dtype=DataType.DECIMAL, gen=RangeColumn(min=0, max=10**17))
         assert col.precision is None
 
     def test_dtype_can_be_none(self):

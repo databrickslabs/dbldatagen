@@ -281,9 +281,7 @@ class TestCDCWithNested:
         num_b = 5
         # Larger row count + more batches so the workload produces UB/D events.
         per = generate_cdc(spark, _nested_plan(rows=200), num_batches=num_b)
-        bulk = generate_cdc_bulk(
-            spark, _nested_plan(rows=200), num_batches=num_b, chunk_size=num_b
-        )
+        bulk = generate_cdc_bulk(spark, _nested_plan(rows=200), num_batches=num_b, chunk_size=num_b)
 
         def pre_image_map(stream) -> dict[tuple[int, int, str], tuple]:
             out: dict[tuple[int, int, str], tuple] = {}
@@ -298,13 +296,12 @@ class TestCDCWithNested:
         bulk_pre = pre_image_map(bulk)
 
         assert per_pre, "no UB/D rows collected from per-batch path — test setup too small"
-        assert set(per_pre.keys()) == set(bulk_pre.keys()), (
-            "bulk and per-batch paths emitted different pre-image (pk, batch, op) tuples"
-        )
+        assert set(per_pre.keys()) == set(
+            bulk_pre.keys()
+        ), "bulk and per-batch paths emitted different pre-image (pk, batch, op) tuples"
         for key in per_pre:
             assert bulk_pre[key] == per_pre[key], (
-                f"struct pre-image values diverge for {key}: "
-                f"per-batch={per_pre[key]}, bulk={bulk_pre[key]}"
+                f"struct pre-image values diverge for {key}: " f"per-batch={per_pre[key]}, bulk={bulk_pre[key]}"
             )
 
 
@@ -394,9 +391,7 @@ class TestStructFieldSeedIndependence:
         # sourced from ``column_seed_map`` — the exact shape
         # ``_build_exprs_dynamic`` hands in.
         df = spark.range(500).withColumn("_write_batch", F.lit(0).cast("long"))
-        parent_map = column_seed_map(
-            global_seed=1, unique_wbs=[0], table_name="t", column_name="parent"
-        )
+        parent_map = column_seed_map(global_seed=1, unique_wbs=[0], table_name="t", column_name="parent")
         parent_seed = column_seed_lookup(parent_map, F.col("_write_batch"))
         struct_col = _build_struct_column(
             gen,

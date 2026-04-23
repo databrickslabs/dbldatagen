@@ -237,8 +237,13 @@ class TestDecimalPrecisionScale:
         """DecimalType(10, 4) is produced when precision=10, scale=4."""
         df = spark.range(5)
         col = build_range_column(
-            F.col("id"), 42, min_val=0.0, max_val=1.0, dtype=DataType.DECIMAL,
-            precision=10, scale=4,
+            F.col("id"),
+            42,
+            min_val=0.0,
+            max_val=1.0,
+            dtype=DataType.DECIMAL,
+            precision=10,
+            scale=4,
         )
         result = df.select(col.alias("v"))
         field = result.schema["v"]
@@ -257,8 +262,13 @@ class TestDecimalPrecisionScale:
 
         df = spark.range(50)
         col = build_range_column(
-            F.col("id"), 42, min_val=0.0, max_val=1.0, dtype=DataType.DECIMAL,
-            precision=10, scale=4,
+            F.col("id"),
+            42,
+            min_val=0.0,
+            max_val=1.0,
+            dtype=DataType.DECIMAL,
+            precision=10,
+            scale=4,
         )
         rows = df.select(col.alias("v")).collect()
         for r in rows:
@@ -273,8 +283,13 @@ class TestDecimalPrecisionScale:
         """Crypto-scale decimal(38, 8) works end-to-end."""
         df = spark.range(5)
         col = build_range_column(
-            F.col("id"), 42, min_val=0.0, max_val=1_000_000.0, dtype=DataType.DECIMAL,
-            precision=38, scale=8,
+            F.col("id"),
+            42,
+            min_val=0.0,
+            max_val=1_000_000.0,
+            dtype=DataType.DECIMAL,
+            precision=38,
+            scale=8,
         )
         result = df.select(col.alias("v"))
         assert result.schema["v"].dataType.precision == 38
