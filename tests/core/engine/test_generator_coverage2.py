@@ -5,7 +5,6 @@ generator.py targets:
 - Line 215: _build_fk_column_expr returns None
 - Lines 341-342, 354, 359-360: _build_exprs_scalar seed_from+null, FK null, null_fraction
 - Lines 411-423, 433, 444-445: _build_exprs_dynamic seed_from, FK, null_fraction
-- Lines 457-466: _build_write_batch_case_when
 - Lines 606-608: ArrayColumn with Column seed (dynamic path)
 """
 
@@ -17,7 +16,6 @@ from pyspark.sql import functions as F
 from dbldatagen.core.engine.generator import (
     _build_exprs_dynamic,
     _build_exprs_scalar,
-    _build_write_batch_case_when,
     build_all_column_exprs,
     build_column_expr,
 )
@@ -250,36 +248,6 @@ class TestBuildExprsDynamic:
             row_count=20,
         )
         assert len(col_exprs) == 2  # pk + val
-
-
-# ===================================================================
-# generator.py: _build_write_batch_case_when (lines 457-466)
-# ===================================================================
-
-
-class TestBuildWriteBatchCaseWhen:
-    def test_single_batch_returns_expr_directly(self, spark):
-        """Line 457-458: single batch returns expression directly."""
-        expr = F.lit(42)
-        result = _build_write_batch_case_when(F.col("wb"), [(0, expr)])
-        # Should return the expression directly (no CASE WHEN)
-        df = spark.range(5).withColumn("wb", F.lit(0))
-        out = df.select(result.alias("v")).collect()
-        assert all(r.v == 42 for r in out)
-
-    def test_multiple_batches_builds_case_when(self, spark):
-        """Lines 460-466: multiple batches build CASE WHEN chain."""
-        e0 = F.lit(10)
-        e1 = F.lit(20)
-        e2 = F.lit(30)
-        result = _build_write_batch_case_when(
-            F.col("wb"),
-            [(0, e0), (1, e1), (2, e2)],
-        )
-        df = spark.createDataFrame([(0,), (1,), (2,)], ["wb"])
-        out = df.select(result.alias("v")).collect()
-        values = {r.v for r in out}
-        assert values == {10, 20, 30}
 
 
 # ===================================================================

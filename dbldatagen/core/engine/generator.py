@@ -36,7 +36,6 @@ from dbldatagen.core.engine.seed import (
 from dbldatagen.core.engine.utils import (
     apply_column_phases,
     apply_null_fraction,
-    case_when_chain,
     create_range_df,
     get_pk_columns,
 )
@@ -477,15 +476,6 @@ def _build_exprs_dynamic(
         pk_cols=get_pk_columns(table_spec),
         dyn_struct_ctx=(unique_wbs, wb_col),
     )
-
-
-def _build_write_batch_case_when(wb_col: Column, wb_exprs: list[tuple[int, Column]]) -> Column:
-    """Build CASE WHEN on a write-batch column for a list of (batch, expr) pairs.
-
-    When there's only one batch value, returns the expression directly
-    (no CASE WHEN needed).
-    """
-    return case_when_chain(wb_col, wb_exprs)
 
 
 def build_column_expr(  # noqa: PLR0911
