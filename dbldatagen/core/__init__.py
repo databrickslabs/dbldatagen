@@ -26,8 +26,8 @@ from dbldatagen.core.engine.cdc import (
 # to keep users from discovering it as a production-path helper.  Tests
 # and advanced debugging can still import it via
 # ``from dbldatagen.core.engine.cdc import generate_expected_state``.
-from dbldatagen.core.engine.generator import generate_table as _generate_table
-from dbldatagen.core.engine.planner import resolve_plan as _resolve_plan
+from dbldatagen.core.engine.generator import generate_table
+from dbldatagen.core.engine.planner import ResolvedPlan, resolve_plan
 from dbldatagen.core.spec import (
     ColumnSpec,
     DataGenPlan,
@@ -63,18 +63,28 @@ if TYPE_CHECKING:
     from pyspark.sql import DataFrame, SparkSession
 
 
-def generate(spark: SparkSession, plan: DataGenPlan) -> dict[str, DataFrame]:
+def generate(
+    spark: SparkSession,
+    plan: DataGenPlan,
+    resolved_plan: ResolvedPlan | None = None,
+) -> dict[str, DataFrame]:
     """Generate all tables from a DataGenPlan.
 
     Returns dict[str, DataFrame] keyed by table name.
     Tables are generated in dependency order (parents first).
+
+    ``resolved_plan`` is optional — pass a pre-computed ``ResolvedPlan``
+    (from ``resolve_plan(plan)``) to avoid re-resolving when iterating
+    over multiple seeds or when composing with lower-level helpers like
+    ``generate_table``.  This matches the ``generate_cdc`` path, which
+    also resolves once and threads the result through every batch.
     """
-    resolved = _resolve_plan(plan)
+    resolved = resolved_plan if resolved_plan is not None else resolve_plan(plan)
     table_map = {t.name: t for t in plan.tables}
     results = {}
     for table_name in resolved.generation_order:
         table_spec = table_map[table_name]
-        df = _generate_table(spark, table_spec, resolved)
+        df = generate_table(spark, table_spec, resolved)
         results[table_name] = df
     return results
 
@@ -92,6 +102,7 @@ __all__ = [
     "MutationSpec",
     "OperationWeights",
     "PrimaryKey",
+    "ResolvedPlan",
     "TableSpec",
     "array",
     "decimal",
@@ -103,11 +114,13 @@ __all__ = [
     "generate_cdc",
     "generate_cdc_batch",
     "generate_cdc_bulk",
+    "generate_table",
     "integer",
     "pattern",
     "pk_auto",
     "pk_pattern",
     "pk_uuid",
+    "resolve_plan",
     "struct",
     "text",
     "timestamp",
