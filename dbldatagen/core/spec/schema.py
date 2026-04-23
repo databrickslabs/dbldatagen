@@ -11,6 +11,13 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 _IDENTIFIER_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
+# Upper bound on ArrayColumn.max_length.  Each slot materialises its own
+# Spark expression tree at plan time, so Catalyst work scales linearly
+# with this value (and with nested arrays/structs, multiplicatively).
+# 1000 is already far beyond realistic array columns; past that, the
+# user wants rows or MapType.
+_MAX_ARRAY_LENGTH = 1000
+
 
 # ---------------------------------------------------------------------------
 # Distributions
@@ -279,6 +286,20 @@ class ArrayColumn(BaseModel):
             raise ValueError(f"min_length must be >= 0, got {self.min_length}")
         if self.min_length > self.max_length:
             raise ValueError(f"min_length ({self.min_length}) must be <= max_length ({self.max_length})")
+        # ``_build_array_column`` materialises ``max_length`` element
+        # expressions at plan time — one per array slot, each with its
+        # own ``build_column_expr`` dispatch tree.  At ``max_length =
+        # 5000`` Catalyst compiles for minutes on a plan the user thinks
+        # is tiny.  1000 is already absurdly large for realistic arrays;
+        # anything higher wants a different representation (MapType,
+        # exploded rows) anyway.
+        if self.max_length > _MAX_ARRAY_LENGTH:
+            raise ValueError(
+                f"max_length ({self.max_length}) exceeds {_MAX_ARRAY_LENGTH}.  "
+                f"Each array element expands to its own Spark expression at "
+                f"plan time; large max_lengths stall Catalyst.  For wider "
+                f"fan-out, model the data as rows or a MapType."
+            )
         return self
 
 
@@ -554,9 +575,33 @@ class TableSpec(BaseModel):
 
     @model_validator(mode="after")
     def validate_name(self) -> TableSpec:
-        if not _IDENTIFIER_RE.match(self.name):
+        # fullmatch, not match: ``re.match`` + ``$`` allows a trailing
+        # newline because ``$`` anchors before a newline in default mode.
+        # ``fullmatch`` requires the whole string to match the pattern.
+        if not _IDENTIFIER_RE.fullmatch(self.name):
             raise ValueError(
-                f"Table name '{self.name}' is not a valid identifier. " f"Must match [a-zA-Z_][a-zA-Z0-9_]*."
+                f"Table name '{self.name}' is not a valid identifier.  "
+                f"Must match [a-zA-Z_][a-zA-Z0-9_]*."
+            )
+        return self
+
+    @model_validator(mode="after")
+    def validate_unique_column_names(self) -> TableSpec:
+        """Reject duplicate column names within a table.
+
+        Two ColumnSpecs with the same ``name`` would produce a Spark
+        DataFrame with duplicate column names — later ``.select(...)``
+        / ``.withColumn(...)`` operations silently shadow one, and
+        SQL round-trip through Delta / Unity Catalog breaks.  Catch
+        at plan construction so the failure names the offender.
+        """
+        names = [c.name for c in self.columns]
+        duplicates = {name for name in names if names.count(name) > 1}
+        if duplicates:
+            raise ValueError(
+                f"Table '{self.name}' has duplicate column names: "
+                f"{sorted(duplicates)}.  Each ColumnSpec must have a "
+                f"unique ``name`` within its table."
             )
         return self
 
