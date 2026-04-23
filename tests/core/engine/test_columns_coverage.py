@@ -61,6 +61,39 @@ class TestTimestampDegenerateRange:
         result = df.select(col.alias("ts")).collect()
         assert all(r.ts is not None for r in result)
 
+    def test_date_is_session_tz_independent(self, spark):
+        """``build_date_column`` must produce identical dates regardless of
+        ``spark.sql.session.timeZone``.  Previously ``F.from_unixtime(s).cast('date')``
+        picked the session-TZ wall-clock date, so midnight-UTC rows
+        landed on different dates in UTC vs ``America/Los_Angeles``.
+        The fix routes through ``F.date_add(epoch_date, days)``, which
+        is TZ-agnostic.
+        """
+        key = "spark.sql.session.timeZone"
+        prev = spark.conf.get(key, None)
+        try:
+            spark.conf.set(key, "UTC")
+            df = spark.range(10)
+            d_utc = [
+                str(r.v)
+                for r in df.select(
+                    build_date_column(F.col("id"), 42, start="2024-01-01", end="2024-01-02").alias("v")
+                ).collect()
+            ]
+            spark.conf.set(key, "America/Los_Angeles")
+            d_la = [
+                str(r.v)
+                for r in df.select(
+                    build_date_column(F.col("id"), 42, start="2024-01-01", end="2024-01-02").alias("v")
+                ).collect()
+            ]
+            assert d_utc == d_la, f"date diverges across sessions: UTC={d_utc}, LA={d_la}"
+        finally:
+            if prev is None:
+                spark.conf.unset(key)
+            else:
+                spark.conf.set(key, prev)
+
     def test_range_beyond_int32_seconds_produces_valid_timestamps(self, spark, ansi_enabled):
         """A 200-year range is ~6.3e9 seconds, past the int32 ceiling.
 

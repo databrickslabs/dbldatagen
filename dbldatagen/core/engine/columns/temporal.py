@@ -37,7 +37,11 @@ def build_timestamp_column(
     """Generate timestamps in [start, end] range.
 
     Maps the cell seed uniformly (or according to *distribution*) across the
-    epoch-seconds range, then casts to ``TimestampType``.
+    epoch-seconds range, then casts to ``TimestampType``.  ``cast(long ->
+    timestamp)`` reads the long as seconds-since-epoch UTC — session-TZ-
+    independent.  The previous ``F.from_unixtime(epoch).cast("timestamp")``
+    route went through session-TZ format+parse that happens to round-trip
+    but is fragile; the direct cast removes the round-trip dependency.
     """
     if isinstance(id_col, str):
         id_col = F.col(id_col)
@@ -45,13 +49,13 @@ def build_timestamp_column(
     start_epoch = _parse_epoch(start)
     end_epoch = _parse_epoch(end)
     if end_epoch <= start_epoch:
-        return F.lit(start).cast("timestamp")
+        return F.lit(start_epoch).cast("long").cast("timestamp")
 
     range_seconds = end_epoch - start_epoch
     seed_col = cell_seed_override if cell_seed_override is not None else cell_seed_expr(column_seed, id_col)
     idx = apply_distribution(seed_col, range_seconds, distribution)
-    epoch_col = idx + F.lit(start_epoch)
-    return F.from_unixtime(epoch_col).cast("timestamp")
+    epoch_col = (idx + F.lit(start_epoch)).cast("long")
+    return epoch_col.cast("timestamp")
 
 
 def build_date_column(
@@ -64,7 +68,13 @@ def build_date_column(
 ) -> Column:
     """Generate dates in [start, end] range.
 
-    Similar to timestamps but casts to ``DateType``.
+    Work in days-since-epoch (UTC) and materialise via
+    ``F.date_add(F.lit("1970-01-01").cast("date"), days)`` so the output
+    date is session-TZ-independent.  The previous
+    ``F.from_unixtime(epoch_seconds).cast("date")`` route picked the
+    session-TZ wall-clock date, so a row whose epoch fell near midnight
+    UTC landed on different dates in UTC vs ``America/Los_Angeles``
+    sessions — breaking reproducibility across clusters.
     """
     if isinstance(id_col, str):
         id_col = F.col(id_col)
@@ -72,14 +82,26 @@ def build_date_column(
     start_epoch = _parse_epoch(start)
     end_epoch = _parse_epoch(end)
     if end_epoch <= start_epoch:
-        return F.lit(start).cast("date")
+        return _days_to_date(start_epoch // 86400)
 
     # Work in days rather than seconds for dates
     range_days = (end_epoch - start_epoch) // 86400
     if range_days <= 0:
-        return F.lit(start).cast("date")
+        return _days_to_date(start_epoch // 86400)
 
     seed_col = cell_seed_override if cell_seed_override is not None else cell_seed_expr(column_seed, id_col)
     idx = apply_distribution(seed_col, range_days, distribution)
-    epoch_col = (idx * F.lit(86400)) + F.lit(start_epoch)
-    return F.from_unixtime(epoch_col).cast("date")
+    start_days = start_epoch // 86400
+    return _days_to_date(idx + F.lit(start_days).cast("long"))
+
+
+def _days_to_date(days: Column | int) -> Column:
+    """Convert a days-since-epoch Column or int to a Spark ``DateType``.
+
+    Uses ``F.date_add`` on the epoch date rather than
+    ``F.from_unixtime(seconds).cast("date")``, which is session-TZ
+    dependent and shifts dates by the TZ offset at midnight UTC.
+    """
+    epoch_date = F.lit("1970-01-01").cast("date")
+    days_col = F.lit(days).cast("int") if isinstance(days, int) else days.cast("int")
+    return F.date_add(epoch_date, days_col)
