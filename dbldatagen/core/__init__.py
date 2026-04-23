@@ -18,9 +18,14 @@ from dbldatagen.core.engine.cdc import (
     generate_cdc,
     generate_cdc_batch,
     generate_cdc_bulk,
-    generate_expected_state,
     write_cdc_to_delta,
 )
+
+# ``generate_expected_state`` is a driver-side O(N) test oracle with a
+# 100K-row hard cap — it's deliberately NOT on the top-level __all__
+# to keep users from discovering it as a production-path helper.  Tests
+# and advanced debugging can still import it via
+# ``from dbldatagen.core.engine.cdc import generate_expected_state``.
 from dbldatagen.core.engine.generator import generate_table as _generate_table
 from dbldatagen.core.engine.planner import resolve_plan as _resolve_plan
 from dbldatagen.core.spec import (
@@ -96,7 +101,6 @@ __all__ = [
     "generate_cdc",
     "generate_cdc_batch",
     "generate_cdc_bulk",
-    "generate_expected_state",
     "integer",
     "pattern",
     "pk_auto",
