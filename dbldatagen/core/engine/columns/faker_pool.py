@@ -40,9 +40,16 @@ def build_faker_column(
     if kwargs is None:
         kwargs = {}
 
-    # Generate the pool on the driver (deterministic)
+    # Generate the pool on the driver (deterministic).  Faker expects a
+    # non-negative 32-bit seed; mix the high 32 bits of ``column_seed``
+    # into the low 32 bits before masking so two columns whose seeds
+    # differ only in bits >= 31 get distinct pools.  The old
+    # ``column_seed & 0x7FFFFFFF`` collided every 2**31 seeds, which —
+    # combined with the polynomial hash in ``derive_column_seed`` —
+    # produced correlated pools across columns with similar names.
     fake = Faker(locale or "en_US")
-    fake.seed_instance(column_seed & 0x7FFFFFFF)  # Faker expects 32-bit seed
+    seed32 = (column_seed ^ (column_seed >> 32)) & 0x7FFFFFFF
+    fake.seed_instance(seed32)
 
     faker_method = getattr(fake, provider, None)
     if faker_method is None:
