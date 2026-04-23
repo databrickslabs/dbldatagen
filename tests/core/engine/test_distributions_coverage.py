@@ -112,12 +112,13 @@ class TestZipfSampleExpr:
         values = [row.val for row in df.collect()]
         assert all(v == 0 for v in values)
 
-    def test_exponent_lte_one(self, spark):
-        """Line 120: exponent <= 1.0 uses log-based fallback."""
-        n = 20
-        df = spark.range(100).select(zipf_sample_expr(F.col("id"), n=n, exponent=0.8).alias("val"))
-        values = [row.val for row in df.collect()]
-        assert all(0 <= v < n for v in values)
+    def test_exponent_lte_one_asserts(self, spark):
+        """``exponent <= 1`` is rejected at the validator layer.  The
+        low-level ``zipf_sample_expr`` asserts the same invariant so a
+        validator bypass fails loudly instead of returning non-Zipf
+        shapes."""
+        with pytest.raises(AssertionError, match="requires exponent > 1"):
+            zipf_sample_expr(F.col("id"), n=20, exponent=0.8)
 
     def test_default_exponent(self, spark):
         """Standard zipf with default exponent produces valid indices."""

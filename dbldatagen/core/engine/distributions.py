@@ -122,21 +122,23 @@ def zipf_sample_expr(cell_seed_col: Column, n: int, exponent: float = 1.5) -> Co
     """Approximate Zipfian sampling via inverse power-law CDF in Spark SQL.
 
     Maps seed to [0, 1) then applies the inverse CDF:
-        index = floor(N * u^(1/(exponent-1)))   for exponent > 1
+        index = floor(N * (1-u)^(1/(exponent-1)))
     Clamps result to [0, N-1].
+
+    ``exponent > 1`` is enforced by ``Zipf.validate_params``; the
+    power-law CDF does not converge for ``exponent <= 1`` and any code
+    path reaching here with a sub-1 exponent would be a validator
+    bypass.  Assert so the bypass fails loudly, not with wrong-shaped
+    data.
     """
     if n <= 1:
         return F.lit(0)
+    assert exponent > 1.0, f"zipf_sample_expr requires exponent > 1, got {exponent}"
     u = F.pmod(cell_seed_col, F.lit(_CONTINUOUS_PRECISION)).cast("double") / F.lit(float(_CONTINUOUS_PRECISION))
     # Shift u away from 0 to avoid log(0)
     u = F.greatest(u, F.lit(1e-9))
-    if exponent <= 1.0:
-        # For exponent <= 1, fall back to a log-based approximation
-        inv = F.exp(F.log(F.lit(float(n))) * u) - F.lit(1.0)
-    else:
-        # Inverse CDF of discrete power-law: rank = n * (1-u)^(1/(s-1)) mapped
-        power = 1.0 / (exponent - 1.0)
-        inv = F.lit(float(n)) * F.pow(F.lit(1.0) - u, F.lit(power))
+    power = 1.0 / (exponent - 1.0)
+    inv = F.lit(float(n)) * F.pow(F.lit(1.0) - u, F.lit(power))
     idx = F.floor(inv).cast("long")
     return F.greatest(F.lit(0), F.least(idx, F.lit(n - 1)))
 

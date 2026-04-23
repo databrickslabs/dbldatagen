@@ -66,8 +66,18 @@ class Zipf(BaseModel):
 
     @model_validator(mode="after")
     def validate_params(self) -> Zipf:
-        if self.exponent <= 0:
-            raise ValueError(f"exponent must be > 0, got {self.exponent}")
+        # Zipfian sampling via inverse power-law CDF converges only for
+        # ``exponent > 1``.  The engine had a ``<= 1`` fallback that used
+        # ``exp(log(n) * u) - 1`` -- not Zipf, not uniform, silently
+        # wrong-shaped data for any caller who trusted the dtype.  Reject
+        # at validation so the user picks an actual Zipf exponent or a
+        # different distribution.
+        if self.exponent <= 1.0:
+            raise ValueError(
+                f"Zipf.exponent must be > 1 (power-law CDF only converges "
+                f"in that range), got {self.exponent}.  For milder skew use "
+                f"``Normal`` or ``LogNormal``; for uniform, use ``Uniform``."
+            )
         return self
 
 
@@ -460,8 +470,7 @@ class ColumnSpec(BaseModel):
         # because ``$`` anchors before a newline in default mode.
         if not _IDENTIFIER_RE.fullmatch(self.name):
             raise ValueError(
-                f"Column name '{self.name}' is not a valid identifier "
-                f"(must match [A-Za-z_][A-Za-z0-9_]*)."
+                f"Column name '{self.name}' is not a valid identifier " f"(must match [A-Za-z_][A-Za-z0-9_]*)."
             )
         if self.name.startswith("_"):
             raise ValueError(
@@ -617,8 +626,7 @@ class TableSpec(BaseModel):
         # ``fullmatch`` requires the whole string to match the pattern.
         if not _IDENTIFIER_RE.fullmatch(self.name):
             raise ValueError(
-                f"Table name '{self.name}' is not a valid identifier.  "
-                f"Must match [a-zA-Z_][a-zA-Z0-9_]*."
+                f"Table name '{self.name}' is not a valid identifier.  " f"Must match [a-zA-Z_][a-zA-Z0-9_]*."
             )
         return self
 

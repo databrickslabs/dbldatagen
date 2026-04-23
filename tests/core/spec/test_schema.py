@@ -624,12 +624,27 @@ class TestDistributionValidation:
             LogNormal(stddev=-0.5)
 
     def test_zipf_zero_exponent(self):
-        with pytest.raises(ValueError, match="exponent must be > 0"):
+        # Power-law CDF diverges for exponent <= 1 (not just <= 0), so the
+        # validator now rejects both -- the engine used to silently fall
+        # back to ``exp(log(n) * u)``, which is neither Zipf nor uniform.
+        with pytest.raises(ValueError, match="must be > 1"):
             Zipf(exponent=0)
 
     def test_zipf_negative_exponent(self):
-        with pytest.raises(ValueError, match="exponent must be > 0"):
+        with pytest.raises(ValueError, match="must be > 1"):
             Zipf(exponent=-1.0)
+
+    def test_zipf_exponent_exactly_one_rejected(self):
+        """``exponent == 1`` is the harmonic-series boundary where the
+        normalizing sum diverges.  Reject at validation so no caller
+        lands on wrong-shaped data."""
+        with pytest.raises(ValueError, match="must be > 1"):
+            Zipf(exponent=1.0)
+
+    def test_zipf_exponent_just_above_one_accepted(self):
+        """Just above 1 is valid -- covers the ``1.2`` default used by
+        ``fk()`` and nearby callers."""
+        Zipf(exponent=1.01)
 
     def test_exponential_zero_rate(self):
         with pytest.raises(ValueError, match="rate must be > 0"):
