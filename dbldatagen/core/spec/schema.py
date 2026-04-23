@@ -337,12 +337,12 @@ class PrimaryKey(BaseModel):
 class ForeignKeyRef(BaseModel):
     """Defines a foreign key relationship to another table's primary key.
 
-    ``ref`` uses the familiar "table.column" syntax.
-    ``cardinality`` controls how many child rows per parent key (default: uniform 1-5).
+    ``ref`` uses the familiar "table.column" syntax.  Use ``distribution``
+    (e.g. ``Zipf``) to skew child-to-parent mapping toward a small set of
+    parents; use ``null_fraction`` for optional FKs.
     """
 
     ref: str
-    cardinality: int | tuple[int, int] | None = None
     distribution: Distribution = Uniform()
     nullable: bool = False
     null_fraction: float = 0.0

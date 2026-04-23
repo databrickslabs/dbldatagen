@@ -400,18 +400,18 @@ class TestForeignKeyRef:
     def test_string_ref(self):
         fk = ForeignKeyRef(ref="orders.order_id")
         assert fk.ref == "orders.order_id"
-        assert fk.cardinality is None
         assert isinstance(fk.distribution, Uniform)
         assert fk.nullable is False
         assert fk.null_fraction == 0.0
 
-    def test_with_int_cardinality(self):
-        fk = ForeignKeyRef(ref="t.c", cardinality=5)
-        assert fk.cardinality == 5
-
-    def test_with_tuple_cardinality(self):
-        fk = ForeignKeyRef(ref="t.c", cardinality=(1, 10))
-        assert fk.cardinality == (1, 10)
+    def test_cardinality_field_removed(self):
+        """``cardinality`` was declared on ``ForeignKeyRef`` but never
+        consumed by the engine — keeping it would have been a
+        load-bearing lie (users set it, nothing happened).  Assert the
+        field is gone from the model definition so future refactors
+        can't accidentally resurrect it.
+        """
+        assert "cardinality" not in ForeignKeyRef.model_fields
 
     def test_with_distribution(self):
         fk = ForeignKeyRef(ref="t.c", distribution=Zipf(exponent=1.3))
