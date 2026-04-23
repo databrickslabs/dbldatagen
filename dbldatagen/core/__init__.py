@@ -78,7 +78,23 @@ def generate(
     over multiple seeds or when composing with lower-level helpers like
     ``generate_table``.  This matches the ``generate_cdc`` path, which
     also resolves once and threads the result through every batch.
+
+    A ``resolved_plan`` must have been produced from *this* ``plan``
+    object: the generator follows ``resolved.generation_order`` but
+    fetches each ``TableSpec`` from ``plan.tables``, so a mismatch
+    (e.g. ``generate(planA, resolved_plan=resolve_plan(planB))``)
+    silently uses planA's table seeds and planB's FK topology,
+    corrupting FK child-column output without any error.  The identity
+    check below catches the mismatch at entry.
     """
+    if resolved_plan is not None and resolved_plan.plan is not plan:
+        raise ValueError(
+            "resolved_plan was produced from a different DataGenPlan than the "
+            "one passed to generate().  The caller must pass the same plan "
+            "object used for ``resolve_plan(plan)``; otherwise FK resolution "
+            "and table seeds refer to different plans.  Re-resolve with "
+            "``resolve_plan(plan)`` or drop the ``resolved_plan`` argument."
+        )
     resolved = resolved_plan if resolved_plan is not None else resolve_plan(plan)
     table_map = {t.name: t for t in plan.tables}
     results = {}

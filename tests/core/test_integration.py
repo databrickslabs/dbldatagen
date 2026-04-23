@@ -6,7 +6,9 @@ determinism, and row count verification.
 
 from __future__ import annotations
 
-from dbldatagen.core import generate
+import pytest
+
+from dbldatagen.core import generate, resolve_plan
 from dbldatagen.core.spec.schema import (
     ColumnSpec,
     ConstantColumn,
@@ -166,6 +168,27 @@ class TestGenerateAPI:
         # Each value is a DataFrame
         for _name, df in dfs.items():
             assert df.count() > 0
+
+    def test_generate_accepts_matching_resolved_plan(self, spark):
+        """Passing a ``resolved_plan`` produced from the same ``plan``
+        object is supported and skips re-resolution."""
+        plan = _customers_orders_plan()
+        resolved = resolve_plan(plan)
+        dfs = generate(spark, plan, resolved_plan=resolved)
+        assert set(dfs) == {"customers", "orders"}
+
+    def test_generate_rejects_mismatched_resolved_plan(self, spark):
+        """Passing a ``resolved_plan`` computed from a *different* plan
+        must raise.  Without this guard, ``generate()`` would silently
+        use planA's table seeds and planB's FK topology -- the FK
+        child-column output would point at parent rows that don't
+        exist in planA, producing orphan references without any
+        error."""
+        plan_a = _customers_orders_plan()
+        plan_b = _customers_orders_plan()  # identical contents, distinct object
+        resolved_b = resolve_plan(plan_b)
+        with pytest.raises(ValueError, match="produced from a different DataGenPlan"):
+            generate(spark, plan_a, resolved_plan=resolved_b)
 
 
 class TestRowCounts:
