@@ -227,13 +227,14 @@ class TestCrossPathTimestampsTzIndependent:
     def test_batch_ts_matches_under_non_utc_session(self, spark):
         key = "spark.sql.session.timeZone"
         prev = spark.conf.get(key, None)
-        spark.conf.set(key, "America/Los_Angeles")
+        # Move the ``set`` inside the try so a raise here still restores
+        # ``prev`` via the finally block — without this, a failure to
+        # apply the non-UTC TZ would leak state to sibling tests.
         try:
+            spark.conf.set(key, "America/Los_Angeles")
             num_b = 3
             per = generate_cdc(spark, _everything_plan(seed=42, rows=50), num_batches=num_b)
-            bulk = generate_cdc_bulk(
-                spark, _everything_plan(seed=42, rows=50), num_batches=num_b, chunk_size=num_b
-            )
+            bulk = generate_cdc_bulk(spark, _everything_plan(seed=42, rows=50), num_batches=num_b, chunk_size=num_b)
 
             per_idx = _collect_and_index(per.batches)
             bulk_idx = _collect_and_index(bulk.batches)
@@ -243,8 +244,7 @@ class TestCrossPathTimestampsTzIndependent:
             for key_tuple in sorted(per_idx):
                 p, b = per_idx[key_tuple], bulk_idx[key_tuple]
                 assert p._ts == b._ts, (
-                    f"_ts diverges under non-UTC session TZ at {key_tuple}: "
-                    f"scalar={p._ts} vs bulk={b._ts}"
+                    f"_ts diverges under non-UTC session TZ at {key_tuple}: " f"scalar={p._ts} vs bulk={b._ts}"
                 )
         finally:
             if prev is None:
