@@ -39,7 +39,6 @@ from dbldatagen.core.spec.dsl import (
     text,
 )
 from dbldatagen.core.spec.schema import (
-    ArrayColumn,
     ColumnSpec,
     ConstantColumn,
     DataGenPlan,
@@ -49,7 +48,6 @@ from dbldatagen.core.spec.schema import (
     PrimaryKey,
     RangeColumn,
     SequenceColumn,
-    StructColumn,
     TableSpec,
     TimestampColumn,
     UUIDColumn,
@@ -180,9 +178,9 @@ class TestCrossPathByteEquality:
         )
         per_rows = per.initial["everything"].orderBy("pk").collect()
         bulk_rows = bulk.initial["everything"].orderBy("pk").collect()
-        assert len(per_rows) == len(bulk_rows), (
-            f"initial row count diverges: scalar={len(per_rows)}, bulk={len(bulk_rows)}"
-        )
+        assert len(per_rows) == len(
+            bulk_rows
+        ), f"initial row count diverges: scalar={len(per_rows)}, bulk={len(bulk_rows)}"
         for p, b in zip(per_rows, bulk_rows):
             _assert_rows_equal(f"initial pk={p.pk}", p, b)
 
@@ -225,8 +223,8 @@ class TestOracleMatchesInitialSnapshot:
         initial_rows = stream.initial["everything"].drop("_op", "_batch_id", "_ts").orderBy("pk").collect()
         oracle_rows = oracle.orderBy("pk").collect()
 
-        assert len(initial_rows) == len(oracle_rows), (
-            f"oracle / initial row count diverges: initial={len(initial_rows)}, oracle={len(oracle_rows)}"
-        )
+        assert len(initial_rows) == len(
+            oracle_rows
+        ), f"oracle / initial row count diverges: initial={len(initial_rows)}, oracle={len(oracle_rows)}"
         for i, o in zip(initial_rows, oracle_rows):
             _assert_rows_equal(f"pk={i.pk}", i, o)
