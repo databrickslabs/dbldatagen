@@ -84,6 +84,18 @@ def null_mask_expr(
         return F.lit(False)
     if null_fraction >= 1.0:
         return F.lit(True)
+    threshold = int(null_fraction * _NULL_PRECISION)
+    if threshold == 0:
+        # Below the engine's 1/_NULL_PRECISION granularity: ``int(f * N)``
+        # would round to 0 and the mask would silently emit zero NULLs
+        # for any non-zero fraction.  Raise so a user asking for a 1e-5
+        # null rate sees why it didn't materialise instead of debugging
+        # "why are there no nulls" at query time.
+        raise ValueError(
+            f"null_fraction={null_fraction} is below the engine's "
+            f"1/{_NULL_PRECISION} = {1.0 / _NULL_PRECISION} granularity.  "
+            f"Pick a larger fraction or raise _NULL_PRECISION in seed.py."
+        )
     if isinstance(id_col, str):
         id_col = F.col(id_col)
     null_seed: int | Column
@@ -92,7 +104,6 @@ def null_mask_expr(
     else:
         null_seed = column_seed ^ _NULL_SEED_XOR
     null_hash = cell_seed_expr(null_seed, id_col)
-    threshold = int(null_fraction * _NULL_PRECISION)
     # pmod, not abs+%: abs(Long.MIN_VALUE) overflows (ARITHMETIC_OVERFLOW
     # under ANSI, silently negative otherwise), and Spark's ``%`` on a
     # negative dividend returns a negative remainder — either path breaks
