@@ -35,3 +35,24 @@ def spark():
     yield session
     # Don't stop — other test suites (v0) may share this JVM.
     # Spark will clean up on process exit.
+
+
+@pytest.fixture
+def ansi_enabled(spark):
+    """Force ``spark.sql.ansi.enabled=true`` for one test, restoring on exit.
+
+    Centralizes the snapshot/restore dance so tests can't diverge on the
+    restore path and no test leaks ANSI state to a sibling.  If the conf
+    was unset on entry, we ``unset`` on exit (rather than setting an
+    explicit ``"false"``, which would mask the runtime default).
+    """
+    key = "spark.sql.ansi.enabled"
+    prev = spark.conf.get(key, None)
+    spark.conf.set(key, "true")
+    try:
+        yield
+    finally:
+        if prev is None:
+            spark.conf.unset(key)
+        else:
+            spark.conf.set(key, prev)

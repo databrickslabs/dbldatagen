@@ -297,7 +297,7 @@ class TestPmodForLongMinValueSweep:
     ``((x % n) + n) % n`` with no abs.
     """
 
-    def test_uniform_sample_at_long_min_value_under_ansi(self, spark):
+    def test_uniform_sample_at_long_min_value_under_ansi(self, spark, ansi_enabled):
         """Passes Long.MIN_VALUE directly through ``uniform_sample``.
 
         Exercises the first post-sweep site (``distributions.py:uniform_sample``).
@@ -308,18 +308,13 @@ class TestPmodForLongMinValueSweep:
         from dbldatagen.core.engine.distributions import uniform_sample
 
         long_min = -(2**63)
-        prev_ansi = spark.conf.get("spark.sql.ansi.enabled", "false")
-        spark.conf.set("spark.sql.ansi.enabled", "true")
-        try:
-            n = 10000
-            df = spark.range(5).withColumn("h", F.lit(long_min).cast("long"))
-            rows = df.select(uniform_sample(F.col("h"), n).alias("r")).collect()
-            for r in rows:
-                assert 0 <= r.r < n, f"uniform_sample produced out-of-range {r.r}"
-        finally:
-            spark.conf.set("spark.sql.ansi.enabled", prev_ansi)
+        n = 10000
+        df = spark.range(5).withColumn("h", F.lit(long_min).cast("long"))
+        rows = df.select(uniform_sample(F.col("h"), n).alias("r")).collect()
+        for r in rows:
+            assert 0 <= r.r < n, f"uniform_sample produced out-of-range {r.r}"
 
-    def test_null_mask_runs_under_ansi_mode(self, spark):
+    def test_null_mask_runs_under_ansi_mode(self, spark, ansi_enabled):
         """null_mask_expr used to be ``abs(null_hash) % N < threshold``.
 
         Under ANSI any row whose xxhash64 yielded Long.MIN_VALUE would
@@ -329,17 +324,12 @@ class TestPmodForLongMinValueSweep:
         """
         from dbldatagen.core.engine.seed import null_mask_expr
 
-        prev_ansi = spark.conf.get("spark.sql.ansi.enabled", "false")
-        spark.conf.set("spark.sql.ansi.enabled", "true")
-        try:
-            df = spark.range(10000)
-            mask = null_mask_expr(column_seed=42, id_col="id", null_fraction=0.3)
-            null_count = df.select(mask.alias("is_null")).filter("is_null").count()
-            # Not asserting an exact ratio (stat variance); just that
-            # the query ran to completion without ANSI overflow.
-            assert 0 < null_count < 10000, f"unexpected null_count {null_count}"
-        finally:
-            spark.conf.set("spark.sql.ansi.enabled", prev_ansi)
+        df = spark.range(10000)
+        mask = null_mask_expr(column_seed=42, id_col="id", null_fraction=0.3)
+        null_count = df.select(mask.alias("is_null")).filter("is_null").count()
+        # Not asserting an exact ratio (stat variance); just that
+        # the query ran to completion without ANSI overflow.
+        assert 0 < null_count < 10000, f"unexpected null_count {null_count}"
 
 
 # ===================================================================
@@ -383,23 +373,19 @@ class TestUUIDColumnSeedAsColumn:
         for r in rows:
             assert uuid_re.match(r.u), f"Invalid UUID format: {r.u}"
 
-    def test_uuid_column_seed_at_long_max_produces_valid_uuids(self, spark):
+    def test_uuid_column_seed_at_long_max_produces_valid_uuids(self, spark, ansi_enabled):
         """Column-typed column_seed carrying Long.MAX_VALUE must also wrap cleanly.
 
-        ANSI is toggled on for this test so the bug actually reproduces: under
-        ANSI, a naive ``seed + 1`` on a MAX row raises ARITHMETIC_OVERFLOW in
-        Catalyst.  In non-ANSI mode (Spark 3.x default) the add silently wraps,
-        which would hide the fix — so we force ANSI here.
+        ANSI is toggled on (via the ``ansi_enabled`` fixture) so the bug
+        actually reproduces: under ANSI, a naive ``seed + 1`` on a MAX
+        row raises ARITHMETIC_OVERFLOW in Catalyst.  In non-ANSI mode
+        (Spark 3.x default) the add silently wraps, which would hide the
+        fix.
         """
-        prev_ansi = spark.conf.get("spark.sql.ansi.enabled", "false")
-        spark.conf.set("spark.sql.ansi.enabled", "true")
-        try:
-            long_max = 2**63 - 1
-            df = spark.range(20).withColumn("_seed", F.lit(long_max).cast("long"))
-            col = build_uuid_column(F.col("id"), F.col("_seed"))
-            rows = df.select(col.alias("u")).collect()
-            uuid_re = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
-            for r in rows:
-                assert uuid_re.match(r.u), f"Invalid UUID format: {r.u}"
-        finally:
-            spark.conf.set("spark.sql.ansi.enabled", prev_ansi)
+        long_max = 2**63 - 1
+        df = spark.range(20).withColumn("_seed", F.lit(long_max).cast("long"))
+        col = build_uuid_column(F.col("id"), F.col("_seed"))
+        rows = df.select(col.alias("u")).collect()
+        uuid_re = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
+        for r in rows:
+            assert uuid_re.match(r.u), f"Invalid UUID format: {r.u}"

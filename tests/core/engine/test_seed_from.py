@@ -6,7 +6,6 @@ regardless of row position.
 """
 
 import pytest
-from pyspark.sql import SparkSession
 
 from dbldatagen.core import generate
 from dbldatagen.core.spec.dsl import (
@@ -27,11 +26,6 @@ from dbldatagen.core.spec.schema import (
     TimestampColumn,
     ValuesColumn,
 )
-
-
-@pytest.fixture(scope="module")
-def spark():
-    return SparkSession.builder.master("local[1]").appName("test_seed_from").getOrCreate()
 
 
 def _make_plan_with_seed_from():
@@ -246,10 +240,13 @@ def test_seed_from_nonexistent_column_raises(spark):
             ),
         ],
     )
-    with pytest.raises(Exception):  # noqa: B017
-        # Spark will raise AnalysisException when the column doesn't exist
-        results = generate(spark, plan)
-        results["t"].collect()
+    # Plan resolution validates seed_from references before Spark sees
+    # anything, so a missing column surfaces as a ValueError naming the
+    # reference — not a generic Exception / AnalysisException at collect
+    # time.  Pin the class + message so a regression that downgrades the
+    # check fails this test.
+    with pytest.raises(ValueError, match="seed_from='nonexistent'"):
+        generate(spark, plan)
 
 
 def test_seed_from_null_fraction_correlated(spark):
