@@ -52,7 +52,17 @@ def _generate_chunk_for_table(
         return _generate_chunk_per_batch(spark, plan, table_name, batch_ids, fmt_name, resolved_plan=resolved_plan)
 
     config = plan.config_for(table_name)
-    global_seed = table_spec.seed if table_spec.seed is not None else plan.base_plan.seed
+    # Match ``generate_table`` / single_batch: reaching ``seed is None``
+    # here means the caller bypassed ``DataGenPlan.propagate_seeds``.
+    # Fail loudly rather than substitute ``plan.base_plan.seed``.
+    if table_spec.seed is None:
+        raise ValueError(
+            f"TableSpec '{table_spec.name}'.seed is None.  Either set "
+            f"it explicitly on the TableSpec or go through a "
+            f"DataGenPlan (which propagates plan.seed to each table "
+            f"during Pydantic validation)."
+        )
+    global_seed = table_spec.seed
     initial_rows = int(table_spec.rows)
     resolved = resolved_plan if resolved_plan is not None else resolve_plan(plan.base_plan)
 

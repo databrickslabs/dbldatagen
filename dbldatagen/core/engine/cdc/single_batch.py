@@ -122,7 +122,21 @@ def generate_cdc_batch_for_table(
     table_map = {t.name: t for t in plan.base_plan.tables}
     table_spec = table_map[table_name]
     config = plan.config_for(table_name)
-    global_seed = table_spec.seed if table_spec.seed is not None else plan.base_plan.seed
+    # ``DataGenPlan.propagate_seeds`` fills in per-table seeds on every
+    # plan construction; reaching ``None`` here means the caller bypassed
+    # the validator (e.g. mutated ``table.seed = None`` after the fact).
+    # ``generate_table`` raises in the same shape; match it so the CDC
+    # path doesn't silently substitute ``plan.base_plan.seed`` and
+    # produce data under a different seed than a user who inspected
+    # ``table.seed`` expects.
+    if table_spec.seed is None:
+        raise ValueError(
+            f"TableSpec '{table_spec.name}'.seed is None.  Either set "
+            f"it explicitly on the TableSpec or go through a "
+            f"DataGenPlan (which propagates plan.seed to each table "
+            f"during Pydantic validation)."
+        )
+    global_seed = table_spec.seed
     initial_rows = int(table_spec.rows)
 
     # Apply FK parent delete guard

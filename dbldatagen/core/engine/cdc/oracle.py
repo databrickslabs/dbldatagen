@@ -93,7 +93,19 @@ def _generate_expected_state_driver(
     table_map = {t.name: t for t in plan.base_plan.tables}
     table_spec = table_map[table_name]
     config = plan.config_for(table_name)
-    global_seed = table_spec.seed if table_spec.seed is not None else plan.base_plan.seed
+    # Match ``generate_table`` / cdc/single_batch / cdc/chunking: the
+    # oracle must produce output under the same seed as the live stream,
+    # so silently swapping in ``plan.base_plan.seed`` when a caller
+    # constructs a plan outside ``DataGenPlan`` would produce a
+    # different-shaped reference than the stream.
+    if table_spec.seed is None:
+        raise ValueError(
+            f"TableSpec '{table_spec.name}'.seed is None.  Either set "
+            f"it explicitly on the TableSpec or go through a "
+            f"DataGenPlan (which propagates plan.seed to each table "
+            f"during Pydantic validation)."
+        )
+    global_seed = table_spec.seed
     initial_rows = int(table_spec.rows)
 
     # Apply FK parent delete guard
