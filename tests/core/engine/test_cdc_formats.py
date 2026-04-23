@@ -1,10 +1,13 @@
 """Tests for CDC output format transformers.
 
 Verifies column presence, operation codes, and update row handling
-for raw, Delta CDF, SQL Server, and Debezium formats.
+for raw, Delta CDF, and SQL Server formats.  Debezium is not yet
+supported (it raises ``NotImplementedError`` — see ``to_debezium``).
 """
 
 from __future__ import annotations
+
+import pytest
 
 from dbldatagen.core.engine.cdc import generate_cdc
 from dbldatagen.core.spec.schema import (
@@ -159,24 +162,22 @@ class TestSQLServerFormat:
 
 
 class TestDebeziumFormat:
-    def test_columns_present(self, spark):
-        stream = generate_cdc(spark, _plan(), num_batches=1, format="debezium")
-        cols = stream.batches[0]["items"].columns
-        assert "op" in cols
-        assert "ts_ms" in cols
-        assert "_op" not in cols
+    """Debezium format is not yet implemented.
 
-    def test_op_values(self, spark):
-        stream = generate_cdc(spark, _plan(), num_batches=1, format="debezium")
-        ops = {r.op for r in stream.batches[0]["items"].select("op").distinct().collect()}
-        # c=create, u=update, d=delete
-        assert ops.issubset({"c", "u", "d"})
+    The earlier flattened approximation silently dropped ``UB`` rows,
+    producing structurally wrong output for real Debezium consumers
+    (Kafka Connect, Flink).  Until a faithful nested-struct
+    implementation lands, ``format="debezium"`` raises
+    ``NotImplementedError`` — callers should pick ``raw`` or
+    ``delta_cdf`` instead.
+    """
 
-    def test_no_internal_ub_rows(self, spark):
-        """UB (update before) rows should be filtered out in Debezium format."""
-        stream = generate_cdc(spark, _plan(), num_batches=1, format="debezium")
-        ops = {r.op for r in stream.batches[0]["items"].select("op").distinct().collect()}
-        assert "ub_internal" not in ops
+    def test_raises_not_implemented(self, spark):
+        # apply_format (and thus to_debezium) runs at stream-construction
+        # time inside generate_cdc, so the raise surfaces synchronously —
+        # no lazy Spark plan needed.
+        with pytest.raises(NotImplementedError, match="DEBEZIUM is not yet supported"):
+            generate_cdc(spark, _plan(), num_batches=1, format="debezium")
 
 
 # ---------------------------------------------------------------------------
@@ -185,8 +186,10 @@ class TestDebeziumFormat:
 
 
 class TestFormatConsistency:
-    def test_all_formats_produce_data(self, spark):
-        for fmt in ["raw", "delta_cdf", "sql_server", "debezium"]:
+    def test_all_implemented_formats_produce_data(self, spark):
+        # Debezium is intentionally excluded — it raises NotImplementedError
+        # until a faithful nested before/after implementation lands.
+        for fmt in ["raw", "delta_cdf", "sql_server"]:
             stream = generate_cdc(spark, _plan(rows=50), num_batches=1, format=fmt)
             count = stream.batches[0]["items"].count()
             assert count > 0, f"Format {fmt} produced empty batch"
@@ -197,19 +200,3 @@ class TestFormatConsistency:
         raw = generate_cdc(spark, plan, num_batches=1, format="raw")
         delta = generate_cdc(spark, plan, num_batches=1, format="delta_cdf")
         assert raw.batches[0]["items"].count() == delta.batches[0]["items"].count()
-
-    def test_debezium_fewer_rows_than_raw(self, spark):
-        """Debezium filters UB rows, so should have fewer rows than raw."""
-        # Use rows=10 and num_batches=3 to ensure updates appear
-        plan = _plan(rows=10, seed=42)
-        raw = generate_cdc(spark, plan, num_batches=3, format="raw")
-        deb = generate_cdc(spark, plan, num_batches=3, format="debezium")
-        from functools import reduce
-
-        raw_all = reduce(lambda a, b: a.unionByName(b), [raw.batches[i]["items"] for i in range(3)])
-        deb_all = reduce(lambda a, b: a.unionByName(b), [deb.batches[i]["items"] for i in range(3)])
-        raw_count = raw_all.count()
-        deb_count = deb_all.count()
-        # Debezium drops UB rows
-        raw_ub = raw_all.filter("_op = 'UB'").count()
-        assert deb_count == raw_count - raw_ub

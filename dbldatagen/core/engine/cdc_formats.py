@@ -98,40 +98,29 @@ def to_sql_server(df: DataFrame) -> DataFrame:
 
 
 def to_debezium(df: DataFrame) -> DataFrame:
-    """Convert raw CDC to flattened Debezium format.
+    """Not yet supported — raises NotImplementedError.
 
-    Mapping:
-        _op='I'  -> op='c' (create)
-        _op='U'  -> op='u' (update) — after image, paired with UB before
-        _op='UB' -> (dropped — folded into 'u' rows via before_* columns)
-        _op='D'  -> op='d' (delete)
+    Real Debezium events nest ``before`` and ``after`` payloads in a
+    single record so downstream consumers (Kafka Connect, Flink,
+    dependent CDC pipelines) can see the full state transition for
+    each update.  The earlier implementation produced a flattened
+    approximation that silently dropped ``UB`` (update-before) rows —
+    structurally wrong output that would corrupt any pipeline
+    actually relying on Debezium semantics.  Silent misrepresentation
+    is worse than a missing feature, so the approximation is removed.
 
-    For simplicity in v1, the Debezium format is flattened: ``before_*``
-    and ``after_*`` columns rather than nested structs.  Update rows
-    (op='u') carry ``after_*`` columns; delete rows (op='d') carry
-    ``before_*`` columns.  Insert rows (op='c') carry ``after_*`` columns.
-
-    .. warning:: Limitation — update before-images are dropped.
-
-        Real Debezium events nest ``before`` and ``after`` fields in a
-        single record.  This simplified format drops UB (update before)
-        rows entirely.  Pipelines that rely on ``before`` fields for
-        update events will see incomplete data.
+    Until a faithful nested-struct implementation lands, pick
+    ``raw`` (includes UB rows explicitly) or ``delta_cdf`` (Delta Lake
+    Change Data Feed — also includes pre/post images).
     """
-    op_col = (
-        F.when(F.col("_op") == "I", F.lit("c"))
-        .when(F.col("_op") == "U", F.lit("u"))
-        .when(F.col("_op") == "UB", F.lit("ub_internal"))
-        .when(F.col("_op") == "D", F.lit("d"))
-        .otherwise(F.lit("r"))
+    raise NotImplementedError(
+        "CDCFormat.DEBEZIUM is not yet supported.  The earlier "
+        "implementation silently dropped update before-images, "
+        "producing output that was structurally wrong for real "
+        "Debezium consumers.  Use format='raw' (full UB/U/D event "
+        "log) or format='delta_cdf' (Delta Change Data Feed) until "
+        "a faithful nested before/after implementation lands."
     )
-    ts_ms = F.col("_ts").cast("long") * 1000
-
-    result = df.withColumn("op", op_col).withColumn("ts_ms", ts_ms).drop("_op", "_ts")
-
-    # Filter out UB rows (they are internal; real Debezium would nest them)
-    result = result.filter(F.col("op") != "ub_internal")
-    return result.drop("_batch_id")
 
 
 FORMAT_TRANSFORMERS = {
