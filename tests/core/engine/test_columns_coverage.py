@@ -61,6 +61,24 @@ class TestTimestampDegenerateRange:
         result = df.select(col.alias("ts")).collect()
         assert all(r.ts is not None for r in result)
 
+    def test_range_beyond_int32_seconds_produces_valid_timestamps(self, spark, ansi_enabled):
+        """A 200-year range is ~6.3e9 seconds, past the int32 ceiling.
+
+        The range passes through ``apply_distribution`` → ``F.pmod(seed,
+        F.lit(n))`` and ``F.least(idx, F.lit(n-1))``; both must stay in
+        long arithmetic all the way through.  PySpark auto-promotes
+        ``F.lit(int > 2**31)`` to LongType, so the expression composes
+        cleanly under ANSI — this test pins that behavior so any
+        regression that forces IntegerType fails here instead of
+        silently wrapping row values.
+        """
+        df = spark.range(10)
+        col = build_timestamp_column(F.col("id"), 42, start="1900-01-01", end="2100-12-31")
+        rows = df.select(col.alias("ts")).collect()
+        years = {r.ts.year for r in rows}
+        # Draw spans more than one century — rules out silent wrap into 1970.
+        assert min(years) < 1970 or max(years) > 2070, f"timestamp range collapsed: years={years}"
+
 
 class TestDateColumnStringId:
     """Line 70: build_date_column with string id_col."""
@@ -160,6 +178,27 @@ class TestRandomAlphaSingleChar:
         result = df.select(col.alias("p")).collect()
         for r in result:
             assert len(r.p) == 1
+            assert r.p.isupper()
+
+    def test_alpha_seed_xor_clamps_to_signed64(self, spark, ansi_enabled):
+        """``_random_alpha`` XORs ``column_seed`` with ``(idx+1) * GOLDEN_RATIO_HASH``.
+
+        For the Column seed branch the XOR is in Spark SQL and stays in
+        signed-64 by construction; the int branch can exceed signed-64
+        when ``column_seed`` is negative and the idx-scaled constant
+        is large, and previously raised at ``F.lit`` because Python
+        ints that don't fit in signed-long are rejected.  The int
+        branch now passes through ``to_signed64`` before ``F.lit`` so
+        any column_seed produces a valid signed-64 mixed seed.
+        """
+        from dbldatagen.core.engine.columns.string import _random_alpha
+
+        # idx=10**10 forces the XOR result outside signed-64 without the clamp.
+        df = spark.range(5)
+        col = _random_alpha(F.col("id"), -(2**63), idx=10**10, width=3)
+        rows = df.select(col.alias("p")).collect()
+        for r in rows:
+            assert len(r.p) == 3
             assert r.p.isupper()
 
 

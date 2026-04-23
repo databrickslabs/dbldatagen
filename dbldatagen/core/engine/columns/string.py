@@ -15,7 +15,7 @@ from dbldatagen.core.engine.distributions import (
     apply_distribution,
     weighted_sample_expr,
 )
-from dbldatagen.core.engine.seed import GOLDEN_RATIO_HASH, cell_seed_expr
+from dbldatagen.core.engine.seed import GOLDEN_RATIO_HASH, cell_seed_expr, to_signed64
 from dbldatagen.core.spec.schema import Distribution, WeightedValues
 
 
@@ -124,10 +124,16 @@ def _seed_xor(column_seed: int | Column, constant: int) -> int | Column:
     PERFORMANCE NOTE: The ``int | Column`` path is required for fused
     multi-batch CDC where column_seed is a Column from map-based lookup
     (see ``column_seed_map`` in seed.py).  Do not simplify to int-only.
+
+    Int branch clamps through ``to_signed64`` — XOR with a Python-side
+    ``constant`` that exceeds signed-64 (e.g. a large ``idx * hash``
+    multiplier) would otherwise push the result outside F.lit's
+    accepted range and raise at query-build time, even though the
+    XOR's low 64 bits are well-defined.
     """
     if isinstance(column_seed, Column):
         return column_seed.bitwiseXOR(F.lit(constant).cast("long"))
-    return column_seed ^ constant
+    return to_signed64(column_seed ^ constant)
 
 
 def _random_digits(
