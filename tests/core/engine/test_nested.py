@@ -454,3 +454,86 @@ class TestStructFieldSeedIndependence:
             f"Sibling struct fields in fused CDC agreed on {matches}/{total} inserts "
             f"(~100% indicates struct-field seeds collapse on the Column path)."
         )
+
+
+class TestNullFractionOnNested:
+    """Pins behavior at the null_fraction=1.0 boundary on struct fields
+    and array elements.
+
+    The naive engine builds each nested child via ``F.when(null_mask,
+    F.lit(None)).otherwise(expr)``.  At ``null_fraction=1.0`` the
+    short-circuit shifts to ``F.lit(True)`` and every row gets
+    ``F.lit(None)`` from the non-null branch -- if the null-branch
+    literal isn't typed to match the element's expected Spark type,
+    struct field types collide with the parent ``StructType`` and the
+    generator raises an obscure type-mismatch at Catalyst compile.
+    """
+
+    def test_struct_field_null_fraction_one(self, spark):
+        """A struct field with null_fraction=1.0 should produce all NULLs
+        in that field without breaking the surrounding struct type."""
+        plan = DataGenPlan(
+            seed=11,
+            tables=[
+                TableSpec(
+                    name="items",
+                    rows=30,
+                    primary_key=PrimaryKey(columns=["item_id"]),
+                    columns=[
+                        pk_auto("item_id"),
+                        ColumnSpec(
+                            name="addr",
+                            gen=StructColumn(
+                                fields=[
+                                    text("city", values=["Austin", "NYC"]),
+                                    ColumnSpec(
+                                        name="zip",
+                                        gen=RangeColumn(min=10000, max=99999),
+                                        null_fraction=1.0,
+                                    ),
+                                ]
+                            ),
+                        ),
+                    ],
+                ),
+            ],
+        )
+        df = generate(spark, plan)["items"]
+        rows = df.collect()
+        assert all(r.addr.zip is None for r in rows), "every zip should be NULL at null_fraction=1.0"
+        # The sibling field must still carry non-null values -- the
+        # null injection should be field-local, not leak to the struct.
+        assert any(r.addr.city is not None for r in rows)
+
+    def test_array_element_struct_null_fraction_one(self, spark):
+        """An array of structs where one struct field has
+        null_fraction=1.0: every element's that-field is NULL, but the
+        array itself is not empty and other fields carry data."""
+        plan = DataGenPlan(
+            seed=13,
+            tables=[
+                TableSpec(
+                    name="items",
+                    rows=20,
+                    primary_key=PrimaryKey(columns=["item_id"]),
+                    columns=[
+                        pk_auto("item_id"),
+                        ColumnSpec(
+                            name="tags",
+                            gen=ArrayColumn(
+                                element=RangeColumn(min=1, max=100),
+                                min_length=2,
+                                max_length=2,
+                            ),
+                            null_fraction=1.0,
+                        ),
+                    ],
+                ),
+            ],
+        )
+        df = generate(spark, plan)["items"]
+        rows = df.collect()
+        # At null_fraction=1.0 on the array column itself, every
+        # row's ``tags`` is NULL -- NOT an empty array, which is
+        # distinct in Spark.
+        assert all(r.tags is None for r in rows), f"expected all NULL tags, got {[r.tags for r in rows[:3]]}"
