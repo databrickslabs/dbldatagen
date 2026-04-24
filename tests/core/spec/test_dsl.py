@@ -225,8 +225,13 @@ class TestFaker:
         assert col.dtype == DataType.STRING
 
     def test_custom_dtype(self):
-        col = faker("dob", "date_of_birth", dtype=DataType.DATE)
-        assert col.dtype == DataType.DATE
+        # Faker emits StringType regardless of provider (the pool
+        # stringifies every value), so STRING is the only
+        # non-default dtype that survives validation.  Historical
+        # ``dtype=DATE`` usage was silently wrong -- the underlying
+        # column still carried strings.
+        col = faker("name", "name", dtype=DataType.STRING)
+        assert col.dtype == DataType.STRING
 
     def test_strategy_is_faker(self):
         col = faker("name", "name")

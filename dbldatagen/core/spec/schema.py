@@ -692,19 +692,46 @@ class ColumnSpec(_StrictModel):
         # warning -- produces integers or strings where the user asked
         # for a date.
         #
-        # FakerColumn, ConstantColumn, ValuesColumn, ExpressionColumn,
-        # and ForeignKeyColumn can all legitimately carry dates
-        # (Faker's ``date_of_birth``, a user-typed date literal, a list
-        # of date values, a CAST in SQL, or inherited from a date-typed
-        # parent PK), so they're not flagged here.
-        _non_date_strategies = (RangeColumn, PatternColumn, SequenceColumn, UUIDColumn)
+        # ConstantColumn, ValuesColumn, ExpressionColumn, and
+        # ForeignKeyColumn can all legitimately carry dates (a
+        # user-typed date literal, a list of date values, a CAST in
+        # SQL, or inherited from a date-typed parent PK), so they're
+        # not flagged here.
+        #
+        # FakerColumn is NOT allowed with ``dtype=DATE``: the Faker
+        # pool pandas_udf hardcodes ``StringType`` and ``str(val)``
+        # stringifies every pool entry before the UDF ships, so even a
+        # ``date_of_birth`` provider returns a string column regardless
+        # of the declared dtype.  Leaving Faker+DATE through was a
+        # silent type-declaration lie.
+        _non_date_strategies = (RangeColumn, PatternColumn, SequenceColumn, UUIDColumn, FakerColumn)
         if self.dtype == DataType.DATE and isinstance(self.gen, _non_date_strategies):
+            if isinstance(self.gen, FakerColumn):
+                type_word = "strings (the Faker pool stringifies every value)"
+            elif isinstance(self.gen, (RangeColumn, SequenceColumn)):
+                type_word = "integers"
+            else:
+                type_word = "strings"
             raise ValueError(
                 f"Column '{self.name}': dtype=DATE is not compatible with "
-                f"{type(self.gen).__name__} (which produces "
-                f"{'integers' if isinstance(self.gen, (RangeColumn, SequenceColumn)) else 'strings'}).  "
+                f"{type(self.gen).__name__} (which produces {type_word}).  "
                 f"Use TimestampColumn for a deterministic random date, or drop "
                 f"``dtype=DATE`` to keep the strategy's native type."
+            )
+        # Faker's pool pandas_udf outputs StringType, and every pool
+        # entry is ``str(val)``.  Any declared dtype other than STRING
+        # (or None -- engine-default STRING) would be a lie about the
+        # resulting column.  Reject the mismatch here rather than let
+        # it ship silently.
+        # DATE is caught above with its specific message; skip it here.
+        _faker_compatible_dtypes = {DataType.STRING, DataType.DATE}
+        if isinstance(self.gen, FakerColumn) and self.dtype is not None and self.dtype not in _faker_compatible_dtypes:
+            raise ValueError(
+                f"Column '{self.name}': FakerColumn always produces StringType "
+                f"(the pool stringifies each value via ``str(val)``); declared "
+                f"dtype={self.dtype.value} is incompatible.  Drop ``dtype`` "
+                f"(or set ``dtype=DataType.STRING``) and cast downstream if you "
+                f"need a different type."
             )
         return self
 

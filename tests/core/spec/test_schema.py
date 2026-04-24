@@ -893,23 +893,30 @@ class TestDateDtypeGuard:
             (SequenceColumn(), "integers"),
             (PatternColumn(template="X-{digit:4}"), "strings"),
             (UUIDColumn(), "strings"),
+            (FakerColumn(provider="date_of_birth"), "strings"),
         ],
     )
     def test_date_with_non_date_strategy_rejected(self, bad_gen, type_word):
         """Strategies whose output type is fixed and non-date can't
         honour ``dtype=DATE``; the dtype hint would be silently dropped
         and the column would carry integers or strings where the user
-        asked for a date."""
+        asked for a date.  FakerColumn joins the list: the Faker pool
+        pandas_udf hardcodes StringType and ``str(val)`` stringifies
+        every pool entry, so even ``date_of_birth`` returns a string
+        column regardless of declared dtype.
+        """
         with pytest.raises(ValueError, match=f"not compatible.*{type_word}"):
             ColumnSpec(name="d", dtype=DataType.DATE, gen=bad_gen)
 
     def test_date_with_timestamp_column_ok(self):
         ColumnSpec(name="d", dtype=DataType.DATE, gen=TimestampColumn())
 
-    def test_date_with_faker_ok(self):
-        """FakerColumn can genuinely produce dates via providers like
-        ``date_of_birth`` -- leave the DATE hint alone."""
-        ColumnSpec(name="d", dtype=DataType.DATE, gen=FakerColumn(provider="date_of_birth"))
+    def test_faker_without_explicit_dtype_ok(self):
+        """``dtype`` is allowed to be ``None`` (engine infers StringType
+        from the Faker pool) or explicit ``STRING``.  Only a mismatch
+        like ``dtype=DATE`` / ``INT`` etc. is rejected."""
+        ColumnSpec(name="name", gen=FakerColumn(provider="name"))
+        ColumnSpec(name="name", dtype=DataType.STRING, gen=FakerColumn(provider="name"))
 
 
 class TestNullFractionGranularityBinding:
