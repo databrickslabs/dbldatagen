@@ -22,6 +22,25 @@ class TestFakerName:
         assert empty_count == 0
 
 
+class TestFakerOutputSchema:
+    """The Faker pool pandas_udf hardcodes ``StringType``.  The schema
+    validator rejects ``dtype != None/STRING`` on FakerColumn because
+    every other type would be a lie about the resulting column; this
+    test pins the other side of the contract -- that the engine does
+    in fact emit StringType so the validator's promise holds."""
+
+    def test_faker_column_output_is_string_type(self, spark):
+        from pyspark.sql import types as T
+
+        col_seed = derive_column_seed(42, "users", "name")
+        df = spark.range(10).select(build_faker_column(F.col("id"), col_seed, "name").alias("name"))
+        assert df.schema["name"].dataType == T.StringType(), (
+            f"FakerColumn must emit StringType -- a regression here would silently "
+            f"invalidate the schema validator's ``dtype=STRING or None`` contract.  "
+            f"Got {df.schema['name'].dataType}"
+        )
+
+
 class TestFakerDeterminism:
     def test_faker_determinism(self, spark):
         """Same seed produces the same names."""

@@ -271,6 +271,23 @@ def generate_cdc_batch(
         )
 
     fmt_name = plan.format.value
+    # Name-based compatibility check mirrors ``generate_table``:
+    # ``resolved_plan`` must have been produced from a plan whose
+    # tables cover the CDC-eligible set; otherwise FK resolution is
+    # undefined (the resolved's ``fk_resolutions`` key space won't
+    # line up with ``plan.cdc_tables``).  Identity is too strict
+    # because the CDCPlan wraps a DataGenPlan whose identity the
+    # caller may not track; match on the sorted set of table names.
+    if resolved_plan is not None:
+        resolved_names = {t.name for t in resolved_plan.plan.tables}
+        plan_names = {t.name for t in plan.base_plan.tables}
+        if resolved_names != plan_names:
+            raise ValueError(
+                f"resolved_plan was produced from a plan with tables "
+                f"{sorted(resolved_names)}, but this CDCPlan has "
+                f"{sorted(plan_names)}.  Pass a ResolvedPlan built "
+                f"from ``plan.base_plan``, or drop the kwarg."
+            )
     # Resolve once and thread through -- mirrors the pattern in
     # ``generate_cdc`` / ``generate_cdc_bulk``.  When the caller passes
     # ``resolved_plan`` (a loop over batches), reuse it and skip the
@@ -368,6 +385,13 @@ def write_cdc_to_delta(
     explicit ``DROP TABLE IF EXISTS`` before the write, which meant a
     crash between DROP and write left the target empty; that DROP has
     been removed.
+
+    Delta-only target: if ``uc_table`` already exists as a non-Delta
+    table (Parquet, CSV, view, external non-Delta path), the Delta
+    overwrite raises -- previously the explicit DROP would have
+    replaced it with a fresh Delta table.  Callers who need to
+    convert an existing non-Delta target should issue the DROP
+    themselves before calling ``write_cdc_to_delta``.
 
     Parameters
     ----------
