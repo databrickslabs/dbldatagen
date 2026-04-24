@@ -899,7 +899,19 @@ class TableSpec(_StrictModel):
         Must run after ``resolve_row_count`` so ``self.rows`` is an
         int (the human-string parse happens there).
         """
-        assert isinstance(self.rows, int)  # ``resolve_row_count`` ran
+        # Raise (not assert) for consistency with the engine-wide
+        # ``survive python -O`` stance: if a future refactor reorders
+        # validators and this runs before ``resolve_row_count``,
+        # ``self.rows`` would still be a string and the arithmetic
+        # below would TypeError -- but the raise names the ordering
+        # issue specifically.
+        if not isinstance(self.rows, int):
+            raise RuntimeError(
+                f"TableSpec '{self.name}': validator ordering invariant "
+                f"violated -- ``rows`` is {type(self.rows).__name__}, not int.  "
+                f"``resolve_row_count`` must run before "
+                f"``validate_sequence_column_overflow``."
+            )
         long_max = 2**63 - 1
         long_min = -(2**63)
         for col_spec in self.columns:
