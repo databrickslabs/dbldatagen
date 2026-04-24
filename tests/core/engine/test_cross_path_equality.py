@@ -135,6 +135,19 @@ def _everything_plan(rows: int = 80, seed: int = 42) -> DataGenPlan:
                         min_length=2,
                         max_length=4,
                     ),
+                    # Pins min_length=0: some rows get empty arrays
+                    # via ``F.slice(full_array, 1, 0)``.  All paths
+                    # (scalar, fused, bulk, oracle) must agree on which
+                    # rows produce empty arrays vs populated ones --
+                    # the length hash was recently decorrelated from
+                    # element[0]'s cell seed, so a length-hash change
+                    # would have gone unnoticed without this coverage.
+                    array(
+                        "opt_codes",
+                        RangeColumn(min=1, max=999),
+                        min_length=0,
+                        max_length=3,
+                    ),
                 ],
             ),
         ],
