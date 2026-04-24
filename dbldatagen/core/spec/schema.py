@@ -654,10 +654,18 @@ class ColumnSpec(_StrictModel):
             )
         # Narrow ``int | None`` for mypy: the XOR check above guarantees
         # both are set when we get here, but mypy doesn't track local
-        # ``has_*`` flags back to the attributes.
+        # ``has_*`` flags back to the attributes.  Raise (not assert) so
+        # a future refactor that drops the XOR check above doesn't let
+        # ``None`` flow through silently under ``python -O``.
         precision = self.precision
         scale = self.scale
-        assert precision is not None and scale is not None
+        if precision is None or scale is None:
+            raise RuntimeError(
+                f"Column '{self.name}': precision/scale narrowing invariant "
+                f"violated (precision={precision}, scale={scale}).  The "
+                f"has_precision ^ has_scale check above should have raised; "
+                f"reaching this line means the preceding guard was removed."
+            )
         # Spark DecimalType: 1 <= precision <= 38, 0 <= scale <= precision.
         if not 1 <= precision <= 38:
             raise ValueError(f"Column '{self.name}': precision must be in [1, 38], got {precision}")
