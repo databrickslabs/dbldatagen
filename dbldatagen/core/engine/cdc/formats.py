@@ -52,13 +52,20 @@ def to_sql_server(df: DataFrame) -> DataFrame:
 
     Adds ``__$start_lsn`` and ``__$seqval`` (synthetic binary-like strings).
 
-    **Deviation from real SQL Server CDC:** real ``__$seqval`` is
-    documented as monotonic within a commit, so downstream consumers can
-    ``ORDER BY __$start_lsn, __$seqval`` to reconstruct within-transaction
-    row order.  This synthetic value is ``xxhash64(_batch_id, *data_cols)``,
-    which is deterministic for a given row content but **unordered within
-    a batch** — so ordering-by-seqval inside one ``__$start_lsn`` is
-    effectively random.
+    .. warning::
+
+       ``__$seqval`` is NOT monotonic within a commit in this synthetic
+       format.  Real SQL Server CDC documents ``__$seqval`` as
+       monotonic, so consumers ``ORDER BY __$start_lsn, __$seqval`` to
+       reconstruct within-transaction row order.  This generator emits
+       ``xxhash64(_batch_id, *data_cols)`` -- deterministic for a given
+       row content but **unordered within a batch** -- so
+       seqval-ordering inside one LSN is effectively random.  Consumers
+       using seqval for strict within-transaction ordering must either
+       tolerate the randomization, swap in a rank-based seqval
+       downstream, or choose the ``RAW`` / ``DELTA_CDF`` format.
+       Consumers using seqval only for dedup / row-identity are
+       unaffected.
 
     Hash was chosen over a deterministic rank (e.g. ``row_number() over
     (partition by _batch_id order by _synth_row_id)``) to avoid the

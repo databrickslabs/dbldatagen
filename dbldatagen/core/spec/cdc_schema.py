@@ -21,15 +21,19 @@ class CDCFormat(str, Enum):
     (Delta Change Data Feed) until a faithful nested before/after
     implementation lands.
 
-    ``SQL_SERVER`` footgun: the synthesised ``__$seqval`` is
-    ``xxhash64(_batch_id, *data_cols)``, not a monotonic rank within
-    ``__$start_lsn``.  It's deterministic for a given row content but
-    **unordered within a batch**, so a consumer that does
-    ``ORDER BY __$start_lsn, __$seqval`` to reconstruct within-commit
-    row order gets effectively random ordering inside each batch.
-    Consumers that use seqval only for row-identity / dedup are fine.
-    See ``dbldatagen/core/engine/cdc/formats.py::to_sql_server`` for
-    why a rank was declined.
+    .. warning::
+
+       ``SQL_SERVER`` deviates from the real SQL Server CDC contract
+       on ``__$seqval``: this generator emits
+       ``xxhash64(_batch_id, *data_cols)``, not a monotonic rank
+       within ``__$start_lsn``.  Ordering ``ORDER BY __$start_lsn,
+       __$seqval`` inside a batch is effectively random.  Consumers
+       that use seqval only for row-identity / dedup are unaffected;
+       consumers relying on strict within-transaction ordering must
+       either tolerate the randomisation, rank downstream, or pick
+       ``RAW`` / ``DELTA_CDF``.  See
+       ``dbldatagen/core/engine/cdc/formats.py::to_sql_server`` for
+       the cost/benefit reasoning behind the rank-less design.
     """
 
     RAW = "raw"
