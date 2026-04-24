@@ -105,13 +105,20 @@ FORMAT_TRANSFORMERS = {
     # approximation silently dropped update before-images — structurally
     # wrong output for Kafka Connect / Flink consumers.  The enum
     # member was removed from ``CDCFormat`` so misuse fails at plan
-    # construction; this dict drops the transformer so ``apply_format``
-    # with an unknown name falls through to ``to_raw``.  Re-add when a
-    # faithful nested before/after implementation lands.
+    # construction.  Re-add when a faithful nested before/after
+    # implementation lands.
 }
 
 
 def apply_format(df: DataFrame, format_name: str) -> DataFrame:
-    """Apply the appropriate format transformer."""
-    transformer = FORMAT_TRANSFORMERS.get(format_name, to_raw)
-    return transformer(df)
+    """Apply the appropriate format transformer.
+
+    Raises on unknown format names rather than silently substituting
+    ``to_raw``.  The CDCFormat enum guards the public API path, but an
+    internal caller passing a typo'd string used to get raw output
+    without any warning -- the class of bug the debezium removal set
+    out to close.  Strict lookup keeps that protection.
+    """
+    if format_name not in FORMAT_TRANSFORMERS:
+        raise ValueError(f"Unknown CDC format '{format_name}'.  " f"Valid formats: {sorted(FORMAT_TRANSFORMERS)}.")
+    return FORMAT_TRANSFORMERS[format_name](df)
