@@ -77,8 +77,15 @@ def build_faker_column(
         # the Long.MIN_VALUE row, which pandas then interpreted as Python
         # negative indexing.  ``np.mod`` uses Python-semantics modulo and
         # is always non-negative when the divisor is positive.
-        x = ids ^ np.int64(_column_seed)
-        x = x * np.int64(6364136223846793005) + np.int64(1442695040888963407)
+        #
+        # The LCG step ``x * 6364... + 1442...`` overflows int64 by
+        # design (that's how the mixer scrambles bits); NumPy's
+        # ``RuntimeWarning: overflow encountered in scalar multiply``
+        # fires per partition and spams executor logs.  Silence locally
+        # so the mix runs clean under default warning filters.
+        with np.errstate(over="ignore"):
+            x = ids ^ np.int64(_column_seed)
+            x = x * np.int64(6364136223846793005) + np.int64(1442695040888963407)
         indices = np.mod(x, _pool_size)
         return pd.Series(pool_array[indices.astype(np.intp)])
 
