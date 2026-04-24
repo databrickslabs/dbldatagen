@@ -142,7 +142,14 @@ def generate_bulk_inserts(
         batch_offset,
         [(i, batch_timestamp(plan, info[0])) for i, info in enumerate(batch_infos)],
     )
-    col_exprs.append(ts_expr.cast("timestamp").alias("_ts"))
+    # ``long.cast("timestamp")`` is the documented
+    # "seconds-since-epoch-in-UTC" interpretation and matches every
+    # other emit site (``_add_cdc_metadata``, ``generate_initial_snapshot``,
+    # the fused path).  ``F.lit(int).cast("timestamp")`` without the
+    # explicit long cast relies on Spark's IntegerType→Timestamp
+    # coercion, which isn't a documented contract -- keeps all paths
+    # emitting bit-identical timestamps under any Spark version.
+    col_exprs.append(ts_expr.cast("long").cast("timestamp").alias("_ts"))
 
     df = df.select(raw_id, *col_exprs)
 
