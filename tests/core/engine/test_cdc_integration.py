@@ -270,6 +270,44 @@ class TestCDCInsertPKContinuity:
                 assert r.product_id not in all_pks, f"PK collision: {r.product_id}"
                 all_pks.add(r.product_id)
 
+    def test_descending_sequence_pk_no_collision(self, spark):
+        """``SequenceColumn(step=-1)`` as a PK produces a descending
+        sequence.  Pin that CDC insert arithmetic
+        (``start + first_start_index * step``) correctly extends the
+        sequence downward without re-using initial-snapshot PKs.
+
+        Regression scope: no prior test covered negative-step as a PK
+        under CDC; the reviewer flagged it as a gap.
+        """
+        plan = DataGenPlan(
+            seed=7,
+            tables=[
+                TableSpec(
+                    name="items",
+                    rows=40,
+                    primary_key=PrimaryKey(columns=["item_id"]),
+                    columns=[
+                        ColumnSpec(name="item_id", gen=SequenceColumn(start=1000, step=-1)),
+                        ColumnSpec(name="v", gen=RangeColumn(min=1, max=100)),
+                    ],
+                ),
+            ],
+        )
+        stream = generate_cdc(spark, plan, num_batches=2)
+
+        all_pks = set()
+        for r in stream.initial["items"].select("item_id").collect():
+            all_pks.add(r.item_id)
+        assert min(all_pks) == 1000 - 39  # start=1000, step=-1, 40 rows: [1000..961]
+
+        for batch in stream.batches:
+            inserts = batch["items"].filter("_op = 'I'")
+            for r in inserts.select("item_id").collect():
+                assert r.item_id not in all_pks, f"PK collision at {r.item_id}"
+                # Inserted PKs must continue the descending run.
+                assert r.item_id < 1000 - 39, f"insert PK {r.item_id} overlaps initial range " f"[{1000 - 39}, 1000]"
+                all_pks.add(r.item_id)
+
 
 # ---------------------------------------------------------------------------
 # Before / after images
