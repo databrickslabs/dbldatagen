@@ -83,7 +83,14 @@ _AUTO_CHUNK_TARGET_ROWS = 20_000_000
 
 
 def _auto_chunk_size(plan: CDCPlan) -> int:
-    """Pick chunk_size so each chunk has ~_AUTO_CHUNK_TARGET_ROWS rows."""
+    """Pick chunk_size so each chunk has ~_AUTO_CHUNK_TARGET_ROWS rows.
+
+    Row accounting per batch:
+        batch_size   = total operations = I + U + D
+        emitted rows = I + 2U + D   (every U emits a UB and a UA)
+                     = batch_size + U
+                     = batch_size + batch_size * upd_frac
+    """
     target_rows = _AUTO_CHUNK_TARGET_ROWS
     max_rows_per_batch = 1
     for table_name in plan.cdc_tables:
@@ -91,7 +98,12 @@ def _auto_chunk_size(plan: CDCPlan) -> int:
         table_spec = next(t for t in plan.base_plan.tables if t.name == table_name)
         batch_size = resolve_batch_size(config.batch_size, int(table_spec.rows))
         _ins_frac, upd_frac, _del_frac = config.operations.fractions
-        # Each batch produces: batch_size + update_before_images
+        # batch_size already covers I + U + D; the extra row is the UB
+        # emitted for every U operation -- not an UA (which is already
+        # counted in the U slot of batch_size) and not a D (counted in
+        # the D slot).  Misreading this as "batch_size * upd_frac only"
+        # undercounts by 2x; misreading as "batch_size * (1 + upd_frac +
+        # del_frac)" double-counts D.
         rows = batch_size + int(batch_size * upd_frac)
         max_rows_per_batch = max(max_rows_per_batch, rows)
     chunk = max(1, target_rows // max(max_rows_per_batch, 1))
