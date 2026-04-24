@@ -8,8 +8,10 @@ from __future__ import annotations
 import pytest
 
 from dbldatagen.core.engine.seed import (
+    _NULL_PRECISION,
     compute_batch_seed,
     derive_column_seed,
+    null_mask_expr,
     to_signed64,
 )
 
@@ -99,3 +101,49 @@ class TestComputeBatchSeed:
 
     def test_determinism(self):
         assert compute_batch_seed(7, 3) == compute_batch_seed(7, 3)
+
+
+class TestNullMaskBoundaries:
+    """``null_mask_expr`` has three short-circuit boundaries worth
+    pinning: ``f <= 0`` (no nulls), ``f >= 1`` (all nulls), and
+    ``f`` below ``1/_NULL_PRECISION`` granularity where ``int(f*N)``
+    rounds to zero (raises to avoid silent zero-NULL output)."""
+
+    def test_zero_returns_false_literal(self, spark):
+        from pyspark.sql import functions as F
+
+        mask = null_mask_expr(42, F.col("id"), 0.0)
+        df = spark.range(5).select(mask.alias("m"))
+        assert all(not r.m for r in df.collect())
+
+    def test_one_returns_true_literal(self, spark):
+        from pyspark.sql import functions as F
+
+        mask = null_mask_expr(42, F.col("id"), 1.0)
+        df = spark.range(5).select(mask.alias("m"))
+        assert all(r.m for r in df.collect())
+
+    def test_below_granularity_raises(self):
+        """A user asking for 1e-6 NULLs with _NULL_PRECISION=1e4 gets
+        ``int(1e-6 * 1e4) == 0`` and would silently emit zero NULLs.
+        Raise so the user sees why the rate didn't materialise."""
+        with pytest.raises(ValueError, match="below the engine's"):
+            null_mask_expr(42, "id", 1e-6)
+
+    def test_just_above_granularity_accepted(self):
+        """``1/_NULL_PRECISION`` is the smallest fraction that produces
+        ``threshold == 1`` (floor, not round).  Accept without raising."""
+        # float arithmetic: 1/10000 * 10000 = 1.0 exactly in IEEE 754.
+        null_mask_expr(42, "id", 1.0 / _NULL_PRECISION)
+
+    def test_99999_fraction_produces_near_all_nulls(self, spark):
+        """At 0.99999 the threshold is 9999 / 10000: all but one pmod
+        bucket should return True.  Statistical check with enough rows
+        to make the boundary visible."""
+        from pyspark.sql import functions as F
+
+        mask = null_mask_expr(42, F.col("id"), 0.9999)
+        n = 10_000
+        count_null = spark.range(n).select(mask.alias("m")).filter(F.col("m")).count()
+        # Expect ~99.99% True; allow slack for hash distribution.
+        assert count_null >= int(n * 0.99)
