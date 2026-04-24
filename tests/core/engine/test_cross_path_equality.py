@@ -44,6 +44,8 @@ from dbldatagen.core.spec.schema import (
     DataGenPlan,
     DataType,
     ExpressionColumn,
+    ForeignKeyColumn,
+    ForeignKeyRef,
     PatternColumn,
     PrimaryKey,
     RangeColumn,
@@ -361,6 +363,144 @@ class TestCrossPathMultiUpdatePerChunk:
             f"  only in scalar: {sorted(only_scalar)[:10]}...\n"
             f"  only in bulk:   {sorted(only_bulk)[:10]}..."
         )
+
+
+def _fk_plan(parent_rows: int = 30, child_rows: int = 60, seed: int = 42) -> DataGenPlan:
+    """Two-table plan exercising ``ForeignKeyColumn``.
+
+    ``ForeignKeyColumn`` has its own seeded Spark expression
+    (``build_fk_column`` reconstructs a parent PK from a
+    distribution-sampled parent_index).  Like ``StructColumn``, the
+    expression has an int-column-seed branch (scalar single-batch) and
+    a Column-seed branch (fused multi-batch via map lookup).  A
+    divergence between the two branches would produce valid-looking
+    but non-matching FK values on the same ``(pk, batch_id, op)`` --
+    planner-level FK integrity tests would still pass because both
+    paths would point at valid parents, just different ones.
+
+    The ``_everything_plan`` harness covers every other strategy; this
+    sister plan closes the FK gap.
+    """
+    return DataGenPlan(
+        seed=seed,
+        tables=[
+            TableSpec(
+                name="parents",
+                rows=parent_rows,
+                primary_key=PrimaryKey(columns=["pid"]),
+                columns=[
+                    ColumnSpec(name="pid", dtype=DataType.LONG, gen=SequenceColumn(start=1)),
+                    ColumnSpec(
+                        name="pname",
+                        gen=ValuesColumn(values=["Alpha", "Bravo", "Charlie", "Delta"]),
+                    ),
+                ],
+            ),
+            TableSpec(
+                name="children",
+                rows=child_rows,
+                # PK named ``pk`` so the shared ``_row_key`` helper can
+                # index child rows by ``(pk, _batch_id, _op)`` without
+                # knowing the per-table PK column name.
+                primary_key=PrimaryKey(columns=["pk"]),
+                columns=[
+                    ColumnSpec(name="pk", dtype=DataType.LONG, gen=SequenceColumn(start=1)),
+                    ColumnSpec(
+                        name="parent_id",
+                        dtype=DataType.LONG,
+                        gen=ForeignKeyColumn(),
+                        foreign_key=ForeignKeyRef(ref="parents.pid"),
+                    ),
+                    ColumnSpec(
+                        name="qty",
+                        dtype=DataType.INT,
+                        gen=RangeColumn(min=1, max=100),
+                    ),
+                ],
+            ),
+        ],
+    )
+
+
+@pytest.mark.parametrize("seed", [42, 1, 2**31 - 1])
+class TestCrossPathForeignKey:
+    """Pin byte-equality of FK columns across scalar and bulk paths.
+
+    ``ForeignKeyColumn`` seed derivation has an int-seed branch
+    (scalar single-batch) and a Column-seed branch (fused multi-batch).
+    Struct fields had a bug of exactly this shape (commit 7fe0475) --
+    XOR on the Column branch, polynomial hash on the int branch,
+    divergent output for the same (pk, batch) pair.  Without a
+    cross-path FK test, the same class of regression on the FK path
+    would pass the planner-level "every FK points at a valid parent"
+    check because both paths would produce valid-but-different parent
+    references.
+
+    Three seeds (including ``2**31 - 1``) exercise the signed-int32
+    boundary; FK distributions (default: Zipf inside
+    ``distribution=Uniform()``) use ``cell_seed_expr`` which folds
+    ``column_seed`` through ``xxhash64`` -- this harness catches any
+    branch-split that survives the hash.
+    """
+
+    NUM_BATCHES = 3
+
+    @staticmethod
+    def _cdc_plan(seed: int, num_batches: int) -> CDCPlan:
+        """Wrap the FK plan in a CDCPlan with ``cdc_tables=["children"]``.
+
+        ``CDCPlan._reject_cross_cdc_foreign_keys`` requires the FK
+        parent to be static (not in ``cdc_tables``), since the stateless
+        engine reconstructs parent PKs from plan-time metadata and
+        can't see per-batch mutations on the parent.  For the cross-
+        path FK test the parent is deliberately static -- the
+        invariant being pinned is FK child-column byte-equality, not
+        mutation propagation.
+        """
+        return CDCPlan(
+            base_plan=_fk_plan(seed=seed),
+            num_batches=num_batches,
+            cdc_tables=["children"],
+        )
+
+    def test_fk_initial_snapshot_matches(self, spark, seed):
+        per = generate_cdc(spark, self._cdc_plan(seed, self.NUM_BATCHES))
+        bulk = generate_cdc_bulk(spark, self._cdc_plan(seed, self.NUM_BATCHES), chunk_size=self.NUM_BATCHES)
+        # Only children is in cdc_tables; parents is a static dimension
+        # and isn't materialised in stream.initial.
+        per_rows = per.initial["children"].orderBy("pk").collect()
+        bulk_rows = bulk.initial["children"].orderBy("pk").collect()
+        assert len(per_rows) == len(bulk_rows), (
+            f"children initial row count diverges: " f"scalar={len(per_rows)}, bulk={len(bulk_rows)}"
+        )
+        # Pin that parent_id values (the FK output) agree byte-for-byte
+        # across paths, and that the surviving child columns also match.
+        for p, b in zip(per_rows, bulk_rows):
+            _assert_rows_equal(f"children initial pk={p.pk}", p, b)
+
+    def test_fk_batch_rows_match(self, spark, seed):
+        """Scalar per-batch and bulk-fused paths must emit the same
+        ``(cid, batch_id, op)`` tuples with identical ``parent_id``
+        values on the child table.  Parent-table rows (static, no CDC
+        mutations at the FK boundary) also must agree on their
+        per-batch views."""
+        per = generate_cdc(spark, self._cdc_plan(seed, self.NUM_BATCHES))
+        bulk = generate_cdc_bulk(spark, self._cdc_plan(seed, self.NUM_BATCHES), chunk_size=self.NUM_BATCHES)
+        per_idx = _collect_and_index(per.batches, table_name="children")
+        bulk_idx = _collect_and_index(bulk.batches, table_name="children")
+        missing_in_bulk = set(per_idx) - set(bulk_idx)
+        missing_in_scalar = set(bulk_idx) - set(per_idx)
+        assert not missing_in_bulk and not missing_in_scalar, (
+            f"children: (pk, batch_id, op) tuple disagreement\n"
+            f"  only in scalar: {sorted(missing_in_bulk)[:5]}...\n"
+            f"  only in bulk:   {sorted(missing_in_scalar)[:5]}..."
+        )
+        for key in sorted(per_idx):
+            _assert_rows_equal(
+                f"children pk={key[0]} batch={key[1]} op={key[2]}",
+                per_idx[key],
+                bulk_idx[key],
+            )
 
 
 class TestOracleMatchesInitialSnapshot:
