@@ -426,6 +426,26 @@ class ArrayColumn(_StrictModel):
                 f"plan time; large max_lengths stall Catalyst.  For wider "
                 f"fan-out, model the data as rows or a MapType."
             )
+        # ``build_column_expr``'s dispatch table only covers the strategies
+        # that can be materialised as a single Spark expression per row;
+        # Faker requires a pandas_udf applied at the column level (not
+        # per-element), and ForeignKeyColumn requires FK resolution keyed
+        # on ``(table_name, top_level_col)`` which has no meaning for an
+        # element inside an array.  Both would reach the ``raise
+        # ValueError("Unsupported column strategy")`` in the dispatcher
+        # at generation time -- reject at plan construction so the user
+        # sees the limitation next to their ArrayColumn declaration.
+        if isinstance(self.element, (FakerColumn, ForeignKeyColumn)):
+            raise ValueError(
+                f"ArrayColumn.element={type(self.element).__name__} is not "
+                f"supported.  Faker requires a column-level pandas_udf (not "
+                f"per-element), and ForeignKeyColumn keys on the top-level "
+                f"(table, column) pair which has no meaning for an array "
+                f"element.  Use ValuesColumn, RangeColumn, PatternColumn, "
+                f"or another scalar strategy for array elements; nest a "
+                f"StructColumn containing the FakerColumn / ForeignKeyColumn "
+                f"if you need an array of records."
+            )
         return self
 
 
