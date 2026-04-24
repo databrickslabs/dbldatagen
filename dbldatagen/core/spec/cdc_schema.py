@@ -97,8 +97,20 @@ class CDCTableConfig(_StrictModel):
                 f"(interpreted as a fraction of initial rows). "
                 f"Use an integer for absolute batch sizes."
             )
-        if self.min_life < 0:
-            raise ValueError(f"min_life must be >= 0, got {self.min_life}")
+        if self.min_life < 1:
+            # ``min_life == 0`` allows a row to be "born dead":
+            # ``death_tick(k) = t_birth + 0 + (k % death_period)`` can
+            # equal ``t_birth``, and ``is_alive`` in the stateless engine
+            # uses ``batch_n < t_death``, so the freshly-inserted row
+            # would never appear as alive in any batch.  The CDC stream
+            # would emit an I event followed by no U / UB / D -- opaque
+            # and almost certainly not what the user wanted.  Require at
+            # least 1 so every inserted row is alive for its birth batch.
+            raise ValueError(
+                f"min_life must be >= 1, got {self.min_life}.  "
+                f"min_life=0 would let a row be born dead (I event with no "
+                f"subsequent U/D because the row's death_tick == birth_tick)."
+            )
         if self.update_window is not None and self.update_window <= 0:
             raise ValueError(f"update_window must be > 0, got {self.update_window}")
         return self

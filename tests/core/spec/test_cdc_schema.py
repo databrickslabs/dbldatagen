@@ -120,9 +120,16 @@ class TestCDCTableConfig:
         c = CDCTableConfig(min_life=10)
         assert c.min_life == 10
 
-    def test_min_life_zero(self):
-        c = CDCTableConfig(min_life=0)
-        assert c.min_life == 0
+    def test_min_life_zero_rejected(self):
+        """``min_life=0`` lets a row be "born dead" (death_tick == birth_tick),
+        emitting an I event with no subsequent U/D -- opaque and almost
+        certainly unintended.  The validator now rejects it; pin the rejection."""
+        with pytest.raises(ValueError, match="must be >= 1"):
+            CDCTableConfig(min_life=0)
+
+    def test_min_life_negative_rejected(self):
+        with pytest.raises(ValueError, match="must be >= 1"):
+            CDCTableConfig(min_life=-3)
 
     def test_min_life_serialization(self):
         c = CDCTableConfig(min_life=7)
@@ -279,7 +286,7 @@ class TestOperationWeightsValidation:
 
 class TestCDCTableConfigValidation:
     def test_negative_min_life(self):
-        with pytest.raises(ValueError, match="min_life must be >= 0"):
+        with pytest.raises(ValueError, match="must be >= 1"):
             CDCTableConfig(min_life=-1)
 
     def test_zero_update_window(self):
