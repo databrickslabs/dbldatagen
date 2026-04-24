@@ -412,16 +412,57 @@ def _validate_expression_columns(plan: DataGenPlan) -> None:
 
 
 def _validate_seed_from(plan: DataGenPlan) -> None:
-    """Validate that seed_from references exist as columns in the same table."""
+    """Validate seed_from references.
+
+    Three checks, in order:
+
+    1. The referenced column exists in the same table.
+    2. A column does not reference itself (``a.seed_from = 'a'``).
+    3. The seed_from graph is acyclic -- ``a -> b -> a`` would loop
+       forever at generation time as ``F.col`` resolves back to its
+       own source.
+
+    All three would otherwise fail at Spark query-build with
+    ``UNRESOLVED_COLUMN`` or a self-join plan, far from the offending
+    column declaration.
+    """
     for table_spec in plan.tables:
         col_names = {c.name for c in table_spec.columns}
+        seed_from_map: dict[str, str] = {}
         for col_spec in table_spec.columns:
-            if col_spec.seed_from and col_spec.seed_from not in col_names:
+            if not col_spec.seed_from:
+                continue
+            if col_spec.seed_from not in col_names:
                 raise ValueError(
                     f"Column '{col_spec.name}' in table '{table_spec.name}' "
                     f"has seed_from='{col_spec.seed_from}' but that column "
                     f"does not exist. Available: {sorted(col_names)}"
                 )
+            if col_spec.seed_from == col_spec.name:
+                raise ValueError(
+                    f"Column '{col_spec.name}' in table '{table_spec.name}' "
+                    f"has seed_from='{col_spec.seed_from}' referencing itself.  "
+                    f"seed_from must point at a different column."
+                )
+            seed_from_map[col_spec.name] = col_spec.seed_from
+
+        # Graph walk: detect cycles by following seed_from chains.
+        # Each starting column walks until it hits a column without
+        # seed_from, re-visits a column already in this walk (cycle),
+        # or terminates.
+        for start, start_target in seed_from_map.items():
+            visited: list[str] = [start]
+            cur = start_target
+            while cur in seed_from_map:
+                if cur in visited:
+                    cycle = [*visited[visited.index(cur) :], cur]
+                    raise ValueError(
+                        f"seed_from cycle in table '{table_spec.name}': "
+                        f"{' -> '.join(cycle)}.  Break the cycle by removing "
+                        f"one of the seed_from links."
+                    )
+                visited.append(cur)
+                cur = seed_from_map[cur]
 
 
 def _validate_primary_keys(plan: DataGenPlan) -> None:
