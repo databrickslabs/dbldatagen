@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import warnings
 from enum import Enum
 from typing import Annotated, Any, Literal
 
@@ -255,7 +256,13 @@ class PatternColumn(_StrictModel):
 
 
 class SequenceColumn(_StrictModel):
-    """Monotonically increasing integer sequence."""
+    """Monotonic integer sequence.
+
+    ``step`` may be negative for a descending sequence; only
+    ``step == 0`` is rejected (it would produce a constant column;
+    use ``ConstantColumn`` for that).  The sequence value at row
+    ``i`` is ``start + i * step``.
+    """
 
     strategy: Literal["sequence"] = "sequence"
     start: int = 1
@@ -808,9 +815,43 @@ class DataGenPlan(_StrictModel):
     seed: int = 42
     default_locale: str = "en_US"
 
+    @model_validator(mode="before")
+    @classmethod
+    def _warn_if_seed_missing(cls, data: Any) -> Any:  # noqa: ANN401 — validator signature
+        """Warn when the caller didn't pass a ``seed``.
+
+        The ``seed: int = 42`` default is convenient for quick demos but
+        means every unseeded plan runs under the literal demo seed --
+        two independent users get identical data, and a production
+        plan that forgot to set ``seed`` is silently reproducible
+        between them without any signal that the reproduction is
+        coincidental.  Emit a ``UserWarning`` pointing at the omission
+        so CI / log scrape can catch it; the default still fills in so
+        tutorial code keeps working.
+        """
+        if isinstance(data, dict) and "seed" not in data:
+            warnings.warn(
+                "DataGenPlan constructed without an explicit ``seed`` -- "
+                "defaulting to 42.  This is fine for demos but means every "
+                "unseeded plan produces identical output across independent "
+                "runs / callers.  Pass ``seed=<int>`` to silence this warning.",
+                UserWarning,
+                stacklevel=2,
+            )
+        return data
+
     @model_validator(mode="after")
     def propagate_seeds(self) -> DataGenPlan:
-        """Assign deterministic per-table seeds from global seed when not set."""
+        """Assign deterministic per-table seeds from global seed when not set.
+
+        This is a *derivation* step, not a mutation of user intent: the
+        resulting ``table.seed`` is what downstream code reads, and
+        round-tripping ``model_dump -> model_validate`` preserves the
+        values because the second pass's ``if table.seed is None``
+        guard short-circuits.  Documented as intentional so a future
+        reader doesn't conflate it with the ``ColumnSpec.nullable``
+        mutation that was a real side-effect bug.
+        """
         for i, table in enumerate(self.tables):
             if table.seed is None:
                 table.seed = self.seed + i

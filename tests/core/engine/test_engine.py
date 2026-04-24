@@ -168,6 +168,17 @@ class TestSequentialPK:
         rows = sorted([r.pk for r in df.collect()])
         assert rows == [10, 15, 20, 25, 30]
 
+    def test_descending_step(self, spark):
+        """Negative step produces a descending sequence.
+
+        ``SequenceColumn`` validator accepts ``step < 0``; pin the
+        engine-side behaviour so the allowed schema stays aligned
+        with what the engine actually emits.
+        """
+        df = spark.range(5).select(build_sequential_pk("id", start=100, step=-3).alias("pk"))
+        rows = [r.pk for r in df.orderBy("pk", ascending=False).collect()]
+        assert rows == [100, 97, 94, 91, 88]
+
 
 # ---------------------------------------------------------------------------
 # Pattern column
