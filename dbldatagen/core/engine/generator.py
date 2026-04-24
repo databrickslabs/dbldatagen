@@ -93,6 +93,25 @@ def generate_table(
             f"DataGenPlan (which propagates plan.seed to each table "
             f"during Pydantic validation)."
         )
+    # Name-based compatibility check on ``resolved_plan``: the table
+    # name must exist in the plan used to compute the resolution, so
+    # FK entries keyed by ``(table_name, col_name)`` line up with this
+    # spec.  Identity (``is``) is too strict -- CDC's insert-subset
+    # path legitimately constructs a fresh ``TableSpec`` per batch
+    # (different PK sequence start + per-batch seed) that shares the
+    # name with the planned table but not the object identity.
+    # ``generate()`` applies the stronger identity check at the user
+    # entry point; this helper only catches the "completely wrong
+    # plan" case, which is still the common mistake.
+    if resolved_plan is not None:
+        plan_table_names = {t.name for t in resolved_plan.plan.tables}
+        if table_spec.name not in plan_table_names:
+            raise ValueError(
+                f"resolved_plan does not contain a table named "
+                f"'{table_spec.name}' (available: {sorted(plan_table_names)}).  "
+                f"Pass a ResolvedPlan built from a plan that owns this "
+                f"TableSpec, or drop the ``resolved_plan`` argument."
+            )
     global_seed = table_spec.seed
 
     # 1. Base DataFrame with deterministic row IDs
