@@ -457,17 +457,13 @@ class TestStructFieldSeedIndependence:
 
 
 class TestNullFractionOnNested:
-    """Pins behavior at the null_fraction=1.0 boundary on struct fields
-    and array elements.
-
-    The naive engine builds each nested child via ``F.when(null_mask,
-    F.lit(None)).otherwise(expr)``.  At ``null_fraction=1.0`` the
-    short-circuit shifts to ``F.lit(True)`` and every row gets
-    ``F.lit(None)`` from the non-null branch -- if the null-branch
-    literal isn't typed to match the element's expected Spark type,
-    struct field types collide with the parent ``StructType`` and the
-    generator raises an obscure type-mismatch at Catalyst compile.
-    """
+    """Pins value-level behavior at ``null_fraction=1.0`` on struct
+    fields and array columns.  Element-level ``null_fraction`` isn't
+    expressible (``ArrayColumn.element`` is a raw ``ColumnStrategy``
+    with no per-element null_fraction field), so coverage stops at
+    the field-on-struct and column-on-array boundary.  Both paths had
+    previously slipped through the main null-fraction tests which
+    only exercised ~0.3."""
 
     def test_struct_field_null_fraction_one(self, spark):
         """A struct field with null_fraction=1.0 should produce all NULLs
@@ -505,10 +501,11 @@ class TestNullFractionOnNested:
         # null injection should be field-local, not leak to the struct.
         assert any(r.addr.city is not None for r in rows)
 
-    def test_array_element_struct_null_fraction_one(self, spark):
-        """An array of structs where one struct field has
-        null_fraction=1.0: every element's that-field is NULL, but the
-        array itself is not empty and other fields carry data."""
+    def test_array_column_null_fraction_one(self, spark):
+        """An array *column* with ``null_fraction=1.0`` produces NULL
+        array values on every row -- distinct from an empty array in
+        Spark (``null`` vs ``[]``).  Element-level null_fraction isn't
+        a schema concept, so this pins the column-level boundary."""
         plan = DataGenPlan(
             seed=13,
             tables=[
