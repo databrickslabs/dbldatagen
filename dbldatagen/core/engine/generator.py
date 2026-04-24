@@ -285,7 +285,11 @@ def _build_seed_from_column(
     row_count: int,
 ) -> tuple[str, Column]:
     """Build expression for a column with seed_from."""
-    assert col_spec.seed_from is not None, f"_build_seed_from_column called for '{col_spec.name}' but seed_from is None"
+    if col_spec.seed_from is None:
+        raise RuntimeError(
+            f"_build_seed_from_column called for '{col_spec.name}' but seed_from is None -- "
+            f"only columns with seed_from set should reach this helper"
+        )
     effective_id = F.col(col_spec.seed_from)
 
     if isinstance(col_spec.gen, FakerColumn):
@@ -337,7 +341,11 @@ def _build_faker_expr(
     """Build a Faker pool UDF expression."""
     from dbldatagen.core.engine.columns.faker_pool import build_faker_column
 
-    assert isinstance(col_spec.gen, FakerColumn)
+    if not isinstance(col_spec.gen, FakerColumn):
+        raise RuntimeError(
+            f"_build_faker_expr called for '{col_spec.name}' with non-FakerColumn gen "
+            f"{type(col_spec.gen).__name__}; dispatcher invariant bypassed"
+        )
     faker_expr = build_faker_column(
         id_col,
         column_seed,  # type: ignore[arg-type]  # always int (Faker tables excluded from batch paths)

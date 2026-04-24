@@ -63,7 +63,11 @@ def _reconstruct_parent_pk(parent_index_col: Column, meta: PKMetadata) -> Column
     if meta.pk_type == "pattern":
         # Pattern PKs use build_pattern_column with the parent's column seed
         # parent_index_col acts as the "id" the parent would have used
-        assert meta.pk_template is not None, f"pattern PK for '{meta.table_name}.{meta.pk_column}' has no template"
+        if meta.pk_template is None:
+            raise RuntimeError(
+                f"pattern PK for '{meta.table_name}.{meta.pk_column}' has no template -- "
+                f"planner.extract_pk_metadata should have populated it; invariant bypassed"
+            )
         return build_pattern_column(parent_index_col, meta.pk_seed, meta.pk_template)
 
     if meta.pk_type == "uuid":
