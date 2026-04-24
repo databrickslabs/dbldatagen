@@ -205,6 +205,26 @@ class TestCDCPlanValidation:
         cfg = plan.config_for("users")
         assert cfg.batch_size == 50
 
+    def test_naive_start_timestamp_rejected(self):
+        """A naive ISO-8601 string (no TZ suffix) silently picks up the
+        driver's local timezone via ``datetime.fromisoformat(...).timestamp()``,
+        violating the engine's UTC-epoch contract.  Reject at plan
+        construction -- the default ``2025-01-01T00:00:00Z`` is
+        TZ-aware, so this only bites callers who override with a naive
+        string, but the failure mode is silent TZ drift which is the
+        worst kind."""
+        with pytest.raises(ValueError, match="naive ISO-8601 datetime"):
+            CDCPlan(
+                base_plan=_simple_base_plan(),
+                start_timestamp="2025-01-01T00:00:00",  # no Z / +00:00
+            )
+
+    def test_tz_aware_start_timestamp_accepted(self):
+        """``Z`` suffix and explicit offsets are accepted."""
+        CDCPlan(base_plan=_simple_base_plan(), start_timestamp="2025-01-01T00:00:00Z")
+        CDCPlan(base_plan=_simple_base_plan(), start_timestamp="2025-01-01T00:00:00+00:00")
+        CDCPlan(base_plan=_simple_base_plan(), start_timestamp="2025-06-01T12:00:00-05:00")
+
 
 # ---------------------------------------------------------------------------
 # Serialization

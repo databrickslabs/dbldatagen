@@ -133,22 +133,37 @@ class CDCPlan(_StrictModel):
 
     @model_validator(mode="after")
     def validate_start_timestamp(self) -> CDCPlan:
-        """Reject malformed ``start_timestamp`` at plan time.
+        """Reject malformed or TZ-naive ``start_timestamp`` at plan time.
 
-        ``_build_fused_output`` parses this string with
-        ``datetime.fromisoformat`` at generation time; a bad format
-        string previously raised deep inside Spark expression build,
-        far from the plan declaration.  Parse here so the error points
-        at the CDCPlan.
+        ``batch_timestamp_epoch`` parses this string with
+        ``datetime.fromisoformat`` and calls ``.timestamp()`` to get
+        UTC epoch seconds.  If the string lacks a timezone suffix
+        (``Z`` / ``+HH:MM`` / ``-HH:MM``), ``fromisoformat`` returns a
+        *naive* datetime and ``.timestamp()`` silently interprets it
+        as the driver's local TZ -- breaking the "UTC epoch"
+        contract the rest of the engine relies on.  The default
+        (``2025-01-01T00:00:00Z``) is TZ-aware, so this only bit
+        callers who overrode with a naive ISO string.  Reject at the
+        validator so the TZ contract is enforced before any Spark
+        call.
         """
         try:
-            datetime.fromisoformat(self.start_timestamp.replace("Z", "+00:00"))
+            parsed = datetime.fromisoformat(self.start_timestamp.replace("Z", "+00:00"))
         except (ValueError, TypeError) as exc:
             raise ValueError(
                 f"CDCPlan.start_timestamp='{self.start_timestamp}' is not a "
                 f"valid ISO-8601 timestamp.  Use a format like "
                 f"'2025-01-01T00:00:00Z' or '2025-01-01T00:00:00+00:00'."
             ) from exc
+        if parsed.tzinfo is None:
+            raise ValueError(
+                f"CDCPlan.start_timestamp='{self.start_timestamp}' is a naive "
+                f"ISO-8601 datetime (no timezone suffix).  ``batch_timestamp_epoch`` "
+                f"converts it via ``.timestamp()`` which would silently use the "
+                f"driver's local timezone, violating the engine's UTC epoch "
+                f"contract.  Append ``Z`` (UTC) or an explicit offset like "
+                f"``+00:00`` / ``-05:00``."
+            )
         return self
 
     @model_validator(mode="after")
