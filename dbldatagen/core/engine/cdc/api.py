@@ -148,8 +148,8 @@ def generate_cdc(
         the first argument is a ``CDCPlan``.  Required if passing a
         ``DataGenPlan``.
     format :
-        Output format.  One of 'raw', 'delta_cdf', 'sql_server',
-        or 'delta_cdf'.  Defaults to 'raw'.
+        Output format.  One of 'raw', 'delta_cdf', or 'sql_server'.
+        Defaults to 'raw'.
 
     Returns
     -------
