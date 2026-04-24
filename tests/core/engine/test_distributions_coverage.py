@@ -117,7 +117,7 @@ class TestZipfSampleExpr:
         low-level ``zipf_sample_expr`` asserts the same invariant so a
         validator bypass fails loudly instead of returning non-Zipf
         shapes."""
-        with pytest.raises(AssertionError, match="requires exponent > 1"):
+        with pytest.raises(ValueError, match="requires exponent > 1"):
             zipf_sample_expr(F.col("id"), n=20, exponent=0.8)
 
     def test_default_exponent(self, spark):

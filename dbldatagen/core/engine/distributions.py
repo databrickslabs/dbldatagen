@@ -134,12 +134,14 @@ def zipf_sample_expr(cell_seed_col: Column, n: int, exponent: float = 1.5) -> Co
     ``exponent > 1`` is enforced by ``Zipf.validate_params``; the
     power-law CDF does not converge for ``exponent <= 1`` and any code
     path reaching here with a sub-1 exponent would be a validator
-    bypass.  Assert so the bypass fails loudly, not with wrong-shaped
-    data.
+    bypass.  Raise (not assert) so the bypass fails loudly under
+    ``python -O`` too, where a stripped assert would silently emit
+    wrong-shaped data.
     """
     if n <= 1:
         return F.lit(0)
-    assert exponent > 1.0, f"zipf_sample_expr requires exponent > 1, got {exponent}"
+    if exponent <= 1.0:
+        raise ValueError(f"zipf_sample_expr requires exponent > 1, got {exponent}")
     u = F.pmod(cell_seed_col, F.lit(_CONTINUOUS_PRECISION)).cast("double") / F.lit(float(_CONTINUOUS_PRECISION))
     # Shift u away from 0 to avoid log(0)
     u = F.greatest(u, F.lit(1e-9))

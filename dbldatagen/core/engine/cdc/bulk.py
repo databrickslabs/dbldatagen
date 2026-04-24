@@ -59,15 +59,18 @@ def generate_bulk_inserts(
     # per plan), and ``_generate_chunk_for_table`` filters out batches
     # with insert_count == 0.  If a future refactor breaks that invariant
     # — e.g. per-batch insert budgets, warm-up ramps, deletion-aware
-    # pacing — the arithmetic silently misaligns PKs and FKs.  Assert
-    # now so the break is loud, not wrong-data.
+    # pacing — the arithmetic silently misaligns PKs and FKs.  Raise
+    # (not assert) so the break survives ``python -O``: the docstring
+    # warns that misalignment silently produces wrong PKs/FKs, which is
+    # exactly what a stripped assert would let through.
     inserts_per_batch = batch_infos[0][2]
-    assert all(info[2] == inserts_per_batch for info in batch_infos), (
-        f"generate_bulk_inserts requires uniform inserts_per_batch across "
-        f"the chunk; got {[info[2] for info in batch_infos]}.  If per-batch "
-        f"insert counts vary, the chunk needs CASE WHEN offsets instead of "
-        f"the uniform-division arithmetic used here."
-    )
+    if not all(info[2] == inserts_per_batch for info in batch_infos):
+        raise RuntimeError(
+            f"generate_bulk_inserts requires uniform inserts_per_batch across "
+            f"the chunk; got {[info[2] for info in batch_infos]}.  If per-batch "
+            f"insert counts vary, the chunk needs CASE WHEN offsets instead of "
+            f"the uniform-division arithmetic used here."
+        )
     first_start_index = batch_infos[0][1]
 
     df, raw_id = create_range_df(spark, total_inserts)
