@@ -85,8 +85,12 @@ def generate_initial_snapshot(
         start_epoch = batch_timestamp_epoch(plan.start_timestamp, plan.batch_interval_seconds, 0)
         df = (
             df.withColumn("_op", F.lit("I"))
-            .withColumn("_batch_id", F.lit(0))
-            .withColumn("_ts", F.lit(start_epoch).cast("long").cast("timestamp"))
+            # ``_batch_id`` is long everywhere else -- match that here
+            # so the initial snapshot's schema unifies with the per-
+            # batch output without relying on int->long promotion.
+            .withColumn("_batch_id", F.lit(0).cast("long")).withColumn(
+                "_ts", F.lit(start_epoch).cast("long").cast("timestamp")
+            )
         )
         results[table_name] = df
     return results

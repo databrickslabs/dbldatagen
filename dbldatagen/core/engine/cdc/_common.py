@@ -178,9 +178,15 @@ def _add_cdc_metadata(
     """
     if df is None:
         return None
+    # ``_batch_id`` is long everywhere else in the engine (fused.py,
+    # bulk.py, CDC output schema, seed derivation).  ``F.lit(int)``
+    # without the explicit cast widens to int32; downstream unions
+    # across tables with long _batch_id widen to long via promotion
+    # today, but the inconsistency drifts from the "long end-to-end"
+    # invariant committed in 8e96ef5 / 46b7849.  Pin long here.
     return (
         df.withColumn("_op", F.lit(op))
-        .withColumn("_batch_id", F.lit(batch_id))
+        .withColumn("_batch_id", F.lit(batch_id).cast("long"))
         .withColumn("_ts", F.lit(batch_ts_epoch).cast("long").cast("timestamp"))
     )
 

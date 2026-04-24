@@ -334,8 +334,11 @@ def _generate_batch(
             empty_ts_epoch = batch_timestamp(plan, batch_id)
             empty = (
                 empty.withColumn("_op", F.lit("I"))
-                .withColumn("_batch_id", F.lit(batch_id))
-                .withColumn("_ts", F.lit(empty_ts_epoch).cast("long").cast("timestamp"))
+                # ``_batch_id`` is long everywhere else -- keep the
+                # cast explicit on every ``F.lit`` emission site.
+                .withColumn("_batch_id", F.lit(batch_id).cast("long")).withColumn(
+                    "_ts", F.lit(empty_ts_epoch).cast("long").cast("timestamp")
+                )
             )
             batch_tables[table_name] = apply_format(empty, fmt_name)
 
