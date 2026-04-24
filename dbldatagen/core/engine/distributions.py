@@ -193,8 +193,17 @@ def lognormal_sample_expr(
     x = F.exp(z)
     median = math.exp(mean)
     scale = float(n) / (median * 10.0)
-    idx = F.floor(x * F.lit(scale)).cast("long")
-    return F.greatest(F.lit(0), F.least(idx, F.lit(n - 1)))
+    # Clamp as double BEFORE the long cast.  For extreme ``mean`` (near
+    # the validator's +/-100 bound) ``scale`` can be ~1e51; tail samples
+    # of ``z`` push ``x * scale`` past ``2**63`` and the long-cast
+    # raises ``ARITHMETIC_OVERFLOW`` under Spark ANSI mode, ~before~
+    # the ``F.least(..., n-1)`` clamp could have saved us.  Order
+    # matters: clamp on double first, THEN cast to long -- that keeps
+    # the output in ``[0, n-1]`` regardless of how large ``x * scale``
+    # gets in double space.
+    x_scaled = F.floor(x * F.lit(scale))
+    clamped = F.least(F.lit(float(n - 1)), F.greatest(F.lit(0.0), x_scaled))
+    return clamped.cast("long")
 
 
 # ---------------------------------------------------------------------------
