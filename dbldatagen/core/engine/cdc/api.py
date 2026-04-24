@@ -347,12 +347,21 @@ def write_cdc_to_delta(
 
     Atomicity caveat: writes are **per-table, per-chunk, not
     transactional end-to-end**.  A mid-run failure (Spark executor loss,
-    driver interrupt, network partition) leaves the target catalog with
-    whatever chunks completed before the failure; subsequent reruns
-    overwrite the initial snapshot but do not roll back partial chunk
-    appends of the previous run.  If you need all-or-nothing semantics,
-    write to a staging namespace and promote via a single
+    driver interrupt, network partition) after the initial snapshot
+    succeeds leaves the target catalog with the new initial snapshot
+    plus whatever chunks completed before the failure; subsequent
+    reruns overwrite the initial snapshot but do not roll back partial
+    chunk appends of the previous run.  If you need all-or-nothing
+    semantics, write to a staging namespace and promote via a single
     ``CREATE TABLE ... AS`` after the run completes.
+
+    The initial snapshot write uses Delta's ``.mode("overwrite")`` with
+    ``overwriteSchema=true``, which atomically replaces any pre-existing
+    table at the target path in a single transaction -- the previous
+    data is preserved if the new write fails.  Earlier code issued an
+    explicit ``DROP TABLE IF EXISTS`` before the write, which meant a
+    crash between DROP and write left the target empty; that DROP has
+    been removed.
 
     Parameters
     ----------
@@ -393,8 +402,12 @@ def write_cdc_to_delta(
         uc_table = f"`{catalog}`.`{schema}`.`{table_name}`"
         uc_tables[table_name] = uc_table
 
-        # Initial snapshot
-        spark.sql(f"DROP TABLE IF EXISTS {uc_table}")
+        # Initial snapshot.  ``mode("overwrite") + overwriteSchema=true``
+        # atomically replaces any existing Delta table at ``uc_table`` --
+        # if this write fails, the pre-existing data is preserved.  An
+        # earlier ``DROP TABLE IF EXISTS`` before the write made the
+        # replacement non-atomic (DROP succeeds, then write fails, target
+        # left empty).  Removed.
         initial_df = rename_cdc_columns(stream.initial[table_name], fmt_name)
         initial_df.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(uc_table)
         logger.info("%s: v0 -> %s", table_name, uc_table)
