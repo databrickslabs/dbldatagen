@@ -210,7 +210,7 @@ def resolve_plan(plan: DataGenPlan) -> ResolvedPlan:
                 )
 
             # Extract PK metadata
-            parent_meta = _extract_pk_metadata(parent_table, parent_col, plan.seed)
+            parent_meta = _extract_pk_metadata(parent_table, parent_col)
 
             # ColumnSpec.null_fraction and ForeignKeyRef.null_fraction are
             # both legal sources (the ColumnSpec validator rejects
@@ -286,10 +286,26 @@ def _topological_sort(graph: dict[str, set[str]], all_tables: list[str]) -> list
     return result
 
 
-def _extract_pk_metadata(table_spec: TableSpec, pk_col_spec: ColumnSpec, plan_seed: int) -> PKMetadata:
-    """Extract PK generation metadata from a TableSpec."""
-    global_seed = table_spec.seed if table_spec.seed is not None else plan_seed
-    column_seed = derive_column_seed(global_seed, table_spec.name, pk_col_spec.name)
+def _extract_pk_metadata(table_spec: TableSpec, pk_col_spec: ColumnSpec) -> PKMetadata:
+    """Extract PK generation metadata from a TableSpec.
+
+    Raises if ``table_spec.seed is None`` -- matches the strictness of
+    ``generate_table`` / ``generate_cdc_batch_for_table`` /
+    ``_generate_chunk_for_table`` / ``generate_expected_state``.  A
+    prior implementation silently substituted ``plan.seed``, which
+    would have the FK child reconstruct parent PKs under a different
+    seed than the parent itself was generated under once the generator
+    entry points started raising -- splitting the same TableSpec across
+    two seeds on the FK boundary.
+    """
+    if table_spec.seed is None:
+        raise ValueError(
+            f"TableSpec '{table_spec.name}'.seed is None.  Either set "
+            f"it explicitly on the TableSpec or go through a "
+            f"DataGenPlan (which propagates plan.seed to each table "
+            f"during Pydantic validation)."
+        )
+    column_seed = derive_column_seed(table_spec.seed, table_spec.name, pk_col_spec.name)
     row_count = int(table_spec.rows)
 
     gen = pk_col_spec.gen
