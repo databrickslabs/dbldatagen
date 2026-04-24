@@ -910,3 +910,21 @@ class TestDateDtypeGuard:
         """FakerColumn can genuinely produce dates via providers like
         ``date_of_birth`` -- leave the DATE hint alone."""
         ColumnSpec(name="d", dtype=DataType.DATE, gen=FakerColumn(provider="date_of_birth"))
+
+
+class TestNullFractionGranularityBinding:
+    """``_MIN_NULL_FRACTION`` in ``spec/schema.py`` must track
+    ``_NULL_PRECISION`` in ``engine/seed.py`` -- if they drift, the
+    schema validator rejects fractions the engine would have accepted
+    (or vice versa).  Layering forbids schema importing from engine,
+    so the two are duplicated -- pin the correspondence with this
+    test so either edit is caught in CI."""
+
+    def test_constants_agree(self):
+        from dbldatagen.core.engine.seed import _NULL_PRECISION
+        from dbldatagen.core.spec.schema import _MIN_NULL_FRACTION
+
+        assert _MIN_NULL_FRACTION * _NULL_PRECISION == 1.0, (
+            f"_MIN_NULL_FRACTION ({_MIN_NULL_FRACTION}) and _NULL_PRECISION "
+            f"({_NULL_PRECISION}) have drifted -- update one to match the other."
+        )
