@@ -184,25 +184,37 @@ def struct_field_seed_map(
     global_seed: int,
     unique_wbs: list[int],
     table_name: str,
-    parent_col_name: str,
-    field_name: str,
+    field_path: list[str],
 ) -> Column:
-    """Like ``column_seed_map`` but for a StructColumn child field.
+    """Like ``column_seed_map`` but for a StructColumn descendant field.
 
-    Precomputes
-    ``derive_column_seed(derive_column_seed(compute_batch_seed(global_seed, wb), table, parent), "", field)``
-    for each ``wb`` on the driver and returns a Spark map literal.  Used
-    by ``_build_struct_column`` under the fused multi-batch CDC path so
-    child field seeds match the scalar path's polynomial hash exactly —
-    before this helper, the Column branch XOR'd the parent seed with a
-    per-field constant, producing different values than the scalar
-    ``derive_column_seed`` on the same (parent, field) pair.
+    ``field_path`` is the chain from the TableSpec's top-level column to
+    the leaf field inside any depth of nesting:
+
+        ["addr", "city"]          -- one-level struct
+        ["addr", "geo", "lat"]    -- struct-of-struct
+        ["owner", "address", "zip"]  -- any nesting depth
+
+    For each ``wb`` the seed is built by chaining ``derive_column_seed``:
+    the first hop uses ``(table_name, field_path[0])`` exactly like a
+    top-level column, then each further name in ``field_path`` is
+    chained with an empty-string table argument (matching the scalar
+    path's ``derive_column_seed(parent_seed, "", name)`` per-field
+    hash).  Used by ``_build_struct_column`` under the fused multi-batch
+    CDC path so nested-struct children match the scalar path
+    byte-for-byte.  Before this helper took a path (only
+    ``parent_col_name`` + ``field_name``), the Column branch raised at
+    plan time whenever a struct's child was itself a struct — nested
+    structs were silently broken on the fused path.
     """
+    if not field_path:
+        raise ValueError("struct_field_seed_map requires a non-empty field_path")
     entries: list[Column] = []
     for wb in unique_wbs:
         s = compute_batch_seed(global_seed, wb)
-        parent_seed = derive_column_seed(s, table_name, parent_col_name)
-        child_seed = derive_column_seed(parent_seed, "", field_name)
+        seed = derive_column_seed(s, table_name, field_path[0])
+        for name in field_path[1:]:
+            seed = derive_column_seed(seed, "", name)
         entries.append(F.lit(wb).cast("long"))
-        entries.append(F.lit(child_seed).cast("long"))
+        entries.append(F.lit(seed).cast("long"))
     return F.create_map(*entries)

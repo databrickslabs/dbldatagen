@@ -115,6 +115,18 @@ def _everything_plan(rows: int = 80, seed: int = 42) -> DataGenPlan:
                         [
                             text("city", ["Austin", "NYC", "LA", "Chicago"]),
                             integer("zip", min=10000, max=99999),
+                            # Struct-of-struct: pins the nested-struct
+                            # seed-derivation path, which previously raised
+                            # at plan time on the fused multi-batch path
+                            # because ``_build_struct_column`` didn't
+                            # forward ``dyn_ctx`` to its recursive call.
+                            struct(
+                                "geo",
+                                [
+                                    integer("lat", min=-90, max=90),
+                                    integer("lon", min=-180, max=180),
+                                ],
+                            ),
                         ],
                     ),
                     array(

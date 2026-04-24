@@ -524,6 +524,7 @@ def build_column_expr(  # noqa: PLR0911
     *,
     cell_seed_override: Column | None = None,
     struct_dyn_ctx: tuple[str, list[int], Column] | None = None,
+    struct_path_prefix: list[str] | None = None,
 ) -> Column:
     """Dispatch to the appropriate column builder based on strategy type.
 
@@ -545,6 +546,14 @@ def build_column_expr(  # noqa: PLR0911
         multi-batch path so ``_build_struct_column`` can precompute
         polynomial-hashed child field seeds via ``struct_field_seed_map``.
         Passed through unchanged for non-struct strategies.
+    struct_path_prefix :
+        Accumulator for the struct-path chain when recursing into nested
+        structs.  Empty/None at the top-level dispatch; set to
+        ``[outer_col, ..., innermost_parent_struct]`` when
+        ``_build_struct_column`` recurses into a field that is itself a
+        struct.  Used alongside ``struct_dyn_ctx`` to compute the correct
+        chained ``derive_column_seed`` for deeply nested fields on the
+        fused multi-batch path.
     """
     gen = col_spec.gen
 
@@ -625,6 +634,7 @@ def build_column_expr(  # noqa: PLR0911
             global_seed,
             parent_col_name=col_spec.name,
             dyn_ctx=struct_dyn_ctx,
+            path_prefix=struct_path_prefix,
         )
 
     if isinstance(gen, ArrayColumn):
@@ -646,23 +656,34 @@ def _build_struct_column(
     *,
     parent_col_name: str,
     dyn_ctx: tuple[str, list[int], Column] | None = None,
+    path_prefix: list[str] | None = None,
 ) -> Column:
-    """Build a Spark struct from child ColumnSpecs.
+    """Build a Spark struct from child ColumnSpecs (nestable).
 
-    Child field seeds are the polynomial hash
-    ``derive_column_seed(parent_seed, "", field_name)``.  In the scalar
-    (int) seed path this runs directly on the driver.  In the fused
-    multi-batch path (``parent_seed`` is a Column sourced from
-    ``column_seed_map``), we cannot evaluate ``derive_column_seed`` in
-    Spark SQL (polynomial multiplication would ``ARITHMETIC_OVERFLOW``
-    under ANSI), so we precompute the per-(batch, field) polynomial
-    hashes on the driver via ``struct_field_seed_map`` and look them up
-    against ``wb_col``.  This replaces an earlier buggy
-    ``parent_seed XOR per_field_hash`` fallback that produced values
-    different from the scalar path for the same (parent, field) pair —
-    breaking the invariant that oracle, initial snapshot, single-batch,
-    and bulk paths all emit identical bytes for the same row.
+    Child field seeds are the polynomial hash chain
+    ``derive_column_seed(..., derive_column_seed(seed_at_top, field_i), ..., field_leaf)``.
+    In the scalar (int) seed path this runs directly on the driver.  In
+    the fused multi-batch path (``parent_seed`` is a ``Column`` sourced
+    from ``column_seed_map`` / ``struct_field_seed_map``), we cannot
+    evaluate ``derive_column_seed`` in Spark SQL (polynomial
+    multiplication would ``ARITHMETIC_OVERFLOW`` under ANSI), so we
+    precompute the per-(batch, field-path) polynomial hashes on the
+    driver via ``struct_field_seed_map`` and look them up against
+    ``wb_col``.
+
+    ``path_prefix`` is the chain of struct names traversed so far, NOT
+    including this struct's own name (``parent_col_name`` is appended
+    below).  At top-level dispatch it is ``None``/empty; when
+    ``_build_struct_column`` recurses into a nested-struct child, the
+    child's ``path_prefix`` is ``[*path_prefix, parent_col_name]`` so the
+    grandchild's seed chain picks up the full hash path.  Before this
+    helper tracked path, the Column branch passed only
+    ``(parent_col_name, field_name)`` to ``struct_field_seed_map`` --
+    correct for depth-1, broken (raise at plan time) for struct-of-
+    struct.
     """
+    current_path = [*(path_prefix or []), parent_col_name]
+
     field_cols: list[Column] = []
     for field_spec in gen.fields:
         child_seed: int | Column
@@ -678,7 +699,8 @@ def _build_struct_column(
                     f"consistently with the scalar path."
                 )
             table_name, unique_wbs, wb_col = dyn_ctx
-            field_map = struct_field_seed_map(global_seed, unique_wbs, table_name, parent_col_name, field_spec.name)
+            field_full_path = [*current_path, field_spec.name]
+            field_map = struct_field_seed_map(global_seed, unique_wbs, table_name, field_full_path)
             child_seed = column_seed_lookup(field_map, wb_col)
         child_expr = build_column_expr(
             field_spec,
@@ -686,6 +708,8 @@ def _build_struct_column(
             child_seed,
             row_count,
             global_seed,
+            struct_dyn_ctx=dyn_ctx,
+            struct_path_prefix=current_path,
         )
         child_expr = apply_null_fraction(child_expr, child_seed, id_col, field_spec.null_fraction)
         field_cols.append(child_expr.alias(field_spec.name))
