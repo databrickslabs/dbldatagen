@@ -115,7 +115,22 @@ def rename_cdc_columns(df: DataFrame, format: str = "sql_server") -> DataFrame:
       - ``__$operation`` → ``cdc_operation``
       - ``__$start_lsn``  → ``cdc_lsn``
       - ``__$seqval``     → ``cdc_seqval``
+
+    For ``raw`` and ``delta_cdf`` the DataFrame is returned unchanged
+    (those formats don't produce ``__$*`` metadata columns).  Any
+    other format name raises -- silent no-op on a typo previously let
+    an external caller ship a DataFrame with the raw metadata names
+    still attached.
     """
+    from dbldatagen.core.spec.cdc_schema import CDCFormat
+
+    try:
+        CDCFormat(format)
+    except ValueError as exc:
+        valid = sorted(f.value for f in CDCFormat)
+        raise ValueError(
+            f"rename_cdc_columns received unknown format '{format}'.  " f"Valid formats: {valid}."
+        ) from exc
     renames = _FORMAT_COLUMN_RENAMES.get(format, {})
     for old_name, new_name in renames.items():
         if old_name in df.columns:
