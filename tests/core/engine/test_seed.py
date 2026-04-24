@@ -117,11 +117,27 @@ class TestNullMaskBoundaries:
         assert all(not r.m for r in df.collect())
 
     def test_one_returns_true_literal(self, spark):
+        """``null_fraction >= 1`` short-circuits to ``F.lit(True)``.
+
+        The implementation's full ``pmod(hash, _NULL_PRECISION) <
+        threshold`` path also happens to be True for all rows when
+        threshold == _NULL_PRECISION, so a hash-path regression would
+        still pass a naive "all True" check.  Introspect the Column's
+        SQL representation to confirm the short-circuit actually
+        fired -- the hash path contains ``pmod`` / ``xxhash64`` in its
+        plan, a literal-True path doesn't.
+        """
         from pyspark.sql import functions as F
 
         mask = null_mask_expr(42, F.col("id"), 1.0)
         df = spark.range(5).select(mask.alias("m"))
         assert all(r.m for r in df.collect())
+        # The short-circuit path returns ``F.lit(True)`` directly; its
+        # SQL doesn't reference ``pmod`` or ``xxhash64``.  Without the
+        # short-circuit, the fallback path would emit those functions.
+        sql = str(mask)
+        assert "pmod" not in sql.lower(), f"expected short-circuit lit; got {sql}"
+        assert "xxhash64" not in sql.lower(), f"expected short-circuit lit; got {sql}"
 
     def test_below_granularity_raises(self):
         """A user asking for 1e-6 NULLs with _NULL_PRECISION=1e4 gets
