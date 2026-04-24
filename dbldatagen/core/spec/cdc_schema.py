@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from enum import Enum
 
 from pydantic import Field, model_validator
@@ -19,6 +20,16 @@ class CDCFormat(str, Enum):
     construction.  Use ``RAW`` (full UB/U/D event log) or ``DELTA_CDF``
     (Delta Change Data Feed) until a faithful nested before/after
     implementation lands.
+
+    ``SQL_SERVER`` footgun: the synthesised ``__$seqval`` is
+    ``xxhash64(_batch_id, *data_cols)``, not a monotonic rank within
+    ``__$start_lsn``.  It's deterministic for a given row content but
+    **unordered within a batch**, so a consumer that does
+    ``ORDER BY __$start_lsn, __$seqval`` to reconstruct within-commit
+    row order gets effectively random ordering inside each batch.
+    Consumers that use seqval only for row-identity / dedup are fine.
+    See ``dbldatagen/core/engine/cdc/formats.py::to_sql_server`` for
+    why a rank was declined.
     """
 
     RAW = "raw"
@@ -107,6 +118,26 @@ class CDCPlan(_StrictModel):
     batch_interval_seconds: int = 3600
     start_timestamp: str = "2025-01-01T00:00:00Z"
     cdc_tables: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_start_timestamp(self) -> CDCPlan:
+        """Reject malformed ``start_timestamp`` at plan time.
+
+        ``_build_fused_output`` parses this string with
+        ``datetime.fromisoformat`` at generation time; a bad format
+        string previously raised deep inside Spark expression build,
+        far from the plan declaration.  Parse here so the error points
+        at the CDCPlan.
+        """
+        try:
+            datetime.fromisoformat(self.start_timestamp.replace("Z", "+00:00"))
+        except (ValueError, TypeError) as exc:
+            raise ValueError(
+                f"CDCPlan.start_timestamp='{self.start_timestamp}' is not a "
+                f"valid ISO-8601 timestamp.  Use a format like "
+                f"'2025-01-01T00:00:00Z' or '2025-01-01T00:00:00+00:00'."
+            ) from exc
+        return self
 
     @model_validator(mode="after")
     def validate_table_refs(self) -> CDCPlan:
