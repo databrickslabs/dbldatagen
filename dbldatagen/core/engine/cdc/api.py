@@ -286,23 +286,27 @@ def generate_cdc_batch(
         )
 
     fmt_name = plan.format.value
-    # Name-based compatibility check mirrors ``generate_table``:
-    # ``resolved_plan`` must have been produced from a plan whose
-    # tables cover the CDC-eligible set; otherwise FK resolution is
-    # undefined (the resolved's ``fk_resolutions`` key space won't
-    # line up with ``plan.cdc_tables``).  Identity is too strict
-    # because the CDCPlan wraps a DataGenPlan whose identity the
-    # caller may not track; match on the sorted set of table names.
-    if resolved_plan is not None:
-        resolved_names = {t.name for t in resolved_plan.plan.tables}
-        plan_names = {t.name for t in plan.base_plan.tables}
-        if resolved_names != plan_names:
-            raise ValueError(
-                f"resolved_plan was produced from a plan with tables "
-                f"{sorted(resolved_names)}, but this CDCPlan has "
-                f"{sorted(plan_names)}.  Pass a ResolvedPlan built "
-                f"from ``plan.base_plan``, or drop the kwarg."
-            )
+    # Identity check mirrors ``generate()``'s ``resolved_plan.plan is plan``
+    # guard.  An earlier name-set check accepted same-named but
+    # differently-seeded plans silently -- ``generate()`` would have
+    # rejected the exact same inputs.  The two entry points must agree:
+    # a caller who does ``resolve_plan(planB)`` and then passes planA
+    # gets the same error shape from either function, not a silent
+    # corruption of FK resolution via mismatched seeds.
+    #
+    # Pydantic v2 stores BaseModel-typed fields by reference, so for
+    # ``CDCPlan(base_plan=dgp)`` or ``dgp`` wrapped internally, the
+    # ``plan.base_plan is original_dgp`` identity holds -- verified.
+    if resolved_plan is not None and resolved_plan.plan is not plan.base_plan:
+        raise ValueError(
+            "resolved_plan was produced from a different DataGenPlan than "
+            "this CDCPlan's ``base_plan``.  Pass a ResolvedPlan built from "
+            "the same plan object (``resolve_plan(plan.base_plan)``), or "
+            "drop the ``resolved_plan`` argument and let generate_cdc_batch "
+            "resolve internally.  Mismatched plans silently corrupt FK "
+            "resolution when the two plans share table names but differ in "
+            "seeds or topology."
+        )
     # Resolve once and thread through -- mirrors the pattern in
     # ``generate_cdc`` / ``generate_cdc_bulk``.  When the caller passes
     # ``resolved_plan`` (a loop over batches), reuse it and skip the

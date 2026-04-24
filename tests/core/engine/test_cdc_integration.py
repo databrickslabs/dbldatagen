@@ -250,6 +250,36 @@ class TestCDCBatchIndependence:
         with pytest.raises(ValueError, match=r"batch_id must be in \[1, 5\]"):
             generate_cdc_batch(spark, plan, batch_id=bad_batch_id)
 
+    def test_mismatched_resolved_plan_rejected(self, spark):
+        """``generate_cdc_batch`` now uses the same identity check as
+        ``generate()`` (``resolved_plan.plan is plan.base_plan``).  An
+        earlier name-set check silently accepted differently-seeded
+        plans that shared table names, producing corrupt FK resolution
+        at runtime.  Pin the stricter behavior: a ``resolved_plan``
+        computed from a different ``DataGenPlan`` -- even with the
+        same table names -- must be rejected."""
+        from dbldatagen.core import resolve_plan
+
+        plan_a = _simple_plan(rows=10, seed=42)
+        plan_b = _simple_plan(rows=10, seed=42)  # identical contents, distinct object
+        resolved_b = resolve_plan(plan_b)
+        cdc_plan_a = CDCPlan(base_plan=plan_a, num_batches=2)
+        with pytest.raises(ValueError, match="different DataGenPlan"):
+            generate_cdc_batch(spark, cdc_plan_a, batch_id=1, resolved_plan=resolved_b)
+
+    def test_matching_resolved_plan_accepted(self, spark):
+        """Happy path for the identity check: ``resolved_plan`` built
+        from the same ``DataGenPlan`` wrapped in the CDCPlan works."""
+        from dbldatagen.core import resolve_plan
+
+        plan = _simple_plan(rows=10, seed=42)
+        cdc_plan = CDCPlan(base_plan=plan, num_batches=2)
+        resolved = resolve_plan(plan)
+        # Pydantic v2 stores BaseModel fields by reference, so
+        # cdc_plan.base_plan is plan -- identity check passes.
+        result = generate_cdc_batch(spark, cdc_plan, batch_id=1, resolved_plan=resolved)
+        assert "products" in result
+
 
 # ---------------------------------------------------------------------------
 # PK continuity
