@@ -43,6 +43,16 @@ _RESERVED_CDC_RENAME_TARGETS = frozenset({"cdc_operation", "cdc_lsn", "cdc_seqva
 # user wants rows or MapType.
 _MAX_ARRAY_LENGTH = 1000
 
+# Engine granularity for null-mask generation.  Must match
+# ``dbldatagen/core/engine/seed.py::_NULL_PRECISION``.  Exposed here so
+# ``null_fraction`` validators can reject below-granularity values at
+# plan time (before the engine would raise at generation time).  A user
+# who asked for ``null_fraction=1e-5`` with precision=10000 would get
+# ``int(1e-5 * 10000) == 0`` and silently emit zero NULLs -- the engine
+# raises on that case, but raising one layer earlier keeps the error
+# next to the ``ColumnSpec`` declaration.
+_MIN_NULL_FRACTION = 1.0 / 10000
+
 
 # ---------------------------------------------------------------------------
 # Distributions
@@ -535,6 +545,14 @@ class ForeignKeyRef(_StrictModel):
             raise ValueError(f"ForeignKeyRef.ref='{self.ref}' must use 'table.column' format.")
         if not 0.0 <= self.null_fraction <= 1.0:
             raise ValueError(f"null_fraction must be in [0.0, 1.0], got {self.null_fraction}")
+        if 0.0 < self.null_fraction < _MIN_NULL_FRACTION:
+            raise ValueError(
+                f"ForeignKeyRef.null_fraction={self.null_fraction} is below the "
+                f"engine's {_MIN_NULL_FRACTION} granularity; ``int(f * N)`` would "
+                f"round to zero and silently emit zero NULLs.  Pick a larger "
+                f"fraction (>= {_MIN_NULL_FRACTION}) or raise _NULL_PRECISION in "
+                f"engine/seed.py."
+            )
         return self
 
 
@@ -702,6 +720,14 @@ class ColumnSpec(_StrictModel):
         # metadata that the user sets if they want it.
         if not 0.0 <= self.null_fraction <= 1.0:
             raise ValueError(f"null_fraction must be in [0.0, 1.0], got {self.null_fraction}")
+        if 0.0 < self.null_fraction < _MIN_NULL_FRACTION:
+            raise ValueError(
+                f"Column '{self.name}': null_fraction={self.null_fraction} is below "
+                f"the engine's {_MIN_NULL_FRACTION} granularity; ``int(f * N)`` "
+                f"would round to zero and silently emit zero NULLs.  Pick a larger "
+                f"fraction (>= {_MIN_NULL_FRACTION}) or raise _NULL_PRECISION in "
+                f"engine/seed.py."
+            )
         return self
 
     @model_validator(mode="after")
