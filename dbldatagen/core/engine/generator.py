@@ -755,8 +755,23 @@ def _build_array_column(
     if gen.min_length == gen.max_length:
         return full_array
 
-    # Random length per row in [min_length, max_length]
+    # Random length per row in [min_length, max_length].  Mix a
+    # constant into ``column_seed`` before computing the cell seed so
+    # the length hash is decorrelated from element[0]'s cell seed
+    # (which uses unmixed ``column_seed``).  Without the mix, two
+    # separate values derived from the same ``cell_seed_expr(col,
+    # id)`` -- one via direct use as element[0]'s seed, one via
+    # pmod-for-length -- share the low bits and produce a subtle
+    # correlation between array length and the first element's value.
+    from dbldatagen.core.engine.seed import to_signed64
+
     range_size = gen.max_length - gen.min_length + 1
-    seed_col = cell_seed_expr(column_seed, id_col)
+    _LEN_SEED_MIX = 0xD6E8FEB86659FD93  # random 64-bit constant, decorrelates length hash
+    length_seed: int | Column
+    if isinstance(column_seed, int):
+        length_seed = to_signed64(column_seed ^ _LEN_SEED_MIX)
+    else:
+        length_seed = column_seed.bitwiseXOR(F.lit(to_signed64(_LEN_SEED_MIX)).cast("long"))
+    seed_col = cell_seed_expr(length_seed, id_col)
     rand_len = F.pmod(seed_col, F.lit(range_size)).cast("int") + F.lit(gen.min_length)
     return F.slice(full_array, 1, rand_len)
