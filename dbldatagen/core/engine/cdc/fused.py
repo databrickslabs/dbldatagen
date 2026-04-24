@@ -61,7 +61,12 @@ def generate_fused_deletes(
         min_life,
     )
     df = df.filter(dt.isin(*[int(b) for b in batch_ids]))
-    df = df.withColumn("_batch_id", dt.cast("int"))
+    # ``_batch_id`` lives as long everywhere else in the engine (CDC
+    # output schema, seed derivation, window filters); this column is
+    # the one place the fused path used ``int`` without a cap on
+    # ``num_batches``.  Past 2**31 batches the int cast would overflow
+    # and Spark ANSI mode would raise.  Keep long end-to-end.
+    df = df.withColumn("_batch_id", dt.cast("long"))
 
     # _write_batch = pre_image_batch with batch_n = death_tick (varies per row)
     t_birth = birth_tick_expr(id_col, initial_rows, periods.inserts_per_batch)
@@ -175,7 +180,9 @@ def generate_fused_updates(
         base_filter = base_filter & (age <= F.lit(update_window).cast("long"))
 
     df = df.filter(base_filter)
-    df = df.withColumn("_batch_id", candidate_b.cast("int")).drop("_ceil_num")
+    # See death_batch_df comment: ``_batch_id`` is long everywhere else;
+    # avoid an int overflow at high ``num_batches``.
+    df = df.withColumn("_batch_id", candidate_b.cast("long")).drop("_ceil_num")
 
     # Before-image: _write_batch = pre_image_batch(k, candidate_b)
     batch_n_col = F.col("_batch_id").cast("long")
