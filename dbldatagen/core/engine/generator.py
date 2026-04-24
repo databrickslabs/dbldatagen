@@ -73,6 +73,16 @@ def generate_table(
         Pydantic model describing the table schema and row count.
     resolved_plan:
         Optional ResolvedPlan from the planner carrying FK resolution info.
+        Must have been produced from a plan that contains a table with
+        ``table_spec.name``.  Unlike ``generate()`` (which checks
+        ``resolved_plan.plan is plan``), this helper accepts any plan
+        containing a matching table name -- the weaker check exists so
+        CDC's insert-subset path can pass freshly-constructed
+        ``TableSpec`` objects per batch.  A caller who wants the
+        stronger cross-plan guarantee should use ``generate()``; a
+        caller who passes planA's TableSpec with
+        ``resolve_plan(planB)`` where both plans have a same-named
+        table will NOT be caught here.
 
     Returns
     -------
