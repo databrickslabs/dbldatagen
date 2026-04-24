@@ -345,6 +345,15 @@ def write_cdc_to_delta(
     issued, so a backtick or dot in the input cannot escape the
     quoting.
 
+    Atomicity caveat: writes are **per-table, per-chunk, not
+    transactional end-to-end**.  A mid-run failure (Spark executor loss,
+    driver interrupt, network partition) leaves the target catalog with
+    whatever chunks completed before the failure; subsequent reruns
+    overwrite the initial snapshot but do not roll back partial chunk
+    appends of the previous run.  If you need all-or-nothing semantics,
+    write to a staging namespace and promote via a single
+    ``CREATE TABLE ... AS`` after the run completes.
+
     Parameters
     ----------
     spark :
