@@ -104,6 +104,18 @@ def _everything_plan(rows: int = 80, seed: int = 42) -> DataGenPlan:
                         name="ts",
                         gen=TimestampColumn(start="2024-01-01", end="2024-12-31"),
                     ),
+                    # dtype=DATE routes ``TimestampColumn`` through
+                    # ``build_date_column`` (generator.py:595-603), a
+                    # separate code path from the timestamp branch.
+                    # Pin cross-path byte-equality so any divergence
+                    # between scalar-int and Column-seed branches of
+                    # the date builder fails the harness immediately --
+                    # same class of gap the FK coverage closed.
+                    ColumnSpec(
+                        name="birth_date",
+                        dtype=DataType.DATE,
+                        gen=TimestampColumn(start="1970-01-01", end="2025-12-31"),
+                    ),
                     ColumnSpec(
                         name="const",
                         gen=ConstantColumn(value="fixed"),
