@@ -76,7 +76,15 @@ def generate_bulk_inserts(
     df, raw_id = create_range_df(spark, total_inserts)
 
     local_id = (raw_id % F.lit(inserts_per_batch)).cast("long")
-    batch_offset = F.floor(raw_id.cast("double") / F.lit(inserts_per_batch)).cast("int")
+    # ``batch_offset`` is in ``[0, len(batch_infos))`` and indexes into
+    # the ``case_when_chain`` per-batch expression list.  Use long (not
+    # int) to stay consistent with ``_batch_id`` long everywhere else
+    # in the engine -- chunk sizes bounded by ``_auto_chunk_size``
+    # (~365 at 20M rows/chunk) don't hit int32 today, but a future
+    # ``_AUTO_CHUNK_TARGET_ROWS`` bump or an explicit large
+    # ``chunk_size`` could silently overflow.  Long closes the window
+    # without cost.
+    batch_offset = F.floor(raw_id.cast("double") / F.lit(inserts_per_batch)).cast("long")
 
     pk_cols = get_pk_columns(table_spec)
 
