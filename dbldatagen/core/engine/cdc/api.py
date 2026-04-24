@@ -235,6 +235,7 @@ def generate_cdc_batch(
     plan_or_base: CDCPlan | DataGenPlan,
     batch_id: int,
     format: str | CDCFormat | None = None,
+    resolved_plan: ResolvedPlan | None = None,
 ) -> dict[str, DataFrame]:
     """Generate a single CDC batch independently.
 
@@ -246,6 +247,12 @@ def generate_cdc_batch(
     ``generate_cdc_bulk`` (not by this function) — passing 0 or a
     value outside the plan's batch range used to return an
     empty-but-formatted DataFrame, silently masking the mistake.
+
+    ``resolved_plan`` is optional.  Pass a pre-computed ``ResolvedPlan``
+    (from ``resolve_plan(plan.base_plan)``) to skip the internal
+    resolution -- useful when iterating over batches in a loop.  Must
+    be built from the base plan of the same ``plan_or_base`` argument;
+    mismatches produce undefined FK resolution.
     """
     if isinstance(plan_or_base, DataGenPlan):
         plan = CDCPlan(base_plan=plan_or_base)
@@ -265,13 +272,12 @@ def generate_cdc_batch(
 
     fmt_name = plan.format.value
     # Resolve once and thread through -- mirrors the pattern in
-    # ``generate_cdc`` / ``generate_cdc_bulk``.  Without this, every
-    # call to ``generate_cdc_batch`` re-runs ``resolve_plan`` via the
-    # ``_generate_batch`` default even though the caller already knows
-    # the plan is stable.  Harmless but wasteful, and the asymmetry
-    # was an invitation to a future bug where one entry point re-validates
-    # FKs and another doesn't.
-    resolved = resolve_plan(plan.base_plan)
+    # ``generate_cdc`` / ``generate_cdc_bulk``.  When the caller passes
+    # ``resolved_plan`` (a loop over batches), reuse it and skip the
+    # driver-side plan walk + FK validation; otherwise resolve once
+    # here so ``_generate_batch`` doesn't re-resolve via its kwarg
+    # default.
+    resolved = resolved_plan if resolved_plan is not None else resolve_plan(plan.base_plan)
     return _generate_batch(spark, plan, batch_id, fmt_name, resolved_plan=resolved)
 
 
