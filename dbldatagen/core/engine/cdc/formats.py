@@ -68,6 +68,15 @@ def to_sql_server(df: DataFrame) -> DataFrame:
     either tolerate the randomization or swap in a rank-based seqval
     downstream.  Consumers using seqval only for dedup (row identity)
     are unaffected.
+
+    Degenerate case: for a PK-only or metadata-only table (no non-
+    underscore data columns), ``data_cols`` is empty and the seqval
+    collapses to ``hex(_batch_id)`` -- every row in a batch carries
+    the identical seqval.  That's non-unique per row, so even
+    row-identity dedup won't distinguish siblings within a batch.  The
+    empty-``data_cols`` branch below is the intentional fall-through;
+    add a data column to the table if per-row uniqueness inside a
+    batch matters to downstream consumers.
     """
     operation = (
         F.when(F.col("_op") == "I", F.lit(2))
