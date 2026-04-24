@@ -42,8 +42,15 @@ class DeltaWriteResult:
         Fully qualified, backtick-quoted UC table name
         (e.g. ``` `cat`.`sch`.`orders` ```).
     delta_version :
-        Final Delta version written. Version 0 is the initial
-        snapshot; each chunk appends one more version.
+        The actual final Delta log version of the table **after** all
+        writes for this invocation have committed, read via
+        ``DESCRIBE HISTORY``.  Unlike the first-run-only mapping
+        "v0 = snapshot, v1..vn = chunks", this value is correct even
+        when the target already existed (``saveAsTable(mode="overwrite")``
+        appends a new version rather than resetting the log) or when
+        some chunks skipped the table (tables with zero CDC rows in a
+        chunk don't advance that chunk's version).  Safe to use for
+        time-travel.
     """
 
     uc_table: str
@@ -98,7 +105,17 @@ def _make_lazy_chunk_list(
     num_chunks = -(-plan.num_batches // chunk_size)  # ceil division
 
     def _build_chunk(chunk_index: int) -> dict[str, DataFrame]:
-        """Build one chunk: bulk insert fusion + per-batch updates/deletes."""
+        """Build one chunk: bulk insert fusion + per-batch updates/deletes.
+
+        When a table has no CDC rows in this chunk,
+        ``_generate_chunk_for_table`` returns ``None`` and the key is
+        omitted from the returned dict.  Consumers should check
+        ``table_name in chunk`` before accessing -- the previous
+        behavior filled missing slots with a ``.limit(0)`` DataFrame,
+        which made every chunk write an empty Delta append for every
+        table (inflating the Delta log and confusing CDF consumers
+        reading by version).
+        """
         start_batch = chunk_index * chunk_size + 1  # batch_ids are 1-based
         end_batch = min(start_batch + chunk_size, plan.num_batches + 1)
         batch_ids = list(range(start_batch, end_batch))
@@ -115,13 +132,7 @@ def _make_lazy_chunk_list(
             )
             if chunk_df is not None:
                 chunk_tables[table_name] = chunk_df
-            else:
-                table_map = {t.name: t for t in plan.base_plan.tables}
-                chunk_tables[table_name] = generate_table(
-                    spark,
-                    table_map[table_name],
-                    resolved_plan,
-                ).limit(0)
+            # else: omit.  Callers guard with ``if table_name in chunk``.
 
         return chunk_tables
 
@@ -188,12 +199,16 @@ def generate_cdc_bulk(
         stream = generate_cdc_bulk(spark, plan)
         stream.initial["table"].write.format("delta").save(...)
         for chunk in stream.batches:
-            chunk["table"].write.format("delta").mode("append").save(...)
+            if "table" in chunk:  # chunk may omit tables with no changes
+                chunk["table"].write.format("delta").mode("append").save(...)
 
     Each iteration of the loop yields a dict of DataFrames containing
-    multiple logical batches unioned together.  The ``_batch_id`` /
-    ``_commit_version`` column still distinguishes individual batches
-    within each chunk.
+    multiple logical batches unioned together.  A table with zero CDC
+    rows in a given chunk is **omitted from the chunk dict** (not
+    included as an empty DataFrame) -- guard the access with
+    ``if name in chunk`` or ``chunk.get(name)`` so you don't write
+    empty appends.  The ``_batch_id`` / ``_commit_version`` column
+    still distinguishes individual batches within each chunk.
 
     Parameters
     ----------
@@ -445,7 +460,14 @@ def write_cdc_to_delta(
         initial_df.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(uc_table)
         logger.info("%s: v0 -> %s", table_name, uc_table)
 
-    # Batches (chunked)
+    # Batches (chunked).  ``if table_name in chunk`` is the load-bearing
+    # guard: ``_make_lazy_chunk_list`` omits a table from a chunk dict
+    # when that table had zero CDC rows in the chunk, so the skip is
+    # real (not a no-op over an empty-but-present DataFrame like the
+    # earlier ``.limit(0)`` fallback was).  Skipping a table in a
+    # chunk means its Delta log does NOT advance for that chunk -- the
+    # final ``delta_version`` per table reflects only the chunks that
+    # actually wrote rows.
     n = len(stream.batches)
     for chunk_idx, chunk in enumerate(stream.batches):
         for table_name in plan.cdc_tables:
@@ -455,5 +477,23 @@ def write_cdc_to_delta(
                 )
         logger.info("chunk %d/%d written", chunk_idx + 1, n)
 
-    logger.info("Done: %d Delta versions per table.", n + 1)
-    return {name: DeltaWriteResult(uc_table=uc, delta_version=n) for name, uc in uc_tables.items()}
+    # Report the actual committed Delta version per table via
+    # ``DESCRIBE HISTORY``.  The old code returned ``delta_version=n``
+    # (just the chunk count) which lies on:
+    #   (a) reruns -- ``saveAsTable(mode="overwrite")`` APPENDS a new
+    #       version to an existing Delta log (doesn't reset to 0), so
+    #       first-run "v0 snapshot + v1..vn chunks" no longer holds on
+    #       the second run, and ``n`` points at a historical commit
+    #       rather than the final one.
+    #   (b) tables with no changes in a chunk -- those chunks are now
+    #       skipped (Bug 2 fix), so a table's final version is
+    #       ``initial_version + count(chunks with rows)``, not n.
+    # ``DESCRIBE HISTORY ... LIMIT 1`` reads the most-recent row (Delta
+    # orders history descending by version), which is the final
+    # committed version after all appends land.
+    results: dict[str, DeltaWriteResult] = {}
+    for table_name, uc in uc_tables.items():
+        final_version = spark.sql(f"DESCRIBE HISTORY {uc} LIMIT 1").select("version").collect()[0][0]
+        results[table_name] = DeltaWriteResult(uc_table=uc, delta_version=int(final_version))
+    logger.info("Done: final per-table Delta versions: %s", {k: v.delta_version for k, v in results.items()})
+    return results

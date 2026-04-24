@@ -825,3 +825,62 @@ class TestMultiTableSeedConsistency:
             "for the 2nd table. This indicates the oracle is using the wrong seed "
             "for table index > 0."
         )
+
+
+class TestBulkChunkOmitsEmptyTables:
+    """Pin the contract that ``generate_cdc_bulk`` OMITS a table from a
+    chunk dict when that table had zero CDC rows in that chunk.  An
+    earlier ``.limit(0)`` fallback filled every slot with an empty
+    DataFrame, which made the ``if table_name in chunk`` guard in
+    ``write_cdc_to_delta`` a no-op: every chunk wrote an empty append
+    for every table, inflating the Delta log with meaningless commits
+    and confusing CDF consumers reading by version.
+    """
+
+    def test_empty_chunk_omits_table(self, spark):
+        """Construct a chunk where the delete-only config has no deletes
+        to emit yet (chunk's batches are all pre-``min_life``).  That
+        chunk's ``_generate_chunk_for_table`` returns None and the
+        table must be absent from the chunk dict -- not present with
+        a ``.limit(0)`` DataFrame.
+        """
+        plan = CDCPlan(
+            base_plan=DataGenPlan(
+                seed=42,
+                tables=[
+                    TableSpec(
+                        name="items",
+                        rows=20,
+                        primary_key=PrimaryKey(columns=["pk"]),
+                        columns=[
+                            ColumnSpec(name="pk", gen=SequenceColumn(start=1)),
+                            ColumnSpec(name="v", dtype=DataType.INT, gen=RangeColumn(min=1, max=100)),
+                        ],
+                    ),
+                ],
+            ),
+            num_batches=12,
+            table_configs={
+                "items": CDCTableConfig(
+                    batch_size=4,
+                    operations=OperationWeights(insert=0, update=0, delete=5),
+                    # min_life=10 means deletes don't fire until batch 10,
+                    # so chunks covering batches 1..4 and 5..8 have zero
+                    # CDC rows (no inserts, no updates, no deletes).
+                    min_life=10,
+                ),
+            },
+        )
+        stream = generate_cdc_bulk(spark, plan, chunk_size=4)
+        # Three chunks: batches [1..4], [5..8], [9..12].  Only the
+        # third should contain "items" (deletes fire at batch >= 10).
+        assert len(stream.batches) == 3
+        assert "items" not in stream.batches[0], (
+            "chunk 0 has zero CDC rows but chunk dict still contains " "'items' -- empty-chunk fallback reintroduced?"
+        )
+        assert "items" not in stream.batches[1], "chunk 1 has zero CDC rows but chunk dict still contains 'items'."
+        assert "items" in stream.batches[2], (
+            "chunk 2 spans batches 9..12 where deletes should fire; " "items should be present."
+        )
+        # Sanity: the non-empty chunk actually has rows.
+        assert stream.batches[2]["items"].count() > 0
