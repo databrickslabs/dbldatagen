@@ -882,6 +882,14 @@ class DataGenPlan(_StrictModel):
     """Top-level plan describing all tables to generate.
 
     Tables are generated in dependency order (FK references resolved automatically).
+
+    ``seed`` defaults to 42 for tutorial / demo convenience.  This is a
+    known reproducibility trap: two independent callers who both omit
+    ``seed`` will produce byte-identical data without realizing the
+    reproduction is coincidental.  Constructing a ``DataGenPlan``
+    without an explicit ``seed`` emits a ``UserWarning`` via the
+    ``_warn_if_seed_missing`` validator so CI / log scrape catches the
+    omission.  Production callers should always pass ``seed=<int>``.
     """
 
     tables: list[TableSpec]
