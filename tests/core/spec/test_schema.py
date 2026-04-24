@@ -803,6 +803,70 @@ class TestTableSpecValidation:
             TableSpec(name="t", columns=[ColumnSpec(name="x", gen=RangeColumn())], rows=-10)
 
 
+class TestSequenceColumnOverflowGuard:
+    """``SequenceColumn`` PKs overflow int64 at ``start + (rows-1)*step >
+    2**63 - 1``.  Engine computes this expression in Spark and ANSI mode
+    raises ``ARITHMETIC_OVERFLOW`` mid-job with no pointer back to the
+    column.  The TableSpec-level validator catches it at plan time."""
+
+    def test_overflow_at_large_step_times_rows(self):
+        """A user who picks ``step = 10**18`` with ``rows = 20`` gets
+        ``0 + 19 * 10**18 = 1.9e19`` which exceeds int64 max (~9.22e18)."""
+        with pytest.raises(ValueError, match="overflows int64"):
+            TableSpec(
+                name="t",
+                columns=[ColumnSpec(name="pk", gen=SequenceColumn(start=0, step=10**18))],
+                rows=20,
+            )
+
+    def test_overflow_at_large_start(self):
+        """Even with step=1, a near-Long.MAX ``start`` overflows at the
+        last row."""
+        with pytest.raises(ValueError, match="overflows int64"):
+            TableSpec(
+                name="t",
+                columns=[ColumnSpec(name="pk", gen=SequenceColumn(start=2**63 - 5, step=1))],
+                rows=100,
+            )
+
+    def test_negative_overflow_with_descending_step(self):
+        """``step = -big`` can underflow Long.MIN at the last row."""
+        with pytest.raises(ValueError, match="overflows int64"):
+            TableSpec(
+                name="t",
+                columns=[ColumnSpec(name="pk", gen=SequenceColumn(start=0, step=-(10**18)))],
+                rows=20,
+            )
+
+    def test_realistic_plan_accepted(self):
+        """The 500M-3B row target with typical steps stays well within
+        int64 -- guard must not flag realistic plans."""
+        TableSpec(
+            name="t",
+            columns=[ColumnSpec(name="pk", gen=SequenceColumn(start=1, step=1))],
+            rows=3_000_000_000,
+        )
+        TableSpec(
+            name="t",
+            columns=[ColumnSpec(name="pk", gen=SequenceColumn(start=10**6, step=1000))],
+            rows=10_000_000,
+        )
+
+    def test_non_pk_sequence_also_checked(self):
+        """SequenceColumn can appear on any column, not just PKs.  The
+        arithmetic overflow hits the same ``id * step + start`` engine
+        path regardless; validate across all columns."""
+        with pytest.raises(ValueError, match="overflows int64"):
+            TableSpec(
+                name="t",
+                columns=[
+                    ColumnSpec(name="pk", gen=SequenceColumn()),
+                    ColumnSpec(name="counter", gen=SequenceColumn(start=0, step=10**18)),
+                ],
+                rows=100,
+            )
+
+
 class TestExtrasForbid:
     """Every public plan model inherits from ``_StrictModel``, which sets
     ``extra="forbid"``.  A YAML plan with a typo'd key round-trips

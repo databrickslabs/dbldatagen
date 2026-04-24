@@ -872,6 +872,48 @@ class TableSpec(_StrictModel):
             raise ValueError(f"rows must be > 0, got {self.rows}")
         return self
 
+    @model_validator(mode="after")
+    def validate_sequence_column_overflow(self) -> TableSpec:
+        """Reject ``SequenceColumn`` configurations that would overflow
+        int64 at the last row.
+
+        The engine computes PK values as ``id * step + start`` in
+        ``pk.py``, cast to long.  Under Spark ANSI mode (default on
+        Databricks), ``(rows-1) * step + start`` exceeding
+        ``2**63 - 1`` raises ``ARITHMETIC_OVERFLOW`` deep inside the
+        Spark job with no pointer back to the offending column.  At
+        realistic scales (500M-3B rows with unit step) there's no
+        overflow path; the trap only fires on adversarial
+        ``(step, start, rows)`` combinations.  Validate here so the
+        error names the column and the magnitude, instead of
+        surfacing as an opaque runtime Spark error.
+
+        Must run after ``resolve_row_count`` so ``self.rows`` is an
+        int (the human-string parse happens there).
+        """
+        assert isinstance(self.rows, int)  # ``resolve_row_count`` ran
+        long_max = 2**63 - 1
+        long_min = -(2**63)
+        for col_spec in self.columns:
+            if not isinstance(col_spec.gen, SequenceColumn):
+                continue
+            start = col_spec.gen.start
+            step = col_spec.gen.step
+            # The last emitted value is ``start + (rows - 1) * step``.
+            # Check both bounds: with a positive step the max is at
+            # row_count - 1; with a negative step the min is.
+            last_val = start + (self.rows - 1) * step
+            if last_val > long_max or last_val < long_min:
+                raise ValueError(
+                    f"Table '{self.name}' column '{col_spec.name}': "
+                    f"SequenceColumn(start={start}, step={step}) over "
+                    f"{self.rows} rows would emit {last_val} at the last "
+                    f"row, which overflows int64 ([{long_min}, {long_max}]).  "
+                    f"Pick a smaller ``step`` or ``start`` (or reduce "
+                    f"``rows``)."
+                )
+        return self
+
 
 # ---------------------------------------------------------------------------
 # Top-level plan
