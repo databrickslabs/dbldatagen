@@ -30,7 +30,7 @@ import pytest
 from pyspark.sql import Row
 
 from dbldatagen.core.engine.cdc import generate_cdc, generate_cdc_bulk, generate_expected_state
-from dbldatagen.core.spec.cdc_schema import CDCPlan
+from dbldatagen.core.spec.cdc_schema import CDCPlan, CDCTableConfig, OperationWeights
 from dbldatagen.core.spec.dsl import (
     array,
     integer,
@@ -146,14 +146,14 @@ def _row_key(row: Row) -> tuple[int, int, str]:
     return (row.pk, row._batch_id, row._op)
 
 
-def _collect_and_index(stream_batches) -> dict[tuple[int, int, str], Row]:
+def _collect_and_index(stream_batches, table_name: str = "everything") -> dict[tuple[int, int, str], Row]:
     """Flatten a CDC stream's per-batch DataFrames into one dict keyed by
     (pk, batch_id, op).  Covers I / U / UB / D — every row type the
     engine emits.
     """
     indexed: dict[tuple[int, int, str], Row] = {}
     for b in stream_batches:
-        for r in b["everything"].collect():
+        for r in b[table_name].collect():
             indexed[_row_key(r)] = r
     return indexed
 
@@ -263,6 +263,91 @@ class TestCrossPathTimestampsTzIndependent:
                 spark.conf.unset(key)
             else:
                 spark.conf.set(key, prev)
+
+
+class TestCrossPathMultiUpdatePerChunk:
+    """Regression test for the fused-updates under-emission bug.
+
+    Scenario: ``update_period`` much smaller than chunk span, so each
+    row should fire several update events inside one chunk.  The
+    scalar per-batch path (``update_indices_at_batch``) emits all
+    matching ``k`` values at every batch; the fused path
+    (``generate_fused_updates``) computed a single ``candidate_b`` per
+    row, emitting only the first in-chunk match and silently dropping
+    every subsequent update for the same row.
+
+    Construction:
+        initial_rows=20, batch_size=10, weights (0, 10, 0) ->
+        update_period = 20 // 10 = 2
+        num_batches=6 with chunk_size=6 -> single fused chunk of 6
+        batches; each row should fire ~3 updates.
+
+    Without the multi-update fix, scalar emits ~6x as many U/UB rows
+    as bulk for each row's batches, so the (pk, batch, op) tuple sets
+    diverge visibly.
+    """
+
+    @staticmethod
+    def _high_update_plan(rows: int = 20, seed: int = 42) -> DataGenPlan:
+        return DataGenPlan(
+            seed=seed,
+            tables=[
+                TableSpec(
+                    name="items",
+                    rows=rows,
+                    primary_key=PrimaryKey(columns=["pk"]),
+                    columns=[
+                        pk_auto("pk"),
+                        ColumnSpec(
+                            name="v",
+                            dtype=DataType.INT,
+                            gen=RangeColumn(min=1, max=1000),
+                        ),
+                    ],
+                ),
+            ],
+        )
+
+    def test_multi_update_per_chunk_matches_scalar(self, spark):
+        """Scalar and bulk must emit the same (pk, batch_id, op) set
+        when one chunk contains multiple update_period boundaries."""
+        plan = CDCPlan(
+            base_plan=self._high_update_plan(),
+            num_batches=6,
+            table_configs={
+                "items": CDCTableConfig(
+                    batch_size=10,
+                    operations=OperationWeights(insert=0, update=10, delete=0),
+                    min_life=1,
+                ),
+            },
+        )
+        per = generate_cdc(
+            spark,
+            CDCPlan(
+                base_plan=self._high_update_plan(),
+                num_batches=6,
+                table_configs=plan.table_configs,
+            ),
+            num_batches=6,
+        )
+        bulk = generate_cdc_bulk(
+            spark,
+            plan,
+            num_batches=6,
+            chunk_size=6,  # one chunk -> fused path sees all 6 batches
+        )
+        per_idx = _collect_and_index(per.batches, table_name="items")
+        bulk_idx = _collect_and_index(bulk.batches, table_name="items")
+        assert per_idx, "scalar path emitted no batch rows"
+        only_scalar = set(per_idx) - set(bulk_idx)
+        only_bulk = set(bulk_idx) - set(per_idx)
+        assert not only_scalar and not only_bulk, (
+            f"multi-update-per-chunk divergence: "
+            f"scalar has {len(only_scalar)} extra, bulk has {len(only_bulk)} extra.\n"
+            f"  only in scalar: {sorted(only_scalar)[:10]}...\n"
+            f"  only in bulk:   {sorted(only_bulk)[:10]}..."
+        )
 
 
 class TestOracleMatchesInitialSnapshot:
