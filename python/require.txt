@@ -6,7 +6,7 @@ pickleshare==0.7.5
 py4j==0.10.9
 pyarrow==8.0.0
 pyspark==3.4.1
-python-dateutil==2.8.2
+python-dateutil==2.9.0.post0
 six==1.16.0
 pyparsing==3.0.9
 jmespath==0.10.0
