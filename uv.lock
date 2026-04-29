@@ -600,7 +600,7 @@ docs = [
     { name = "jinja2", specifier = ">3.1,<4" },
     { name = "myst-parser", specifier = "~=3.0" },
     { name = "nbsphinx", specifier = "~=0.9.8" },
-    { name = "numpydoc", specifier = "~=1.8" },
+    { name = "numpydoc", specifier = "~=1.10" },
     { name = "pypandoc", specifier = "~=1.13" },
     { name = "rst2pdf", extras = ["sphinx"], specifier = "~=0.102" },
     { name = "sphinx", specifier = "~=7.0.0" },
