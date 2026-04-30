@@ -2,7 +2,7 @@
 
 ## Overview
 
-`dbldatagen.core` is a next-generation synthetic data engine that lives alongside the existing v0 API. Both work independently -- you can use v0 and core in the same project without conflicts.
+`dbldatagen.core` is a new synthetic data engine that lives alongside the existing v0 API. Both work independently -- you can use v0 and core in the same project without conflicts. Most v0 capabilities have a direct or indirect equivalent in core; this guide maps each one and calls out the handful of true differences (e.g. CDC, FK references, struct columns are core-only; Beta/Gamma distributions and `uniqueValues` are v0-only today).
 
 ## Installation
 
@@ -26,7 +26,11 @@ pip install dbldatagen[core-faker]   # Faker-based text generation
 
 ```python
 # v0
-dg = DataGenerator(spark, rows=10000, name="orders", randomSeed=42)
+dg = (
+    DataGenerator(sparkSession=spark, name="orders", rows=10000, randomSeed=42)
+    .withIdOutput()
+    .withColumn(...)
+)
 df = dg.build()
 
 # core
@@ -36,8 +40,13 @@ from dbldatagen.core.spec.schema import DataGenPlan, TableSpec, PrimaryKey
 plan = DataGenPlan(
     seed=42,
     tables=[
-        TableSpec(name="orders", rows=10000, columns=[...], primary_key=PrimaryKey(columns=["id"]))
-    ]
+        TableSpec(
+            name="orders",
+            rows=10000,
+            columns=[...],
+            primary_key=PrimaryKey(columns=["id"]),
+        )
+    ],
 )
 result = generate(spark, plan)
 df = result["orders"]
@@ -146,33 +155,55 @@ expression("total", "quantity * unit_price", dtype=DataType.DOUBLE)
 #### Template / Pattern
 
 ```python
-# v0 (regex-style)
-.withColumn("code", StringType(), template=r"ORD-\d{4}")
+# v0 (character-class placeholders -- e.g. `d` = random decimal digit)
+.withColumn("code", StringType(), template=r"ORD-dddd")
 
-# core (placeholder-style)
+# core (named placeholders with explicit length)
 from dbldatagen.core.spec.dsl import pattern
 pattern("code", template="ORD-{digit:4}")
 ```
 
-core template placeholders: `{digit:N}`, `{alpha:N}`, `{hex:N}`, `{seq}`, `{uuid}`
+v0 placeholders are single literal chars: `d/D` (decimal), `a/A` (alpha),
+`x/X` (hex), `k/K` (alphanumeric), `\\w/\\W` (word), `\\n/\\N` (number).
+core placeholders are named with explicit length: `{digit:N}`, `{alpha:N}`,
+`{hex:N}`, `{seq}`, `{uuid}`.
 
 #### Prefix/Suffix
 
 ```python
-# v0
+# v0 -- a `prefix` shortcut, plus the equivalent template form
 .withColumn("sku", StringType(), prefix="SKU-")
+.withColumn("sku2", StringType(), template=r"SKU-dddddd")
 
-# core
+# core -- expressed as a single template
 pattern("sku", template="SKU-{digit:6}")
 ```
 
 ### Primary Keys
 
-```python
-# v0 (implicit -- the 'id' column is auto-generated)
-dg = DataGenerator(spark, rows=1000)
+v0 always materialises an implicit seed column (default name `id`) via
+`spark.range`; `withIdOutput()` keeps it in the output. UUID and patterned
+keys are built as ordinary columns derived from that seed. core makes the
+key explicit and lifts that information to plan level so foreign-key
+generation can target it.
 
-# core (explicit)
+```python
+# v0 -- sequential integer id
+DataGenerator(sparkSession=spark, name="orders", rows=1000).withIdOutput()
+
+# v0 -- UUID id (computed from the seed column)
+(
+    DataGenerator(sparkSession=spark, name="orders", rows=1000)
+    .withColumn("id", StringType(), expr="uuid()", omit=False)
+)
+
+# v0 -- patterned id (template applied to the seed column)
+(
+    DataGenerator(sparkSession=spark, name="orders", rows=1000)
+    .withColumn("id", StringType(), template=r"ORD-dddddd")
+)
+
+# core -- explicit primary key, declared once on the column
 from dbldatagen.core.spec.dsl import pk_auto, pk_uuid, pk_pattern
 
 pk_auto("id")                          # Sequential integer (1, 2, 3, ...)
@@ -216,8 +247,11 @@ integer("feature_1", min=0, max=100)
 integer("feature_2", min=0, max=100)
 ```
 
-Expand `numColumns` manually when migrating; core does not provide a
-converter, and each column spec is explicit by design.
+Expand `numColumns` manually when migrating. This is a deliberate design
+choice in core (every column spec is explicit, named, and individually
+validated), not a side-effect of template validation. If a generator
+needs many similar columns, build the list with a Python comprehension
+and splat it into `TableSpec.columns`.
 
 ### Unique Values
 
@@ -225,9 +259,15 @@ converter, and each column spec is explicit by design.
 # v0 -- constrain to exactly 50 distinct values
 .withColumn("category", IntegerType(), minValue=1, maxValue=1000, uniqueValues=50)
 
-# core -- adjust range to match cardinality: max = min + (N-1) * step
+# core -- no direct equivalent today; the closest workaround is to adjust
+# the range to match the desired cardinality:
+#   max = min + (N-1) * step
 integer("category", min=1, max=50)
 ```
+
+`uniqueValues=N` with a wider range is a known follow-up for core; the
+range-narrowing workaround above keeps the resulting cardinality but
+loses the original `[min, max]` envelope.
 
 ### Distributions
 
@@ -246,14 +286,18 @@ ColumnSpec(
 ```
 
 Available in both: `Normal`, `Exponential`
-v0 only: `Beta`, `Gamma`
+v0 only: `Beta`, `Gamma` (tracked as follow-ups for core)
 core only: `LogNormal`, `Zipf`, `WeightedValues`
 
-## Core-Only Features (No v0 Equivalent)
+## Core-Only Features
 
-These features are new in core and have no v0 equivalent:
+These have no v0 equivalent today.
 
-### Foreign Keys
+### Foreign Keys (cross-table references)
+
+v0's `baseColumn` only correlates two columns inside the same table.
+core lifts this to plan level so a child column can draw from a parent
+table's primary key, with topology validated up front:
 
 ```python
 from dbldatagen.core.spec.dsl import pk_auto, fk, integer
@@ -278,32 +322,21 @@ plan = DataGenPlan(
 )
 ```
 
-### Nested Types (Struct, Array)
+### Nested Struct Columns
+
+v0 can pass through a `StructType` defined elsewhere but does not
+declare struct fields in the column spec itself. core defines the
+nested fields inline:
 
 ```python
-from dbldatagen.core.spec.dsl import struct, array, text, integer
+from dbldatagen.core.spec.dsl import struct, text, integer
 
 struct("address", [
     text("city", ["Austin", "NYC", "LA"]),
     text("state", ["TX", "NY", "CA"]),
     integer("zip", min=10000, max=99999),
 ])
-
-array("tags", ValuesColumn(values=["sale", "new", "popular"]), min_length=1, max_length=4)
 ```
-
-### Faker Integration
-
-```python
-from dbldatagen.core.spec.dsl import faker
-
-faker("email", provider="email")
-faker("full_name", provider="name")
-faker("address", provider="street_address")
-faker("phone", provider="phone_number")
-```
-
-Requires: `pip install dbldatagen[core-faker]`
 
 ### CDC (Change Data Capture)
 
@@ -315,14 +348,56 @@ initial_df = stream.initial["orders"]
 batch_1 = stream.batches[0]["orders"]  # Contains _op column: I/U/D
 ```
 
-## Features Not Supported in Core
+## Different Surface for the Same Capability
 
-These v0 features have no core equivalent:
+v0 supports each of these — core just exposes them through a different
+API. Listed here for orientation when porting a v0 generator.
 
-| v0 Feature | Recommendation |
+### Array Columns
+
+```python
+# v0 -- combine N columns into an array via numColumns + structType
+.withColumn("tags", StringType(),
+            values=["sale", "new", "popular"],
+            numColumns=4,
+            structType="array")
+
+# core -- declare the element generator and length bounds directly
+from dbldatagen.core.spec.dsl import array
+from dbldatagen.core.spec.schema import ValuesColumn
+
+array("tags",
+      ValuesColumn(values=["sale", "new", "popular"]),
+      min_length=1, max_length=4)
+```
+
+### Faker / Custom Text Providers
+
+```python
+# v0 -- FakerText wraps a faker callable; PyfuncText wraps any callable
+from dbldatagen.text_generator_plugins import FakerText
+.withColumn("email", StringType(),
+            text=FakerText(lambda fake: fake.email(), rootProperty="faker"))
+
+# core -- name the provider directly on a faker() column
+from dbldatagen.core.spec.dsl import faker
+
+faker("email", provider="email")
+faker("full_name", provider="name")
+```
+
+Requires: `pip install dbldatagen[core-faker]`
+
+## v0-Only Features (Today)
+
+These v0 features do not yet have a core equivalent. They are tracked
+as follow-ups for core; the recommended interim workarounds are:
+
+| v0 Feature | Workaround in core |
 |-----------|----------------|
-| `format` (printf-style `%05d`) | Use `PatternColumn(template="{digit:5}")` or `ExpressionColumn(expr="format_string(...)")` |
-| `text=ILText(...)` (Lorem Ipsum) | Use `FakerColumn(provider="paragraph")` |
-| `withConstraint(SqlExpr(...))` | Design generation to naturally satisfy rules; core doesn't do post-hoc filtering |
-| `Beta` / `Gamma` distributions | Use `Normal` or `LogNormal` as approximation |
+| `uniqueValues=N` (constrain cardinality below the natural range) | Narrow the range so cardinality matches: `max = min + (N-1) * step` |
+| `format` (printf-style `%05d`) | `pattern("col", template="{digit:5}")` or `expression("col", "format_string(...)")` |
+| `text=ILText(...)` (Lorem Ipsum) | `faker("col", provider="paragraph")` |
+| `withConstraint(SqlExpr(...))` (post-hoc filtering) | Design generation so the rule holds by construction; core does not filter rows after generation |
+| `Beta` / `Gamma` distributions | Approximate with `Normal` or `LogNormal` for now |
 
