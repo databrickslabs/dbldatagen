@@ -192,7 +192,10 @@ def apply_distribution(
             "weighted_sample_expr with the discrete value list).  Schema "
             "validation should have caught this."
         )
-    return uniform_sample(cell_seed_col, n)  # type: ignore[unreachable]
+    raise TypeError(
+        f"apply_distribution: unhandled Distribution subclass "
+        f"{type(distribution).__name__}.  Add an isinstance branch above."
+    )
 
 
 def _array_index(cell_seed_col: Column, values: list) -> Column:
