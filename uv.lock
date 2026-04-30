@@ -581,7 +581,7 @@ dev = [
     { name = "py4j", specifier = "~=0.10.9" },
     { name = "pyarrow", specifier = ">=8.0.0,<23.0.0" },
     { name = "pylint", specifier = "~=3.3.1" },
-    { name = "pylint-pytest", specifier = "==2.0.0a0" },
+    { name = "pylint-pytest", specifier = "==2.0.0a1" },
     { name = "pyparsing", specifier = ">=3.0.0,<3.3.0" },
     { name = "pyspark", extras = ["sql"], specifier = ">=3.4.1,<4.2" },
     { name = "pytest", specifier = "~=8.3.3" },
@@ -612,7 +612,7 @@ lint = [
     { name = "black", specifier = "~=25.12.0" },
     { name = "mypy", specifier = "~=1.9.0" },
     { name = "pylint", specifier = "~=3.3.1" },
-    { name = "pylint-pytest", specifier = "==2.0.0a0" },
+    { name = "pylint-pytest", specifier = "==2.0.0a1" },
     { name = "ruff", specifier = "~=0.13.0" },
     { name = "types-pyyaml", specifier = "~=6.0.12" },
     { name = "types-requests", specifier = "~=2.31.0" },
@@ -1741,15 +1741,15 @@ wheels = [
 
 [[package]]
 name = "pylint-pytest"
-version = "2.0.0a0"
+version = "2.0.0a1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pylint" },
     { name = "pytest" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9e/d5/f462966dfef323a12ebeabdaac17a7fa9265b11c7e41fcf386acd1da77d8/pylint-pytest-2.0.0a0.tar.gz", hash = "sha256:78f44012d005cc74ffe3136bcc766a8624ada17d63e47ed67c033958d49c133b", size = 13507, upload-time = "2024-02-02T16:54:40.144Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/07/39/6ed26ff23099a5d925d6dc9f7fb66fb71b339f0c1b82e9c4efd50d1f4ab1/pylint_pytest-2.0.0a1.tar.gz", hash = "sha256:b35662aa5f1f5cad6b3eac4614d7be71d9477f39dddbf4445dcec3d5981e18fd", size = 13717, upload-time = "2026-01-07T09:47:08.869Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5f/f8/be62678ce54a1973053041e57bac00293a2bd84d26232792c4c3bb618a0d/pylint_pytest-2.0.0a0-py3-none-any.whl", hash = "sha256:8c2223680619f1e34a3e82cfab9c9d1fbfd0558c321c35196a74a1a4babfbf6c", size = 11778, upload-time = "2024-02-02T16:54:38.13Z" },
+    { url = "https://files.pythonhosted.org/packages/ef/99/78323bafd186c07bee094cf99a22d5c041e2047be4df5cb77743571ad8de/pylint_pytest-2.0.0a1-py3-none-any.whl", hash = "sha256:27d874c83a2e470ed9ece412c02d8b7178fb55b8f9be9fdd3f9e7b914f02980d", size = 11929, upload-time = "2026-01-07T09:47:07.772Z" },
 ]
 
 [[package]]
