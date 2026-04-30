@@ -141,43 +141,22 @@ def generate_fused_updates(
 
     df, id_col = create_range_df(spark, upper_k)
 
-    # For row k, the update batches b within [min_batch, max_batch]
-    # satisfy (b + k) % up == 0.  That's an arithmetic progression
-    # starting at ``first_b = ceil((min_batch + k) / up) * up - k``,
-    # stepping by ``up``, up to ``max_batch``.  A single chunk may
-    # contain multiple progression terms -- e.g. chunk=[1..6] with
-    # update_period=2 and k=1 yields first_b=1 then 3 then 5 -- so we
-    # must emit three update events for row k=1, not one.  The older
-    # implementation computed first_b only and dropped every
-    # subsequent update in the chunk; regression pinned by
+    # For row k, candidate update batches in [min_batch, max_batch]
+    # form an arithmetic progression with step ``up``.  Emitting all
+    # progression terms (not just the first) is pinned by
     # ``TestCrossPathMultiUpdatePerChunk``.
     up_lit = F.lit(up).cast("long")
     min_b_lit = F.lit(min_batch).cast("long")
     max_b_lit = F.lit(max_batch).cast("long")
 
-    # Integer ceil-div ``(a + b - 1) div b``.  ``_ceil_num`` is bounded
-    # by ``min_batch + upper_k + up``; at the 500M-3B row scale this
-    # path targets, _ceil_num tops out ~3e9 -- comfortably inside
-    # double precision (2**53 ~= 9e15), so ``F.floor(double / double)
-    # .cast("long")`` is exact and stays on the Column API (no f-string
-    # into ``F.expr``, which was injection-adjacent even with a
-    # driver-derived divisor).
     df = df.withColumn("_ceil_num", min_b_lit + id_col + up_lit - F.lit(1).cast("long"))
     ceil_div = F.floor(F.col("_ceil_num").cast("double") / up_lit.cast("double")).cast("long")
     df = df.withColumn("_first_b", (ceil_div * up_lit - id_col).cast("long"))
 
-    # ``F.sequence(start, end, step)`` raises
-    # ``ILLEGAL_SEQUENCE_BOUNDARIES`` when ``start > end`` with a
-    # positive step (it does NOT just return an empty array).  Filter
-    # rows whose ``first_b`` lies beyond ``max_batch`` before handing
-    # them to ``sequence``; those rows would contribute zero candidate
-    # batches anyway.
+    # F.sequence raises ILLEGAL_SEQUENCE_BOUNDARIES (not empty array)
+    # when start > end with positive step; pre-filter.
     df = df.filter(F.col("_first_b") <= max_b_lit)
 
-    # Generate the full progression ``[first_b, first_b+up, ..., max_b]``
-    # per row, then explode into one row per candidate.  Each surviving
-    # row produces at least one candidate by construction (first_b is
-    # the smallest batch in range satisfying the update period).
     df = df.withColumn("_candidates", F.sequence(F.col("_first_b"), max_b_lit, up_lit))
     df = df.withColumn("_batch_id", F.explode(F.col("_candidates")))
     df = df.drop("_ceil_num", "_first_b", "_candidates")

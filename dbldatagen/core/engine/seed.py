@@ -104,11 +104,6 @@ def null_mask_expr(
     else:
         null_seed = column_seed ^ _NULL_SEED_XOR
     null_hash = cell_seed_expr(null_seed, id_col)
-    # pmod, not abs+%: abs(Long.MIN_VALUE) overflows (ARITHMETIC_OVERFLOW
-    # under ANSI, silently negative otherwise), and Spark's ``%`` on a
-    # negative dividend returns a negative remainder — either path breaks
-    # the ``< threshold`` comparison.  pmod gives a non-negative result
-    # with no abs.
     return F.pmod(null_hash, F.lit(_NULL_PRECISION)) < F.lit(threshold)
 
 

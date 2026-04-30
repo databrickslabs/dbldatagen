@@ -90,29 +90,14 @@ def generate_table(
     """
     row_count = int(table_spec.rows)
     if table_spec.seed is None:
-        # ``DataGenPlan.propagate_seeds`` assigns a per-table seed
-        # derived from the plan seed during construction, so callers
-        # who route through ``generate(plan)`` never land here.  A
-        # caller that constructs a ``TableSpec`` directly and skips
-        # the plan-level propagation (or mutates ``.seed = None``
-        # after the fact) would previously silently get a hardcoded
-        # ``42`` — breaking reproducibility claims.  Fail loudly.
         raise ValueError(
             f"TableSpec '{table_spec.name}'.seed is None.  Either set "
             f"it explicitly on the TableSpec or go through a "
             f"DataGenPlan (which propagates plan.seed to each table "
             f"during Pydantic validation)."
         )
-    # Name-based compatibility check on ``resolved_plan``: the table
-    # name must exist in the plan used to compute the resolution, so
-    # FK entries keyed by ``(table_name, col_name)`` line up with this
-    # spec.  Identity (``is``) is too strict -- CDC's insert-subset
-    # path legitimately constructs a fresh ``TableSpec`` per batch
-    # (different PK sequence start + per-batch seed) that shares the
-    # name with the planned table but not the object identity.
-    # ``generate()`` applies the stronger identity check at the user
-    # entry point; this helper only catches the "completely wrong
-    # plan" case, which is still the common mistake.
+    # Name-based (not identity) check: CDC's insert-subset path
+    # legitimately constructs fresh per-batch TableSpecs.
     if resolved_plan is not None:
         plan_table_names = {t.name for t in resolved_plan.plan.tables}
         if table_spec.name not in plan_table_names:

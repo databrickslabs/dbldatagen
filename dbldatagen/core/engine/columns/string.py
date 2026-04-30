@@ -135,15 +135,10 @@ def build_pattern_column(
 def _seed_xor(column_seed: int | Column, constant: int) -> int | Column:
     """XOR a column seed (int or Column) with a constant.
 
-    PERFORMANCE NOTE: The ``int | Column`` path is required for fused
-    multi-batch CDC where column_seed is a Column from map-based lookup
-    (see ``column_seed_map`` in seed.py).  Do not simplify to int-only.
-
-    Int branch clamps through ``to_signed64`` — XOR with a Python-side
-    ``constant`` that exceeds signed-64 (e.g. a large ``idx * hash``
-    multiplier) would otherwise push the result outside F.lit's
-    accepted range and raise at query-build time, even though the
-    XOR's low 64 bits are well-defined.
+    The ``int | Column`` split is required: fused multi-batch CDC
+    passes a Column from map-based lookup (``column_seed_map`` in
+    seed.py).  The int branch clamps via ``to_signed64`` so XOR
+    results outside signed-64 don't trip F.lit at query-build time.
     """
     if isinstance(column_seed, Column):
         return column_seed.bitwiseXOR(F.lit(constant).cast("long"))

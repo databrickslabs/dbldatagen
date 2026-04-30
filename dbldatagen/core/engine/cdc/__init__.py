@@ -40,10 +40,6 @@ from dbldatagen.core.engine.cdc.api import (
 from dbldatagen.core.engine.cdc.oracle import generate_expected_state
 
 
-# Public surface only.  Private helpers (``_auto_chunk_size``,
-# ``_common.*``, the per-path ``single_batch``/``fused``/``bulk`` /
-# ``stateless`` / ``formats`` submodules) are accessed via their dotted
-# path when needed by tests or advanced users.
 __all__ = [
     "CDCStream",
     "DeltaWriteResult",

@@ -36,12 +36,9 @@ def build_timestamp_column(
 ) -> Column:
     """Generate timestamps in [start, end] range.
 
-    Maps the cell seed uniformly (or according to *distribution*) across the
-    epoch-seconds range, then casts to ``TimestampType``.  ``cast(long ->
-    timestamp)`` reads the long as seconds-since-epoch UTC — session-TZ-
-    independent.  The previous ``F.from_unixtime(epoch).cast("timestamp")``
-    route went through session-TZ format+parse that happens to round-trip
-    but is fragile; the direct cast removes the round-trip dependency.
+    ``cast(long -> timestamp)`` reads the long as UTC epoch seconds
+    (session-TZ-independent), unlike ``F.from_unixtime(...).cast("timestamp")``
+    which round-trips through session-TZ format+parse.
     """
     if isinstance(id_col, str):
         id_col = F.col(id_col)
@@ -68,13 +65,10 @@ def build_date_column(
 ) -> Column:
     """Generate dates in [start, end] range.
 
-    Work in days-since-epoch (UTC) and materialise via
-    ``F.date_add(F.lit("1970-01-01").cast("date"), days)`` so the output
-    date is session-TZ-independent.  The previous
-    ``F.from_unixtime(epoch_seconds).cast("date")`` route picked the
-    session-TZ wall-clock date, so a row whose epoch fell near midnight
-    UTC landed on different dates in UTC vs ``America/Los_Angeles``
-    sessions — breaking reproducibility across clusters.
+    Materialised via ``date_add`` on days-since-epoch (UTC).  The
+    previous ``from_unixtime(...).cast("date")`` picked the session-TZ
+    wall-clock date and gave non-reproducible output across clusters
+    when the epoch landed near midnight UTC.
     """
     if isinstance(id_col, str):
         id_col = F.col(id_col)

@@ -27,30 +27,21 @@ def build_uuid_column(id_col: Column | str, column_seed: int | Column) -> Column
     if isinstance(id_col, str):
         id_col = F.col(id_col)
 
-    # Clamp seed + 1 into signed-64 range.  At column_seed == Long.MAX_VALUE
-    # the naive "+ 1" overflows: as a Python int the int branch would pass
-    # 2**63 to F.lit (which rejects it); as a Spark Column the "+ 1" raises
-    # ARITHMETIC_OVERFLOW under ANSI mode.  Both branches map MAX → MIN
-    # (two's-complement wrap) via CaseWhen short-circuit in the Column case.
+    # Clamp seed and seed+1 into signed-64 range; at Long.MAX_VALUE the
+    # naive "+ 1" overflows (ARITHMETIC_OVERFLOW under ANSI for Column,
+    # F.lit reject for Python int).
     if isinstance(column_seed, Column):
         seed_col = column_seed
         long_max = F.lit(2**63 - 1).cast("long")
         long_min = F.lit(-(2**63)).cast("long")
         seed_col_plus1 = F.when(seed_col == long_max, long_min).otherwise(seed_col + F.lit(1).cast("long"))
     else:
-        # Clamp both ``seed`` and ``seed + 1`` through ``to_signed64``.
-        # Without the clamp on the base, a caller passing ``column_seed =
-        # 2**63`` (legal Python int, illegal int64) would raise at
-        # ``F.lit`` before the +1 branch even ran.
         seed_col = F.lit(to_signed64(column_seed)).cast("long")
         seed_col_plus1 = F.lit(to_signed64(column_seed + 1)).cast("long")
 
     hi = F.xxhash64(seed_col, id_col)
     lo = F.xxhash64(seed_col_plus1, id_col)
 
-    # Convert each 64-bit hash to a 16-char lowercase hex string.
-    # Use two's-complement hex directly — no abs(), which would halve
-    # the output space and mishandle Long.MIN_VALUE.
     hi_hex = F.lower(F.lpad(F.hex(hi), 16, "0"))
     lo_hex = F.lower(F.lpad(F.hex(lo), 16, "0"))
 

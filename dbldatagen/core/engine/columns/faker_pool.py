@@ -40,15 +40,9 @@ def build_faker_column(
     if kwargs is None:
         kwargs = {}
 
-    # Generate the pool on the driver (deterministic).  Faker expects a
-    # non-negative 32-bit seed; fold the high 32 bits into the low 32
-    # bits before masking so two columns whose seeds differ only above
-    # bit 31 get distinct pools.  Mask to the unsigned 64-bit range
-    # FIRST — Python's ``>>`` on a negative int sign-extends
-    # arithmetically, so ``-2 >> 32`` is ``-1``, collapsing half of the
-    # signed-64 seed space onto the same mix value.  ``derive_column_seed``
-    # returns both positive and negative values, so negatives are the
-    # common case, not the edge.
+    # Faker wants a non-negative 32-bit seed.  Mask to u64 BEFORE the
+    # right-shift -- Python ``>>`` on negative ints sign-extends and
+    # collapses half the signed-64 space onto the same mix value.
     fake = Faker(locale or "en_US")
     seed_u64 = column_seed & 0xFFFFFFFFFFFFFFFF
     seed32 = (seed_u64 ^ (seed_u64 >> 32)) & 0x7FFFFFFF
@@ -71,18 +65,9 @@ def build_faker_column(
     @F.pandas_udf(T.StringType())  # type: ignore[call-overload]
     def _faker_pool_udf(id_series: pd.Series) -> pd.Series:
         ids = id_series.values.astype(np.int64)
-        # Deterministic index: non-negative pmod of mix(seed, id) over pool_size.
-        # ``np.abs(np.iinfo(np.int64).min)`` silently wraps (NumPy does not
-        # raise) so the old ``np.abs(x) % N`` produced negative indices on
-        # the Long.MIN_VALUE row, which pandas then interpreted as Python
-        # negative indexing.  ``np.mod`` uses Python-semantics modulo and
-        # is always non-negative when the divisor is positive.
-        #
-        # The LCG step ``x * 6364... + 1442...`` overflows int64 by
-        # design (that's how the mixer scrambles bits); NumPy's
-        # ``RuntimeWarning: overflow encountered in scalar multiply``
-        # fires per partition and spams executor logs.  Silence locally
-        # so the mix runs clean under default warning filters.
+        # ``np.mod`` (not ``np.abs() % N``): np.abs silently wraps on
+        # Long.MIN_VALUE.  ``errstate(over="ignore")`` silences the LCG
+        # overflow warning -- overflow is the mixing mechanism here.
         with np.errstate(over="ignore"):
             x = ids ^ np.int64(_column_seed)
             x = x * np.int64(6364136223846793005) + np.int64(1442695040888963407)
