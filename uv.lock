@@ -466,16 +466,16 @@ wheels = [
 
 [[package]]
 name = "databricks-sdk"
-version = "0.102.0"
+version = "0.105.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "google-auth" },
     { name = "protobuf" },
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ab/b3/41ff1c3afe092df9085e084e0dc81c45bca5ed65f7b60dc59df0ade43c76/databricks_sdk-0.102.0.tar.gz", hash = "sha256:8fa5f82317ee27cc46323c6e2543d2cfefb4468653f92ba558271043c6f72fb9", size = 887450, upload-time = "2026-03-19T08:15:54.428Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cc/4a/14c0608545b9a0a1103d6a964b226241c336ff8aa99d4226f9741af60f17/databricks_sdk-0.105.0.tar.gz", hash = "sha256:c52bf21c5e5814bc3d741a98fc772f4b6f1f9cfa08e90bf7580aa1592bc92e92", size = 917927, upload-time = "2026-04-23T08:53:44.249Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/02/8c/d082bd5f72d7613524d5b35dfe1f71732b2246be2704fad68cd0e3fdd020/databricks_sdk-0.102.0-py3-none-any.whl", hash = "sha256:75d1253276ee8f3dd5e7b00d62594b7051838435e618f74a8570a6dbd723ec12", size = 838533, upload-time = "2026-03-19T08:15:52.248Z" },
+    { url = "https://files.pythonhosted.org/packages/d5/8c/27651e85dab9897c65c4acf7abcd924e85f8726d282804fc7686f1387520/databricks_sdk-0.105.0-py3-none-any.whl", hash = "sha256:f1624e434588e2174052bc3646670f17581f3bb269b9438f9121e9df4a59eebd", size = 866235, upload-time = "2026-04-23T08:53:42.01Z" },
 ]
 
 [[package]]
@@ -563,7 +563,7 @@ yq = [
 
 [package.metadata]
 requires-dist = [
-    { name = "databricks-sdk", specifier = "~=0.57" },
+    { name = "databricks-sdk", specifier = "~=0.105" },
     { name = "jmespath", specifier = ">=0.10.0,<1.1.0" },
     { name = "pyparsing", specifier = ">=3.0.0,<3.3.0" },
 ]
@@ -572,7 +572,7 @@ requires-dist = [
 dev = [
     { name = "black", specifier = "~=25.12.0" },
     { name = "coverage", extras = ["toml"], specifier = "~=7.4.4" },
-    { name = "databricks-sdk", specifier = "~=0.57" },
+    { name = "databricks-sdk", specifier = "~=0.105" },
     { name = "jmespath", specifier = ">=0.10.0,<1.1.0" },
     { name = "mypy", specifier = "~=1.9.0" },
     { name = "numpy", specifier = ">=1.21.5,<2.4" },
@@ -619,7 +619,7 @@ lint = [
 ]
 test = [
     { name = "coverage", extras = ["toml"], specifier = "~=7.4.4" },
-    { name = "databricks-sdk", specifier = "~=0.57" },
+    { name = "databricks-sdk", specifier = "~=0.105" },
     { name = "jmespath", specifier = ">=0.10.0,<1.1.0" },
     { name = "numpy", specifier = ">=1.21.5,<2.4" },
     { name = "pandas", specifier = ">=1.4.4,<3" },
