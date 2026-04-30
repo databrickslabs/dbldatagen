@@ -72,10 +72,6 @@ Slow perf tests (e.g. `TestCDCPerfXLarge`, `TestCDCPerfXXL` — 10M/20M rows) ar
 
 Bare `pytest --cov` from the shell does NOT apply the `.coveragerc-core` overrides and will crash on `test_faker_pool.py`. Prefer `make test` (honours the overrides) or `make test-fast` (no coverage, runs all tests).
 
-#### Integration notebooks (manual only)
-
-`integration_tests/core/notebooks/*.py` are Databricks notebook-format tests orchestrated by the `integration_tests/core/databricks.yml` Databricks Asset Bundle. **They are not run in CI.** Maintainers deploy and run them manually against a Databricks workspace before releases; external contributors without a workspace cannot reproduce them.
-
 ### Submitting a PR
 To submit a pull request:
 
