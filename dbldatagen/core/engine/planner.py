@@ -141,11 +141,28 @@ class FKResolution:
 
 @dataclass
 class ResolvedPlan:
-    """Fully resolved plan with FK metadata and generation order."""
+    """Fully resolved plan with FK metadata and generation order.
 
-    generation_order: list[str]  # Table names in dependency order
-    fk_resolutions: dict[tuple[str, str], FKResolution]  # (table, column) -> resolution
-    plan: DataGenPlan  # Original DataGenPlan
+    Produced by ``resolve_plan(plan)``.  Pass into ``generate(spark, plan,
+    resolved_plan=...)`` or ``generate_table(spark, table_spec, resolved_plan)``
+    to skip re-resolution when generating the same plan multiple times
+    (e.g. across seeds, batches, or partitions).
+
+    Attributes:
+        generation_order: Table names sorted so each parent is built
+            before any of its children.
+        fk_resolutions: Per FK column ``(table_name, column_name)`` ->
+            ``FKResolution`` describing the parent PK metadata,
+            sampling distribution, and null fraction.
+        plan: The original ``DataGenPlan`` this resolution was built
+            from.  ``generate()`` checks identity here so the resolved
+            plan cannot be silently used against a different plan
+            object.
+    """
+
+    generation_order: list[str]
+    fk_resolutions: dict[tuple[str, str], FKResolution]
+    plan: DataGenPlan
 
 
 def resolve_plan(plan: DataGenPlan) -> ResolvedPlan:

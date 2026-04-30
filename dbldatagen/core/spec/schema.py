@@ -498,6 +498,16 @@ ColumnStrategy = Annotated[
 
 
 class DataType(str, Enum):
+    """Output data types for ``ColumnSpec``, mapped to Spark SQL types.
+
+    Members ``INT``, ``LONG``, ``FLOAT``, ``DOUBLE``, ``STRING``,
+    ``BOOLEAN``, ``DATE``, ``TIMESTAMP``, and ``DECIMAL`` correspond to
+    the equivalent Spark SQL types.  ``INTEGER`` is an alias for
+    ``INT``; ``_missing_`` also accepts ``"integer"`` -> ``INT``,
+    ``"bool"`` -> ``BOOLEAN``, and ``"str"`` -> ``STRING`` so YAML /
+    JSON plans written with any of those spellings deserialise cleanly.
+    """
+
     INT = "int"
     LONG = "long"
     FLOAT = "float"
@@ -508,10 +518,6 @@ class DataType(str, Enum):
     TIMESTAMP = "timestamp"
     DECIMAL = "decimal"
 
-    # convenience aliases — Python Enum treats duplicate values as
-    # aliases of the canonical member (``DataType.INTEGER is DataType.INT``).
-    # Also accept common alternate spellings via ``_missing_`` so YAML /
-    # JSON plans written with either form round-trip cleanly.
     INTEGER = "int"
 
     @classmethod
