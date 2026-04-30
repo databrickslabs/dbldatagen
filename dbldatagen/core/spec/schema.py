@@ -182,6 +182,15 @@ class RangeColumn(_StrictModel):
 
     @model_validator(mode="after")
     def validate_range(self) -> RangeColumn:
+        if isinstance(self.distribution, WeightedValues):
+            raise ValueError(
+                "RangeColumn does not support WeightedValues.  WeightedValues "
+                "weights a discrete value list; RangeColumn produces values "
+                "from a continuous numeric range with no list to weight.  "
+                "Use ValuesColumn for weighted categorical selection, or "
+                "Zipf / Normal / LogNormal / Exponential to skew a numeric "
+                "range."
+            )
         if self.min > self.max:
             raise ValueError(f"min ({self.min}) must be <= max ({self.max})")
         if self.step is not None and self.step <= 0:
@@ -329,6 +338,13 @@ class TimestampColumn(_StrictModel):
                 ) from None
         if parsed["start"] > parsed["end"]:
             raise ValueError(f"start ({self.start}) must be <= end ({self.end})")
+        if isinstance(self.distribution, WeightedValues):
+            raise ValueError(
+                "TimestampColumn does not support WeightedValues.  WeightedValues "
+                "weights a discrete value list; TimestampColumn samples from a "
+                "continuous time range.  Use Uniform / Normal / Zipf / Exponential / "
+                "LogNormal to skew the timestamp distribution."
+            )
         return self
 
 
@@ -552,6 +568,14 @@ class ForeignKeyRef(_StrictModel):
                 f"round to zero and silently emit zero NULLs.  Pick a larger "
                 f"fraction (>= {_MIN_NULL_FRACTION}) or raise _NULL_PRECISION in "
                 f"engine/seed.py."
+            )
+        if isinstance(self.distribution, WeightedValues):
+            raise ValueError(
+                "ForeignKeyRef does not support WeightedValues.  WeightedValues "
+                "weights a discrete value list; FK skewing operates over the "
+                "implicit parent-row index range, not a list.  Use Zipf "
+                "(default for FK) or other continuous distributions to skew "
+                "child references toward a small set of parents."
             )
         return self
 

@@ -234,9 +234,23 @@ def apply_distribution(  # noqa: PLR0911
     if isinstance(distribution, LogNormal):
         return lognormal_sample_expr(cell_seed_col, n, distribution.mean, distribution.stddev)
     if isinstance(distribution, WeightedValues):
-        # WeightedValues is handled at a higher level (needs value list)
-        return uniform_sample(cell_seed_col, n)
-    # Fallback
+        # ``WeightedValues`` is dispatched at the column level via
+        # ``weighted_sample_expr`` (see ``columns/string.py:build_values_column``)
+        # because it needs the discrete value list.  Reaching this branch
+        # means a ``WeightedValues`` distribution was attached to a
+        # numeric / temporal / FK column where there is no value list to
+        # weight -- silently substituting ``uniform_sample`` here would
+        # drop the user's intent.  The schema validators on
+        # ``RangeColumn`` / ``TimestampColumn`` / ``ForeignKeyRef`` reject
+        # the misuse at plan time; this raise is the engine-level
+        # backstop for any path that bypasses validation.
+        raise ValueError(
+            "WeightedValues distribution reached apply_distribution; only "
+            "ValuesColumn dispatches WeightedValues correctly (via "
+            "weighted_sample_expr with the discrete value list).  Schema "
+            "validation should have caught this."
+        )
+    # Fallback for any future Distribution subclass we forgot to dispatch.
     return uniform_sample(cell_seed_col, n)  # type: ignore[unreachable]
 
 

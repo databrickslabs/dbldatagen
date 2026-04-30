@@ -624,20 +624,49 @@ class TestJsonRoundTrip:
             assert restored == col, f"Round-trip failed for {type(strat).__name__}"
 
     def test_all_distributions_round_trip(self):
-        """Every distribution type survives JSON serialization inside a RangeColumn."""
+        """Every continuous distribution survives JSON serialization inside a
+        RangeColumn.  ``WeightedValues`` is excluded because RangeColumn
+        validators now reject it (no discrete value list to weight) --
+        the WeightedValues round-trip lives in
+        ``test_weighted_values_round_trip_on_values_column``."""
         distributions = [
             Uniform(),
             Normal(mean=5, stddev=2),
             LogNormal(mean=1, stddev=0.5),
             Zipf(exponent=2.0),
             Exponential(rate=0.3),
-            WeightedValues(weights={"x": 0.6, "y": 0.4}),
         ]
         for dist in distributions:
             col = ColumnSpec(name="x", gen=RangeColumn(distribution=dist))  # type: ignore[arg-type]
             json_str = col.model_dump_json()
             restored = ColumnSpec.model_validate_json(json_str)
             assert restored == col, f"Round-trip failed for {type(dist).__name__}"
+
+    def test_weighted_values_round_trip_on_values_column(self):
+        """``WeightedValues`` is the one distribution that's only valid on
+        ``ValuesColumn`` (where the discrete list is in scope for the
+        weighted-CASE-WHEN dispatch).  Pin the round-trip there."""
+        col = ColumnSpec(
+            name="tier",
+            gen=ValuesColumn(
+                values=["x", "y"],
+                distribution=WeightedValues(weights={"x": 0.6, "y": 0.4}),
+            ),
+        )
+        restored = ColumnSpec.model_validate_json(col.model_dump_json())
+        assert restored == col
+
+    def test_weighted_values_rejected_on_range_column(self):
+        with pytest.raises(ValueError, match="RangeColumn does not support WeightedValues"):
+            RangeColumn(distribution=WeightedValues(weights={"a": 1.0}))
+
+    def test_weighted_values_rejected_on_timestamp_column(self):
+        with pytest.raises(ValueError, match="TimestampColumn does not support WeightedValues"):
+            TimestampColumn(distribution=WeightedValues(weights={"a": 1.0}))
+
+    def test_weighted_values_rejected_on_foreign_key_ref(self):
+        with pytest.raises(ValueError, match="ForeignKeyRef does not support WeightedValues"):
+            ForeignKeyRef(ref="t.c", distribution=WeightedValues(weights={"a": 1.0}))
 
 
 # ---------------------------------------------------------------------------

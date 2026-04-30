@@ -225,14 +225,16 @@ class TestApplyDistribution:
             "LogNormal is likely still dispatching to the exponential sampler."
         )
 
-    def test_weighted_values_distribution(self, spark):
-        """Lines 176-178: WeightedValues falls back to uniform."""
-        n = 10
-        df = spark.range(50).select(
-            apply_distribution(F.col("id"), n, WeightedValues(weights={"a": 1.0, "b": 2.0})).alias("val")
-        )
-        values = [row.val for row in df.collect()]
-        assert all(0 <= v < n for v in values)
+    def test_weighted_values_distribution_raises(self):
+        """``WeightedValues`` must NOT silently fall back to uniform when
+        it reaches ``apply_distribution``.  The dispatcher only sees a
+        seed and a count, not the discrete values list, so any
+        WeightedValues at this level is a misuse (``RangeColumn`` /
+        ``TimestampColumn`` / ``ForeignKeyRef`` with WeightedValues).
+        Schema validators catch the misuse at plan time; this test
+        pins the engine-level backstop."""
+        with pytest.raises(ValueError, match="WeightedValues distribution reached"):
+            apply_distribution(F.col("id"), 10, WeightedValues(weights={"a": 1.0, "b": 2.0}))
 
 
 # ---------------------------------------------------------------------------
