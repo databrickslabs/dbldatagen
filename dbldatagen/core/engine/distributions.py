@@ -103,24 +103,36 @@ def normal_sample_expr(
     mean: float = 0.0,
     stddev: float = 1.0,
 ) -> Column:
-    """Approximate normal distribution using the Central Limit Theorem.
+    """Sample N(mean, stddev) via the Box-Muller transform.
 
-    Sums 12 independent uniform [0, 1) values and subtracts 6.0, giving an
-    approximate N(0, 1) with range roughly [-6, 6].  Then scale to the
-    requested mean and stddev.
+    Two independent uniform draws U1, U2 in (0, 1] yield one standard
+    normal Z via:
 
-    Each of the 12 uniform draws uses a different hash of the seed so they
-    are independent.
+        Z = sqrt(-2 ln U1) * cos(2 pi U2)
+
+    Box-Muller produces an exact standard normal (vs the
+    Central-Limit-Theorem approximation that summed 12 uniforms),
+    using only two ``xxhash64`` calls per row instead of twelve.  At
+    the 500M-3B row scale this engine targets, the Spark plan is
+    much smaller (2 hashes + a sqrt/log/cos vs 12 hashes + an
+    11-deep accumulator tree) and Catalyst compile time drops
+    accordingly.
+
+    U1 is clamped away from 0 so ``log(U1)`` stays finite.  Box-Muller
+    can return values past 6 sigma (rare, ~1 in 5e8) -- callers that
+    need a bounded range (e.g. ``RangeColumn`` with Normal) clamp
+    after the call; ``LogNormal`` already clamps before its long
+    cast.
     """
-    accum: Column | None = None
-    for i in range(12):
-        # Derive an independent uniform [0, 1) from the cell seed
-        h = F.xxhash64(cell_seed_col, F.lit(i).cast("long"))
-        u = F.pmod(h, F.lit(_CONTINUOUS_PRECISION)).cast("double") / F.lit(float(_CONTINUOUS_PRECISION))
-        accum = u if accum is None else accum + u
-
-    # accum ~ sum of 12 Uniform(0,1) => approx Normal(6, 1)
-    z = accum - F.lit(6.0)  # type: ignore[operator]
+    h1 = F.xxhash64(cell_seed_col, F.lit(0).cast("long"))
+    h2 = F.xxhash64(cell_seed_col, F.lit(1).cast("long"))
+    eps = 1.0 / _CONTINUOUS_PRECISION
+    u1 = F.greatest(
+        F.pmod(h1, F.lit(_CONTINUOUS_PRECISION)).cast("double") / F.lit(float(_CONTINUOUS_PRECISION)),
+        F.lit(eps),
+    )
+    u2 = F.pmod(h2, F.lit(_CONTINUOUS_PRECISION)).cast("double") / F.lit(float(_CONTINUOUS_PRECISION))
+    z = F.sqrt(F.lit(-2.0) * F.log(u1)) * F.cos(F.lit(2.0 * math.pi) * u2)
     return z * F.lit(stddev) + F.lit(mean)
 
 
@@ -211,7 +223,7 @@ def lognormal_sample_expr(
 # ---------------------------------------------------------------------------
 
 
-def apply_distribution(  # noqa: PLR0911
+def apply_distribution(
     cell_seed_col: Column,
     n: int,
     distribution: Distribution | None,
