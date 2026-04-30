@@ -171,11 +171,10 @@ core placeholders are named with explicit length: `{digit:N}`, `{alpha:N}`,
 #### Prefix/Suffix
 
 ```python
-# v0 -- a `prefix` shortcut, plus the equivalent template form
-.withColumn("sku", StringType(), prefix="SKU-")
-.withColumn("sku2", StringType(), template=r"SKU-dddddd")
+# v0
+.withColumn("sku", StringType(), template=r"SKU-dddddd")
 
-# core -- expressed as a single template
+# core
 pattern("sku", template="SKU-{digit:6}")
 ```
 
