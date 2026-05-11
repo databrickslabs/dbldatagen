@@ -241,7 +241,29 @@ Distribution = Annotated[
 
 
 class RangeColumn(_StrictModel):
-    """Generate values from a numeric range."""
+    """Generate values from a numeric range.
+
+    Inclusive of both ``min`` and ``max``.  When ``step`` is set the
+    output snaps to the lattice ``{min, min + step, min + 2*step, ...}``
+    intersected with ``[min, max]``; otherwise samples are drawn
+    continuously.  The integer-range path requires
+    ``(max - min + 1) < 2**63`` so the size literal fits in signed
+    int64.  ``WeightedValues`` is rejected on this strategy -- skewed
+    numeric ranges should use ``Normal`` / ``LogNormal`` / ``Zipf`` /
+    ``Exponential``.
+
+    Attributes:
+        strategy: Discriminator literal; always ``"range"``.
+        min: Inclusive lower bound.  Mixed ``int``/``float`` allowed.
+          Defaults to ``0``.
+        max: Inclusive upper bound; must be ``>= min``.  Defaults to
+          ``100``.
+        step: Optional step granularity.  When set, must be strictly
+          positive and produces lattice-snapped output.  When
+          ``None`` (default), output is continuous within the range.
+        distribution: Sampling distribution over the range.  Defaults
+          to ``Uniform``.  ``WeightedValues`` is not accepted here.
+    """
 
     strategy: Literal["range"] = "range"
     min: float | int = 0
@@ -283,7 +305,24 @@ class RangeColumn(_StrictModel):
 
 
 class ValuesColumn(_StrictModel):
-    """Pick from an explicit list of allowed values."""
+    """Pick from an explicit list of allowed values.
+
+    The element type is whatever the caller puts into ``values``
+    (strings, ints, booleans, ...); Pydantic preserves the literal
+    types at validation.  When ``distribution`` is
+    ``WeightedValues``, the engine cross-validates that every weight
+    key matches a value in this list (and rejects unweighted-but-
+    listed or weighted-but-not-listed values at plan construction).
+
+    Attributes:
+        strategy: Discriminator literal; always ``"values"``.
+        values: Non-empty list of allowed values.  Element type is
+          preserved through plan dump / reload.
+        distribution: Sampling distribution.  Defaults to ``Uniform``
+          (each value equally likely).  Use ``WeightedValues`` for
+          explicit per-value probabilities; the weight keys must
+          match the values in this list.
+    """
 
     strategy: Literal["values"] = "values"
     values: list[Any]
@@ -319,7 +358,25 @@ class ValuesColumn(_StrictModel):
 
 
 class FakerColumn(_StrictModel):
-    """Generate data using a Faker provider method."""
+    """Generate data using a Faker provider method.
+
+    Calls ``Faker(...).<provider>(**kwargs)`` per row via a pooled
+    ``pandas_udf``.  ``faker`` is an optional dependency; install via
+    ``pip install 'dbldatagen[core-faker]'``.  At materialisation the
+    engine raises ``ImportError`` if the library is missing and
+    ``ValueError`` if ``provider`` is not a known Faker method.
+
+    Attributes:
+        strategy: Discriminator literal; always ``"faker"``.
+        provider: Faker provider method name (e.g. ``"first_name"``,
+          ``"company"``, ``"ipv4"``).  Must be a real method on
+          ``Faker``; checked at materialisation.
+        kwargs: Keyword arguments forwarded to the provider.  Defaults
+          to an empty mapping.
+        locale: Optional Faker locale (e.g. ``"en_US"``,
+          ``"de_DE"``).  When ``None`` (default), falls back to
+          ``DataGenPlan.default_locale``.
+    """
 
     strategy: Literal["faker"] = "faker"
     provider: str
@@ -336,7 +393,18 @@ class PatternColumn(_StrictModel):
         {alpha:N} -- N random alpha chars
         {digit:N} -- N random digits
         {hex:N}   -- N random hex chars
-    Example: "ORD-{digit:4}-{alpha:3}" -> "ORD-3847-KMX"
+    Example: ``"ORD-{digit:4}-{alpha:3}"`` -> ``"ORD-3847-KMX"``
+
+    The ``{uuid}`` placeholder is a fixed-width 36-character literal
+    (no ``:N`` modifier).  ``{digit:N}`` and ``{hex:N}`` are capped at
+    a width that fits in 64 random bits to keep generation
+    branch-free; the engine raises ``ValueError`` at materialisation
+    for widths beyond that.
+
+    Attributes:
+        strategy: Discriminator literal; always ``"pattern"``.
+        template: Pattern string containing literal text and any of
+          the placeholders above.
     """
 
     strategy: Literal["pattern"] = "pattern"
@@ -346,10 +414,17 @@ class PatternColumn(_StrictModel):
 class SequenceColumn(_StrictModel):
     """Monotonic integer sequence.
 
-    ``step`` may be negative for a descending sequence; only
-    ``step == 0`` is rejected (it would produce a constant column;
-    use ``ConstantColumn`` for that).  The sequence value at row
-    ``i`` is ``start + i * step``.
+    The sequence value at row ``i`` is ``start + i * step``.  ``step``
+    may be negative for a descending sequence; only ``step == 0`` is
+    rejected (it would produce a constant column; use
+    ``ConstantColumn`` for that).  The owning ``TableSpec`` validates
+    that ``start + (rows - 1) * step`` does not overflow int64.
+
+    Attributes:
+        strategy: Discriminator literal; always ``"sequence"``.
+        start: Value at row ``0``.  Defaults to ``1``.
+        step: Increment per row.  May be positive or negative; must
+          not be ``0``.  Defaults to ``1``.
     """
 
     strategy: Literal["sequence"] = "sequence"
@@ -364,7 +439,15 @@ class SequenceColumn(_StrictModel):
 
 
 class UUIDColumn(_StrictModel):
-    """Deterministic UUID generation (v5 from seed + row index)."""
+    """Deterministic UUID generation (v5 from seed + row index).
+
+    Output is reproducible: the same ``(table seed, row index)``
+    always yields the same UUID string.  Strategy has no parameters
+    beyond the discriminator.
+
+    Attributes:
+        strategy: Discriminator literal; always ``"uuid"``.
+    """
 
     strategy: Literal["uuid"] = "uuid"
 
@@ -372,11 +455,20 @@ class UUIDColumn(_StrictModel):
 class ExpressionColumn(_StrictModel):
     """Spark SQL expression referencing other columns in the same table.
 
-    Example: ``"quantity * unit_price"`` or ``"concat(first_name, ' ', last_name)"``
+    Example: ``"quantity * unit_price"`` or
+    ``"concat(first_name, ' ', last_name)"``.  Expressions may
+    reference any same-table column that is generated before this one
+    in declaration order.
 
-    Security note: Expressions are passed directly to ``F.expr()`` and can
-    execute arbitrary Spark SQL.  Do not use ExpressionColumn with untrusted
-    plan YAML in multi-tenant environments.
+    Security note: Expressions are passed directly to ``F.expr()`` and
+    can execute arbitrary Spark SQL.  Do not use ``ExpressionColumn``
+    with untrusted plan YAML in multi-tenant environments.
+
+    Attributes:
+        strategy: Discriminator literal; always ``"expression"``.
+        expr: A Spark SQL expression string.  Referenced column names
+          must exist on the same ``TableSpec``; the planner validates
+          this at ``resolve_plan`` time.
     """
 
     strategy: Literal["expression"] = "expression"
@@ -384,7 +476,26 @@ class ExpressionColumn(_StrictModel):
 
 
 class TimestampColumn(_StrictModel):
-    """Generate timestamps within a range."""
+    """Generate timestamps within a range.
+
+    Output is session-timezone-independent: the engine routes
+    ``start``/``end`` through UTC epoch before sampling so the same
+    plan run on different cluster timezones produces byte-identical
+    timestamps.  ``WeightedValues`` is rejected here; skewed time
+    ranges should use ``Normal`` / ``LogNormal`` / ``Zipf`` /
+    ``Exponential``.
+
+    Attributes:
+        strategy: Discriminator literal; always ``"timestamp"``.
+        start: Inclusive lower bound, as an ISO-8601 string
+          (``"YYYY-MM-DD"`` or ``"YYYY-MM-DD HH:MM:SS"``).  Defaults
+          to ``"2020-01-01"``.
+        end: Inclusive upper bound, same format as ``start``; must be
+          ``>= start``.  Defaults to ``"2025-12-31"``.
+        distribution: Sampling distribution over the time range.
+          Defaults to ``Uniform``.  ``WeightedValues`` is not
+          accepted here.
+    """
 
     strategy: Literal["timestamp"] = "timestamp"
     start: str = "2020-01-01"
@@ -418,7 +529,17 @@ class TimestampColumn(_StrictModel):
 
 
 class ConstantColumn(_StrictModel):
-    """Every row gets the same value."""
+    """Every row gets the same value.
+
+    Useful for environment markers (``"prod"``), version stamps, or
+    null literals.  ``value`` is preserved literally through plan
+    dump / reload.
+
+    Attributes:
+        strategy: Discriminator literal; always ``"constant"``.
+        value: The literal value emitted on every row.  Any
+          JSON-serialisable type.
+    """
 
     strategy: Literal["constant"] = "constant"
     value: Any
@@ -433,6 +554,9 @@ class ForeignKeyColumn(_StrictModel):
     exists so FK columns have a real type in the ``ColumnStrategy`` union
     instead of a ``ConstantColumn(value=None)`` sentinel that would
     silently produce all-NULL output if FK resolution were ever skipped.
+
+    Attributes:
+        strategy: Discriminator literal; always ``"foreign_key"``.
     """
 
     strategy: Literal["foreign_key"] = "foreign_key"
@@ -441,12 +565,21 @@ class ForeignKeyColumn(_StrictModel):
 class StructColumn(_StrictModel):
     """Group child columns into a Spark struct (nested object in JSON).
 
-    Each field is a full ``ColumnSpec`` — supports range, values, faker,
-    timestamps, and even nested structs.
+    Each field is a full ``ColumnSpec`` — supports range, values,
+    faker, timestamps, and even nested structs.  Field names must be
+    unique within the struct (validated at construction); the engine
+    drives schema inference from the field types.
 
     Example JSON output::
 
         {"address": {"street": "123 Main St", "city": "Austin", "zip": "78701"}}
+
+    Attributes:
+        strategy: Discriminator literal; always ``"struct"``.
+        fields: Ordered list of child ``ColumnSpec`` objects.  Field
+          names must be unique within this struct.  Fields may be
+          ``StructColumn`` themselves (nested structs) or
+          ``ArrayColumn`` (array of records).
     """
 
     strategy: Literal["struct"] = "struct"
@@ -475,12 +608,30 @@ class StructColumn(_StrictModel):
 class ArrayColumn(_StrictModel):
     """Generate a variable-length array of values.
 
-    Each element is produced from *element* with a different seed offset.
-    The array length per row is random in [min_length, max_length].
+    Each element is produced from ``element`` with a different seed
+    offset.  The array length per row is random in
+    ``[min_length, max_length]``.  ``max_length`` is capped at
+    ``1000`` because the engine materialises one Spark expression per
+    array slot; larger fan-outs stall Catalyst.  ``FakerColumn`` and
+    ``ForeignKeyColumn`` are rejected as direct element types (wrap
+    them in a ``StructColumn`` if you need an array of records).
 
     Example JSON output::
 
         {"tags": ["electronics", "sale", "new"]}
+
+    Attributes:
+        strategy: Discriminator literal; always ``"array"``.
+        element: Element-generation strategy.  Any
+          ``ColumnStrategy`` *except* ``FakerColumn`` and
+          ``ForeignKeyColumn``.  May itself be a ``StructColumn`` or
+          ``ArrayColumn`` (nesting is supported).
+        min_length: Inclusive minimum array length per row.  Must be
+          ``>= 0``.  ``0`` is allowed for sometimes-empty arrays.
+          Defaults to ``1``.
+        max_length: Inclusive maximum array length per row.  Must be
+          ``>= 1`` and ``>= min_length``, and ``<= 1000``.  Defaults
+          to ``5``.
     """
 
     strategy: Literal["array"] = "array"
