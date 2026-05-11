@@ -146,32 +146,39 @@ def build_all_column_exprs(
     seed_fn: Callable[[ColumnSpec], int] | None = None,
     cell_seed_fn: Callable[[int, Column, ColumnSpec], Column | None] | None = None,
 ) -> tuple[list[Column], list[tuple[str, Column]], list[tuple[str, Column]]]:
-    """Build column expressions for all columns in a table.
+    """Builds column expressions for every column in a table.
 
-    Returns ``(col_exprs, udf_columns, seeded_columns)`` —
-    ``col_exprs`` are Spark SQL expressions for a flat ``select``,
-    ``udf_columns`` are ``(name, expr)`` pairs for ``withColumn`` (FK, Faker),
-    ``seeded_columns`` are ``(name, expr)`` pairs for columns with ``seed_from``
-    (applied after phases 1 and 2 so the source column is available).
+    Drives the three-phase application pipeline that
+    ``apply_column_phases`` later assembles: Phase 1 ``col_exprs``
+    project via flat ``select``, Phase 2 ``udf_columns`` apply via
+    ``withColumn`` (FK, Faker), Phase 3 ``seeded_columns`` apply
+    after phases 1 and 2 so the ``seed_from`` source column is
+    already materialised.
 
-    Parameters
-    ----------
-    fk_resolutions :
-        Dict mapping ``(table_name, col_name)`` to ``FKResolution``.
-    seed :
-        Base seed used for default column-seed derivation and passed
-        through to ``build_column_expr`` as ``global_seed``. Required —
-        callers must derive this from ``table_spec.seed`` so reruns
-        don't silently desynchronise.
-    row_count :
-        Row count passed through to ``build_column_expr``.
-    seed_fn :
-        ``(col_spec) -> int`` — override column-seed derivation.
-        Default: ``derive_column_seed(seed, table_name, col_spec.name)``.
-    cell_seed_fn :
-        ``(column_seed, id_col, col_spec) -> Column | None`` — override
-        the per-cell seed for ``build_column_expr``.
-        Default: ``None`` (standard xxhash64).
+    Args:
+        table_spec: Table whose columns to expand.
+        id_col: Row-id ``Column`` (typically
+          ``F.col("_synth_row_id")``).
+        fk_resolutions: Mapping of ``(table_name, column_name)`` to
+          ``FKResolution`` from ``ResolvedPlan``.  ``None`` means
+          no FK columns on this table.
+        seed: Base seed used for default column-seed derivation and
+          passed through to ``build_column_expr`` as ``global_seed``.
+          Required -- callers must derive this from
+          ``table_spec.seed`` so reruns do not silently
+          desynchronise.
+        row_count: Row count passed through to ``build_column_expr``.
+        seed_fn: Optional ``(col_spec) -> int`` override for the
+          per-column seed.  Default:
+          ``derive_column_seed(seed, table_name, col_spec.name)``.
+        cell_seed_fn: Optional
+          ``(column_seed, id_col, col_spec) -> Column | None``
+          override for the per-cell seed.  ``None`` (default) keeps
+          the standard ``xxhash64`` derivation.
+
+    Returns:
+        A three-tuple ``(col_exprs, udf_columns, seeded_columns)``
+        ready to feed into ``apply_column_phases``.
     """
     table_name = table_spec.name
 
@@ -408,7 +415,7 @@ def build_all_column_exprs_case_when(
     *,
     row_count: int = 0,
 ) -> tuple[list[Column], list[tuple[str, Column]], list[tuple[str, Column]]]:
-    """Build column expressions for multi-write-batch DataFrames.
+    """Builds column expressions for multi-write-batch ``DataFrame`` rows.
 
     PERFORMANCE-CRITICAL FUNCTION — read before modifying:
         When there are many unique write-batch values (>1), seeds are resolved
@@ -424,7 +431,22 @@ def build_all_column_exprs_case_when(
         Do not refactor ``_build_exprs_dynamic`` back to CASE WHEN.  See
         ``column_seed_map`` in seed.py for additional context.
 
-    Returns ``(col_exprs, udf_columns, seeded_columns)``.
+    Args:
+        table_spec: Table whose columns to expand.
+        id_col: Row-id ``Column``.
+        wb_col: Per-row ``_write_batch`` ``Column``.
+        unique_wbs: Distinct write-batch values present in the source
+          ``DataFrame``.  Length-one input short-circuits to
+          ``_build_exprs_scalar`` (no map literal needed).
+        global_seed: Plan-level seed.
+        fk_resolutions: Optional FK resolution map from
+          ``ResolvedPlan``.
+        row_count: Row count threaded through to per-column builders.
+
+    Returns:
+        A three-tuple ``(col_exprs, udf_columns, seeded_columns)``
+        suitable for ``apply_column_phases`` -- same shape as
+        ``build_all_column_exprs`` returns for single-batch input.
     """
     # Fast path: single write-batch (no CASE WHEN needed)
     if len(unique_wbs) == 1:
@@ -527,34 +549,57 @@ def build_column_expr(  # noqa: PLR0911
     struct_dyn_ctx: tuple[str, list[int], Column] | None = None,
     struct_path_prefix: list[str] | None = None,
 ) -> Column:
-    """Dispatch to the appropriate column builder based on strategy type.
+    """Dispatches to the appropriate column builder based on strategy type.
 
-    Parameters
-    ----------
-    column_seed :
-        Per-column seed.  May be a scalar ``int`` (planning-time constant)
-        or a ``Column`` (dynamic seed derived from ``_write_batch`` via
-        map-based lookup — see ``_build_exprs_dynamic`` and
-        ``column_seed_map`` in seed.py for the performance rationale).
-    cell_seed_override :
-        If provided, used as the per-cell seed instead of the default
-        ``cell_seed_expr(column_seed, id_col)``.  Useful for snapshot
-        generation where the seed incorporates per-row state (e.g. the
-        last-write batch).
-    struct_dyn_ctx :
-        ``(table_name, unique_wbs, wb_col)`` threaded from the
-        multi-write-batch path so ``_build_struct_column`` can
-        precompute polynomial-hashed child field seeds via
-        ``struct_field_seed_map``.  Passed through unchanged for
-        non-struct strategies.
-    struct_path_prefix :
-        Accumulator for the struct-path chain when recursing into nested
-        structs.  Empty/None at the top-level dispatch; set to
-        ``[outer_col, ..., innermost_parent_struct]`` when
-        ``_build_struct_column`` recurses into a field that is itself a
-        struct.  Used alongside ``struct_dyn_ctx`` to compute the correct
-        chained ``derive_column_seed`` for deeply nested fields on the
-        multi-write-batch path.
+    The single point where ``ColumnSpec.gen`` is matched to the
+    corresponding builder (``build_range_column``,
+    ``build_values_column``, ``build_pattern_column``,
+    ``build_sequential_pk``, ``build_uuid_column``,
+    ``build_expression_column``, ``build_timestamp_column`` /
+    ``build_date_column``, ``build_constant_column``,
+    ``_build_struct_column``, ``_build_array_column``).  ``FakerColumn``
+    and ``ForeignKeyColumn`` are intentionally not handled here -- the
+    former goes through a column-level pandas_udf and the latter is
+    resolved against ``fk_resolutions`` at the table level.
+
+    Args:
+        col_spec: The column specification to expand.
+        id_col: Row-id ``Column``.
+        column_seed: Per-column seed.  May be a scalar ``int``
+          (planning-time constant) or a ``Column`` (dynamic seed
+          derived from ``_write_batch`` via map-based lookup --
+          see ``_build_exprs_dynamic`` and ``column_seed_map`` in
+          ``seed.py`` for the performance rationale).
+        row_count: Row count threaded through to builders that need
+          it (e.g. ``build_uuid_column`` for clamping).
+        global_seed: Plan-level seed forwarded to nested struct /
+          array seed derivation.
+        cell_seed_override: If provided, used as the per-cell seed
+          instead of the default ``cell_seed_expr(column_seed,
+          id_col)``.  Useful for snapshot generation where the seed
+          incorporates per-row state (e.g. the last-write batch).
+        struct_dyn_ctx: ``(table_name, unique_wbs, wb_col)`` threaded
+          from the multi-write-batch path so ``_build_struct_column``
+          can precompute polynomial-hashed child field seeds via
+          ``struct_field_seed_map``.  Passed through unchanged for
+          non-struct strategies.
+        struct_path_prefix: Accumulator for the struct-path chain
+          when recursing into nested structs.  Empty / ``None`` at
+          the top-level dispatch; set to
+          ``[outer_col, ..., innermost_parent_struct]`` when
+          ``_build_struct_column`` recurses into a field that is
+          itself a struct.
+
+    Returns:
+        A Spark ``Column`` carrying the generated values; runtime
+        type depends on the strategy.
+
+    Raises:
+        ValueError: ``col_spec.gen`` is ``FakerColumn`` (handled by
+          the column-level pandas_udf in
+          ``_build_faker_expr``) or ``ForeignKeyColumn`` (handled
+          at the table level via ``fk_resolutions``) -- reaching
+          this dispatch is a caller bug.
     """
     gen = col_spec.gen
 

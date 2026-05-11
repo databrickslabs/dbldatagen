@@ -37,12 +37,35 @@ def build_range_column(
     precision: int | None = None,
     scale: int | None = None,
 ) -> Column:
-    """Generate numeric values in [min_val, max_val] using Spark SQL expressions.
+    """Generates numeric values in ``[min_val, max_val]`` via Spark SQL.
 
-    For integer types the range is discrete; for float/double/decimal the values
-    are continuous.  ``precision`` / ``scale`` are only honoured when
-    ``dtype == DataType.DECIMAL``; if either is ``None`` the engine falls back
-    to ``DecimalType(18, 2)``.
+    For integer ``dtype`` (or when both bounds are ``int`` and
+    ``dtype`` is ``None``), the range is discrete and sampled via
+    ``apply_distribution``.  For float / double / decimal types, the
+    values are continuous; ``Normal`` is sampled directly (centred,
+    clipped to the range) while every other distribution maps a
+    uniform fraction onto ``[min_val, max_val]``.
+
+    Args:
+        id_col: Row-id ``Column`` reference or column name.
+        column_seed: Per-column seed.  Scalar ``int`` for single-batch
+          generation; ``Column`` for the multi-write-batch path.
+        min_val: Inclusive lower bound.
+        max_val: Inclusive upper bound.  Must be ``>= min_val``.
+        distribution: Sampling distribution.  ``None`` defaults to
+          ``Uniform``.
+        dtype: Target ``DataType``.  When ``None``, the function
+          infers ``LONG`` for integer bounds and ``DOUBLE`` otherwise.
+        cell_seed_override: When provided, used as the per-cell seed
+          ``Column`` instead of ``cell_seed_expr(column_seed, id_col)``.
+        precision: Total digit count for ``DataType.DECIMAL``;
+          defaults to ``18`` when unset.
+        scale: Fractional digit count for ``DataType.DECIMAL``;
+          defaults to ``2`` when unset.
+
+    Returns:
+        A Spark ``Column`` of the resolved Spark type containing the
+        sampled values.
     """
     if isinstance(id_col, str):
         id_col = F.col(id_col)

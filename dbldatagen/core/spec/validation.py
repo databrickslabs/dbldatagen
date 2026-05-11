@@ -15,8 +15,23 @@ def validate_referential_integrity(
 ) -> list[str]:
     """Post-generation check that all FK values reference valid parent PKs.
 
-    Uses left anti join to find orphan FK values.
-    Returns list of error messages (empty = valid).
+    Iterates every FK column in the plan and uses a Spark left-anti
+    join against the parent PK column to find orphan FK values.
+    Useful as a smoke test after large multi-table generation, or as
+    a continuous check in regression tests.  ``NULL`` FK values are
+    excluded from the orphan check (legitimate when
+    ``ForeignKeyRef.null_fraction > 0`` or
+    ``ForeignKeyRef.nullable=True``).
+
+    Args:
+        dataframes: Mapping of table name to generated ``DataFrame``,
+          typically the output of ``generate(spark, plan)``.
+        plan: The ``DataGenPlan`` that produced ``dataframes``.
+
+    Returns:
+        A list of error messages, one per failing FK column or
+        missing table.  An empty list means every FK in ``plan``
+        resolves to a real parent PK in ``dataframes``.
     """
     errors: list[str] = []
 

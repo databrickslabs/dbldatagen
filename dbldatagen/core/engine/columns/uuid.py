@@ -13,15 +13,27 @@ from dbldatagen.core.engine.seed import to_signed64
 
 
 def build_uuid_column(id_col: Column | str, column_seed: int | Column) -> Column:
-    """Generate a deterministic UUID-formatted string.
+    """Generates a deterministic UUID-formatted string.
 
-    Two independent xxhash64 values are combined to produce 128 bits of
-    pseudorandom data, formatted as a standard UUID:
-    ``xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx``
+    Two independent ``xxhash64`` values are combined to produce 128
+    bits of pseudorandom data, formatted as a standard UUID:
+    ``xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx``.  Output is reproducible
+    for any given ``(column_seed, id)`` pair.
 
-    PERFORMANCE NOTE: The ``int | Column`` branching for ``column_seed`` is
-    required when the seed varies per row via map-based lookup (see
-    ``column_seed_map`` in seed.py).  Do not simplify to int-only.
+    PERFORMANCE NOTE: The ``int | Column`` branching for
+    ``column_seed`` is required when the seed varies per row via
+    map-based lookup (see ``column_seed_map`` in ``seed.py``).  Do
+    not simplify to int-only.
+
+    Args:
+        id_col: Row-id ``Column`` reference or column name.
+        column_seed: Per-column seed.  Scalar ``int`` for the
+          single-batch path; ``Column`` for the multi-write-batch
+          path (where the seed varies per row).
+
+    Returns:
+        A Spark ``Column`` (string) holding the UUID-formatted
+        values.
     """
     if isinstance(id_col, str):
         id_col = F.col(id_col)

@@ -22,12 +22,39 @@ def build_faker_column(
     locale: str | None = None,
     pool_size: int = 10_000,
 ) -> Column:
-    """Generate realistic text using a pre-computed Faker pool.
+    """Generates realistic text using a pre-computed Faker pool.
 
-    1. Driver-side: Create Faker with deterministic seed, generate pool
-    2. Executor-side: pandas_udf selects from pool via hash(column_seed, id) % pool_size
+    Two-phase strategy chosen for Spark Connect compatibility (the
+    pool travels via closure, not ``sc.broadcast``):
 
-    Raises ImportError if faker is not installed.
+        1. Driver-side: create a ``Faker`` instance with a
+           deterministic seed, generate a fixed-size pool of values.
+        2. Executor-side: a ``pandas_udf`` selects from the pool via
+           ``hash(column_seed, id) % pool_size``.
+
+    Args:
+        id_col: Row-id ``Column``.
+        column_seed: Per-column seed.  Used both to seed the
+          driver-side Faker (so the pool is reproducible) and to
+          index into the pool at execution time.
+        provider: Faker provider method name (e.g. ``"first_name"``,
+          ``"company"``).
+        kwargs: Keyword arguments forwarded to the provider.  ``None``
+          (default) is treated as an empty mapping.
+        locale: Faker locale (e.g. ``"en_US"``).  ``None`` (default)
+          falls back to ``"en_US"``.
+        pool_size: Number of pre-computed values to draw at the
+          driver.  Larger pools reduce cross-row repetition at the
+          cost of driver memory.  Defaults to ``10_000``.
+
+    Returns:
+        A Spark ``Column`` (string) holding the per-row Faker output.
+
+    Raises:
+        ImportError: ``faker`` is not installed; install with
+          ``pip install 'dbldatagen[core-faker]'``.
+        ValueError: ``provider`` is not a method on the ``Faker``
+          instance for the chosen locale.
     """
     try:
         from faker import Faker

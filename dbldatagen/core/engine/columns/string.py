@@ -32,11 +32,27 @@ def build_values_column(
     distribution: Distribution | None = None,
     cell_seed_override: Column | None = None,
 ) -> Column:
-    """Pick from a list of values.
+    """Picks from a list of values.
 
-    For ``WeightedValues`` distributions, a CASE/WHEN chain is used; otherwise
-    the cell seed indexes uniformly (or via the given distribution) into a
-    Spark array literal.
+    For ``WeightedValues`` distributions, dispatches to a CASE/WHEN
+    chain built by ``weighted_sample_expr``.  Otherwise the cell seed
+    indexes uniformly (or via the given distribution) into a Spark
+    array literal.
+
+    Args:
+        id_col: Row-id ``Column`` reference or column name.
+        column_seed: Per-column seed.
+        values_list: The allowed-values list.  Empty produces an
+          all-NULL column; single-element short-circuits to a literal.
+        distribution: Sampling distribution.  ``Uniform`` (default)
+          indexes uniformly; ``WeightedValues`` uses cumulative
+          weights; other distributions skew the index.
+        cell_seed_override: Optional per-cell seed ``Column`` to use
+          instead of ``cell_seed_expr(column_seed, id_col)``.
+
+    Returns:
+        A Spark ``Column`` whose runtime element type matches
+        ``values_list``'s element type.
     """
     if isinstance(id_col, str):
         id_col = F.col(id_col)
@@ -75,7 +91,7 @@ def build_pattern_column(
     column_seed: int | Column,
     template: str,
 ) -> Column:
-    """Generate strings from a template like ``'ORD-{digit:4}-{alpha:3}'``.
+    """Generates strings from a template like ``"ORD-{digit:4}-{alpha:3}"``.
 
     Supported placeholders:
         {seq}       -- row sequence number (from id)
@@ -83,6 +99,20 @@ def build_pattern_column(
         {digit:N}   -- N random digits
         {alpha:N}   -- N random uppercase alpha characters
         {hex:N}     -- N random hex characters
+
+    Args:
+        id_col: Row-id ``Column`` reference or column name.
+        column_seed: Per-column seed.
+        template: Template string containing literal text and any of
+          the placeholders above.
+
+    Returns:
+        A Spark ``Column`` (string) holding the rendered values.
+
+    Raises:
+        ValueError: ``{uuid}`` placeholder carries a width modifier,
+          or ``{digit:N}`` / ``{hex:N}`` width exceeds the engine's
+          int64-fit ceiling (18 for digit, 15 for hex).
     """
     if isinstance(id_col, str):
         id_col = F.col(id_col)
@@ -233,14 +263,35 @@ def _random_hex(
 
 
 def build_constant_column(value: object) -> Column:
-    """Return a literal Spark column with a fixed value for every row."""
+    """Returns a literal Spark column with a fixed value for every row.
+
+    Args:
+        value: The literal value emitted on every row.  Any
+          JSON-serialisable type Spark's ``F.lit`` accepts.
+
+    Returns:
+        A Spark ``Column`` (literal) whose runtime type matches the
+        Python type of ``value``.
+    """
     return F.lit(value)
 
 
 def build_expression_column(expr_str: str) -> Column:
-    """Return a Spark column from a SQL expression string.
+    """Returns a Spark column from a SQL expression string.
 
-    The expression can reference other columns in the same table, e.g.
-    ``"quantity * unit_price"`` or ``"concat(first_name, ' ', last_name)"``.
+    The expression can reference other columns in the same table,
+    e.g. ``"quantity * unit_price"`` or
+    ``"concat(first_name, ' ', last_name)"``.
+
+    Security note: ``expr_str`` is passed directly to ``F.expr()`` and
+    can execute arbitrary Spark SQL.  Do not use ``ExpressionColumn``
+    with untrusted plan YAML in multi-tenant environments.
+
+    Args:
+        expr_str: A Spark SQL expression string.
+
+    Returns:
+        A Spark ``Column`` carrying the parsed expression; its
+        runtime type is whatever the expression evaluates to.
     """
     return F.expr(expr_str)

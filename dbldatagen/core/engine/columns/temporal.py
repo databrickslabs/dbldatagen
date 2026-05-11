@@ -34,11 +34,29 @@ def build_timestamp_column(
     distribution: Distribution | None = None,
     cell_seed_override: Column | None = None,
 ) -> Column:
-    """Generate timestamps in [start, end] range.
+    """Generates timestamps in ``[start, end]`` range.
 
     ``cast(long -> timestamp)`` reads the long as UTC epoch seconds
-    (session-TZ-independent), unlike ``F.from_unixtime(...).cast("timestamp")``
-    which round-trips through session-TZ format+parse.
+    (session-TZ-independent), unlike
+    ``F.from_unixtime(...).cast("timestamp")`` which round-trips
+    through session-TZ format+parse and gives non-reproducible output
+    across clusters.
+
+    Args:
+        id_col: Row-id ``Column`` reference or column name.
+        column_seed: Per-column seed.
+        start: Inclusive lower bound as an ISO-8601 string
+          (``"YYYY-MM-DD"`` or ``"YYYY-MM-DD HH:MM:SS"``).  Defaults
+          to ``"2020-01-01"``.
+        end: Inclusive upper bound, same format as ``start``.
+          Defaults to ``"2025-12-31"``.
+        distribution: Sampling distribution.  ``None`` defaults to
+          ``Uniform``.
+        cell_seed_override: Optional per-cell seed ``Column`` to use
+          instead of ``cell_seed_expr(column_seed, id_col)``.
+
+    Returns:
+        A Spark ``Column`` (timestamp) holding the sampled values.
     """
     if isinstance(id_col, str):
         id_col = F.col(id_col)
@@ -63,12 +81,26 @@ def build_date_column(
     distribution: Distribution | None = None,
     cell_seed_override: Column | None = None,
 ) -> Column:
-    """Generate dates in [start, end] range.
+    """Generates dates in ``[start, end]`` range.
 
-    Materialised via ``date_add`` on days-since-epoch (UTC).  The
-    previous ``from_unixtime(...).cast("date")`` picked the session-TZ
-    wall-clock date and gave non-reproducible output across clusters
-    when the epoch landed near midnight UTC.
+    Materialised via ``F.date_add`` on days-since-epoch (UTC).  The
+    previous ``F.from_unixtime(...).cast("date")`` picked the
+    session-TZ wall-clock date and gave non-reproducible output
+    across clusters when the epoch landed near midnight UTC.
+
+    Args:
+        id_col: Row-id ``Column`` reference or column name.
+        column_seed: Per-column seed.
+        start: Inclusive lower bound as an ISO-8601 string.
+          Defaults to ``"2020-01-01"``.
+        end: Inclusive upper bound.  Defaults to ``"2025-12-31"``.
+        distribution: Sampling distribution.  ``None`` defaults to
+          ``Uniform``.
+        cell_seed_override: Optional per-cell seed ``Column`` to use
+          instead of ``cell_seed_expr(column_seed, id_col)``.
+
+    Returns:
+        A Spark ``Column`` (date) holding the sampled values.
     """
     if isinstance(id_col, str):
         id_col = F.col(id_col)
