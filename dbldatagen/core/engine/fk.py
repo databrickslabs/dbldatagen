@@ -21,12 +21,32 @@ def build_fk_column(
     column_seed: int | Column,
     fk_resolution: FKResolution,
 ) -> Column:
-    """Generate FK values that are guaranteed to be valid parent PKs.
+    """Generates FK values that are guaranteed to be valid parent PKs.
 
     Algorithm:
-    1. cell_seed = xxhash64(column_seed, id)
-    2. parent_index = distribution_sample(cell_seed, N_parent)
-    3. fk_value = reconstruct_parent_pk(parent_index, pk_metadata)
+        1. ``cell_seed = xxhash64(column_seed, id)``
+        2. ``parent_index = distribution_sample(cell_seed, N_parent)``
+        3. ``fk_value = reconstruct_parent_pk(parent_index, pk_metadata)``
+
+    Step 3 reconstructs what the parent PK column would have produced
+    for the chosen row index, without re-materialising the parent
+    table.
+
+    Args:
+        id_col: Row-id ``Column`` (typically
+          ``F.col("_synth_row_id")``).
+        column_seed: Per-column seed for the FK column.  Scalar
+          ``int`` for the single-batch path; ``Column`` for the
+          multi-write-batch path.
+        fk_resolution: ``FKResolution`` from ``ResolvedPlan``
+          carrying the parent ``PKMetadata``, sampling distribution,
+          and null fraction.
+
+    Returns:
+        A Spark ``Column`` whose runtime type matches the parent
+        PK's type (long for sequence/uuid PKs, string for pattern
+        PKs).  When ``null_fraction > 0``, a per-row mask wraps the
+        result with ``NULL`` literals.
     """
     meta = fk_resolution.parent_meta
     distribution = fk_resolution.distribution

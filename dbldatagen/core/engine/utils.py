@@ -67,7 +67,20 @@ class _LazyList(Generic[T]):
 
 
 def resolve_batch_size(batch_size_spec: int | float | str, initial_rows: int) -> int:
-    """Convert a batch_size spec (int, float fraction, or human string) to an absolute count."""
+    """Converts a batch-size spec into an absolute row count.
+
+    Args:
+        batch_size_spec: Either an ``int`` row count, a ``float`` in
+          ``(0.0, 1.0]`` interpreted as a fraction of ``initial_rows``,
+          or a human-readable string like ``"50K"`` /  ``"1M"`` /
+          ``"100"`` (parsed via ``parse_human_count``).
+        initial_rows: The baseline row count used when
+          ``batch_size_spec`` is a fractional ``float``.
+
+    Returns:
+        An absolute batch size (``int``).  At least ``1`` when the
+        fractional interpretation rounds below one.
+    """
     if isinstance(batch_size_spec, str):
         from dbldatagen.core.spec.schema import parse_human_count
 
@@ -81,11 +94,21 @@ def split_with_remainder(
     total: int,
     fractions: tuple[float, float, float],
 ) -> tuple[int, int, int]:
-    """Split *total* into three integer counts proportional to *fractions*.
+    """Splits *total* into three integer counts proportional to *fractions*.
 
     Remainder (from integer truncation) is assigned to the category
     with the largest non-zero fraction.  If all fractions are zero,
     the remainder goes to the first category.
+
+    Args:
+        total: Total count to distribute.  Must be non-negative.
+        fractions: Three-element tuple of non-negative fractions
+          ``(a, b, c)``.  Normalised internally; need not sum to
+          ``1.0``.
+
+    Returns:
+        A three-element tuple ``(a, b, c)`` of ``int`` counts that
+        sum to ``total``.
     """
     a_frac, b_frac, c_frac = fractions
     total_w = a_frac + b_frac + c_frac
@@ -121,14 +144,19 @@ def union_all(
     *,
     allow_missing_columns: bool = False,
 ) -> DataFrame:
-    """Union a non-empty list of DataFrames by name.
+    """Unions a non-empty list of ``DataFrame`` objects by column name.
 
-    Parameters
-    ----------
-    dfs : list[DataFrame]
-        Must contain at least one DataFrame.
-    allow_missing_columns : bool
-        If True, missing columns are filled with NULL.
+    Args:
+        dfs: Non-empty list of ``DataFrame`` objects to union.
+          Schema alignment is by column name, not position.
+        allow_missing_columns: When ``True``, columns missing from a
+          ``DataFrame`` are filled with ``NULL`` in the union (Spark
+          3.1+ ``unionByName`` ``allowMissingColumns`` semantics).
+          Defaults to ``False``.
+
+    Returns:
+        A single ``DataFrame`` carrying the union of all inputs by
+        name.
     """
     result = dfs[0]
     for df in dfs[1:]:
@@ -140,12 +168,21 @@ def create_range_df(
     spark: SparkSession,
     row_count: int,
 ) -> tuple[DataFrame, Column]:
-    """Create a range DataFrame with ``_synth_row_id`` column.
+    """Creates a range ``DataFrame`` with a ``_synth_row_id`` column.
 
-    Renames ``spark.range()``'s default ``id`` column to avoid collisions
-    with user columns named ``id``.
+    Renames ``spark.range()``'s default ``id`` column to avoid
+    collisions with user columns named ``id``.  The renamed column
+    is reserved internally and dropped before the final ``DataFrame``
+    is returned to the user.
 
-    Returns ``(df, id_col)`` where ``id_col`` is ``F.col("_synth_row_id")``.
+    Args:
+        spark: Active ``SparkSession``.
+        row_count: Number of rows to generate.  Must be non-negative.
+
+    Returns:
+        A two-tuple ``(df, id_col)`` where ``df`` has a single
+        ``_synth_row_id`` column and ``id_col`` is the corresponding
+        ``Column`` reference for use in downstream expressions.
     """
     df = spark.range(row_count).withColumnRenamed("id", "_synth_row_id")
     return df, F.col("_synth_row_id")
@@ -157,9 +194,21 @@ def apply_null_fraction(
     id_col: Column,
     null_fraction: float,
 ) -> Column:
-    """Wrap *expr* with a null mask when *null_fraction* > 0.
+    """Wraps *expr* with a null mask when *null_fraction* > 0.
 
-    Returns *expr* unchanged when ``null_fraction <= 0``.
+    Args:
+        expr: The Spark ``Column`` expression to wrap.
+        column_seed: Per-column seed.  Scalar ``int`` for the
+          single-batch path; ``Column`` for the multi-write-batch
+          path.
+        id_col: Row-id ``Column`` (typically
+          ``F.col("_synth_row_id")``).
+        null_fraction: Target fraction of rows to mark NULL, in
+          ``[0.0, 1.0]``.
+
+    Returns:
+        ``expr`` unchanged when ``null_fraction <= 0``; otherwise
+        ``F.when(null_mask, NULL).otherwise(expr)``.
     """
     if null_fraction <= 0:
         return expr
@@ -176,11 +225,29 @@ def apply_column_phases(
     udf_columns: list[tuple[str, Column]],
     seeded_columns: list[tuple[str, Column]],
 ) -> DataFrame:
-    """Apply the three-phase column application pattern and drop ``_synth_row_id``.
+    """Applies the three-phase column application pattern.
 
-    Phase 1: flat ``select`` for Spark SQL expressions.
-    Phase 2: ``withColumn`` for UDF-based columns (FK, Faker).
-    Phase 3: ``withColumn`` for seed_from columns.
+    Phase 1 -- flat ``select`` for Spark SQL expressions (cheapest).
+    Phase 2 -- ``withColumn`` for UDF-based columns (FK, Faker) so
+        each one anchors against the already-projected scalar
+        columns.
+    Phase 3 -- ``withColumn`` for ``seed_from`` columns so they
+        reference the already-materialised parent column.
+    Finally, drops the internal ``_synth_row_id`` column.
+
+    Args:
+        df: Source ``DataFrame`` carrying the ``_synth_row_id``
+          column produced by ``create_range_df``.
+        id_col: ``Column`` reference to ``_synth_row_id``.
+        col_exprs: Phase-1 Spark SQL expression columns to project.
+        udf_columns: Phase-2 list of ``(name, expr)`` pairs for
+          UDF-based columns added via ``withColumn``.
+        seeded_columns: Phase-3 list of ``(name, expr)`` pairs for
+          ``seed_from``-derived columns added after their parents.
+
+    Returns:
+        A ``DataFrame`` with the user-facing columns in declaration
+        order; ``_synth_row_id`` is no longer present.
     """
     df = df.select(id_col, *col_exprs)
 
@@ -197,11 +264,23 @@ def case_when_chain(
     discriminator: Column,
     branches: list[tuple[int, Column]],
 ) -> Column:
-    """Build a CASE WHEN chain over *discriminator* for a list of ``(key, expr)`` pairs.
+    """Builds a CASE WHEN chain over *discriminator* for a list of branches.
 
-    Returns ``WHEN disc == k0 THEN v0 WHEN disc == k1 THEN v1 ... ELSE v_last``.
+    Emits ``WHEN disc == k0 THEN v0 WHEN disc == k1 THEN v1 ... ELSE v_last``.
     When there is exactly one branch, returns the expression directly
-    (no CASE WHEN needed).
+    (no CASE WHEN needed) so single-batch generation produces a
+    minimal Spark plan.
+
+    Args:
+        discriminator: Spark ``Column`` whose value selects a branch.
+        branches: Non-empty list of ``(key, expr)`` pairs.  The last
+          pair acts as the ``ELSE`` arm; the remainder become
+          ``WHEN disc == key THEN expr`` clauses in order.
+
+    Returns:
+        A Spark ``Column`` representing the CASE WHEN expression
+        (or the single branch's expression unchanged when
+        ``len(branches) == 1``).
     """
     if len(branches) == 1:
         return branches[0][1]
@@ -216,7 +295,15 @@ def case_when_chain(
 
 
 def get_pk_columns(table_spec: TableSpec) -> set[str]:
-    """Extract primary key column names as a set."""
+    """Extracts primary key column names as a set.
+
+    Args:
+        table_spec: The table whose PK column names to return.
+
+    Returns:
+        ``set(table_spec.primary_key.columns)`` when the table has a
+        primary key, otherwise an empty set.
+    """
     if table_spec.primary_key:
         return set(table_spec.primary_key.columns)
     return set()
