@@ -30,11 +30,23 @@ GOLDEN_RATIO_HASH = 0x9E3779B9
 
 
 def derive_column_seed(global_seed: int, table_name: str, column_name: str) -> int:
-    """Derive a per-column seed from global seed + table + column identity.
+    """Derives a per-column seed from global seed + table + column identity.
 
-    Pure Python, called once per column during planning.  The result is a signed
-    64-bit integer (Java long compatible) that is deterministic for a given
-    (global_seed, table, column) triple.
+    Pure Python, called once per column during planning.  Same triple
+    always returns the same seed, so re-running ``resolve_plan`` on the
+    same ``DataGenPlan`` produces byte-identical downstream data.
+
+    Args:
+        global_seed: The plan-level seed (typically
+          ``DataGenPlan.seed`` after propagation).
+        table_name: Name of the table the column belongs to.
+        column_name: Name of the column.  When chaining seeds for
+          nested struct fields, callers pass the field name and an
+          empty ``table_name`` for the second-and-onwards hop.
+
+    Returns:
+        A signed 64-bit int (Java long compatible) deterministic for
+        the given ``(global_seed, table_name, column_name)`` triple.
     """
     h = global_seed & 0xFFFFFFFFFFFFFFFF
     for c in table_name:
@@ -45,11 +57,11 @@ def derive_column_seed(global_seed: int, table_name: str, column_name: str) -> i
 
 
 def cell_seed_expr(column_seed: int | Column, id_col: Column | str = "id") -> Column:
-    """Return a Spark expression that computes a per-cell seed.
+    """Returns a Spark expression that computes a per-cell seed.
 
     ``cell_seed = xxhash64(column_seed, id)``
 
-    This is partition-independent because *id* comes from ``spark.range(n)``.
+    Partition-independent because ``id`` comes from ``spark.range(n)``.
 
     PERFORMANCE NOTE — ``int | Column`` signature:
         *column_seed* may be a scalar ``int`` (single-batch generation) or a
@@ -59,6 +71,16 @@ def cell_seed_expr(column_seed: int | Column, id_col: Column | str = "id") -> Co
         for minutes while the cluster sits idle.  Verified at 500M-3B row
         scale (365 batches x 10+ columns).  Do not refactor this back to
         int-only -- it is intentional.
+
+    Args:
+        column_seed: Per-column seed (scalar ``int`` or Spark
+          ``Column`` — see PERFORMANCE NOTE).
+        id_col: Row-id column.  Either a Spark ``Column`` reference
+          or the name of the column (defaults to ``"id"``).
+
+    Returns:
+        A Spark ``Column`` (long) holding the per-cell seed for every
+        row in the input ``DataFrame``.
     """
     if isinstance(id_col, str):
         id_col = F.col(id_col)
@@ -71,13 +93,33 @@ def null_mask_expr(
     id_col: Column | str,
     null_fraction: float,
 ) -> Column:
-    """Return a boolean Column that is ``True`` for rows that should be NULL.
+    """Returns a boolean Column that is ``True`` for rows that should be NULL.
 
     Uses a separate seed (XOR with constant) to avoid correlation with the
     value seed for the same column.
 
     PERFORMANCE NOTE: Accepts ``int | Column`` for the same reason as
     ``cell_seed_expr`` — see that function's docstring.
+
+    Args:
+        column_seed: Per-column seed (scalar ``int`` or Spark
+          ``Column``).
+        id_col: Row-id column.  Either a Spark ``Column`` reference
+          or the name of the column.
+        null_fraction: Target fraction of rows to mark NULL, in
+          ``[0.0, 1.0]``.  ``0.0`` returns a ``False`` literal,
+          ``>= 1.0`` returns a ``True`` literal; in-between values
+          are quantised to ``1 / _NULL_PRECISION`` granularity.
+
+    Returns:
+        A Spark boolean ``Column``: ``True`` for rows the caller
+        should emit as NULL, ``False`` otherwise.  Cheap to combine
+        with ``F.when(mask, F.lit(None)).otherwise(value_expr)``.
+
+    Raises:
+        ValueError: ``null_fraction`` is strictly between ``0.0`` and
+          ``1.0`` but smaller than ``1 / _NULL_PRECISION``.  Raises
+          rather than silently emitting zero NULLs.
     """
     if null_fraction <= 0.0:
         return F.lit(False)
@@ -107,10 +149,19 @@ def null_mask_expr(
 
 
 def compute_batch_seed(global_seed: int, batch_id: int) -> int:
-    """Compute the seed for a given batch.
+    """Computes the seed for a given batch.
 
-    Batch 0 uses global_seed directly.
-    Batch n uses global_seed + n * _BATCH_SEED_STRIDE (wrapped to signed 64-bit).
+    Batch ``0`` uses ``global_seed`` directly so single-batch
+    generation matches the pre-batched output byte-for-byte.  Batches
+    ``n >= 1`` use ``global_seed + n * _BATCH_SEED_STRIDE``
+    (wrapped to signed 64-bit).
+
+    Args:
+        global_seed: The plan-level seed.
+        batch_id: Zero-based batch index.
+
+    Returns:
+        Signed 64-bit batch seed.
     """
     if batch_id == 0:
         return global_seed
@@ -119,7 +170,18 @@ def compute_batch_seed(global_seed: int, batch_id: int) -> int:
 
 
 def to_signed64(n: int) -> int:
-    """Convert an arbitrary Python int to a signed 64-bit int (Java long range)."""
+    """Converts an arbitrary Python int to a signed 64-bit int (Java long range).
+
+    Bit-truncates to 64 bits and re-interprets as two's-complement
+    signed, so values outside the int64 range wrap consistently with
+    the JVM long semantics that Spark uses.
+
+    Args:
+        n: Any Python int (may be negative, may exceed 64 bits).
+
+    Returns:
+        ``n`` mapped into ``[-2**63, 2**63 - 1]``.
+    """
     n = n & 0xFFFFFFFFFFFFFFFF
     if n >= 0x8000000000000000:
         return n - 0x10000000000000000
@@ -137,7 +199,7 @@ def column_seed_map(
     table_name: str,
     column_name: str,
 ) -> Column:
-    """Build a Spark map literal that maps write_batch → column_seed.
+    """Builds a Spark map literal that maps ``write_batch`` → column seed.
 
     Precomputes ``derive_column_seed(compute_batch_seed(global_seed, wb), ...)``
     for each write-batch value, then encodes the mapping as a single Spark
@@ -156,6 +218,20 @@ def column_seed_map(
         The map literal precomputes seeds on the driver (microseconds) and
         gives O(1) lookup at execution time.  Verified at 500M-3B row scale
         with full cluster utilization.
+
+    Args:
+        global_seed: The plan-level seed.
+        unique_wbs: The distinct ``_write_batch`` values present in
+          the DataFrame (typically ``list(range(num_batches))``).
+        table_name: Owning table name; threaded into
+          ``derive_column_seed`` so different tables get
+          uncorrelated maps.
+        column_name: Owning column name; threaded into
+          ``derive_column_seed``.
+
+    Returns:
+        A Spark ``MapType`` ``Column`` (long → long) suitable for
+        ``element_at(map, F.col("_write_batch"))``.
     """
     entries: list[Column] = []
     for wb in unique_wbs:
@@ -170,7 +246,17 @@ def column_seed_lookup(
     seed_map: Column,
     wb_col: Column,
 ) -> Column:
-    """Look up the column seed for a given write_batch from a map literal."""
+    """Looks up the column seed for a given ``_write_batch`` from a map literal.
+
+    Args:
+        seed_map: Map literal produced by ``column_seed_map`` or
+          ``struct_field_seed_map``.
+        wb_col: Spark ``Column`` carrying the per-row
+          ``_write_batch`` value.
+
+    Returns:
+        A Spark ``Column`` (long) holding the per-row column seed.
+    """
     return F.element_at(seed_map, wb_col.cast("long"))
 
 
@@ -180,9 +266,9 @@ def struct_field_seed_map(
     table_name: str,
     field_path: list[str],
 ) -> Column:
-    """Like ``column_seed_map`` but for a StructColumn descendant field.
+    """Like ``column_seed_map`` but for a ``StructColumn`` descendant field.
 
-    ``field_path`` is the chain from the TableSpec's top-level column to
+    ``field_path`` is the chain from the ``TableSpec``'s top-level column to
     the leaf field inside any depth of nesting:
 
         ["addr", "city"]          -- one-level struct
@@ -200,6 +286,22 @@ def struct_field_seed_map(
     ``field_name``), the Column branch raised at plan time whenever a
     struct's child was itself a struct — nested structs were silently
     broken on the Column-typed-seed path.
+
+    Args:
+        global_seed: The plan-level seed.
+        unique_wbs: Distinct ``_write_batch`` values present in the
+          DataFrame.
+        table_name: Owning table name.
+        field_path: Non-empty chain of struct field names from the
+          top-level column down to the leaf field whose seed is
+          being computed.
+
+    Returns:
+        A Spark ``MapType`` ``Column`` (long → long) suitable for
+        ``element_at(map, F.col("_write_batch"))``.
+
+    Raises:
+        ValueError: ``field_path`` is empty.
     """
     if not field_path:
         raise ValueError("struct_field_seed_map requires a non-empty field_path")
