@@ -53,9 +53,9 @@ def cell_seed_expr(column_seed: int | Column, id_col: Column | str = "id") -> Co
 
     PERFORMANCE NOTE — ``int | Column`` signature:
         *column_seed* may be a scalar ``int`` (single-batch generation) or a
-        ``Column`` (fused multi-batch CDC via map-based seed lookup).  The
-        Column path eliminates O(N_batches x N_columns) CASE WHEN branches in
-        the Spark plan, which otherwise causes Catalyst compilation to stall
+        ``Column`` (multi-write-batch generation via map-based seed lookup).
+        The Column path eliminates O(N_batches x N_columns) CASE WHEN branches
+        in the Spark plan, which otherwise causes Catalyst compilation to stall
         for minutes while the cluster sits idle.  Verified at 500M-3B row
         scale (365 batches x 10+ columns).  Do not refactor this back to
         int-only -- it is intentional.
@@ -77,8 +77,7 @@ def null_mask_expr(
     value seed for the same column.
 
     PERFORMANCE NOTE: Accepts ``int | Column`` for the same reason as
-    ``cell_seed_expr`` — see that function's docstring.  The ``bitwiseXOR``
-    path for Column seeds is required for fused multi-batch CDC.
+    ``cell_seed_expr`` — see that function's docstring.
     """
     if null_fraction <= 0.0:
         return F.lit(False)
@@ -128,7 +127,7 @@ def to_signed64(n: int) -> int:
 
 
 # ---------------------------------------------------------------------------
-# Map-based seed lookup (for fused multi-batch CDC)
+# Map-based seed lookup (for multi-write-batch generation paths)
 # ---------------------------------------------------------------------------
 
 
@@ -195,12 +194,12 @@ def struct_field_seed_map(
     top-level column, then each further name in ``field_path`` is
     chained with an empty-string table argument (matching the scalar
     path's ``derive_column_seed(parent_seed, "", name)`` per-field
-    hash).  Used by ``_build_struct_column`` under the fused multi-batch
-    CDC path so nested-struct children match the scalar path
-    byte-for-byte.  Before this helper took a path (only
-    ``parent_col_name`` + ``field_name``), the Column branch raised at
-    plan time whenever a struct's child was itself a struct — nested
-    structs were silently broken on the fused path.
+    hash).  Used by ``_build_struct_column`` under the multi-write-batch
+    path so nested-struct children match the scalar path byte-for-byte.
+    Before this helper took a path (only ``parent_col_name`` +
+    ``field_name``), the Column branch raised at plan time whenever a
+    struct's child was itself a struct — nested structs were silently
+    broken on the Column-typed-seed path.
     """
     if not field_path:
         raise ValueError("struct_field_seed_map requires a non-empty field_path")

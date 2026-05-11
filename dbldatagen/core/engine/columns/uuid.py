@@ -20,9 +20,8 @@ def build_uuid_column(id_col: Column | str, column_seed: int | Column) -> Column
     ``xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx``
 
     PERFORMANCE NOTE: The ``int | Column`` branching for ``column_seed`` is
-    required for fused multi-batch CDC where the seed varies per row via
-    map-based lookup (see ``column_seed_map`` in seed.py).  Do not simplify
-    to int-only.
+    required when the seed varies per row via map-based lookup (see
+    ``column_seed_map`` in seed.py).  Do not simplify to int-only.
     """
     if isinstance(id_col, str):
         id_col = F.col(id_col)

@@ -135,9 +135,9 @@ def build_pattern_column(
 def _seed_xor(column_seed: int | Column, constant: int) -> int | Column:
     """XOR a column seed (int or Column) with a constant.
 
-    The ``int | Column`` split is required: fused multi-batch CDC
-    passes a Column from map-based lookup (``column_seed_map`` in
-    seed.py).  The int branch clamps via ``to_signed64`` so XOR
+    The ``int | Column`` split is required: callers passing a
+    Column-typed seed come from map-based lookup (``column_seed_map``
+    in seed.py).  The int branch clamps via ``to_signed64`` so XOR
     results outside signed-64 don't trip F.lit at query-build time.
     """
     if isinstance(column_seed, Column):

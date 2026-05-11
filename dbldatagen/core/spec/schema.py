@@ -26,16 +26,6 @@ class _StrictModel(BaseModel):
 
 _IDENTIFIER_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
-# Names that the SQL Server CDC format rewrite (``rename_cdc_columns``)
-# emits by renaming the raw ``__$operation`` / ``__$start_lsn`` /
-# ``__$seqval`` metadata columns.  A user column with one of these names
-# would silently shadow the rewritten metadata after rename, and Delta
-# would carry two identically-named columns with the user's one winning
-# in downstream reads.  Reserve at plan time so the collision fails
-# loudly where the column is defined, not at write time with an opaque
-# Delta error.
-_RESERVED_CDC_RENAME_TARGETS = frozenset({"cdc_operation", "cdc_lsn", "cdc_seqval"})
-
 # Upper bound on ArrayColumn.max_length.  Each slot materialises its own
 # Spark expression tree at plan time, so Catalyst work scales linearly
 # with this value (and with nested arrays/structs, multiplicatively).
@@ -617,15 +607,10 @@ class ColumnSpec(_StrictModel):
     def validate_column_name(self) -> ColumnSpec:
         """Reject column names that would collide with engine-internal metadata.
 
-        Leading-underscore names (and the specific CDC metadata
-        columns ``_op``, ``_batch_id``, ``_ts``) would silently
-        shadow or get shadowed by the internal columns the engine
-        adds during generation — e.g. a user column named ``_ts``
-        would collide with the CDC timestamp attached by
-        ``_add_cdc_metadata`` and get double-counted in
-        ``to_sql_server``'s ``__$seqval`` hash.  Internal-only
-        markers reserved here: ``_op``, ``_batch_id``, ``_ts``,
-        ``_write_batch``, ``_synth_row_id``.
+        Leading-underscore names are reserved for engine-internal
+        columns (``_write_batch``, ``_synth_row_id``) added during
+        generation; a user column with such a name would silently
+        shadow them.
 
         The name must also be a valid SQL / Python-like identifier
         (``[A-Za-z_][A-Za-z0-9_]*``) so it round-trips through Spark
@@ -641,23 +626,8 @@ class ColumnSpec(_StrictModel):
             raise ValueError(
                 f"Column name '{self.name}' starts with underscore, which is "
                 f"reserved for engine-internal metadata columns "
-                f"(``_op``, ``_batch_id``, ``_ts``, ``_write_batch``, "
-                f"``_synth_row_id``).  Rename to a non-underscore-prefixed "
-                f"identifier to avoid silent shadowing."
-            )
-        if self.name in _RESERVED_CDC_RENAME_TARGETS:
-            raise ValueError(
-                f"Column name '{self.name}' is reserved for the SQL Server "
-                f"CDC format rewrite (``rename_cdc_columns`` renames "
-                f"``__$operation`` / ``__$start_lsn`` / ``__$seqval`` into "
-                f"``cdc_operation`` / ``cdc_lsn`` / ``cdc_seqval``).  A user "
-                f"column with the same name collides silently after rename -- "
-                f"rename your column to avoid the collision.  This reservation "
-                f"is unconditional because a plan can be handed to any CDC "
-                f"format at generation time -- rejecting only for "
-                f"``format='sql_server'`` would mean a plan that validates "
-                f"today fails the moment someone picks that format, with no "
-                f"clear path back to the offending column."
+                f"(``_write_batch``, ``_synth_row_id``).  Rename to a "
+                f"non-underscore-prefixed identifier to avoid silent shadowing."
             )
         return self
 

@@ -77,9 +77,9 @@ def generate_table(
         ``table_spec.name``.  Unlike ``generate()`` (which checks
         ``resolved_plan.plan is plan``), this helper accepts any plan
         containing a matching table name -- the weaker check exists so
-        CDC's insert-subset path can pass freshly-constructed
-        ``TableSpec`` objects per batch.  A caller who wants the
-        stronger cross-plan guarantee should use ``generate()``; a
+        callers that legitimately build fresh per-call ``TableSpec``
+        objects can still reuse a ``ResolvedPlan``.  A caller who wants
+        the stronger cross-plan guarantee should use ``generate()``; a
         caller who passes planA's TableSpec with
         ``resolve_plan(planB)`` where both plans have a same-named
         table will NOT be caught here.
@@ -96,8 +96,9 @@ def generate_table(
             f"DataGenPlan (which propagates plan.seed to each table "
             f"during Pydantic validation)."
         )
-    # Name-based (not identity) check: CDC's insert-subset path
-    # legitimately constructs fresh per-batch TableSpecs.
+    # Name-based (not identity) check: callers may legitimately
+    # construct fresh per-call TableSpecs that share a name with a
+    # table in the resolved plan.
     if resolved_plan is not None:
         plan_table_names = {t.name for t in resolved_plan.plan.tables}
         if table_spec.name not in plan_table_names:
@@ -364,7 +365,7 @@ def _build_regular_column_expr(
     """Build a regular (non-FK, non-seed_from) column expression.
 
     ``struct_dyn_ctx`` is ``(table_name, unique_wbs, wb_col)``; only
-    populated by the fused multi-batch path so ``_build_struct_column``
+    populated by the multi-write-batch path so ``_build_struct_column``
     can precompute polynomial-hashed child seeds that match the scalar
     path (without it, the Column branch used XOR and diverged).
     """
@@ -382,6 +383,12 @@ def _build_regular_column_expr(
     return apply_null_fraction(expr, column_seed, id_col, col_spec.null_fraction)
 
 
+# Reserved for the CDC follow-up PR (branch ``ak/synth-next-cdc``).
+# This wrapper and its inner ``_build_exprs_dynamic`` have no live caller
+# in this PR; they exist to support the CDC fused/bulk paths that ship
+# next.  Keeping them here (along with the ``int | Column`` seed branches
+# in ``seed.py`` / ``columns/string.py`` / ``columns/uuid.py``) avoids a
+# round-trip of delete-now / re-add-in-follow-up.
 def build_all_column_exprs_case_when(
     table_spec: TableSpec,
     id_col: Column,
@@ -392,7 +399,7 @@ def build_all_column_exprs_case_when(
     *,
     row_count: int = 0,
 ) -> tuple[list[Column], list[tuple[str, Column]], list[tuple[str, Column]]]:
-    """Build column expressions for fused multi-batch CDC DataFrames.
+    """Build column expressions for multi-write-batch DataFrames.
 
     PERFORMANCE-CRITICAL FUNCTION — read before modifying:
         When there are many unique write-batch values (>1), seeds are resolved
@@ -518,19 +525,19 @@ def build_column_expr(  # noqa: PLR0911
     column_seed :
         Per-column seed.  May be a scalar ``int`` (planning-time constant)
         or a ``Column`` (dynamic seed derived from ``_write_batch`` via
-        map-based lookup).  The ``int | Column`` type is required for the
-        fused multi-batch CDC path — see ``_build_exprs_dynamic`` and
-        ``column_seed_map`` in seed.py for the performance rationale.
+        map-based lookup — see ``_build_exprs_dynamic`` and
+        ``column_seed_map`` in seed.py for the performance rationale).
     cell_seed_override :
         If provided, used as the per-cell seed instead of the default
         ``cell_seed_expr(column_seed, id_col)``.  Useful for snapshot
         generation where the seed incorporates per-row state (e.g. the
         last-write batch).
     struct_dyn_ctx :
-        ``(table_name, unique_wbs, wb_col)`` threaded from the fused
-        multi-batch path so ``_build_struct_column`` can precompute
-        polynomial-hashed child field seeds via ``struct_field_seed_map``.
-        Passed through unchanged for non-struct strategies.
+        ``(table_name, unique_wbs, wb_col)`` threaded from the
+        multi-write-batch path so ``_build_struct_column`` can
+        precompute polynomial-hashed child field seeds via
+        ``struct_field_seed_map``.  Passed through unchanged for
+        non-struct strategies.
     struct_path_prefix :
         Accumulator for the struct-path chain when recursing into nested
         structs.  Empty/None at the top-level dispatch; set to
@@ -538,7 +545,7 @@ def build_column_expr(  # noqa: PLR0911
         ``_build_struct_column`` recurses into a field that is itself a
         struct.  Used alongside ``struct_dyn_ctx`` to compute the correct
         chained ``derive_column_seed`` for deeply nested fields on the
-        fused multi-batch path.
+        multi-write-batch path.
     """
     gen = col_spec.gen
 
@@ -648,7 +655,7 @@ def _build_struct_column(
     Child field seeds are the polynomial hash chain
     ``derive_column_seed(..., derive_column_seed(seed_at_top, field_i), ..., field_leaf)``.
     In the scalar (int) seed path this runs directly on the driver.  In
-    the fused multi-batch path (``parent_seed`` is a ``Column`` sourced
+    the multi-write-batch path (``parent_seed`` is a ``Column`` sourced
     from ``column_seed_map`` / ``struct_field_seed_map``), we cannot
     evaluate ``derive_column_seed`` in Spark SQL (polynomial
     multiplication would ``ARITHMETIC_OVERFLOW`` under ANSI), so we
@@ -679,7 +686,7 @@ def _build_struct_column(
                 raise RuntimeError(
                     f"_build_struct_column for '{parent_col_name}.{field_spec.name}' "
                     f"received a Column parent_seed but no dyn_ctx (table_name, "
-                    f"unique_wbs, wb_col) was threaded from the fused multi-batch "
+                    f"unique_wbs, wb_col) was threaded from the multi-write-batch "
                     f"path. Without context the child seed cannot be computed "
                     f"consistently with the scalar path."
                 )

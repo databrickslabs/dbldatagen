@@ -1,7 +1,7 @@
 """Tests for nested column types: StructColumn and ArrayColumn.
 
 Covers struct generation, array generation, nesting, JSON round-trip,
-CDC compatibility, and determinism.
+and determinism.
 """
 
 from __future__ import annotations
@@ -232,80 +232,6 @@ class TestJSONRoundTrip:
 
 
 # ---------------------------------------------------------------------------
-# CDC with nested columns
-# ---------------------------------------------------------------------------
-
-
-class TestCDCWithNested:
-    def test_cdc_initial_has_struct(self, spark):
-        from dbldatagen.core.engine.cdc import generate_cdc
-
-        stream = generate_cdc(spark, _nested_plan(rows=50), num_batches=1)
-        schema = stream.initial["items"].schema
-        addr_field = schema["address"]
-        assert isinstance(addr_field.dataType, T.StructType)
-
-    def test_cdc_batch_has_struct(self, spark):
-        from dbldatagen.core.engine.cdc import generate_cdc
-
-        stream = generate_cdc(spark, _nested_plan(rows=50), num_batches=1)
-        batch_df = stream.batches[0]["items"]
-        assert "address" in batch_df.columns
-        # Verify struct fields are accessible
-        cities = [r[0] for r in batch_df.filter("_op = 'I'").select("address.city").collect()]
-        assert len(cities) > 0
-
-    def test_cdc_batch_has_array(self, spark):
-        from dbldatagen.core.engine.cdc import generate_cdc
-
-        stream = generate_cdc(spark, _nested_plan(rows=50), num_batches=1)
-        batch_df = stream.batches[0]["items"]
-        assert "tags" in batch_df.columns
-
-    def test_bulk_struct_pre_image_matches_per_batch(self, spark):
-        """Pre-image struct values must agree between bulk and per-batch paths.
-
-        Per-batch (``generate_cdc``) passes a scalar int seed into
-        ``_build_struct_column``, which polynomial-hashes each field via
-        ``derive_column_seed(parent_seed, "", field)``.  Bulk
-        (``generate_cdc_bulk`` with chunk_size > 1) goes through the
-        fused multi-batch path, which previously XOR'd the field hash
-        against the parent column seed — not equivalent to the
-        polynomial-hash the scalar path uses.  Result: UB (update
-        before-image) and D rows carried different struct field values
-        on the two paths.  This test pins the cross-path equality
-        invariant on pre-image rows.
-        """
-        from dbldatagen.core.engine.cdc import generate_cdc, generate_cdc_bulk
-
-        num_b = 5
-        # Larger row count + more batches so the workload produces UB/D events.
-        per = generate_cdc(spark, _nested_plan(rows=200), num_batches=num_b)
-        bulk = generate_cdc_bulk(spark, _nested_plan(rows=200), num_batches=num_b, chunk_size=num_b)
-
-        def pre_image_map(stream) -> dict[tuple[int, int, str], tuple]:
-            out: dict[tuple[int, int, str], tuple] = {}
-            for b in stream.batches:
-                df = b["items"].filter("_op IN ('UB', 'D')")
-                for r in df.collect():
-                    key = (r.item_id, r._batch_id, r._op)
-                    out[key] = (r.address.city, r.address.state, r.address.zip)
-            return out
-
-        per_pre = pre_image_map(per)
-        bulk_pre = pre_image_map(bulk)
-
-        assert per_pre, "no UB/D rows collected from per-batch path — test setup too small"
-        assert set(per_pre.keys()) == set(
-            bulk_pre.keys()
-        ), "bulk and per-batch paths emitted different pre-image (pk, batch, op) tuples"
-        for key in per_pre:
-            assert bulk_pre[key] == per_pre[key], (
-                f"struct pre-image values diverge for {key}: " f"per-batch={per_pre[key]}, bulk={bulk_pre[key]}"
-            )
-
-
-# ---------------------------------------------------------------------------
 # Determinism
 # ---------------------------------------------------------------------------
 
@@ -386,7 +312,7 @@ class TestStructFieldSeedIndependence:
                 text("b", values=["x", "y", "z", "w", "v"]),
             ]
         )
-        # Synthetic dyn_ctx mimicking the fused multi-batch path: one
+        # Synthetic dyn_ctx mimicking the multi-write-batch path: one
         # write_batch value, a ``_write_batch`` column, and a parent seed
         # sourced from ``column_seed_map`` — the exact shape
         # ``_build_exprs_dynamic`` hands in.
@@ -409,50 +335,6 @@ class TestStructFieldSeedIndependence:
         assert matches / len(rows) < 0.5, (
             f"Sibling struct fields 'a' and 'b' agreed on {matches}/{len(rows)} rows "
             f"(~100% indicates the Column-seed path is not mixing field names)."
-        )
-
-    def test_struct_fields_independent_in_multi_batch_cdc(self, spark):
-        """End-to-end check via generate_cdc with num_batches=3, which routes
-        through the fused multi-batch path (``_build_exprs_dynamic``).
-        """
-        from dbldatagen.core.engine.cdc import generate_cdc
-
-        plan = DataGenPlan(
-            seed=7,
-            tables=[
-                TableSpec(
-                    name="items",
-                    rows=300,
-                    primary_key=PrimaryKey(columns=["item_id"]),
-                    columns=[
-                        pk_auto("item_id"),
-                        ColumnSpec(
-                            name="payload",
-                            gen=StructColumn(
-                                fields=[
-                                    text("left", values=["x", "y", "z", "w", "v"]),
-                                    text("right", values=["x", "y", "z", "w", "v"]),
-                                ]
-                            ),
-                        ),
-                    ],
-                ),
-            ],
-        )
-        stream = generate_cdc(spark, plan, num_batches=3)
-        # Gather all insert rows across batches (batches use the Column-seed path)
-        matches = 0
-        total = 0
-        for batch in stream.batches:
-            df = batch["items"].filter("_op = 'I'")
-            for row in df.collect():
-                total += 1
-                if row.payload.left == row.payload.right:
-                    matches += 1
-        assert total > 0, "no insert rows collected from fused CDC batches"
-        assert matches / total < 0.5, (
-            f"Sibling struct fields in fused CDC agreed on {matches}/{total} inserts "
-            f"(~100% indicates struct-field seeds collapse on the Column path)."
         )
 
 

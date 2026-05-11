@@ -1,11 +1,6 @@
 """Public top-level generation API for ``dbldatagen.core``.
 
-Mirrors the structure of ``dbldatagen/core/engine/cdc/api.py`` (which
-hosts ``generate_cdc`` / ``generate_cdc_bulk`` / ``generate_cdc_batch``
-/ ``write_cdc_to_delta``) so the non-CDC entry point lives next to its
-sibling rather than in the package ``__init__.py``.
-
-The function is re-exported from ``dbldatagen.core`` so the public
+``generate`` is re-exported from ``dbldatagen.core`` so the public
 import path ``from dbldatagen.core import generate`` is unchanged.
 """
 
@@ -35,8 +30,7 @@ def generate(
     ``resolved_plan`` is optional — pass a pre-computed ``ResolvedPlan``
     (from ``resolve_plan(plan)``) to avoid re-resolving when iterating
     over multiple seeds or when composing with lower-level helpers like
-    ``generate_table``.  This matches the ``generate_cdc`` path, which
-    also resolves once and threads the result through every batch.
+    ``generate_table``.
 
     A ``resolved_plan`` must have been produced from *this* ``plan``
     object: the generator follows ``resolved.generation_order`` but

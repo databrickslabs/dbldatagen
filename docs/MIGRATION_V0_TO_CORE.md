@@ -2,7 +2,7 @@
 
 ## Overview
 
-`dbldatagen.core` is a new synthetic data engine that lives alongside the existing v0 API. Both work independently -- you can use v0 and core in the same project without conflicts. Most v0 capabilities have a direct or indirect equivalent in core; this guide maps each one and calls out the handful of true differences (e.g. CDC, FK references, struct columns are core-only; Beta/Gamma distributions and `uniqueValues` are v0-only today).
+`dbldatagen.core` is a new synthetic data engine that lives alongside the existing v0 API. Both work independently -- you can use v0 and core in the same project without conflicts. Most v0 capabilities have a direct or indirect equivalent in core; this guide maps each one and calls out the handful of true differences (e.g. FK references and struct columns are core-only; Beta/Gamma distributions and `uniqueValues` are v0-only today). CDC support is shipping in a follow-up PR.
 
 ## Installation
 
@@ -339,13 +339,7 @@ struct("address", [
 
 ### CDC (Change Data Capture)
 
-```python
-from dbldatagen.core.engine.cdc import generate_cdc
-
-stream = generate_cdc(spark, plan, num_batches=10)
-initial_df = stream.initial["orders"]
-batch_1 = stream.batches[0]["orders"]  # Contains _op column: I/U/D
-```
+CDC support is shipping in a follow-up PR.
 
 ## Different Surface for the Same Capability
 

@@ -307,13 +307,11 @@ def _extract_pk_metadata(table_spec: TableSpec, pk_col_spec: ColumnSpec) -> PKMe
     """Extract PK generation metadata from a TableSpec.
 
     Raises if ``table_spec.seed is None`` -- matches the strictness of
-    ``generate_table`` / ``generate_cdc_batch_for_table`` /
-    ``_generate_chunk_for_table`` / ``generate_expected_state``.  A
-    prior implementation silently substituted ``plan.seed``, which
-    would have the FK child reconstruct parent PKs under a different
-    seed than the parent itself was generated under once the generator
-    entry points started raising -- splitting the same TableSpec across
-    two seeds on the FK boundary.
+    ``generate_table``.  A prior implementation silently substituted
+    ``plan.seed``, which would have the FK child reconstruct parent
+    PKs under a different seed than the parent itself was generated
+    under once the generator entry points started raising -- splitting
+    the same TableSpec across two seeds on the FK boundary.
     """
     if table_spec.seed is None:
         raise ValueError(
