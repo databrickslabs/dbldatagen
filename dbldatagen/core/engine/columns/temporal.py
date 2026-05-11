@@ -57,6 +57,13 @@ def build_timestamp_column(
 
     Returns:
         A Spark ``Column`` (timestamp) holding the sampled values.
+
+    Raises:
+        ValueError: ``start`` or ``end`` does not parse as an ISO-8601
+          datetime string.  The schema's
+          ``TimestampColumn.validate_timestamps`` catches this at
+          plan time for plan-driven generation, so direct callers
+          are the only realistic trigger.
     """
     if isinstance(id_col, str):
         id_col = F.col(id_col)
@@ -101,6 +108,13 @@ def build_date_column(
 
     Returns:
         A Spark ``Column`` (date) holding the sampled values.
+
+    Raises:
+        ValueError: ``start`` or ``end`` does not parse as an ISO-8601
+          datetime string.  The schema's
+          ``TimestampColumn.validate_timestamps`` catches this at
+          plan time for plan-driven generation, so direct callers
+          are the only realistic trigger.
     """
     if isinstance(id_col, str):
         id_col = F.col(id_col)

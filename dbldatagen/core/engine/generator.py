@@ -606,11 +606,15 @@ def build_column_expr(  # noqa: PLR0911
         type depends on the strategy.
 
     Raises:
-        ValueError: ``col_spec.gen`` is ``FakerColumn`` (handled by
-          the column-level pandas_udf in
-          ``_build_faker_expr``) or ``ForeignKeyColumn`` (handled
-          at the table level via ``fk_resolutions``) -- reaching
-          this dispatch is a caller bug.
+        RuntimeError: ``col_spec.gen`` is ``ForeignKeyColumn``.  FK
+          resolution must run earlier via ``_build_fk_column_expr``;
+          reaching this dispatch means the FK short-circuit in
+          ``_build_column_exprs_loop`` was bypassed.
+        ValueError: ``col_spec.gen`` is an unsupported strategy.
+          Includes ``FakerColumn`` (handled out-of-band by
+          ``_build_faker_expr`` as a column-level pandas_udf) and
+          any future strategy that lacks an ``isinstance`` branch
+          above.
     """
     gen = col_spec.gen
 
