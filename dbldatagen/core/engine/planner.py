@@ -116,7 +116,32 @@ _QUOTED_SEGMENT = re.compile(
 
 @dataclass
 class PKMetadata:
-    """Metadata about a parent table's primary key needed for FK generation."""
+    """Metadata about a parent table's primary key needed for FK generation.
+
+    Produced by ``_extract_pk_metadata`` during plan resolution and
+    consumed by ``FKResolution.parent_meta`` and the engine's
+    ``_reconstruct_parent_pk``: the child FK column reconstructs the
+    parent PK value at row index ``i`` from these fields alone, so
+    the parent table never has to be materialised twice.
+
+    Attributes:
+        table_name: Name of the parent table the PK belongs to.
+        pk_column: Name of the PK column on that table.
+        row_count: Number of rows the parent table will produce.
+          Used as the index range from which FK children sample.
+        pk_type: PK generation kind.  One of ``"sequence"``,
+          ``"pattern"``, or ``"uuid"``.
+        pk_seed: Column seed used when generating the PK column.
+          Threaded back into the child's reconstruction so output
+          matches the parent byte-for-byte.
+        pk_start: For ``pk_type == "sequence"``: the sequence start
+          value.  Ignored for other PK types.
+        pk_step: For ``pk_type == "sequence"``: the sequence step
+          value.  Ignored for other PK types.
+        pk_template: For ``pk_type == "pattern"``: the
+          ``PatternColumn.template`` string used to format the PK.
+          ``None`` for non-pattern PKs.
+    """
 
     table_name: str
     pk_column: str
@@ -130,7 +155,31 @@ class PKMetadata:
 
 @dataclass
 class FKResolution:
-    """Resolved FK info for a single FK column."""
+    """Resolved FK info for a single FK column.
+
+    One ``FKResolution`` is created per FK column at ``resolve_plan``
+    time and stored in ``ResolvedPlan.fk_resolutions`` keyed by
+    ``(child_table, child_column)``.  The engine reads it at
+    materialisation to drive the parent-row sampling and reconstruct
+    the parent PK value for each child row.
+
+    Attributes:
+        child_table: Name of the table that owns the FK column.
+        child_column: Name of the FK column on that table.
+        parent_meta: ``PKMetadata`` of the referenced parent
+          ``(table.column)``.  Carries everything needed to
+          reconstruct the parent's PK values without re-materialising
+          the parent table.
+        distribution: Sampling distribution over the parent row index
+          range.  Defaults to the ``ForeignKeyRef.distribution`` set
+          on the user-facing spec; ``None`` falls back to ``Uniform``
+          at materialisation.
+        null_fraction: Probability in ``[0.0, 1.0]`` that a given
+          child row emits ``NULL`` instead of resolving the FK.  The
+          higher of ``ColumnSpec.null_fraction`` and
+          ``ForeignKeyRef.null_fraction`` (validated to agree when
+          both non-zero).
+    """
 
     child_table: str
     child_column: str

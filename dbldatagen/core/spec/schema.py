@@ -1099,9 +1099,25 @@ class ColumnSpec(_StrictModel):
 
 
 def parse_human_count(value: int | str) -> int:
-    """Parse a human-readable count string like '10M', '1B', '500K' to int.
+    """Parses a row-count value into an ``int``.
 
-    Returns *value* unchanged if already an int.
+    Accepts an already-typed ``int`` (returned unchanged) or a
+    human-readable string with a ``K`` / ``M`` / ``B`` suffix
+    (case-insensitive).  Used internally by ``TableSpec`` to normalise
+    the user-facing ``rows`` field before downstream validators run.
+
+    Args:
+        value: Either an ``int`` row count, or a string like
+          ``"10K"``, ``"5M"``, ``"1.5B"``.  Fractional multipliers
+          are allowed; the result is truncated to ``int``.
+
+    Returns:
+        The row count as an ``int``.  For ``int`` input, the input
+        unchanged; for string input, the parsed magnitude.
+
+    Raises:
+        ValueError: ``value`` is a string that does not parse to an
+          ``int`` after suffix stripping.
     """
     if isinstance(value, int):
         return value
