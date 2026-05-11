@@ -212,24 +212,35 @@ def _build_column_exprs_loop(
 ) -> tuple[list[Column], list[tuple[str, Column]], list[tuple[str, Column]]]:
     """Unified column-building loop.
 
-    Iterates ``table_spec.columns``, classifies each column, and routes
-    to the appropriate builder.  The *seed_resolver* callable is the only
-    injection point — it controls how column seeds are derived (scalar,
-    batch-aware scalar, or map-based Column expression).
+    Iterates ``table_spec.columns``, classifies each column, and
+    routes to the appropriate builder.  The *seed_resolver* callable
+    is the only injection point — it controls how column seeds are
+    derived (scalar, batch-aware scalar, or map-based ``Column``
+    expression).
 
-    Parameters
-    ----------
-    seed_resolver :
-        ``(col_spec) -> int | Column`` — returns the column seed.
-    effective_global_seed :
-        Passed through to ``build_column_expr`` as ``global_seed``.
-        For the scalar batch path this is the batch-shifted seed;
-        for the simple and dynamic paths it is the original seed.
-    pk_cols :
-        If provided, PK sequence columns are short-circuited with
-        inline arithmetic instead of routing through ``build_column_expr``.
-    cell_seed_fn :
-        Optional per-cell seed override (used by snapshot generation).
+    Args:
+        table_spec: Table whose columns to expand.
+        id_col: Row-id ``Column``.
+        seed_resolver: ``(col_spec) -> int | Column`` returning the
+          per-column seed.
+        effective_global_seed: Passed through to ``build_column_expr``
+          as ``global_seed``.  For the scalar batch path this is the
+          batch-shifted seed; for the simple and dynamic paths it is
+          the original seed.
+        row_count: Row count threaded through to per-column builders.
+        fk_resolutions: Optional FK resolution map from
+          ``ResolvedPlan``.
+        pk_cols: If provided, PK sequence columns are short-circuited
+          with inline arithmetic instead of routing through
+          ``build_column_expr``.
+        cell_seed_fn: Optional per-cell seed override (used by
+          snapshot generation).
+        dyn_struct_ctx: Optional ``(unique_wbs, wb_col)`` carrying the
+          multi-write-batch context for nested struct seed derivation.
+
+    Returns:
+        A three-tuple ``(col_exprs, udf_columns, seeded_columns)``
+        feeding into ``apply_column_phases``.
     """
     table_name = table_spec.name
     col_exprs: list[Column] = []

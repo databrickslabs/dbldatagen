@@ -27,13 +27,10 @@ class _LazyList(Generic[T]):
         every generated value in memory.  Access individual items and
         discard references when memory is a concern.
 
-    Parameters
-    ----------
-    length :
-        Total number of items.
-    generator :
-        ``(index) -> T`` — called on cache miss.  *index* is the
-        zero-based position in the list.
+    Attributes:
+        length: Total number of items in the lazy list.
+        generator: ``(index) -> T`` callable invoked on cache miss.
+          ``index`` is the zero-based position in the list.
     """
 
     def __init__(self, length: int, generator: Callable[[int], T]) -> None:
