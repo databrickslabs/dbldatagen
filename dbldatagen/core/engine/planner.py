@@ -166,13 +166,33 @@ class ResolvedPlan:
 
 
 def resolve_plan(plan: DataGenPlan) -> ResolvedPlan:
-    """Resolve a DataGenPlan.
+    """Resolves a ``DataGenPlan`` into a generation-ready plan.
 
-    1. Validate all FK references point to existing tables/columns
-    2. Validate referenced columns are actually PKs
-    3. Build dependency graph
-    4. Topological sort (detect cycles)
-    5. Extract PK metadata for each referenced parent
+    Validates every foreign-key reference, builds the table-dependency
+    graph, topologically sorts it (so each parent is generated before
+    its children), and extracts the PK metadata each FK child needs
+    at materialisation.  The result is safe to thread through
+    ``generate()`` / ``generate_table()`` so resolution is paid once
+    even when the same plan is generated many times (e.g. across
+    seeds, partitions, or batches).
+
+    Args:
+        plan: The ``DataGenPlan`` to resolve.  All FK ``ref`` values
+          must use the ``"table.column"`` form and point at a column
+          that is part of the referenced table's ``primary_key``.
+
+    Returns:
+        A ``ResolvedPlan`` carrying ``generation_order`` (parents
+        before children), per-FK ``FKResolution`` records, and a
+        back-pointer to the original ``plan`` so callers downstream
+        can identity-check the pairing.
+
+    Raises:
+        ValueError: an FK ``ref`` is malformed, points at a missing
+          table or column, points at a non-PK column, or the FK graph
+          contains a cycle.  Also raised by upstream
+          ``expression_columns`` / ``seed_from`` / ``primary_keys``
+          validators when their invariants fail.
     """
     table_map: dict[str, TableSpec] = {t.name: t for t in plan.tables}
     all_table_names = list(table_map.keys())

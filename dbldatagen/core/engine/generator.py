@@ -63,30 +63,39 @@ def generate_table(
     table_spec: TableSpec,
     resolved_plan: ResolvedPlan | None = None,
 ) -> DataFrame:
-    """Generate a single table as a Spark DataFrame.
+    """Generates a single table as a Spark ``DataFrame``.
 
-    Parameters
-    ----------
-    spark:
-        Active SparkSession.
-    table_spec:
-        Pydantic model describing the table schema and row count.
-    resolved_plan:
-        Optional ResolvedPlan from the planner carrying FK resolution info.
-        Must have been produced from a plan that contains a table with
-        ``table_spec.name``.  Unlike ``generate()`` (which checks
-        ``resolved_plan.plan is plan``), this helper accepts any plan
-        containing a matching table name -- the weaker check exists so
-        callers that legitimately build fresh per-call ``TableSpec``
-        objects can still reuse a ``ResolvedPlan``.  A caller who wants
-        the stronger cross-plan guarantee should use ``generate()``; a
-        caller who passes planA's TableSpec with
-        ``resolve_plan(planB)`` where both plans have a same-named
-        table will NOT be caught here.
+    Builds a deterministic ``DataFrame`` from the schema described by
+    ``table_spec``.  When ``resolved_plan`` is supplied, FK children
+    resolve to the parent metadata it carries; otherwise FK columns
+    raise at materialisation.  ``table_spec.seed`` must be set --
+    typically by going through ``DataGenPlan``, which propagates
+    ``plan.seed`` to each table during Pydantic validation.
 
-    Returns
-    -------
-    DataFrame with all columns generated.
+    Args:
+        spark: Active ``SparkSession`` used to construct the underlying
+          ``DataFrame``.
+        table_spec: Pydantic model describing the table schema, row
+          count, and per-table seed.
+        resolved_plan: Optional ``ResolvedPlan`` from the planner
+          carrying FK resolution info.  Must have been produced from a
+          plan that contains a table with ``table_spec.name``.  Unlike
+          ``generate()`` (which checks ``resolved_plan.plan is plan``),
+          this helper only checks the name -- the weaker check lets
+          callers that legitimately build fresh per-call ``TableSpec``
+          objects still reuse a ``ResolvedPlan``.  Use ``generate()``
+          when the full cross-plan guarantee is needed; passing planA's
+          ``TableSpec`` with ``resolve_plan(planB)`` where both plans
+          have a same-named table will NOT be caught here.
+
+    Returns:
+        A ``DataFrame`` with one row per ``table_spec.rows`` and one
+        column per ``ColumnSpec`` in ``table_spec.columns``, in declared
+        order.  Output is deterministic given ``table_spec.seed``.
+
+    Raises:
+        ValueError: ``table_spec.seed`` is ``None``, or ``resolved_plan``
+          does not contain a table named ``table_spec.name``.
     """
     row_count = int(table_spec.rows)
     if table_spec.seed is None:

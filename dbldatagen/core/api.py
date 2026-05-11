@@ -22,23 +22,36 @@ def generate(
     plan: DataGenPlan,
     resolved_plan: ResolvedPlan | None = None,
 ) -> dict[str, DataFrame]:
-    """Generate all tables from a DataGenPlan.
+    """Generates all tables from a ``DataGenPlan``.
 
-    Returns dict[str, DataFrame] keyed by table name.
-    Tables are generated in dependency order (parents first).
+    Tables are generated in dependency order (parents first) so that
+    foreign-key children can reference the parent rows that were just
+    built.  When ``resolved_plan`` is omitted, this calls
+    ``resolve_plan(plan)`` once on entry; pass a pre-computed
+    ``ResolvedPlan`` to skip re-resolution when iterating over multiple
+    seeds or composing with lower-level helpers like ``generate_table``.
 
-    ``resolved_plan`` is optional — pass a pre-computed ``ResolvedPlan``
-    (from ``resolve_plan(plan)``) to avoid re-resolving when iterating
-    over multiple seeds or when composing with lower-level helpers like
-    ``generate_table``.
+    Args:
+        spark: Active ``SparkSession`` used to construct the underlying
+          ``DataFrame`` objects.
+        plan: The ``DataGenPlan`` to materialise.  Must have ``seed`` set
+          (either directly or via Pydantic-time propagation to each
+          ``TableSpec``).
+        resolved_plan: Optional pre-resolved plan from
+          ``resolve_plan(plan)``.  Must have been produced from this
+          exact ``plan`` object (identity check, not equality); a
+          mismatch would silently combine one plan's table seeds with
+          another's FK topology and corrupt FK child columns.
 
-    A ``resolved_plan`` must have been produced from *this* ``plan``
-    object: the generator follows ``resolved.generation_order`` but
-    fetches each ``TableSpec`` from ``plan.tables``, so a mismatch
-    (e.g. ``generate(planA, resolved_plan=resolve_plan(planB))``)
-    silently uses planA's table seeds and planB's FK topology,
-    corrupting FK child-column output without any error.  The identity
-    check below catches the mismatch at entry.
+    Returns:
+        A ``dict`` mapping each table name to its generated
+        ``DataFrame``.  Keys come from ``TableSpec.name``; the iteration
+        order follows ``resolved.generation_order`` (parents before
+        children).
+
+    Raises:
+        ValueError: ``resolved_plan`` was produced from a different
+          ``DataGenPlan`` than the one passed in.
     """
     if resolved_plan is not None and resolved_plan.plan is not plan:
         raise ValueError(
