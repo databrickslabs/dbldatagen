@@ -50,13 +50,33 @@ _MIN_NULL_FRACTION = 1.0 / 10000
 
 
 class Uniform(_StrictModel):
-    """Uniform distribution (default)."""
+    """Uniform distribution (default).
+
+    Each value in the target range is equally likely.  This is the
+    default for every strategy that accepts a ``distribution`` field.
+
+    Attributes:
+        type: Discriminator literal; always ``"uniform"``.  Set
+          automatically; consumers should not pass it explicitly.
+    """
 
     type: Literal["uniform"] = "uniform"
 
 
 class Normal(_StrictModel):
-    """Normal/Gaussian distribution."""
+    """Normal/Gaussian distribution.
+
+    Samples are drawn from N(``mean``, ``stddev``) and then mapped onto
+    the strategy's target range.  ``stddev >= 0`` is enforced at
+    validation time.
+
+    Attributes:
+        type: Discriminator literal; always ``"normal"``.
+        mean: Distribution mean.  Defaults to ``0.0``.
+        stddev: Standard deviation.  Must be non-negative; ``0.0`` is
+          accepted and produces a degenerate (constant) distribution.
+          Defaults to ``1.0``.
+    """
 
     type: Literal["normal"] = "normal"
     mean: float = 0.0
@@ -70,7 +90,23 @@ class Normal(_StrictModel):
 
 
 class LogNormal(_StrictModel):
-    """Log-normal distribution."""
+    """Log-normal distribution.
+
+    The natural-log of the samples is normally distributed.  Useful
+    for heavy-tailed positive quantities (incomes, file sizes, page
+    response times).  ``|mean|`` is capped at ``100`` because the
+    engine computes ``math.exp(mean)`` on the driver to position the
+    distribution's median; values past the cap would overflow or
+    underflow double precision and leak ``inf`` / ``0`` into the
+    Spark plan.
+
+    Attributes:
+        type: Discriminator literal; always ``"lognormal"``.
+        mean: Mean of the underlying normal distribution.  Must be in
+          ``[-100.0, 100.0]``.  Defaults to ``0.0``.
+        stddev: Standard deviation of the underlying normal
+          distribution.  Must be non-negative.  Defaults to ``1.0``.
+    """
 
     type: Literal["lognormal"] = "lognormal"
     mean: float = 0.0
@@ -100,7 +136,23 @@ class LogNormal(_StrictModel):
 
 
 class Zipf(_StrictModel):
-    """Zipfian/power-law distribution -- common for realistic cardinality skew."""
+    """Zipfian / power-law distribution.
+
+    Common for realistic cardinality skew: a small fraction of values
+    (popular customers, hot keys, viral content) account for most of
+    the mass.  The engine samples via inverse power-law CDF, which
+    only converges for ``exponent > 1`` -- values at or below ``1``
+    are rejected at validation rather than silently falling back to
+    a different shape.
+
+    Attributes:
+        type: Discriminator literal; always ``"zipf"``.
+        exponent: Power-law exponent.  Must be strictly greater than
+          ``1.0``.  Smaller values (e.g. ``1.05``) give heavier tails
+          (more skew toward the top values); larger values give
+          milder skew approaching ``Uniform`` from above.  Defaults
+          to ``1.5``.
+    """
 
     type: Literal["zipf"] = "zipf"
     exponent: float = 1.5
@@ -123,7 +175,18 @@ class Zipf(_StrictModel):
 
 
 class Exponential(_StrictModel):
-    """Exponential distribution."""
+    """Exponential distribution.
+
+    Models inter-arrival times of memoryless events (e.g. customer
+    sessions, web requests).  Samples are drawn with rate parameter
+    ``rate`` and then mapped onto the strategy's target range.
+
+    Attributes:
+        type: Discriminator literal; always ``"exponential"``.
+        rate: Rate parameter (``lambda``); the reciprocal is the
+          distribution's mean.  Must be strictly positive.  Defaults
+          to ``1.0``.
+    """
 
     type: Literal["exponential"] = "exponential"
     rate: float = 1.0
@@ -136,7 +199,23 @@ class Exponential(_StrictModel):
 
 
 class WeightedValues(_StrictModel):
-    """Explicit weighted selection from a list of values."""
+    """Explicit weighted selection from a list of values.
+
+    Pair with ``ValuesColumn`` to give each discrete value its own
+    probability mass.  Weights do not have to sum to ``1.0``; the
+    engine normalises them.  ``WeightedValues`` is **not** accepted
+    by strategies that sample from a continuous range
+    (``RangeColumn``, ``TimestampColumn``) or by ``ForeignKeyRef``,
+    because there is no value list to weight in those settings.
+
+    Attributes:
+        type: Discriminator literal; always ``"weighted"``.
+        weights: Mapping of value (rendered as ``str`` for plan
+          serialisation) to non-negative weight.  Must be non-empty
+          and every weight must be ``>= 0``.  The keys are coerced
+          back to the ``ValuesColumn.values`` element type at
+          materialisation.
+    """
 
     type: Literal["weighted"] = "weighted"
     weights: dict[str, float]
