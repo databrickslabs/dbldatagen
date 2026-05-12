@@ -78,8 +78,18 @@ def generate_table(
 
     Returns:
         A ``DataFrame`` with one row per ``table_spec.rows`` and one
-        column per ``ColumnSpec`` in ``table_spec.columns``, in declared
-        order.  Output is deterministic given ``table_spec.seed``.
+        column per ``ColumnSpec`` in ``table_spec.columns``.  Output is
+        deterministic given ``table_spec.seed``.
+
+        Column order is **not** strictly the declared order: the
+        engine projects columns in three phases for performance
+        (regular columns first, then FK / Faker columns, then
+        ``seed_from``-derived columns; declaration order is preserved
+        within each phase).  Schema-level operations (``df.schema``,
+        ``df.columns``, ``df.select("name")``) are unaffected.  If
+        callers need byte-exact declared order in the final
+        DataFrame, append a projection: ``df.select(*[c.name for c in
+        table_spec.columns])``.
 
     Raises:
         ValueError: ``table_spec.seed`` is ``None``, or ``resolved_plan``
