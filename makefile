@@ -34,13 +34,16 @@ fmt:
 
 # test: full suite with coverage (what CI runs).  Runs v0 and core lanes
 # separately so each can use its own .coveragerc (v0 omits core/, core omits
-# pandas_udf files that break under coverage.py sys.settrace).  See CONTRIBUTING.
+# pandas_udf files that break under coverage.py sys.settrace).  Then runs
+# the faker_pool tests in a separate no-coverage step so the pandas_udf
+# branch is still exercised in CI.  See CONTRIBUTING.
 test:
 	$(UV_TEST) --cov=dbldatagen --cov-config=.coveragerc --cov-report= --ignore=tests/core/ tests/
 	$(UV_RUN) pytest tests/core/ --cov=dbldatagen/core --cov-config=.coveragerc-core --cov-append --cov-report= --timeout 600 --durations 20 --no-header -q --ignore=tests/core/engine/test_faker_pool.py
 	$(UV_RUN) coverage xml --rcfile=.coveragerc-all
 	$(UV_RUN) coverage html --rcfile=.coveragerc-all
 	$(UV_RUN) coverage report --rcfile=.coveragerc-all --fail-under=80 --skip-covered
+	$(UV_RUN) pytest tests/core/engine/test_faker_pool.py --timeout 600 --no-header -q
 
 # test-fast: full suite, no coverage.  Runs faker_pool tests (which coverage
 # mode has to skip due to cloudpickle incompat) and uses -n 2 for the v0 lane.
