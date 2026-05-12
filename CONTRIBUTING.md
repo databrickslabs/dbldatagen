@@ -62,7 +62,7 @@ To run unit tests locally:
 3. Open the coverage report in your browser.
 4. Verify that all modified modules have full coverage.
 
-Slow perf tests (e.g. `TestCDCPerfXLarge`, `TestCDCPerfXXL` — 10M/20M rows) are marked `@pytest.mark.slow` and excluded from the default lane. Run them explicitly with `pytest -m slow`.
+Slow tests (large-row perf / scale workloads) are marked `@pytest.mark.slow` and excluded from the default lane. Run them explicitly with `pytest -m slow`.
 
 #### Coverage gotchas with `pandas_udf`
 

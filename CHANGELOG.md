@@ -57,10 +57,6 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 * Updated Git actions
 * Updated [makefile](makefile)
 * Updated [CONTRIBUTING.md](CONTRIBUTING.md)
-* Documented that SQL Server `__$seqval` is `xxhash64(_batch_id, *data_cols)` —
-  deterministic per row but unordered within a batch.  Consumers using seqval for
-  dedup are unaffected; consumers relying on within-transaction ordering must apply a
-  rank-based seqval downstream.
 
 
 ### Version 0.4.0 Hotfix 2
