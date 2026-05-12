@@ -250,6 +250,16 @@ def resolve_plan(plan: DataGenPlan) -> ResolvedPlan:
     # Pre-build column lookup dicts for O(1) access (avoids O(N) scan per FK)
     table_col_maps: dict[str, dict[str, ColumnSpec]] = {t.name: {c.name: c for c in t.columns} for t in plan.tables}
 
+    # Cross-column reference validators run BEFORE the FK loop so that
+    # _extract_pk_metadata (called from the loop) is only reached for
+    # PK columns that have already been verified to use a supported
+    # strategy.  A bad-PK plan with a child FK would otherwise hit the
+    # ``_extract_pk_metadata`` RuntimeError backstop instead of the
+    # friendly ``_validate_primary_keys`` ValueError.
+    _validate_expression_columns(plan)
+    _validate_seed_from(plan)
+    _validate_primary_keys(plan)
+
     # Collect all FK references and validate them
     fk_resolutions: dict[tuple[str, str], FKResolution] = {}
 
@@ -312,11 +322,6 @@ def resolve_plan(plan: DataGenPlan) -> ResolvedPlan:
                 distribution=distribution,
                 null_fraction=null_fraction,
             )
-
-    # Validate cross-column references
-    _validate_expression_columns(plan)
-    _validate_seed_from(plan)
-    _validate_primary_keys(plan)
 
     # Build dependency graph and topological sort
     dep_graph = _build_dependency_graph(plan)

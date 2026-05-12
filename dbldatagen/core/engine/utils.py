@@ -86,8 +86,12 @@ def apply_column_phases(
           ``seed_from``-derived columns added after their parents.
 
     Returns:
-        A ``DataFrame`` with the user-facing columns in declaration
-        order; ``_synth_row_id`` is no longer present.
+        A ``DataFrame`` with the user-facing columns projected in
+        phase order (phase 1 first, then phase 2, then phase 3);
+        declaration order is preserved within each phase but not
+        across phases.  ``_synth_row_id`` is no longer present.
+        Callers that need byte-exact declared order can append
+        ``df.select(*[c.name for c in table_spec.columns])``.
     """
     df = df.select(id_col, *col_exprs)
 

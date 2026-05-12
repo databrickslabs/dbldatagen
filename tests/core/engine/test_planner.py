@@ -528,3 +528,30 @@ class TestPrimaryKeyValidation:
         )
         with pytest.raises(ValueError, match="not a supported PK strategy"):
             resolve_plan(plan)
+
+    def test_pk_strategy_check_fires_before_fk_loop(self):
+        """Bad-PK + child-FK: the FRIENDLY ValueError fires, not the engine RuntimeError.
+
+        Before the validator-ordering fix, the FK loop's
+        ``_extract_pk_metadata`` call hit its RuntimeError backstop
+        ("validator-ordering regression") before
+        ``_validate_primary_keys`` ran, surfacing a confusing message.
+        Pin the ordering so the friendly ValueError fires first.
+        """
+        parent = TableSpec(
+            name="parent",
+            rows=10,
+            primary_key=PrimaryKey(columns=["id"]),
+            columns=[ColumnSpec(name="id", gen=RangeColumn(min=1, max=100))],
+        )
+        child = TableSpec(
+            name="child",
+            rows=20,
+            primary_key=PrimaryKey(columns=["cid"]),
+            columns=[
+                ColumnSpec(name="cid", gen=SequenceColumn(start=1, step=1)),
+                ColumnSpec(name="pid", gen=ForeignKeyColumn(), foreign_key=ForeignKeyRef(ref="parent.id")),
+            ],
+        )
+        with pytest.raises(ValueError, match="not a supported PK strategy"):
+            resolve_plan(DataGenPlan(tables=[parent, child]))
