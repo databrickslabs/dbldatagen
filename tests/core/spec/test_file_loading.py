@@ -20,7 +20,7 @@ from dbldatagen.core.spec.schema import (
     SequenceColumn,
     TableSpec,
 )
-from dbldatagen.core.spec.validation import validate_referential_integrity
+from tests.core._referential_integrity import validate_referential_integrity
 
 
 FIXTURES = Path(__file__).parent.parent / "fixtures"

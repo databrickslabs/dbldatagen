@@ -22,7 +22,7 @@ from dbldatagen.core.spec.schema import (
     TableSpec,
     Zipf,
 )
-from dbldatagen.core.spec.validation import validate_referential_integrity
+from tests.core._referential_integrity import validate_referential_integrity
 
 
 def _customers_orders_plan():

@@ -15,7 +15,7 @@ from pyspark.sql import functions as F
 
 from dbldatagen.core import generate
 from dbldatagen.core.spec.schema import DataGenPlan
-from dbldatagen.core.spec.validation import validate_referential_integrity
+from tests.core._referential_integrity import validate_referential_integrity
 
 
 FIXTURES = Path(__file__).parent.parent / "fixtures"

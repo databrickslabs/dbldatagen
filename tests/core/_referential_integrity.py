@@ -1,7 +1,12 @@
-"""Post-generation referential integrity validation.
+"""Test-only post-generation referential integrity check.
 
-Uses left anti joins to detect orphan FK values that don't reference
-any valid parent PK.
+Lives under ``tests/`` because production ``dbldatagen.core`` has no
+caller for it: ``resolve_plan`` validates every FK reference at plan
+time, and the engine deterministically reconstructs parent PK values
+from ``PKMetadata`` so every emitted FK row is guaranteed to hit a real
+parent PK by construction.  This helper is a regression check that the
+guarantee actually held byte-for-byte on a generated ``DataFrame`` --
+useful as a test oracle, not as a user-facing API.
 """
 
 from __future__ import annotations
