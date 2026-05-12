@@ -253,21 +253,22 @@ class TestRandomHexGeneration:
 
 
 class TestIntegerRangeDegenerate:
-    """Line 60: range_size <= 0 returns lit(min_val)."""
+    """Engine rejects validator-bypass min > max with ValueError."""
 
-    def test_max_less_than_min_returns_literal(self, spark):
+    def test_max_less_than_min_raises(self, spark):
         df = spark.range(5)
-        col = build_range_column(F.col("id"), 42, min_val=10, max_val=5, dtype=DataType.INT)
-        result = df.select(col.alias("v")).collect()
-        assert all(r.v == 10 for r in result)
+        with pytest.raises(ValueError, match="non-positive"):
+            df.select(
+                build_range_column(F.col("id"), 42, min_val=10, max_val=5, dtype=DataType.INT).alias("v")
+            ).collect()
 
-    def test_equal_min_max_returns_literal(self, spark):
-        """When min == max, range_size = max - min + 1 = 1, so not degenerate.
-        But min > max is degenerate (range_size = 0)."""
+    def test_min_equal_max_plus_one_raises(self, spark):
+        """``min == max + 1`` gives ``range_size = 0`` and also raises."""
         df = spark.range(5)
-        col = build_range_column(F.col("id"), 42, min_val=7, max_val=6, dtype=DataType.INT)
-        result = df.select(col.alias("v")).collect()
-        assert all(r.v == 7 for r in result)
+        with pytest.raises(ValueError, match="non-positive"):
+            df.select(
+                build_range_column(F.col("id"), 42, min_val=7, max_val=6, dtype=DataType.INT).alias("v")
+            ).collect()
 
 
 class TestFloatRangeNormalDistribution:

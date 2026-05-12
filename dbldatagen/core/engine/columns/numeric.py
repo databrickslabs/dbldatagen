@@ -94,7 +94,16 @@ def _build_integer_range(
     """Generate integers in [min_val, max_val] inclusive."""
     range_size = max_val - min_val + 1
     if range_size <= 0:
-        return F.lit(min_val)
+        # Schema validator (``RangeColumn.validate_range``) rejects
+        # ``min > max`` at plan time; reaching here means the validator
+        # was bypassed (e.g. under ``python -O`` with custom-built
+        # RangeColumn).  Raise instead of silently collapsing to a
+        # constant so the bypass surfaces.
+        raise ValueError(
+            f"_build_integer_range: range_size={range_size} (min_val="
+            f"{min_val}, max_val={max_val}) is non-positive; schema "
+            f"validator should have rejected this."
+        )
 
     idx = apply_distribution(seed_col, range_size, distribution)
     result = idx + F.lit(min_val)
@@ -114,7 +123,18 @@ def _build_float_range(
 ) -> Column:
     """Generate floating-point values in [min_val, max_val]."""
     span = max_val - min_val
-    if span <= 0:
+    if span < 0:
+        # ``min > max`` is rejected by the schema validator; reaching
+        # here means the validator was bypassed.  Raise instead of
+        # silently collapsing to a constant.
+        raise ValueError(
+            f"_build_float_range: span={span} (min_val={min_val}, "
+            f"max_val={max_val}) is negative; schema validator should "
+            f"have rejected this."
+        )
+    if span == 0:
+        # min_val == max_val is a legitimate degenerate range -- emit
+        # the single literal.
         return F.lit(min_val)
 
     if isinstance(distribution, Normal):
