@@ -12,6 +12,7 @@ from dbldatagen.core.spec.schema import (
     DataGenPlan,
     Distribution,
     ExpressionColumn,
+    FakerColumn,
     PatternColumn,
     SequenceColumn,
     TableSpec,
@@ -430,16 +431,16 @@ def _extract_pk_metadata(table_spec: TableSpec, pk_col_spec: ColumnSpec) -> PKMe
             pk_template=None,
         )
 
-    # Fallback: treat as sequence
-    return PKMetadata(
-        table_name=table_spec.name,
-        pk_column=pk_col_spec.name,
-        row_count=row_count,
-        pk_type="sequence",
-        pk_seed=column_seed,
-        pk_start=0,
-        pk_step=1,
-        pk_template=None,
+    # ``_validate_primary_keys`` rejects any other strategy at plan
+    # time; this branch is a defensive backstop for an invariant
+    # bypass and surfaces a clear error instead of silently building
+    # synthetic-sequence metadata that would corrupt FK children.
+    raise RuntimeError(
+        f"_extract_pk_metadata received PK column '{table_spec.name}."
+        f"{pk_col_spec.name}' with unsupported strategy "
+        f"{type(gen).__name__}.  ``_validate_primary_keys`` should "
+        f"have rejected this at plan time -- a validator-ordering "
+        f"regression has bypassed the check."
     )
 
 
@@ -473,19 +474,37 @@ def _extract_column_references(expr: str) -> set[str]:
 
 
 def _validate_expression_columns(plan: DataGenPlan) -> None:
-    """Raise ValueError if an ExpressionColumn references an unknown column.
+    """Raise ValueError if an ExpressionColumn references an unknown or unreachable column.
 
-    Runs at plan resolution time so callers (including AI agents building
-    plans programmatically) get a clean traceback naming the column, the
-    unknown token, and the available columns — strictly more actionable
-    than Spark's ``UNRESOLVED_COLUMN`` error raised at job execution.
+    Two checks, both phrased so the failure surfaces at plan time with
+    a clean traceback instead of a downstream Spark ``UNRESOLVED_COLUMN``:
+
+    1. Every referenced name must be a column on the same table.
+    2. Every referenced name must be **phase-1-visible**.  The engine
+       applies columns in three phases (regular Spark SQL via flat
+       ``select``, then FK / Faker via ``withColumn``, then
+       ``seed_from``-derived via ``withColumn``).  ``ExpressionColumn``
+       runs in phase 1, so referencing an FK / Faker / ``seed_from``
+       column means the referenced column isn't in the DataFrame yet
+       at evaluation time -- Spark would raise
+       ``UNRESOLVED_COLUMN`` far from the offending declaration.
     """
     for table_spec in plan.tables:
-        col_names = {c.name for c in table_spec.columns}
+        col_by_name = {c.name: c for c in table_spec.columns}
+        col_names = set(col_by_name)
+        # Names of columns that are NOT phase-1-visible: anything with
+        # a foreign_key (phase 2), a FakerColumn strategy (phase 2),
+        # or a seed_from (phase 3).
+        non_phase1 = {
+            c.name
+            for c in table_spec.columns
+            if c.foreign_key is not None or isinstance(c.gen, FakerColumn) or c.seed_from is not None
+        }
         for col_spec in table_spec.columns:
             if not isinstance(col_spec.gen, ExpressionColumn):
                 continue
-            unknown = _extract_column_references(col_spec.gen.expr) - col_names
+            refs = _extract_column_references(col_spec.gen.expr)
+            unknown = refs - col_names
             if unknown:
                 raise ValueError(
                     f"ExpressionColumn '{col_spec.name}' in table "
@@ -493,25 +512,49 @@ def _validate_expression_columns(plan: DataGenPlan) -> None:
                     f"which are not columns in this table. "
                     f"Available columns: {sorted(col_names)}"
                 )
+            unreachable = refs & non_phase1
+            if unreachable:
+                raise ValueError(
+                    f"ExpressionColumn '{col_spec.name}' in table "
+                    f"'{table_spec.name}' references {sorted(unreachable)}, "
+                    f"which are FK / Faker / seed_from columns applied in a "
+                    f"later phase.  ExpressionColumn evaluates in the first "
+                    f"projection pass, before those columns are added to the "
+                    f"DataFrame -- the reference would fail at Spark plan "
+                    f"time with UNRESOLVED_COLUMN.  Either reference a "
+                    f"regular column instead, or compute the expression at "
+                    f"the source (e.g. inline the FK derivation)."
+                )
 
 
 def _validate_seed_from(plan: DataGenPlan) -> None:
     """Validate seed_from references.
 
-    Three checks, in order:
+    Four checks, in order:
 
     1. The referenced column exists in the same table.
     2. A column does not reference itself (``a.seed_from = 'a'``).
-    3. The seed_from graph is acyclic -- ``a -> b -> a`` would loop
-       forever at generation time as ``F.col`` resolves back to its
-       own source.
+    3. The referenced column does not itself have ``seed_from`` set
+       (no chains).  Chains like ``a -> b -> c`` would break at
+       Spark plan time because phase-3 columns are applied in
+       declaration order, not dependency-topo order; an ``F.col(b)``
+       reference resolves to the un-materialised ``b`` and Spark
+       raises ``UNRESOLVED_COLUMN``.  Real users want one source
+       column with many derived columns, not chains -- the planner
+       rejects the chain shape with a clear error rather than
+       complicating the engine to topo-sort phase 3.
+    4. The seed_from graph is acyclic -- check 3 already implies
+       this for chains, but the explicit cycle walk also catches the
+       degenerate single-edge ``a -> a`` (handled by check 2 above)
+       and stays as a defensive backstop.
 
-    All three would otherwise fail at Spark query-build with
+    All four would otherwise fail at Spark query-build with
     ``UNRESOLVED_COLUMN`` or a self-join plan, far from the offending
     column declaration.
     """
     for table_spec in plan.tables:
         col_names = {c.name for c in table_spec.columns}
+        col_by_name = {c.name: c for c in table_spec.columns}
         seed_from_map: dict[str, str] = {}
         for col_spec in table_spec.columns:
             if not col_spec.seed_from:
@@ -528,12 +571,23 @@ def _validate_seed_from(plan: DataGenPlan) -> None:
                     f"has seed_from='{col_spec.seed_from}' referencing itself.  "
                     f"seed_from must point at a different column."
                 )
+            target = col_by_name[col_spec.seed_from]
+            if target.seed_from is not None:
+                raise ValueError(
+                    f"Column '{col_spec.name}' in table '{table_spec.name}' "
+                    f"has seed_from='{col_spec.seed_from}', but '{col_spec.seed_from}' "
+                    f"itself has seed_from='{target.seed_from}'.  seed_from chains "
+                    f"are rejected because phase-3 columns are applied in "
+                    f"declaration order at generation time, not in dependency-topo "
+                    f"order -- chained references break at Spark plan time.  "
+                    f"Point '{col_spec.name}' directly at '{target.seed_from}' "
+                    f"(or another non-derived column) instead."
+                )
             seed_from_map[col_spec.name] = col_spec.seed_from
 
-        # Graph walk: detect cycles by following seed_from chains.
-        # Each starting column walks until it hits a column without
-        # seed_from, re-visits a column already in this walk (cycle),
-        # or terminates.
+        # Graph walk: defensive backstop for cycles that bypass the
+        # chain check (shouldn't be reachable, but kept so future
+        # refactors don't silently regress).
         for start, start_target in seed_from_map.items():
             visited: list[str] = [start]
             cur = start_target
@@ -550,14 +604,41 @@ def _validate_seed_from(plan: DataGenPlan) -> None:
 
 
 def _validate_primary_keys(plan: DataGenPlan) -> None:
-    """Validate that PK columns exist in their table."""
+    """Validate that PK columns exist and use a supported PK strategy.
+
+    Two checks:
+
+    1. Each named PK column exists on the table.
+    2. The PK column's ``gen`` strategy is one the FK reconstruction
+       path actually handles: ``SequenceColumn``, ``PatternColumn``,
+       or ``UUIDColumn``.  ``_extract_pk_metadata`` previously fell
+       back to a synthetic ``pk_type="sequence"`` for any unknown
+       strategy, which would silently corrupt FK children pointed at
+       a ``RangeColumn`` / ``ValuesColumn`` / ``ConstantColumn`` PK
+       (the FK would reconstruct fake sequence values instead of
+       matching the parent's actual PK values).  Reject at plan time
+       so the error names the offending column instead of surfacing
+       as a silent data-corruption.
+    """
     for table_spec in plan.tables:
         if table_spec.primary_key is None:
             continue
-        col_names = {c.name for c in table_spec.columns}
+        col_by_name = {c.name: c for c in table_spec.columns}
         for pk_col in table_spec.primary_key.columns:
-            if pk_col not in col_names:
+            if pk_col not in col_by_name:
                 raise ValueError(
                     f"Primary key column '{pk_col}' not found in table "
-                    f"'{table_spec.name}'. Available: {sorted(col_names)}"
+                    f"'{table_spec.name}'. Available: {sorted(col_by_name)}"
+                )
+            pk_spec = col_by_name[pk_col]
+            if not isinstance(pk_spec.gen, (SequenceColumn, PatternColumn, UUIDColumn)):
+                raise ValueError(
+                    f"Primary key column '{table_spec.name}.{pk_col}' uses "
+                    f"strategy {type(pk_spec.gen).__name__}, which is not a "
+                    f"supported PK strategy.  Use ``SequenceColumn``, "
+                    f"``PatternColumn``, or ``UUIDColumn`` (or the DSL helpers "
+                    f"``pk_auto`` / ``pk_pattern`` / ``pk_uuid``).  Non-PK "
+                    f"strategies were silently treated as sequence at FK "
+                    f"reconstruction time, which produced FK values that did "
+                    f"not match the actual PK values."
                 )

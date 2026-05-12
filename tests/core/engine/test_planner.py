@@ -12,6 +12,7 @@ from dbldatagen.core.spec.schema import (
     ConstantColumn,
     DataGenPlan,
     ExpressionColumn,
+    FakerColumn,
     ForeignKeyColumn,
     ForeignKeyRef,
     PatternColumn,
@@ -361,6 +362,81 @@ class TestExpressionColumnValidation:
         """SQL doubles a quote to escape: ``'it''s'`` is one literal, not two."""
         resolve_plan(self._plan("case when a > 0 then 'it''s unknown_word here' else 'x' end"))
 
+    def test_reference_to_fk_column_rejected(self):
+        """ExpressionColumn cannot reference an FK column (phase-2 column).
+
+        The expression runs in phase-1 ``select``; the FK column isn't
+        added to the DataFrame until phase 2's ``withColumn`` step, so
+        the ``F.expr()`` reference would fail at Spark plan time with
+        ``UNRESOLVED_COLUMN``.  Reject at validation with a clearer message.
+        """
+        parent = TableSpec(
+            name="customers",
+            rows=10,
+            columns=[ColumnSpec(name="customer_id", gen=SequenceColumn(start=1, step=1))],
+            primary_key=PrimaryKey(columns=["customer_id"]),
+        )
+        child = TableSpec(
+            name="orders",
+            rows=20,
+            columns=[
+                ColumnSpec(name="order_id", gen=SequenceColumn(start=1, step=1)),
+                ColumnSpec(
+                    name="customer_id",
+                    gen=ForeignKeyColumn(),
+                    foreign_key=ForeignKeyRef(ref="customers.customer_id"),
+                ),
+                ColumnSpec(name="customer_label", gen=ExpressionColumn(expr="concat('cid-', customer_id)")),
+            ],
+            primary_key=PrimaryKey(columns=["order_id"]),
+        )
+        with pytest.raises(ValueError, match="FK / Faker / seed_from columns applied in a later phase"):
+            resolve_plan(DataGenPlan(tables=[parent, child]))
+
+    def test_reference_to_faker_column_rejected(self):
+        """ExpressionColumn cannot reference a FakerColumn (phase-2 column)."""
+        plan = DataGenPlan(
+            tables=[
+                TableSpec(
+                    name="t",
+                    rows=10,
+                    columns=[
+                        ColumnSpec(name="a", gen=RangeColumn(min=1, max=10)),
+                        ColumnSpec(name="full_name", gen=FakerColumn(provider="name")),
+                        ColumnSpec(name="greeting", gen=ExpressionColumn(expr="concat('hi ', full_name)")),
+                    ],
+                )
+            ]
+        )
+        with pytest.raises(ValueError, match="FK / Faker / seed_from columns applied in a later phase"):
+            resolve_plan(plan)
+
+    def test_reference_to_seed_from_column_rejected(self):
+        """ExpressionColumn cannot reference a seed_from-derived column (phase 3)."""
+        plan = DataGenPlan(
+            tables=[
+                TableSpec(
+                    name="t",
+                    rows=10,
+                    columns=[
+                        ColumnSpec(name="group_id", gen=RangeColumn(min=1, max=5)),
+                        ColumnSpec(
+                            name="country",
+                            gen=ExpressionColumn(expr="concat('country_', group_id)"),  # group_id is OK (regular)
+                        ),
+                        ColumnSpec(
+                            name="label",
+                            gen=RangeColumn(min=1, max=2),
+                            seed_from="group_id",
+                        ),
+                        ColumnSpec(name="bad", gen=ExpressionColumn(expr="label + 1")),  # label is phase-3
+                    ],
+                )
+            ]
+        )
+        with pytest.raises(ValueError, match="FK / Faker / seed_from columns applied in a later phase"):
+            resolve_plan(plan)
+
 
 class TestSeedFromValidation:
     def test_nonexistent_seed_from_raises(self):
@@ -412,4 +488,43 @@ class TestPrimaryKeyValidation:
             ]
         )
         with pytest.raises(ValueError, match="Primary key column 'missing'"):
+            resolve_plan(plan)
+
+    def test_pk_with_range_column_strategy_rejected(self):
+        """A PK column with a RangeColumn strategy is rejected at plan time.
+
+        FK reconstruction expects sequence / pattern / uuid PK shapes;
+        a RangeColumn PK previously fell back to synthetic sequence
+        metadata and produced FK values that didn't match the actual
+        PK values.  Reject up front so the error names the offender.
+        """
+        plan = DataGenPlan(
+            tables=[
+                TableSpec(
+                    name="t",
+                    rows=10,
+                    primary_key=PrimaryKey(columns=["id"]),
+                    columns=[
+                        ColumnSpec(name="id", gen=RangeColumn(min=1, max=100)),
+                    ],
+                )
+            ]
+        )
+        with pytest.raises(ValueError, match="not a supported PK strategy"):
+            resolve_plan(plan)
+
+    def test_pk_with_constant_column_strategy_rejected(self):
+        plan = DataGenPlan(
+            tables=[
+                TableSpec(
+                    name="t",
+                    rows=10,
+                    primary_key=PrimaryKey(columns=["id"]),
+                    columns=[
+                        ColumnSpec(name="id", gen=ConstantColumn(value=1)),
+                    ],
+                )
+            ]
+        )
+        with pytest.raises(ValueError, match="not a supported PK strategy"):
             resolve_plan(plan)

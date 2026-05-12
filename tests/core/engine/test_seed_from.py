@@ -242,6 +242,45 @@ def test_seed_from_nonexistent_column_raises(spark):
         generate(spark, plan)
 
 
+def test_seed_from_chain_rejected(spark):
+    """seed_from cannot point at another column that itself has seed_from.
+
+    Chains like ``a -> b -> c`` would break at Spark plan time because
+    phase-3 columns are applied in declaration order, not topo order.
+    The planner rejects the chain shape at validation with a clear
+    error rather than letting Spark emit ``UNRESOLVED_COLUMN`` far from
+    the offending declaration.
+    """
+    plan = DataGenPlan(
+        seed=42,
+        tables=[
+            TableSpec(
+                name="t",
+                rows=10,
+                columns=[
+                    dg.pk_auto("id"),
+                    dg.integer("source", min=1, max=5),
+                    ColumnSpec(
+                        name="middle",
+                        dtype=DataType.STRING,
+                        gen=ValuesColumn(values=["A", "B"]),
+                        seed_from="source",
+                    ),
+                    ColumnSpec(
+                        name="leaf",
+                        dtype=DataType.STRING,
+                        gen=ValuesColumn(values=["X", "Y"]),
+                        seed_from="middle",  # chain: leaf -> middle -> source
+                    ),
+                ],
+                primary_key=PrimaryKey(columns=["id"]),
+            ),
+        ],
+    )
+    with pytest.raises(ValueError, match="seed_from chains are rejected"):
+        generate(spark, plan)
+
+
 def test_seed_from_null_fraction_correlated(spark):
     """Null masking with seed_from is also correlated (same source → consistent nullability)."""
     plan = DataGenPlan(
