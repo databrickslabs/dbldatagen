@@ -18,7 +18,7 @@ from dbldatagen.core.engine.seed import cell_seed_expr, null_mask_expr
 
 def build_fk_column(
     id_col: Column,
-    column_seed: int | Column,
+    column_seed: int,
     fk_resolution: FKResolution,
 ) -> Column:
     """Generates FK values that are guaranteed to be valid parent PKs.

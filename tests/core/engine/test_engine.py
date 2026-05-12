@@ -12,10 +12,7 @@ import pytest
 from pyspark.sql import functions as F
 
 from dbldatagen.core.engine.columns.numeric import build_range_column
-from dbldatagen.core.engine.columns.pk import (
-    build_formatted_pk,
-    build_sequential_pk,
-)
+from dbldatagen.core.engine.columns.pk import build_sequential_pk
 from dbldatagen.core.engine.columns.string import build_pattern_column, build_values_column
 from dbldatagen.core.engine.columns.temporal import build_timestamp_column
 from dbldatagen.core.engine.columns.uuid import build_uuid_column
@@ -470,10 +467,3 @@ class TestGenerateTable:
         rows = df.collect()
         for r in rows:
             assert r.c == r.a * r.b, f"Expression mismatch: {r.a} * {r.b} != {r.c}"
-
-    def test_formatted_pk(self, spark):
-        """Formatted PK template produces correct output."""
-        df = spark.range(5).select(build_formatted_pk("id", "CUST-{digit:6}").alias("pk"))
-        values = [r.pk for r in df.collect()]
-        expected = [f"CUST-{str(i + 1).zfill(6)}" for i in range(5)]
-        assert sorted(values) == sorted(expected)

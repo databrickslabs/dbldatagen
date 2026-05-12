@@ -5,11 +5,7 @@ from __future__ import annotations
 import pytest
 from pyspark.sql import functions as F
 
-from dbldatagen.core.engine.generator import (
-    _build_exprs_scalar,
-    build_all_column_exprs,
-    build_column_expr,
-)
+from dbldatagen.core.engine.generator import build_all_column_exprs, build_column_expr
 from dbldatagen.core.engine.seed import derive_column_seed
 from dbldatagen.core.engine.utils import create_range_df
 from dbldatagen.core.spec.schema import (
@@ -18,7 +14,6 @@ from dbldatagen.core.spec.schema import (
     DataType,
     FakerColumn,
     RangeColumn,
-    SequenceColumn,
     TableSpec,
     TimestampColumn,
     ValuesColumn,
@@ -58,35 +53,6 @@ class TestSeedFromWithFaker:
         assert len(seeded_columns) == 1
         name, _ = seeded_columns[0]
         assert name == "fake_name"
-
-    def test_seed_from_faker_in_scalar_path(self, spark):
-        """seed_from in _build_exprs_scalar routes through build_column_expr (line 338-344)."""
-        spec = TableSpec(
-            name="t",
-            rows=20,
-            seed=42,
-            columns=[
-                ColumnSpec(name="pk", gen=SequenceColumn(start=1, step=1)),
-                ColumnSpec(name="group_id", gen=RangeColumn(min=1, max=5)),
-                ColumnSpec(
-                    name="derived",
-                    gen=RangeColumn(min=10, max=99),
-                    seed_from="group_id",
-                ),
-            ],
-        )
-        _df, id_col = create_range_df(spark, 20)
-        _col_exprs, _udf_columns, seeded_columns = _build_exprs_scalar(
-            spec,
-            id_col,
-            0,
-            42,
-            None,
-            row_count=20,
-        )
-        # seed_from column should be in seeded_columns
-        assert len(seeded_columns) == 1
-        assert seeded_columns[0][0] == "derived"
 
 
 # ---------------------------------------------------------------------------

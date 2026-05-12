@@ -27,7 +27,7 @@ from dbldatagen.core.spec.schema import Distribution, WeightedValues
 
 def build_values_column(
     id_col: Column | str,
-    column_seed: int | Column,
+    column_seed: int,
     values_list: list,
     distribution: Distribution | None = None,
     cell_seed_override: Column | None = None,
@@ -88,7 +88,7 @@ _MAX_HEX_WIDTH = 15
 
 def build_pattern_column(
     id_col: Column | str,
-    column_seed: int | Column,
+    column_seed: int,
     template: str,
 ) -> Column:
     """Generates strings from a template like ``"ORD-{digit:4}-{alpha:3}"``.
@@ -162,22 +162,18 @@ def build_pattern_column(
     return F.concat(*parts)
 
 
-def _seed_xor(column_seed: int | Column, constant: int) -> int | Column:
-    """XOR a column seed (int or Column) with a constant.
+def _seed_xor(column_seed: int, constant: int) -> int:
+    """XOR a column seed with a constant, clamped to signed-64.
 
-    The ``int | Column`` split is required: callers passing a
-    Column-typed seed come from map-based lookup (``column_seed_map``
-    in seed.py).  The int branch clamps via ``to_signed64`` so XOR
-    results outside signed-64 don't trip F.lit at query-build time.
+    ``to_signed64`` keeps XOR results inside int64 so ``F.lit``
+    accepts them at query-build time.
     """
-    if isinstance(column_seed, Column):
-        return column_seed.bitwiseXOR(F.lit(constant).cast("long"))
     return to_signed64(column_seed ^ constant)
 
 
 def _random_uuid(
     id_col: Column,
-    column_seed: int | Column,
+    column_seed: int,
     idx: int,
 ) -> Column:
     """Generate a UUID embedded inside a pattern template.
@@ -192,7 +188,7 @@ def _random_uuid(
 
 def _random_digits(
     id_col: Column,
-    column_seed: int | Column,
+    column_seed: int,
     idx: int,
     width: int,
 ) -> Column:
@@ -213,7 +209,7 @@ def _random_digits(
 
 def _random_alpha(
     id_col: Column,
-    column_seed: int | Column,
+    column_seed: int,
     idx: int,
     width: int,
 ) -> Column:
@@ -222,7 +218,7 @@ def _random_alpha(
     Each character is derived from a separate hash to ensure independence.
     """
     mixed_seed = _seed_xor(column_seed, (idx + 1) * GOLDEN_RATIO_HASH)
-    seed_col = mixed_seed if isinstance(mixed_seed, Column) else F.lit(mixed_seed).cast("long")
+    seed_col = F.lit(mixed_seed).cast("long")
     chars: list[Column] = []
     for i in range(width):
         h = F.xxhash64(seed_col, id_col, F.lit(i).cast("long"))
@@ -238,7 +234,7 @@ def _random_alpha(
 
 def _random_hex(
     id_col: Column,
-    column_seed: int | Column,
+    column_seed: int,
     idx: int,
     width: int,
 ) -> Column:

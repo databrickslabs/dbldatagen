@@ -277,58 +277,6 @@ class TestSchemaSerialize:
         assert arr_col.gen.max_length == 4
 
 
-# ---------------------------------------------------------------------------
-# Regression: sibling struct fields must NOT collapse on the Column-seed path
-# ---------------------------------------------------------------------------
-
-
-class TestStructFieldSeedIndependence:
-    """Regression: the Column-seed path must mix in field names so
-    sibling struct fields derive independent per-cell seeds.  An earlier
-    bug had it passing the parent seed unchanged (100% field agreement);
-    a later bug XOR'd with a per-field constant (independent from each
-    other, but divergent from the scalar path's polynomial hash).  The
-    current implementation precomputes polynomial-hashed child seeds on
-    the driver via ``struct_field_seed_map`` so the Column path matches
-    the scalar path byte-for-byte and siblings stay independent.
-    """
-
-    def test_struct_fields_independent_on_column_seed(self, spark):
-        from dbldatagen.core.engine.generator import _build_struct_column
-        from dbldatagen.core.engine.seed import column_seed_lookup, column_seed_map
-
-        gen = StructColumn(
-            fields=[
-                dg.text("a", values=["x", "y", "z", "w", "v"]),
-                dg.text("b", values=["x", "y", "z", "w", "v"]),
-            ]
-        )
-        # Synthetic dyn_ctx mimicking the multi-write-batch path: one
-        # write_batch value, a ``_write_batch`` column, and a parent seed
-        # sourced from ``column_seed_map`` — the exact shape
-        # ``_build_exprs_dynamic`` hands in.
-        df = spark.range(500).withColumn("_write_batch", F.lit(0).cast("long"))
-        parent_map = column_seed_map(global_seed=1, unique_wbs=[0], table_name="t", column_name="parent")
-        parent_seed = column_seed_lookup(parent_map, F.col("_write_batch"))
-        struct_col = _build_struct_column(
-            gen,
-            F.col("id"),
-            parent_seed,
-            row_count=500,
-            global_seed=1,
-            parent_col_name="parent",
-            dyn_ctx=("t", [0], F.col("_write_batch")),
-        )
-        rows = df.select(struct_col.alias("s")).collect()
-        matches = sum(1 for r in rows if r.s.a == r.s.b)
-        # Independent fields with 5 values each should match on ~1/5 of rows.
-        # The buggy "pass through unchanged" code would give 100% matches.
-        assert matches / len(rows) < 0.5, (
-            f"Sibling struct fields 'a' and 'b' agreed on {matches}/{len(rows)} rows "
-            f"(~100% indicates the Column-seed path is not mixing field names)."
-        )
-
-
 class TestNullFractionOnNested:
     """Pins value-level behavior at ``null_fraction=1.0`` on struct
     fields and array columns.  Element-level ``null_fraction`` isn't

@@ -7,13 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from dbldatagen.core.engine.seed import (
-    _NULL_PRECISION,
-    compute_batch_seed,
-    derive_column_seed,
-    null_mask_expr,
-    to_signed64,
-)
+from dbldatagen.core.engine.seed import _NULL_PRECISION, derive_column_seed, null_mask_expr, to_signed64
 
 
 LONG_MAX = 2**63 - 1
@@ -86,21 +80,6 @@ class TestDeriveColumnSeed:
         a = derive_column_seed(42, "t", "c1")
         b = derive_column_seed(42, "t", "c2")
         assert a != b
-
-
-class TestComputeBatchSeed:
-    """compute_batch_seed wraps through to_signed64 for non-zero batch_id."""
-
-    def test_batch_zero_returns_global(self):
-        assert compute_batch_seed(12345, 0) == 12345
-
-    def test_result_in_signed64_range_at_large_batch(self):
-        # A batch_id large enough to push global_seed past Long.MAX.
-        r = compute_batch_seed(LONG_MAX - 100, 1_000_000)
-        assert LONG_MIN <= r <= LONG_MAX
-
-    def test_determinism(self):
-        assert compute_batch_seed(7, 3) == compute_batch_seed(7, 3)
 
 
 class TestNullMaskBoundaries:

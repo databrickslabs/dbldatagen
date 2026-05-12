@@ -28,7 +28,7 @@ _DEFAULT_DECIMAL_SCALE = 2
 
 def build_range_column(
     id_col: Column | str,
-    column_seed: int | Column,
+    column_seed: int,
     min_val: float | int,
     max_val: float | int,
     distribution: Distribution | None = None,

@@ -25,20 +25,8 @@ from dbldatagen.core.engine.columns.string import (
 from dbldatagen.core.engine.columns.temporal import build_date_column, build_timestamp_column
 from dbldatagen.core.engine.columns.uuid import build_uuid_column
 from dbldatagen.core.engine.planner import FKResolution, ResolvedPlan
-from dbldatagen.core.engine.seed import (
-    GOLDEN_RATIO_HASH,
-    column_seed_lookup,
-    column_seed_map,
-    compute_batch_seed,
-    derive_column_seed,
-    struct_field_seed_map,
-)
-from dbldatagen.core.engine.utils import (
-    apply_column_phases,
-    apply_null_fraction,
-    create_range_df,
-    get_pk_columns,
-)
+from dbldatagen.core.engine.seed import GOLDEN_RATIO_HASH, derive_column_seed
+from dbldatagen.core.engine.utils import apply_column_phases, apply_null_fraction, create_range_df
 from dbldatagen.core.spec.schema import (
     ArrayColumn,
     ColumnSpec,
@@ -201,32 +189,27 @@ def build_all_column_exprs(
 def _build_column_exprs_loop(
     table_spec: TableSpec,
     id_col: Column,
-    seed_resolver: Callable[[ColumnSpec], int | Column],
+    seed_resolver: Callable[[ColumnSpec], int],
     effective_global_seed: int,
     row_count: int,
     fk_resolutions: dict[tuple[str, str], FKResolution] | None,
     *,
     pk_cols: set[str] | None = None,
     cell_seed_fn: Callable[[int, Column, ColumnSpec], Column | None] | None = None,
-    dyn_struct_ctx: tuple[list[int], Column] | None = None,
 ) -> tuple[list[Column], list[tuple[str, Column]], list[tuple[str, Column]]]:
     """Unified column-building loop.
 
     Iterates ``table_spec.columns``, classifies each column, and
     routes to the appropriate builder.  The *seed_resolver* callable
-    is the only injection point — it controls how column seeds are
-    derived (scalar, batch-aware scalar, or map-based ``Column``
-    expression).
+    controls how the per-column seed is derived.
 
     Args:
         table_spec: Table whose columns to expand.
         id_col: Row-id ``Column``.
-        seed_resolver: ``(col_spec) -> int | Column`` returning the
-          per-column seed.
+        seed_resolver: ``(col_spec) -> int`` returning the per-column
+          seed.
         effective_global_seed: Passed through to ``build_column_expr``
-          as ``global_seed``.  For the scalar batch path this is the
-          batch-shifted seed; for the simple and dynamic paths it is
-          the original seed.
+          as ``global_seed``.
         row_count: Row count threaded through to per-column builders.
         fk_resolutions: Optional FK resolution map from
           ``ResolvedPlan``.
@@ -235,8 +218,6 @@ def _build_column_exprs_loop(
           ``build_column_expr``.
         cell_seed_fn: Optional per-cell seed override (used by
           snapshot generation).
-        dyn_struct_ctx: Optional ``(unique_wbs, wb_col)`` carrying the
-          multi-write-batch context for nested struct seed derivation.
 
     Returns:
         A three-tuple ``(col_exprs, udf_columns, seeded_columns)``
@@ -282,10 +263,6 @@ def _build_column_exprs_loop(
             continue
 
         # Regular columns
-        struct_ctx_for_col: tuple[str, list[int], Column] | None = None
-        if dyn_struct_ctx is not None and isinstance(col_spec.gen, StructColumn):
-            unique_wbs, wb_col = dyn_struct_ctx
-            struct_ctx_for_col = (table_name, unique_wbs, wb_col)
         expr = _build_regular_column_expr(
             col_spec,
             id_col,
@@ -293,7 +270,6 @@ def _build_column_exprs_loop(
             row_count,
             effective_global_seed,
             cell_seed_fn,
-            struct_dyn_ctx=struct_ctx_for_col,
         )
         if expr is not None:
             col_exprs.append(expr.alias(col_spec.name))
@@ -303,7 +279,7 @@ def _build_column_exprs_loop(
 
 def _build_seed_from_column(
     col_spec: ColumnSpec,
-    column_seed: int | Column,
+    column_seed: int,
     global_seed: int,
     row_count: int,
 ) -> tuple[str, Column]:
@@ -327,7 +303,7 @@ def _build_fk_column_expr(
     col_spec: ColumnSpec,
     table_name: str,
     id_col: Column,
-    column_seed: int | Column,
+    column_seed: int,
     fk_resolutions: dict[tuple[str, str], FKResolution] | None,
 ) -> tuple[str, Column]:
     """Build FK column expression; raise if resolution is missing.
@@ -359,7 +335,7 @@ def _build_fk_column_expr(
 def _build_faker_expr(
     col_spec: ColumnSpec,
     id_col: Column,
-    column_seed: int | Column,
+    column_seed: int,
 ) -> tuple[str, Column]:
     """Build a Faker pool UDF expression."""
     from dbldatagen.core.engine.columns.faker_pool import build_faker_column
@@ -371,7 +347,7 @@ def _build_faker_expr(
         )
     faker_expr = build_faker_column(
         id_col,
-        column_seed,  # type: ignore[arg-type]  # always int (Faker tables excluded from batch paths)
+        column_seed,
         provider=col_spec.gen.provider,
         kwargs=col_spec.gen.kwargs or None,
         locale=col_spec.gen.locale,
@@ -383,20 +359,13 @@ def _build_faker_expr(
 def _build_regular_column_expr(
     col_spec: ColumnSpec,
     id_col: Column,
-    column_seed: int | Column,
+    column_seed: int,
     row_count: int,
     global_seed: int,
     cell_seed_fn: Callable[[int, Column, ColumnSpec], Column | None] | None = None,
-    struct_dyn_ctx: tuple[str, list[int], Column] | None = None,
 ) -> Column | None:
-    """Build a regular (non-FK, non-seed_from) column expression.
-
-    ``struct_dyn_ctx`` is ``(table_name, unique_wbs, wb_col)``; only
-    populated by the multi-write-batch path so ``_build_struct_column``
-    can precompute polynomial-hashed child seeds that match the scalar
-    path (without it, the Column branch used XOR and diverged).
-    """
-    cell_override = cell_seed_fn(column_seed, id_col, col_spec) if cell_seed_fn is not None else None  # type: ignore[arg-type]  # always int when cell_seed_fn is provided
+    """Build a regular (non-FK, non-seed_from) column expression."""
+    cell_override = cell_seed_fn(column_seed, id_col, col_spec) if cell_seed_fn is not None else None
     expr = build_column_expr(
         col_spec,
         id_col,
@@ -404,161 +373,19 @@ def _build_regular_column_expr(
         row_count,
         global_seed,
         cell_seed_override=cell_override,
-        struct_dyn_ctx=struct_dyn_ctx,
     )
 
     return apply_null_fraction(expr, column_seed, id_col, col_spec.null_fraction)
 
 
-# Reserved for the CDC follow-up PR (branch ``ak/synth-next-cdc``).
-# This wrapper and its inner ``_build_exprs_dynamic`` have no live caller
-# in this PR; they exist to support the CDC fused/bulk paths that ship
-# next.  Keeping them here (along with the ``int | Column`` seed branches
-# in ``seed.py`` / ``columns/string.py`` / ``columns/uuid.py``) avoids a
-# round-trip of delete-now / re-add-in-follow-up.
-def build_all_column_exprs_case_when(
-    table_spec: TableSpec,
-    id_col: Column,
-    wb_col: Column,
-    unique_wbs: list[int],
-    global_seed: int,
-    fk_resolutions: dict[tuple[str, str], FKResolution] | None = None,
-    *,
-    row_count: int = 0,
-) -> tuple[list[Column], list[tuple[str, Column]], list[tuple[str, Column]]]:
-    """Builds column expressions for multi-write-batch ``DataFrame`` rows.
-
-    PERFORMANCE-CRITICAL FUNCTION — read before modifying:
-        When there are many unique write-batch values (>1), seeds are resolved
-        via a Spark **map literal** (``column_seed_map`` + ``element_at``),
-        producing O(1) plan nodes per column regardless of batch count.
-
-        The naive approach (CASE WHEN per write-batch per column) produced
-        O(N_batches x N_columns) expression branches -- e.g. 365 batches x 10
-        columns = 3,650+ nodes -- causing Catalyst to stall for minutes while
-        the cluster sat at ~10% CPU utilization.  The map-based approach was
-        verified at 500M-3B rows with full cluster utilization.
-
-        Do not refactor ``_build_exprs_dynamic`` back to CASE WHEN.  See
-        ``column_seed_map`` in seed.py for additional context.
-
-    Args:
-        table_spec: Table whose columns to expand.
-        id_col: Row-id ``Column``.
-        wb_col: Per-row ``_write_batch`` ``Column``.
-        unique_wbs: Distinct write-batch values present in the source
-          ``DataFrame``.  Length-one input short-circuits to
-          ``_build_exprs_scalar`` (no map literal needed).
-        global_seed: Plan-level seed.
-        fk_resolutions: Optional FK resolution map from
-          ``ResolvedPlan``.
-        row_count: Row count threaded through to per-column builders.
-
-    Returns:
-        A three-tuple ``(col_exprs, udf_columns, seeded_columns)``
-        suitable for ``apply_column_phases`` -- same shape as
-        ``build_all_column_exprs`` returns for single-batch input.
-    """
-    # Fast path: single write-batch (no CASE WHEN needed)
-    if len(unique_wbs) == 1:
-        return _build_exprs_scalar(
-            table_spec,
-            id_col,
-            unique_wbs[0],
-            global_seed,
-            fk_resolutions,
-            row_count=row_count,
-        )
-
-    # Map-based seed lookup: precompute seeds, O(1) lookup per row at runtime
-    return _build_exprs_dynamic(
-        table_spec,
-        id_col,
-        wb_col,
-        unique_wbs,
-        global_seed,
-        fk_resolutions,
-        row_count=row_count,
-    )
-
-
-def _build_exprs_scalar(
-    table_spec: TableSpec,
-    id_col: Column,
-    wb: int,
-    global_seed: int,
-    fk_resolutions: dict[tuple[str, str], FKResolution] | None,
-    *,
-    row_count: int = 0,
-) -> tuple[list[Column], list[tuple[str, Column]], list[tuple[str, Column]]]:
-    """Build column expressions using a single scalar write-batch seed."""
-    table_name = table_spec.name
-    s = compute_batch_seed(global_seed, wb)
-
-    def resolver(cs: ColumnSpec) -> int:
-        return derive_column_seed(s, table_name, cs.name)
-
-    return _build_column_exprs_loop(
-        table_spec,
-        id_col,
-        resolver,
-        s,
-        row_count,
-        fk_resolutions,
-        pk_cols=get_pk_columns(table_spec),
-    )
-
-
-def _build_exprs_dynamic(
-    table_spec: TableSpec,
-    id_col: Column,
-    wb_col: Column,
-    unique_wbs: list[int],
-    global_seed: int,
-    fk_resolutions: dict[tuple[str, str], FKResolution] | None,
-    *,
-    row_count: int = 0,
-) -> tuple[list[Column], list[tuple[str, Column]], list[tuple[str, Column]]]:
-    """Build column expressions using map-based seed lookup from ``_write_batch``.
-
-    PERFORMANCE NOTE — do not convert back to CASE WHEN:
-        Instead of a CASE WHEN with N branches per column (where N can be
-        365+), the column seed is precomputed for each write-batch value and
-        stored in a Spark **map literal**.  At execution time,
-        ``element_at(map, _write_batch)`` gives O(1) seed lookup — one
-        expression node per column instead of N CASE WHEN branches.  This
-        eliminates the Catalyst plan compilation bottleneck that caused the
-        cluster to idle at ~10% CPU at scale.  See ``column_seed_map`` in
-        seed.py for the full rationale.
-    """
-    table_name = table_spec.name
-
-    def resolver(cs: ColumnSpec) -> Column:
-        seed_map = column_seed_map(global_seed, unique_wbs, table_name, cs.name)
-        return column_seed_lookup(seed_map, wb_col)
-
-    return _build_column_exprs_loop(
-        table_spec,
-        id_col,
-        resolver,
-        global_seed,
-        row_count,
-        fk_resolutions,
-        pk_cols=get_pk_columns(table_spec),
-        dyn_struct_ctx=(unique_wbs, wb_col),
-    )
-
-
 def build_column_expr(  # noqa: PLR0911
     col_spec: ColumnSpec,
     id_col: Column,
-    column_seed: int | Column,
+    column_seed: int,
     row_count: int,
     global_seed: int,
     *,
     cell_seed_override: Column | None = None,
-    struct_dyn_ctx: tuple[str, list[int], Column] | None = None,
-    struct_path_prefix: list[str] | None = None,
 ) -> Column:
     """Dispatches to the appropriate column builder based on strategy type.
 
@@ -576,11 +403,7 @@ def build_column_expr(  # noqa: PLR0911
     Args:
         col_spec: The column specification to expand.
         id_col: Row-id ``Column``.
-        column_seed: Per-column seed.  May be a scalar ``int``
-          (planning-time constant) or a ``Column`` (dynamic seed
-          derived from ``_write_batch`` via map-based lookup --
-          see ``_build_exprs_dynamic`` and ``column_seed_map`` in
-          ``seed.py`` for the performance rationale).
+        column_seed: Per-column seed (planning-time constant).
         row_count: Row count threaded through to builders that need
           it (e.g. ``build_uuid_column`` for clamping).
         global_seed: Plan-level seed forwarded to nested struct /
@@ -588,18 +411,7 @@ def build_column_expr(  # noqa: PLR0911
         cell_seed_override: If provided, used as the per-cell seed
           instead of the default ``cell_seed_expr(column_seed,
           id_col)``.  Useful for snapshot generation where the seed
-          incorporates per-row state (e.g. the last-write batch).
-        struct_dyn_ctx: ``(table_name, unique_wbs, wb_col)`` threaded
-          from the multi-write-batch path so ``_build_struct_column``
-          can precompute polynomial-hashed child field seeds via
-          ``struct_field_seed_map``.  Passed through unchanged for
-          non-struct strategies.
-        struct_path_prefix: Accumulator for the struct-path chain
-          when recursing into nested structs.  Empty / ``None`` at
-          the top-level dispatch; set to
-          ``[outer_col, ..., innermost_parent_struct]`` when
-          ``_build_struct_column`` recurses into a field that is
-          itself a struct.
+          incorporates per-row state.
 
     Returns:
         A Spark ``Column`` carrying the generated values; runtime
@@ -694,8 +506,6 @@ def build_column_expr(  # noqa: PLR0911
             row_count,
             global_seed,
             parent_col_name=col_spec.name,
-            dyn_ctx=struct_dyn_ctx,
-            path_prefix=struct_path_prefix,
         )
 
     if isinstance(gen, ArrayColumn):
@@ -711,66 +521,28 @@ def build_column_expr(  # noqa: PLR0911
 def _build_struct_column(
     gen: StructColumn,
     id_col: Column,
-    parent_seed: int | Column,
+    parent_seed: int,
     row_count: int,
     global_seed: int,
     *,
     parent_col_name: str,
-    dyn_ctx: tuple[str, list[int], Column] | None = None,
-    path_prefix: list[str] | None = None,
 ) -> Column:
     """Build a Spark struct from child ColumnSpecs (nestable).
 
     Child field seeds are the polynomial hash chain
-    ``derive_column_seed(..., derive_column_seed(seed_at_top, field_i), ..., field_leaf)``.
-    In the scalar (int) seed path this runs directly on the driver.  In
-    the multi-write-batch path (``parent_seed`` is a ``Column`` sourced
-    from ``column_seed_map`` / ``struct_field_seed_map``), we cannot
-    evaluate ``derive_column_seed`` in Spark SQL (polynomial
-    multiplication would ``ARITHMETIC_OVERFLOW`` under ANSI), so we
-    precompute the per-(batch, field-path) polynomial hashes on the
-    driver via ``struct_field_seed_map`` and look them up against
-    ``wb_col``.
-
-    ``path_prefix`` is the chain of struct names traversed so far, NOT
-    including this struct's own name (``parent_col_name`` is appended
-    below).  At top-level dispatch it is ``None``/empty; when
-    ``_build_struct_column`` recurses into a nested-struct child, the
-    child's ``path_prefix`` is ``[*path_prefix, parent_col_name]`` so the
-    grandchild's seed chain picks up the full hash path.  Before this
-    helper tracked path, the Column branch passed only
-    ``(parent_col_name, field_name)`` to ``struct_field_seed_map`` --
-    correct for depth-1, broken (raise at plan time) for struct-of-
-    struct.
+    ``derive_column_seed(parent_seed, "", field_name)``, evaluated on
+    the driver since ``parent_seed`` is always an int at plan time.
+    Supports arbitrary nesting (struct-of-struct) via recursion.
     """
-    current_path = [*(path_prefix or []), parent_col_name]
-
     field_cols: list[Column] = []
     for field_spec in gen.fields:
-        child_seed: int | Column
-        if isinstance(parent_seed, int):
-            child_seed = derive_column_seed(parent_seed, "", field_spec.name)
-        else:
-            if dyn_ctx is None:
-                raise RuntimeError(
-                    f"_build_struct_column for '{parent_col_name}.{field_spec.name}' "
-                    f"received a Column parent_seed but no dyn_ctx (table_name, "
-                    f"unique_wbs, wb_col) was threaded from the multi-write-batch "
-                    f"path. Without context the child seed cannot be computed "
-                    f"consistently with the scalar path."
-                )
-            table_name, unique_wbs, wb_col = dyn_ctx
-            field_full_path = [*current_path, field_spec.name]
-            field_map = struct_field_seed_map(global_seed, unique_wbs, table_name, field_full_path)
-            child_seed = column_seed_lookup(field_map, wb_col)
+        child_seed = derive_column_seed(parent_seed, "", field_spec.name)
         child_expr = build_column_expr(
             field_spec,
             id_col,
             child_seed,
             row_count,
             global_seed,
-            struct_dyn_ctx=dyn_ctx,
-            struct_path_prefix=current_path,
         )
         child_expr = apply_null_fraction(child_expr, child_seed, id_col, field_spec.null_fraction)
         field_cols.append(child_expr.alias(field_spec.name))
@@ -780,7 +552,7 @@ def _build_struct_column(
 def _build_array_column(
     gen: ArrayColumn,
     id_col: Column,
-    column_seed: int | Column,
+    column_seed: int,
     row_count: int,
     global_seed: int,
 ) -> Column:
@@ -789,19 +561,15 @@ def _build_array_column(
 
     # Generate max_length elements, each with a unique seed offset
     element_cols: list[Column] = []
-    # ``elem`` (not ``_elem``): ColumnSpec now rejects leading-underscore
-    # names (they collide with engine metadata like ``_op`` / ``_batch_id``).
-    # This dummy spec is never surfaced to the user — it just drives the
-    # per-element builder — so any non-underscore identifier works.
+    # ``elem`` (not ``_elem``): ColumnSpec rejects leading-underscore names
+    # (reserved for engine-internal metadata).  This dummy spec is never
+    # surfaced to the user — it just drives the per-element builder.
     dummy_spec = ColumnSpec(name="elem", gen=gen.element)
     for i in range(gen.max_length):
-        if isinstance(column_seed, int):
-            elem_seed: int | Column = column_seed ^ ((i + 1) * GOLDEN_RATIO_HASH)
-            # Keep elem_seed in signed 64-bit range
-            if elem_seed >= 0x8000000000000000:
-                elem_seed -= 0x10000000000000000
-        else:
-            elem_seed = column_seed.bitwiseXOR(F.lit((i + 1) * GOLDEN_RATIO_HASH).cast("long"))
+        elem_seed = column_seed ^ ((i + 1) * GOLDEN_RATIO_HASH)
+        # Keep elem_seed in signed 64-bit range
+        if elem_seed >= 0x8000000000000000:
+            elem_seed -= 0x10000000000000000
         elem_expr = build_column_expr(
             dummy_spec,
             id_col,
@@ -828,11 +596,7 @@ def _build_array_column(
 
     range_size = gen.max_length - gen.min_length + 1
     _LEN_SEED_MIX = 0xD6E8FEB86659FD93  # random 64-bit constant, decorrelates length hash
-    length_seed: int | Column
-    if isinstance(column_seed, int):
-        length_seed = to_signed64(column_seed ^ _LEN_SEED_MIX)
-    else:
-        length_seed = column_seed.bitwiseXOR(F.lit(to_signed64(_LEN_SEED_MIX)).cast("long"))
+    length_seed = to_signed64(column_seed ^ _LEN_SEED_MIX)
     seed_col = cell_seed_expr(length_seed, id_col)
     rand_len = F.pmod(seed_col, F.lit(range_size)).cast("int") + F.lit(gen.min_length)
     return F.slice(full_array, 1, rand_len)

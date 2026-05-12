@@ -424,19 +424,11 @@ class TestPmodForLongMinValueSweep:
 # ===================================================================
 
 
-class TestUUIDColumnSeedAsColumn:
-    """Lines 29-30: build_uuid_column with column_seed as a Column (not int)."""
-
-    def test_uuid_with_column_seed(self, spark):
-        df = spark.range(20).withColumn("_seed", F.lit(42).cast("long"))
-        col = build_uuid_column(F.col("id"), F.col("_seed"))
-        result = df.select(col.alias("uuid")).collect()
-        uuid_re = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
-        for r in result:
-            assert uuid_re.match(r.uuid), f"Invalid UUID format: {r.uuid}"
+class TestUUIDColumnEdgeCases:
+    """Edge cases on ``build_uuid_column``: string id_col and Long.MAX seed."""
 
     def test_uuid_with_string_id_col(self, spark):
-        """Also covers line 25-26: string id_col branch."""
+        """String id_col branch (line 25-26)."""
         df = spark.range(10).withColumnRenamed("id", "row_id")
         col = build_uuid_column("row_id", 42)
         result = df.select(col.alias("uuid")).collect()
@@ -445,7 +437,7 @@ class TestUUIDColumnSeedAsColumn:
             assert uuid_re.match(r.uuid), f"Invalid UUID format: {r.uuid}"
 
     def test_uuid_seed_at_long_max_produces_valid_uuids(self, spark):
-        """column_seed == Long.MAX_VALUE (int branch) must not overflow seed + 1.
+        """column_seed == Long.MAX_VALUE must not overflow seed + 1.
 
         Without the to_signed64 clamp, ``column_seed + 1`` = 2**63, which is
         out of signed-64 range — F.lit/cast("long") rejects it before any rows
@@ -455,23 +447,6 @@ class TestUUIDColumnSeedAsColumn:
         long_max = 2**63 - 1
         df = spark.range(20)
         col = build_uuid_column("id", long_max)
-        rows = df.select(col.alias("u")).collect()
-        uuid_re = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
-        for r in rows:
-            assert uuid_re.match(r.u), f"Invalid UUID format: {r.u}"
-
-    def test_uuid_column_seed_at_long_max_produces_valid_uuids(self, spark, ansi_enabled):
-        """Column-typed column_seed carrying Long.MAX_VALUE must also wrap cleanly.
-
-        ANSI is toggled on (via the ``ansi_enabled`` fixture) so the bug
-        actually reproduces: under ANSI, a naive ``seed + 1`` on a MAX
-        row raises ARITHMETIC_OVERFLOW in Catalyst.  In non-ANSI mode
-        (Spark 3.x default) the add silently wraps, which would hide the
-        fix.
-        """
-        long_max = 2**63 - 1
-        df = spark.range(20).withColumn("_seed", F.lit(long_max).cast("long"))
-        col = build_uuid_column(F.col("id"), F.col("_seed"))
         rows = df.select(col.alias("u")).collect()
         uuid_re = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
         for r in rows:
