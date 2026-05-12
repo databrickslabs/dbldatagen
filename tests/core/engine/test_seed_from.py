@@ -8,14 +8,7 @@ regardless of row position.
 import pytest
 
 from dbldatagen.core import generate
-from dbldatagen.core.spec.dsl import (
-    decimal,
-    fk,
-    integer,
-    pk_auto,
-    text,
-    timestamp,
-)
+from dbldatagen.core.spec import dsl as dg
 from dbldatagen.core.spec.schema import (
     ColumnSpec,
     DataGenPlan,
@@ -36,22 +29,22 @@ def _make_plan_with_seed_from():
             TableSpec(
                 name="devices",
                 rows=50,
-                columns=[pk_auto("id")],
+                columns=[dg.pk_auto("id")],
                 primary_key=PrimaryKey(columns=["id"]),
             ),
             TableSpec(
                 name="events",
                 rows=200,
                 columns=[
-                    pk_auto("id"),
-                    fk("device_id", ref="devices.id"),
-                    text("country", values=["US", "DE", "JP", "BR"], seed_from="device_id"),
-                    text(
+                    dg.pk_auto("id"),
+                    dg.fk("device_id", ref="devices.id"),
+                    dg.text("country", values=["US", "DE", "JP", "BR"], seed_from="device_id"),
+                    dg.text(
                         "manufacturer",
                         values=["Apple", "Samsung", "Google"],
                         seed_from="device_id",
                     ),
-                    integer("value", min=1, max=1000),  # no seed_from — varies per row
+                    dg.integer("value", min=1, max=1000),  # no seed_from — varies per row
                 ],
                 primary_key=PrimaryKey(columns=["id"]),
             ),
@@ -123,7 +116,7 @@ def test_seed_from_with_values_column(spark):
                 name="t",
                 rows=100,
                 columns=[
-                    pk_auto("id"),
+                    dg.pk_auto("id"),
                     ColumnSpec(
                         name="group_id",
                         dtype=DataType.INT,
@@ -158,7 +151,7 @@ def test_seed_from_with_range_column(spark):
                 name="t",
                 rows=100,
                 columns=[
-                    pk_auto("id"),
+                    dg.pk_auto("id"),
                     ColumnSpec(
                         name="category",
                         dtype=DataType.INT,
@@ -193,7 +186,7 @@ def test_seed_from_with_timestamp_column(spark):
                 name="t",
                 rows=100,
                 columns=[
-                    pk_auto("id"),
+                    dg.pk_auto("id"),
                     ColumnSpec(
                         name="region",
                         dtype=DataType.INT,
@@ -228,7 +221,7 @@ def test_seed_from_nonexistent_column_raises(spark):
                 name="t",
                 rows=10,
                 columns=[
-                    pk_auto("id"),
+                    dg.pk_auto("id"),
                     ColumnSpec(
                         name="label",
                         dtype=DataType.STRING,
@@ -258,7 +251,7 @@ def test_seed_from_null_fraction_correlated(spark):
                 name="t",
                 rows=200,
                 columns=[
-                    pk_auto("id"),
+                    dg.pk_auto("id"),
                     ColumnSpec(
                         name="group_id",
                         dtype=DataType.INT,
@@ -305,12 +298,12 @@ def test_dsl_seed_from_passthrough(spark):
                 name="t",
                 rows=50,
                 columns=[
-                    pk_auto("id"),
-                    integer("group_id", min=1, max=5),
-                    text("label", values=["A", "B", "C"], seed_from="group_id"),
-                    integer("score", min=0, max=100, seed_from="group_id"),
-                    decimal("amount", min=0.0, max=100.0, seed_from="group_id"),
-                    timestamp("ts", seed_from="group_id"),
+                    dg.pk_auto("id"),
+                    dg.integer("group_id", min=1, max=5),
+                    dg.text("label", values=["A", "B", "C"], seed_from="group_id"),
+                    dg.integer("score", min=0, max=100, seed_from="group_id"),
+                    dg.decimal("amount", min=0.0, max=100.0, seed_from="group_id"),
+                    dg.timestamp("ts", seed_from="group_id"),
                 ],
                 primary_key=PrimaryKey(columns=["id"]),
             ),

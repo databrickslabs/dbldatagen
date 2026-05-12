@@ -12,17 +12,8 @@ import tempfile
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 
-from dbldatagen.core import (
-    DataGenPlan,
-    PrimaryKey,
-    TableSpec,
-    array,
-    generate,
-    integer,
-    pk_auto,
-    struct,
-    text,
-)
+from dbldatagen.core import DataGenPlan, PrimaryKey, TableSpec, generate
+from dbldatagen.core.spec import dsl as dg
 from dbldatagen.core.spec.schema import (
     ArrayColumn,
     ColumnSpec,
@@ -41,22 +32,22 @@ def _nested_plan(rows=100, seed=42):
                 rows=rows,
                 primary_key=PrimaryKey(columns=["item_id"]),
                 columns=[
-                    pk_auto("item_id"),
-                    struct(
+                    dg.pk_auto("item_id"),
+                    dg.struct(
                         "address",
                         [
-                            text("city", ["Austin", "NYC", "LA", "Chicago"]),
-                            text("state", ["TX", "NY", "CA", "IL"]),
-                            integer("zip", min=10000, max=99999),
+                            dg.text("city", ["Austin", "NYC", "LA", "Chicago"]),
+                            dg.text("state", ["TX", "NY", "CA", "IL"]),
+                            dg.integer("zip", min=10000, max=99999),
                         ],
                     ),
-                    array(
+                    dg.array(
                         "tags",
                         ValuesColumn(values=["sale", "new", "popular", "clearance"]),
                         min_length=1,
                         max_length=4,
                     ),
-                    integer("price", min=1, max=500),
+                    dg.integer("price", min=1, max=500),
                 ],
             ),
         ],
@@ -125,8 +116,8 @@ class TestArrayColumn:
                     name="t",
                     rows=50,
                     columns=[
-                        pk_auto("tid"),
-                        array("nums", RangeColumn(min=1, max=100), min_length=3, max_length=3),
+                        dg.pk_auto("tid"),
+                        dg.array("nums", RangeColumn(min=1, max=100), min_length=3, max_length=3),
                     ],
                 ),
             ],
@@ -150,18 +141,18 @@ class TestNestedStruct:
                     name="t",
                     rows=20,
                     columns=[
-                        pk_auto("tid"),
+                        dg.pk_auto("tid"),
                         ColumnSpec(
                             name="contact",
                             gen=StructColumn(
                                 fields=[
-                                    text("name", ["Alice", "Bob"]),
+                                    dg.text("name", ["Alice", "Bob"]),
                                     ColumnSpec(
                                         name="location",
                                         gen=StructColumn(
                                             fields=[
-                                                text("city", ["Austin", "NYC"]),
-                                                integer("zip", min=10000, max=99999),
+                                                dg.text("city", ["Austin", "NYC"]),
+                                                dg.integer("zip", min=10000, max=99999),
                                             ]
                                         ),
                                     ),
@@ -185,8 +176,8 @@ class TestNestedStruct:
                     name="t",
                     rows=30,
                     columns=[
-                        pk_auto("tid"),
-                        array("scores", RangeColumn(min=0, max=100), min_length=2, max_length=5),
+                        dg.pk_auto("tid"),
+                        dg.array("scores", RangeColumn(min=0, max=100), min_length=2, max_length=5),
                     ],
                 ),
             ],
@@ -308,8 +299,8 @@ class TestStructFieldSeedIndependence:
 
         gen = StructColumn(
             fields=[
-                text("a", values=["x", "y", "z", "w", "v"]),
-                text("b", values=["x", "y", "z", "w", "v"]),
+                dg.text("a", values=["x", "y", "z", "w", "v"]),
+                dg.text("b", values=["x", "y", "z", "w", "v"]),
             ]
         )
         # Synthetic dyn_ctx mimicking the multi-write-batch path: one
@@ -358,12 +349,12 @@ class TestNullFractionOnNested:
                     rows=30,
                     primary_key=PrimaryKey(columns=["item_id"]),
                     columns=[
-                        pk_auto("item_id"),
+                        dg.pk_auto("item_id"),
                         ColumnSpec(
                             name="addr",
                             gen=StructColumn(
                                 fields=[
-                                    text("city", values=["Austin", "NYC"]),
+                                    dg.text("city", values=["Austin", "NYC"]),
                                     ColumnSpec(
                                         name="zip",
                                         gen=RangeColumn(min=10000, max=99999),
@@ -396,7 +387,7 @@ class TestNullFractionOnNested:
                     rows=20,
                     primary_key=PrimaryKey(columns=["item_id"]),
                     columns=[
-                        pk_auto("item_id"),
+                        dg.pk_auto("item_id"),
                         ColumnSpec(
                             name="tags",
                             gen=ArrayColumn(

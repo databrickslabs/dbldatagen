@@ -1,4 +1,25 @@
-"""dbldatagen.core.spec.dsl -- Shorthand constructors for common patterns."""
+"""Lowercase factory helpers for building ``ColumnSpec`` objects.
+
+The recommended import is::
+
+    from dbldatagen.core.spec import dsl as dg
+
+    dg.pk_auto("id")
+    dg.integer("age", 0, 99)
+    dg.decimal("price", precision=10, scale=2)
+    dg.faker("name", provider="name")
+
+The helpers are *not* re-exported from ``dbldatagen.core`` or
+``dbldatagen.core.spec`` because several of the lowercase names would
+shadow stdlib modules (``decimal``, ``array``, ``struct``) and the
+PyPI ``faker`` package when flat-imported.  The ``dg.`` prefix keeps
+every DSL call unambiguous without renaming the helpers themselves.
+
+The pattern mirrors the established PySpark convention
+(``import pyspark.sql.functions as F`` then ``F.col(...)``).  Direct
+imports (``from dbldatagen.core.spec.dsl import integer``) continue to
+work for callers who prefer them.
+"""
 
 from __future__ import annotations
 
