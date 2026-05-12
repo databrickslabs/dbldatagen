@@ -48,8 +48,7 @@ def build_range_column(
 
     Args:
         id_col: Row-id ``Column`` reference or column name.
-        column_seed: Per-column seed.  Scalar ``int`` for single-batch
-          generation; ``Column`` for the multi-write-batch path.
+        column_seed: Per-column seed (planning-time constant).
         min_val: Inclusive lower bound.
         max_val: Inclusive upper bound.  Must be ``>= min_val``.
         distribution: Sampling distribution.  ``None`` defaults to

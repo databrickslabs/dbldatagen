@@ -35,9 +35,8 @@ def build_fk_column(
     Args:
         id_col: Row-id ``Column`` (typically
           ``F.col("_synth_row_id")``).
-        column_seed: Per-column seed for the FK column.  Scalar
-          ``int`` for the single-batch path; ``Column`` for the
-          multi-write-batch path.
+        column_seed: Per-column seed for the FK column
+          (planning-time constant).
         fk_resolution: ``FKResolution`` from ``ResolvedPlan``
           carrying the parent ``PKMetadata``, sampling distribution,
           and null fraction.
