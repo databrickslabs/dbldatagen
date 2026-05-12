@@ -20,22 +20,42 @@ pip install dbldatagen[core-dev]
 pip install dbldatagen[core-faker]   # Faker-based text generation
 ```
 
+## Recommended import style
+
+The entry-point classes and functions are PascalCase and imported flat -- they don't shadow anything in the Python ecosystem:
+
+```python
+from dbldatagen.core import DataGenPlan, TableSpec, PrimaryKey, ColumnSpec, generate
+```
+
+The lowercase DSL factory helpers live in `dbldatagen.core.spec.dsl` and are imported under a short alias to avoid shadowing stdlib modules (`decimal`, `array`, `struct`) and the PyPI `faker` package:
+
+```python
+from dbldatagen.core.spec import dsl as dg
+
+dg.pk_auto("id")
+dg.integer("age", 0, 99)
+dg.decimal("price", precision=10, scale=2)
+dg.faker("name", provider="name")
+```
+
+This mirrors the established PySpark convention (`import pyspark.sql.functions as F` then `F.col(...)`). Every example below uses the `dg.` prefix; direct imports (`from dbldatagen.core.spec.dsl import integer`) continue to work if you prefer them.
+
 ## Manual Conversion Reference
 
 ### Table Setup
 
 ```python
 # v0
-dg = (
+dg_v0 = (
     DataGenerator(sparkSession=spark, name="orders", rows=10000, randomSeed=42)
     .withIdOutput()
     .withColumn(...)
 )
-df = dg.build()
+df = dg_v0.build()
 
 # core
-from dbldatagen.core import generate
-from dbldatagen.core.spec.schema import DataGenPlan, TableSpec, PrimaryKey
+from dbldatagen.core import DataGenPlan, PrimaryKey, TableSpec, generate
 
 plan = DataGenPlan(
     seed=42,
@@ -65,8 +85,8 @@ from dbldatagen.core.spec.schema import ColumnSpec, DataType, RangeColumn
 ColumnSpec(name="age", dtype=DataType.INT, gen=RangeColumn(min=18, max=90))
 
 # core (DSL shorthand)
-from dbldatagen.core.spec.dsl import integer
-integer("age", min=18, max=90)
+from dbldatagen.core.spec import dsl as dg
+dg.integer("age", min=18, max=90)
 ```
 
 #### Float/Double Range
@@ -76,14 +96,14 @@ integer("age", min=18, max=90)
 .withColumn("amount", DoubleType(), minValue=10.0, maxValue=500.0)
 
 # core
-from dbldatagen.core import double
-double("amount", min=10.0, max=500.0)
+from dbldatagen.core.spec import dsl as dg
+dg.double("amount", min=10.0, max=500.0)
 ```
 
-``double()`` maps to ``DataType.DOUBLE``.  Use ``decimal(name,
-precision=P, scale=S)`` only for fixed-precision financial values
-(the earlier MIGRATION doc suggested ``decimal`` here — wrong, it
-produced a different on-disk type).
+`dg.double()` maps to `DataType.DOUBLE`.  Use `dg.decimal(name,
+precision=P, scale=S)` only for fixed-precision financial values (the
+earlier MIGRATION doc suggested `decimal` here — wrong, it produced a
+different on-disk type).
 
 #### String Values (Discrete)
 
@@ -92,8 +112,8 @@ produced a different on-disk type).
 .withColumn("status", StringType(), values=["active", "inactive", "pending"])
 
 # core
-from dbldatagen.core.spec.dsl import text
-text("status", values=["active", "inactive", "pending"])
+from dbldatagen.core.spec import dsl as dg
+dg.text("status", values=["active", "inactive", "pending"])
 ```
 
 #### Weighted Values
@@ -126,8 +146,8 @@ Note: v0 uses a list of weights (position-matched). core uses a dict (name-match
             begin="2020-01-01 00:00:00", end="2025-12-31 23:59:59")
 
 # core
-from dbldatagen.core.spec.dsl import timestamp
-timestamp("created_at", start="2020-01-01", end="2025-12-31")
+from dbldatagen.core.spec import dsl as dg
+dg.timestamp("created_at", start="2020-01-01", end="2025-12-31")
 ```
 
 #### Boolean
@@ -148,8 +168,9 @@ ColumnSpec(name="is_active", dtype=DataType.BOOLEAN, gen=ValuesColumn(values=[Tr
 .withColumn("total", DoubleType(), expr="quantity * unit_price")
 
 # core
-from dbldatagen.core.spec.dsl import expression
-expression("total", "quantity * unit_price", dtype=DataType.DOUBLE)
+from dbldatagen.core.spec import dsl as dg
+from dbldatagen.core.spec.schema import DataType
+dg.expression("total", "quantity * unit_price", dtype=DataType.DOUBLE)
 ```
 
 #### Template / Pattern
@@ -159,8 +180,8 @@ expression("total", "quantity * unit_price", dtype=DataType.DOUBLE)
 .withColumn("code", StringType(), template=r"ORD-dddd")
 
 # core (named placeholders with explicit length)
-from dbldatagen.core.spec.dsl import pattern
-pattern("code", template="ORD-{digit:4}")
+from dbldatagen.core.spec import dsl as dg
+dg.pattern("code", template="ORD-{digit:4}")
 ```
 
 v0 placeholders are single literal chars: `d/D` (decimal), `a/A` (alpha),
@@ -175,7 +196,7 @@ core placeholders are named with explicit length: `{digit:N}`, `{alpha:N}`,
 .withColumn("sku", StringType(), template=r"SKU-dddddd")
 
 # core
-pattern("sku", template="SKU-{digit:6}")
+dg.pattern("sku", template="SKU-{digit:6}")
 ```
 
 ### Primary Keys
@@ -203,11 +224,11 @@ DataGenerator(sparkSession=spark, name="orders", rows=1000).withIdOutput()
 )
 
 # core -- explicit primary key, declared once on the column
-from dbldatagen.core.spec.dsl import pk_auto, pk_uuid, pk_pattern
+from dbldatagen.core.spec import dsl as dg
 
-pk_auto("id")                          # Sequential integer (1, 2, 3, ...)
-pk_uuid("id")                          # Deterministic UUID
-pk_pattern("id", "ORD-{digit:6}")      # Patterned string
+dg.pk_auto("id")                          # Sequential integer (1, 2, 3, ...)
+dg.pk_uuid("id")                          # Deterministic UUID
+dg.pk_pattern("id", "ORD-{digit:6}")      # Patterned string
 ```
 
 ### Nullable Columns
@@ -230,8 +251,10 @@ ColumnSpec(name="email", dtype=DataType.STRING, gen=..., nullable=True, null_fra
             values=["US", "DE", "JP", "BR"])
 
 # core -- seed_from is the direct equivalent
-integer("device_id", min=1, max=50)
-text("country", values=["US", "DE", "JP", "BR"], seed_from="device_id")
+from dbldatagen.core.spec import dsl as dg
+
+dg.integer("device_id", min=1, max=50)
+dg.text("country", values=["US", "DE", "JP", "BR"], seed_from="device_id")
 ```
 
 ### Multiple Identical Columns (numColumns)
@@ -241,9 +264,11 @@ text("country", values=["US", "DE", "JP", "BR"], seed_from="device_id")
 .withColumn("feature", IntegerType(), minValue=0, maxValue=100, numColumns=3)
 
 # core -- define each column explicitly
-integer("feature_0", min=0, max=100)
-integer("feature_1", min=0, max=100)
-integer("feature_2", min=0, max=100)
+from dbldatagen.core.spec import dsl as dg
+
+dg.integer("feature_0", min=0, max=100)
+dg.integer("feature_1", min=0, max=100)
+dg.integer("feature_2", min=0, max=100)
 ```
 
 Expand `numColumns` manually when migrating. This is a deliberate design
@@ -261,7 +286,7 @@ and splat it into `TableSpec.columns`.
 # core -- no direct equivalent today; the closest workaround is to adjust
 # the range to match the desired cardinality:
 #   max = min + (N-1) * step
-integer("category", min=1, max=50)
+dg.integer("category", min=1, max=50)
 ```
 
 `uniqueValues=N` with a wider range is a known follow-up for core; the
@@ -299,8 +324,8 @@ core lifts this to plan level so a child column can draw from a parent
 table's primary key, with topology validated up front:
 
 ```python
-from dbldatagen.core.spec.dsl import pk_auto, fk, integer
-from dbldatagen.core.spec.schema import DataGenPlan, TableSpec, PrimaryKey
+from dbldatagen.core import DataGenPlan, PrimaryKey, TableSpec
+from dbldatagen.core.spec import dsl as dg
 
 plan = DataGenPlan(
     seed=42,
@@ -308,13 +333,13 @@ plan = DataGenPlan(
         TableSpec(
             name="customers",
             rows=100,
-            columns=[pk_auto("id"), text("name", values=["Alice", "Bob", "Carol"])],
+            columns=[dg.pk_auto("id"), dg.text("name", values=["Alice", "Bob", "Carol"])],
             primary_key=PrimaryKey(columns=["id"]),
         ),
         TableSpec(
             name="orders",
             rows=1000,
-            columns=[pk_auto("id"), fk("customer_id", ref="customers.id"), decimal("amount", min=10, max=500)],
+            columns=[dg.pk_auto("id"), dg.fk("customer_id", ref="customers.id"), dg.decimal("amount", min=10, max=500)],
             primary_key=PrimaryKey(columns=["id"]),
         ),
     ]
@@ -328,12 +353,12 @@ declare struct fields in the column spec itself. core defines the
 nested fields inline:
 
 ```python
-from dbldatagen.core.spec.dsl import struct, text, integer
+from dbldatagen.core.spec import dsl as dg
 
-struct("address", [
-    text("city", ["Austin", "NYC", "LA"]),
-    text("state", ["TX", "NY", "CA"]),
-    integer("zip", min=10000, max=99999),
+dg.struct("address", [
+    dg.text("city", ["Austin", "NYC", "LA"]),
+    dg.text("state", ["TX", "NY", "CA"]),
+    dg.integer("zip", min=10000, max=99999),
 ])
 ```
 
@@ -356,12 +381,12 @@ API. Listed here for orientation when porting a v0 generator.
             structType="array")
 
 # core -- declare the element generator and length bounds directly
-from dbldatagen.core.spec.dsl import array
+from dbldatagen.core.spec import dsl as dg
 from dbldatagen.core.spec.schema import ValuesColumn
 
-array("tags",
-      ValuesColumn(values=["sale", "new", "popular"]),
-      min_length=1, max_length=4)
+dg.array("tags",
+         ValuesColumn(values=["sale", "new", "popular"]),
+         min_length=1, max_length=4)
 ```
 
 ### Faker / Custom Text Providers
@@ -373,10 +398,10 @@ from dbldatagen.text_generator_plugins import FakerText
             text=FakerText(lambda fake: fake.email(), rootProperty="faker"))
 
 # core -- name the provider directly on a faker() column
-from dbldatagen.core.spec.dsl import faker
+from dbldatagen.core.spec import dsl as dg
 
-faker("email", provider="email")
-faker("full_name", provider="name")
+dg.faker("email", provider="email")
+dg.faker("full_name", provider="name")
 ```
 
 Requires: `pip install dbldatagen[core-faker]`
@@ -389,8 +414,7 @@ as follow-ups for core; the recommended interim workarounds are:
 | v0 Feature | Workaround in core |
 |-----------|----------------|
 | `uniqueValues=N` (constrain cardinality below the natural range) | Narrow the range so cardinality matches: `max = min + (N-1) * step` |
-| `format` (printf-style `%05d`) | `pattern("col", template="{digit:5}")` or `expression("col", "format_string(...)")` |
-| `text=ILText(...)` (Lorem Ipsum) | `faker("col", provider="paragraph")` |
+| `format` (printf-style `%05d`) | `dg.pattern("col", template="{digit:5}")` or `dg.expression("col", "format_string(...)")` |
+| `text=ILText(...)` (Lorem Ipsum) | `dg.faker("col", provider="paragraph")` |
 | `withConstraint(SqlExpr(...))` (post-hoc filtering) | Design generation so the rule holds by construction; core does not filter rows after generation |
 | `Beta` / `Gamma` distributions | Approximate with `Normal` or `LogNormal` for now |
-
