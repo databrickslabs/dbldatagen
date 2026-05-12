@@ -308,3 +308,28 @@ class TestFKZipfDistribution:
         top_count = counts[0]["count"]
         bottom_count = counts[-1]["count"]
         assert top_count > bottom_count, "Zipf should create skew"
+
+
+class TestReconstructParentPkBackstop:
+    """_reconstruct_parent_pk raises on unknown pk_type — defense-in-depth
+    against a hand-constructed PKMetadata that bypasses the planner."""
+
+    def test_unknown_pk_type_raises(self, spark):
+        import pytest
+
+        from dbldatagen.core.engine.fk import _reconstruct_parent_pk
+        from dbldatagen.core.engine.planner import PKMetadata
+
+        meta = PKMetadata(
+            table_name="t",
+            pk_column="id",
+            row_count=10,
+            pk_type="bogus",  # planner would never emit this
+            pk_seed=42,
+            pk_start=0,
+            pk_step=1,
+            pk_template=None,
+        )
+        with pytest.raises(RuntimeError, match="unknown pk_type='bogus'"):
+            # parent_index_col can be anything; the raise fires before we use it
+            _reconstruct_parent_pk(F.col("id"), meta)

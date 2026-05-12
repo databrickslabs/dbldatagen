@@ -94,5 +94,14 @@ def _reconstruct_parent_pk(parent_index_col: Column, meta: PKMetadata) -> Column
         # We need to reconstruct the UUID from the parent_index
         return build_uuid_column(parent_index_col, meta.pk_seed)
 
-    # Fallback: treat as sequential
-    return parent_index_col.cast("long")
+    # ``_validate_primary_keys`` rejects non-{Sequence, Pattern, UUID}
+    # PK strategies at plan time, so ``meta.pk_type`` cannot be anything
+    # else here.  Raise instead of silently casting the index to long
+    # so a hand-constructed ``PKMetadata`` with a bogus ``pk_type``
+    # surfaces the bypass rather than emitting wrong FK values.
+    raise RuntimeError(
+        f"_reconstruct_parent_pk received unknown pk_type='{meta.pk_type}' "
+        f"for '{meta.table_name}.{meta.pk_column}'.  Expected one of "
+        f"'sequence', 'pattern', 'uuid' — the plan-time validator "
+        f"``_validate_primary_keys`` should have rejected this."
+    )
