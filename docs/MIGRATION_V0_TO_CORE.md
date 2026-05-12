@@ -28,7 +28,7 @@ The entry-point classes and functions are PascalCase and imported flat -- they d
 from dbldatagen.core import DataGenPlan, TableSpec, PrimaryKey, ColumnSpec, generate
 ```
 
-The lowercase DSL factory helpers live in `dbldatagen.core.spec.dsl` and are imported under a short alias to avoid shadowing stdlib modules (`decimal`, `array`, `struct`) and the PyPI `faker` package:
+The lowercase DSL factory helpers live in `dbldatagen.core.spec.dsl`. They are **not** re-exported from `dbldatagen.core` -- several of those names (`decimal`, `array`, `struct`) shadow stdlib modules and `faker` collides with the PyPI package, so flat-importing them would poison user code. Import the dsl module under a short alias instead:
 
 ```python
 from dbldatagen.core.spec import dsl as dg
