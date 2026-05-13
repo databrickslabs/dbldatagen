@@ -374,9 +374,7 @@ class TestExpressionColumnValidation:
         """``rows between unbounded preceding and current row`` — frame-bound
         keywords (``rows``, ``unbounded``, ``preceding``, ``current``,
         ``row``, ``following``) must also pass."""
-        resolve_plan(self._plan(
-            "sum(a) over (order by a rows between unbounded preceding and current row)"
-        ))
+        resolve_plan(self._plan("sum(a) over (order by a rows between unbounded preceding and current row)"))
 
     def test_aggregation_with_asc_desc_not_flagged(self):
         """``order by a desc`` / ``... asc`` keywords must pass."""

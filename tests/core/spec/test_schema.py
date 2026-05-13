@@ -126,6 +126,18 @@ class TestColumnStrategies:
         assert s.kwargs == {"start_date": "-5y"}
         assert s.locale == "de_DE"
 
+    def test_faker_kwargs_default_is_independent_dict(self):
+        """``kwargs`` uses ``Field(default_factory=dict)``: each
+        instance gets its own dict, not a shared one.  Pydantic v2
+        already deep-copies the literal ``{}`` default, but the
+        ``default_factory`` spelling makes the intent unambiguous
+        and pins it against a future regression that swaps the
+        default for a mutable literal."""
+        a = FakerColumn(provider="name")
+        b = FakerColumn(provider="email")
+        a.kwargs["mutated"] = 1
+        assert "mutated" not in b.kwargs
+
     def test_pattern_column(self):
         s = PatternColumn(template="ORD-{digit:4}-{alpha:3}")
         assert s.strategy == "pattern"
@@ -150,6 +162,12 @@ class TestColumnStrategies:
         s = ExpressionColumn(expr="quantity * unit_price")
         assert s.strategy == "expression"
         assert s.expr == "quantity * unit_price"
+
+    def test_expression_column_empty_expr_rejected(self):
+        """``ExpressionColumn(expr="")`` would crash at ``F.expr("")``;
+        reject at construction so the failure names the column."""
+        with pytest.raises(ValueError, match="at least 1 character"):
+            ExpressionColumn(expr="")
 
     def test_timestamp_column(self):
         s = TimestampColumn(start="2023-01-01", end="2024-12-31")
@@ -407,6 +425,13 @@ class TestPrimaryKey:
         pk = PrimaryKey(columns=["tenant_id", "user_id"])
         assert pk.columns == ["tenant_id", "user_id"]
         assert len(pk.columns) == 2
+
+    def test_empty_columns_rejected(self):
+        """An empty PK is meaningless — would silently disable FK
+        targeting downstream.  Reject at construction so the spec
+        never carries a zero-column PK."""
+        with pytest.raises(ValueError, match="at least 1 item"):
+            PrimaryKey(columns=[])
 
 
 # ---------------------------------------------------------------------------

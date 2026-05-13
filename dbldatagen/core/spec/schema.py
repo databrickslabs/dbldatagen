@@ -380,7 +380,7 @@ class FakerColumn(_StrictModel):
 
     strategy: Literal["faker"] = "faker"
     provider: str
-    kwargs: dict[str, Any] = {}
+    kwargs: dict[str, Any] = Field(default_factory=dict)
     locale: str | None = None
 
 
@@ -472,7 +472,7 @@ class ExpressionColumn(_StrictModel):
     """
 
     strategy: Literal["expression"] = "expression"
-    expr: str
+    expr: str = Field(min_length=1)
 
 
 class TimestampColumn(_StrictModel):
@@ -767,10 +767,10 @@ class PrimaryKey(_StrictModel):
     Attributes:
         columns: Names of the columns that form the primary key, in
           declaration order.  Each name must match a ``ColumnSpec.name``
-          on the owning ``TableSpec``.
+          on the owning ``TableSpec``.  Must be non-empty.
     """
 
-    columns: list[str]
+    columns: list[str] = Field(min_length=1)
 
 
 class ForeignKeyRef(_StrictModel):
