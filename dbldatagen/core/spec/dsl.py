@@ -2,17 +2,17 @@
 
 The recommended import is::
 
-    from dbldatagen.core.spec import dsl as dg
+    from dbldatagen.core.spec import dsl as datagendg
 
-    dg.pk_auto("id")
-    dg.integer("age", 0, 99)
-    dg.decimal("price", precision=10, scale=2)
-    dg.faker("name", provider="name")
+    datagendg.pk_auto("id")
+    datagendg.integer("age", 0, 99)
+    datagendg.decimal("price", precision=10, scale=2)
+    datagendg.faker("name", provider="name")
 
 The helpers are *not* re-exported from ``dbldatagen.core`` or
 ``dbldatagen.core.spec`` because several of the lowercase names would
 shadow stdlib modules (``decimal``, ``array``, ``struct``) and the
-PyPI ``faker`` package when flat-imported.  The ``dg.`` prefix keeps
+PyPI ``faker`` package when flat-imported.  The ``datagendg.`` prefix keeps
 every DSL call unambiguous without renaming the helpers themselves.
 
 The pattern mirrors the established PySpark convention

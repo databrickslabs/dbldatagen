@@ -13,7 +13,7 @@ from pyspark.sql import functions as F
 from pyspark.sql import types as T
 
 from dbldatagen.core import DataGenPlan, PrimaryKey, TableSpec, generate
-from dbldatagen.core.spec import dsl as dg
+from dbldatagen.core.spec import dsl as datagendg
 from dbldatagen.core.spec.schema import (
     ArrayColumn,
     ColumnSpec,
@@ -32,22 +32,22 @@ def _nested_plan(rows=100, seed=42):
                 rows=rows,
                 primary_key=PrimaryKey(columns=["item_id"]),
                 columns=[
-                    dg.pk_auto("item_id"),
-                    dg.struct(
+                    datagendg.pk_auto("item_id"),
+                    datagendg.struct(
                         "address",
                         [
-                            dg.text("city", ["Austin", "NYC", "LA", "Chicago"]),
-                            dg.text("state", ["TX", "NY", "CA", "IL"]),
-                            dg.integer("zip", min=10000, max=99999),
+                            datagendg.text("city", ["Austin", "NYC", "LA", "Chicago"]),
+                            datagendg.text("state", ["TX", "NY", "CA", "IL"]),
+                            datagendg.integer("zip", min=10000, max=99999),
                         ],
                     ),
-                    dg.array(
+                    datagendg.array(
                         "tags",
                         ValuesColumn(values=["sale", "new", "popular", "clearance"]),
                         min_length=1,
                         max_length=4,
                     ),
-                    dg.integer("price", min=1, max=500),
+                    datagendg.integer("price", min=1, max=500),
                 ],
             ),
         ],
@@ -116,8 +116,8 @@ class TestArrayColumn:
                     name="t",
                     rows=50,
                     columns=[
-                        dg.pk_auto("tid"),
-                        dg.array("nums", RangeColumn(min=1, max=100), min_length=3, max_length=3),
+                        datagendg.pk_auto("tid"),
+                        datagendg.array("nums", RangeColumn(min=1, max=100), min_length=3, max_length=3),
                     ],
                 ),
             ],
@@ -141,18 +141,18 @@ class TestNestedStruct:
                     name="t",
                     rows=20,
                     columns=[
-                        dg.pk_auto("tid"),
+                        datagendg.pk_auto("tid"),
                         ColumnSpec(
                             name="contact",
                             gen=StructColumn(
                                 fields=[
-                                    dg.text("name", ["Alice", "Bob"]),
+                                    datagendg.text("name", ["Alice", "Bob"]),
                                     ColumnSpec(
                                         name="location",
                                         gen=StructColumn(
                                             fields=[
-                                                dg.text("city", ["Austin", "NYC"]),
-                                                dg.integer("zip", min=10000, max=99999),
+                                                datagendg.text("city", ["Austin", "NYC"]),
+                                                datagendg.integer("zip", min=10000, max=99999),
                                             ]
                                         ),
                                     ),
@@ -176,8 +176,8 @@ class TestNestedStruct:
                     name="t",
                     rows=30,
                     columns=[
-                        dg.pk_auto("tid"),
-                        dg.array("scores", RangeColumn(min=0, max=100), min_length=2, max_length=5),
+                        datagendg.pk_auto("tid"),
+                        datagendg.array("scores", RangeColumn(min=0, max=100), min_length=2, max_length=5),
                     ],
                 ),
             ],
@@ -297,12 +297,12 @@ class TestNullFractionOnNested:
                     rows=30,
                     primary_key=PrimaryKey(columns=["item_id"]),
                     columns=[
-                        dg.pk_auto("item_id"),
+                        datagendg.pk_auto("item_id"),
                         ColumnSpec(
                             name="addr",
                             gen=StructColumn(
                                 fields=[
-                                    dg.text("city", values=["Austin", "NYC"]),
+                                    datagendg.text("city", values=["Austin", "NYC"]),
                                     ColumnSpec(
                                         name="zip",
                                         gen=RangeColumn(min=10000, max=99999),
@@ -335,7 +335,7 @@ class TestNullFractionOnNested:
                     rows=20,
                     primary_key=PrimaryKey(columns=["item_id"]),
                     columns=[
-                        dg.pk_auto("item_id"),
+                        datagendg.pk_auto("item_id"),
                         ColumnSpec(
                             name="tags",
                             gen=ArrayColumn(

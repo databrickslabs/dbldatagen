@@ -12,7 +12,7 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
   follow-up PR.  See [`docs/MIGRATION_V0_TO_CORE.md`](docs/MIGRATION_V0_TO_CORE.md).
   Legacy top-level API is unchanged; `dbldatagen.core` lives alongside it.
 * DSL factory helpers (`integer`, `text`, `decimal`, `array`, `struct`, `faker`, ...) are
-  imported via `from dbldatagen.core.spec import dsl as dg` and used as `dg.integer(...)`.
+  imported via `from dbldatagen.core.spec import dsl as datagendg` and used as `datagendg.integer(...)`.
   Mirrors the PySpark `import pyspark.sql.functions as F` convention.  The lowercase
   names are not re-exported from `dbldatagen.core` or `dbldatagen.core.spec` because
   several would shadow stdlib modules (`decimal`, `array`, `struct`) and the PyPI
