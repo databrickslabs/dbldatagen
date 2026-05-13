@@ -381,6 +381,17 @@ class TestExpressionColumnValidation:
         resolve_plan(self._plan("first(a) over (order by a desc)"))
         resolve_plan(self._plan("first(a) over (order by a asc)"))
 
+    def test_nulls_first_last_not_flagged(self):
+        """``order by a nulls first`` / ``... nulls last`` — the bare
+        tokens ``nulls``, ``first``, ``last`` must pass."""
+        resolve_plan(self._plan("first(a) over (order by a nulls first)"))
+        resolve_plan(self._plan("last(a) over (order by a nulls last)"))
+
+    def test_filter_where_clause_not_flagged(self):
+        """``sum(a) filter (where a > 0)`` — the bare token ``where``
+        must pass."""
+        resolve_plan(self._plan("sum(a) filter (where a > 0)"))
+
     def test_reference_to_fk_column_rejected(self):
         """ExpressionColumn cannot reference an FK column (phase-2 column).
 

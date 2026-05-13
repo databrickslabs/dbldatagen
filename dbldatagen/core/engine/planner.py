@@ -60,14 +60,23 @@ _SQL_KEYWORDS: frozenset[str] = frozenset(
         "true",
         # Window function / aggregation clause keywords
         # (legal as bare tokens inside ``rank() over (partition by a order by b)``,
-        # ``sum(a) over (rows between unbounded preceding and current row)``, etc.)
+        # ``sum(a) over (rows between unbounded preceding and current row)``,
+        # ``filter(x) where y > 0``, ``order by x nulls first``, etc.).
+        # Same trade-off as the interval-unit and type-name entries
+        # above: a user who picks ``order`` / ``group`` / ``row`` / ``range`` /
+        # ``where`` / ``first`` / ``last`` as a bare column name no longer gets
+        # plan-time typo detection on the un-suffixed form.  Spark's
+        # ``UNRESOLVED_COLUMN`` is still the backstop at job time.
         "asc",
         "by",
         "current",
         "desc",
+        "first",
         "following",
         "group",
         "having",
+        "last",
+        "nulls",
         "order",
         "over",
         "partition",
@@ -76,6 +85,7 @@ _SQL_KEYWORDS: frozenset[str] = frozenset(
         "row",
         "rows",
         "unbounded",
+        "where",
         # Interval units (legal as bare tokens inside ``interval`` literals)
         "day",
         "days",
