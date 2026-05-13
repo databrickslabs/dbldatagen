@@ -467,3 +467,90 @@ class TestGenerateTable:
         rows = df.collect()
         for r in rows:
             assert r.c == r.a * r.b, f"Expression mismatch: {r.a} * {r.b} != {r.c}"
+
+
+# ---------------------------------------------------------------------------
+# ExpressionColumn — broader evaluation coverage
+# ---------------------------------------------------------------------------
+
+
+class TestExpressionColumnEvaluation:
+    """End-to-end evaluation of non-trivial ``ExpressionColumn`` shapes.
+
+    The existing ``test_expression_column`` only exercises ``a * b``.
+    These cases pin three realistic patterns: ``CASE WHEN``, ``cast``,
+    and window functions (which depends on the ``_SQL_KEYWORDS``
+    window-function fix landing in commit 16e1a43).
+    """
+
+    def test_case_when(self, spark):
+        spec = TableSpec(
+            name="case_when_test",
+            rows=200,
+            seed=42,
+            columns=[
+                ColumnSpec(name="a", gen=RangeColumn(min=0, max=100)),
+                ColumnSpec(
+                    name="band",
+                    gen=ExpressionColumn(expr="case when a < 50 then 'low' else 'high' end"),
+                ),
+            ],
+        )
+        df = generate_table(spark, spec)
+        rows = df.collect()
+        assert {r.band for r in rows} == {"low", "high"}, "expected exactly two bands"
+        for r in rows:
+            assert r.band == ("low" if r.a < 50 else "high"), f"{r.a} band={r.band}"
+
+    def test_cast_promotes_dtype(self, spark):
+        """``cast(a as bigint) * 1000000`` materialises as a long column."""
+        import pyspark.sql.types as T
+
+        spec = TableSpec(
+            name="cast_test",
+            rows=50,
+            seed=42,
+            columns=[
+                ColumnSpec(name="a", gen=RangeColumn(min=1, max=10)),
+                ColumnSpec(name="big", gen=ExpressionColumn(expr="cast(a as bigint) * 1000000")),
+            ],
+        )
+        df = generate_table(spark, spec)
+        big_field = df.schema["big"]
+        assert isinstance(big_field.dataType, T.LongType)
+        rows = df.collect()
+        for r in rows:
+            assert r.big == r.a * 1_000_000
+
+    def test_window_function(self, spark):
+        """``row_number() over (order by ...)`` is now a valid ExpressionColumn.
+
+        Pins the engine-side counterpart of the plan-time keyword fix
+        (commit 16e1a43): if ``_SQL_KEYWORDS`` regresses on window
+        tokens, this test fails at plan-resolution time before Spark
+        ever runs.
+
+        Note: the window clause must not reference another column being
+        defined in the same projection -- Spark rejects lateral column
+        alias references inside window expressions
+        (UNSUPPORTED_FEATURE.LATERAL_COLUMN_ALIAS_IN_WINDOW).  Using a
+        constant ``1`` for the order keeps the expression
+        self-contained.
+        """
+        spec = TableSpec(
+            name="window_test",
+            rows=100,
+            seed=42,
+            columns=[
+                ColumnSpec(name="bucket", gen=RangeColumn(min=1, max=5)),
+                ColumnSpec(
+                    name="rn",
+                    gen=ExpressionColumn(expr="row_number() over (order by 1)"),
+                ),
+            ],
+        )
+        df = generate_table(spark, spec)
+        rows = df.collect()
+        assert len(rows) == 100
+        # row_number() over (order by 1) emits the trivial 1..N sequence
+        assert {r.rn for r in rows} == set(range(1, 101))

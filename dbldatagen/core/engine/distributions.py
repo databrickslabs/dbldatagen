@@ -30,6 +30,17 @@ _UNIFORM_PRECISION = 10_000
 _CONTINUOUS_PRECISION = 2**53
 
 
+def _uniform_fraction(seed_col: Column) -> Column:
+    """Map a long-typed seed column to a uniform double in ``[0.0, 1.0)``.
+
+    The repeated ``pmod(seed, P) / P`` algebra appeared at four call
+    sites in this module (Box-Muller's two uniform draws, Zipf's
+    inverse CDF, exponential's inverse CDF); centralising it removes
+    drift risk if ``_CONTINUOUS_PRECISION`` ever changes.
+    """
+    return F.pmod(seed_col, F.lit(_CONTINUOUS_PRECISION)).cast("double") / F.lit(float(_CONTINUOUS_PRECISION))
+
+
 def uniform_sample(cell_seed_col: Column, n: int) -> Column:
     """Maps a seed column to a uniform index in ``[0, n)``.
 
@@ -124,11 +135,8 @@ def normal_sample_expr(
     h1 = F.xxhash64(cell_seed_col, F.lit(0).cast("long"))
     h2 = F.xxhash64(cell_seed_col, F.lit(1).cast("long"))
     eps = 1.0 / _CONTINUOUS_PRECISION
-    u1 = F.greatest(
-        F.pmod(h1, F.lit(_CONTINUOUS_PRECISION)).cast("double") / F.lit(float(_CONTINUOUS_PRECISION)),
-        F.lit(eps),
-    )
-    u2 = F.pmod(h2, F.lit(_CONTINUOUS_PRECISION)).cast("double") / F.lit(float(_CONTINUOUS_PRECISION))
+    u1 = F.greatest(_uniform_fraction(h1), F.lit(eps))
+    u2 = _uniform_fraction(h2)
     z = F.sqrt(F.lit(-2.0) * F.log(u1)) * F.cos(F.lit(2.0 * math.pi) * u2)
     return z * F.lit(stddev) + F.lit(mean)
 
@@ -161,8 +169,7 @@ def zipf_sample_expr(cell_seed_col: Column, n: int, exponent: float = 1.5) -> Co
         # Defensive: Zipf.validate_params enforces exponent > 1, but raise
         # (not assert) so a validator bypass also fails under python -O.
         raise ValueError(f"zipf_sample_expr requires exponent > 1, got {exponent}")
-    u = F.pmod(cell_seed_col, F.lit(_CONTINUOUS_PRECISION)).cast("double") / F.lit(float(_CONTINUOUS_PRECISION))
-    u = F.greatest(u, F.lit(1e-9))
+    u = F.greatest(_uniform_fraction(cell_seed_col), F.lit(1e-9))
     power = 1.0 / (exponent - 1.0)
     inv = F.lit(float(n)) * F.pow(F.lit(1.0) - u, F.lit(power))
     idx = F.floor(inv).cast("long")
@@ -193,8 +200,7 @@ def exponential_sample_expr(
     """
     if n <= 1:
         return F.lit(0)
-    u = F.pmod(cell_seed_col, F.lit(_CONTINUOUS_PRECISION)).cast("double") / F.lit(float(_CONTINUOUS_PRECISION))
-    u = F.least(u, F.lit(0.999999))  # avoid log(0)
+    u = F.least(_uniform_fraction(cell_seed_col), F.lit(0.999999))  # avoid log(0)
     x = -F.log(F.lit(1.0) - u) / F.lit(rate)
     idx = F.floor(x * F.lit(float(n) / 5.0)).cast("long")
     return F.greatest(F.lit(0), F.least(idx, F.lit(n - 1)))

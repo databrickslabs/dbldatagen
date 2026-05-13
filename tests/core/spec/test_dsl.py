@@ -5,6 +5,7 @@ import pytest
 from dbldatagen.core.spec import dsl as datagendg
 from dbldatagen.core.spec.schema import (
     ColumnSpec,
+    ConstantColumn,
     DataType,
     ExpressionColumn,
     FakerColumn,
@@ -294,3 +295,22 @@ class TestExpression:
     def test_custom_dtype(self):
         col = datagendg.expression("total", "a + b", dtype=DataType.DOUBLE)
         assert col.dtype == DataType.DOUBLE
+
+
+class TestConstant:
+    def test_returns_column_spec(self):
+        col = datagendg.constant("env", "prod")
+        assert isinstance(col, ColumnSpec)
+
+    def test_strategy_is_constant_and_value_preserved(self):
+        col = datagendg.constant("version", 42)
+        assert isinstance(col.gen, ConstantColumn)
+        assert col.gen.value == 42
+
+    def test_dtype_default_none(self):
+        col = datagendg.constant("flag", True)
+        assert col.dtype is None
+
+    def test_explicit_dtype(self):
+        col = datagendg.constant("score", 0, dtype=DataType.LONG)
+        assert col.dtype == DataType.LONG

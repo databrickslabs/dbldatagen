@@ -27,6 +27,7 @@ from dbldatagen.core.spec.schema import (
     ArrayColumn,
     ColumnSpec,
     ColumnStrategy,
+    ConstantColumn,
     DataType,
     Distribution,
     ExpressionColumn,
@@ -368,6 +369,27 @@ def expression(name: str, expr: str, dtype: DataType | None = None) -> ColumnSpe
         ``ExpressionColumn`` generator.
     """
     return ColumnSpec(name=name, dtype=dtype, gen=ExpressionColumn(expr=expr))
+
+
+def constant(name: str, value: object, dtype: DataType | None = None) -> ColumnSpec:
+    """Build a column spec where every row gets the same literal value.
+
+    Useful for environment markers, version stamps, batch IDs, or any
+    column with no per-row variation.
+
+    Args:
+        name: Column name.
+        value: The literal value emitted on every row.  Any JSON-
+            serialisable Python literal that ``F.lit`` accepts.
+        dtype: Optional Spark ``DataType`` override.  When ``None``
+            (default), Spark infers it from the Python type of
+            ``value``.
+
+    Returns:
+        ``ColumnSpec`` with the given ``dtype`` (or inferred) and a
+        ``ConstantColumn`` generator.
+    """
+    return ColumnSpec(name=name, dtype=dtype, gen=ConstantColumn(value=value))
 
 
 # -- Nested types --
