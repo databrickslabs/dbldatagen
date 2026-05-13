@@ -4,7 +4,7 @@ numpy==1.22.0
 pandas==1.4.4
 pickleshare==0.7.5
 py4j>=0.10.9.3
-pyarrow==8.0.0
+pyarrow==24.0.0
 pyspark==3.4.1
 python-dateutil==2.8.2
 six==1.16.0
