@@ -1,4 +1,21 @@
-"""dbldatagen.core.spec.schema -- Public API models."""
+"""Pydantic v2 models for the ``dbldatagen.core`` plan schema.
+
+Defines the ``Distribution`` discriminated union (``Uniform``,
+``Normal``, ``LogNormal``, ``Zipf``, ``Exponential``,
+``WeightedValues``), the ``ColumnStrategy`` discriminated union
+(``RangeColumn``, ``ValuesColumn``, ``FakerColumn``, ``PatternColumn``,
+``SequenceColumn``, ``UUIDColumn``, ``ExpressionColumn``,
+``TimestampColumn``, ``ConstantColumn``, ``ForeignKeyColumn``,
+``StructColumn``, ``ArrayColumn``), and the three composition models
+``ColumnSpec`` / ``TableSpec`` / ``DataGenPlan`` -- the complete
+vocabulary for describing a synthetic data generation plan.
+
+Every model inherits ``extra="forbid"`` so unknown YAML/JSON keys
+fail validation instead of being silently dropped.  Validators on
+each strategy reject illegal parameter combinations at plan time so
+the failure surfaces next to the offending declaration rather than
+deep inside the engine.
+"""
 
 from __future__ import annotations
 
