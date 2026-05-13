@@ -596,7 +596,7 @@ dev = [
     { name = "types-requests", specifier = "~=2.31.0" },
 ]
 docs = [
-    { name = "ipython", specifier = "~=8.10" },
+    { name = "ipython", specifier = "~=8.39" },
     { name = "jinja2", specifier = ">3.1,<4" },
     { name = "myst-parser", specifier = "~=3.0" },
     { name = "nbsphinx", specifier = "~=0.9.8" },

@@ -27,7 +27,7 @@ sphinx_rtd_theme
 nbsphinx
 numpydoc==0.8
 pypandoc
-ipython==8.10.0
+ipython==8.39.0
 recommonmark
 sphinx-markdown-builder
 Jinja2 < 3.1, >= 2.11.3
