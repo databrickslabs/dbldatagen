@@ -141,7 +141,13 @@ def fk(
 # -- Common column shorthands --
 
 
-def integer(name: str, min: float | int = 0, max: float | int = 100, seed_from: str | None = None, **kw) -> ColumnSpec:
+def integer(
+    name: str,
+    min: float | int = 0,
+    max: float | int = 100,
+    seed_from: str | None = None,
+    **kw,
+) -> ColumnSpec:
     """Build an INT column spec drawing from ``[min, max]``.
 
     Args:
@@ -241,7 +247,12 @@ def decimal(
     )
 
 
-def text(name: str, values: list[str], seed_from: str | None = None, **kw) -> ColumnSpec:
+def text(
+    name: str,
+    values: list[str],
+    seed_from: str | None = None,
+    **kw,
+) -> ColumnSpec:
     """Build a STRING column spec drawing from a discrete value list.
 
     Args:
@@ -303,7 +314,13 @@ def faker(
     )
 
 
-def timestamp(name: str, start: str, end: str, seed_from: str | None = None, **kw) -> ColumnSpec:
+def timestamp(
+    name: str,
+    start: str,
+    end: str,
+    seed_from: str | None = None,
+    **kw,
+) -> ColumnSpec:
     """Build a TIMESTAMP column spec drawing from ``[start, end]``.
 
     Args:
@@ -330,7 +347,11 @@ def timestamp(name: str, start: str, end: str, seed_from: str | None = None, **k
     )
 
 
-def pattern(name: str, template: str, seed_from: str | None = None) -> ColumnSpec:
+def pattern(
+    name: str,
+    template: str,
+    seed_from: str | None = None,
+) -> ColumnSpec:
     """Build a STRING column spec from a placeholder template.
 
     Args:
@@ -354,7 +375,11 @@ def pattern(name: str, template: str, seed_from: str | None = None) -> ColumnSpe
     )
 
 
-def expression(name: str, expr: str, dtype: DataType | None = None) -> ColumnSpec:
+def expression(
+    name: str,
+    expr: str,
+    dtype: DataType | None = None,
+) -> ColumnSpec:
     """Build a column spec computed from a Spark SQL expression.
 
     Args:
@@ -371,7 +396,11 @@ def expression(name: str, expr: str, dtype: DataType | None = None) -> ColumnSpe
     return ColumnSpec(name=name, dtype=dtype, gen=ExpressionColumn(expr=expr))
 
 
-def constant(name: str, value: object, dtype: DataType | None = None) -> ColumnSpec:
+def constant(
+    name: str,
+    value: object,
+    dtype: DataType | None = None,
+) -> ColumnSpec:
     """Build a column spec where every row gets the same literal value.
 
     Useful for environment markers, version stamps, batch IDs, or any
