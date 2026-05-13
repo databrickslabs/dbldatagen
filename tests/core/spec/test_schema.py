@@ -180,7 +180,7 @@ class TestColumnStrategies:
         must be supplied.  Past defaults (``"2020-01-01"`` /
         ``"2025-12-31"``) were vestigial demo values that went stale."""
         with pytest.raises(ValueError, match="Field required"):
-            TimestampColumn()
+            TimestampColumn()  # type: ignore[call-arg]
 
     def test_timestamp_column_with_distribution(self):
         s = TimestampColumn(start="2023-01-01", end="2023-12-31", distribution=Normal(mean=0.5, stddev=0.1))
