@@ -362,6 +362,27 @@ class TestExpressionColumnValidation:
         """SQL doubles a quote to escape: ``'it''s'`` is one literal, not two."""
         resolve_plan(self._plan("case when a > 0 then 'it''s unknown_word here' else 'x' end"))
 
+    def test_window_function_not_flagged(self):
+        """``rank() over (partition by a order by a)`` — the bare tokens
+        ``over``, ``partition``, ``by``, ``order`` are window-function
+        keywords, not unknown column references.  A regression here would
+        break valid v0-style expressions in core.
+        """
+        resolve_plan(self._plan("rank() over (partition by a order by a)"))
+
+    def test_window_function_with_frame_not_flagged(self):
+        """``rows between unbounded preceding and current row`` — frame-bound
+        keywords (``rows``, ``unbounded``, ``preceding``, ``current``,
+        ``row``, ``following``) must also pass."""
+        resolve_plan(self._plan(
+            "sum(a) over (order by a rows between unbounded preceding and current row)"
+        ))
+
+    def test_aggregation_with_asc_desc_not_flagged(self):
+        """``order by a desc`` / ``... asc`` keywords must pass."""
+        resolve_plan(self._plan("first(a) over (order by a desc)"))
+        resolve_plan(self._plan("first(a) over (order by a asc)"))
+
     def test_reference_to_fk_column_rejected(self):
         """ExpressionColumn cannot reference an FK column (phase-2 column).
 
