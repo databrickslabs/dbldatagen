@@ -1,5 +1,7 @@
 """Tests for dbldatagen.core.spec.dsl convenience constructors."""
 
+import pytest
+
 from dbldatagen.core.spec import dsl as datagendg
 from dbldatagen.core.spec.schema import (
     ColumnSpec,
@@ -239,11 +241,11 @@ class TestFaker:
 
 class TestTimestamp:
     def test_returns_column_spec(self):
-        col = datagendg.timestamp("created_at")
+        col = datagendg.timestamp("created_at", start="2020-01-01", end="2025-12-31")
         assert isinstance(col, ColumnSpec)
 
     def test_dtype_is_timestamp(self):
-        col = datagendg.timestamp("created_at")
+        col = datagendg.timestamp("created_at", start="2020-01-01", end="2025-12-31")
         assert col.dtype == DataType.TIMESTAMP
 
     def test_strategy_is_timestamp(self):
@@ -252,11 +254,12 @@ class TestTimestamp:
         assert col.gen.start == "2023-01-01"
         assert col.gen.end == "2024-12-31"
 
-    def test_defaults(self):
-        col = datagendg.timestamp("ts")
-        assert isinstance(col.gen, TimestampColumn)
-        assert col.gen.start == "2020-01-01"
-        assert col.gen.end == "2025-12-31"
+    def test_start_and_end_required(self):
+        """Past defaults (``"2020-01-01"`` / ``"2025-12-31"``) were
+        vestigial demo values; the helper now requires explicit
+        bounds so the call site documents the intended range."""
+        with pytest.raises(TypeError, match="required"):
+            datagendg.timestamp("ts")  # type: ignore[call-arg]
 
 
 class TestPattern:

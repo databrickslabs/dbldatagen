@@ -9,6 +9,8 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from dbldatagen.core.engine.seed import _NULL_PRECISION
+
 
 class _StrictModel(BaseModel):
     """Base for every public plan model.
@@ -33,15 +35,15 @@ _IDENTIFIER_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 # user wants rows or MapType.
 _MAX_ARRAY_LENGTH = 1000
 
-# Engine granularity for null-mask generation.  Must match
-# ``dbldatagen/core/engine/seed.py::_NULL_PRECISION``.  Exposed here so
-# ``null_fraction`` validators can reject below-granularity values at
-# plan time (before the engine would raise at generation time).  A user
-# who asked for ``null_fraction=1e-5`` with precision=10000 would get
-# ``int(1e-5 * 10000) == 0`` and silently emit zero NULLs -- the engine
-# raises on that case, but raising one layer earlier keeps the error
-# next to the ``ColumnSpec`` declaration.
-_MIN_NULL_FRACTION = 1.0 / 10000
+# Engine granularity for null-mask generation, derived from
+# ``dbldatagen/core/engine/seed.py::_NULL_PRECISION`` (the import above
+# is the single source of truth).  ``null_fraction`` validators reject
+# below-granularity values at plan time so a user who asks for
+# ``null_fraction=1e-5`` with precision=10000 (which would give
+# ``int(1e-5 * 10000) == 0`` and silently emit zero NULLs) gets the
+# error next to the ``ColumnSpec`` declaration instead of deep inside
+# the engine.
+_MIN_NULL_FRACTION = 1.0 / _NULL_PRECISION
 
 
 # ---------------------------------------------------------------------------
@@ -488,18 +490,19 @@ class TimestampColumn(_StrictModel):
     Attributes:
         strategy: Discriminator literal; always ``"timestamp"``.
         start: Inclusive lower bound, as an ISO-8601 string
-          (``"YYYY-MM-DD"`` or ``"YYYY-MM-DD HH:MM:SS"``).  Defaults
-          to ``"2020-01-01"``.
+          (``"YYYY-MM-DD"`` or ``"YYYY-MM-DD HH:MM:SS"``).  Required
+          -- no universal default makes sense for a time range, so
+          callers must specify their own bounds.
         end: Inclusive upper bound, same format as ``start``; must be
-          ``>= start``.  Defaults to ``"2025-12-31"``.
+          ``>= start``.  Required.
         distribution: Sampling distribution over the time range.
           Defaults to ``Uniform``.  ``WeightedValues`` is not
           accepted here.
     """
 
     strategy: Literal["timestamp"] = "timestamp"
-    start: str = "2020-01-01"
-    end: str = "2025-12-31"
+    start: str
+    end: str
     distribution: Distribution = Uniform()
 
     @model_validator(mode="after")

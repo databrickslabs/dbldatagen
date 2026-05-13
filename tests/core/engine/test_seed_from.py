@@ -342,7 +342,7 @@ def test_dsl_seed_from_passthrough(spark):
                     datagendg.text("label", values=["A", "B", "C"], seed_from="group_id"),
                     datagendg.integer("score", min=0, max=100, seed_from="group_id"),
                     datagendg.decimal("amount", min=0.0, max=100.0, seed_from="group_id"),
-                    datagendg.timestamp("ts", seed_from="group_id"),
+                    datagendg.timestamp("ts", start="2020-01-01", end="2025-12-31", seed_from="group_id"),
                 ],
                 primary_key=PrimaryKey(columns=["id"]),
             ),

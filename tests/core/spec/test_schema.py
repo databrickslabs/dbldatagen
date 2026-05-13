@@ -175,13 +175,15 @@ class TestColumnStrategies:
         assert s.start == "2023-01-01"
         assert s.end == "2024-12-31"
 
-    def test_timestamp_column_defaults(self):
-        s = TimestampColumn()
-        assert s.start == "2020-01-01"
-        assert s.end == "2025-12-31"
+    def test_timestamp_column_requires_start_and_end(self):
+        """``TimestampColumn`` has no universal default — both bounds
+        must be supplied.  Past defaults (``"2020-01-01"`` /
+        ``"2025-12-31"``) were vestigial demo values that went stale."""
+        with pytest.raises(ValueError, match="Field required"):
+            TimestampColumn()
 
     def test_timestamp_column_with_distribution(self):
-        s = TimestampColumn(distribution=Normal(mean=0.5, stddev=0.1))
+        s = TimestampColumn(start="2023-01-01", end="2023-12-31", distribution=Normal(mean=0.5, stddev=0.1))
         assert isinstance(s.distribution, Normal)
 
     def test_constant_column(self):
@@ -231,7 +233,7 @@ class TestColumnSpec:
         assert isinstance(col.gen, ExpressionColumn)
 
     def test_column_with_timestamp(self):
-        col = ColumnSpec(name="ts", gen=TimestampColumn())
+        col = ColumnSpec(name="ts", gen=TimestampColumn(start="2023-01-01", end="2023-12-31"))
         assert isinstance(col.gen, TimestampColumn)
 
     def test_column_with_values(self):
@@ -626,7 +628,7 @@ class TestJsonRoundTrip:
             SequenceColumn(),
             UUIDColumn(),
             ExpressionColumn(expr="a + b"),
-            TimestampColumn(),
+            TimestampColumn(start="2023-01-01", end="2023-12-31"),
             ConstantColumn(value=42),
         ]
         for i, strat in enumerate(strategies):
@@ -674,7 +676,7 @@ class TestJsonRoundTrip:
 
     def test_weighted_values_rejected_on_timestamp_column(self):
         with pytest.raises(ValueError, match="TimestampColumn does not support WeightedValues"):
-            TimestampColumn(distribution=WeightedValues(weights={"a": 1.0}))
+            TimestampColumn(start="2023-01-01", end="2023-12-31", distribution=WeightedValues(weights={"a": 1.0}))
 
     def test_weighted_values_rejected_on_foreign_key_ref(self):
         with pytest.raises(ValueError, match="ForeignKeyRef does not support WeightedValues"):
@@ -1014,7 +1016,7 @@ class TestDateDtypeGuard:
             ColumnSpec(name="d", dtype=DataType.DATE, gen=bad_gen)
 
     def test_date_with_timestamp_column_ok(self):
-        ColumnSpec(name="d", dtype=DataType.DATE, gen=TimestampColumn())
+        ColumnSpec(name="d", dtype=DataType.DATE, gen=TimestampColumn(start="2023-01-01", end="2023-12-31"))
 
     def test_faker_without_explicit_dtype_ok(self):
         """``dtype`` is allowed to be ``None`` (engine infers StringType

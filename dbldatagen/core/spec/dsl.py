@@ -302,16 +302,16 @@ def faker(
     )
 
 
-def timestamp(
-    name: str, start: str = "2020-01-01", end: str = "2025-12-31", seed_from: str | None = None, **kw
-) -> ColumnSpec:
+def timestamp(name: str, start: str, end: str, seed_from: str | None = None, **kw) -> ColumnSpec:
     """Build a TIMESTAMP column spec drawing from ``[start, end]``.
 
     Args:
         name: Column name.
         start: Inclusive lower bound, parseable as a date or timestamp
             (e.g. ``"2020-01-01"`` or ``"2020-01-01 00:00:00"``).
-        end: Inclusive upper bound, same format as ``start``.
+            Required -- no universal default makes sense for a time
+            range, so callers must specify their own bounds.
+        end: Inclusive upper bound, same format as ``start``.  Required.
         seed_from: Optional name of another column to derive the cell
             seed from.
         **kw: Extra ``TimestampColumn`` fields, e.g. ``distribution``.

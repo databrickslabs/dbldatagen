@@ -29,8 +29,8 @@ def _parse_epoch(dt_str: str) -> int:
 def build_timestamp_column(
     id_col: Column | str,
     column_seed: int,
-    start: str = "2020-01-01",
-    end: str = "2025-12-31",
+    start: str,
+    end: str,
     distribution: Distribution | None = None,
     cell_seed_override: Column | None = None,
 ) -> Column:
@@ -46,10 +46,9 @@ def build_timestamp_column(
         id_col: Row-id ``Column`` reference or column name.
         column_seed: Per-column seed.
         start: Inclusive lower bound as an ISO-8601 string
-          (``"YYYY-MM-DD"`` or ``"YYYY-MM-DD HH:MM:SS"``).  Defaults
-          to ``"2020-01-01"``.
+          (``"YYYY-MM-DD"`` or ``"YYYY-MM-DD HH:MM:SS"``).  Required.
         end: Inclusive upper bound, same format as ``start``.
-          Defaults to ``"2025-12-31"``.
+          Required.
         distribution: Sampling distribution.  ``None`` defaults to
           ``Uniform``.
         cell_seed_override: Optional per-cell seed ``Column`` to use
@@ -83,8 +82,8 @@ def build_timestamp_column(
 def build_date_column(
     id_col: Column | str,
     column_seed: int,
-    start: str = "2020-01-01",
-    end: str = "2025-12-31",
+    start: str,
+    end: str,
     distribution: Distribution | None = None,
     cell_seed_override: Column | None = None,
 ) -> Column:
@@ -98,9 +97,8 @@ def build_date_column(
     Args:
         id_col: Row-id ``Column`` reference or column name.
         column_seed: Per-column seed.
-        start: Inclusive lower bound as an ISO-8601 string.
-          Defaults to ``"2020-01-01"``.
-        end: Inclusive upper bound.  Defaults to ``"2025-12-31"``.
+        start: Inclusive lower bound as an ISO-8601 string.  Required.
+        end: Inclusive upper bound.  Required.
         distribution: Sampling distribution.  ``None`` defaults to
           ``Uniform``.
         cell_seed_override: Optional per-cell seed ``Column`` to use
