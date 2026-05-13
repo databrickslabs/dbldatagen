@@ -108,10 +108,10 @@ class TestTimestampDegenerateRange:
         # 50 rows (not 10): the test is deterministic at this seed today,
         # but the assertion is loose enough that a future change to seed
         # derivation could land all rows inside the 1970-2070 band and
-        # break the test deterministically.  50 rows drops the "all
-        # inside the band by chance" probability to ~6e-16 under any
-        # reasonable uniform draw, making the test robust to seed-algo
-        # changes.
+        # break the test deterministically.  101 of 201 calendar years
+        # fall in that band, so P(all 50 in band) = (101/201)^50 ≈
+        # 1.1e-15 under any reasonable uniform draw — effectively zero,
+        # and robust to seed-algo changes.
         df = spark.range(50)
         col = build_timestamp_column(F.col("id"), 42, start="1900-01-01", end="2100-12-31")
         rows = df.select(col.alias("ts")).collect()
