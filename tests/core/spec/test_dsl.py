@@ -180,7 +180,7 @@ class TestDecimal:
         assert col.gen.max == 1000.0
 
     def test_precision_scale_default_none(self):
-        """Unset precision/scale stay None so the engine applies (18, 2)."""
+        """Unset precision/scale stay None so the engine falls back to Spark's DecimalType() default of (10, 0)."""
         col = datagendg.decimal("price")
         assert col.precision is None
         assert col.scale is None
@@ -217,10 +217,9 @@ class TestFaker:
 
     def test_custom_dtype(self):
         # Faker emits StringType regardless of provider (the pool
-        # stringifies every value), so STRING is the only
-        # non-default dtype that survives validation.  Historical
-        # ``dtype=DATE`` usage was silently wrong -- the underlying
-        # column still carried strings.
+        # stringifies every value), so STRING is the only dtype that
+        # survives validation -- anything else would lie about the
+        # column's runtime type.
         col = datagendg.faker("name", "name", dtype=DataType.STRING)
         assert col.dtype == DataType.STRING
 

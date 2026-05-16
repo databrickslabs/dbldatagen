@@ -315,7 +315,7 @@ class TestColumnSpec:
         assert col.scale == 4
 
     def test_decimal_without_precision_scale_defaults_to_none(self):
-        """Both unset on a DECIMAL column → engine applies (18, 2) backward-compat."""
+        """Both unset on a DECIMAL column → engine falls back to Spark's DecimalType() default of (10, 0)."""
         col = ColumnSpec(name="x", dtype=DataType.DECIMAL, gen=RangeColumn())
         assert col.precision is None
         assert col.scale is None
@@ -379,10 +379,11 @@ class TestColumnSpec:
         assert col.precision == 5
 
     def test_range_check_skipped_when_precision_unset(self):
-        """Plans without explicit precision/scale use the (18, 2) default path;
-        range fit is not enforced so pre-existing plans don't regress."""
-        # Max 10**17 would overflow DecimalType(18, 2), but with no explicit
-        # precision/scale we preserve old behaviour (Spark errors at runtime).
+        """Plans without explicit precision/scale fall through to Spark's
+        ``DecimalType()`` default of ``(10, 0)``; range fit is not enforced
+        at plan time so any overflow surfaces at materialization."""
+        # Max 10**17 would overflow DecimalType(10, 0), but with no explicit
+        # precision/scale we defer to Spark's runtime behaviour.
         col = ColumnSpec(name="x", dtype=DataType.DECIMAL, gen=RangeColumn(min=0, max=10**17))
         assert col.precision is None
 

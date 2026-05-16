@@ -22,7 +22,7 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
   `[core-dev]` (dev tooling).
 * Added `ColumnSpec.precision` and `ColumnSpec.scale` on DECIMAL columns so users can
   express `decimal(10, 4)` or `decimal(38, 8)` natively without falling back to raw
-  SQL; defaults to the historical `DecimalType(18, 2)` when unset.
+  SQL; defaults to Spark's `DecimalType()` default of `(10, 0)` when unset.
 * Added support for serialization to/from JSON format
 * Added Ruff and mypy tooling
 * Added `OutputDataset` class and the ability to save a `DataGenerator` to an output

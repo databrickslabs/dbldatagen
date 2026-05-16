@@ -523,10 +523,10 @@ class TestPrimaryKeyValidation:
     def test_pk_with_range_column_strategy_rejected(self):
         """A PK column with a RangeColumn strategy is rejected at plan time.
 
-        FK reconstruction expects sequence / pattern / uuid PK shapes;
-        a RangeColumn PK previously fell back to synthetic sequence
-        metadata and produced FK values that didn't match the actual
-        PK values.  Reject up front so the error names the offender.
+        FK reconstruction expects sequence / pattern / uuid PK shapes.
+        Without this validator a RangeColumn PK would produce FK values
+        that don't match the parent's actual PK values; reject up
+        front so the error names the offender.
         """
         plan = DataGenPlan(
             tables=[

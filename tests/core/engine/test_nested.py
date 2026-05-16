@@ -282,9 +282,9 @@ class TestNullFractionOnNested:
     fields and array columns.  Element-level ``null_fraction`` isn't
     expressible (``ArrayColumn.element`` is a raw ``ColumnStrategy``
     with no per-element null_fraction field), so coverage stops at
-    the field-on-struct and column-on-array boundary.  Both paths had
-    previously slipped through the main null-fraction tests which
-    only exercised ~0.3."""
+    the field-on-struct and column-on-array boundary.  The main
+    null-fraction tests only exercise ~0.3; these tests cover the
+    1.0 edge separately."""
 
     def test_struct_field_null_fraction_one(self, spark):
         """A struct field with null_fraction=1.0 should produce all NULLs

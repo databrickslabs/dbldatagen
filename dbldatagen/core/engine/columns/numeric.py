@@ -19,11 +19,13 @@ from dbldatagen.core.engine.seed import cell_seed_expr
 from dbldatagen.core.spec.schema import DataType, Distribution, Normal
 
 
-# Default DECIMAL shape when a DECIMAL column has no explicit precision/scale.
-# Kept as (18, 2) for backward compatibility with plans authored before
-# precision/scale were user-configurable.
-_DEFAULT_DECIMAL_PRECISION = 18
-_DEFAULT_DECIMAL_SCALE = 2
+# Fallback DECIMAL shape when a column has dtype=DECIMAL but no explicit
+# precision/scale.  Matches Spark's ``DecimalType()`` default of ``(10, 0)``
+# (see https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.types.DecimalType.html)
+# so plans without precision/scale produce the same shape Spark would
+# produce on its own.
+_DEFAULT_DECIMAL_PRECISION = 10
+_DEFAULT_DECIMAL_SCALE = 0
 
 
 def build_range_column(
@@ -58,9 +60,9 @@ def build_range_column(
         cell_seed_override: When provided, used as the per-cell seed
           ``Column`` instead of ``cell_seed_expr(column_seed, id_col)``.
         precision: Total digit count for ``DataType.DECIMAL``;
-          defaults to ``18`` when unset.
+          defaults to ``10`` (Spark's ``DecimalType()`` default) when unset.
         scale: Fractional digit count for ``DataType.DECIMAL``;
-          defaults to ``2`` when unset.
+          defaults to ``0`` (Spark's ``DecimalType()`` default) when unset.
 
     Returns:
         A Spark ``Column`` of the resolved Spark type containing the

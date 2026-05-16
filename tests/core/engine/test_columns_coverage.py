@@ -303,15 +303,15 @@ class TestFloatRangeNormalDistribution:
 class TestDecimalPrecisionScale:
     """build_range_column with dtype=DECIMAL respects precision/scale."""
 
-    def test_default_precision_scale_is_18_2(self, spark):
-        """When precision/scale are None, decimal type is DecimalType(18, 2)."""
+    def test_default_precision_scale_is_10_0(self, spark):
+        """When precision/scale are None, decimal type matches Spark's DecimalType() default of (10, 0)."""
         df = spark.range(5)
         col = build_range_column(F.col("id"), 42, min_val=0.0, max_val=1000.0, dtype=DataType.DECIMAL)
         result = df.select(col.alias("v"))
         field = result.schema["v"]
         assert field.dataType.typeName() == "decimal"
-        assert field.dataType.precision == 18
-        assert field.dataType.scale == 2
+        assert field.dataType.precision == 10
+        assert field.dataType.scale == 0
 
     def test_custom_precision_scale_applied(self, spark):
         """DecimalType(10, 4) is produced when precision=10, scale=4."""
@@ -335,8 +335,8 @@ class TestDecimalPrecisionScale:
 
         Spark's ``cast(DecimalType(p, s))`` pads to exactly ``s`` fractional
         digits (``Decimal('0.5000')`` not ``Decimal('0.5')``).  Assert
-        ``exponent == -scale`` exactly — a regression that kept the old
-        hard-coded scale=2 would produce exponent=-2 and fail this test.
+        ``exponent == -scale`` exactly — a regression that fell back to the
+        default scale=0 would produce exponent=0 and fail this test.
         """
         from decimal import Decimal
 
@@ -355,8 +355,7 @@ class TestDecimalPrecisionScale:
             assert isinstance(r.v, Decimal)
             _, _, exponent = r.v.as_tuple()
             assert exponent == -4, (
-                f"value {r.v} has exponent {exponent}, expected -4 "
-                f"(would be -2 if the old hard-coded scale leaked through)"
+                f"value {r.v} has exponent {exponent}, expected -4 " f"(would be 0 if the default scale leaked through)"
             )
 
     def test_high_precision_decimal_38_8(self, spark):

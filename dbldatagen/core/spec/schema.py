@@ -890,10 +890,11 @@ class ColumnSpec(_StrictModel):
           from the column's own name.  Useful for correlating
           generated values across columns (e.g. ``city`` ↔ ``zip``).
         precision: Total digit count for ``DataType.DECIMAL`` columns.
-          Set together with ``scale``; engine defaults to ``(18, 2)``
-          when both are unset.  Rejected on non-DECIMAL dtypes.
-        scale: Fractional digit count for ``DataType.DECIMAL``
-          columns.  Set together with ``precision``.
+          Set together with ``scale``; falls back to Spark's
+          ``DecimalType()`` default of ``(10, 0)`` when both are unset.
+          Rejected on non-DECIMAL dtypes.
+        scale: Fractional digit count for ``DataType.DECIMAL`` columns.
+          Set together with ``precision``.
     """
 
     # Inherits extra="forbid" from _StrictModel; extend with
@@ -943,9 +944,8 @@ class ColumnSpec(_StrictModel):
     def validate_decimal_precision_scale(self) -> ColumnSpec:
         """Precision/scale are only meaningful for DECIMAL and must go together.
 
-        Defaults (when both unset on a DECIMAL column) are applied at the
-        engine layer as ``(18, 2)``; the schema stores ``None`` to keep
-        existing serialized plans byte-identical.
+        When both are unset on a DECIMAL column, the engine falls back to
+        Spark's ``DecimalType()`` default of ``(10, 0)``.
         """
         has_precision = self.precision is not None
         has_scale = self.scale is not None
@@ -984,7 +984,7 @@ class ColumnSpec(_StrictModel):
         # Max magnitude representable in DecimalType(p, s) is just under
         # 10**(p-s); anything >= that overflows after cast.  Only checked
         # when precision/scale are explicit — the None/None default path
-        # preserves existing behavior for pre-existing plans.
+        # defers to Spark's DecimalType(10, 0) and inherits its rounding.
         if isinstance(self.gen, RangeColumn):
             limit = 10 ** (precision - scale)
             max_abs = max(abs(self.gen.min), abs(self.gen.max))
@@ -1075,11 +1075,11 @@ class ColumnSpec(_StrictModel):
 
     @model_validator(mode="after")
     def validate_foreign_key_strategy(self) -> ColumnSpec:
-        # Both directions of the ForeignKeyColumn <-> foreign_key invariant:
-        # the strategy and the FK spec must travel together so legacy plans
-        # that used `ConstantColumn(value=None) + foreign_key` fail loudly
-        # at load time instead of silently working until someone drops the
-        # foreign_key and the column quietly becomes all-NULL.
+        # Enforce both directions of the ForeignKeyColumn <-> foreign_key
+        # invariant.  Without this, a plan with one side set and the other
+        # missing would either silently emit all-NULL (gen=FK, no ref) or
+        # ignore the FK and use the other strategy (ref set, gen=anything
+        # else); both are easy to miss at review time.
         if isinstance(self.gen, ForeignKeyColumn) and self.foreign_key is None:
             raise ValueError(
                 f"Column '{self.name}' uses ForeignKeyColumn strategy but has no "
@@ -1088,16 +1088,13 @@ class ColumnSpec(_StrictModel):
         if self.foreign_key is not None and not isinstance(self.gen, ForeignKeyColumn):
             raise ValueError(
                 f"Column '{self.name}' has foreign_key set but gen is "
-                f"{type(self.gen).__name__}. FK columns must use "
-                f"ForeignKeyColumn (or the fk() DSL helper); the "
-                f"old `ConstantColumn(value=None)` placeholder is no longer accepted."
+                f"{type(self.gen).__name__}. FK columns must use ForeignKeyColumn "
+                f"(or the fk() DSL helper)."
             )
         # null_fraction can be set on ColumnSpec (like every other column
-        # kind) or on the ForeignKeyRef.  Previously the FK path read only
-        # ForeignKeyRef.null_fraction, silently ignoring a top-level
-        # null_fraction that a user had set.  Allow either source but
-        # reject disagreeing non-zero values so the user intent is
-        # unambiguous; planner.py resolves to ``max(...)``.
+        # kind) or on the ForeignKeyRef.  Allow either source but reject
+        # disagreeing non-zero values so the user intent is unambiguous;
+        # planner.py resolves to ``max(...)`` when both agree.
         if (
             self.foreign_key is not None
             and self.null_fraction > 0

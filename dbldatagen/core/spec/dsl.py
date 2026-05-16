@@ -226,11 +226,12 @@ def decimal(
         max: Upper bound (inclusive). Defaults to ``1000.0``.
         seed_from: Optional name of another column to derive the cell
             seed from.
-        precision: Total number of digits. ``None`` uses the engine
-            default ``DecimalType(18, 2)``.
-        scale: Digits after the decimal point. ``None`` uses the
-            engine default.  Pass both with ``precision`` to override,
-            e.g. ``decimal("rate", precision=10, scale=4)``.
+        precision: Total number of digits. ``None`` falls back to
+            Spark's ``DecimalType()`` default of ``10``.
+        scale: Digits after the decimal point. ``None`` falls back to
+            Spark's ``DecimalType()`` default of ``0``.  Pass both with
+            ``precision`` to override, e.g.
+            ``decimal("rate", precision=10, scale=4)``.
         **kw: Extra ``RangeColumn`` fields, e.g. ``distribution``.
 
     Returns:

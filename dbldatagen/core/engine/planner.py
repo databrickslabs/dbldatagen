@@ -644,14 +644,13 @@ def _validate_primary_keys(plan: DataGenPlan) -> None:
     1. Each named PK column exists on the table.
     2. The PK column's ``gen`` strategy is one the FK reconstruction
        path actually handles: ``SequenceColumn``, ``PatternColumn``,
-       or ``UUIDColumn``.  ``_extract_pk_metadata`` previously fell
-       back to a synthetic ``pk_type="sequence"`` for any unknown
-       strategy, which would silently corrupt FK children pointed at
-       a ``RangeColumn`` / ``ValuesColumn`` / ``ConstantColumn`` PK
-       (the FK would reconstruct fake sequence values instead of
-       matching the parent's actual PK values).  Reject at plan time
-       so the error names the offending column instead of surfacing
-       as a silent data-corruption.
+       or ``UUIDColumn``.  Any other strategy (``RangeColumn``,
+       ``ValuesColumn``, ``ConstantColumn``, etc.) cannot be
+       reconstructed deterministically from PK metadata alone, so an
+       FK pointed at such a PK would emit values that don't match the
+       parent's actual PK values.  Reject at plan time so the error
+       names the offending column rather than surfacing as silent
+       data corruption at materialization.
     """
     for table_spec in plan.tables:
         if table_spec.primary_key is None:
