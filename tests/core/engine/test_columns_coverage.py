@@ -458,3 +458,52 @@ class TestUUIDColumnEdgeCases:
         uuid_re = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
         for r in rows:
             assert uuid_re.match(r.u), f"Invalid UUID format: {r.u}"
+
+    def test_uuid_values_are_deterministic(self, spark):
+        """Pin specific UUIDs for known ``(column_seed, id)`` pairs.
+
+        ``build_uuid_column`` advertises reproducibility as part of its
+        public contract: the same ``(column_seed, id)`` pair must yield
+        the same UUID across runs, Spark versions, and refactors.  The
+        format-only regex checks above don't catch a silent value
+        regression -- e.g. swapping the hi/lo halves, reordering the
+        bit slices, or changing from arithmetic to logical right shift
+        would still pass a shape check.
+
+        These pins were generated from the current implementation and
+        cover three seeds: 42 (arbitrary), 0 (edge), Long.MAX (the
+        wraparound regression case).  Any refactor of ``build_uuid_column``
+        must reproduce these byte-for-byte.
+        """
+        expected = {
+            42: {
+                0: "55e286bc-ca92-6f97-0cb3-254fe7d7e63d",
+                1: "54f51447-3c2a-606a-fb05-fa24aef6d6ef",
+                2: "c193988c-86d5-e3fd-ad33-317ce387e634",
+                3: "eef0d506-d5e9-40d8-488d-8677907c22aa",
+                4: "c4edb456-7e3e-e763-4406-4aef13f31e7a",
+            },
+            0: {
+                0: "80534700-ba5d-177e-e12e-325b86032959",
+                1: "72eec4cc-5475-1688-af9b-ef9d3437f546",
+                2: "5fea6284-a215-1548-8e3a-bf45d1b1ac3a",
+                3: "e0e259f3-a9a9-d270-676c-0e9821e2b81d",
+                4: "523ac03b-8c02-3737-6682-89f42e1130c3",
+            },
+            (2**63 - 1): {
+                0: "a243b662-5419-7ba6-9080-74cc17197c65",
+                1: "4b99220f-309b-f090-1227-b5d613ad8ea4",
+                2: "24bf6c01-c0ee-397a-78c7-e676e7f75dfb",
+                3: "62af3824-7770-5ab2-63c8-0a52ed16df8a",
+                4: "de73f140-7ca1-3c69-c660-22a68c5bbc30",
+            },
+        }
+        for seed, id_to_uuid in expected.items():
+            df = spark.range(5).withColumnRenamed("id", "row_id")
+            col = build_uuid_column("row_id", seed)
+            rows = df.select("row_id", col.alias("u")).collect()
+            actual = {r.row_id: r.u for r in rows}
+            assert actual == id_to_uuid, (
+                f"UUID determinism regression at seed={seed}: "
+                f"expected {id_to_uuid}, got {actual}"
+            )
