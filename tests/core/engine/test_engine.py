@@ -17,7 +17,7 @@ from dbldatagen.core.engine.columns.string import build_pattern_column, build_va
 from dbldatagen.core.engine.columns.temporal import build_timestamp_column
 from dbldatagen.core.engine.columns.uuid import build_uuid_column
 from dbldatagen.core.engine.generator import generate_table
-from dbldatagen.core.engine.seed import cell_seed_expr, derive_column_seed, null_mask_expr
+from dbldatagen.core.engine.seed import cell_seed_expr, derive_column_seed, null_mask_expr, to_signed64
 from dbldatagen.core.spec.schema import (
     ColumnSpec,
     ConstantColumn,
@@ -97,6 +97,49 @@ class TestSeedDeterminism:
         seeds1 = [r.seed for r in run1]
         seeds2 = [r.seed for r in run2]
         assert seeds1 == seeds2
+
+
+class TestToSigned64:
+    """Pin two's-complement wrap behavior at the signed-64 boundary."""
+
+    def test_to_signed64_edge_cases(self):
+        """Pin ``to_signed64`` output across the signed-64 boundary.
+
+        ``to_signed64`` truncates an arbitrary Python int to the JVM
+        long range ``[-2**63, 2**63 - 1]`` by reinterpreting the low
+        64 bits as two's complement.  It's used in every seeded code
+        path (derive_column_seed, UUID generation, length-seed mix),
+        so any refactor that changed wrap behavior at the boundary
+        would cascade through every downstream value.
+
+        Pins cover: identity-on-in-range, Long.MIN/MAX exactness, the
+        exact-2^63 overflow point, 2^64 wrap-to-zero, several-step
+        overflow on both sides, and very-large Python ints
+        (which only Python supports natively).
+        """
+        expected = {
+            0: 0,
+            1: 1,
+            -1: -1,
+            2**63 - 1: 2**63 - 1,            # Long.MAX, identity
+            -(2**63): -(2**63),              # Long.MIN, identity
+            2**63: -(2**63),                 # first overflow → wraps to Long.MIN
+            2**63 + 1: -(2**63) + 1,         # one past overflow
+            -(2**63) - 1: 2**63 - 1,         # underflow → wraps to Long.MAX
+            -(2**63) - 2: 2**63 - 2,
+            2**64: 0,                        # full-period wrap
+            2**64 + 5: 5,
+            10**30: 5076944270305263616,     # very large positive
+            -(10**30): -5076944270305263616,
+            0xFFFFFFFFFFFFFFFF: -1,          # all-ones mask
+            0x8000000000000000: -(2**63),    # exact sign bit
+        }
+        for n, pinned in expected.items():
+            actual = to_signed64(n)
+            assert actual == pinned, (
+                f"to_signed64 boundary regression at n={n}: "
+                f"expected {pinned}, got {actual}"
+            )
 
 
 # ---------------------------------------------------------------------------
