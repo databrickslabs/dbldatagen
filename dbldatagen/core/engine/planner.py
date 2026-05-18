@@ -383,21 +383,19 @@ def _build_dependency_graph(plan: DataGenPlan) -> dict[str, set[str]]:
 
 def _topological_sort(graph: dict[str, set[str]], all_tables: list[str]) -> list[str]:
     """Kahn's algorithm. Raise ValueError on cycles."""
-    # Compute in-degree
-    in_degree: dict[str, int] = dict.fromkeys(all_tables, 0)
-    # Build adjacency: parent -> children
-    adj: dict[str, list[str]] = {t: [] for t in all_tables}
-    for child, parents in graph.items():
-        for parent in parents:
-            adj[parent].append(child)
-            in_degree[child] += 1
+    # Parent -> children adjacency, derived from the child -> parents graph.
+    adj: dict[str, list[str]] = {
+        parent: [child for child, parents in graph.items() if parent in parents]
+        for parent in all_tables
+    }
 
-    queue: deque[str] = deque()
-    for t in all_tables:
-        if in_degree[t] == 0:
-            queue.append(t)
+    # In-degree = number of parents each table depends on.
+    in_degree: dict[str, int] = {table: len(graph.get(table, set())) for table in all_tables}
 
+    # Seed the queue with every table that has no parents.
+    queue: deque[str] = deque(t for t in all_tables if in_degree[t] == 0)
     result: list[str] = []
+
     while queue:
         node = queue.popleft()
         result.append(node)
