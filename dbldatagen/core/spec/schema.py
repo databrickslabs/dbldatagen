@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import re
 import warnings
+from collections import Counter
 from enum import Enum
 from typing import Annotated, Any, Literal
 
@@ -611,15 +612,13 @@ class StructColumn(_StrictModel):
         # columns; a struct with two children named ``x`` would
         # otherwise build an invalid ``StructType`` and every
         # ``.select("addr.x")`` against the result becomes ambiguous.
-        seen: set[str] = set()
-        dupes: list[str] = []
-        for f in self.fields:
-            if f.name in seen:
-                dupes.append(f.name)
-            seen.add(f.name)
-        if dupes:
+        field_names = [f.name for f in self.fields]
+        # Happy path: ``set`` length differs only when duplicates exist.
+        # Skips building a dupes list when validation passes.
+        if len(set(field_names)) != len(field_names):
+            dupes = sorted(name for name, count in Counter(field_names).items() if count > 1)
             raise ValueError(
-                f"StructColumn has duplicate field names: {sorted(set(dupes))}.  "
+                f"StructColumn has duplicate field names: {dupes}.  "
                 f"Each field must have a unique name within the struct."
             )
         return self
