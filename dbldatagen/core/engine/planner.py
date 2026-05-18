@@ -429,58 +429,34 @@ def _extract_pk_metadata(table_spec: TableSpec, pk_col_spec: ColumnSpec) -> PKMe
             f"DataGenPlan (which propagates plan.seed to each table "
             f"during Pydantic validation)."
         )
-    column_seed = derive_column_seed(table_spec.seed, table_spec.name, pk_col_spec.name)
-    row_count = int(table_spec.rows)
 
-    gen = pk_col_spec.gen
-
-    if isinstance(gen, SequenceColumn):
-        return PKMetadata(
-            table_name=table_spec.name,
-            pk_column=pk_col_spec.name,
-            row_count=row_count,
-            pk_type="sequence",
-            pk_seed=column_seed,
-            pk_start=gen.start,
-            pk_step=gen.step,
-            pk_template=None,
-        )
-
-    if isinstance(gen, PatternColumn):
-        return PKMetadata(
-            table_name=table_spec.name,
-            pk_column=pk_col_spec.name,
-            row_count=row_count,
-            pk_type="pattern",
-            pk_seed=column_seed,
-            pk_start=0,
-            pk_step=1,
-            pk_template=gen.template,
-        )
-
-    if isinstance(gen, UUIDColumn):
-        return PKMetadata(
-            table_name=table_spec.name,
-            pk_column=pk_col_spec.name,
-            row_count=row_count,
-            pk_type="uuid",
-            pk_seed=column_seed,
-            pk_start=0,
-            pk_step=1,
-            pk_template=None,
-        )
+    base_meta = {
+        "table_name": table_spec.name,
+        "pk_column": pk_col_spec.name,
+        "row_count": int(table_spec.rows),
+        "pk_seed": derive_column_seed(table_spec.seed, table_spec.name, pk_col_spec.name),
+    }
 
     # ``_validate_primary_keys`` rejects any other strategy at plan
-    # time; this branch is a defensive backstop for an invariant
-    # bypass and surfaces a clear error instead of silently building
-    # synthetic-sequence metadata that would corrupt FK children.
-    raise RuntimeError(
-        f"_extract_pk_metadata received PK column '{table_spec.name}."
-        f"{pk_col_spec.name}' with unsupported strategy "
-        f"{type(gen).__name__}.  ``_validate_primary_keys`` should "
-        f"have rejected this at plan time -- a validator-ordering "
-        f"regression has bypassed the check."
-    )
+    # time; the ``case _`` branch is a defensive backstop for an
+    # invariant bypass and surfaces a clear error instead of silently
+    # building synthetic-sequence metadata that would corrupt FK
+    # children.
+    match pk_col_spec.gen:
+        case SequenceColumn(start=start, step=step):
+            return PKMetadata(**base_meta, pk_type="sequence", pk_start=start, pk_step=step, pk_template=None)
+        case PatternColumn(template=template):
+            return PKMetadata(**base_meta, pk_type="pattern", pk_start=0, pk_step=1, pk_template=template)
+        case UUIDColumn():
+            return PKMetadata(**base_meta, pk_type="uuid", pk_start=0, pk_step=1, pk_template=None)
+        case _:
+            raise RuntimeError(
+                f"_extract_pk_metadata received PK column '{table_spec.name}."
+                f"{pk_col_spec.name}' with unsupported strategy "
+                f"{type(pk_col_spec.gen).__name__}.  ``_validate_primary_keys`` "
+                f"should have rejected this at plan time -- a validator-ordering "
+                f"regression has bypassed the check."
+            )
 
 
 def _extract_column_references(expr: str) -> set[str]:
