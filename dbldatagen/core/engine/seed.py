@@ -138,7 +138,7 @@ def to_signed64(n: int) -> int:
     Returns:
         ``n`` mapped into ``[-2**63, 2**63 - 1]``.
     """
-    n = n & 0xFFFFFFFFFFFFFFFF
-    if n >= 0x8000000000000000:
-        return n - 0x10000000000000000
-    return n
+    # Offset-mod-offset two's-complement reinterpretation: shift up by
+    # 2**63 so signed range [-2**63, 2**63-1] becomes unsigned [0, 2**64-1],
+    # apply % 2**64 to fold any out-of-range input back, then shift down.
+    return ((n + 0x8000000000000000) % 0x10000000000000000) - 0x8000000000000000
