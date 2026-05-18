@@ -474,18 +474,13 @@ def _extract_column_references(expr: str) -> set[str]:
     the allowlist drifting out of date.
     """
     cleaned = _QUOTED_SEGMENT.sub("", expr)
-
-    references: set[str] = set()
-    for match in re.finditer(r"\b([a-zA-Z_]\w*)\b", cleaned):
-        token = match.group(1)
-        if cleaned[match.end() :].lstrip().startswith("("):
-            continue
-        if cleaned[: match.start()].rstrip().endswith("."):
-            continue
-        if token.lower() in _SQL_KEYWORDS:
-            continue
-        references.add(token)
-    return references
+    return {
+        m.group(1)
+        for m in re.finditer(r"\b([a-zA-Z_]\w*)\b", cleaned)
+        if not cleaned[m.end() :].lstrip().startswith("(")  # not a function call
+        and not cleaned[: m.start()].rstrip().endswith(".")  # not a qualified field access
+        and m.group(1).lower() not in _SQL_KEYWORDS
+    }
 
 
 def _validate_expression_columns(plan: DataGenPlan) -> None:
