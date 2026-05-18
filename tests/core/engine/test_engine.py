@@ -50,6 +50,42 @@ class TestSeedDeterminism:
         s2 = derive_column_seed(42, "orders", "status")
         assert s1 != s2
 
+    def test_derive_column_seed_pinned_values(self):
+        """Pin specific seeds for known ``(global_seed, table, column)`` triples.
+
+        ``derive_column_seed`` is the foundation of dbldatagen's reproducibility
+        contract: every column seed in every plan flows from here, and any
+        change to its output cascades into every value the engine generates.
+        The other tests prove determinism and variance but not byte
+        equivalence -- a refactor that swapped multipliers, changed the
+        mask, or reordered the table/column hash steps would still pass
+        those checks.
+
+        These pins were generated from the current implementation and
+        cover global-seed edge cases (0, Long.MIN, Long.MAX), empty
+        strings, unicode, and a long-string case to exercise the
+        polynomial mix.  Any refactor of ``derive_column_seed`` must
+        reproduce these byte-for-byte.
+        """
+        expected = {
+            (42, "orders", "amount"): -6611133535135442573,
+            (42, "orders", "status"): -6611133533874842473,
+            (42, "customers", "id"): 1640369763616038596,
+            (0, "orders", "amount"): 8431482345212582905,
+            (1, "", ""): 1,
+            (2**63 - 1, "orders", "amount"): -3068981324068604432,
+            (-(2**63), "orders", "amount"): -791889691642192903,
+            (42, "unicode_table", "col_with_emoji"): 662861529137711238,
+            (42, "t", "c"): 52565,
+            (42, "a_very_long_table_name_for_polynomial_mix_coverage", "a_very_long_column_name_for_polynomial_mix_coverage"): 3752365923030754514,
+        }
+        for (gs, table, column), pinned in expected.items():
+            actual = derive_column_seed(gs, table, column)
+            assert actual == pinned, (
+                f"derive_column_seed determinism regression at "
+                f"({gs}, {table!r}, {column!r}): expected {pinned}, got {actual}"
+            )
+
     def test_cell_seed_determinism(self, spark):
         """Cell seeds for 1000 rows are identical across two runs."""
         col_seed = derive_column_seed(42, "t", "c")
