@@ -605,7 +605,13 @@ def _build_array_column(
     from dbldatagen.core.engine.seed import to_signed64
 
     range_size = gen.max_length - gen.min_length + 1
-    _LEN_SEED_MIX = 0xD6E8FEB86659FD93  # random 64-bit constant, decorrelates length hash
+    # Fibonacci hashing constant from Knuth (TAOCP Vol 3, §6.4):
+    # floor(2^64 / phi) = 0x9E3779B97F4A7C15.  Any high-entropy 64-bit
+    # value would decorrelate the length hash from element[0]'s seed,
+    # but using the named Knuth constant makes the choice
+    # self-documenting -- a reader recognises it instead of having to
+    # take a "random hex" comment on faith.
+    _LEN_SEED_MIX = 0x9E3779B97F4A7C15
     length_seed = to_signed64(column_seed ^ _LEN_SEED_MIX)
     seed_col = cell_seed_expr(length_seed, id_col)
     rand_len = F.pmod(seed_col, F.lit(range_size)).cast("int") + F.lit(gen.min_length)
