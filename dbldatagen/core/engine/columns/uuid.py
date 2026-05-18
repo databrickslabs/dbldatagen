@@ -36,21 +36,21 @@ def build_uuid_column(id_col: Column | str, column_seed: int) -> Column:
     seed_col = F.lit(to_signed64(column_seed)).cast("long")
     seed_col_plus1 = F.lit(to_signed64(column_seed + 1)).cast("long")
 
+    # Two independent 64-bit hashes give the 128 bits of UUID payload.
     hi = F.xxhash64(seed_col, id_col)
     lo = F.xxhash64(seed_col_plus1, id_col)
 
-    hi_hex = F.lower(F.lpad(F.hex(hi), 16, "0"))
-    lo_hex = F.lower(F.lpad(F.hex(lo), 16, "0"))
-
-    # Format as UUID: 8-4-4-4-12
-    return F.concat(
-        F.substring(hi_hex, 1, 8),
-        F.lit("-"),
-        F.substring(hi_hex, 9, 4),
-        F.lit("-"),
-        F.substring(hi_hex, 13, 4),
-        F.lit("-"),
-        F.substring(lo_hex, 1, 4),
-        F.lit("-"),
-        F.substring(lo_hex, 5, 12),
+    # Slice the 8-4-4-4-12 UUID layout out of (hi, lo) via bit shifts.
+    # Note: PySpark ``Column & int`` is *logical* AND, not bitwise --
+    # we must use ``.bitwiseAND(...)``.  ``F.shiftright`` is arithmetic
+    # (sign-extending) on BIGINT, so the masks are also load-bearing:
+    # they zero the sign-extended bits, making each chunk non-negative
+    # so ``%0Nx`` produces exactly N hex chars regardless of input sign.
+    return F.format_string(
+        "%08x-%04x-%04x-%04x-%012x",
+        F.shiftright(hi, 32).bitwiseAND(0xFFFFFFFF),  # bits [63:32] of hi -> 8 chars
+        F.shiftright(hi, 16).bitwiseAND(0xFFFF),      # bits [31:16] of hi -> 4 chars
+        hi.bitwiseAND(0xFFFF),                        # bits [15:0]  of hi -> 4 chars
+        F.shiftright(lo, 48).bitwiseAND(0xFFFF),      # bits [63:48] of lo -> 4 chars
+        lo.bitwiseAND(0xFFFFFFFFFFFF),                # bits [47:0]  of lo -> 12 chars
     )
