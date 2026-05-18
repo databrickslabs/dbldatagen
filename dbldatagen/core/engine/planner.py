@@ -363,14 +363,22 @@ def resolve_plan(plan: DataGenPlan) -> ResolvedPlan:
 
 
 def _build_dependency_graph(plan: DataGenPlan) -> dict[str, set[str]]:
-    """Build {child_table: {parent_table, ...}} from FK refs."""
-    graph: dict[str, set[str]] = {t.name: set() for t in plan.tables}
-    for table_spec in plan.tables:
-        for col_spec in table_spec.columns:
-            if col_spec.foreign_key is not None:
-                parent_table_name = col_spec.foreign_key.ref.split(".", 1)[0]
-                graph[table_spec.name].add(parent_table_name)
-    return graph
+    """Build {child_table: {parent_table, ...}} from FK refs.
+
+    Pure shape transform: every table gets a key, mapping to the set
+    of parent tables it references through FK columns (empty set if
+    none).  Safe to call ``.ref.split(".", 1)[0]`` here because the
+    FK validation loop in ``resolve_plan`` runs first and rejects any
+    ref without a ``.`` separator.
+    """
+    return {
+        table_spec.name: {
+            col_spec.foreign_key.ref.split(".", 1)[0]
+            for col_spec in table_spec.columns
+            if col_spec.foreign_key is not None
+        }
+        for table_spec in plan.tables
+    }
 
 
 def _topological_sort(graph: dict[str, set[str]], all_tables: list[str]) -> list[str]:
