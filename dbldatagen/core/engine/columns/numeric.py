@@ -134,9 +134,8 @@ def _build_float_range(
             f"max_val={max_val}) is negative; schema validator should "
             f"have rejected this."
         )
-    if span == 0:
-        # min_val == max_val is a legitimate degenerate range -- emit
-        # the single literal.
+    if min_val == max_val:
+        # Legitimate degenerate range -- emit the single literal.
         return F.lit(min_val)
 
     if isinstance(distribution, Normal):
