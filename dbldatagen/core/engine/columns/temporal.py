@@ -17,13 +17,21 @@ from dbldatagen.core.spec.schema import Distribution
 
 
 def _parse_epoch(dt_str: str) -> int:
-    """Parse a datetime string to epoch seconds (UTC)."""
-    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d", "%Y-%m-%dT%H:%M:%S"):
-        try:
-            return int(datetime.strptime(dt_str, fmt).replace(tzinfo=timezone.utc).timestamp())
-        except ValueError:
-            continue
-    raise ValueError(f"Cannot parse datetime string: {dt_str!r}")
+    """Parse a datetime string to epoch seconds (UTC).
+
+    Mirrors ``schema.TimestampColumn.validate_timestamps``: any string
+    ``datetime.fromisoformat`` accepts is valid.  Naive datetimes are
+    treated as UTC so the engine remains session-TZ-independent;
+    tz-aware datetimes resolve to the correct UTC epoch regardless of
+    the offset.
+    """
+    try:
+        dt = datetime.fromisoformat(dt_str)
+    except ValueError:
+        raise ValueError(f"Cannot parse datetime string: {dt_str!r}") from None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return int(dt.timestamp())
 
 
 def build_timestamp_column(
