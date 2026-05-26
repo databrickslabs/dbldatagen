@@ -328,6 +328,26 @@ def resolve_plan(plan: DataGenPlan) -> ResolvedPlan:
                     f"FK reference '{ref}' in {table_spec.name}.{col_spec.name}: "
                     f"table '{parent_table_name}' has no primary key defined"
                 )
+            # ``ForeignKeyRef.ref`` is a single ``"table.column"``;
+            # ``_extract_pk_metadata`` and ``PKMetadata`` are
+            # single-column by construction.  Pointing at one
+            # sub-column of a composite parent PK can match multiple
+            # parent rows once the user joins back (the composite PK
+            # guarantees tuple uniqueness, not sub-column
+            # uniqueness), which breaks the "every FK matches
+            # exactly one parent" invariant the engine relies on.
+            # Reject up front rather than silently emit
+            # join-ambiguous FKs.
+            if len(parent_table.primary_key.columns) > 1:
+                raise ValueError(
+                    f"FK reference '{ref}' in {table_spec.name}.{col_spec.name}: "
+                    f"table '{parent_table_name}' has a composite primary key "
+                    f"({parent_table.primary_key.columns}); single-column "
+                    f"``ForeignKeyRef`` cannot deterministically resolve to one "
+                    f"parent row.  Use a single-column primary key on "
+                    f"'{parent_table_name}', or split the FK relationship into "
+                    f"a derived single-column key."
+                )
             if parent_col_name not in parent_table.primary_key.columns:
                 raise ValueError(
                     f"FK reference '{ref}' in {table_spec.name}.{col_spec.name}: "

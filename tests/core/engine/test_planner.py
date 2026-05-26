@@ -213,6 +213,126 @@ class TestMissingRef:
             resolve_plan(plan)
 
 
+class TestCompositePKFKRejection:
+    """``ForeignKeyRef.ref`` is single-column; ``PKMetadata`` and
+    ``_extract_pk_metadata`` are single-column by construction.  An FK
+    targeting one sub-column of a composite parent PK silently produced
+    a single ``FKResolution`` keyed on ``(table, sub_column)`` and the
+    FK reconstruction path emitted values from a single-column synthesis
+    that may not uniquely identify a parent row.  Reject at plan time
+    so the failure mode is visible instead of silently producing
+    join-ambiguous FKs.
+    """
+
+    @staticmethod
+    def _parent_with_composite_pk() -> TableSpec:
+        return TableSpec(
+            name="parent",
+            rows=100,
+            primary_key=PrimaryKey(columns=["tenant_id", "user_id"]),
+            columns=[
+                ColumnSpec(name="tenant_id", gen=SequenceColumn(start=1, step=1)),
+                ColumnSpec(name="user_id", gen=SequenceColumn(start=1, step=1)),
+            ],
+        )
+
+    def test_fk_to_composite_pk_first_subcol_rejected(self):
+        child = TableSpec(
+            name="child",
+            rows=100,
+            columns=[
+                ColumnSpec(name="cid", gen=SequenceColumn(start=1, step=1)),
+                ColumnSpec(
+                    name="t_ref",
+                    gen=ForeignKeyColumn(),
+                    foreign_key=ForeignKeyRef(ref="parent.tenant_id"),
+                ),
+            ],
+        )
+        plan = DataGenPlan(tables=[self._parent_with_composite_pk(), child], seed=42)
+        with pytest.raises(ValueError, match="composite primary key"):
+            resolve_plan(plan)
+
+    def test_fk_to_composite_pk_second_subcol_rejected(self):
+        """Rejection fires regardless of which sub-column is targeted —
+        the composite check runs before the column-membership check, so
+        any FK ref into a composite-PK table is rejected with the same
+        message."""
+        child = TableSpec(
+            name="child",
+            rows=100,
+            columns=[
+                ColumnSpec(name="cid", gen=SequenceColumn(start=1, step=1)),
+                ColumnSpec(
+                    name="u_ref",
+                    gen=ForeignKeyColumn(),
+                    foreign_key=ForeignKeyRef(ref="parent.user_id"),
+                ),
+            ],
+        )
+        plan = DataGenPlan(tables=[self._parent_with_composite_pk(), child], seed=42)
+        with pytest.raises(ValueError, match="composite primary key"):
+            resolve_plan(plan)
+
+    def test_fk_to_composite_pk_non_member_subcol_also_rejected(self):
+        """If the user targets a column that exists on the parent but
+        isn't part of the composite PK, the composite-PK rejection
+        still fires first.  Better signal: the root issue is that the
+        parent's PK shape doesn't support single-column FKs; the
+        column-membership error would be a less informative red herring.
+        """
+        parent = TableSpec(
+            name="parent",
+            rows=100,
+            primary_key=PrimaryKey(columns=["tenant_id", "user_id"]),
+            columns=[
+                ColumnSpec(name="tenant_id", gen=SequenceColumn(start=1, step=1)),
+                ColumnSpec(name="user_id", gen=SequenceColumn(start=1, step=1)),
+                ColumnSpec(name="name", gen=SequenceColumn(start=1, step=1)),
+            ],
+        )
+        child = TableSpec(
+            name="child",
+            rows=100,
+            columns=[
+                ColumnSpec(name="cid", gen=SequenceColumn(start=1, step=1)),
+                ColumnSpec(
+                    name="n_ref",
+                    gen=ForeignKeyColumn(),
+                    foreign_key=ForeignKeyRef(ref="parent.name"),
+                ),
+            ],
+        )
+        plan = DataGenPlan(tables=[parent, child], seed=42)
+        with pytest.raises(ValueError, match="composite primary key"):
+            resolve_plan(plan)
+
+    def test_fk_to_single_column_pk_still_works(self):
+        """Negative regression: a normal single-column-PK FK must
+        continue to resolve cleanly with the new composite check in
+        place."""
+        parent = TableSpec(
+            name="parent",
+            rows=100,
+            primary_key=PrimaryKey(columns=["pid"]),
+            columns=[ColumnSpec(name="pid", gen=SequenceColumn(start=1, step=1))],
+        )
+        child = TableSpec(
+            name="child",
+            rows=100,
+            columns=[
+                ColumnSpec(name="cid", gen=SequenceColumn(start=1, step=1)),
+                ColumnSpec(
+                    name="p_ref",
+                    gen=ForeignKeyColumn(),
+                    foreign_key=ForeignKeyRef(ref="parent.pid"),
+                ),
+            ],
+        )
+        # Must resolve cleanly with no raise.
+        resolve_plan(DataGenPlan(tables=[parent, child], seed=42))
+
+
 class TestPKMetadataExtraction:
     def test_sequence_pk_metadata(self):
         """Verify correct metadata for sequence PK."""

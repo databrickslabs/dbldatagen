@@ -784,7 +784,11 @@ class PrimaryKey(_StrictModel):
     """Marks a column (or set of columns) as the primary key.
 
     For single-column PKs, just set ``columns`` to a single-element list.
-    For composite PKs, list all column names.
+    Composite PKs are accepted but cannot currently be referenced by
+    ``ForeignKeyRef`` (the planner rejects FK refs into a composite-PK
+    table at plan time): ``ForeignKeyRef.ref`` is single-column, and a
+    single sub-column of a composite PK doesn't uniquely identify a
+    parent row.
 
     Attributes:
         columns: Names of the columns that form the primary key, in
@@ -822,8 +826,10 @@ class ForeignKeyRef(_StrictModel):
 
     Attributes:
         ref: Reference to the parent PK in ``"table.column"`` form.  The
-          parent table must exist in the same ``DataGenPlan`` and the
-          named column must be part of that table's ``primary_key``.
+          parent table must exist in the same ``DataGenPlan``, the
+          named column must be part of that table's ``primary_key``,
+          and that ``primary_key`` must be single-column -- composite
+          parent PKs are rejected at plan time (see ``PrimaryKey``).
         distribution: Sampling distribution over the parent row index
           range.  Defaults to ``Uniform`` (every parent row equally
           likely).  ``WeightedValues`` is rejected here -- it weights a
