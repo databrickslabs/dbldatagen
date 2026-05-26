@@ -135,28 +135,43 @@ def build_pattern_column(
         kind = m.group(1)
         width = int(m.group(2)) if m.group(2) else 1
 
-        if kind == "seq":
-            if width > _MAX_SEQ_WIDTH:
-                raise ValueError(f"{{seq:N}} width must be <= {_MAX_SEQ_WIDTH} (got {width})")
-            parts.append(F.lpad((id_col + F.lit(1)).cast("string"), width, "0"))
-        elif kind == "uuid":
-            # {uuid} has no width modifier -- a 36-char UUID with the
-            # user asking for N chars is almost always a bug (they
-            # probably want {hex:N} or {alpha:N}).  Reject rather than
-            # silently ignore the width.
-            if m.group(2) is not None:
-                raise ValueError(
-                    f"{{uuid}} does not accept a width modifier (got '{m.group(0)}'). "
-                    f"UUIDs are always 36 characters; use {{hex:N}} or {{alpha:N}} for a "
-                    f"short random token."
+        match kind:
+            case "seq":
+                if width > _MAX_SEQ_WIDTH:
+                    raise ValueError(f"{{seq:N}} width must be <= {_MAX_SEQ_WIDTH} (got {width})")
+                parts.append(F.lpad((id_col + F.lit(1)).cast("string"), width, "0"))
+            case "uuid":
+                # {uuid} has no width modifier -- a 36-char UUID with the
+                # user asking for N chars is almost always a bug (they
+                # probably want {hex:N} or {alpha:N}).  Reject rather than
+                # silently ignore the width.
+                if m.group(2) is not None:
+                    raise ValueError(
+                        f"{{uuid}} does not accept a width modifier (got '{m.group(0)}'). "
+                        f"UUIDs are always 36 characters; use {{hex:N}} or {{alpha:N}} for a "
+                        f"short random token."
+                    )
+                parts.append(_random_uuid(id_col, column_seed, placeholder_idx))
+            case "digit":
+                parts.append(_random_digits(id_col, column_seed, placeholder_idx, width))
+            case "alpha":
+                parts.append(_random_alpha(id_col, column_seed, placeholder_idx, width))
+            case "hex":
+                parts.append(_random_hex(id_col, column_seed, placeholder_idx, width))
+            case _:
+                # Drift guard: _PLACEHOLDER_RE's alternation
+                # ``(seq|uuid|digit|alpha|hex)`` is the only producer of
+                # ``kind``, so reaching this arm means a new alternation
+                # was added to the regex without a matching dispatch
+                # case here (or vice versa).  Raise so the next reader
+                # gets a precise pointer rather than a silent "no parts
+                # appended" placeholder that disappears from the output.
+                raise RuntimeError(
+                    f"_PLACEHOLDER_RE matched kind {kind!r} but build_pattern_column "
+                    f"has no dispatch arm for it -- the regex alternation and the "
+                    f"``match`` block must stay in sync.  Adding a new placeholder "
+                    f"kind requires updating both."
                 )
-            parts.append(_random_uuid(id_col, column_seed, placeholder_idx))
-        elif kind == "digit":
-            parts.append(_random_digits(id_col, column_seed, placeholder_idx, width))
-        elif kind == "alpha":
-            parts.append(_random_alpha(id_col, column_seed, placeholder_idx, width))
-        elif kind == "hex":
-            parts.append(_random_hex(id_col, column_seed, placeholder_idx, width))
 
         pos = m.end()
 
