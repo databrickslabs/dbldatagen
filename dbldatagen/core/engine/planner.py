@@ -560,7 +560,7 @@ def _validate_expression_columns(plan: DataGenPlan) -> None:
 def _validate_seed_from(plan: DataGenPlan) -> None:
     """Validate seed_from references.
 
-    Four checks, in order:
+    Three checks, in order:
 
     1. The referenced column exists in the same table.
     2. A column does not reference itself (``a.seed_from = 'a'``).
@@ -573,19 +573,16 @@ def _validate_seed_from(plan: DataGenPlan) -> None:
        column with many derived columns, not chains -- the planner
        rejects the chain shape with a clear error rather than
        complicating the engine to topo-sort phase 3.
-    4. The seed_from graph is acyclic -- check 3 already implies
-       this for chains, but the explicit cycle walk also catches the
-       degenerate single-edge ``a -> a`` (handled by check 2 above)
-       and stays as a defensive backstop.
 
-    All four would otherwise fail at Spark query-build with
-    ``UNRESOLVED_COLUMN`` or a self-join plan, far from the offending
-    column declaration.
+    Checks 2 and 3 together close every cycle shape: check 2 rejects
+    the self-edge ``a -> a``, and check 3 forbids any path of length
+    >= 2 so longer cycles can't form.  All three failures would
+    otherwise surface at Spark query-build as ``UNRESOLVED_COLUMN``
+    or a self-join plan, far from the offending column declaration.
     """
     for table_spec in plan.tables:
         col_names = {c.name for c in table_spec.columns}
         col_by_name = {c.name: c for c in table_spec.columns}
-        seed_from_map: dict[str, str] = {}
         for col_spec in table_spec.columns:
             if not col_spec.seed_from:
                 continue
@@ -613,24 +610,6 @@ def _validate_seed_from(plan: DataGenPlan) -> None:
                     f"Point '{col_spec.name}' directly at '{target.seed_from}' "
                     f"(or another non-derived column) instead."
                 )
-            seed_from_map[col_spec.name] = col_spec.seed_from
-
-        # Graph walk: defensive backstop for cycles that bypass the
-        # chain check (shouldn't be reachable, but kept so future
-        # refactors don't silently regress).
-        for start, start_target in seed_from_map.items():
-            visited: list[str] = [start]
-            cur = start_target
-            while cur in seed_from_map:
-                if cur in visited:
-                    cycle = [*visited[visited.index(cur) :], cur]
-                    raise ValueError(
-                        f"seed_from cycle in table '{table_spec.name}': "
-                        f"{' -> '.join(cycle)}.  Break the cycle by removing "
-                        f"one of the seed_from links."
-                    )
-                visited.append(cur)
-                cur = seed_from_map[cur]
 
 
 def _validate_primary_keys(plan: DataGenPlan) -> None:
