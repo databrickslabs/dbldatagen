@@ -141,8 +141,6 @@ def build_all_column_exprs(
     *,
     seed: int,
     row_count: int = 0,
-    seed_fn: Callable[[ColumnSpec], int] | None = None,
-    cell_seed_fn: Callable[[int, Column, ColumnSpec], Column | None] | None = None,
 ) -> tuple[list[Column], list[tuple[str, Column]], list[tuple[str, Column]]]:
     """Builds column expressions for every column in a table.
 
@@ -166,13 +164,6 @@ def build_all_column_exprs(
           ``table_spec.seed`` so reruns do not silently
           desynchronise.
         row_count: Row count passed through to ``build_column_expr``.
-        seed_fn: Optional ``(col_spec) -> int`` override for the
-          per-column seed.  Default:
-          ``derive_column_seed(seed, table_name, col_spec.name)``.
-        cell_seed_fn: Optional
-          ``(column_seed, id_col, col_spec) -> Column | None``
-          override for the per-cell seed.  ``None`` (default) keeps
-          the standard ``xxhash64`` derivation.
 
     Returns:
         A three-tuple ``(col_exprs, udf_columns, seeded_columns)``
@@ -180,19 +171,16 @@ def build_all_column_exprs(
     """
     table_name = table_spec.name
 
-    def _default_resolver(cs: ColumnSpec) -> int:
+    def _resolver(cs: ColumnSpec) -> int:
         return derive_column_seed(seed, table_name, cs.name)
-
-    resolver = seed_fn if seed_fn is not None else _default_resolver
 
     return _build_column_exprs_loop(
         table_spec,
         id_col,
-        resolver,
+        _resolver,
         seed,
         row_count,
         fk_resolutions,
-        cell_seed_fn=cell_seed_fn,
     )
 
 
@@ -203,9 +191,6 @@ def _build_column_exprs_loop(
     effective_global_seed: int,
     row_count: int,
     fk_resolutions: dict[tuple[str, str], FKResolution] | None,
-    *,
-    pk_cols: set[str] | None = None,
-    cell_seed_fn: Callable[[int, Column, ColumnSpec], Column | None] | None = None,
 ) -> tuple[list[Column], list[tuple[str, Column]], list[tuple[str, Column]]]:
     """Unified column-building loop.
 
@@ -223,11 +208,6 @@ def _build_column_exprs_loop(
         row_count: Row count threaded through to per-column builders.
         fk_resolutions: Optional FK resolution map from
           ``ResolvedPlan``.
-        pk_cols: If provided, PK sequence columns are short-circuited
-          with inline arithmetic instead of routing through
-          ``build_column_expr``.
-        cell_seed_fn: Optional per-cell seed override (used by
-          snapshot generation).
 
     Returns:
         A three-tuple ``(col_exprs, udf_columns, seeded_columns)``
@@ -239,12 +219,6 @@ def _build_column_exprs_loop(
     seeded_columns: list[tuple[str, Column]] = []
 
     for col_spec in table_spec.columns:
-        # PK sequence short-circuit (batch paths)
-        if pk_cols and col_spec.name in pk_cols and isinstance(col_spec.gen, SequenceColumn):
-            pk_expr = (id_col * F.lit(col_spec.gen.step) + F.lit(col_spec.gen.start)).cast("long")
-            col_exprs.append(pk_expr.alias(col_spec.name))
-            continue
-
         column_seed = seed_resolver(col_spec)
 
         # Defer seed_from columns to phase 3
@@ -279,7 +253,6 @@ def _build_column_exprs_loop(
             column_seed,
             row_count,
             effective_global_seed,
-            cell_seed_fn,
         )
         if expr is not None:
             col_exprs.append(expr.alias(col_spec.name))
@@ -372,17 +345,14 @@ def _build_regular_column_expr(
     column_seed: int,
     row_count: int,
     global_seed: int,
-    cell_seed_fn: Callable[[int, Column, ColumnSpec], Column | None] | None = None,
 ) -> Column | None:
     """Build a regular (non-FK, non-seed_from) column expression."""
-    cell_override = cell_seed_fn(column_seed, id_col, col_spec) if cell_seed_fn is not None else None
     expr = build_column_expr(
         col_spec,
         id_col,
         column_seed,
         row_count,
         global_seed,
-        cell_seed_override=cell_override,
     )
 
     return apply_null_fraction(expr, column_seed, id_col, col_spec.null_fraction)
@@ -394,8 +364,6 @@ def build_column_expr(  # noqa: PLR0911
     column_seed: int,
     row_count: int,
     global_seed: int,
-    *,
-    cell_seed_override: Column | None = None,
 ) -> Column:
     """Dispatches to the appropriate column builder based on strategy type.
 
@@ -418,10 +386,6 @@ def build_column_expr(  # noqa: PLR0911
           it (e.g. ``build_uuid_column`` for clamping).
         global_seed: Plan-level seed forwarded to nested struct /
           array seed derivation.
-        cell_seed_override: If provided, used as the per-cell seed
-          instead of the default ``cell_seed_expr(column_seed,
-          id_col)``.  Useful for snapshot generation where the seed
-          incorporates per-row state.
 
     Returns:
         A Spark ``Column`` carrying the generated values; runtime
@@ -448,7 +412,6 @@ def build_column_expr(  # noqa: PLR0911
             gen.max,
             distribution=gen.distribution,
             dtype=col_spec.dtype,
-            cell_seed_override=cell_seed_override,
             precision=col_spec.precision,
             scale=col_spec.scale,
         )
@@ -459,7 +422,6 @@ def build_column_expr(  # noqa: PLR0911
             column_seed,
             gen.values,
             distribution=gen.distribution,
-            cell_seed_override=cell_seed_override,
         )
 
     if isinstance(gen, PatternColumn):
@@ -482,7 +444,6 @@ def build_column_expr(  # noqa: PLR0911
                 gen.start,
                 gen.end,
                 gen.distribution,
-                cell_seed_override=cell_seed_override,
             )
         return build_timestamp_column(
             id_col,
@@ -490,7 +451,6 @@ def build_column_expr(  # noqa: PLR0911
             gen.start,
             gen.end,
             gen.distribution,
-            cell_seed_override=cell_seed_override,
         )
 
     if isinstance(gen, ConstantColumn):

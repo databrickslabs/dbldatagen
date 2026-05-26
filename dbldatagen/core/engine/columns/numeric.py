@@ -35,7 +35,6 @@ def build_range_column(
     max_val: float | int,
     distribution: Distribution | None = None,
     dtype: DataType | None = None,
-    cell_seed_override: Column | None = None,
     precision: int | None = None,
     scale: int | None = None,
 ) -> Column:
@@ -57,8 +56,6 @@ def build_range_column(
           ``Uniform``.
         dtype: Target ``DataType``.  When ``None``, the function
           infers ``LONG`` for integer bounds and ``DOUBLE`` otherwise.
-        cell_seed_override: When provided, used as the per-cell seed
-          ``Column`` instead of ``cell_seed_expr(column_seed, id_col)``.
         precision: Total digit count for ``DataType.DECIMAL``;
           defaults to ``10`` (Spark's ``DecimalType()`` default) when unset.
         scale: Fractional digit count for ``DataType.DECIMAL``;
@@ -71,7 +68,7 @@ def build_range_column(
     if isinstance(id_col, str):
         id_col = F.col(id_col)
 
-    seed_col = cell_seed_override if cell_seed_override is not None else cell_seed_expr(column_seed, id_col)
+    seed_col = cell_seed_expr(column_seed, id_col)
 
     # Determine whether we need integer or floating-point output
     is_integer = (

@@ -30,7 +30,6 @@ def build_values_column(
     column_seed: int,
     values_list: list,
     distribution: Distribution | None = None,
-    cell_seed_override: Column | None = None,
 ) -> Column:
     """Picks from a list of values.
 
@@ -47,8 +46,6 @@ def build_values_column(
         distribution: Sampling distribution.  ``Uniform`` (default)
           indexes uniformly; ``WeightedValues`` uses cumulative
           weights; other distributions skew the index.
-        cell_seed_override: Optional per-cell seed ``Column`` to use
-          instead of ``cell_seed_expr(column_seed, id_col)``.
 
     Returns:
         A Spark ``Column`` whose runtime element type matches
@@ -61,7 +58,7 @@ def build_values_column(
     if len(values_list) == 1:
         return F.lit(values_list[0])
 
-    seed_col = cell_seed_override if cell_seed_override is not None else cell_seed_expr(column_seed, id_col)
+    seed_col = cell_seed_expr(column_seed, id_col)
 
     if isinstance(distribution, WeightedValues):
         return weighted_sample_expr(seed_col, values_list, distribution.weights)

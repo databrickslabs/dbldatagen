@@ -40,7 +40,6 @@ def build_timestamp_column(
     start: str,
     end: str,
     distribution: Distribution | None = None,
-    cell_seed_override: Column | None = None,
 ) -> Column:
     """Generates timestamps in ``[start, end]`` range.
 
@@ -59,8 +58,6 @@ def build_timestamp_column(
           Required.
         distribution: Sampling distribution.  ``None`` defaults to
           ``Uniform``.
-        cell_seed_override: Optional per-cell seed ``Column`` to use
-          instead of ``cell_seed_expr(column_seed, id_col)``.
 
     Returns:
         A Spark ``Column`` (timestamp) holding the sampled values.
@@ -81,7 +78,7 @@ def build_timestamp_column(
         return F.lit(start_epoch).cast("long").cast("timestamp")
 
     range_seconds = end_epoch - start_epoch
-    seed_col = cell_seed_override if cell_seed_override is not None else cell_seed_expr(column_seed, id_col)
+    seed_col = cell_seed_expr(column_seed, id_col)
     idx = apply_distribution(seed_col, range_seconds, distribution)
     epoch_col = (idx + F.lit(start_epoch)).cast("long")
     return epoch_col.cast("timestamp")
@@ -93,7 +90,6 @@ def build_date_column(
     start: str,
     end: str,
     distribution: Distribution | None = None,
-    cell_seed_override: Column | None = None,
 ) -> Column:
     """Generates dates in ``[start, end]`` range.
 
@@ -109,8 +105,6 @@ def build_date_column(
         end: Inclusive upper bound.  Required.
         distribution: Sampling distribution.  ``None`` defaults to
           ``Uniform``.
-        cell_seed_override: Optional per-cell seed ``Column`` to use
-          instead of ``cell_seed_expr(column_seed, id_col)``.
 
     Returns:
         A Spark ``Column`` (date) holding the sampled values.
@@ -135,7 +129,7 @@ def build_date_column(
     if range_days <= 0:
         return _days_to_date(start_epoch // 86400)
 
-    seed_col = cell_seed_override if cell_seed_override is not None else cell_seed_expr(column_seed, id_col)
+    seed_col = cell_seed_expr(column_seed, id_col)
     idx = apply_distribution(seed_col, range_days, distribution)
     start_days = start_epoch // 86400
     return _days_to_date(idx + F.lit(start_days).cast("long"))
