@@ -5,6 +5,8 @@ from __future__ import annotations
 from pyspark.sql import Column, DataFrame, SparkSession
 from pyspark.sql import functions as F
 
+from dbldatagen.core.engine.seed import null_mask_expr
+
 
 def create_range_df(
     spark: SparkSession,
@@ -52,8 +54,6 @@ def apply_null_fraction(
     """
     if null_fraction <= 0:
         return expr
-    from dbldatagen.core.engine.seed import null_mask_expr
-
     is_null = null_mask_expr(column_seed, id_col, null_fraction)
     return F.when(is_null, F.lit(None)).otherwise(expr)
 

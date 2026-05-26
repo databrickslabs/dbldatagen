@@ -12,6 +12,7 @@ from collections.abc import Callable
 from pyspark.sql import Column, DataFrame, SparkSession
 from pyspark.sql import functions as F
 
+from dbldatagen.core.engine.columns.faker_pool import build_faker_column
 from dbldatagen.core.engine.columns.numeric import build_range_column
 from dbldatagen.core.engine.columns.pk import (
     build_sequential_pk,
@@ -24,8 +25,9 @@ from dbldatagen.core.engine.columns.string import (
 )
 from dbldatagen.core.engine.columns.temporal import build_date_column, build_timestamp_column
 from dbldatagen.core.engine.columns.uuid import build_uuid_column
+from dbldatagen.core.engine.fk import build_fk_column
 from dbldatagen.core.engine.planner import FKResolution, ResolvedPlan
-from dbldatagen.core.engine.seed import GOLDEN_RATIO_HASH, derive_column_seed
+from dbldatagen.core.engine.seed import GOLDEN_RATIO_HASH, cell_seed_expr, derive_column_seed, to_signed64
 from dbldatagen.core.engine.utils import apply_column_phases, apply_null_fraction, create_range_df
 from dbldatagen.core.spec.schema import (
     ArrayColumn,
@@ -309,8 +311,6 @@ def _build_fk_column_expr(
             f"directly requires passing a ``ResolvedPlan`` that includes this "
             f"column's FK."
         )
-    from dbldatagen.core.engine.fk import build_fk_column
-
     fk_expr = build_fk_column(id_col, column_seed, fk_resolutions[fk_key])
     return (col_spec.name, fk_expr)
 
@@ -321,8 +321,6 @@ def _build_faker_expr(
     column_seed: int,
 ) -> tuple[str, Column]:
     """Build a Faker pool UDF expression."""
-    from dbldatagen.core.engine.columns.faker_pool import build_faker_column
-
     if not isinstance(col_spec.gen, FakerColumn):
         raise RuntimeError(
             f"_build_faker_expr called for '{col_spec.name}' with non-FakerColumn gen "
@@ -527,8 +525,6 @@ def _build_array_column(
     global_seed: int,
 ) -> Column:
     """Build a variable-length Spark array from an inner strategy."""
-    from dbldatagen.core.engine.seed import cell_seed_expr
-
     # Generate max_length elements, each with a unique seed offset
     element_cols: list[Column] = []
     # ``elem`` (not ``_elem``): ColumnSpec rejects leading-underscore names
@@ -562,8 +558,6 @@ def _build_array_column(
     # id)`` -- one via direct use as element[0]'s seed, one via
     # pmod-for-length -- share the low bits and produce a subtle
     # correlation between array length and the first element's value.
-    from dbldatagen.core.engine.seed import to_signed64
-
     range_size = gen.max_length - gen.min_length + 1
     # Fibonacci hashing constant from Knuth (TAOCP Vol 3, §6.4):
     # floor(2^64 / phi) = 0x9E3779B97F4A7C15.  Any high-entropy 64-bit
