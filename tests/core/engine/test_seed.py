@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from dbldatagen.core.engine.seed import _NULL_PRECISION, derive_column_seed, null_mask_expr, to_signed64
+from dbldatagen.core.engine.seed import NULL_PRECISION, derive_column_seed, null_mask_expr, to_signed64
 
 
 LONG_MAX = 2**63 - 1
@@ -85,7 +85,7 @@ class TestDeriveColumnSeed:
 class TestNullMaskBoundaries:
     """``null_mask_expr`` has three short-circuit boundaries worth
     pinning: ``f <= 0`` (no nulls), ``f >= 1`` (all nulls), and
-    ``f`` below ``1/_NULL_PRECISION`` granularity where ``int(f*N)``
+    ``f`` below ``1/NULL_PRECISION`` granularity where ``int(f*N)``
     rounds to zero (raises to avoid silent zero-NULL output)."""
 
     def test_zero_returns_false_literal(self, spark):
@@ -98,9 +98,9 @@ class TestNullMaskBoundaries:
     def test_one_returns_true_literal(self, spark):
         """``null_fraction >= 1`` short-circuits to ``F.lit(True)``.
 
-        The implementation's full ``pmod(hash, _NULL_PRECISION) <
+        The implementation's full ``pmod(hash, NULL_PRECISION) <
         threshold`` path also happens to be True for all rows when
-        threshold == _NULL_PRECISION, so a hash-path regression would
+        threshold == NULL_PRECISION, so a hash-path regression would
         still pass a naive "all True" check.  Introspect the Column's
         SQL representation to confirm the short-circuit actually
         fired -- the hash path contains ``pmod`` / ``xxhash64`` in its
@@ -119,17 +119,17 @@ class TestNullMaskBoundaries:
         assert "xxhash64" not in sql.lower(), f"expected short-circuit lit; got {sql}"
 
     def test_below_granularity_raises(self):
-        """A user asking for 1e-6 NULLs with _NULL_PRECISION=1e4 gets
+        """A user asking for 1e-6 NULLs with NULL_PRECISION=1e4 gets
         ``int(1e-6 * 1e4) == 0`` and would silently emit zero NULLs.
         Raise so the user sees why the rate didn't materialise."""
         with pytest.raises(ValueError, match="below the engine's"):
             null_mask_expr(42, "id", 1e-6)
 
     def test_just_above_granularity_accepted(self):
-        """``1/_NULL_PRECISION`` is the smallest fraction that produces
+        """``1/NULL_PRECISION`` is the smallest fraction that produces
         ``threshold == 1`` (floor, not round).  Accept without raising."""
         # float arithmetic: 1/10000 * 10000 = 1.0 exactly in IEEE 754.
-        null_mask_expr(42, "id", 1.0 / _NULL_PRECISION)
+        null_mask_expr(42, "id", 1.0 / NULL_PRECISION)
 
     def test_99999_fraction_produces_near_all_nulls(self, spark):
         """At 0.99999 the threshold is 9999 / 10000: all but one pmod

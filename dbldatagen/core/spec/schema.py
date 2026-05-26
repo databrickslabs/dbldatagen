@@ -29,7 +29,7 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from dbldatagen.core.engine.seed import _NULL_PRECISION
+from dbldatagen.core.engine.seed import NULL_PRECISION
 
 
 class _StrictModel(BaseModel):
@@ -56,14 +56,14 @@ _IDENTIFIER_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 _MAX_ARRAY_LENGTH = 1000
 
 # Engine granularity for null-mask generation, derived from
-# ``dbldatagen/core/engine/seed.py::_NULL_PRECISION`` (the import above
+# ``dbldatagen/core/engine/seed.py::NULL_PRECISION`` (the import above
 # is the single source of truth).  ``null_fraction`` validators reject
 # below-granularity values at plan time so a user who asks for
 # ``null_fraction=1e-5`` with precision=10000 (which would give
 # ``int(1e-5 * 10000) == 0`` and silently emit zero NULLs) gets the
 # error next to the ``ColumnSpec`` declaration instead of deep inside
 # the engine.
-_MIN_NULL_FRACTION = 1.0 / _NULL_PRECISION
+_MIN_NULL_FRACTION = 1.0 / NULL_PRECISION
 
 
 # ---------------------------------------------------------------------------
@@ -858,7 +858,7 @@ class ForeignKeyRef(_StrictModel):
                 f"ForeignKeyRef.null_fraction={self.null_fraction} is below the "
                 f"engine's {_MIN_NULL_FRACTION} granularity; ``int(f * N)`` would "
                 f"round to zero and silently emit zero NULLs.  Pick a larger "
-                f"fraction (>= {_MIN_NULL_FRACTION}) or raise _NULL_PRECISION in "
+                f"fraction (>= {_MIN_NULL_FRACTION}) or raise NULL_PRECISION in "
                 f"engine/seed.py."
             )
         if isinstance(self.distribution, WeightedValues):
@@ -1108,7 +1108,7 @@ class ColumnSpec(_StrictModel):
                 f"Column '{self.name}': null_fraction={self.null_fraction} is below "
                 f"the engine's {_MIN_NULL_FRACTION} granularity; ``int(f * N)`` "
                 f"would round to zero and silently emit zero NULLs.  Pick a larger "
-                f"fraction (>= {_MIN_NULL_FRACTION}) or raise _NULL_PRECISION in "
+                f"fraction (>= {_MIN_NULL_FRACTION}) or raise NULL_PRECISION in "
                 f"engine/seed.py."
             )
         return self

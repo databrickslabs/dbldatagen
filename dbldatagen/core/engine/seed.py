@@ -15,8 +15,8 @@ from pyspark.sql import functions as F
 
 
 # Precision for null fraction mapping: null_fraction is quantized to
-# 1/_NULL_PRECISION granularity (0.01% with default 10000).
-_NULL_PRECISION = 10000
+# 1/NULL_PRECISION granularity (0.01% with default 10000).
+NULL_PRECISION = 10000
 
 # XOR constant to decorrelate the null mask seed from the value seed.
 _NULL_SEED_XOR = 0xDEADBEEF
@@ -90,7 +90,7 @@ def null_mask_expr(
         null_fraction: Target fraction of rows to mark NULL, in
           ``[0.0, 1.0]``.  ``0.0`` returns a ``False`` literal,
           ``>= 1.0`` returns a ``True`` literal; in-between values
-          are quantised to ``1 / _NULL_PRECISION`` granularity.
+          are quantised to ``1 / NULL_PRECISION`` granularity.
 
     Returns:
         A Spark boolean ``Column``: ``True`` for rows the caller
@@ -99,30 +99,30 @@ def null_mask_expr(
 
     Raises:
         ValueError: ``null_fraction`` is strictly between ``0.0`` and
-          ``1.0`` but smaller than ``1 / _NULL_PRECISION``.  Raises
+          ``1.0`` but smaller than ``1 / NULL_PRECISION``.  Raises
           rather than silently emitting zero NULLs.
     """
     if null_fraction <= 0.0:
         return F.lit(False)
     if null_fraction >= 1.0:
         return F.lit(True)
-    threshold = int(null_fraction * _NULL_PRECISION)
+    threshold = int(null_fraction * NULL_PRECISION)
     if threshold == 0:
-        # Below the engine's 1/_NULL_PRECISION granularity: ``int(f * N)``
+        # Below the engine's 1/NULL_PRECISION granularity: ``int(f * N)``
         # would round to 0 and the mask would silently emit zero NULLs
         # for any non-zero fraction.  Raise so a user asking for a 1e-5
         # null rate sees why it didn't materialise instead of debugging
         # "why are there no nulls" at query time.
         raise ValueError(
             f"null_fraction={null_fraction} is below the engine's "
-            f"1/{_NULL_PRECISION} = {1.0 / _NULL_PRECISION} granularity.  "
-            f"Pick a larger fraction or raise _NULL_PRECISION in seed.py."
+            f"1/{NULL_PRECISION} = {1.0 / NULL_PRECISION} granularity.  "
+            f"Pick a larger fraction or raise NULL_PRECISION in seed.py."
         )
     if isinstance(id_col, str):
         id_col = F.col(id_col)
     null_seed = column_seed ^ _NULL_SEED_XOR
     null_hash = cell_seed_expr(null_seed, id_col)
-    return F.pmod(null_hash, F.lit(_NULL_PRECISION)) < F.lit(threshold)
+    return F.pmod(null_hash, F.lit(NULL_PRECISION)) < F.lit(threshold)
 
 
 def to_signed64(n: int) -> int:
