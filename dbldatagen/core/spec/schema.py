@@ -22,6 +22,7 @@ from __future__ import annotations
 import re
 import warnings
 from collections import Counter
+from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 from typing import Annotated, Any, Literal
@@ -528,8 +529,6 @@ class TimestampColumn(_StrictModel):
 
     @model_validator(mode="after")
     def validate_timestamps(self) -> TimestampColumn:
-        from datetime import datetime
-
         parsed = {}
         for field_name in ("start", "end"):
             val = getattr(self, field_name)

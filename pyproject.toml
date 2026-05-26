@@ -196,7 +196,13 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["PLR2004", "S101", "TID252"]
-"dbldatagen/core/*" = ["PLC0415"]
+# PLC0415 is allowed only inside the optional-dep import guard
+# (``try: from faker import Faker except ImportError: ...`` rewrites
+# the message to point at ``pip install 'dbldatagen[core-faker]'``).
+# The guard cannot be hoisted to module level without breaking the
+# optional-dependency contract.  Everywhere else in dbldatagen/core
+# the rule applies.
+"dbldatagen/core/engine/columns/faker_pool.py" = ["PLC0415"]
 "tests/core/*" = ["ANN", "PLC0415", "PLR2004", "S101", "TID252", "B905"]
 "examples/*" = ["ALL"]
 "tutorial/*" = ["ALL"]
