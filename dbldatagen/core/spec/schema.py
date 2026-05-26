@@ -789,10 +789,28 @@ class PrimaryKey(_StrictModel):
     Attributes:
         columns: Names of the columns that form the primary key, in
           declaration order.  Each name must match a ``ColumnSpec.name``
-          on the owning ``TableSpec``.  Must be non-empty.
+          on the owning ``TableSpec``.  Must be non-empty and contain
+          no duplicates.
     """
 
     columns: list[str] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_unique_columns(self) -> PrimaryKey:
+        # ``Field(min_length=1)`` rejects empty lists but not duplicates.
+        # A composite PK with a repeated column name has no well-defined
+        # tuple identity, and the downstream FK planner keys resolutions
+        # on ``(table, column)`` — a typo'd ``PrimaryKey(columns=["a", "a"])``
+        # silently produces a single FK resolution and no signal back
+        # to the user.  Reject at plan time, same shape as
+        # ``StructColumn.validate_unique_field_names``.
+        if len(set(self.columns)) != len(self.columns):
+            dupes = sorted(name for name, count in Counter(self.columns).items() if count > 1)
+            raise ValueError(
+                f"PrimaryKey has duplicate column names: {dupes}.  "
+                f"Each column may appear at most once in a composite key."
+            )
+        return self
 
 
 class ForeignKeyRef(_StrictModel):

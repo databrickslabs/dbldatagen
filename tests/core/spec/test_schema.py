@@ -497,6 +497,26 @@ class TestPrimaryKey:
         with pytest.raises(ValueError, match="at least 1 item"):
             PrimaryKey(columns=[])
 
+    def test_duplicate_columns_rejected(self):
+        """``PrimaryKey(columns=["a", "a"])`` has no well-defined tuple
+        identity; the downstream FK planner keys resolutions on
+        ``(table, column)``, so a typo'd duplicate silently produced
+        a single FK resolution and no signal to the user.  Reject at
+        plan time."""
+        with pytest.raises(ValueError, match=r"duplicate column names: \['a'\]"):
+            PrimaryKey(columns=["a", "a"])
+
+    def test_duplicate_columns_in_composite_rejected(self):
+        """Mid-list duplicates in a longer composite PK also caught."""
+        with pytest.raises(ValueError, match=r"duplicate column names: \['a'\]"):
+            PrimaryKey(columns=["a", "b", "a"])
+
+    def test_multiple_duplicates_listed(self):
+        """All duplicated names appear in the error so the user can
+        fix every typo in one round."""
+        with pytest.raises(ValueError, match=r"duplicate column names: \['a', 'b'\]"):
+            PrimaryKey(columns=["a", "b", "a", "b"])
+
 
 # ---------------------------------------------------------------------------
 # ForeignKeyRef
