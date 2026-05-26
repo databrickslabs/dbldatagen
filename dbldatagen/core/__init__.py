@@ -4,7 +4,7 @@ from __future__ import annotations
 
 
 try:
-    import pydantic  # noqa: F401
+    import pydantic  # noqa: F401  # imported only to trigger the friendly install hint below at load time
 except ImportError:
     raise ImportError(
         "dbldatagen.core requires pydantic>=2.0. " "Install with: pip install 'dbldatagen[core]'"
