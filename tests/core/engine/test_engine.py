@@ -350,6 +350,30 @@ class TestPatternColumn:
         with pytest.raises(ValueError, match=r"hex:N.*width must be <= 15"):
             build_pattern_column("id", 0, "{hex:16}")
 
+    def test_alpha_width_cap(self):
+        """{alpha:N} with N > 64 is rejected — alpha materialises one
+        xxhash64 + substring expression per character, so width
+        directly controls per-row Catalyst plan size."""
+        with pytest.raises(ValueError, match=r"alpha:N.*width must be <= 64"):
+            build_pattern_column("id", 0, "{alpha:65}")
+
+    def test_alpha_at_cap_accepted(self):
+        """Boundary: {alpha:64} is exactly at the cap and must pass."""
+        # No assertion on value content -- this only pins that the
+        # boundary is inclusive (matches the existing digit/hex caps,
+        # which reject ``> _MAX``, not ``>= _MAX``).
+        build_pattern_column("id", 0, "{alpha:64}")
+
+    def test_seq_width_cap(self):
+        """{seq:N} with N > 24 is rejected — F.lpad emits width-char
+        strings per row, so unbounded width is a per-row size DoS."""
+        with pytest.raises(ValueError, match=r"seq:N.*width must be <= 24"):
+            build_pattern_column("id", 0, "{seq:25}")
+
+    def test_seq_at_cap_accepted(self):
+        """Boundary: {seq:24} is exactly at the cap and must pass."""
+        build_pattern_column("id", 0, "{seq:24}")
+
     def test_uuid_placeholder_emits_uuid(self, spark):
         """``{uuid}`` produces a 36-char UUID inside a template.
 

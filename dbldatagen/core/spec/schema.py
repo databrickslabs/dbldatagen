@@ -416,10 +416,12 @@ class PatternColumn(_StrictModel):
     Example: ``"ORD-{digit:4}-{alpha:3}"`` -> ``"ORD-3847-KMX"``
 
     The ``{uuid}`` placeholder is a fixed-width 36-character literal
-    (no ``:N`` modifier).  ``{digit:N}`` and ``{hex:N}`` are capped at
-    a width that fits in 64 random bits to keep generation
-    branch-free; the engine raises ``ValueError`` at materialisation
-    for widths beyond that.
+    (no ``:N`` modifier).  Every ``{kind:N}`` placeholder has a
+    per-kind width ceiling (``{digit:N}`` 18, ``{hex:N}`` 15,
+    ``{alpha:N}`` 64, ``{seq:N}`` 24); the engine raises ``ValueError``
+    for widths beyond that.  The digit/hex caps come from int64-fit
+    requirements (``pmod(seed, base**width)``); the alpha/seq caps
+    bound per-row Catalyst plan size and emitted string length.
 
     Attributes:
         strategy: Discriminator literal; always ``"pattern"``.

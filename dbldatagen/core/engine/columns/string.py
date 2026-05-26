@@ -74,13 +74,22 @@ def build_values_column(
 
 _PLACEHOLDER_RE = re.compile(r"\{(seq|uuid|digit|alpha|hex):?(\d+)?[a-z]?\}")
 
-# Max widths for {digit:N} and {hex:N}: both use pmod(seed, base**width),
-# and F.lit(base**width) must fit in int64. 10**18 and 16**15 do; 10**19
-# and 16**16 don't. These ceilings are comfortably above any realistic
-# PK-pattern use; the guard gives a clear error instead of a py4j long
-# conversion failure.
+# Per-placeholder width caps. The rationale differs by kind:
+#   * {digit:N} / {hex:N}: both use pmod(seed, base**width), and
+#     F.lit(base**width) must fit in int64. 10**18 and 16**15 do;
+#     10**19 and 16**16 don't. The guard gives a clear error instead
+#     of a py4j long-conversion failure.
+#   * {alpha:N}: each character materialises a separate xxhash64 +
+#     substring expression that gets concat'd, so width directly
+#     controls the per-row Catalyst plan size. 64 is comfortably
+#     above any realistic token use.
+#   * {seq:N}: F.lpad(value, width, "0") doesn't bomb Catalyst (one
+#     expression) but emits width-character strings per row. 24
+#     covers sequence values up to 10**24 with zero-padding.
 _MAX_DIGIT_WIDTH = 18
 _MAX_HEX_WIDTH = 15
+_MAX_ALPHA_WIDTH = 64
+_MAX_SEQ_WIDTH = 24
 
 
 def build_pattern_column(
@@ -108,8 +117,9 @@ def build_pattern_column(
 
     Raises:
         ValueError: ``{uuid}`` placeholder carries a width modifier,
-          or ``{digit:N}`` / ``{hex:N}`` width exceeds the engine's
-          int64-fit ceiling (18 for digit, 15 for hex).
+          or any ``{kind:N}`` width exceeds its per-kind ceiling
+          (``{digit:N}`` 18, ``{hex:N}`` 15, ``{alpha:N}`` 64,
+          ``{seq:N}`` 24).
     """
     if isinstance(id_col, str):
         id_col = F.col(id_col)
@@ -126,6 +136,8 @@ def build_pattern_column(
         width = int(m.group(2)) if m.group(2) else 1
 
         if kind == "seq":
+            if width > _MAX_SEQ_WIDTH:
+                raise ValueError(f"{{seq:N}} width must be <= {_MAX_SEQ_WIDTH} (got {width})")
             parts.append(F.lpad((id_col + F.lit(1)).cast("string"), width, "0"))
         elif kind == "uuid":
             # {uuid} has no width modifier -- a 36-char UUID with the
@@ -214,6 +226,8 @@ def _random_alpha(
 
     Each character is derived from a separate hash to ensure independence.
     """
+    if width > _MAX_ALPHA_WIDTH:
+        raise ValueError(f"{{alpha:N}} width must be <= {_MAX_ALPHA_WIDTH} (got {width})")
     mixed_seed = _seed_xor(column_seed, (idx + 1) * GOLDEN_RATIO_HASH)
     seed_col = F.lit(mixed_seed).cast("long")
     chars: list[Column] = []
