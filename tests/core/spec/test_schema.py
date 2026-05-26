@@ -387,6 +387,67 @@ class TestColumnSpec:
         col = ColumnSpec(name="x", dtype=DataType.DECIMAL, gen=RangeColumn(min=0, max=10**17))
         assert col.precision is None
 
+    def test_values_column_exceeds_precision_rejected(self):
+        """``ValuesColumn(values=[100000])`` on ``decimal(5, 0)`` (max 99999)
+        overflows after cast; previously this passed Pydantic and surfaced
+        as Spark's ``NUMERIC_VALUE_OUT_OF_RANGE`` deep in the job."""
+        with pytest.raises(ValueError, match="does not fit in decimal"):
+            ColumnSpec(
+                name="x",
+                dtype=DataType.DECIMAL,
+                gen=ValuesColumn(values=[1, 50, 100000]),
+                precision=5,
+                scale=0,
+            )
+
+    def test_values_column_negative_exceeds_precision_rejected(self):
+        """Magnitude check covers negative outliers too."""
+        with pytest.raises(ValueError, match="does not fit in decimal"):
+            ColumnSpec(
+                name="x",
+                dtype=DataType.DECIMAL,
+                gen=ValuesColumn(values=[-1000000, 0, 5]),
+                precision=5,
+                scale=0,
+            )
+
+    def test_values_column_at_max_representable_ok(self):
+        """99999 is the max representable in decimal(5, 0); must not false-fail."""
+        col = ColumnSpec(
+            name="x",
+            dtype=DataType.DECIMAL,
+            gen=ValuesColumn(values=[0, 1, 99999]),
+            precision=5,
+            scale=0,
+        )
+        assert col.precision == 5
+
+    def test_values_column_with_floats_checked(self):
+        """Float values are walked too; 999.99 fits in decimal(5, 2),
+        1000.0 does not (limit = 1000)."""
+        with pytest.raises(ValueError, match="does not fit in decimal"):
+            ColumnSpec(
+                name="x",
+                dtype=DataType.DECIMAL,
+                gen=ValuesColumn(values=[1.5, 999.99, 1000.0]),
+                precision=5,
+                scale=2,
+            )
+
+    def test_values_column_non_numeric_skipped(self):
+        """Non-numeric values are skipped (a string ValuesColumn paired
+        with dtype=DECIMAL is a different misconfiguration -- the
+        decimal-fit validator must not crash on the list walk)."""
+        # No numeric values → no check → no false-positive raise.
+        col = ColumnSpec(
+            name="x",
+            dtype=DataType.DECIMAL,
+            gen=ValuesColumn(values=["a", "b"]),
+            precision=5,
+            scale=0,
+        )
+        assert col.precision == 5
+
     def test_dtype_can_be_none(self):
         col = ColumnSpec(name="x", gen=RangeColumn())
         assert col.dtype is None
@@ -909,6 +970,79 @@ class TestSequenceColumnOverflowGuard:
                 ],
                 rows=100,
             )
+
+    def test_sequence_overflows_decimal_precision(self):
+        """``SequenceColumn(start=1, step=1)`` over 10**6 rows reaches
+        last_val = 1_000_000, which does not fit in decimal(5, 0)
+        (max 99999).  Previously surfaced as Spark's
+        ``NUMERIC_VALUE_OUT_OF_RANGE`` at cast time; now caught at
+        plan time."""
+        with pytest.raises(ValueError, match=r"does not fit in decimal\(5, 0\)"):
+            TableSpec(
+                name="t",
+                columns=[
+                    ColumnSpec(
+                        name="c",
+                        dtype=DataType.DECIMAL,
+                        gen=SequenceColumn(start=1, step=1),
+                        precision=5,
+                        scale=0,
+                    )
+                ],
+                rows=10**6,
+            )
+
+    def test_sequence_at_decimal_max_ok(self):
+        """``SequenceColumn(start=1, step=1)`` over 99999 rows hits
+        last_val = 99999, exactly the max representable in
+        decimal(5, 0).  Must not false-fail at the boundary."""
+        TableSpec(
+            name="t",
+            columns=[
+                ColumnSpec(
+                    name="c",
+                    dtype=DataType.DECIMAL,
+                    gen=SequenceColumn(start=1, step=1),
+                    precision=5,
+                    scale=0,
+                )
+            ],
+            rows=99999,
+        )
+
+    def test_sequence_negative_step_overflows_decimal(self):
+        """With a descending step, ``start`` is the magnitude-max; the
+        check must catch overflow at row 0, not just at last_val."""
+        with pytest.raises(ValueError, match=r"does not fit in decimal\(5, 0\)"):
+            TableSpec(
+                name="t",
+                columns=[
+                    ColumnSpec(
+                        name="c",
+                        dtype=DataType.DECIMAL,
+                        gen=SequenceColumn(start=200_000, step=-1),
+                        precision=5,
+                        scale=0,
+                    )
+                ],
+                rows=10,
+            )
+
+    def test_sequence_decimal_check_skipped_when_precision_unset(self):
+        """Mirrors RangeColumn behavior: without explicit precision/scale
+        the DECIMAL check defers to Spark's DecimalType(10, 0) default
+        and is not enforced at plan time."""
+        TableSpec(
+            name="t",
+            columns=[
+                ColumnSpec(
+                    name="c",
+                    dtype=DataType.DECIMAL,
+                    gen=SequenceColumn(start=1, step=1),
+                )
+            ],
+            rows=10**6,  # exceeds DecimalType(10,0) max but plan-time check is off
+        )
 
 
 class TestExtrasForbid:

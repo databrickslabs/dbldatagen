@@ -22,6 +22,7 @@ from __future__ import annotations
 import re
 import warnings
 from collections import Counter
+from decimal import Decimal
 from enum import Enum
 from typing import Annotated, Any, Literal
 
@@ -996,6 +997,21 @@ class ColumnSpec(_StrictModel):
                     f"does not fit in decimal({precision}, {scale}) "
                     f"(max representable magnitude is {max_repr})"
                 )
+        elif isinstance(self.gen, ValuesColumn):
+            # Walk numeric entries once; non-numeric values are skipped
+            # (a string-typed ValuesColumn paired with dtype=DECIMAL is
+            # a different misconfiguration handled elsewhere).
+            limit = 10 ** (precision - scale)
+            numeric_values = [v for v in self.gen.values if isinstance(v, (int, float, Decimal))]
+            if numeric_values:
+                offending = max(numeric_values, key=abs)
+                if abs(offending) >= limit:
+                    max_repr = limit - 10**-scale
+                    raise ValueError(
+                        f"Column '{self.name}': value {offending} in ValuesColumn "
+                        f"does not fit in decimal({precision}, {scale}) "
+                        f"(max representable magnitude is {max_repr})"
+                    )
         return self
 
     @model_validator(mode="after")
@@ -1276,6 +1292,31 @@ class TableSpec(_StrictModel):
                     f"Pick a smaller ``step`` or ``start`` (or reduce "
                     f"``rows``)."
                 )
+            # DECIMAL bounds fit: lands the failure at plan time
+            # instead of as a NUMERIC_VALUE_OUT_OF_RANGE at cast time
+            # in Spark.  Only when precision/scale are explicit -- the
+            # None/None default defers to Spark's DecimalType(10, 0)
+            # and inherits its rounding, matching the RangeColumn
+            # behavior in ``ColumnSpec.validate_decimal_precision_scale``.
+            if (
+                col_spec.dtype == DataType.DECIMAL
+                and col_spec.precision is not None
+                and col_spec.scale is not None
+            ):
+                decimal_limit = 10 ** (col_spec.precision - col_spec.scale)
+                # start is the magnitude-max when step is negative;
+                # last_val is the magnitude-max when step is positive.
+                max_abs = max(abs(start), abs(last_val))
+                if max_abs >= decimal_limit:
+                    max_repr = decimal_limit - 10**-col_spec.scale
+                    raise ValueError(
+                        f"Table '{self.name}' column '{col_spec.name}': "
+                        f"SequenceColumn(start={start}, step={step}) over "
+                        f"{self.rows} rows would emit {last_val} at the last "
+                        f"row, which does not fit in "
+                        f"decimal({col_spec.precision}, {col_spec.scale}) "
+                        f"(max representable magnitude is {max_repr})."
+                    )
         return self
 
 
