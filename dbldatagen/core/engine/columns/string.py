@@ -72,7 +72,7 @@ def build_values_column(
 # Pattern column  (template-based string generation)
 # ---------------------------------------------------------------------------
 
-_PLACEHOLDER_RE = re.compile(r"\{(seq|uuid|digit|alpha|hex):?(\d+)?[a-z]?\}")
+_PLACEHOLDER_RE = re.compile(r"\{(seq|uuid|digit|alpha|hex):?(\d+)?\}")
 
 # Per-placeholder width caps. The rationale differs by kind:
 #   * {digit:N} / {hex:N}: both use pmod(seed, base**width), and

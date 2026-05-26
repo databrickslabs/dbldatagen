@@ -305,12 +305,28 @@ class TestPatternColumn:
         values = [r.sid for r in df.collect()]
         assert values == ["STORE-0001", "STORE-0002", "STORE-0003", "STORE-0004", "STORE-0005"]
 
-    def test_seq_pattern_with_d_suffix(self, spark):
-        """Pattern '{seq:06d}' (Python-style format) also works."""
-        col_seed = derive_column_seed(42, "t", "product_id")
-        df = spark.range(3).select(build_pattern_column("id", col_seed, "PROD-{seq:06d}").alias("pid"))
-        values = [r.pid for r in df.collect()]
-        assert values == ["PROD-000001", "PROD-000002", "PROD-000003"]
+    def test_malformed_placeholder_passes_through_as_literal(self, spark):
+        """Placeholders with a trailing non-digit character (``{seq:06d}``,
+        ``{digit:4a}``, ``{alpha:3x}``, ``{seq:y}``) do not match
+        ``_PLACEHOLDER_RE`` and are emitted verbatim into the output
+        string.
+
+        Pins the removal of an undocumented trailing ``[a-z]?`` group
+        from the placeholder regex that previously silently consumed
+        the letter, masquerading as Python-style format-spec support
+        (``{seq:06d}`` produced the same output as ``{seq:6}`` because
+        the ``d`` was dropped and ``lpad`` always pads with ``"0"``).
+        Literal pass-through is the intended failure mode: a malformed
+        placeholder appears in the data so the typo is visible, rather
+        than being silently re-interpreted.
+        """
+        col_seed = derive_column_seed(42, "t", "p")
+        for template in ("PROD-{seq:06d}", "X-{digit:4a}", "{alpha:3x}", "Y-{seq:y}"):
+            df = spark.range(2).select(build_pattern_column("id", col_seed, template).alias("v"))
+            values = [r.v for r in df.collect()]
+            assert all(v == template for v in values), (
+                f"template {template!r} should pass through as literal; got {values}"
+            )
 
     def test_alpha_pattern(self, spark):
         """Pattern '{alpha:3}' produces 3 uppercase letters."""
