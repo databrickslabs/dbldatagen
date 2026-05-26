@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import datetime
 import re
+import sys
 
 import pytest
 from pyspark.sql import functions as F
@@ -44,6 +45,45 @@ class TestParseEpochError:
     def test_partial_date_raises(self):
         with pytest.raises(ValueError, match="Cannot parse datetime string"):
             _parse_epoch("2023-13-45")
+
+
+class TestParseEpochSchemaParity:
+    """Pin that ``_parse_epoch`` accepts the same strings the schema's
+    ``TimestampColumn.validate_timestamps`` accepts (both call
+    ``datetime.fromisoformat``), and that TZ offsets resolve to the
+    correct UTC epoch instead of being reinterpreted as UTC wall-clock.
+
+    Previously ``_parse_epoch`` used ``strptime`` against three fixed
+    formats with no ``%z`` and no fractional seconds, so plans like
+    ``TimestampColumn(start="2024-01-15T10:00:00+02:00", ...)`` passed
+    schema validation and then raised at materialisation.  The parity
+    fix landed in commit 72bc82f; this class is the regression pin.
+    """
+
+    def test_fractional_seconds_accepted(self):
+        # Six-digit fractional second works on Python 3.10+ (the project
+        # minimum); the single-digit form ``.5`` and ``Z`` suffix require
+        # 3.11+ and are pinned in the gated test below.
+        assert _parse_epoch("2024-01-15T10:00:00.123456") == 1_705_312_800
+
+    def test_naive_datetime_treated_as_utc(self):
+        # Reference value: a bare datetime with no offset is treated as
+        # UTC so the engine remains session-TZ-independent.
+        assert _parse_epoch("2024-01-15T10:00:00") == 1_705_312_800
+
+    def test_tz_aware_offset_converted_to_utc_epoch(self):
+        # 10:00 at +02:00 is 08:00 UTC — epoch 1_705_305_600, NOT
+        # 1_705_312_800 (which would mean the offset was silently
+        # dropped via ``.replace(tzinfo=utc)``).  This pins the
+        # tz-aware branch's correctness.
+        assert _parse_epoch("2024-01-15T10:00:00+02:00") == 1_705_305_600
+
+    @pytest.mark.skipif(
+        sys.version_info < (3, 11),
+        reason="datetime.fromisoformat accepts the 'Z' suffix only on Python 3.11+",
+    )
+    def test_z_suffix_treated_as_utc(self):
+        assert _parse_epoch("2024-01-15T10:00:00Z") == 1_705_312_800
 
 
 class TestTimestampDegenerateRange:
