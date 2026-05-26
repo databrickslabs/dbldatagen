@@ -1181,10 +1181,15 @@ def parse_human_count(value: int | str) -> int:
         return value
     suffixes = {"K": 1_000, "M": 1_000_000, "B": 1_000_000_000}
     s = str(value).strip().upper()
-    for suffix, mult in suffixes.items():
-        if s.endswith(suffix):
-            return int(float(s[: -len(suffix)]) * mult)
+    # Single try/except covers both branches so a malformed suffix
+    # mantissa ('K' / '1.5.0K') gets the same friendly wrap as a
+    # malformed plain-int input ('abc'); previously only the plain-int
+    # path was wrapped and the float() call below leaked the raw
+    # "could not convert string to float" message.
     try:
+        for suffix, mult in suffixes.items():
+            if s.endswith(suffix):
+                return int(float(s[: -len(suffix)]) * mult)
         return int(s)
     except ValueError:
         raise ValueError(

@@ -583,6 +583,27 @@ class TestTableSpec:
         t = TableSpec(name="t", columns=self._make_columns(), rows="10m")
         assert t.rows == 10_000_000
 
+    def test_rows_string_empty_mantissa_friendly_error(self):
+        """``"K"`` has no digits before the suffix; the float()
+        conversion previously leaked a raw "could not convert string
+        to float: ''" message.  Now wrapped by the same friendly
+        guard as the plain-int path."""
+        with pytest.raises(ValueError, match=r"Invalid row count 'K'"):
+            TableSpec(name="t", columns=self._make_columns(), rows="K")
+
+    def test_rows_string_malformed_mantissa_friendly_error(self):
+        """``"1.5.0K"`` has a malformed mantissa; same wrap as the
+        empty-mantissa case."""
+        with pytest.raises(ValueError, match=r"Invalid row count '1\.5\.0K'"):
+            TableSpec(name="t", columns=self._make_columns(), rows="1.5.0K")
+
+    def test_rows_string_garbage_friendly_error(self):
+        """Plain garbage with no suffix still hits the friendly wrap
+        — pin that the int()-path branch of the unified try/except
+        still raises with the same message shape."""
+        with pytest.raises(ValueError, match=r"Invalid row count 'abc'"):
+            TableSpec(name="t", columns=self._make_columns(), rows="abc")
+
     def test_primary_key(self):
         t = TableSpec(
             name="t",
