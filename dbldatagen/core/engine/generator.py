@@ -356,7 +356,7 @@ def _build_regular_column_expr(
     return apply_null_fraction(expr, column_seed, id_col, col_spec.null_fraction)
 
 
-def build_column_expr(  # noqa: PLR0911
+def build_column_expr(
     col_spec: ColumnSpec,
     id_col: Column,
     column_seed: int,
@@ -397,93 +397,91 @@ def build_column_expr(  # noqa: PLR0911
         ValueError: ``col_spec.gen`` is an unsupported strategy.
           Includes ``FakerColumn`` (handled out-of-band by
           ``_build_faker_expr`` as a column-level pandas_udf) and
-          any future strategy that lacks an ``isinstance`` branch
+          any future strategy that lacks a ``case`` arm
           above.
     """
     gen = col_spec.gen
-
-    if isinstance(gen, RangeColumn):
-        return build_range_column(
-            id_col,
-            column_seed,
-            gen.min,
-            gen.max,
-            distribution=gen.distribution,
-            dtype=col_spec.dtype,
-            precision=col_spec.precision,
-            scale=col_spec.scale,
-        )
-
-    if isinstance(gen, ValuesColumn):
-        return build_values_column(
-            id_col,
-            column_seed,
-            gen.values,
-            distribution=gen.distribution,
-        )
-
-    if isinstance(gen, PatternColumn):
-        return build_pattern_column(id_col, column_seed, gen.template)
-
-    if isinstance(gen, SequenceColumn):
-        return build_sequential_pk(id_col, start=gen.start, step=gen.step)
-
-    if isinstance(gen, UUIDColumn):
-        return build_uuid_column(id_col, column_seed)
-
-    if isinstance(gen, ExpressionColumn):
-        return build_expression_column(gen.expr)
-
-    if isinstance(gen, TimestampColumn):
-        if col_spec.dtype == DataType.DATE:
-            return build_date_column(
+    match gen:
+        case RangeColumn():
+            result = build_range_column(
+                id_col,
+                column_seed,
+                gen.min,
+                gen.max,
+                distribution=gen.distribution,
+                dtype=col_spec.dtype,
+                precision=col_spec.precision,
+                scale=col_spec.scale,
+            )
+        case ValuesColumn():
+            result = build_values_column(
+                id_col,
+                column_seed,
+                gen.values,
+                distribution=gen.distribution,
+            )
+        case PatternColumn():
+            result = build_pattern_column(id_col, column_seed, gen.template)
+        case SequenceColumn():
+            result = build_sequential_pk(id_col, start=gen.start, step=gen.step)
+        case UUIDColumn():
+            result = build_uuid_column(id_col, column_seed)
+        case ExpressionColumn():
+            result = build_expression_column(gen.expr)
+        case TimestampColumn() if col_spec.dtype == DataType.DATE:
+            result = build_date_column(
                 id_col,
                 column_seed,
                 gen.start,
                 gen.end,
                 gen.distribution,
             )
-        return build_timestamp_column(
-            id_col,
-            column_seed,
-            gen.start,
-            gen.end,
-            gen.distribution,
-        )
-
-    if isinstance(gen, ConstantColumn):
-        return build_constant_column(gen.value)
-
-    if isinstance(gen, ForeignKeyColumn):
-        # FK columns are resolved earlier via ColumnSpec.foreign_key in
-        # _build_fk_column_expr. Reaching dispatch means either the column
-        # had no foreign_key set (should have been caught by ColumnSpec's
-        # validator) or the FK loop short-circuit was bypassed.
-        raise RuntimeError(
-            f"ForeignKeyColumn '{col_spec.name}' reached build_column_expr — "
-            f"FK resolution must run before column-strategy dispatch. "
-            f"Check that ColumnSpec.foreign_key is set and the planner has "
-            f"produced an FKResolution for this column."
-        )
-
-    if isinstance(gen, StructColumn):
-        return _build_struct_column(
-            gen,
-            id_col,
-            column_seed,
-            row_count,
-            global_seed,
-            parent_col_name=col_spec.name,
-        )
-
-    if isinstance(gen, ArrayColumn):
-        return _build_array_column(gen, id_col, column_seed, row_count, global_seed)
-
-    raise ValueError(
-        f"Unsupported column strategy '{gen.strategy}' for column '{col_spec.name}'. "
-        f"Supported: range, values, faker, pattern, sequence, uuid, expression, "
-        f"timestamp, constant, foreign_key, struct, array."
-    )
+        case TimestampColumn():
+            result = build_timestamp_column(
+                id_col,
+                column_seed,
+                gen.start,
+                gen.end,
+                gen.distribution,
+            )
+        case ConstantColumn():
+            result = build_constant_column(gen.value)
+        case ForeignKeyColumn():
+            # FK columns are resolved earlier via ColumnSpec.foreign_key in
+            # _build_fk_column_expr. Reaching dispatch means either the column
+            # had no foreign_key set (should have been caught by ColumnSpec's
+            # validator) or the FK loop short-circuit was bypassed.
+            raise RuntimeError(
+                f"ForeignKeyColumn '{col_spec.name}' reached build_column_expr — "
+                f"FK resolution must run before column-strategy dispatch. "
+                f"Check that ColumnSpec.foreign_key is set and the planner has "
+                f"produced an FKResolution for this column."
+            )
+        case StructColumn():
+            result = _build_struct_column(
+                gen,
+                id_col,
+                column_seed,
+                row_count,
+                global_seed,
+                parent_col_name=col_spec.name,
+            )
+        case ArrayColumn():
+            result = _build_array_column(gen, id_col, column_seed, row_count, global_seed)
+        case _:
+            # Drift guard: ColumnSpec.gen is a Pydantic discriminated
+            # union whose declared members are exactly the cases above
+            # (minus FakerColumn, which is dispatched out-of-band via
+            # _build_faker_expr).  Reaching this arm means either a new
+            # strategy type was added to the schema without a dispatch
+            # case here, or FakerColumn slipped past the FK / Faker
+            # short-circuits in _build_column_exprs_loop.
+            raise ValueError(
+                f"Unsupported column strategy '{gen.strategy}' for column '{col_spec.name}'. "
+                f"Supported: range, values, faker, pattern, sequence, uuid, expression, "
+                f"timestamp, constant, foreign_key, struct, array."
+            )
+    return result
 
 
 def _build_struct_column(
