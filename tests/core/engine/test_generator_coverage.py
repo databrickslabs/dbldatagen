@@ -27,7 +27,7 @@ from dbldatagen.core.spec.schema import (
 
 class TestSeedFromWithFaker:
     def test_seed_from_faker_column(self, spark):
-        """seed_from + FakerColumn routes through _build_faker_expr with effective_id."""
+        """seed_from + FakerColumn routes through build_faker_expr with effective_id."""
         spec = TableSpec(
             name="t",
             rows=50,

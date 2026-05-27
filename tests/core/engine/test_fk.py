@@ -177,7 +177,7 @@ class TestFKNullable:
         a ResolvedPlan must raise, not silently emit an all-NULL column.
 
         The ForeignKeyColumn strategy was added (a78597b) to close the
-        silent-NULL class; an earlier branch in _build_fk_column_expr
+        silent-NULL class; an earlier branch in build_fk_column_expr
         re-introduced it by returning None on missing resolution, which
         the caller translated into ``F.lit(None)``.
         """

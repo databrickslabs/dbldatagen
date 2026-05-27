@@ -13,6 +13,9 @@ from pyspark.sql import Column
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 
+from dbldatagen.core.engine.utils import apply_null_fraction
+from dbldatagen.core.spec.schema import ColumnSpec, FakerColumn
+
 
 def build_faker_column(
     id_col: Column,
@@ -102,3 +105,34 @@ def build_faker_column(
         return pd.Series(pool_array[indices.astype(np.intp)])
 
     return _faker_pool_udf(id_col)  # type: ignore[no-any-return]
+
+
+def build_faker_expr(
+    col_spec: ColumnSpec,
+    id_col: Column,
+    column_seed: int,
+) -> tuple[str, Column]:
+    """Dispatch-layer entry point for Faker columns.
+
+    Validates the ColumnSpec's ``gen`` is a ``FakerColumn`` (the
+    upstream loop's invariant), builds the Faker pool UDF expression
+    via ``build_faker_column``, and wraps with the null mask if
+    ``null_fraction > 0``.
+
+    Lives next to ``build_faker_column`` so the Faker-specific
+    pre-flight check and the actual UDF construction share a module.
+    """
+    if not isinstance(col_spec.gen, FakerColumn):
+        raise RuntimeError(
+            f"build_faker_expr called for '{col_spec.name}' with non-FakerColumn gen "
+            f"{type(col_spec.gen).__name__}; dispatcher invariant bypassed"
+        )
+    faker_expr = build_faker_column(
+        id_col,
+        column_seed,
+        provider=col_spec.gen.provider,
+        kwargs=col_spec.gen.kwargs or None,
+        locale=col_spec.gen.locale,
+    )
+    faker_expr = apply_null_fraction(faker_expr, column_seed, id_col, col_spec.null_fraction)
+    return (col_spec.name, faker_expr)

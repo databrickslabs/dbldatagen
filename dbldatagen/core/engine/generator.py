@@ -10,7 +10,7 @@ from __future__ import annotations
 from pyspark.sql import Column, DataFrame, SparkSession
 from pyspark.sql import functions as F
 
-from dbldatagen.core.engine.columns.faker_pool import build_faker_column
+from dbldatagen.core.engine.columns.faker_pool import build_faker_expr
 from dbldatagen.core.engine.columns.numeric import build_range_column
 from dbldatagen.core.engine.columns.pk import (
     build_sequential_pk,
@@ -23,7 +23,7 @@ from dbldatagen.core.engine.columns.string import (
 )
 from dbldatagen.core.engine.columns.temporal import build_date_column, build_timestamp_column
 from dbldatagen.core.engine.columns.uuid import build_uuid_column
-from dbldatagen.core.engine.fk import build_fk_column
+from dbldatagen.core.engine.fk import build_fk_column_expr
 from dbldatagen.core.engine.planner import FKResolution, ResolvedPlan
 from dbldatagen.core.engine.seed import GOLDEN_RATIO_HASH, cell_seed_expr, derive_column_seed, to_signed64
 from dbldatagen.core.engine.utils import apply_column_phases, apply_null_fraction, create_range_df
@@ -222,11 +222,11 @@ def _build_column_exprs_loop(
             seeded_columns.append(result)
             continue
 
-        # FK columns — _build_fk_column_expr raises if the resolution
+        # FK columns — build_fk_column_expr raises if the resolution
         # is missing, so we never silently emit an all-NULL column.
         if col_spec.foreign_key is not None:
             udf_columns.append(
-                _build_fk_column_expr(
+                build_fk_column_expr(
                     col_spec,
                     table_name,
                     id_col,
@@ -238,7 +238,7 @@ def _build_column_exprs_loop(
 
         # Faker columns
         if isinstance(col_spec.gen, FakerColumn):
-            udf_columns.append(_build_faker_expr(col_spec, id_col, column_seed))
+            udf_columns.append(build_faker_expr(col_spec, id_col, column_seed))
             continue
 
         # Regular columns
@@ -270,64 +270,11 @@ def _build_seed_from_column(
     effective_id = F.col(col_spec.seed_from)
 
     if isinstance(col_spec.gen, FakerColumn):
-        return _build_faker_expr(col_spec, effective_id, column_seed)
+        return build_faker_expr(col_spec, effective_id, column_seed)
 
     expr = build_column_expr(col_spec, effective_id, column_seed, row_count, global_seed)
     expr = apply_null_fraction(expr, column_seed, effective_id, col_spec.null_fraction)
     return (col_spec.name, expr.alias(col_spec.name))
-
-
-def _build_fk_column_expr(
-    col_spec: ColumnSpec,
-    table_name: str,
-    id_col: Column,
-    column_seed: int,
-    fk_resolutions: dict[tuple[str, str], FKResolution] | None,
-) -> tuple[str, Column]:
-    """Build FK column expression; raise if resolution is missing.
-
-    The ForeignKeyColumn strategy was introduced specifically to close
-    the silent-all-NULL class of bug (commit a78597b).  Returning None
-    here — which the caller previously translated into
-    ``F.lit(None).alias(...)`` — reintroduced it: a direct call to
-    ``generate_table`` without a ``ResolvedPlan`` carrying the FK map
-    silently produced an all-NULL column instead of surfacing the
-    missing resolution.  Raise a clear error that names the column and
-    the expected call sequence so the failure is impossible to miss.
-    """
-    fk_key = (table_name, col_spec.name)
-    if fk_resolutions is None or fk_key not in fk_resolutions:
-        raise RuntimeError(
-            f"FK column '{table_name}.{col_spec.name}' has no FKResolution — "
-            f"caller must resolve the plan (via ``resolve_plan`` / ``generate``) "
-            f"before reaching ``build_column_expr``.  Calling ``generate_table`` "
-            f"directly requires passing a ``ResolvedPlan`` that includes this "
-            f"column's FK."
-        )
-    fk_expr = build_fk_column(id_col, column_seed, fk_resolutions[fk_key])
-    return (col_spec.name, fk_expr)
-
-
-def _build_faker_expr(
-    col_spec: ColumnSpec,
-    id_col: Column,
-    column_seed: int,
-) -> tuple[str, Column]:
-    """Build a Faker pool UDF expression."""
-    if not isinstance(col_spec.gen, FakerColumn):
-        raise RuntimeError(
-            f"_build_faker_expr called for '{col_spec.name}' with non-FakerColumn gen "
-            f"{type(col_spec.gen).__name__}; dispatcher invariant bypassed"
-        )
-    faker_expr = build_faker_column(
-        id_col,
-        column_seed,
-        provider=col_spec.gen.provider,
-        kwargs=col_spec.gen.kwargs or None,
-        locale=col_spec.gen.locale,
-    )
-    faker_expr = apply_null_fraction(faker_expr, column_seed, id_col, col_spec.null_fraction)
-    return (col_spec.name, faker_expr)
 
 
 def _build_regular_column_expr(
@@ -384,12 +331,12 @@ def build_column_expr(
 
     Raises:
         RuntimeError: ``col_spec.gen`` is ``ForeignKeyColumn``.  FK
-          resolution must run earlier via ``_build_fk_column_expr``;
+          resolution must run earlier via ``build_fk_column_expr``;
           reaching this dispatch means the FK short-circuit in
           ``_build_column_exprs_loop`` was bypassed.
         ValueError: ``col_spec.gen`` is an unsupported strategy.
           Includes ``FakerColumn`` (handled out-of-band by
-          ``_build_faker_expr`` as a column-level pandas_udf) and
+          ``build_faker_expr`` as a column-level pandas_udf) and
           any future strategy that lacks a ``case`` arm
           above.
     """
@@ -442,7 +389,7 @@ def build_column_expr(
             result = build_constant_column(gen.value)
         case ForeignKeyColumn():
             # FK columns are resolved earlier via ColumnSpec.foreign_key in
-            # _build_fk_column_expr. Reaching dispatch means either the column
+            # build_fk_column_expr. Reaching dispatch means either the column
             # had no foreign_key set (should have been caught by ColumnSpec's
             # validator) or the FK loop short-circuit was bypassed.
             raise RuntimeError(
@@ -466,7 +413,7 @@ def build_column_expr(
             # Drift guard: ColumnSpec.gen is a Pydantic discriminated
             # union whose declared members are exactly the cases above
             # (minus FakerColumn, which is dispatched out-of-band via
-            # _build_faker_expr).  Reaching this arm means either a new
+            # build_faker_expr).  Reaching this arm means either a new
             # strategy type was added to the schema without a dispatch
             # case here, or FakerColumn slipped past the FK / Faker
             # short-circuits in _build_column_exprs_loop.

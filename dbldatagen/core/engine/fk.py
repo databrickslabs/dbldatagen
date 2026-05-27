@@ -14,6 +14,7 @@ from dbldatagen.core.engine.columns.uuid import build_uuid_column
 from dbldatagen.core.engine.distributions import apply_distribution
 from dbldatagen.core.engine.planner import FKResolution, PKMetadata
 from dbldatagen.core.engine.seed import cell_seed_expr, null_mask_expr
+from dbldatagen.core.spec.schema import ColumnSpec
 
 
 def build_fk_column(
@@ -105,3 +106,40 @@ def _reconstruct_parent_pk(parent_index_col: Column, meta: PKMetadata) -> Column
         f"'sequence', 'pattern', 'uuid' — the plan-time validator "
         f"``_validate_primary_keys`` should have rejected this."
     )
+
+
+def build_fk_column_expr(
+    col_spec: ColumnSpec,
+    table_name: str,
+    id_col: Column,
+    column_seed: int,
+    fk_resolutions: dict[tuple[str, str], FKResolution] | None,
+) -> tuple[str, Column]:
+    """Build an FK column expression; raise if the resolution is missing.
+
+    Dispatch-layer entry point used by the engine's column-building
+    loop in ``generator.py``.  Lives here (next to ``build_fk_column``)
+    so the FK-specific pre-flight check and the actual value
+    reconstruction share a module.
+
+    The ``ForeignKeyColumn`` strategy was introduced specifically to
+    close the silent-all-NULL class of bug (commit ``a78597b``).
+    Returning ``None`` here -- which the caller previously translated
+    into ``F.lit(None).alias(...)`` -- reintroduced it: a direct call
+    to ``generate_table`` without a ``ResolvedPlan`` carrying the FK
+    map silently produced an all-NULL column instead of surfacing the
+    missing resolution.  Raise a clear error that names the column
+    and the expected call sequence so the failure is impossible to
+    miss.
+    """
+    fk_key = (table_name, col_spec.name)
+    if fk_resolutions is None or fk_key not in fk_resolutions:
+        raise RuntimeError(
+            f"FK column '{table_name}.{col_spec.name}' has no FKResolution — "
+            f"caller must resolve the plan (via ``resolve_plan`` / ``generate``) "
+            f"before reaching ``build_column_expr``.  Calling ``generate_table`` "
+            f"directly requires passing a ``ResolvedPlan`` that includes this "
+            f"column's FK."
+        )
+    fk_expr = build_fk_column(id_col, column_seed, fk_resolutions[fk_key])
+    return (col_spec.name, fk_expr)
