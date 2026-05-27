@@ -25,7 +25,7 @@ from collections import Counter
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, cast
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -1063,8 +1063,15 @@ class ColumnSpec(_StrictModel):
             limit = 10 ** (precision - scale)
             numeric_values = [v for v in self.gen.values if isinstance(v, (int, float, Decimal))]
             if numeric_values:
-                offending = max(numeric_values, key=abs)
-                if abs(offending) >= limit:
+                # Two-pass: max() over absolute values keeps mypy happy
+                # about the comparator type, then re-find the original
+                # (signed) value for the error message.  ``float`` cast
+                # gives a uniform comparable type across int / float /
+                # Decimal entries -- precision loss is irrelevant for
+                # the magnitude-fit check.
+                max_abs_value = max(abs(float(v)) for v in numeric_values)
+                if max_abs_value >= limit:
+                    offending = next(v for v in numeric_values if abs(float(v)) == max_abs_value)
                     max_repr = limit - 10**-scale
                     raise ValueError(
                         f"Column '{self.name}': value {offending} in ValuesColumn "
@@ -1232,6 +1239,27 @@ class TableSpec(_StrictModel):
     seed: int | None = None
 
     @model_validator(mode="after")
+    def resolve_row_count(self) -> TableSpec:
+        """Normalise the user-facing ``int | str`` ``rows`` to ``int``.
+
+        ``rows`` is declared ``int | str`` so users can write
+        ``rows="10K"`` for readability.  This validator runs after
+        Pydantic's type check, parses the string form via
+        ``parse_human_count`` (which also returns ``int`` unchanged
+        for ``int`` input), and stores the result back on ``self.rows``
+        so all downstream validators / consumers see an ``int``.
+
+        Engine call sites read ``self.rows`` via ``typing.cast(int, ...)``
+        rather than runtime ``int(...)`` coercion: the validator is the
+        single normalisation point, and a ``cast`` documents "trust
+        the validator" without re-running the conversion at every read.
+        """
+        self.rows = TableSpec.parse_human_count(self.rows)
+        if self.rows <= 0:
+            raise ValueError(f"rows must be > 0, got {self.rows}")
+        return self
+
+    @model_validator(mode="after")
     def validate_name(self) -> TableSpec:
         # fullmatch, not match: ``re.match`` + ``$`` allows a trailing
         # newline because ``$`` anchors before a newline in default mode.
@@ -1306,13 +1334,6 @@ class TableSpec(_StrictModel):
             ) from None
 
     @model_validator(mode="after")
-    def resolve_row_count(self) -> TableSpec:
-        self.rows = TableSpec.parse_human_count(self.rows)
-        if self.rows <= 0:
-            raise ValueError(f"rows must be > 0, got {self.rows}")
-        return self
-
-    @model_validator(mode="after")
     def validate_sequence_column_overflow(self) -> TableSpec:
         """Reject ``SequenceColumn`` configurations that would overflow
         int64 at the last row.
@@ -1327,25 +1348,14 @@ class TableSpec(_StrictModel):
         ``(step, start, rows)`` combinations.  Validate here so the
         error names the column and the magnitude, instead of
         surfacing as an opaque runtime Spark error.
-
-        Must run after ``resolve_row_count`` so ``self.rows`` is an
-        int (the human-string parse happens there).
         """
-        # Raise (not assert) for consistency with the engine-wide
-        # ``survive python -O`` stance: if a future refactor reorders
-        # validators and this runs before ``resolve_row_count``,
-        # ``self.rows`` would still be a string and the arithmetic
-        # below would TypeError -- but the raise names the ordering
-        # issue specifically.
-        if not isinstance(self.rows, int):
-            raise RuntimeError(
-                f"TableSpec '{self.name}': validator ordering invariant "
-                f"violated -- ``rows`` is {type(self.rows).__name__}, not int.  "
-                f"``resolve_row_count`` must run before "
-                f"``validate_sequence_column_overflow``."
-            )
         long_max = 2**63 - 1
         long_min = -(2**63)
+        # ``rows`` is declared ``int | str`` on the user-facing model;
+        # ``resolve_row_count`` normalised it to ``int`` above (validator
+        # ordering: resolve_row_count is declared before this).  Cast
+        # once for mypy; no runtime work.
+        rows = cast(int, self.rows)
         for col_spec in self.columns:
             if not isinstance(col_spec.gen, SequenceColumn):
                 continue
@@ -1354,7 +1364,7 @@ class TableSpec(_StrictModel):
             # The last emitted value is ``start + (rows - 1) * step``.
             # Check both bounds: with a positive step the max is at
             # row_count - 1; with a negative step the min is.
-            last_val = start + (self.rows - 1) * step
+            last_val = start + (rows - 1) * step
             if last_val > long_max or last_val < long_min:
                 raise ValueError(
                     f"Table '{self.name}' column '{col_spec.name}': "

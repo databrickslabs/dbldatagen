@@ -7,6 +7,7 @@ with optional distribution control.
 from __future__ import annotations
 
 import math
+from typing import cast
 
 from pyspark.sql import Column
 from pyspark.sql import functions as F
@@ -97,7 +98,9 @@ def build_range_column(
     )
 
     if is_integer:
-        return _build_integer_range(seed_col, int(min_val), int(max_val), distribution, dtype, step)
+        # ``is_integer`` above ensures ``step`` is ``int`` or ``None``;
+        # ``cast`` narrows the type for mypy without runtime cost.
+        return _build_integer_range(seed_col, int(min_val), int(max_val), distribution, dtype, cast("int | None", step))
     else:
         return _build_float_range(seed_col, float(min_val), float(max_val), distribution, dtype, precision, scale, step)
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from collections import deque
 from dataclasses import dataclass
+from typing import cast
 
 from dbldatagen.core.engine.seed import derive_column_seed
 from dbldatagen.core.spec.schema import (
@@ -448,12 +449,13 @@ def _extract_pk_metadata(table_spec: TableSpec, pk_col_spec: ColumnSpec) -> PKMe
             f"during Pydantic validation)."
         )
 
-    base_meta = {
-        "table_name": table_spec.name,
-        "pk_column": pk_col_spec.name,
-        "row_count": table_spec.rows,
-        "pk_seed": derive_column_seed(table_spec.seed, table_spec.name, pk_col_spec.name),
-    }
+    table_name = table_spec.name
+    pk_column = pk_col_spec.name
+    # ``rows`` is ``int | str`` on the user-facing model; ``resolve_row_count``
+    # normalises it to ``int`` at validation time.  ``cast`` is a pure
+    # type assertion -- no runtime conversion.
+    row_count = cast(int, table_spec.rows)
+    pk_seed = derive_column_seed(table_spec.seed, table_spec.name, pk_col_spec.name)
 
     # ``_validate_primary_keys`` rejects any other strategy at plan
     # time; the ``case _`` branch is a defensive backstop for an
@@ -462,11 +464,38 @@ def _extract_pk_metadata(table_spec: TableSpec, pk_col_spec: ColumnSpec) -> PKMe
     # children.
     match pk_col_spec.gen:
         case SequenceColumn(start=start, step=step):
-            return PKMetadata(**base_meta, pk_type="sequence", pk_start=start, pk_step=step, pk_template=None)
+            return PKMetadata(
+                table_name=table_name,
+                pk_column=pk_column,
+                row_count=row_count,
+                pk_seed=pk_seed,
+                pk_type="sequence",
+                pk_start=start,
+                pk_step=step,
+                pk_template=None,
+            )
         case PatternColumn(template=template):
-            return PKMetadata(**base_meta, pk_type="pattern", pk_start=0, pk_step=1, pk_template=template)
+            return PKMetadata(
+                table_name=table_name,
+                pk_column=pk_column,
+                row_count=row_count,
+                pk_seed=pk_seed,
+                pk_type="pattern",
+                pk_start=0,
+                pk_step=1,
+                pk_template=template,
+            )
         case UUIDColumn():
-            return PKMetadata(**base_meta, pk_type="uuid", pk_start=0, pk_step=1, pk_template=None)
+            return PKMetadata(
+                table_name=table_name,
+                pk_column=pk_column,
+                row_count=row_count,
+                pk_seed=pk_seed,
+                pk_type="uuid",
+                pk_start=0,
+                pk_step=1,
+                pk_template=None,
+            )
         case _:
             raise RuntimeError(
                 f"_extract_pk_metadata received PK column '{table_spec.name}."

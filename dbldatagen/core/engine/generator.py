@@ -7,6 +7,8 @@ to avoid the O(n^2) plan depth of chained ``withColumn`` calls.
 
 from __future__ import annotations
 
+from typing import cast
+
 from pyspark.sql import Column, DataFrame, SparkSession
 from pyspark.sql import functions as F
 
@@ -95,7 +97,11 @@ def generate_table(
         ValueError: ``table_spec.seed`` is ``None``, or ``resolved_plan``
           does not contain a table named ``table_spec.name``.
     """
-    row_count = table_spec.rows
+    # ``rows`` is declared ``int | str`` on the user-facing model;
+    # ``TableSpec.resolve_row_count`` normalises it to ``int`` at
+    # validation time.  ``cast`` is a pure type assertion (no runtime
+    # work) -- different from ``int(...)`` which would re-coerce.
+    row_count = cast(int, table_spec.rows)
     if table_spec.seed is None:
         raise ValueError(
             f"TableSpec '{table_spec.name}'.seed is None.  Either set "
