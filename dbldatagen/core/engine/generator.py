@@ -7,8 +7,6 @@ to avoid the O(n^2) plan depth of chained ``withColumn`` calls.
 
 from __future__ import annotations
 
-from collections.abc import Callable
-
 from pyspark.sql import Column, DataFrame, SparkSession
 from pyspark.sql import functions as F
 
@@ -171,15 +169,9 @@ def build_all_column_exprs(
         A three-tuple ``(col_exprs, udf_columns, seeded_columns)``
         ready to feed into ``apply_column_phases``.
     """
-    table_name = table_spec.name
-
-    def _resolver(cs: ColumnSpec) -> int:
-        return derive_column_seed(seed, table_name, cs.name)
-
     return _build_column_exprs_loop(
         table_spec,
         id_col,
-        _resolver,
         seed,
         row_count,
         fk_resolutions,
@@ -189,7 +181,6 @@ def build_all_column_exprs(
 def _build_column_exprs_loop(
     table_spec: TableSpec,
     id_col: Column,
-    seed_resolver: Callable[[ColumnSpec], int],
     effective_global_seed: int,
     row_count: int,
     fk_resolutions: dict[tuple[str, str], FKResolution] | None,
@@ -197,16 +188,18 @@ def _build_column_exprs_loop(
     """Unified column-building loop.
 
     Iterates ``table_spec.columns``, classifies each column, and
-    routes to the appropriate builder.  The *seed_resolver* callable
-    controls how the per-column seed is derived.
+    routes to the appropriate builder.  The per-column seed is
+    derived inline via ``derive_column_seed(global_seed, table_name,
+    column_name)`` -- no override hook today; the previous
+    ``seed_resolver`` callable was vestigial after the CDC extraction
+    and removed in this commit.
 
     Args:
         table_spec: Table whose columns to expand.
         id_col: Row-id ``Column``.
-        seed_resolver: ``(col_spec) -> int`` returning the per-column
-          seed.
         effective_global_seed: Passed through to ``build_column_expr``
-          as ``global_seed``.
+          as ``global_seed`` and used as the base for per-column seed
+          derivation.
         row_count: Row count threaded through to per-column builders.
         fk_resolutions: Optional FK resolution map from
           ``ResolvedPlan``.
@@ -221,7 +214,7 @@ def _build_column_exprs_loop(
     seeded_columns: list[tuple[str, Column]] = []
 
     for col_spec in table_spec.columns:
-        column_seed = seed_resolver(col_spec)
+        column_seed = derive_column_seed(effective_global_seed, table_name, col_spec.name)
 
         # Defer seed_from columns to phase 3
         if col_spec.seed_from is not None:
