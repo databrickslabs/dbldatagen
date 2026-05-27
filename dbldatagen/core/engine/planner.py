@@ -17,6 +17,7 @@ from dbldatagen.core.spec.schema import (
     SequenceColumn,
     TableSpec,
     UUIDColumn,
+    parse_fk_ref,
 )
 
 
@@ -297,13 +298,11 @@ def resolve_plan(plan: DataGenPlan) -> ResolvedPlan:
                 continue
 
             ref = col_spec.foreign_key.ref
-            if "." not in ref:
-                raise ValueError(
-                    f"Invalid FK reference '{ref}' in {table_spec.name}.{col_spec.name}: "
-                    f"expected 'table.column' format"
-                )
-
-            parent_table_name, parent_col_name = ref.split(".", 1)
+            # ``ForeignKeyRef.validate_ref_format`` already ran
+            # ``parse_fk_ref`` at construction time, so a malformed
+            # ref can't reach this point.  Re-call here to get the
+            # parts -- single source of truth for the parse rule.
+            parent_table_name, parent_col_name = parse_fk_ref(ref)
 
             # Validate parent table exists
             if parent_table_name not in table_map:
@@ -387,13 +386,13 @@ def _build_dependency_graph(plan: DataGenPlan) -> dict[str, set[str]]:
 
     Pure shape transform: every table gets a key, mapping to the set
     of parent tables it references through FK columns (empty set if
-    none).  Safe to call ``.ref.split(".", 1)[0]`` here because the
-    FK validation loop in ``resolve_plan`` runs first and rejects any
-    ref without a ``.`` separator.
+    none).  Uses ``parse_fk_ref`` -- the same helper the schema
+    validator and ``resolve_plan``'s FK loop run on -- so the parse
+    rule has a single source of truth.
     """
     return {
         table_spec.name: {
-            col_spec.foreign_key.ref.split(".", 1)[0]
+            parse_fk_ref(col_spec.foreign_key.ref)[0]
             for col_spec in table_spec.columns
             if col_spec.foreign_key is not None
         }

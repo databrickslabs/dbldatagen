@@ -48,6 +48,40 @@ class _StrictModel(BaseModel):
 
 _IDENTIFIER_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
+
+def parse_fk_ref(ref: str) -> tuple[str, str]:
+    """Parse and validate a ``ForeignKeyRef.ref`` string.
+
+    Single source of truth for the ``"table.column"`` format.  Called
+    by ``ForeignKeyRef.validate_ref_format`` at construction time and
+    by the planner when it needs the parent table / column names, so
+    the same parse rule applies everywhere without redundant
+    ``split(".")`` calls scattered across modules.
+
+    Args:
+        ref: An FK reference string in ``"table.column"`` form.  Each
+          half must match ``_IDENTIFIER_RE`` -- the same rule
+          ``TableSpec.name`` and ``ColumnSpec.name`` enforce.
+
+    Returns:
+        A ``(table_name, column_name)`` tuple.
+
+    Raises:
+        ValueError: ``ref`` is not exactly two identifier-shaped
+          components separated by a single ``.``.  Catches ``"."``,
+          ``" . "``, ``"orders."``, ``".id"``, ``"a.b.c"``,
+          ``"1orders.id"``, ``"orders abc.id"``, and similar
+          malformed forms.
+    """
+    parts = ref.split(".")
+    if len(parts) != 2 or not all(_IDENTIFIER_RE.fullmatch(p) for p in parts):
+        raise ValueError(
+            f"ForeignKeyRef.ref='{ref}' must use 'table.column' "
+            f"format with each half matching {_IDENTIFIER_RE.pattern!r} "
+            f"(letters / digits / underscore, must not start with a digit)."
+        )
+    return parts[0], parts[1]
+
 # Upper bound on ArrayColumn.max_length.  Each slot materialises its own
 # Spark expression tree at plan time, so Catalyst work scales linearly
 # with this value (and with nested arrays/structs, multiplicatively).
@@ -829,19 +863,10 @@ class ForeignKeyRef(_StrictModel):
 
     @model_validator(mode="after")
     def validate_ref_format(self) -> ForeignKeyRef:
-        # ``"." not in self.ref`` rejected ``"customers"`` but let
-        # malformed forms like ``"."``, ``" . "``, ``"x."``, ``".y"``,
-        # and ``"a.b.c"`` through.  Require exactly one dot separator
-        # with each half matching the same identifier rule that
-        # TableSpec.name / ColumnSpec.name enforce -- so the planner's
-        # downstream ``split(".")`` always yields two valid names.
-        parts = self.ref.split(".")
-        if len(parts) != 2 or not all(_IDENTIFIER_RE.fullmatch(p) for p in parts):
-            raise ValueError(
-                f"ForeignKeyRef.ref='{self.ref}' must use 'table.column' "
-                f"format with each half matching {_IDENTIFIER_RE.pattern!r} "
-                f"(letters / digits / underscore, must not start with a digit)."
-            )
+        # ``parse_fk_ref`` is the single source of truth for the
+        # ``table.column`` format; the planner uses the same helper to
+        # avoid drift between schema validation and downstream parsing.
+        parse_fk_ref(self.ref)
         if not 0.0 <= self.null_fraction <= 1.0:
             raise ValueError(f"null_fraction must be in [0.0, 1.0], got {self.null_fraction}")
         if 0.0 < self.null_fraction < _MIN_NULL_FRACTION:
