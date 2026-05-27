@@ -1196,47 +1196,6 @@ class ColumnSpec(_StrictModel):
         return self
 
 
-def parse_human_count(value: int | str) -> int:
-    """Parses a row-count value into an ``int``.
-
-    Accepts an already-typed ``int`` (returned unchanged) or a
-    human-readable string with a ``K`` / ``M`` / ``B`` suffix
-    (case-insensitive).  Used internally by ``TableSpec`` to normalise
-    the user-facing ``rows`` field before downstream validators run.
-
-    Args:
-        value: Either an ``int`` row count, or a string like
-          ``"10K"``, ``"5M"``, ``"1.5B"``.  Fractional multipliers
-          are allowed; the result is truncated to ``int``.
-
-    Returns:
-        The row count as an ``int``.  For ``int`` input, the input
-        unchanged; for string input, the parsed magnitude.
-
-    Raises:
-        ValueError: ``value`` is a string that does not parse to an
-          ``int`` after suffix stripping.
-    """
-    if isinstance(value, int):
-        return value
-    suffixes = {"K": 1_000, "M": 1_000_000, "B": 1_000_000_000}
-    s = str(value).strip().upper()
-    # Single try/except covers both branches so a malformed suffix
-    # mantissa ('K' / '1.5.0K') gets the same friendly wrap as a
-    # malformed plain-int input ('abc'); previously only the plain-int
-    # path was wrapped and the float() call below leaked the raw
-    # "could not convert string to float" message.
-    try:
-        for suffix, mult in suffixes.items():
-            if s.endswith(suffix):
-                return int(float(s[: -len(suffix)]) * mult)
-        return int(s)
-    except ValueError:
-        raise ValueError(
-            f"Invalid row count '{value}'. Expected an integer or a " f"human-readable string like '10K', '1M', '1B'."
-        ) from None
-
-
 class TableSpec(_StrictModel):
     """Defines one table to generate.
 
@@ -1302,9 +1261,52 @@ class TableSpec(_StrictModel):
             )
         return self
 
+    @staticmethod
+    def parse_human_count(value: int | str) -> int:
+        """Parses a row-count value into an ``int``.
+
+        Accepts an already-typed ``int`` (returned unchanged) or a
+        human-readable string with a ``K`` / ``M`` / ``B`` suffix
+        (case-insensitive).  Used internally by ``resolve_row_count``
+        to normalise the user-facing ``rows`` field before downstream
+        validators run.
+
+        Args:
+            value: Either an ``int`` row count, or a string like
+              ``"10K"``, ``"5M"``, ``"1.5B"``.  Fractional multipliers
+              are allowed; the result is truncated to ``int``.
+
+        Returns:
+            The row count as an ``int``.  For ``int`` input, the input
+            unchanged; for string input, the parsed magnitude.
+
+        Raises:
+            ValueError: ``value`` is a string that does not parse to
+              an ``int`` after suffix stripping.
+        """
+        if isinstance(value, int):
+            return value
+        suffixes = {"K": 1_000, "M": 1_000_000, "B": 1_000_000_000}
+        s = str(value).strip().upper()
+        # Single try/except covers both branches so a malformed suffix
+        # mantissa ('K' / '1.5.0K') gets the same friendly wrap as a
+        # malformed plain-int input ('abc'); previously only the plain-int
+        # path was wrapped and the float() call below leaked the raw
+        # "could not convert string to float" message.
+        try:
+            for suffix, mult in suffixes.items():
+                if s.endswith(suffix):
+                    return int(float(s[: -len(suffix)]) * mult)
+            return int(s)
+        except ValueError:
+            raise ValueError(
+                f"Invalid row count '{value}'. Expected an integer or a "
+                f"human-readable string like '10K', '1M', '1B'."
+            ) from None
+
     @model_validator(mode="after")
     def resolve_row_count(self) -> TableSpec:
-        self.rows = parse_human_count(self.rows)
+        self.rows = TableSpec.parse_human_count(self.rows)
         if self.rows <= 0:
             raise ValueError(f"rows must be > 0, got {self.rows}")
         return self
