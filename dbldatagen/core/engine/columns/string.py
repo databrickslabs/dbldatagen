@@ -6,8 +6,6 @@ column types.
 
 from __future__ import annotations
 
-import re
-
 from pyspark.sql import Column
 from pyspark.sql import functions as F
 
@@ -17,6 +15,13 @@ from dbldatagen.core.engine.distributions import (
     weighted_sample_expr,
 )
 from dbldatagen.core.engine.seed import GOLDEN_RATIO_HASH, cell_seed_expr, to_signed64
+from dbldatagen.core.spec._constants import (
+    MAX_ALPHA_WIDTH,
+    MAX_DIGIT_WIDTH,
+    MAX_HEX_WIDTH,
+    MAX_SEQ_WIDTH,
+    PLACEHOLDER_RE,
+)
 from dbldatagen.core.spec.schema import Distribution, WeightedValues
 
 
@@ -63,24 +68,11 @@ def build_values_column(
     return arr[idx.cast("int")]
 
 
-_PLACEHOLDER_RE = re.compile(r"\{(seq|uuid|digit|alpha|hex):?(\d+)?\}")
-
-# Per-placeholder width caps. The rationale differs by kind:
-#   * {digit:N} / {hex:N}: both use pmod(seed, base**width), and
-#     F.lit(base**width) must fit in int64. 10**18 and 16**15 do;
-#     10**19 and 16**16 don't. The guard gives a clear error instead
-#     of a py4j long-conversion failure.
-#   * {alpha:N}: each character materialises a separate xxhash64 +
-#     substring expression that gets concat'd, so width directly
-#     controls the per-row Catalyst plan size. 64 is comfortably
-#     above any realistic token use.
-#   * {seq:N}: F.lpad(value, width, "0") doesn't bomb Catalyst (one
-#     expression) but emits width-character strings per row. 24
-#     covers sequence values up to 10**24 with zero-padding.
-_MAX_DIGIT_WIDTH = 18
-_MAX_HEX_WIDTH = 15
-_MAX_ALPHA_WIDTH = 64
-_MAX_SEQ_WIDTH = 24
+# ``PLACEHOLDER_RE`` and the ``MAX_*_WIDTH`` caps imported above are
+# shared with the schema validator (``PatternColumn.validate_template``
+# in ``core/spec/schema.py``) via ``core/spec/_constants.py`` so the
+# accept-set the schema promises is exactly what the engine accepts.
+# See the docstring in _constants.py for the per-kind cap rationale.
 
 
 def build_pattern_column(
@@ -118,25 +110,26 @@ def build_pattern_column(
     parts: list[Column] = []
     pos = 0
 
-    for placeholder_idx, m in enumerate(_PLACEHOLDER_RE.finditer(template)):
+    for placeholder_idx, m in enumerate(PLACEHOLDER_RE.finditer(template)):
         # Literal text before this placeholder
         if m.start() > pos:
             parts.append(F.lit(template[pos : m.start()]))
 
-        kind = m.group(1)
-        width = int(m.group(2)) if m.group(2) else 1
+        kind = m.group("kind")
+        width_str = m.group("width")
+        width = int(width_str) if width_str else 1
 
         match kind:
             case "seq":
-                if width > _MAX_SEQ_WIDTH:
-                    raise ValueError(f"{{seq:N}} width must be <= {_MAX_SEQ_WIDTH} (got {width})")
+                if width > MAX_SEQ_WIDTH:
+                    raise ValueError(f"{{seq:N}} width must be <= {MAX_SEQ_WIDTH} (got {width})")
                 parts.append(F.lpad((id_col + F.lit(1)).cast("string"), width, "0"))
             case "uuid":
                 # {uuid} has no width modifier -- a 36-char UUID with the
                 # user asking for N chars is almost always a bug (they
                 # probably want {hex:N} or {alpha:N}).  Reject rather than
                 # silently ignore the width.
-                if m.group(2) is not None:
+                if width_str is not None:
                     raise ValueError(
                         f"{{uuid}} does not accept a width modifier (got '{m.group(0)}'). "
                         f"UUIDs are always 36 characters; use {{hex:N}} or {{alpha:N}} for a "
@@ -150,18 +143,20 @@ def build_pattern_column(
             case "hex":
                 parts.append(_random_hex(id_col, column_seed, placeholder_idx, width))
             case _:
-                # Drift guard: _PLACEHOLDER_RE's alternation
+                # Drift guard: PLACEHOLDER_RE's alternation
                 # ``(seq|uuid|digit|alpha|hex)`` is the only producer of
                 # ``kind``, so reaching this arm means a new alternation
-                # was added to the regex without a matching dispatch
-                # case here (or vice versa).  Raise so the next reader
-                # gets a precise pointer rather than a silent "no parts
-                # appended" placeholder that disappears from the output.
+                # was added to the regex (in core/spec/_constants.py)
+                # without a matching dispatch case here.  Raise so the
+                # next reader gets a precise pointer rather than a silent
+                # "no parts appended" placeholder that disappears from
+                # the output.
                 raise RuntimeError(
-                    f"_PLACEHOLDER_RE matched kind {kind!r} but build_pattern_column "
-                    f"has no dispatch arm for it -- the regex alternation and the "
-                    f"``match`` block must stay in sync.  Adding a new placeholder "
-                    f"kind requires updating both."
+                    f"PLACEHOLDER_RE matched kind {kind!r} but build_pattern_column "
+                    f"has no dispatch arm for it -- the regex alternation in "
+                    f"core/spec/_constants.py and the ``match`` block here must "
+                    f"stay in sync.  Adding a new placeholder kind requires "
+                    f"updating both."
                 )
 
         pos = m.end()
@@ -215,8 +210,8 @@ def _random_digits(
     for every int64 including ``Long.MIN_VALUE``, so ``'-'`` can't leak
     into the output. Matters on the ``pk_pattern`` FK critical path.
     """
-    if width > _MAX_DIGIT_WIDTH:
-        raise ValueError(f"{{digit:N}} width must be <= {_MAX_DIGIT_WIDTH} (got {width})")
+    if width > MAX_DIGIT_WIDTH:
+        raise ValueError(f"{{digit:N}} width must be <= {MAX_DIGIT_WIDTH} (got {width})")
     seed = cell_seed_expr(_seed_xor(column_seed, (idx + 1) * GOLDEN_RATIO_HASH), id_col)
     digits = F.pmod(seed, F.lit(10**width))
     return F.lpad(digits.cast("string"), width, "0")
@@ -232,8 +227,8 @@ def _random_alpha(
 
     Each character is derived from a separate hash to ensure independence.
     """
-    if width > _MAX_ALPHA_WIDTH:
-        raise ValueError(f"{{alpha:N}} width must be <= {_MAX_ALPHA_WIDTH} (got {width})")
+    if width > MAX_ALPHA_WIDTH:
+        raise ValueError(f"{{alpha:N}} width must be <= {MAX_ALPHA_WIDTH} (got {width})")
     mixed_seed = _seed_xor(column_seed, (idx + 1) * GOLDEN_RATIO_HASH)
     seed_col = F.lit(mixed_seed).cast("long")
     chars: list[Column] = []
@@ -263,8 +258,8 @@ def _random_hex(
     ``abs(seed)``. Uses ``pmod`` so Long.MIN_VALUE can't leak and all
     16 hex characters are equally likely at every position.
     """
-    if width > _MAX_HEX_WIDTH:
-        raise ValueError(f"{{hex:N}} width must be <= {_MAX_HEX_WIDTH} (got {width})")
+    if width > MAX_HEX_WIDTH:
+        raise ValueError(f"{{hex:N}} width must be <= {MAX_HEX_WIDTH} (got {width})")
     seed = cell_seed_expr(_seed_xor(column_seed, (idx + 1) * GOLDEN_RATIO_HASH), id_col)
     value = F.pmod(seed, F.lit(16**width))
     return F.lower(F.lpad(F.hex(value), width, "0"))

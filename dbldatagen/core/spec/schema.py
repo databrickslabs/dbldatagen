@@ -19,6 +19,7 @@ deep inside the engine.
 
 from __future__ import annotations
 
+import math
 import re
 import warnings
 from collections import Counter
@@ -27,9 +28,16 @@ from decimal import Decimal
 from enum import Enum
 from typing import Annotated, Any, Literal, cast
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from dbldatagen.core.engine.seed import NULL_PRECISION
+from dbldatagen.core.spec._constants import (
+    MAX_ALPHA_WIDTH,
+    MAX_DIGIT_WIDTH,
+    MAX_HEX_WIDTH,
+    MAX_SEQ_WIDTH,
+    PLACEHOLDER_RE,
+)
 
 
 class _StrictModel(BaseModel):
@@ -47,6 +55,24 @@ class _StrictModel(BaseModel):
 
 
 _IDENTIFIER_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+
+
+def _require_finite(field_name: str, value: float, owner: str) -> None:
+    """Reject NaN / +/-Inf for a float field.
+
+    ``value < N``, ``value > N``, ``value <= N`` all return False
+    when ``value`` is NaN, so a downstream validator like
+    ``stddev < 0`` silently passes NaN through and the engine ships
+    ``F.lit(nan)`` into the Spark plan -- every row materialises as
+    NaN with no signal at plan time.  Catch at the float boundary.
+    """
+    if isinstance(value, float) and not math.isfinite(value):
+        raise ValueError(
+            f"{owner}.{field_name}={value} is not finite (NaN/Inf).  "
+            f"Use a concrete numeric value; NaN-vs-* comparisons "
+            f"silently return False and would let every other check pass."
+        )
+
 
 # Engine-internal column names that user columns must not collide with.
 # Currently only ``_synth_row_id`` (added by ``create_range_df`` and
@@ -145,6 +171,8 @@ class Normal(_StrictModel):
 
     @model_validator(mode="after")
     def validate_params(self) -> Normal:
+        _require_finite("mean", self.mean, "Normal")
+        _require_finite("stddev", self.stddev, "Normal")
         if self.stddev < 0:
             raise ValueError(f"stddev must be >= 0, got {self.stddev}")
         return self
@@ -175,6 +203,8 @@ class LogNormal(_StrictModel):
 
     @model_validator(mode="after")
     def validate_params(self) -> LogNormal:
+        _require_finite("mean", self.mean, "LogNormal")
+        _require_finite("stddev", self.stddev, "LogNormal")
         if self.stddev < 0:
             raise ValueError(f"stddev must be >= 0, got {self.stddev}")
         # ``lognormal_sample_expr`` computes ``math.exp(mean)`` on the
@@ -220,6 +250,7 @@ class Zipf(_StrictModel):
 
     @model_validator(mode="after")
     def validate_params(self) -> Zipf:
+        _require_finite("exponent", self.exponent, "Zipf")
         # Zipfian sampling via inverse power-law CDF converges only for
         # ``exponent > 1``.  The engine had a ``<= 1`` fallback that used
         # ``exp(log(n) * u) - 1`` -- not Zipf, not uniform, silently
@@ -254,6 +285,7 @@ class Exponential(_StrictModel):
 
     @model_validator(mode="after")
     def validate_params(self) -> Exponential:
+        _require_finite("rate", self.rate, "Exponential")
         if self.rate <= 0:
             raise ValueError(f"rate must be > 0, got {self.rate}")
         return self
@@ -285,6 +317,13 @@ class WeightedValues(_StrictModel):
     def validate_weights(self) -> WeightedValues:
         if not self.weights:
             raise ValueError("weights must not be empty")
+        # NaN / Inf weights make ``sum(weights)`` and per-bucket
+        # thresholds NaN; the engine's ``frac < threshold`` then
+        # returns False for every row and every sample collapses to
+        # the last value in the cumulative distribution.  Catch at
+        # validation so the user sees the offending key.
+        for key, weight in self.weights.items():
+            _require_finite(f"weights[{key!r}]", weight, "WeightedValues")
         if any(w < 0 for w in self.weights.values()):
             raise ValueError("weights must be non-negative")
         return self
@@ -338,6 +377,17 @@ class RangeColumn(_StrictModel):
                 "Zipf / Normal / LogNormal / Exponential to skew a numeric "
                 "range."
             )
+        # NaN comparisons short-circuit ({NaN} > {NaN}, {NaN} <= 0,
+        # etc., all return False), so a RangeColumn(min=float('nan'),
+        # max=float('nan')) would slip past every other check below
+        # and ship to the engine, which then emits all-NaN output
+        # under ANSI mode and ARITHMETIC_OVERFLOW errors otherwise.
+        # Infinity is similar: the range-size and step math below
+        # produces inf or nan downstream.
+        for field_name in ("min", "max", "step"):
+            value = getattr(self, field_name)
+            if value is not None:
+                _require_finite(field_name, value, "RangeColumn")
         if self.min > self.max:
             raise ValueError(f"min ({self.min}) must be <= max ({self.max})")
         if self.step is not None and self.step <= 0:
@@ -388,6 +438,30 @@ class ValuesColumn(_StrictModel):
     def validate_values(self) -> ValuesColumn:
         if not self.values:
             raise ValueError("values list must not be empty")
+        # Duplicates silently inflate the probability mass on the
+        # repeated entry under Uniform (and create ambiguous keying
+        # under WeightedValues since ``str(v)`` collides).  The user
+        # almost certainly meant either ``WeightedValues`` (with
+        # explicit weights) or distinct values; reject duplicates so
+        # the intent is unambiguous at plan time.  Skip hashing
+        # entirely when the happy path holds.
+        try:
+            seen_count = len(set(self.values))
+        except TypeError:
+            # Values may include unhashable types (lists, dicts).
+            # Walk Counter on stringified form -- approximate but
+            # surfaces the common case of duplicate dict literals
+            # in YAML plans.
+            seen_count = len({repr(v) for v in self.values})
+        if seen_count != len(self.values):
+            counter = Counter(repr(v) for v in self.values)
+            dupes = sorted(name for name, count in counter.items() if count > 1)
+            raise ValueError(
+                f"ValuesColumn has duplicate entries: {dupes}.  Duplicates "
+                f"silently double the probability mass under Uniform.  Use "
+                f"distinct values, or switch to WeightedValues with explicit "
+                f"weights."
+            )
         # Cross-validate: WeightedValues.weights has str keys; the engine
         # does ``weights.get(str(v), 0.0)`` for each value, so any value
         # whose str() isn't a weight key silently contributes zero.  If
@@ -435,9 +509,24 @@ class FakerColumn(_StrictModel):
     """
 
     strategy: Literal["faker"] = "faker"
-    provider: str
+    provider: str = Field(min_length=1)
     kwargs: dict[str, Any] = Field(default_factory=dict)
     locale: str | None = None
+
+    @field_validator("provider")
+    @classmethod
+    def _strip_provider(cls, value: str) -> str:
+        # ``Field(min_length=1)`` admits ``"   "`` (3 chars, all
+        # whitespace) -- the engine then calls ``getattr(Faker(),
+        # "   ")`` which raises AttributeError deep in the pandas_udf.
+        # Catch at plan time with a clear message.
+        if not value.strip():
+            raise ValueError(
+                f"FakerColumn.provider={value!r} is whitespace-only.  "
+                f"Set provider to a real Faker method name such as "
+                f"'first_name', 'company', or 'ipv4'."
+            )
+        return value
 
 
 class PatternColumn(_StrictModel):
@@ -453,9 +542,12 @@ class PatternColumn(_StrictModel):
 
     The ``{uuid}`` placeholder is a fixed-width 36-character literal
     (no ``:N`` modifier).  Every ``{kind:N}`` placeholder has a
-    per-kind width ceiling (``{digit:N}`` 18, ``{hex:N}`` 15,
-    ``{alpha:N}`` 64, ``{seq:N}`` 24); the engine raises ``ValueError``
-    for widths beyond that.  The digit/hex caps come from int64-fit
+    per-kind width ceiling defined in
+    ``dbldatagen/core/spec/_constants.py`` (``MAX_DIGIT_WIDTH``,
+    ``MAX_HEX_WIDTH``, ``MAX_ALPHA_WIDTH``, ``MAX_SEQ_WIDTH``); the
+    schema validator rejects templates exceeding any cap at plan
+    time, and the engine imports the same constants so the
+    accept-sets can't drift.  The digit/hex caps come from int64-fit
     requirements (``pmod(seed, base**width)``); the alpha/seq caps
     bound per-row Catalyst plan size and emitted string length.
 
@@ -466,7 +558,81 @@ class PatternColumn(_StrictModel):
     """
 
     strategy: Literal["pattern"] = "pattern"
-    template: str
+    template: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_template(self) -> PatternColumn:
+        # ``Field(min_length=1)`` admits ``"   "``; reject
+        # whitespace-only too -- a pure-whitespace template would
+        # generate identical whitespace for every row, which is
+        # almost certainly a user typo.
+        if not self.template.strip():
+            raise ValueError(
+                f"PatternColumn.template={self.template!r} is whitespace-only.  "
+                f"Templates need literal text and/or placeholders such as "
+                f"'{{digit:4}}' or '{{alpha:3}}'."
+            )
+        # A template with no placeholders is effectively a
+        # ConstantColumn -- every row emits the same literal string.
+        # That's almost always a misuse of PatternColumn; redirect
+        # the user.
+        matches = list(PLACEHOLDER_RE.finditer(self.template))
+        if not matches:
+            raise ValueError(
+                f"PatternColumn.template={self.template!r} contains no "
+                f"placeholders.  PatternColumn requires at least one of "
+                f"'{{seq}}', '{{uuid}}', '{{digit:N}}', '{{hex:N}}', "
+                f"'{{alpha:N}}', or '{{seq:N}}'.  For a literal value on "
+                f"every row, use ConstantColumn."
+            )
+        # Per-kind width caps from _constants.py.  These must match
+        # what build_pattern_column rejects at materialisation
+        # (engine/columns/string.py); the shared constants prevent
+        # drift.  Catching here gives the user a single error message
+        # naming all violations rather than one-at-a-time from the
+        # engine.
+        cap_by_kind = {
+            "digit": MAX_DIGIT_WIDTH,
+            "hex": MAX_HEX_WIDTH,
+            "alpha": MAX_ALPHA_WIDTH,
+            "seq": MAX_SEQ_WIDTH,
+        }
+        violations = []
+        for match in matches:
+            kind = match.group("kind")
+            width_str = match.group("width")
+            if width_str is None:
+                continue
+            # ``{uuid}`` is a fixed 36-character literal -- the engine
+            # rejects any width modifier with a hard error.  Match the
+            # engine here so the schema and engine accept-sets agree.
+            if kind == "uuid":
+                violations.append(
+                    f"{{uuid:{width_str}}} -- uuid takes no width modifier "
+                    f"(UUIDs are always 36 characters; use {{hex:N}} / "
+                    f"{{alpha:N}} for a short random token)"
+                )
+                continue
+            if kind not in cap_by_kind:
+                continue
+            width = int(width_str)
+            cap = cap_by_kind[kind]
+            # Width 0 silently emits a zero-character placeholder
+            # (``F.lpad("0", 0, "0")`` -> "", ``pmod(seed, base**0)``
+            # -> 0).  Almost certainly a user typo; reject so the
+            # intent is unambiguous at plan time.
+            if width < 1:
+                violations.append(f"{{{kind}:{width}}} width must be >= 1")
+            elif width > cap:
+                violations.append(f"{{{kind}:{width}}} exceeds cap {cap}")
+        if violations:
+            raise ValueError(
+                f"PatternColumn.template={self.template!r} has width-cap "
+                f"violations: {'; '.join(violations)}.  Caps live in "
+                f"dbldatagen/core/spec/_constants.py and are shared with "
+                f"the engine."
+            )
+        return self
 
 
 class SequenceColumn(_StrictModel):
@@ -532,6 +698,22 @@ class ExpressionColumn(_StrictModel):
     strategy: Literal["expression"] = "expression"
     expr: str = Field(min_length=1)
 
+    @field_validator("expr")
+    @classmethod
+    def _reject_whitespace_expr(cls, value: str) -> str:
+        # ``Field(min_length=1)`` admits ``"   "`` -- a 3-char,
+        # all-whitespace expr that Spark's ``F.expr`` then rejects
+        # with a parse error far from the column declaration.  Catch
+        # at plan time with a clear message.
+        if not value.strip():
+            raise ValueError(
+                f"ExpressionColumn.expr={value!r} is whitespace-only.  "
+                f"Provide a real Spark SQL expression (e.g., "
+                f"'quantity * unit_price' or "
+                f"'concat(first_name, \" \", last_name)')."
+            )
+        return value
+
 
 class TimestampColumn(_StrictModel):
     """Generate timestamps within a range.
@@ -573,6 +755,22 @@ class TimestampColumn(_StrictModel):
                     f"TimestampColumn.{field_name}='{val}' is not a valid ISO timestamp. "
                     f"Expected format: 'YYYY-MM-DD' or 'YYYY-MM-DD HH:MM:SS'."
                 ) from None
+        # Comparing a tz-naive datetime to a tz-aware one raises
+        # ``TypeError`` from Python rather than the ``ValueError`` the
+        # validator contract promises.  Force both bounds to the same
+        # awareness; the user must pick one regime (naive=local time, or
+        # aware with an explicit offset) instead of mixing.
+        start_aware = parsed["start"].tzinfo is not None
+        end_aware = parsed["end"].tzinfo is not None
+        if start_aware != end_aware:
+            raise ValueError(
+                f"TimestampColumn bounds differ in tz-awareness: "
+                f"start='{self.start}' ({'aware' if start_aware else 'naive'}), "
+                f"end='{self.end}' ({'aware' if end_aware else 'naive'}).  "
+                f"Use the same regime on both -- either both naive (e.g., "
+                f"'2024-01-01T00:00:00') or both aware with an explicit "
+                f"offset (e.g., '2024-01-01T00:00:00+00:00')."
+            )
         if parsed["start"] > parsed["end"]:
             raise ValueError(f"start ({self.start}) must be <= end ({self.end})")
         if isinstance(self.distribution, WeightedValues):
@@ -640,7 +838,12 @@ class StructColumn(_StrictModel):
     """
 
     strategy: Literal["struct"] = "struct"
-    fields: list[ColumnSpec]  # forward ref resolved by model_rebuild() below
+    # ``min_length=1`` -- an empty fields list builds ``F.struct()``
+    # with zero children, which Spark types as ``struct<>`` (an
+    # ambiguous nothing-struct that downstream schema inference
+    # cannot resolve).  Reject at plan time.  Forward ref resolved
+    # by ``model_rebuild()`` below.
+    fields: list[ColumnSpec] = Field(min_length=1)
 
     @model_validator(mode="after")
     def validate_unique_field_names(self) -> StructColumn:
@@ -657,6 +860,30 @@ class StructColumn(_StrictModel):
                 f"StructColumn has duplicate field names: {dupes}.  "
                 f"Each field must have a unique name within the struct."
             )
+        return self
+
+    @model_validator(mode="after")
+    def validate_field_strategies(self) -> StructColumn:
+        # Parallel to ``ArrayColumn.validate_lengths``'s element-strategy
+        # rejection: a struct child whose ``gen`` is ``FakerColumn`` or
+        # ``ForeignKeyColumn`` cannot be materialised by
+        # ``_build_struct_column`` -- Faker requires a column-level
+        # ``pandas_udf`` (not per-cell) and FK resolution keys on the
+        # top-level ``(table, column)`` pair with no meaning inside a
+        # nested struct.  The engine would raise a RuntimeError far
+        # from the declaration; catch at plan time instead.
+        for field_spec in self.fields:
+            if isinstance(field_spec.gen, (FakerColumn, ForeignKeyColumn)):
+                raise ValueError(
+                    f"StructColumn.fields[{field_spec.name!r}].gen="
+                    f"{type(field_spec.gen).__name__} is not supported.  "
+                    f"Faker requires a column-level pandas_udf and "
+                    f"ForeignKeyColumn keys on the top-level (table, "
+                    f"column) pair -- neither works inside a struct.  "
+                    f"Use a scalar strategy (RangeColumn, ValuesColumn, "
+                    f"PatternColumn, ConstantColumn, ExpressionColumn) "
+                    f"for struct field generation."
+                )
         return self
 
 
@@ -939,9 +1166,11 @@ class ColumnSpec(_StrictModel):
           from the column's own name.  Useful for correlating
           generated values across columns (e.g. ``city`` ↔ ``zip``).
         precision: Total digit count for ``DataType.DECIMAL`` columns.
-          Set together with ``scale``; falls back to Spark's
-          ``DecimalType()`` default of ``(10, 0)`` when both are unset.
-          Rejected on non-DECIMAL dtypes.
+          Set together with ``scale``; falls back to
+          ``(DEFAULT_DECIMAL_PRECISION, DEFAULT_DECIMAL_SCALE)`` from
+          ``dbldatagen.core.spec._constants`` when both are unset
+          (matches Spark's ``DecimalType()`` default).  Rejected on
+          non-DECIMAL dtypes.
         scale: Fractional digit count for ``DataType.DECIMAL`` columns.
           Set together with ``precision``.
     """
@@ -1046,11 +1275,20 @@ class ColumnSpec(_StrictModel):
         # 10**(p-s); anything >= that overflows after cast.  Only checked
         # when precision/scale are explicit — the None/None default path
         # defers to Spark's DecimalType(10, 0) and inherits its rounding.
+        # Walk every ColumnStrategy member that can carry a numeric
+        # value -- not just RangeColumn / ValuesColumn.  Skipping a
+        # member silently passes overflowing values through to
+        # NUMERIC_VALUE_OUT_OF_RANGE deep in a Spark job.  Members
+        # exempted by design (FakerColumn -> StringType, Pattern /
+        # UUID / Struct / Array -> non-numeric, Timestamp -> timestamp,
+        # ForeignKey -> inherits parent type, Expression -> raw SQL
+        # that can't be statically evaluated) fall through to the
+        # ``return self`` at the end with no check.
+        limit = 10 ** (precision - scale)
+        max_repr = limit - 10**-scale
         if isinstance(self.gen, RangeColumn):
-            limit = 10 ** (precision - scale)
             max_abs = max(abs(self.gen.min), abs(self.gen.max))
             if max_abs >= limit:
-                max_repr = limit - 10**-scale
                 raise ValueError(
                     f"Column '{self.name}': range [{self.gen.min}, {self.gen.max}] "
                     f"does not fit in decimal({precision}, {scale}) "
@@ -1060,7 +1298,6 @@ class ColumnSpec(_StrictModel):
             # Walk numeric entries once; non-numeric values are skipped
             # (a string-typed ValuesColumn paired with dtype=DECIMAL is
             # a different misconfiguration handled elsewhere).
-            limit = 10 ** (precision - scale)
             numeric_values = [v for v in self.gen.values if isinstance(v, (int, float, Decimal))]
             if numeric_values:
                 # Two-pass: max() over absolute values keeps mypy happy
@@ -1072,12 +1309,46 @@ class ColumnSpec(_StrictModel):
                 max_abs_value = max(abs(float(v)) for v in numeric_values)
                 if max_abs_value >= limit:
                     offending = next(v for v in numeric_values if abs(float(v)) == max_abs_value)
-                    max_repr = limit - 10**-scale
                     raise ValueError(
                         f"Column '{self.name}': value {offending} in ValuesColumn "
                         f"does not fit in decimal({precision}, {scale}) "
                         f"(max representable magnitude is {max_repr})"
                     )
+        elif isinstance(self.gen, SequenceColumn):
+            # Sequence span requires ``rows`` from the owning TableSpec,
+            # which isn't visible here (ColumnSpec doesn't see its
+            # parent).  ``TableSpec.validate_sequence_column_overflow`` (below) does
+            # the row-aware fit check; document the cross-cutting
+            # responsibility so this method's reader knows it's covered.
+            pass
+        elif isinstance(self.gen, ConstantColumn):
+            value = self.gen.value
+            if isinstance(value, (int, float, Decimal)):
+                # ``abs(float('nan')) >= limit`` is False, so NaN/Inf
+                # values bypass the magnitude check below and ship to
+                # the engine as ``F.lit(nan)`` -- catch them here so the
+                # error names the constant.
+                _require_finite("value", float(value), "ConstantColumn")
+                if abs(float(value)) >= limit:
+                    raise ValueError(
+                        f"Column '{self.name}': constant value {value} "
+                        f"does not fit in decimal({precision}, {scale}) "
+                        f"(max representable magnitude is {max_repr})"
+                    )
+        elif isinstance(self.gen, ForeignKeyColumn):
+            # FK columns inherit their dtype + precision/scale from the
+            # parent's PK at plan resolution time.  Fit-check is the
+            # parent's responsibility -- the child carries no value
+            # space of its own to range-check.  Explicit branch (rather
+            # than falling through silently) so the next reader knows
+            # this exemption is intentional.
+            pass
+        # ExpressionColumn: raw SQL evaluated by Spark at run time --
+        # we have no static expression value to fit-check.  Any
+        # overflow surfaces as NUMERIC_VALUE_OUT_OF_RANGE at
+        # materialisation; the user wrote the SQL and accepts that.
+        # Other strategies (Faker/Pattern/UUID/Struct/Array/Timestamp)
+        # don't produce numeric values that need a fit check here.
         return self
 
     @model_validator(mode="after")
@@ -1103,12 +1374,30 @@ class ColumnSpec(_StrictModel):
         # ``date_of_birth`` provider returns a string column regardless
         # of the declared dtype.  Leaving Faker+DATE through was a
         # silent type-declaration lie.
-        _non_date_strategies = (RangeColumn, PatternColumn, SequenceColumn, UUIDColumn, FakerColumn)
+        # StructColumn and ArrayColumn produce composite Spark types
+        # (struct<...>, array<element>) that cannot be coerced to DATE
+        # at any cast; pairing them with ``dtype=DATE`` is a silent
+        # type-declaration lie -- the resulting column ships as a
+        # struct/array regardless of the requested DATE, and the user's
+        # declared dtype never matches the materialised schema.
+        _non_date_strategies = (
+            RangeColumn,
+            PatternColumn,
+            SequenceColumn,
+            UUIDColumn,
+            FakerColumn,
+            StructColumn,
+            ArrayColumn,
+        )
         if self.dtype == DataType.DATE and isinstance(self.gen, _non_date_strategies):
             if isinstance(self.gen, FakerColumn):
                 type_word = "strings (the Faker pool stringifies every value)"
             elif isinstance(self.gen, (RangeColumn, SequenceColumn)):
                 type_word = "integers"
+            elif isinstance(self.gen, StructColumn):
+                type_word = "a struct<...> composite (no DATE cast exists)"
+            elif isinstance(self.gen, ArrayColumn):
+                type_word = "an array<element> composite (no DATE cast exists)"
             else:
                 type_word = "strings"
             raise ValueError(
@@ -1233,7 +1522,11 @@ class TableSpec(_StrictModel):
     """
 
     name: str
-    columns: list[ColumnSpec]
+    # ``min_length=1`` -- a TableSpec with no columns has nothing to
+    # generate; downstream ``build_all_column_exprs`` ``select(*[])``
+    # produces an empty-schema DataFrame with no signal that the user's
+    # plan was incomplete.  Reject up front.
+    columns: list[ColumnSpec] = Field(min_length=1)
     rows: int | str
     primary_key: PrimaryKey | None = None
     seed: int | None = None
@@ -1287,6 +1580,32 @@ class TableSpec(_StrictModel):
                 f"Table '{self.name}' has duplicate column names: "
                 f"{sorted(duplicates)}.  Each ColumnSpec must have a "
                 f"unique ``name`` within its table."
+            )
+        return self
+
+    @model_validator(mode="after")
+    def validate_primary_key_columns_exist(self) -> TableSpec:
+        """Reject ``PrimaryKey.columns`` that name columns missing from
+        ``columns``.
+
+        Without this check, ``PrimaryKey(columns=["does_not_exist"])``
+        constructs successfully and only ``planner._validate_primary_keys``
+        catches the typo at plan-resolve time.  Direct ``generate_table``
+        callers (outside a ``DataGenPlan``) get no model-layer signal --
+        the engine then fails with a confusing missing-column reference
+        far from the offending declaration.  Catch at TableSpec
+        construction so the error names the typo'd column and the
+        available columns.
+        """
+        if self.primary_key is None:
+            return self
+        column_names = {c.name for c in self.columns}
+        missing = [pk_col for pk_col in self.primary_key.columns if pk_col not in column_names]
+        if missing:
+            raise ValueError(
+                f"Table '{self.name}' primary_key references columns "
+                f"that don't exist: {missing}.  Available columns: "
+                f"{sorted(column_names)}."
             )
         return self
 
@@ -1425,7 +1744,12 @@ class DataGenPlan(_StrictModel):
           locally.
     """
 
-    tables: list[TableSpec]
+    # ``min_length=1`` -- a plan with no tables has nothing to
+    # generate and is almost certainly a user error (e.g., YAML
+    # ``tables: []`` instead of forgetting the section entirely).
+    # Reject at plan time so the empty-plan failure surfaces at
+    # construction, not at the engine's empty-iteration call site.
+    tables: list[TableSpec] = Field(min_length=1)
     seed: int = 42
     default_locale: str = "en_US"
 
@@ -1453,6 +1777,28 @@ class DataGenPlan(_StrictModel):
                 stacklevel=2,
             )
         return data
+
+    @model_validator(mode="after")
+    def validate_unique_table_names(self) -> DataGenPlan:
+        """Reject plans containing two TableSpecs with the same name.
+
+        Downstream ``resolve_plan`` builds ``{t.name: t for t in
+        plan.tables}`` which silently drops all but the last
+        colliding table.  FK references that targeted the dropped
+        table then resolve to the survivor's row space, producing
+        wrong join cardinality with no signal that the user's
+        original plan had a typo.  Catch at plan time with the
+        offending name.
+        """
+        names = [t.name for t in self.tables]
+        if len(set(names)) != len(names):
+            dupes = sorted(name for name, count in Counter(names).items() if count > 1)
+            raise ValueError(
+                f"DataGenPlan has duplicate TableSpec names: {dupes}.  "
+                f"resolve_plan dedupes on name (silently dropping all but "
+                f"the last); rename so each table is unique."
+            )
+        return self
 
     @model_validator(mode="after")
     def propagate_seeds(self) -> DataGenPlan:

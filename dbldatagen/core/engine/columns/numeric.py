@@ -19,16 +19,11 @@ from dbldatagen.core.engine.distributions import (
     normal_sample_expr,
 )
 from dbldatagen.core.engine.seed import cell_seed_expr
+from dbldatagen.core.spec._constants import (
+    DEFAULT_DECIMAL_PRECISION,
+    DEFAULT_DECIMAL_SCALE,
+)
 from dbldatagen.core.spec.schema import DataType, Distribution, Normal
-
-
-# Fallback DECIMAL shape when a column has dtype=DECIMAL but no explicit
-# precision/scale.  Matches Spark's ``DecimalType()`` default of ``(10, 0)``
-# (see https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.types.DecimalType.html)
-# so plans without precision/scale produce the same shape Spark would
-# produce on its own.
-_DEFAULT_DECIMAL_PRECISION = 10
-_DEFAULT_DECIMAL_SCALE = 0
 
 
 def build_range_column(
@@ -195,7 +190,7 @@ def _build_float_range(
 
     spark_type = _resolve_spark_type(dtype, integer=False, precision=precision, scale=scale)
     if dtype == DataType.DECIMAL:
-        effective_scale = scale if scale is not None else _DEFAULT_DECIMAL_SCALE
+        effective_scale = scale if scale is not None else DEFAULT_DECIMAL_SCALE
         return F.round(result, effective_scale).cast(spark_type)
     return result.cast(spark_type)
 
@@ -211,8 +206,8 @@ def _resolve_spark_type(
         return T.LongType() if integer else T.DoubleType()
     if dtype == DataType.DECIMAL:
         return T.DecimalType(
-            precision if precision is not None else _DEFAULT_DECIMAL_PRECISION,
-            scale if scale is not None else _DEFAULT_DECIMAL_SCALE,
+            precision if precision is not None else DEFAULT_DECIMAL_PRECISION,
+            scale if scale is not None else DEFAULT_DECIMAL_SCALE,
         )
     mapping = {
         DataType.INT: T.IntegerType(),

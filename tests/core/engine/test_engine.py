@@ -408,7 +408,7 @@ class TestPatternColumn:
     def test_malformed_placeholder_passes_through_as_literal(self, spark):
         """Placeholders with a trailing non-digit character (``{seq:06d}``,
         ``{digit:4a}``, ``{alpha:3x}``, ``{seq:y}``) do not match
-        ``_PLACEHOLDER_RE`` and are emitted verbatim into the output
+        ``PLACEHOLDER_RE`` and are emitted verbatim into the output
         string.
 
         Pins the removal of an undocumented trailing ``[a-z]?`` group

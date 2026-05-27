@@ -624,21 +624,23 @@ class TestSeedFromValidation:
 
 class TestPrimaryKeyValidation:
     def test_pk_column_not_in_table_raises(self):
-        plan = DataGenPlan(
-            tables=[
-                TableSpec(
-                    name="t",
-                    rows=10,
-                    primary_key=PrimaryKey(columns=["id", "missing"]),
-                    columns=[
-                        ColumnSpec(name="id", gen=SequenceColumn()),
-                        ColumnSpec(name="val", gen=RangeColumn(min=1, max=10)),
-                    ],
-                )
-            ]
-        )
-        with pytest.raises(ValueError, match="Primary key column 'missing'"):
-            resolve_plan(plan)
+        # ``TableSpec.validate_primary_key_columns_exist`` now catches
+        # this at model construction (one validation layer earlier than
+        # the planner).  Direct ``generate_table`` callers also get the
+        # signal now -- see tests/core/spec/test_table_spec_validators.py
+        # for the model-layer coverage.  Pinned here so the planner
+        # rejection assertion stays correct if the validator order ever
+        # shifts.
+        with pytest.raises(ValueError, match="don't exist"):
+            TableSpec(
+                name="t",
+                rows=10,
+                primary_key=PrimaryKey(columns=["id", "missing"]),
+                columns=[
+                    ColumnSpec(name="id", gen=SequenceColumn()),
+                    ColumnSpec(name="val", gen=RangeColumn(min=1, max=10)),
+                ],
+            )
 
     def test_pk_with_range_column_strategy_rejected(self):
         """A PK column with a RangeColumn strategy is rejected at plan time.
