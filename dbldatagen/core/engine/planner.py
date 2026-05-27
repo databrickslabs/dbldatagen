@@ -452,7 +452,7 @@ def _extract_pk_metadata(table_spec: TableSpec, pk_col_spec: ColumnSpec) -> PKMe
     base_meta = {
         "table_name": table_spec.name,
         "pk_column": pk_col_spec.name,
-        "row_count": int(table_spec.rows),
+        "row_count": table_spec.rows,
         "pk_seed": derive_column_seed(table_spec.seed, table_spec.name, pk_col_spec.name),
     }
 

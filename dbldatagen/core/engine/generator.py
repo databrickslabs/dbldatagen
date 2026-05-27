@@ -97,7 +97,7 @@ def generate_table(
         ValueError: ``table_spec.seed`` is ``None``, or ``resolved_plan``
           does not contain a table named ``table_spec.name``.
     """
-    row_count = int(table_spec.rows)
+    row_count = table_spec.rows
     if table_spec.seed is None:
         raise ValueError(
             f"TableSpec '{table_spec.name}'.seed is None.  Either set "
