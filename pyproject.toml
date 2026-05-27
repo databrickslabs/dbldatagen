@@ -47,7 +47,7 @@ dev = [
 ]
 lint = [
     "black~=25.12.0",
-    "mypy~=1.9.0",
+    "mypy~=2.1.0",
     "pylint~=3.3.1",
     "pylint-pytest==2.0.0a0",
     "ruff~=0.13.0",
