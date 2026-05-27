@@ -66,11 +66,6 @@ _MAX_ARRAY_LENGTH = 1000
 _MIN_NULL_FRACTION = 1.0 / NULL_PRECISION
 
 
-# ---------------------------------------------------------------------------
-# Distributions
-# ---------------------------------------------------------------------------
-
-
 class Uniform(_StrictModel):
     """Uniform distribution (default).
 
@@ -255,11 +250,6 @@ Distribution = Annotated[
     Uniform | Normal | LogNormal | Zipf | Exponential | WeightedValues,
     Field(discriminator="type"),
 ]
-
-
-# ---------------------------------------------------------------------------
-# Column generation strategies  (discriminated union on `strategy` field)
-# ---------------------------------------------------------------------------
 
 
 class RangeColumn(_StrictModel):
@@ -733,11 +723,6 @@ ColumnStrategy = Annotated[
 ]
 
 
-# ---------------------------------------------------------------------------
-# Data types  (maps to Spark SQL types)
-# ---------------------------------------------------------------------------
-
-
 class DataType(str, Enum):
     """Output data types for ``ColumnSpec``, mapped to Spark SQL types.
 
@@ -772,11 +757,6 @@ class DataType(str, Enum):
             "str": cls.STRING,
         }
         return aliases.get(value.lower())
-
-
-# ---------------------------------------------------------------------------
-# Primary key and foreign key
-# ---------------------------------------------------------------------------
 
 
 class PrimaryKey(_StrictModel):
@@ -870,11 +850,6 @@ class ForeignKeyRef(_StrictModel):
                 "child references toward a small set of parents."
             )
         return self
-
-
-# ---------------------------------------------------------------------------
-# Column spec  -- the main column definition
-# ---------------------------------------------------------------------------
 
 
 class ColumnSpec(_StrictModel):
@@ -1150,11 +1125,6 @@ class ColumnSpec(_StrictModel):
         return self
 
 
-# ---------------------------------------------------------------------------
-# Table spec
-# ---------------------------------------------------------------------------
-
-
 def parse_human_count(value: int | str) -> int:
     """Parses a row-count value into an ``int``.
 
@@ -1346,11 +1316,6 @@ class TableSpec(_StrictModel):
                         f"(max representable magnitude is {max_repr})."
                     )
         return self
-
-
-# ---------------------------------------------------------------------------
-# Top-level plan
-# ---------------------------------------------------------------------------
 
 
 class DataGenPlan(_StrictModel):

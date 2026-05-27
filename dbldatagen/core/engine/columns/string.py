@@ -20,11 +20,6 @@ from dbldatagen.core.engine.seed import GOLDEN_RATIO_HASH, cell_seed_expr, to_si
 from dbldatagen.core.spec.schema import Distribution, WeightedValues
 
 
-# ---------------------------------------------------------------------------
-# Values column (categorical)
-# ---------------------------------------------------------------------------
-
-
 def build_values_column(
     id_col: Column | str,
     column_seed: int,
@@ -67,10 +62,6 @@ def build_values_column(
     idx = apply_distribution(seed_col, len(values_list), distribution)
     return arr[idx.cast("int")]
 
-
-# ---------------------------------------------------------------------------
-# Pattern column  (template-based string generation)
-# ---------------------------------------------------------------------------
 
 _PLACEHOLDER_RE = re.compile(r"\{(seq|uuid|digit|alpha|hex):?(\d+)?\}")
 
@@ -277,11 +268,6 @@ def _random_hex(
     seed = cell_seed_expr(_seed_xor(column_seed, (idx + 1) * GOLDEN_RATIO_HASH), id_col)
     value = F.pmod(seed, F.lit(16**width))
     return F.lower(F.lpad(F.hex(value), width, "0"))
-
-
-# ---------------------------------------------------------------------------
-# Constant and expression columns
-# ---------------------------------------------------------------------------
 
 
 def build_constant_column(value: object) -> Column:
