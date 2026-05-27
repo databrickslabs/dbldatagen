@@ -412,6 +412,7 @@ def build_column_expr(
                 dtype=col_spec.dtype,
                 precision=col_spec.precision,
                 scale=col_spec.scale,
+                step=gen.step,
             )
         case ValuesColumn():
             result = build_values_column(

@@ -23,6 +23,7 @@ from dbldatagen.core.spec.schema import (
     ConstantColumn,
     DataType,
     ExpressionColumn,
+    Normal,
     RangeColumn,
     SequenceColumn,
     TableSpec,
@@ -181,6 +182,104 @@ class TestRangeColumn:
         stats = df.agg(F.min("price").alias("lo"), F.max("price").alias("hi")).first()
         assert stats.lo >= 0.0
         assert stats.hi <= 100.0
+
+
+class TestRangeColumnStep:
+    """``step`` was declared and validated on ``RangeColumn`` but the
+    engine silently ignored it before this fix -- a user writing
+    ``RangeColumn(min=0, max=100, step=5)`` expecting the lattice
+    ``{0, 5, ..., 100}`` was getting continuous random values from
+    ``[0, 100]``.  These tests pin value-level lattice snapping
+    (not just that the field round-trips through Pydantic)."""
+
+    def test_integer_step_lattice(self, spark):
+        """All output values are exact multiples of step on the lattice."""
+        col_seed = derive_column_seed(42, "t", "v")
+        df = spark.range(500).select(build_range_column("id", col_seed, 0, 100, step=10).alias("v"))
+        values = [r.v for r in df.collect()]
+        valid = {0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100}
+        assert set(values).issubset(valid), f"non-lattice values: {set(values) - valid}"
+
+    def test_float_step_lattice(self, spark):
+        """Float step constrains output to half-unit lattice."""
+        col_seed = derive_column_seed(42, "t", "v")
+        df = spark.range(500).select(build_range_column("id", col_seed, 0.0, 10.0, step=0.5).alias("v"))
+        values = [r.v for r in df.collect()]
+        # Every value should be a multiple of 0.5 in [0, 10]
+        for v in values:
+            doubled = v * 2.0
+            assert abs(doubled - round(doubled)) < 1e-9, f"{v} not on 0.5 lattice"
+            assert 0.0 <= v <= 10.0
+
+    def test_currency_cents_lattice(self, spark):
+        """The motivating "prices in cents" use case: step=0.01 forces
+        every value to a discrete cent."""
+        col_seed = derive_column_seed(42, "t", "price")
+        df = spark.range(200).select(build_range_column("id", col_seed, 0.0, 100.0, step=0.01).alias("p"))
+        values = [r.p for r in df.collect()]
+        for v in values:
+            cents = v * 100.0
+            assert abs(cents - round(cents)) < 1e-6, f"{v} not on cents lattice"
+
+    def test_float_step_on_int_bounds_forces_float_output(self, spark):
+        """``min=0, max=10, step=0.5`` mixes int bounds with float step.
+        Engine should use the float path so the half-step lattice
+        ``{0.0, 0.5, ..., 10.0}`` is representable."""
+        col_seed = derive_column_seed(42, "t", "v")
+        df = spark.range(200).select(build_range_column("id", col_seed, 0, 10, step=0.5).alias("v"))
+        values = [r.v for r in df.collect()]
+        for v in values:
+            doubled = v * 2.0
+            assert abs(doubled - round(doubled)) < 1e-9, f"{v} not on 0.5 lattice"
+
+    def test_step_none_remains_continuous(self, spark):
+        """Regression-pin: step=None preserves the original continuous
+        float-uniform behavior (most values are NOT integer multiples
+        of any small step)."""
+        col_seed = derive_column_seed(42, "t", "v")
+        df = spark.range(200).select(build_range_column("id", col_seed, 0.0, 10.0, step=None).alias("v"))
+        values = [r.v for r in df.collect()]
+        # Roughly every row should be non-half-lattice -- continuous output
+        # has effectively zero probability of landing exactly on multiples
+        # of 0.5.  Tolerate a small minority to absorb seed-collision edge
+        # cases at the _CONTINUOUS_PRECISION = 10000 grid.
+        on_half_lattice = sum(1 for v in values if abs(v * 2 - round(v * 2)) < 1e-9)
+        assert on_half_lattice < 50, f"{on_half_lattice}/200 values on 0.5 lattice — engine ignored step=None"
+
+    def test_step_with_normal_distribution(self, spark):
+        """Normal + step: every value lands on the lattice (bell shape
+        is preserved via continuous-draw-then-snap)."""
+        col_seed = derive_column_seed(42, "t", "v")
+        df = spark.range(500).select(
+            build_range_column(
+                "id",
+                col_seed,
+                0,
+                100,
+                step=5,
+                distribution=Normal(mean=0.5, stddev=0.1),
+            ).alias("v")
+        )
+        values = [r.v for r in df.collect()]
+        valid = set(range(0, 101, 5))
+        assert set(values).issubset(valid), f"non-lattice: {set(values) - valid}"
+
+    def test_step_larger_than_range(self, spark):
+        """Edge case: step > (max - min) leaves only ``min`` on the
+        lattice.  Every output should equal ``min``."""
+        col_seed = derive_column_seed(42, "t", "v")
+        df = spark.range(50).select(build_range_column("id", col_seed, 0, 10, step=100).alias("v"))
+        values = {r.v for r in df.collect()}
+        assert values == {0}, f"expected only min on lattice, got {values}"
+
+    def test_step_does_not_divide_range(self, spark):
+        """When ``(max - min) % step != 0``, ``max`` is not on the
+        lattice and should not appear in output.  For
+        ``min=0, max=10, step=3`` the lattice is ``{0, 3, 6, 9}``."""
+        col_seed = derive_column_seed(42, "t", "v")
+        df = spark.range(500).select(build_range_column("id", col_seed, 0, 10, step=3).alias("v"))
+        values = {r.v for r in df.collect()}
+        assert values.issubset({0, 3, 6, 9}), f"non-lattice values: {values - {0, 3, 6, 9}}"
 
 
 # ---------------------------------------------------------------------------
