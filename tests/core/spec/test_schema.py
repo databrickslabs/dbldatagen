@@ -244,17 +244,27 @@ class TestColumnSpec:
         col = ColumnSpec(name="version", gen=ConstantColumn(value=1))
         assert isinstance(col.gen, ConstantColumn)
 
+    def test_reserved_internal_name_rejected(self):
+        """``_synth_row_id`` is added by the engine and dropped before
+        return; a user column with that exact name would silently
+        shadow it.  Rejected at construction so the collision fails
+        loudly."""
+        with pytest.raises(ValueError, match="engine-internal"):
+            ColumnSpec(name="_synth_row_id", gen=RangeColumn())
+
     @pytest.mark.parametrize(
-        "reserved_name",
-        ["_write_batch", "_synth_row_id", "_anything"],
+        "customer_name",
+        ["_modified_at", "_id", "_partition_key", "_anything", "_write_batch"],
     )
-    def test_leading_underscore_name_rejected(self, reserved_name):
-        """Names with a leading underscore collide with engine-internal
-        metadata columns (``_write_batch``, ``_synth_row_id``).
-        Rejected at construction so the collision fails loudly instead
-        of silently shadowing."""
-        with pytest.raises(ValueError, match="reserved for engine-internal"):
-            ColumnSpec(name=reserved_name, gen=RangeColumn())
+    def test_other_leading_underscore_names_accepted(self, customer_name):
+        """Many real-world systems and customers emit columns whose
+        names begin with an underscore (CDC metadata, partition
+        keys, etc.).  Only exact collisions with engine-internal
+        names are rejected -- everything else, including
+        ``_write_batch`` (no longer reserved after the CDC
+        extraction), is accepted."""
+        col = ColumnSpec(name=customer_name, gen=RangeColumn())
+        assert col.name == customer_name
 
     @pytest.mark.parametrize(
         "bad_name",

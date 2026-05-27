@@ -526,9 +526,9 @@ def _build_array_column(
     """Build a variable-length Spark array from an inner strategy."""
     # Generate max_length elements, each with a unique seed offset
     element_cols: list[Column] = []
-    # ``elem`` (not ``_elem``): ColumnSpec rejects leading-underscore names
-    # (reserved for engine-internal metadata).  This dummy spec is never
-    # surfaced to the user — it just drives the per-element builder.
+    # Dummy spec; never surfaced to the user, just drives the
+    # per-element builder.  ``elem`` is arbitrary -- any valid
+    # identifier works.
     dummy_spec = ColumnSpec(name="elem", gen=gen.element)
     for i in range(gen.max_length):
         elem_seed = column_seed ^ ((i + 1) * GOLDEN_RATIO_HASH)

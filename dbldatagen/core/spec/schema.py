@@ -48,6 +48,15 @@ class _StrictModel(BaseModel):
 
 _IDENTIFIER_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
+# Engine-internal column names that user columns must not collide with.
+# Currently only ``_synth_row_id`` (added by ``create_range_df`` and
+# dropped by ``apply_column_phases``).  Add new internal names here if
+# the engine introduces more.  The validator rejects exact matches
+# only -- legitimate customer names like ``_modified_at`` or
+# ``_partition_key`` are accepted, even though they begin with an
+# underscore, because they don't shadow anything in this set.
+_RESERVED_INTERNAL_COLUMN_NAMES: frozenset[str] = frozenset({"_synth_row_id"})
+
 
 def parse_fk_ref(ref: str) -> tuple[str, str]:
     """Parse and validate a ``ForeignKeyRef.ref`` string.
@@ -899,9 +908,12 @@ class ColumnSpec(_StrictModel):
 
     Attributes:
         name: Column name.  Must be a valid identifier (``[A-Za-z_]
-          [A-Za-z0-9_]*``) and must not begin with an underscore
-          (those are reserved for engine-internal metadata columns
-          like ``_write_batch`` and ``_synth_row_id``).
+          [A-Za-z0-9_]*``) and must not exactly match any name in
+          ``_RESERVED_INTERNAL_COLUMN_NAMES`` (currently
+          ``{"_synth_row_id"}``).  Other leading-underscore names
+          (``_modified_at``, ``_partition_key``, ``_id``, ...) are
+          accepted -- many real-world systems emit columns in that
+          shape.
         dtype: Optional Spark ``DataType`` for the column.  When
           ``None``, the engine infers it from ``gen``.  Set explicitly
           when the strategy's natural output dtype is not what you
@@ -952,14 +964,18 @@ class ColumnSpec(_StrictModel):
     def validate_column_name(self) -> ColumnSpec:
         """Reject column names that would collide with engine-internal metadata.
 
-        Leading-underscore names are reserved for engine-internal
-        columns (``_write_batch``, ``_synth_row_id``) added during
-        generation; a user column with such a name would silently
-        shadow them.
-
-        The name must also be a valid SQL / Python-like identifier
+        The name must be a valid SQL / Python-like identifier
         (``[A-Za-z_][A-Za-z0-9_]*``) so it round-trips through Spark
-        without backtick quoting.
+        without backtick quoting, AND must not exactly match any
+        name in ``_RESERVED_INTERNAL_COLUMN_NAMES``.
+
+        Earlier versions rejected every leading-underscore name to
+        avoid accidental shadowing; that rule turned out to be too
+        strict -- many real customer / upstream-system columns
+        legitimately begin with ``_`` (``_modified_at``, ``_id``,
+        ``_partition_key``).  The narrower exact-match check
+        preserves the anti-shadowing guarantee for the names the
+        engine actually adds while accepting the customer pattern.
         """
         # fullmatch, not match: ``match`` + ``$`` allows a trailing ``\n``
         # because ``$`` anchors before a newline in default mode.
@@ -967,12 +983,12 @@ class ColumnSpec(_StrictModel):
             raise ValueError(
                 f"Column name '{self.name}' is not a valid identifier " f"(must match [A-Za-z_][A-Za-z0-9_]*)."
             )
-        if self.name.startswith("_"):
+        if self.name in _RESERVED_INTERNAL_COLUMN_NAMES:
             raise ValueError(
-                f"Column name '{self.name}' starts with underscore, which is "
-                f"reserved for engine-internal metadata columns "
-                f"(``_write_batch``, ``_synth_row_id``).  Rename to a "
-                f"non-underscore-prefixed identifier to avoid silent shadowing."
+                f"Column name '{self.name}' collides with an engine-internal "
+                f"metadata column.  Reserved names: "
+                f"{sorted(_RESERVED_INTERNAL_COLUMN_NAMES)}.  Rename to avoid "
+                f"silent shadowing."
             )
         return self
 
