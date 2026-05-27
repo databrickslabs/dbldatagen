@@ -418,3 +418,76 @@ as follow-ups for core; the recommended interim workarounds are:
 | `text=ILText(...)` (Lorem Ipsum) | `datagendg.faker("col", provider="paragraph")` |
 | `withConstraint(SqlExpr(...))` (post-hoc filtering) | Design generation so the rule holds by construction; core does not filter rows after generation |
 | `Beta` / `Gamma` distributions | Approximate with `Normal` or `LogNormal` for now |
+| `random=False` lattice sweep on numeric range | See below — compose `SequenceColumn` + `ExpressionColumn("id % N")` |
+| Sequential `TimestampColumn` | See below — compose `SequenceColumn` over epoch seconds + a cast in `ExpressionColumn` |
+| `ByteType` / `ShortType` numeric dtypes | Use `INT` and rely on the range bounds; the storage saving is marginal at synth-data scales |
+| Decimal auto-`max` from precision/scale | Specify `max` explicitly (e.g. `decimal(5,2)` → set `max=999.99`) |
+
+### Sequential / lattice-sweep over a numeric range
+
+v0 defaults to `random=False`, which produces a deterministic row-id-keyed
+cycle through the lattice `{min, min+step, 2*step, ..., max, min, ...}`.
+Core's `RangeColumn` is always sampled. Substitute by composing two columns:
+
+```python
+# v0 -- deterministic cycle: row N gets value (N % 11) * 10
+.withColumn("shard", IntegerType(), minValue=0, maxValue=100, step=10, random=False)
+
+# core -- the same id-keyed cycle via SequenceColumn + ExpressionColumn modulo
+ColumnSpec(name="row_idx", gen=SequenceColumn(start=0, step=1)),
+ColumnSpec(
+    name="shard",
+    gen=ExpressionColumn(expr="(row_idx % 11) * 10"),
+)
+```
+
+The `row_idx` helper is a regular user column.  Drop it after generation
+if you don't want it in the final DataFrame.
+
+This pattern covers every concrete use case of `random=False` on a
+numeric range:
+
+- **Balanced shard / partition keys.** Each shard gets *exactly* `floor(N/k)` rows.
+- **Time-bucket dimensions** with exact balance (`day_of_week`, `hour_of_day`, `quarter`).
+- **Hand-computable test fixtures** where row `N` should produce a closed-form value.
+- **Predictable join cardinality** at small `N` (`ForeignKeyRef` is the
+  preferred mechanism, but raw modulo works when there's no parent table).
+
+Random sampling (`RangeColumn(... distribution=Uniform())`) gives *balanced
+in expectation*, not *balanced in actuality* — counts vary as `±sqrt(N/k)`.
+Use the substitute when exact balance is required.
+
+### Sequential / evenly-spaced timestamps
+
+Same recipe for `TimestampColumn`:
+
+```python
+# v0 -- one row per hour, deterministic
+.withColumn("ts", "timestamp", begin="2024-01-01", end="2024-12-31", interval="1 hour", random=False)
+
+# core -- SequenceColumn over epoch seconds, cast to timestamp
+ColumnSpec(name="row_idx", gen=SequenceColumn(start=0, step=1)),
+ColumnSpec(
+    name="ts",
+    gen=ExpressionColumn(
+        expr="cast(unix_timestamp('2024-01-01 00:00:00') + row_idx * 3600 as timestamp)"
+    ),
+)
+```
+
+Adjust the multiplier in `unix_timestamp(...) + row_idx * <seconds>` to
+control the bucket interval.  The base string needs the explicit
+`HH:mm:ss` because Spark's default `unix_timestamp` format pattern is
+`yyyy-MM-dd HH:mm:ss` and rejects a bare date under ANSI mode.  Drop
+`row_idx` from the output DataFrame after generation if it isn't needed
+downstream.
+
+**Session timezone:** Spark resolves the base literal in
+`spark.sql.session.timeZone`, not UTC.  If you need UTC-absolute
+timestamps regardless of cluster TZ, set
+`spark.conf.set("spark.sql.session.timeZone", "UTC")` before
+`generate_table(...)`, or wrap the base in `to_utc_timestamp(...,
+'UTC')` in the expression.
+
+Both recipes above are pinned by end-to-end tests in
+`tests/core/engine/test_engine.py::TestMigrationRecipes`.

@@ -772,3 +772,108 @@ class TestExpressionColumnEvaluation:
         assert len(rows) == 100
         # row_number() over (order by 1) emits the trivial 1..N sequence
         assert {r.rn for r in rows} == set(range(1, 101))
+
+
+class TestMigrationRecipes:
+    """End-to-end pins of the substitution recipes documented in
+    ``docs/MIGRATION_V0_TO_CORE.md`` for the v0 features that don't have
+    a direct core equivalent.  If these tests break, the migration
+    doc is shipping misinformation.
+    """
+
+    def test_random_false_shard_assignment_via_sequence_modulo(self, spark):
+        """Migration recipe for v0's ``random=False`` lattice sweep on
+        a numeric range: compose ``SequenceColumn`` + ``ExpressionColumn``
+        with modulo so each shard gets *exactly* ``floor(N/k)`` rows
+        (not just balanced-in-expectation)."""
+        spec = TableSpec(
+            name="shard_assignment",
+            rows=110,  # exactly 10 rows per shard for 11 shards
+            seed=42,
+            columns=[
+                ColumnSpec(name="row_idx", gen=SequenceColumn(start=0, step=1)),
+                ColumnSpec(
+                    name="shard",
+                    gen=ExpressionColumn(expr="(row_idx % 11) * 10"),
+                ),
+            ],
+        )
+        df = generate_table(spark, spec)
+        rows = df.collect()
+        # Exact balance: every shard hit exactly 10 times.
+        from collections import Counter
+
+        counts = Counter(r.shard for r in rows)
+        expected_shards = {i * 10 for i in range(11)}
+        assert set(counts.keys()) == expected_shards, (
+            f"expected shards {expected_shards}, got {set(counts.keys())}"
+        )
+        assert all(v == 10 for v in counts.values()), (
+            f"expected exactly 10 rows per shard, got {dict(counts)}"
+        )
+
+    def test_sequential_timestamps_via_sequence_unix_cast(self, spark):
+        """Migration recipe for v0's sequential ``TimestampColumn``:
+        compose ``SequenceColumn`` over epoch seconds + an
+        ``ExpressionColumn`` that adds the offset to a base
+        ``unix_timestamp(...)`` and casts the result to a timestamp.
+
+        Generates one row per hour starting from 2024-01-01 UTC.  Pins
+        the row->timestamp arithmetic so the engine path is
+        round-tripped end-to-end at plan-resolution + Spark eval time.
+
+        Spark's ``unix_timestamp`` parses the literal in
+        ``spark.sql.session.timeZone``, not UTC -- so the test pins
+        the session TZ to UTC for the duration of the assertion to
+        make the absolute-epoch comparison runner-independent.  Users
+        applying the recipe in production don't need this pin unless
+        they need UTC-absolute timestamps regardless of cluster TZ.
+        """
+        import datetime as _dt
+
+        tz_key = "spark.sql.session.timeZone"
+        prev_tz = spark.conf.get(tz_key, None)
+        try:
+            spark.conf.set(tz_key, "UTC")
+            spec = TableSpec(
+                name="hourly_ts",
+                rows=72,  # 3 days * 24 hours
+                seed=42,
+                columns=[
+                    ColumnSpec(name="row_idx", gen=SequenceColumn(start=0, step=1)),
+                    ColumnSpec(
+                        name="ts",
+                        gen=ExpressionColumn(
+                            # Explicit ``HH:mm:ss`` because Spark's default
+                            # ``unix_timestamp`` format pattern requires it
+                            # under ANSI mode -- ``'2024-01-01'`` alone
+                            # raises CANNOT_PARSE_TIMESTAMP.
+                            expr="cast(unix_timestamp('2024-01-01 00:00:00') + row_idx * 3600 as timestamp)"
+                        ),
+                    ),
+                ],
+            )
+            df = generate_table(spark, spec)
+            rows = df.collect()
+            assert len(rows) == 72
+
+            # With session TZ = UTC, ``unix_timestamp('2024-01-01 00:00:00')``
+            # resolves to the same epoch as Python's UTC midnight on the
+            # same date, so the offset comparison is deterministic.
+            base_epoch = int(_dt.datetime(2024, 1, 1, tzinfo=_dt.timezone.utc).timestamp())
+            for r in rows:
+                assert isinstance(r.ts, _dt.datetime), f"ts is {type(r.ts)}, not datetime"
+                offset_seconds = int(r.ts.timestamp()) - base_epoch
+                assert offset_seconds == r.row_idx * 3600, (
+                    f"row_idx={r.row_idx} ts={r.ts} offset={offset_seconds}s, "
+                    f"expected {r.row_idx * 3600}s"
+                )
+
+            # Sanity: 72 distinct timestamps at 1-hour spacing.
+            ts_set = {r.ts for r in rows}
+            assert len(ts_set) == 72, f"expected 72 distinct timestamps, got {len(ts_set)}"
+        finally:
+            if prev_tz is None:
+                spark.conf.unset(tz_key)
+            else:
+                spark.conf.set(tz_key, prev_tz)
