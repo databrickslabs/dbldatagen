@@ -829,8 +829,19 @@ class ForeignKeyRef(_StrictModel):
 
     @model_validator(mode="after")
     def validate_ref_format(self) -> ForeignKeyRef:
-        if "." not in self.ref:
-            raise ValueError(f"ForeignKeyRef.ref='{self.ref}' must use 'table.column' format.")
+        # ``"." not in self.ref`` rejected ``"customers"`` but let
+        # malformed forms like ``"."``, ``" . "``, ``"x."``, ``".y"``,
+        # and ``"a.b.c"`` through.  Require exactly one dot separator
+        # with each half matching the same identifier rule that
+        # TableSpec.name / ColumnSpec.name enforce -- so the planner's
+        # downstream ``split(".")`` always yields two valid names.
+        parts = self.ref.split(".")
+        if len(parts) != 2 or not all(_IDENTIFIER_RE.fullmatch(p) for p in parts):
+            raise ValueError(
+                f"ForeignKeyRef.ref='{self.ref}' must use 'table.column' "
+                f"format with each half matching {_IDENTIFIER_RE.pattern!r} "
+                f"(letters / digits / underscore, must not start with a digit)."
+            )
         if not 0.0 <= self.null_fraction <= 1.0:
             raise ValueError(f"null_fraction must be in [0.0, 1.0], got {self.null_fraction}")
         if 0.0 < self.null_fraction < _MIN_NULL_FRACTION:

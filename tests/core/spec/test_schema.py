@@ -545,6 +545,52 @@ class TestForeignKeyRef:
         assert isinstance(fk.distribution, Zipf)
         assert fk.distribution.exponent == 1.3
 
+    def test_ref_must_have_dot(self):
+        """The original loose validator (``"." not in self.ref``)
+        rejects this; pin that the tighter validator still does."""
+        with pytest.raises(ValueError, match=r"must use 'table.column' format"):
+            ForeignKeyRef(ref="customers")
+
+    def test_ref_rejects_bare_dot(self):
+        """``"."`` slipped past ``"." not in self.ref`` and produced
+        two empty-string halves downstream."""
+        with pytest.raises(ValueError, match=r"must use 'table.column' format"):
+            ForeignKeyRef(ref=".")
+
+    def test_ref_rejects_whitespace_dot(self):
+        """``" . "`` slipped through the old check too."""
+        with pytest.raises(ValueError, match=r"must use 'table.column' format"):
+            ForeignKeyRef(ref=" . ")
+
+    def test_ref_rejects_missing_column_half(self):
+        with pytest.raises(ValueError, match=r"must use 'table.column' format"):
+            ForeignKeyRef(ref="orders.")
+
+    def test_ref_rejects_missing_table_half(self):
+        with pytest.raises(ValueError, match=r"must use 'table.column' format"):
+            ForeignKeyRef(ref=".order_id")
+
+    def test_ref_rejects_three_part(self):
+        """``"catalog.schema.column"`` is ambiguous — three parts
+        means downstream split(".") yields three tokens and the FK
+        loop's ``parent_table_name, parent_col_name = ref.split(".")``
+        would crash with a ValueError of its own."""
+        with pytest.raises(ValueError, match=r"must use 'table.column' format"):
+            ForeignKeyRef(ref="catalog.schema.column")
+
+    def test_ref_rejects_leading_digit(self):
+        """Each half must match the identifier rule, which forbids
+        a leading digit (same rule TableSpec.name / ColumnSpec.name
+        enforce)."""
+        with pytest.raises(ValueError, match=r"must use 'table.column' format"):
+            ForeignKeyRef(ref="1orders.id")
+
+    def test_ref_rejects_internal_spaces(self):
+        """An embedded space would have produced a parent_table_name
+        with whitespace and silently failed the existence lookup."""
+        with pytest.raises(ValueError, match=r"must use 'table.column' format"):
+            ForeignKeyRef(ref="orders abc.id")
+
 
 # ---------------------------------------------------------------------------
 # TableSpec
