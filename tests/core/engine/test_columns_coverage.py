@@ -544,6 +544,5 @@ class TestUUIDColumnEdgeCases:
             rows = df.select("row_id", col.alias("u")).collect()
             actual = {r.row_id: r.u for r in rows}
             assert actual == id_to_uuid, (
-                f"UUID determinism regression at seed={seed}: "
-                f"expected {id_to_uuid}, got {actual}"
+                f"UUID determinism regression at seed={seed}: " f"expected {id_to_uuid}, got {actual}"
             )

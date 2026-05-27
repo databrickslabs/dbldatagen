@@ -49,8 +49,8 @@ def build_uuid_column(id_col: Column | str, column_seed: int) -> Column:
     return F.format_string(
         "%08x-%04x-%04x-%04x-%012x",
         F.shiftright(hi, 32).bitwiseAND(0xFFFFFFFF),  # bits [63:32] of hi -> 8 chars
-        F.shiftright(hi, 16).bitwiseAND(0xFFFF),      # bits [31:16] of hi -> 4 chars
-        hi.bitwiseAND(0xFFFF),                        # bits [15:0]  of hi -> 4 chars
-        F.shiftright(lo, 48).bitwiseAND(0xFFFF),      # bits [63:48] of lo -> 4 chars
-        lo.bitwiseAND(0xFFFFFFFFFFFF),                # bits [47:0]  of lo -> 12 chars
+        F.shiftright(hi, 16).bitwiseAND(0xFFFF),  # bits [31:16] of hi -> 4 chars
+        hi.bitwiseAND(0xFFFF),  # bits [15:0]  of hi -> 4 chars
+        F.shiftright(lo, 48).bitwiseAND(0xFFFF),  # bits [63:48] of lo -> 4 chars
+        lo.bitwiseAND(0xFFFFFFFFFFFF),  # bits [47:0]  of lo -> 12 chars
     )

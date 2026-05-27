@@ -91,6 +91,7 @@ def parse_fk_ref(ref: str) -> tuple[str, str]:
         )
     return parts[0], parts[1]
 
+
 # Upper bound on ArrayColumn.max_length.  Each slot materialises its own
 # Spark expression tree at plan time, so Catalyst work scales linearly
 # with this value (and with nested arrays/structs, multiplicatively).
@@ -1369,11 +1370,7 @@ class TableSpec(_StrictModel):
             # None/None default defers to Spark's DecimalType(10, 0)
             # and inherits its rounding, matching the RangeColumn
             # behavior in ``ColumnSpec.validate_decimal_precision_scale``.
-            if (
-                col_spec.dtype == DataType.DECIMAL
-                and col_spec.precision is not None
-                and col_spec.scale is not None
-            ):
+            if col_spec.dtype == DataType.DECIMAL and col_spec.precision is not None and col_spec.scale is not None:
                 decimal_limit = 10 ** (col_spec.precision - col_spec.scale)
                 # start is the magnitude-max when step is negative;
                 # last_val is the magnitude-max when step is positive.

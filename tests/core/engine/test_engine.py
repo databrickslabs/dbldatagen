@@ -78,7 +78,11 @@ class TestSeedDeterminism:
             (-(2**63), "orders", "amount"): -791889691642192903,
             (42, "unicode_table", "col_with_emoji"): 662861529137711238,
             (42, "t", "c"): 52565,
-            (42, "a_very_long_table_name_for_polynomial_mix_coverage", "a_very_long_column_name_for_polynomial_mix_coverage"): 3752365923030754514,
+            (
+                42,
+                "a_very_long_table_name_for_polynomial_mix_coverage",
+                "a_very_long_column_name_for_polynomial_mix_coverage",
+            ): 3752365923030754514,
         }
         for (gs, table, column), pinned in expected.items():
             actual = derive_column_seed(gs, table, column)
@@ -122,25 +126,22 @@ class TestToSigned64:
             0: 0,
             1: 1,
             -1: -1,
-            2**63 - 1: 2**63 - 1,            # Long.MAX, identity
-            -(2**63): -(2**63),              # Long.MIN, identity
-            2**63: -(2**63),                 # first overflow → wraps to Long.MIN
-            2**63 + 1: -(2**63) + 1,         # one past overflow
-            -(2**63) - 1: 2**63 - 1,         # underflow → wraps to Long.MAX
+            2**63 - 1: 2**63 - 1,  # Long.MAX, identity
+            -(2**63): -(2**63),  # Long.MIN, identity
+            2**63: -(2**63),  # first overflow → wraps to Long.MIN
+            2**63 + 1: -(2**63) + 1,  # one past overflow
+            -(2**63) - 1: 2**63 - 1,  # underflow → wraps to Long.MAX
             -(2**63) - 2: 2**63 - 2,
-            2**64: 0,                        # full-period wrap
+            2**64: 0,  # full-period wrap
             2**64 + 5: 5,
-            10**30: 5076944270305263616,     # very large positive
+            10**30: 5076944270305263616,  # very large positive
             -(10**30): -5076944270305263616,
-            0xFFFFFFFFFFFFFFFF: -1,          # all-ones mask
-            0x8000000000000000: -(2**63),    # exact sign bit
+            0xFFFFFFFFFFFFFFFF: -1,  # all-ones mask
+            0x8000000000000000: -(2**63),  # exact sign bit
         }
         for n, pinned in expected.items():
             actual = to_signed64(n)
-            assert actual == pinned, (
-                f"to_signed64 boundary regression at n={n}: "
-                f"expected {pinned}, got {actual}"
-            )
+            assert actual == pinned, f"to_signed64 boundary regression at n={n}: " f"expected {pinned}, got {actual}"
 
 
 # ---------------------------------------------------------------------------
@@ -423,9 +424,9 @@ class TestPatternColumn:
         for template in ("PROD-{seq:06d}", "X-{digit:4a}", "{alpha:3x}", "Y-{seq:y}"):
             df = spark.range(2).select(build_pattern_column("id", col_seed, template).alias("v"))
             values = [r.v for r in df.collect()]
-            assert all(v == template for v in values), (
-                f"template {template!r} should pass through as literal; got {values}"
-            )
+            assert all(
+                v == template for v in values
+            ), f"template {template!r} should pass through as literal; got {values}"
 
     def test_alpha_pattern(self, spark):
         """Pattern '{alpha:3}' produces 3 uppercase letters."""
@@ -805,12 +806,8 @@ class TestMigrationRecipes:
 
         counts = Counter(r.shard for r in rows)
         expected_shards = {i * 10 for i in range(11)}
-        assert set(counts.keys()) == expected_shards, (
-            f"expected shards {expected_shards}, got {set(counts.keys())}"
-        )
-        assert all(v == 10 for v in counts.values()), (
-            f"expected exactly 10 rows per shard, got {dict(counts)}"
-        )
+        assert set(counts.keys()) == expected_shards, f"expected shards {expected_shards}, got {set(counts.keys())}"
+        assert all(v == 10 for v in counts.values()), f"expected exactly 10 rows per shard, got {dict(counts)}"
 
     def test_sequential_timestamps_via_sequence_unix_cast(self, spark):
         """Migration recipe for v0's sequential ``TimestampColumn``:
@@ -865,8 +862,7 @@ class TestMigrationRecipes:
                 assert isinstance(r.ts, _dt.datetime), f"ts is {type(r.ts)}, not datetime"
                 offset_seconds = int(r.ts.timestamp()) - base_epoch
                 assert offset_seconds == r.row_idx * 3600, (
-                    f"row_idx={r.row_idx} ts={r.ts} offset={offset_seconds}s, "
-                    f"expected {r.row_idx * 3600}s"
+                    f"row_idx={r.row_idx} ts={r.ts} offset={offset_seconds}s, " f"expected {r.row_idx * 3600}s"
                 )
 
             # Sanity: 72 distinct timestamps at 1-hour spacing.

@@ -404,8 +404,7 @@ def _topological_sort(graph: dict[str, set[str]], all_tables: list[str]) -> list
     """Kahn's algorithm. Raise ValueError on cycles."""
     # Parent -> children adjacency, derived from the child -> parents graph.
     adj: dict[str, list[str]] = {
-        parent: [child for child, parents in graph.items() if parent in parents]
-        for parent in all_tables
+        parent: [child for child, parents in graph.items() if parent in parents] for parent in all_tables
     }
 
     # In-degree = number of parents each table depends on.
