@@ -1262,6 +1262,24 @@ class TestDateDtypeGuard:
         ColumnSpec(name="name", gen=FakerColumn(provider="name"))
         ColumnSpec(name="name", dtype=DataType.STRING, gen=FakerColumn(provider="name"))
 
+    @pytest.mark.parametrize(
+        "incompatible_dtype",
+        [DataType.INT, DataType.LONG, DataType.FLOAT, DataType.DOUBLE, DataType.DECIMAL, DataType.BOOLEAN],
+    )
+    def test_faker_with_non_string_dtype_rejected(self, incompatible_dtype):
+        """``FakerColumn`` always produces ``StringType`` via the pool
+        ``pandas_udf`` + ``str(val)``.  Declaring a non-STRING dtype
+        would lie about the resulting column.  Pinned in its own
+        validator (``validate_faker_dtype_compatibility``) so the
+        responsibility is single-purpose.
+        """
+        with pytest.raises(ValueError, match=r"FakerColumn always produces StringType"):
+            ColumnSpec(
+                name="x",
+                dtype=incompatible_dtype,
+                gen=FakerColumn(provider="name"),
+            )
+
 
 class TestNullFractionGranularityBinding:
     """``_MIN_NULL_FRACTION`` in ``spec/schema.py`` must track

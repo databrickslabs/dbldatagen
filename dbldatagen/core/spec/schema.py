@@ -1109,22 +1109,33 @@ class ColumnSpec(_StrictModel):
                 f"Use TimestampColumn for a deterministic random date, or drop "
                 f"``dtype=DATE`` to keep the strategy's native type."
             )
-        # Faker's pool pandas_udf outputs StringType, and every pool
-        # entry is ``str(val)``.  Any declared dtype other than STRING
-        # (or None -- engine-default STRING) would be a lie about the
-        # resulting column.  Reject the mismatch here rather than let
-        # it ship silently.
-        # DATE is caught above with its specific message; skip it here.
-        _faker_compatible_dtypes = {DataType.STRING, DataType.DATE}
-        if isinstance(self.gen, FakerColumn) and self.dtype is not None and self.dtype not in _faker_compatible_dtypes:
-            raise ValueError(
-                f"Column '{self.name}': FakerColumn always produces StringType "
-                f"(the pool stringifies each value via ``str(val)``); declared "
-                f"dtype={self.dtype.value} is incompatible.  Drop ``dtype`` "
-                f"(or set ``dtype=DataType.STRING``) and cast downstream if you "
-                f"need a different type."
-            )
         return self
+
+    @model_validator(mode="after")
+    def validate_faker_dtype_compatibility(self) -> ColumnSpec:
+        """Reject ``FakerColumn`` paired with a dtype the pool can't honour.
+
+        Faker's pool ``pandas_udf`` outputs ``StringType``, and every
+        pool entry is stringified via ``str(val)`` before the UDF
+        ships.  Any declared dtype other than ``STRING`` (or ``None`` --
+        engine-default STRING) would be a lie about the resulting
+        column.  ``DATE`` is rejected here too: even a
+        ``date_of_birth`` provider returns a string after the pool's
+        ``str(val)`` step.  Catch the mismatch at plan time rather
+        than let the column ship with a declared type the engine
+        can't deliver.
+        """
+        if not isinstance(self.gen, FakerColumn):
+            return self
+        if self.dtype is None or self.dtype == DataType.STRING:
+            return self
+        raise ValueError(
+            f"Column '{self.name}': FakerColumn always produces StringType "
+            f"(the pool stringifies each value via ``str(val)``); declared "
+            f"dtype={self.dtype.value} is incompatible.  Drop ``dtype`` "
+            f"(or set ``dtype=DataType.STRING``) and cast downstream if you "
+            f"need a different type."
+        )
 
     @model_validator(mode="after")
     def validate_null_fraction(self) -> ColumnSpec:
