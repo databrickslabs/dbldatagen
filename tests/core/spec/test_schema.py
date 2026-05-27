@@ -331,11 +331,16 @@ class TestColumnSpec:
         assert col.scale is None
 
     def test_precision_without_scale_rejected(self):
-        with pytest.raises(ValueError, match="precision and scale must be set together"):
+        """The error must name precision-was-set / scale-was-not specifically
+        so the user gets an actionable hint, not a generic "must be set
+        together" message."""
+        with pytest.raises(ValueError, match=r"precision=10 was set but scale is None"):
             ColumnSpec(name="x", dtype=DataType.DECIMAL, gen=RangeColumn(), precision=10)
 
     def test_scale_without_precision_rejected(self):
-        with pytest.raises(ValueError, match="precision and scale must be set together"):
+        """Symmetric to the precision-without-scale case; specific message
+        names scale-was-set so the user knows which half to add."""
+        with pytest.raises(ValueError, match=r"scale=4 was set but precision is None"):
             ColumnSpec(name="x", dtype=DataType.DECIMAL, gen=RangeColumn(), scale=4)
 
     def test_precision_scale_on_non_decimal_rejected(self):

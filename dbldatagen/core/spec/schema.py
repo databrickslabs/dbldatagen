@@ -1007,24 +1007,32 @@ class ColumnSpec(_StrictModel):
             raise ValueError(
                 f"Column '{self.name}': precision/scale are only valid when " f"dtype=DECIMAL, got dtype={self.dtype}"
             )
-        if has_precision ^ has_scale:
+        if has_precision and not has_scale:
             raise ValueError(
-                f"Column '{self.name}': precision and scale must be set together "
-                f"(got precision={self.precision}, scale={self.scale})"
+                f"Column '{self.name}': precision={self.precision} was set but "
+                f"scale is None.  DECIMAL requires both; set scale explicitly "
+                f"(must be in [0, precision])."
             )
-        # Narrow ``int | None`` for mypy: the XOR check above guarantees
-        # both are set when we get here, but mypy doesn't track local
-        # ``has_*`` flags back to the attributes.  Raise (not assert) so
-        # a future refactor that drops the XOR check above doesn't let
-        # ``None`` flow through silently under ``python -O``.
+        if has_scale and not has_precision:
+            raise ValueError(
+                f"Column '{self.name}': scale={self.scale} was set but precision "
+                f"is None.  DECIMAL requires both; set precision explicitly "
+                f"(must be in [scale, 38])."
+            )
+        # Narrow ``int | None`` for mypy: the two checks above together
+        # guarantee both are set when we get here, but mypy doesn't
+        # track local ``has_*`` flags back to the attributes.  Raise
+        # (not assert) so a future refactor that drops either check
+        # above doesn't let ``None`` flow through silently under
+        # ``python -O``.
         precision = self.precision
         scale = self.scale
         if precision is None or scale is None:
             raise RuntimeError(
                 f"Column '{self.name}': precision/scale narrowing invariant "
                 f"violated (precision={precision}, scale={scale}).  The "
-                f"has_precision ^ has_scale check above should have raised; "
-                f"reaching this line means the preceding guard was removed."
+                f"precision-and-scale checks above should have raised; "
+                f"reaching this line means the preceding guards were removed."
             )
         # Spark DecimalType: 1 <= precision <= 38, 0 <= scale <= precision.
         if not 1 <= precision <= 38:
