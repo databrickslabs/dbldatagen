@@ -4,6 +4,7 @@
 All notable changes to the Databricks Labs Data Generator will be documented in this file.
 
 ### unreleased
+* feat: add comprehensive FSI retail banking synthetic data notebook to examples ([#354](https://github.com/databrickslabs/dbldatagen/issues/354))
 
 #### Fixed 
 * Refactored `DataAnalyzer` and `BasicStockTickerProvider` to comply with ANSI SQL standards
