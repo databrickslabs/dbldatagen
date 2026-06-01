@@ -29,7 +29,7 @@ classifiers = [
 ]
 dependencies = [
     "databricks-sdk~=0.57",
-    "jmespath>=0.10.0,<1.1.0",
+    "jmespath>=1.1.0,<1.2.0",
     "pyparsing>=3.0.0,<3.3.0",
 ]
 
@@ -69,7 +69,7 @@ test = [
     "python-dateutil>=2.8.2,<2.9.0",
     "six~=1.16.0",
     "pyparsing>=3.0.0,<3.3.0",
-    "jmespath>=0.10.0,<1.1.0",
+    "jmespath>=1.1.0,<1.2.0",
     "py4j~=0.10.9",
     "pickleshare>=0.7.5,<0.8",
 ]
