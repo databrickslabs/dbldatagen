@@ -7,6 +7,7 @@ from pyspark.sql.types import IntegerType, StringType, FloatType, TimestampType
 
 import dbldatagen as dg
 from dbldatagen import DateRange
+from dbldatagen import column_generation_spec as cgs
 
 # build spark session
 
@@ -1214,3 +1215,69 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
         # Ensure different unique values are generated using the new random seed:
         self.assertNotEqual(unique_set_val1, unique_set_val3)
+
+    def test_unique_values_random_exceeds_grid(self):
+        # Requesting more unique values than the range can supply must NOT hang and must clamp to the grid
+        test_df = (
+            dg.DataGenerator(spark, name="exceeds_grid", rows=5000, partitions=4,
+                             randomSeedMethod="fixed", randomSeed=24)
+            .withIdOutput()
+            .withColumn("val", "int", minValue=1, maxValue=10, uniqueValues=50, random=True)
+            .build()
+        )
+        unique_vals = {r[0] for r in test_df.select("val").distinct().collect()}
+        # grid only has 10 distinct values (1..10); the request of 50 is clamped to 10
+        self.assertEqual(unique_vals, set(range(1, 11)))
+
+    def test_unique_values_random_equals_grid(self):
+        # Requesting exactly the grid size should surface every grid value, in range
+        test_df = (
+            dg.DataGenerator(spark, name="equals_grid", rows=5000, partitions=4,
+                             randomSeedMethod="fixed", randomSeed=24)
+            .withIdOutput()
+            .withColumn("val", "int", minValue=1, maxValue=10, step=1, uniqueValues=10, random=True)
+            .build()
+        )
+        unique_vals = {r[0] for r in test_df.select("val").distinct().collect()}
+        self.assertEqual(unique_vals, set(range(1, 11)))
+
+    def test_unique_values_random_dates_exceeds_grid(self):
+        # Date columns must also clamp (regression: the date path previously clamped, the numeric did not)
+        test_df = (
+            dg.DataGenerator(spark, name="dates_exceeds_grid", rows=5000, partitions=4,
+                             randomSeedMethod="fixed", randomSeed=456)
+            .withIdOutput()
+            .withColumn("val", "date", begin="2020-01-01", end="2020-01-05", interval="1 day",
+                        uniqueValues=100, random=True)
+            .build()
+        )
+        unique_vals = {r[0] for r in test_df.select("val").distinct().collect()}
+        # range 2020-01-01..2020-01-05 at 1 day = 5 grid points
+        self.assertEqual(len(unique_vals), 5)
+        self.assertTrue(all(date(2020, 1, 1) <= v <= date(2020, 1, 5) for v in unique_vals))
+
+    def test_unique_values_random_large_count_mapped(self):
+        original_threshold = cgs.RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD
+        cgs.RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD = 5
+        try:
+            test_gen = (
+                dg.DataGenerator(spark, name="large_mapped", rows=20000, partitions=4,
+                                 randomSeedMethod="fixed", randomSeed=24)
+                .withIdOutput()
+                .withColumn("val", "int", minValue=1, maxValue=100000, uniqueValues=40, random=True)
+            )
+            test_df = test_gen.build()
+            unique_values = {row[0] for row in test_df.select("val").distinct().collect()}
+
+            self.assertEqual(len(unique_values), 40)
+            self.assertTrue(all(1 <= value <= 100000 for value in unique_values))
+
+            mapping = test_gen.getColumnSpec("val")._uniqueValueMapping
+            self.assertIsNotNone(mapping)
+            self.assertEqual(mapping["kind"], "numeric")
+
+            unique_values_2 = {row[0] for row in test_gen.build().select("val").distinct().collect()}
+            self.assertEqual(unique_values, unique_values_2)
+
+        finally:
+            cgs.RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD = original_threshold

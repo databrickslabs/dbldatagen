@@ -8,8 +8,9 @@ This file defines the `ColumnGenerationSpec` class
 
 import copy
 import logging
+import math
 import random
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 
 import numpy as np
 from pyspark.sql.functions import col, pandas_udf
@@ -18,7 +19,7 @@ from pyspark.sql.functions import lit, concat, rand, round as sql_round, array, 
 
 import pyspark.sql.functions as F
 
-from pyspark.sql.types import FloatType, IntegerType, StringType, DoubleType, BooleanType, \
+from pyspark.sql.types import FloatType, IntegerType, LongType, StringType, DoubleType, BooleanType, \
     TimestampType, DataType, DateType, ArrayType, MapType, StructType
 
 from .column_spec_options import ColumnSpecOptions
@@ -33,6 +34,8 @@ from .text_generators import TemplateGenerator
 from .utils import ensure, coalesce_values, parse_time_interval
 from .schema_parser import SchemaParser
 
+APPROX_GOLDEN_RATIO = 1.6180339887498949
+RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD = 10000
 HASH_COMPUTE_METHOD = "hash"
 VALUES_COMPUTE_METHOD = "values"
 RAW_VALUES_COMPUTE_METHOD = "raw_values"
@@ -114,6 +117,7 @@ class ColumnGenerationSpec(SerializableToDict):
 
         # set up default range and type for column
         self._dataRange = NRange(None, None, None)  # by default range of values for  column is unconstrained
+        self._uniqueValueMapping = None
 
         self._inferDataType = False
         if colType is None:  # default to integer field if none specified
@@ -521,129 +525,144 @@ class ColumnGenerationSpec(SerializableToDict):
                                                                         'description': desc}))
                 self._weightedBaseColumn = temp_name
 
-    def _list_random_unique_numeric_values(
-        self,
-        unique_count: int,
-        min_val: int | float | date | datetime | str,
-        max_val: int | float | date | datetime | str,
-        step_val: int | float | timedelta | str
-    ) -> None:
+    def _randomUniqueGenerator(self):
+        """Returns a seeded random number generator for reproducible random-unique value selection.
+
+        Uses the column's random seed when a fixed seed is configured; otherwise returns an unseeded generator.
+
+        :return: Random number generator
         """
-        Builds a list of random unique numeric values when ``uniqueValues`` is specified and ``random=True``.
-        
-        This creates an internal omitted column with a list of randomly selected unique values from the specified range,
-        then sets up the main column to select from this list using a random index.
-        
+        if self._randomSeed is not None and self._randomSeed != RANDOM_SEED_RANDOM:
+            return random.Random(abs(self._randomSeed) % (2 ** 32))
+        return random.Random()
+
+    @staticmethod
+    def _numericGridSize(min_val, max_val, step_val):
+        """Computes the number of discrete points on the grid ``{min, min + step, ..., <= max}``
+        for numeric-valued columns.
+
+        :param min_val: Minimum value in the column range
+        :param max_val: Maximum value in the column range
+        :param step_val: Step / increment value
+        :return: Number of discrete values in the range
+        """
+        if isinstance(min_val, float) or isinstance(max_val, float) or isinstance(step_val, float):
+            return int(math.floor(round((max_val - min_val) / step_val, 9))) + 1
+        return int((max_val - min_val) // step_val) + 1
+
+    @staticmethod
+    def _datetimeGridSize(begin_val, end_val, interval_val):
+        """Computes the number of discrete date/timestamp points in ``[begin, end]`` for the given interval
+        for ordinal-valued columns.
+
+        :param begin_val: Begin value in the column range
+        :param end_val: End value in the column range
+        :interval_val: Step / interval value
+        :return: Number of discrete values in the range
+        """
+        interval_seconds = interval_val.total_seconds()
+        if interval_seconds == 0:
+            return 1
+        return int((end_val - begin_val).total_seconds() // interval_seconds) + 1
+
+    def _computeScatterMapping(self, grid_size, random_generator):
+        """Chooses coefficients ``(a, b)`` for the bijective mapping ``g(k) = (a*k + b) mod grid_size``.
+
+        :param grid_size: Number of discrete values in the grid
+        :param random_generator: Random number generator
+        :return: Coefficients for mapping a value to the grid
+        """
+        a = int(grid_size * (1 - APPROX_GOLDEN_RATIO)) | 1
+        while math.gcd(a, grid_size) != 1:
+            a += 2
+        b = random_generator.randrange(grid_size)
+        return a, b
+
+    def _setupRandomUniqueNumericValues(self, unique_count, grid_size, min_val, step_val):
+        """Configures generation of ``unique_count`` distinct random values from a numeric grid. Uses
+        the following heuristic:
+
+        * Counts at or below ``RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD`` use an explicit
+            value list (exact set guaranteed).
+        * Counts above ``RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD`` use a bijective index mapping
+
         :param unique_count: Number of unique values to generate
-        :param min_val: Minimum value of the range
-        :param max_val: Maximum value of the range
-        :param step_val: Step value for the range
+        :param grid_size: Number of possible values in the grid spanned by the min, max, and step values
+        :param min_val: Minimum value
+        :param step_val: Step / increment value
         """
-        if self._randomSeed is not None and self._randomSeed != -1:
-            self._set_random_seed()
+        random_generator = self._randomUniqueGenerator()
+        if unique_count <= RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD:
+            values = [min_val + i * step_val for i in random_generator.sample(range(grid_size), unique_count)]
+            if isinstance(min_val, float) or isinstance(step_val, float):
+                values = [round(v, 9) for v in values]
+            self.values = values
+        else:
+            a, b = self._computeScatterMapping(grid_size, random_generator)
+            self._uniqueValueMapping = {
+                "kind": "numeric", "a": a, "b": b, "grid_size": grid_size,
+                "min": min_val, "step": step_val,
+            }
+        self.logger.info("Column %s: %s random unique values from a grid of %s (%s)", self.name, unique_count,
+                         grid_size, "materialized" if self.values is not None else "mapped")
 
-        selected_values = set()
-        while len(selected_values) < unique_count:
-            if self.distribution and isinstance(self.distribution, DataDistribution):
-                raw_value = np.clip(self.distribution.generateNormalizedDistributionSample(), 0, 1)
-            else:
-                raw_value = random.random()
+    def _setupRandomUniqueDatetimeValues(self, unique_count, grid_size, begin_val, interval_val, column_type):
+        """Configures generation of ``unique_count`` distinct random date/timestamp values from a grid. Uses
+        the following heuristic:
 
-            range_size = (max_val - min_val) / step_val
-            if not isinstance(min_val, float) and not isinstance(max_val, float) and not isinstance(step_val, float):
-                range_size = range_size + 1
+        * Counts at or below ``RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD`` use an explicit
+            value list (exact set guaranteed).
+        * Counts above ``RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD`` use a bijective index mapping
 
-            scaled_index = int(raw_value * range_size)
-            value = np.clip(min_val + scaled_index * step_val, min_val, max_val)
-            selected_values.add(value)
-
-        selected_values = list(selected_values)
-        if len(selected_values) < unique_count:
-            self.logger.warning(
-                f"Could not generate {unique_count} unique values for column {self.name}; "
-                f"Generated {len(selected_values)} unique values"
-            )
-
-        self.values = selected_values
-        self.logger.info(
-            f"Set up random unique values for column {self.name}: {len(selected_values)} values using "
-            f"{'distribution' if self.distribution else 'uniform'} sampling"
-        )
-
-    def _list_random_unique_datetime_values(
-        self,
-        unique_count: int,
-        begin_val: date | datetime | str,
-        end_val: date | datetime | str,
-        interval_val: timedelta | str,
-        col_type: DataType | str
-    ) -> None:
-        """
-        Builds a list of random unique date/timestamp values when ``uniqueValues`` is specified and ``random=True``.
-        
         :param unique_count: Number of unique values to generate
-        :param begin_val: Beginning date/timestamp
-        :param end_val: End date/timestamp
-        :param interval_val: Date/time interval
-        :param col_type: Type of column to generate (e.g. ``DateType`` or ``TimestampType``)
+        :param grid_size: Number of possible values in the grid spanned by the min, max, and step values
+        :param begin_val: Starting date / timestamp value
+        :param interval_val: Step / increment value
+        :param column_type: Spark column type (e.g. DateType, TimestampType)
+        """
+        random_generator = self._randomUniqueGenerator()
+        if unique_count <= RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD:
+            self.values = [
+                begin_val + interval_val * i for i in random_generator.sample(range(grid_size), unique_count)
+            ]
+        else:
+            a, b = self._computeScatterMapping(grid_size, random_generator)
+            interval_units = interval_val.days if type(column_type) is DateType else int(interval_val.total_seconds())
+            self._uniqueValueMapping = {
+                "kind": "date" if type(column_type) is DateType else "timestamp",
+                "a": a, "b": b, "grid_size": grid_size,
+                "begin": begin_val, "interval": interval_units,
+            }
+        self.logger.info("Column %s: %s random unique datetime values from a grid of %s (%s)", self.name,
+                         unique_count, grid_size, "materialized" if self.values is not None else "mapped")
+
+    @staticmethod
+    def _normalizeDatetimeBounds(begin_val, end_val, interval_val, column_type):
+        """Coerces string / `timedelta` range bounds into concrete date or datetime objects.
+
+        :param begin_val: Starting date / timestamp value as an arbitrary type
+        :param end_val: Ending date / timestamp value as an arbitrary type
+        :param interval_val: Step / increment value as an arbitrary type
+        :param column_type: Spark column type (e.g. DateType, TimestampType)
+        :return: Tuple containing the start value, end value, and step value as date / datetime objects.
         """
         if isinstance(interval_val, str):
             interval_val = parse_time_interval(interval_val)
-        if isinstance(begin_val, str):
-            if isinstance(col_type, TimestampType):
-                begin_val = datetime.strptime(begin_val, DateRange.DEFAULT_UTC_TS_FORMAT)
-            else:
-                begin_val = datetime.strptime(begin_val, DateRange.DEFAULT_DATE_FORMAT)
-        if isinstance(end_val, str):
-            if isinstance(col_type, TimestampType):
-                end_val = datetime.strptime(end_val, DateRange.DEFAULT_UTC_TS_FORMAT)
-            else:
-                end_val = datetime.strptime(end_val, DateRange.DEFAULT_DATE_FORMAT)
-        if isinstance(col_type, DateType):
-            begin_val = begin_val.date()
-            end_val = end_val.date()
-
-        total_span = end_val - begin_val
-        if isinstance(total_span, timedelta):
-            total_seconds = total_span.total_seconds()
-            interval_seconds = interval_val.total_seconds()
-            num_possible_values = int(total_seconds / interval_seconds) + 1
-        else:
-            total_days = total_span.days
-            interval_days = interval_val.days
-            num_possible_values = int(total_days / interval_days) + 1
-
-        unique_count = min(unique_count, num_possible_values)
-
-        if self._randomSeed is not None and self._randomSeed != -1:
-            self._set_random_seed()
-
-        selected_values = set()
-        while len(selected_values) < unique_count:
-            if self.distribution and isinstance(self.distribution, DataDistribution):
-                raw_value = np.clip(self.distribution.generateNormalizedDistributionSample(), 0, 1)
-            else:
-                raw_value = random.random()
-
-            scaled_index = int(raw_value * (num_possible_values - 1))
-            value = begin_val + interval_val * scaled_index
-
-            if value > end_val:
-                value = end_val
-            selected_values.add(value)
-
-        selected_values = list(selected_values)
-        if len(selected_values) < unique_count:
-            self.logger.warning(
-                f"Could not generate {unique_count} unique values for column {self.name}; "
-                f"Generated {len(selected_values)} unique values"
-            )
-
-        self.values = selected_values
-        self.logger.info(
-            f"Set up random unique values for column {self.name}: {len(selected_values)} values using "
-            f"{'distribution' if self.distribution else 'uniform'} sampling"
+        if interval_val is None:
+            interval_val = timedelta(days=1)
+        fmt = (
+            DateRange.DEFAULT_UTC_TS_FORMAT if isinstance(column_type, TimestampType) else DateRange.DEFAULT_DATE_FORMAT
         )
+        if isinstance(begin_val, str):
+            begin_val = datetime.strptime(begin_val, fmt)
+        if isinstance(end_val, str):
+            end_val = datetime.strptime(end_val, fmt)
+        if type(column_type) is DateType:
+            if isinstance(begin_val, datetime):
+                begin_val = begin_val.date()
+            if isinstance(end_val, datetime):
+                end_val = end_val.date()
+        return begin_val, end_val, interval_val
 
     def _setup_logger(self):
         """Set up logging
@@ -697,10 +716,23 @@ class ColumnGenerationSpec(SerializableToDict):
 
             # Check if both uniqueValues and random=True are specified
             if self.random and effective_max is not None:
-                # Generate random unique values from the full range and store them
-                self._list_random_unique_numeric_values(c_unique, effective_min, effective_max, effective_step)
-                # Create a range that maps to indices of the unique values (0 to unique_count-1)
-                result = NRange(0, c_unique - 1, 1)
+                # Draw `unique_count` distinct random values from the discrete grid defined by the range
+                grid_size = self._numericGridSize(effective_min, effective_max, effective_step)
+                unique_count = min(c_unique, grid_size)
+                if c_unique > grid_size:
+                    self.logger.warning("Requested %s unique values for column [%s] exceeds the %s values available "
+                                        "in the range; using %s", c_unique, self.name, grid_size, grid_size)
+                if unique_count >= grid_size:
+                    # every grid value is required: ordinary random ranged generation already covers the full grid
+                    if type(effective_min) is float or type(effective_step) is float:
+                        full_max = round(effective_min + (grid_size - 1) * effective_step, 9)
+                    else:
+                        full_max = effective_min + (grid_size - 1) * effective_step
+                    result = NRange(effective_min, full_max, effective_step)
+                else:
+                    self._setupRandomUniqueNumericValues(unique_count, grid_size, effective_min, effective_step)
+                    # the column now selects from the unique values via a random index (0 to unique_count-1)
+                    result = NRange(0, unique_count - 1, 1)
             else:
                 # Original behavior: create sequential range
                 # due to floating point errors in some Python floating point calculations, we need to apply rounding
@@ -744,13 +776,26 @@ class ColumnGenerationSpec(SerializableToDict):
 
         # Check if both uniqueValues and random=True are specified for date/timestamp
         if c_unique is not None and self.random and effective_end is not None:
-            # Generate random unique date/timestamp values from the full range
-            self._list_random_unique_datetime_values(c_unique, effective_begin, effective_end, effective_interval, colType)
-            # Return a minimal range - the actual values will come from discrete values
-            if type(colType) is DateType:
-                result = DateRange.computeDateRange(effective_begin, effective_begin, effective_interval, 1)
+            # Draw `unique_count` distinct random values from the discrete grid defined by the range
+            begin_val, end_val, interval_val = self._normalizeDatetimeBounds(
+                effective_begin, effective_end, effective_interval, colType)
+            grid_size = self._datetimeGridSize(begin_val, end_val, interval_val)
+            unique_count = min(c_unique, grid_size)
+            if c_unique > grid_size:
+                self.logger.warning("Requested %s unique values for column [%s] exceeds the %s values available "
+                                    "in the range; using %s", c_unique, self.name, grid_size, grid_size)
+            if unique_count >= grid_size:
+                # every grid value is required: ordinary random ranged generation already covers the full range
+                if type(colType) is DateType:
+                    result = DateRange.computeDateRange(effective_begin, effective_end, effective_interval,
+                                                        unique_count)
+                else:
+                    result = DateRange.computeTimestampRange(effective_begin, effective_end, effective_interval,
+                                                             unique_count)
             else:
-                result = DateRange.computeTimestampRange(effective_begin, effective_begin, effective_interval, 1)
+                self._setupRandomUniqueDatetimeValues(unique_count, grid_size, begin_val, interval_val, colType)
+                # the column now selects from the unique values via a random index (0 to unique_count-1)
+                result = NRange(0, unique_count - 1, 1)
         else:
             # Original behavior
             if type(colType) is DateType:
@@ -1167,6 +1212,29 @@ class ColumnGenerationSpec(SerializableToDict):
             new_def = baseval
         return new_def
 
+    def _applyRandomUniqueValueMapping(self, index_expr):
+        """Maps a random index in ``[0, unique_count-1]`` to a distinct grid value.
+
+        :param index_expr: Spark column producing the per-row random index
+        :return: Spark column producing the mapped value (cast to the column type downstream)
+        """
+        mapping = self._uniqueValueMapping
+        a, b, grid_size = mapping["a"], mapping["b"], mapping["grid_size"]
+        grid_index = ((index_expr.astype("decimal(38,0)") * lit(a) + lit(b)) % lit(grid_size)).astype(LongType())
+
+        if mapping["kind"] == "numeric":
+            value = lit(mapping["min"]) + grid_index * lit(mapping["step"])
+            if isinstance(mapping["min"], float) or isinstance(mapping["step"], float):
+                value = sql_round(value.astype(DoubleType()), 9)
+            return value
+
+        if mapping["kind"] == "date":
+            offset_days = (grid_index * lit(mapping["interval"])).astype(IntegerType())
+            return F.date_add(lit(mapping["begin"]).astype(DateType()), offset_days)
+
+        begin_seconds = F.unix_timestamp(lit(mapping["begin"]).astype(TimestampType()))
+        return F.timestamp_seconds(begin_seconds + grid_index * lit(mapping["interval"]))
+
     def _makeSingleGenerationExpression(self, index=None, use_pandas_optimizations=True):
         """ generate column data for a single column value via Spark SQL expression
 
@@ -1252,7 +1320,9 @@ class ColumnGenerationSpec(SerializableToDict):
                     new_def = ((self._getSeedExpression(self.baseColumn) + lit(self._dataRange.minValue))
                                .astype(self.datatype))
 
-            if self.values is not None:
+            if self._uniqueValueMapping is not None:
+                new_def = self._applyRandomUniqueValueMapping(new_def)
+            elif self.values is not None:
                 new_def = F.element_at(F.array([F.lit(x) for x in self.values]), new_def.astype(IntegerType()) + 1)
             elif type(self.datatype) is StringType and self.expr is None:
                 new_def = self._applyPrefixSuffixExpressions(self.prefix, self.suffix, new_def)
@@ -1468,11 +1538,3 @@ class ColumnGenerationSpec(SerializableToDict):
                     retval = F.slice(retval, F.lit(1), F.expr(expr_str))
 
         return retval
-
-    def _set_random_seed(self) -> None:
-        """
-        Sets the random seed value for computing random values from a range.
-        """
-        seed_value = abs(self._randomSeed) % (2**32)  # Numpy accepts values in the range from 0 - 2^32-1.
-        random.seed(seed_value)
-        np.random.seed(seed_value)
