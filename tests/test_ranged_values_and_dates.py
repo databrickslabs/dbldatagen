@@ -1393,8 +1393,13 @@ class TestRangedValuesAndDates(unittest.TestCase):
                 )
                 .withIdOutput()
                 .withColumn(
-                    "val", "timestamp", begin="2020-01-01 00:00:00", end="2020-01-02 00:00:00", interval="1 minute",
-                    uniqueValues=40, random=True
+                    "val",
+                    "timestamp",
+                    begin="2020-01-01 00:00:00",
+                    end="2020-01-02 00:00:00",
+                    interval="1 minute",
+                    uniqueValues=40,
+                    random=True,
                 )
             )
             test_df = test_gen.build()
