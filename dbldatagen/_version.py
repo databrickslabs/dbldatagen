@@ -22,7 +22,7 @@ VersionInfo = namedtuple("VersionInfo", ["major", "minor", "patch", "release", "
 
 
 def get_version(version: str) -> VersionInfo:
-    """ Get version info object for library.
+    """Get version info object for library.
 
     :param version: version string to parse for version information
 

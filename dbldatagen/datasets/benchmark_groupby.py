@@ -8,10 +8,12 @@ from dbldatagen.data_generator import DataGenerator
 from dbldatagen.datasets.dataset_provider import DatasetProvider, dataset_definition
 
 
-@dataset_definition(name="benchmark/groupby",
-                    summary="Benchmarking dataset for GROUP BY queries in various database systems",
-                    autoRegister=True,
-                    supportsStreaming=True)
+@dataset_definition(
+    name="benchmark/groupby",
+    summary="Benchmarking dataset for GROUP BY queries in various database systems",
+    autoRegister=True,
+    supportsStreaming=True,
+)
 class BenchmarkGroupByProvider(DatasetProvider.NoAssociatedDatasetsMixin, DatasetProvider):
     """
     Grouping Benchmark Dataset
@@ -34,6 +36,7 @@ class BenchmarkGroupByProvider(DatasetProvider.NoAssociatedDatasetsMixin, Datase
     streaming dataframe, and so the flag `supportsStreaming` is set to True.
 
     """
+
     MAX_LONG = 9223372036854775807
     DEFAULT_NUM_GROUPS = 100
     DEFAULT_PCT_NULLS = 0.0
@@ -41,7 +44,15 @@ class BenchmarkGroupByProvider(DatasetProvider.NoAssociatedDatasetsMixin, Datase
     ALLOWED_OPTIONS: ClassVar[list[str]] = ["groups", "percentNulls", "rows", "partitions", "tableName", "random"]
 
     @DatasetProvider.allowed_options(options=ALLOWED_OPTIONS)
-    def getTableGenerator(self, sparkSession: SparkSession, *, tableName: str|None=None, rows: int=-1, partitions: int=-1, **options: dict[str, Any]) -> DataGenerator:
+    def getTableGenerator(
+        self,
+        sparkSession: SparkSession,
+        *,
+        tableName: str | None = None,
+        rows: int = -1,
+        partitions: int = -1,
+        **options: dict[str, Any],
+    ) -> DataGenerator:
 
         generateRandom = options.get("random", False)
         groups = options.get("groups", self.DEFAULT_NUM_GROUPS)
@@ -71,26 +82,48 @@ class BenchmarkGroupByProvider(DatasetProvider.NoAssociatedDatasetsMixin, Datase
 
         assert tableName is None or tableName == DatasetProvider.DEFAULT_TABLE_NAME, "Invalid table name"
         df_spec = (
-             dg.DataGenerator(sparkSession=sparkSession, rows=rows,
-                              partitions=partitions,
-                              randomSeedMethod="hash_fieldname")
-            .withColumn("base1", "integer", minValue=1, maxValue=groups,
-                            uniqueValues=groups, random=generateRandom, omit=True)
-            .withColumn("base2", "integer", minValue=1, maxValue=groups,
-                            uniqueValues=groups, random=generateRandom, omit=True)
-            .withColumn("base3", "integer", minValue=1, maxValue=(1 + int(rows / groups)),
-                            uniqueValues=(1 + int(rows / groups)),  random=generateRandom, omit=True)
+            dg.DataGenerator(
+                sparkSession=sparkSession, rows=rows, partitions=partitions, randomSeedMethod="hash_fieldname"
+            )
+            .withColumn(
+                "base1", "integer", minValue=1, maxValue=groups, uniqueValues=groups, random=generateRandom, omit=True
+            )
+            .withColumn(
+                "base2", "integer", minValue=1, maxValue=groups, uniqueValues=groups, random=generateRandom, omit=True
+            )
+            .withColumn(
+                "base3",
+                "integer",
+                minValue=1,
+                maxValue=(1 + int(rows / groups)),
+                uniqueValues=(1 + int(rows / groups)),
+                random=generateRandom,
+                omit=True,
+            )
             .withColumn("id1", "string", baseColumn="base1", format="id%03d", percentNulls=percentNulls)
             .withColumn("id2", "string", baseColumn="base2", format="id%03d", percentNulls=percentNulls)
             .withColumn("id3", "string", baseColumn="base3", format="id%010d", percentNulls=percentNulls)
             .withColumn("id4", "integer", minValue=1, maxValue=groups, random=generateRandom, percentNulls=percentNulls)
             .withColumn("id5", "integer", minValue=1, maxValue=groups, random=generateRandom, percentNulls=percentNulls)
-            .withColumn("id6", "integer", minValue=1, maxValue=(1 + int(rows / groups)), random=generateRandom,
-                            percentNulls=percentNulls)
+            .withColumn(
+                "id6",
+                "integer",
+                minValue=1,
+                maxValue=(1 + int(rows / groups)),
+                random=generateRandom,
+                percentNulls=percentNulls,
+            )
             .withColumn("v1", "integer", minValue=1, maxValue=5, random=generateRandom, percentNulls=percentNulls)
             .withColumn("v2", "integer", minValue=1, maxValue=15, random=generateRandom, percentNulls=percentNulls)
-            .withColumn("v3", "decimal(9,6)", minValue=0.0, maxValue=100.0,
-                            step=1e-6, random=generateRandom, percentNulls=percentNulls)
+            .withColumn(
+                "v3",
+                "decimal(9,6)",
+                minValue=0.0,
+                maxValue=100.0,
+                step=1e-6,
+                random=generateRandom,
+                percentNulls=percentNulls,
+            )
         )
 
         return df_spec

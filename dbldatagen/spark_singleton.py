@@ -28,7 +28,9 @@ class SparkSingleton:
         return SparkSession.builder.getOrCreate()
 
     @classmethod
-    def getLocalInstance(cls: type["SparkSingleton"], appName: str = "new Spark session", useAllCores: bool = True) -> SparkSession:
+    def getLocalInstance(
+        cls: type["SparkSingleton"], appName: str = "new Spark session", useAllCores: bool = True
+    ) -> SparkSession:
         """Creates a machine local `SparkSession` instance for Datalib.
         By default, it uses `n-1` cores  of the available cores for the spark session,
         where `n` is total cores available.
@@ -49,10 +51,11 @@ class SparkSingleton:
         logger = logging.getLogger(__name__)
         logger.info("Spark core count: %d", spark_core_count)
 
-        sparkSession = SparkSession.builder \
-            .master(f"local[{spark_core_count}]") \
-            .appName(appName) \
-            .config("spark.sql.warehouse.dir", "/tmp/spark-warehouse") \
+        sparkSession = (
+            SparkSession.builder.master(f"local[{spark_core_count}]")
+            .appName(appName)
+            .config("spark.sql.warehouse.dir", "/tmp/spark-warehouse")
             .getOrCreate()
+        )
 
         return sparkSession

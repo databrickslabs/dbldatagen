@@ -50,10 +50,7 @@ class Datasets:
 
     @classmethod
     def getProviderDefinitions(
-        cls,
-        name: str | None = None,
-        pattern: str | None = None,
-        supportsStreaming: bool = False
+        cls, name: str | None = None, pattern: str | None = None, supportsStreaming: bool = False
     ) -> list[DatasetProvider.DatasetDefinition]:
         """
         Gets provider definitions for one or more datasets.
@@ -64,25 +61,31 @@ class Datasets:
         :returns: List of provider definitions matching input name and pattern.
         """
         if pattern is not None and name is not None:
-            summary_list = [provider_definition
-                            for provider_definition in DatasetProvider.getRegisteredDatasets().values()
-                            if re.match(pattern, provider_definition.name) and name == provider_definition.name]
+            summary_list = [
+                provider_definition
+                for provider_definition in DatasetProvider.getRegisteredDatasets().values()
+                if re.match(pattern, provider_definition.name) and name == provider_definition.name
+            ]
         elif pattern is not None:
-            summary_list = [provider_definition
-                            for provider_definition in DatasetProvider.getRegisteredDatasets().values()
-                            if re.match(pattern, provider_definition.name)]
+            summary_list = [
+                provider_definition
+                for provider_definition in DatasetProvider.getRegisteredDatasets().values()
+                if re.match(pattern, provider_definition.name)
+            ]
         elif name is not None:
-            summary_list = [provider_definition
-                            for provider_definition in DatasetProvider.getRegisteredDatasets().values()
-                            if name == provider_definition.name]
+            summary_list = [
+                provider_definition
+                for provider_definition in DatasetProvider.getRegisteredDatasets().values()
+                if name == provider_definition.name
+            ]
         else:
             summary_list = list(DatasetProvider.getRegisteredDatasets().values())
 
         # filter for streaming
         if supportsStreaming:
-            summary_list_filtered = [provider_definition
-                                     for provider_definition in summary_list
-                                     if provider_definition.supportsStreaming]
+            summary_list_filtered = [
+                provider_definition for provider_definition in summary_list if provider_definition.supportsStreaming
+            ]
             return summary_list_filtered
         else:
             return summary_list
@@ -95,9 +98,14 @@ class Datasets:
         :param pattern: Pattern to match dataset names. If ``None``, all datasets are listed.
         :param supportsStreaming: If ``true``, filters out dataset providers that don't support streaming.
         """
-        summary_list = sorted([(providerDefinition.name, providerDefinition.summary) for
-                               providerDefinition in cls.getProviderDefinitions(name=None, pattern=pattern,
-                                                                                supportsStreaming=supportsStreaming)])
+        summary_list = sorted(
+            [
+                (providerDefinition.name, providerDefinition.summary)
+                for providerDefinition in cls.getProviderDefinitions(
+                    name=None, pattern=pattern, supportsStreaming=supportsStreaming
+                )
+            ]
+        )
 
         print("The followed datasets are registered and available for use:")
 
@@ -180,9 +188,7 @@ class Datasets:
         return self._navigator
 
     def _getProviderInstanceAndMetadata(
-        self,
-        providerName: str,
-        supportsStreaming: bool
+        self, providerName: str, supportsStreaming: bool
     ) -> tuple[DatasetProvider, DatasetProvider.DatasetDefinition]:
         """
         Gets a dataset provider and definition.
@@ -201,8 +207,9 @@ class Datasets:
 
         providerClass = providerDefinition.providerClass
 
-        assert providerClass is not None and DatasetProvider.isValidDataProviderType(providerClass), \
-            f"Dataset provider incorrectly configured for name {self._name}"
+        assert providerClass is not None and DatasetProvider.isValidDataProviderType(
+            providerClass
+        ), f"Dataset provider incorrectly configured for name {self._name}"
 
         providerInstance = providerClass()
 
@@ -222,8 +229,9 @@ class Datasets:
         :returns: `DataGenerator` for the requested table
         """
 
-        providerInstance, providerDefinition = \
-            self._getProviderInstanceAndMetadata(providerName, supportsStreaming=self._streamingRequired)
+        providerInstance, providerDefinition = self._getProviderInstanceAndMetadata(
+            providerName, supportsStreaming=self._streamingRequired
+        )
 
         if tableName is None:
             tableName = providerDefinition.primaryTable
@@ -233,11 +241,7 @@ class Datasets:
             raise ValueError(f"Table `{tableName}` not a recognized table option")
 
         return providerInstance.getTableGenerator(
-            self._sparkSession,
-            tableName=tableName,
-            rows=rows,
-            partitions=partitions,
-            **kwargs
+            self._sparkSession, tableName=tableName, rows=rows, partitions=partitions, **kwargs
         )
 
     def get(self, table: str | None = None, rows: int = -1, partitions: int = -1, **kwargs) -> DataGenerator:
@@ -384,9 +388,9 @@ class NavigatorNode:
         datasets: Datasets,
         providerName: str | None = None,
         tableName: str | None = None,
-        location: list[str] | None = None
+        location: list[str] | None = None,
     ) -> None:
-        """ Initialization for node
+        """Initialization for node
 
         :param datasets: instance of datasets object
         :param providerName: provider name for node
@@ -403,11 +407,7 @@ class NavigatorNode:
         return f"Node: (datasets: {self._datasets}, provider: {self._providerName}, loc: {self._location} )"
 
     def _addEntry(
-        self,
-        datasets: Datasets,
-        steps: list[str] | None,
-        providerName: str | None,
-        tableName: str | None
+        self, datasets: Datasets, steps: list[str] | None, providerName: str | None, tableName: str | None
     ) -> NavigatorNode:
         """
         Adds an entry to the dataset navigator.

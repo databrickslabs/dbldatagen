@@ -58,6 +58,7 @@ class DatasetProvider(ABC):
     By default, all DatasetProvider classes should support batch usage. If a dataset provider supports streaming usage,
     the flag `supportsStreaming` should be set to `True` in the decorator.
     """
+
     DEFAULT_TABLE_NAME = "main"
     DEFAULT_ROWS = 100_000
     DEFAULT_PARTITIONS = 4
@@ -75,7 +76,7 @@ class DatasetProvider(ABC):
 
     @dataclass
     class DatasetDefinition:
-        """ Dataset Definition class - stores the attributes related to the dataset for use by the implementation
+        """Dataset Definition class - stores the attributes related to the dataset for use by the implementation
         of the decorator.
 
         This stores the name of the dataset (e.g. `basic/user`), the list of tables provided by the dataset,
@@ -85,6 +86,7 @@ class DatasetProvider(ABC):
         It also allows specification of supporting tables which are tables computed from existing dataframes
         that can be provided by the dataset provider
         """
+
         name: str
         tables: list[str]
         primaryTable: str
@@ -102,18 +104,20 @@ class DatasetProvider(ABC):
         :return: True if valid DatasetProvider type, False otherwise
 
         """
-        return (candidateDataProvider is not None and
-                isinstance(candidateDataProvider, type) and
-                issubclass(candidateDataProvider, cls))
+        return (
+            candidateDataProvider is not None
+            and isinstance(candidateDataProvider, type)
+            and issubclass(candidateDataProvider, cls)
+        )
 
     @classmethod
     def getDatasetDefinition(cls) -> DatasetDefinition:
-        """ Get the dataset definition for the class """
+        """Get the dataset definition for the class"""
         return cls._DATASET_DEFINITION
 
     @classmethod
     def getDatasetTables(cls) -> list[str]:
-        """ Get the dataset tables list for the class """
+        """Get the dataset tables list for the class"""
         datasetDefinition = cls.getDatasetDefinition()
 
         if datasetDefinition is None or datasetDefinition.tables is None:
@@ -123,7 +127,7 @@ class DatasetProvider(ABC):
 
     @classmethod
     def registerDataset(cls, datasetProvider: type) -> None:
-        """ Register the dataset provider type using metadata defined in the dataset provider
+        """Register the dataset provider type using metadata defined in the dataset provider
 
         :param datasetProvider: Dataset provider class
         :return: None
@@ -143,14 +147,13 @@ class DatasetProvider(ABC):
 
         datasetDefinition = datasetProvider.getDatasetDefinition()
 
-        assert isinstance(datasetDefinition, cls.DatasetDefinition), \
-            "retrieved datasetDefinition must be an instance of DatasetDefinition"
+        assert isinstance(
+            datasetDefinition, cls.DatasetDefinition
+        ), "retrieved datasetDefinition must be an instance of DatasetDefinition"
 
-        assert datasetDefinition.name is not None, \
-            "datasetDefinition must contain a name for the data set"
+        assert datasetDefinition.name is not None, "datasetDefinition must contain a name for the data set"
 
-        assert issubclass(datasetDefinition.providerClass, cls), \
-            "datasetClass must be a subclass of DatasetProvider"
+        assert issubclass(datasetDefinition.providerClass, cls), "datasetClass must be a subclass of DatasetProvider"
 
         if datasetDefinition.name in cls._registeredDatasetsMetadata:
             raise ValueError(f"Dataset provider is already registered for name `{datasetDefinition.name}`")
@@ -160,7 +163,7 @@ class DatasetProvider(ABC):
 
     @classmethod
     def unregisterDataset(cls, name: str) -> None:
-        """ Unregister the dataset with the specified name
+        """Unregister the dataset with the specified name
 
         :param name: Name of the dataset to unregister
         """
@@ -180,7 +183,7 @@ class DatasetProvider(ABC):
         return cls._registeredDatasetsMetadata
 
     @classmethod
-    def getRegisteredDatasetsVersion(cls) -> int   :
+    def getRegisteredDatasetsVersion(cls) -> int:
         """
         Get the registered datasets version indicator
         :return:  A dictionary of registered datasets
@@ -188,7 +191,15 @@ class DatasetProvider(ABC):
         return cls._registeredDatasetsVersion
 
     @abstractmethod
-    def getTableGenerator(self, sparkSession: SparkSession, *, tableName: str|None=None, rows: int=-1, partitions: int=-1, **options: dict[str, Any]) -> DataGenerator:
+    def getTableGenerator(
+        self,
+        sparkSession: SparkSession,
+        *,
+        tableName: str | None = None,
+        rows: int = -1,
+        partitions: int = -1,
+        **options: dict[str, Any],
+    ) -> DataGenerator:
         """Gets data generation instance that will produce table for named table
 
         :param sparkSession: Spark session to use
@@ -207,8 +218,15 @@ class DatasetProvider(ABC):
         raise NotImplementedError("Base data provider does not provide any table generation specifications!")
 
     @abstractmethod
-    def getAssociatedDataset(self, sparkSession: SparkSession, *, tableName: str | None=None, rows: int=-1, partitions: int=-1,
-                             **options: dict[str, Any]) -> DataGenerator:
+    def getAssociatedDataset(
+        self,
+        sparkSession: SparkSession,
+        *,
+        tableName: str | None = None,
+        rows: int = -1,
+        partitions: int = -1,
+        **options: dict[str, Any],
+    ) -> DataGenerator:
         """
         Gets associated datasets that are used in conjunction with the provider datasets.
         These may be associated lookup tables, tables that execute benchmarks or exercise key features as part of
@@ -230,20 +248,23 @@ class DatasetProvider(ABC):
         raise NotImplementedError("Base data provider does not produce any supporting tables!")
 
     @staticmethod
-    def allowed_options(options: list[str]|None =None) -> Callable[[Callable], Callable]:
-        """ Decorator to enforce allowed options
+    def allowed_options(options: list[str] | None = None) -> Callable[[Callable], Callable]:
+        """Decorator to enforce allowed options
 
-            Used to document and enforce what options are allowed for each dataset provider implementation
-            If the signature of the getTableGenerator method changes, change the DEFAULT_OPTIONS constant
-            to include options that are always allowed
+        Used to document and enforce what options are allowed for each dataset provider implementation
+        If the signature of the getTableGenerator method changes, change the DEFAULT_OPTIONS constant
+        to include options that are always allowed
         """
         DEFAULT_OPTIONS = ["sparkSession", "tableName", "rows", "partitions"]
 
         def decorator(func: Callable) -> Callable:
             @functools.wraps(func)
             def wrapper(*args, **kwargs) -> Callable:
-                bad_options = [keyword_arg for keyword_arg in kwargs
-                               if keyword_arg not in DEFAULT_OPTIONS and keyword_arg not in options]
+                bad_options = [
+                    keyword_arg
+                    for keyword_arg in kwargs
+                    if keyword_arg not in DEFAULT_OPTIONS and keyword_arg not in options
+                ]
 
                 if len(bad_options) > 0:
                     errorMessage = f"""The following options are unsupported by provider: [{",".join(bad_options)}]"""
@@ -256,7 +277,7 @@ class DatasetProvider(ABC):
         return decorator
 
     def checkOptions(self, options: dict[str, Any], allowedOptions: list[str]) -> DatasetDefinition:
-        """ Check that options are valid
+        """Check that options are valid
 
         :param options: options to check as dict
         :param allowedOptions: allowed options as list of strings
@@ -268,7 +289,7 @@ class DatasetProvider(ABC):
         return self
 
     def autoComputePartitions(self, rows: int, columns: int) -> int:
-        """ Compute the number of partitions based on rows and columns
+        """Compute the number of partitions based on rows and columns
 
         :param rows: number of rows
         :param columns: number of columns
@@ -285,29 +306,47 @@ class DatasetProvider(ABC):
         return max(self.DEFAULT_PARTITIONS, int(math.log(rows / 350_000) * max(1, math.log(columns))))
 
     class NoAssociatedDatasetsMixin(ABC):  # noqa: B024
-        """ Use this mixin to provide default implementation for data provider when it does not provide
-            any associated datasets
+        """Use this mixin to provide default implementation for data provider when it does not provide
+        any associated datasets
         """
-        def getAssociatedDataset(self, sparkSession: SparkSession, *, tableName: str|None=None, rows: int=-1, partitions: int   =-1,
-                                 **options: dict[str, Any]) -> DataGenerator:
+
+        def getAssociatedDataset(
+            self,
+            sparkSession: SparkSession,
+            *,
+            tableName: str | None = None,
+            rows: int = -1,
+            partitions: int = -1,
+            **options: dict[str, Any],
+        ) -> DataGenerator:
             raise NotImplementedError("Data provider does not produce any associated datasets!")
 
     class DatasetDecoratorUtils:
-        """ Defines the predefined_dataset decorator
+        """Defines the predefined_dataset decorator
 
-            :param cls: target class to apply decorator to
-            :param name: name of the dataset
-            :param tables: list of tables produced by the dataset provider, if None, defaults to [ DEFAULT_TABLE_NAME ]
-            :param primaryTable: primary table provided by dataset. Defaults to first table of table list
-            :param summary: Summary information for the dataset. If None, will be derived from target class name
-            :param description: Detailed description of the class. If None, will use the target class doc string
-            :param associatedDatasets: list of associated datasets produced by the dataset provider
-            :param supportsStreaming: Whether data set can be used in streaming scenarios
+        :param cls: target class to apply decorator to
+        :param name: name of the dataset
+        :param tables: list of tables produced by the dataset provider, if None, defaults to [ DEFAULT_TABLE_NAME ]
+        :param primaryTable: primary table provided by dataset. Defaults to first table of table list
+        :param summary: Summary information for the dataset. If None, will be derived from target class name
+        :param description: Detailed description of the class. If None, will use the target class doc string
+        :param associatedDatasets: list of associated datasets produced by the dataset provider
+        :param supportsStreaming: Whether data set can be used in streaming scenarios
 
         """
 
-        def __init__(self, cls: type|None =None, *, name: str|None =None, tables: list[str]|None =None, primaryTable: str|None =None, summary: str|None =None, description: str|None =None,
-                     associatedDatasets: list[str]|None =None, supportsStreaming: bool =False) -> None:
+        def __init__(
+            self,
+            cls: type | None = None,
+            *,
+            name: str | None = None,
+            tables: list[str] | None = None,
+            primaryTable: str | None = None,
+            summary: str | None = None,
+            description: str | None = None,
+            associatedDatasets: list[str] | None = None,
+            supportsStreaming: bool = False,
+        ) -> None:
             self._targetCls = cls
 
             # compute the data set provider name if not provided.
@@ -338,8 +377,7 @@ class DatasetProvider(ABC):
                 generated_description = [
                     f"The datasetProvider '{cls.__name__}' provides a data spec for the '{self._datasetName}' dataset",
                     "",  # empty line
-                    f"Summary: {self._summary}"
-                    "",  # empty line
+                    f"Summary: {self._summary}" "",  # empty line
                     f"Tables generators provided: {', '.join(self._tables)}",
                     "",  # empty line
                     f"Primary table: {self._primaryTable}",
@@ -351,8 +389,8 @@ class DatasetProvider(ABC):
                 ]
                 self._description = "\n".join(generated_description)
 
-        def mkClass(self, autoRegister: bool =False) -> type:
-            """ make the modified class for the Data Provider
+        def mkClass(self, autoRegister: bool = False) -> type:
+            """make the modified class for the Data Provider
 
             Applies the decorator args as a metadata object on the class.
             This is done at the class level as there is no instance of the target class at this point.
@@ -362,15 +400,16 @@ class DatasetProvider(ABC):
             if self._targetCls is not None:
                 # if self._targetCls is not None and (isinstance(self._targetCls, DatasetProvider) or
                 #                                    issubclass(self._targetCls, DatasetProvider)):
-                dataset_desc = DatasetProvider.DatasetDefinition(name=self._datasetName,
-                                                                 tables=self._tables,
-                                                                 primaryTable=self._primaryTable,
-                                                                 summary=self._summary,
-                                                                 description=self._description,
-                                                                 supportsStreaming=self._supportsStreaming,
-                                                                 providerClass=self._targetCls,
-                                                                 associatedDatasets=self._associatedDatasets
-                                                                 )
+                dataset_desc = DatasetProvider.DatasetDefinition(
+                    name=self._datasetName,
+                    tables=self._tables,
+                    primaryTable=self._primaryTable,
+                    summary=self._summary,
+                    description=self._description,
+                    supportsStreaming=self._supportsStreaming,
+                    providerClass=self._targetCls,
+                    associatedDatasets=self._associatedDatasets,
+                )
                 self._targetCls._DATASET_DEFINITION = dataset_desc
                 retval = self._targetCls
             else:
@@ -382,8 +421,8 @@ class DatasetProvider(ABC):
             return retval
 
 
-def dataset_definition(cls: type|None =None, *args: object, autoRegister: bool =False, **kwargs: object) -> type:
-    """ decorator to define standard dataset definition
+def dataset_definition(cls: type | None = None, *args: object, autoRegister: bool = False, **kwargs: object) -> type:
+    """decorator to define standard dataset definition
 
     This is intended to be applied classes derived from DatasetProvider to simplify the implementation
     of the predefined datasets.
@@ -415,8 +454,8 @@ def dataset_definition(cls: type|None =None, *args: object, autoRegister: bool =
 
     """
 
-    def inner_wrapper(inner_cls: type|None =None, *inner_args: object, **inner_kwargs: object) -> type:
-        """ The inner wrapper function is used to handle the case where the decorator is used with arguments.
+    def inner_wrapper(inner_cls: type | None = None, *inner_args: object, **inner_kwargs: object) -> type:
+        """The inner wrapper function is used to handle the case where the decorator is used with arguments.
         It defers the application of the decorator to the target class until the target class is available.
 
         :param inner_cls: inner class object
@@ -426,8 +465,9 @@ def dataset_definition(cls: type|None =None, *args: object, autoRegister: bool =
         :return: Returns the target class object
         """
         try:
-            assert DatasetProvider.isValidDataProviderType(inner_cls), \
-                f"Target class of decorator ({inner_cls}) must inherit from DataProvider"
+            assert DatasetProvider.isValidDataProviderType(
+                inner_cls
+            ), f"Target class of decorator ({inner_cls}) must inherit from DataProvider"
             return DatasetProvider.DatasetDecoratorUtils(inner_cls, *args, **kwargs).mkClass(autoRegister)
         except Exception as exc:
             raise TypeError(f"Invalid decorator usage: {exc}") from exc
@@ -438,8 +478,9 @@ def dataset_definition(cls: type|None =None, *args: object, autoRegister: bool =
         if cls is not None:
             # handle decorator syntax with no arguments
             # when no arguments are provided to the decorator, the only argument passed is an implicit class object
-            assert DatasetProvider.isValidDataProviderType(cls), \
-                f"Target class of decorator ({cls}) must inherit from DataProvider"
+            assert DatasetProvider.isValidDataProviderType(
+                cls
+            ), f"Target class of decorator ({cls}) must inherit from DataProvider"
             return DatasetProvider.DatasetDecoratorUtils(cls, *args, **kwargs).mkClass(autoRegister)
         else:
             # handle decorator syntax with arguments - here we simply return the inner wrapper function

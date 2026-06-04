@@ -8,7 +8,6 @@ from pyspark.sql.types import IntegerType, StringType, FloatType
 
 import dbldatagen as dg
 
-
 spark = dg.SparkSingleton.getLocalInstance("output tests")
 
 
@@ -44,12 +43,11 @@ class TestOutput:
             rows=100,
             partitions=4,
             seedMethod='hash_fieldname',
-            seedColumnName=seed_column_name
+            seedColumnName=seed_column_name,
         )
 
         gen = (
-            gen
-            .withIdOutput()
+            gen.withIdOutput()
             .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
             .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
             .withColumn("code3", StringType(), values=['a', 'b', 'c'])
@@ -79,12 +77,11 @@ class TestOutput:
             rows=100,
             partitions=4,
             seedMethod='hash_fieldname',
-            seedColumnName=seed_column_name
+            seedColumnName=seed_column_name,
         )
 
         gen = (
-            gen
-            .withIdOutput()
+            gen.withIdOutput()
             .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
             .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
             .withColumn("code3", StringType(), values=['a', 'b', 'c'])
@@ -97,7 +94,7 @@ class TestOutput:
             output_mode="append",
             format=table_format,
             options={"mergeSchema": "true", "checkpointLocation": f"{data_dir}/{checkpoint_dir}"},
-            trigger={"processingTime": "1 SECOND"}
+            trigger={"processingTime": "1 SECOND"},
         )
 
         query = gen.saveAsDataset(output_dataset, with_streaming=True)

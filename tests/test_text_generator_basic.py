@@ -14,7 +14,7 @@ class TestTextGeneratorBasic:
     partitions_requested = 4
 
     class TestTextGenerator(TextGenerator):
-        def pandasGenerateText(self, v):    # pylint: disable=useless-parent-delegation
+        def pandasGenerateText(self, v):  # pylint: disable=useless-parent-delegation
             return super().pandasGenerateText(v)
 
     @pytest.mark.parametrize("randomSeed", [None, 0, -1, 2112, 42])
@@ -39,11 +39,21 @@ class TestTextGeneratorBasic:
             text_gen1 = self.TestTextGenerator()
             text_gen1.pandasGenerateText(None)
 
-    @pytest.mark.parametrize("randomSeed, forceNewInstance", [(None, True), (None, False),
-                                                              (0, True), (0, False),
-                                                              (-1, True), (-1, False),
-                                                              (2112, True), (2112, False),
-                                                              (42, True), (42, False)])
+    @pytest.mark.parametrize(
+        "randomSeed, forceNewInstance",
+        [
+            (None, True),
+            (None, False),
+            (0, True),
+            (0, False),
+            (-1, True),
+            (-1, False),
+            (2112, True),
+            (2112, False),
+            (42, True),
+            (42, False),
+        ],
+    )
     def test_text_generator_rng(self, randomSeed, forceNewInstance):
         text_gen1 = self.TestTextGenerator()
         text_gen2 = self.TestTextGenerator()
@@ -74,21 +84,29 @@ class TestTextGeneratorBasic:
         if randomSeed is not None and randomSeed != -1 and forceNewInstance:
             assert (values1 == values2).all()
 
-    @pytest.mark.parametrize("values, expectedType", [([1, 2, 3], np.uint8),
-                                                      ([1, 40000, 3], np.uint16),
-                                                      ([1, 40000.0, 3], np.uint16),
-                                                      ([1, 40000.4, 3], np.uint16),
-                                                      (np.array([1, 40000.4, 3]), np.uint16)
-                                                      ])
+    @pytest.mark.parametrize(
+        "values, expectedType",
+        [
+            ([1, 2, 3], np.uint8),
+            ([1, 40000, 3], np.uint16),
+            ([1, 40000.0, 3], np.uint16),
+            ([1, 40000.4, 3], np.uint16),
+            (np.array([1, 40000.4, 3]), np.uint16),
+        ],
+    )
     def test_text_generator_compact_types(self, values, expectedType):
         text_gen1 = self.TestTextGenerator()
 
         np_type = text_gen1.compactNumpyTypeForValues(values)
         assert np_type == expectedType
 
-    @pytest.mark.parametrize("template, expectedOutput", [(r'53.123.ddd.ddd', r"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"),
-                                                          (r'\w.\W.\w.\W', r"[a-z]+\.[A-Z]+\.[a-z]+\.[A-Z]+"),
-                                                          ])
+    @pytest.mark.parametrize(
+        "template, expectedOutput",
+        [
+            (r'53.123.ddd.ddd', r"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"),
+            (r'\w.\W.\w.\W', r"[a-z]+\.[A-Z]+\.[a-z]+\.[A-Z]+"),
+        ],
+    )
     def test_templates_constant(self, template, expectedOutput):
         text_gen1 = TemplateGenerator(template)
         text_gen1 = text_gen1.withRandomSeed(2112)
@@ -102,17 +120,16 @@ class TestTextGeneratorBasic:
         for x in results[0:100]:
             assert patt.match(x), f"Expecting data '{x}'  to match pattern {patt}"
 
-    @pytest.mark.parametrize("sourceData, template, expectedOutput", [(np.arange(100000),
-                                                                       r'53.123.\V.\V', r"53\.123\.105\.105"),
-                                                                      (np.arange(100000),
-                                                                       r'\V.\V.\V.123', r"105\.105\.105\.123"),
-                                                                      (np.arange(1000),
-                                                                       r'\V.\W.\w.\W', r"105\.[A-Z]+\.[a-z]+\.[A-Z]+"),
-                                                                      ([[x, x + 1] for x in np.arange(10000)],
-                                                                       r'\v0.\v1.\w.\W', r"105\.106\.[a-z]+\.[A-Z]+"),
-                                                                      ([(x, x + 1) for x in range(10000)],
-                                                                       r'\v0.\v1.\w.\W', r"105\.106\.[a-z]+\.[A-Z]+"),
-                                                                      ])
+    @pytest.mark.parametrize(
+        "sourceData, template, expectedOutput",
+        [
+            (np.arange(100000), r'53.123.\V.\V', r"53\.123\.105\.105"),
+            (np.arange(100000), r'\V.\V.\V.123', r"105\.105\.105\.123"),
+            (np.arange(1000), r'\V.\W.\w.\W', r"105\.[A-Z]+\.[a-z]+\.[A-Z]+"),
+            ([[x, x + 1] for x in np.arange(10000)], r'\v0.\v1.\w.\W', r"105\.106\.[a-z]+\.[A-Z]+"),
+            ([(x, x + 1) for x in range(10000)], r'\v0.\v1.\w.\W', r"105\.106\.[a-z]+\.[A-Z]+"),
+        ],
+    )
     def test_template_value_substitution(self, sourceData, template, expectedOutput):
         """
         Test value substition for row 105
@@ -133,10 +150,14 @@ class TestTextGeneratorBasic:
         test_row = results[105]
         assert patt.match(test_row), f"Expecting data '{test_row}'  to match pattern {patt}"
 
-    @pytest.mark.parametrize("template, expectedRandomNumbers", [(r'53.123.ddd.ddd', 6),
-                                                                 (r'\w.\W.\w.\W', 4),
-                                                                 (r'\w.\W.\w.\W|\w \w|\W \w \W', [4, 2, 3]),
-                                                                 ])
+    @pytest.mark.parametrize(
+        "template, expectedRandomNumbers",
+        [
+            (r'53.123.ddd.ddd', 6),
+            (r'\w.\W.\w.\W', 4),
+            (r'\w.\W.\w.\W|\w \w|\W \w \W', [4, 2, 3]),
+        ],
+    )
     def test_prepare_templates(self, template, expectedRandomNumbers):
         text_gen1 = TemplateGenerator(template)
         text_gen1 = text_gen1.withRandomSeed(2112)
@@ -154,10 +175,14 @@ class TestTextGeneratorBasic:
             assert len(vector_rnd) == expectedVectorSize, f"template is '{individualTemplate}'"
             assert placeholders > len(vector_rnd)
 
-    @pytest.mark.parametrize("template, expectedRandomNumbers", [(r'53.123.ddd.ddd', 6),
-                                                                 (r'\w.\W.\w.\W', 4),
-                                                                 (r'\w.\W.\w.\W|\w \w|\W \w \W', [4, 2, 3]),
-                                                                 ])
+    @pytest.mark.parametrize(
+        "template, expectedRandomNumbers",
+        [
+            (r'53.123.ddd.ddd', 6),
+            (r'\w.\W.\w.\W', 4),
+            (r'\w.\W.\w.\W|\w \w|\W \w \W', [4, 2, 3]),
+        ],
+    )
     def test_prepare_bounds(self, template, expectedRandomNumbers):
         text_gen1 = TemplateGenerator(template)
         text_gen1 = text_gen1.withRandomSeed(2112)
@@ -183,17 +208,20 @@ class TestTextGeneratorBasic:
 
         print(template_rnds)
 
-    @pytest.mark.parametrize("template, expectedOutput", [(r'53.123.ddd.ddd', r"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"),
-                                                          (r'\w.\W.\w.\W', r"[a-z]+\.[A-Z]+\.[a-z]+\.[A-Z]+"),
-                                                          (r'\w.\W.\w.\W|\w \w', r"[a-zA-Z\. ]+"),
-                                                          (r'Dddd', r"[1-9][0-9]+"),
-                                                          (r'\xxxxx \xXXX', r"x[0-9a-f]+ x[0-9A-F]+"),
-                                                          (r'Aaaa Kkkk \N \n', r"[a-zA-Z]+ [0-9A-Za-z]+ [0-9]+ [0-9]+"),
-                                                          (r'Aaaa \V \N \n', r"[A-Za-z]+ [0-9]+ [0-9]+ [0-9]+"),
-                                                          ])
+    @pytest.mark.parametrize(
+        "template, expectedOutput",
+        [
+            (r'53.123.ddd.ddd', r"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"),
+            (r'\w.\W.\w.\W', r"[a-z]+\.[A-Z]+\.[a-z]+\.[A-Z]+"),
+            (r'\w.\W.\w.\W|\w \w', r"[a-zA-Z\. ]+"),
+            (r'Dddd', r"[1-9][0-9]+"),
+            (r'\xxxxx \xXXX', r"x[0-9a-f]+ x[0-9A-F]+"),
+            (r'Aaaa Kkkk \N \n', r"[a-zA-Z]+ [0-9A-Za-z]+ [0-9]+ [0-9]+"),
+            (r'Aaaa \V \N \n', r"[A-Za-z]+ [0-9]+ [0-9]+ [0-9]+"),
+        ],
+    )
     def test_apply_template(self, template, expectedOutput):
-        """ This method tests the core logic of the template generator
-        """
+        """This method tests the core logic of the template generator"""
         text_gen1 = TemplateGenerator(template)
         text_gen1 = text_gen1.withRandomSeed(2112)
 
@@ -230,11 +258,7 @@ class TestTextGeneratorBasic:
                 np.ma.harden_mask(m)
 
             # expand values into placeholders
-            text_gen1._applyTemplateStringsForTemplate(pd_data,
-                                                       selectedTemplate,
-                                                       masked_placeholders,
-                                                       masked_rnds
-                                                       )
+            text_gen1._applyTemplateStringsForTemplate(pd_data, selectedTemplate, masked_placeholders, masked_rnds)
 
             # soften mask, allowing modifications
             for m in masked_matrices:

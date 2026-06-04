@@ -18,10 +18,12 @@ from datetime import timedelta
 from typing import Any
 
 import jmespath
-from pyspark.sql import DataFrame
+from pyspark.sql import Column, DataFrame
+from pyspark.sql.functions import col
 from pyspark.sql.streaming.query import StreamingQuery
 
 from dbldatagen.config import OutputDataset
+from dbldatagen.datagen_types import ColumnLike
 
 
 def deprecated(message: str = "") -> Callable[[Callable[..., Any]], Callable[..., Any]]:
@@ -36,8 +38,11 @@ def deprecated(message: str = "") -> Callable[[Callable[..., Any]], Callable[...
     def deprecated_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @functools.wraps(func)
         def deprecated_func(*args: object, **kwargs: object) -> object:
-            warnings.warn(f"`{func.__name__}` is a deprecated function or method. \n{message}",
-                          category=DeprecationWarning, stacklevel=1)
+            warnings.warn(
+                f"`{func.__name__}` is a deprecated function or method. \n{message}",
+                category=DeprecationWarning,
+                stacklevel=1,
+            )
             warnings.simplefilter("default", DeprecationWarning)
             return func(*args, **kwargs)
 
@@ -49,13 +54,12 @@ def deprecated(message: str = "") -> Callable[[Callable[..., Any]], Callable[...
 class DataGenError(Exception):
     """Exception class to represent data generation errors
 
-        :param msg: message related to error
-        :param baseException: underlying exception, if any that caused the issue
+    :param msg: message related to error
+    :param baseException: underlying exception, if any that caused the issue
     """
 
     def __init__(self, msg: str, baseException: object | None = None) -> None:
-        """ constructor
-        """
+        """constructor"""
         super().__init__(msg)
         self._underlyingException: object | None = baseException
         self._msg: str = msg
@@ -96,11 +100,11 @@ def ensure(cond: bool, msg: str = "condition does not hold true") -> None:
 
 
 def mkBoundsList(x: int | list[int] | None, default: int | list[int]) -> tuple[bool, list[int]]:
-    """ make a bounds list from supplied parameter - otherwise use default
+    """make a bounds list from supplied parameter - otherwise use default
 
-        :param x: integer or list of 2 values that define bounds list
-        :param default: default value if X is `None`
-        :returns: list of form [x,y]
+    :param x: integer or list of 2 values that define bounds list
+    :param default: default value if X is `None`
+    :returns: list of form [x,y]
     """
     if x is None:
         retval = (True, [default, default]) if isinstance(default, int) else (True, list(default))
@@ -116,11 +120,9 @@ def mkBoundsList(x: int | list[int] | None, default: int | list[int]) -> tuple[b
 
 
 def topologicalSort(
-    sources: list[tuple[str, set[str]]],
-    initial_columns: list[str] | None = None,
-    flatten: bool = True
+    sources: list[tuple[str, set[str]]], initial_columns: list[str] | None = None, flatten: bool = True
 ) -> list[str] | list[list[str]]:
-    """ Perform a topological sort over sources
+    """Perform a topological sort over sources
 
     Used to compute the column test data generation order of the column generation dependencies.
 
@@ -242,7 +244,7 @@ def parse_time_interval(spec: str) -> timedelta:
         milliseconds=milliseconds,
         minutes=minutes,
         hours=hours,
-        weeks=weeks + (years * _WEEKS_PER_YEAR)
+        weeks=weeks + (years * _WEEKS_PER_YEAR),
     )
 
     return delta
@@ -273,7 +275,7 @@ def strip_margins(s: str, marginChar: str) -> str:
 
     for line in lines:
         if marginChar in line:
-            revised_line: str = line[line.index(marginChar) + 1:]
+            revised_line: str = line[line.index(marginChar) + 1 :]
             revised_lines.append(revised_line)
         else:
             revised_lines.append(line)
@@ -324,8 +326,8 @@ def split_list_matching_condition(lst: list[Any], cond: Callable[[Any], bool]) -
         ix: int = match_condition(lst, cond)
         if ix != -1:
             retval.extend(split_list_matching_condition(lst[0:ix], cond))
-            retval.append(lst[ix:ix + 1])
-            retval.extend(split_list_matching_condition(lst[ix + 1:], cond))
+            retval.append(lst[ix : ix + 1])
+            retval.extend(split_list_matching_condition(lst[ix + 1 :], cond))
         else:
             retval = [lst]
 
@@ -334,7 +336,7 @@ def split_list_matching_condition(lst: list[Any], cond: Callable[[Any], bool]) -
 
 
 def json_value_from_path(searchPath: str, jsonData: str, defaultValue: object) -> object:
-    """ Get JSON value from JSON data referenced by searchPath
+    """Get JSON value from JSON data referenced by searchPath
 
     searchPath should be a JSON path as supported by the `jmespath` package
     (see https://jmespath.org/)
@@ -358,7 +360,7 @@ def json_value_from_path(searchPath: str, jsonData: str, defaultValue: object) -
 
 
 def system_time_millis() -> int:
-    """ return system time as milliseconds since start of epoch
+    """return system time as milliseconds since start of epoch
 
     :return: system time millis as long
     """
@@ -401,3 +403,17 @@ def write_data_to_output(df: DataFrame, output_dataset: OutputDataset) -> Stream
         )
 
     return None
+
+
+def ensure_column(column: ColumnLike) -> Column:
+    """
+    Normalizes an input ``ColumnLike`` value into a Column expression.
+
+    :param column: Column name as a string or a ``pyspark.sql.Column`` expression
+    :return: ``pyspark.sql.Column`` expression
+    """
+    if isinstance(column, Column):
+        return column
+
+    if isinstance(column, str):
+        return col(column)
