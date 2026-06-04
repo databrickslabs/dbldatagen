@@ -1044,7 +1044,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
                 rows=10000,
                 partitions=4,
                 randomSeedMethod="fixed",
-                randomSeed=24
+                randomSeed=24,
             )
             .withIdOutput()
             .withColumn("val1", "int", minValue=1, maxValue=100, uniqueValues=10, random=True)
@@ -1081,7 +1081,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
                 rows=5000,
                 partitions=4,
                 randomSeedMethod="fixed",
-                randomSeed=42
+                randomSeed=42,
             )
             .withIdOutput()
             .withColumn("val1", "float", minValue=1.0, maxValue=10.0, step=0.5, uniqueValues=10, random=True)
@@ -1118,26 +1118,14 @@ class TestRangedValuesAndDates(unittest.TestCase):
                 rows=5000,
                 partitions=4,
                 randomSeedMethod="fixed",
-                randomSeed=456
+                randomSeed=456,
             )
             .withIdOutput()
             .withColumn(
-                "val1",
-                "date",
-                begin="2020-01-01",
-                end="2020-01-31",
-                interval="1 day",
-                uniqueValues=10,
-                random=True
+                "val1", "date", begin="2020-01-01", end="2020-01-31", interval="1 day", uniqueValues=10, random=True
             )
             .withColumn(
-                "val2",
-                "date",
-                begin="2020-01-01",
-                end="2020-01-31",
-                interval="1 day",
-                uniqueValues=10,
-                random=False
+                "val2", "date", begin="2020-01-01", end="2020-01-31", interval="1 day", uniqueValues=10, random=False
             )
             .build()
         )
@@ -1152,7 +1140,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         unique_set_val1 = {r[0] for r in test_df.select("val1").distinct().collect()}
         unique_set_val2 = {r[0] for r in test_df.select("val2").distinct().collect()}
         end_date = date(2020, 1, 31)
-        expected_sequence = {end_date - timedelta(days=j-1) for j in range(10, 0, -1)}
+        expected_sequence = {end_date - timedelta(days=j - 1) for j in range(10, 0, -1)}
 
         # Ensure that the expected values for val1 are not generated in sequence:
         self.assertNotEqual(unique_set_val1, expected_sequence)
@@ -1174,7 +1162,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
                 rows=3000,
                 partitions=4,
                 randomSeedMethod="fixed",
-                randomSeed=789
+                randomSeed=789,
             )
             .withIdOutput()
             .withColumn(
@@ -1184,7 +1172,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
                 end="2020-01-01 23:59:59",
                 interval="1 hour",
                 uniqueValues=10,
-                random=True
+                random=True,
             )
             .withColumn(
                 "val2",
@@ -1193,7 +1181,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
                 end="2020-01-01 23:59:59",
                 interval="1 hour",
                 uniqueValues=10,
-                random=False
+                random=False,
             )
             .build()
         )
@@ -1208,7 +1196,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         unique_set_val1 = {r[0] for r in test_df.select("val1").distinct().collect()}
         unique_set_val2 = {r[0] for r in test_df.select("val2").distinct().collect()}
         end_time = datetime(2020, 1, 1, 23, 59, 59)
-        expected_sequence = {end_time - timedelta(hours=j-1) for j in range(10, 0, -1)}
+        expected_sequence = {end_time - timedelta(hours=j - 1) for j in range(10, 0, -1)}
 
         # Ensure that the expected values for val1 are not generated in sequence:
         self.assertNotEqual(unique_set_val1, expected_sequence)
@@ -1230,7 +1218,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
                 rows=1000,
                 partitions=2,
                 randomSeedMethod="fixed",
-                randomSeed=999
+                randomSeed=999,
             )
             .withIdOutput()
             .withColumn("val", "int", minValue=1, maxValue=50, uniqueValues=8, random=True)
@@ -1255,7 +1243,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
                 rows=1000,
                 partitions=2,
                 randomSeedMethod="fixed",
-                randomSeed=42
+                randomSeed=42,
             )
             .withIdOutput()
             .withColumn("val", "int", minValue=1, maxValue=50, uniqueValues=8, random=True)
@@ -1269,8 +1257,9 @@ class TestRangedValuesAndDates(unittest.TestCase):
     def test_unique_values_random_exceeds_grid(self):
         # Requesting more unique values than the range can supply must NOT hang and must clamp to the grid
         test_df = (
-            dg.DataGenerator(spark, name="exceeds_grid", rows=5000, partitions=4,
-                             randomSeedMethod="fixed", randomSeed=24)
+            dg.DataGenerator(
+                spark, name="exceeds_grid", rows=5000, partitions=4, randomSeedMethod="fixed", randomSeed=24
+            )
             .withIdOutput()
             .withColumn("val", "int", minValue=1, maxValue=10, uniqueValues=50, random=True)
             .build()
@@ -1282,8 +1271,9 @@ class TestRangedValuesAndDates(unittest.TestCase):
     def test_unique_values_random_equals_grid(self):
         # Requesting exactly the grid size should surface every grid value, in range
         test_df = (
-            dg.DataGenerator(spark, name="equals_grid", rows=5000, partitions=4,
-                             randomSeedMethod="fixed", randomSeed=24)
+            dg.DataGenerator(
+                spark, name="equals_grid", rows=5000, partitions=4, randomSeedMethod="fixed", randomSeed=24
+            )
             .withIdOutput()
             .withColumn("val", "int", minValue=1, maxValue=10, step=1, uniqueValues=10, random=True)
             .build()
@@ -1294,11 +1284,13 @@ class TestRangedValuesAndDates(unittest.TestCase):
     def test_unique_values_random_dates_exceeds_grid(self):
         # Date columns must also clamp (regression: the date path previously clamped, the numeric did not)
         test_df = (
-            dg.DataGenerator(spark, name="dates_exceeds_grid", rows=5000, partitions=4,
-                             randomSeedMethod="fixed", randomSeed=456)
+            dg.DataGenerator(
+                spark, name="dates_exceeds_grid", rows=5000, partitions=4, randomSeedMethod="fixed", randomSeed=456
+            )
             .withIdOutput()
-            .withColumn("val", "date", begin="2020-01-01", end="2020-01-05", interval="1 day",
-                        uniqueValues=100, random=True)
+            .withColumn(
+                "val", "date", begin="2020-01-01", end="2020-01-05", interval="1 day", uniqueValues=100, random=True
+            )
             .build()
         )
         unique_vals = {r[0] for r in test_df.select("val").distinct().collect()}
@@ -1311,8 +1303,9 @@ class TestRangedValuesAndDates(unittest.TestCase):
         cgs.RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD = 5
         try:
             test_gen = (
-                dg.DataGenerator(spark, name="large_mapped", rows=20000, partitions=4,
-                                 randomSeedMethod="fixed", randomSeed=24)
+                dg.DataGenerator(
+                    spark, name="large_mapped", rows=20000, partitions=4, randomSeedMethod="fixed", randomSeed=24
+                )
                 .withIdOutput()
                 .withColumn("val", "int", minValue=1, maxValue=100000, uniqueValues=40, random=True)
             )

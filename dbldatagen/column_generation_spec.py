@@ -624,7 +624,7 @@ class ColumnGenerationSpec(SerializableToDict):
         :return: Random number generator
         """
         if self._randomSeed is not None and self._randomSeed != RANDOM_SEED_RANDOM:
-            return random.Random(abs(self._randomSeed) % (2 ** 32))
+            return random.Random(abs(self._randomSeed) % (2**32))
         return random.Random()
 
     @staticmethod
@@ -691,11 +691,20 @@ class ColumnGenerationSpec(SerializableToDict):
         else:
             a, b = self._computeScatterMapping(grid_size, random_generator)
             self._uniqueValueMapping = {
-                "kind": "numeric", "a": a, "b": b, "grid_size": grid_size,
-                "min": min_val, "step": step_val,
+                "kind": "numeric",
+                "a": a,
+                "b": b,
+                "grid_size": grid_size,
+                "min": min_val,
+                "step": step_val,
             }
-        self.logger.info("Column %s: %s random unique values from a grid of %s (%s)", self.name, unique_count,
-                         grid_size, "materialized" if self.values is not None else "mapped")
+        self.logger.info(
+            "Column %s: %s random unique values from a grid of %s (%s)",
+            self.name,
+            unique_count,
+            grid_size,
+            "materialized" if self.values is not None else "mapped",
+        )
 
     def _setupRandomUniqueDatetimeValues(self, unique_count, grid_size, begin_val, interval_val, column_type):
         """Configures generation of ``unique_count`` distinct random date/timestamp values from a grid. Uses
@@ -721,11 +730,19 @@ class ColumnGenerationSpec(SerializableToDict):
             interval_units = interval_val.days if type(column_type) is DateType else int(interval_val.total_seconds())
             self._uniqueValueMapping = {
                 "kind": "date" if type(column_type) is DateType else "timestamp",
-                "a": a, "b": b, "grid_size": grid_size,
-                "begin": begin_val, "interval": interval_units,
+                "a": a,
+                "b": b,
+                "grid_size": grid_size,
+                "begin": begin_val,
+                "interval": interval_units,
             }
-        self.logger.info("Column %s: %s random unique datetime values from a grid of %s (%s)", self.name,
-                         unique_count, grid_size, "materialized" if self.values is not None else "mapped")
+        self.logger.info(
+            "Column %s: %s random unique datetime values from a grid of %s (%s)",
+            self.name,
+            unique_count,
+            grid_size,
+            "materialized" if self.values is not None else "mapped",
+        )
 
     @staticmethod
     def _normalizeDatetimeBounds(begin_val, end_val, interval_val, column_type):
@@ -811,8 +828,14 @@ class ColumnGenerationSpec(SerializableToDict):
                 grid_size = self._numericGridSize(effective_min, effective_max, effective_step)
                 unique_count = min(c_unique, grid_size)
                 if c_unique > grid_size:
-                    self.logger.warning("Requested %s unique values for column [%s] exceeds the %s values available "
-                                        "in the range; using %s", c_unique, self.name, grid_size, grid_size)
+                    self.logger.warning(
+                        "Requested %s unique values for column [%s] exceeds the %s values available "
+                        "in the range; using %s",
+                        c_unique,
+                        self.name,
+                        grid_size,
+                        grid_size,
+                    )
                 if unique_count >= grid_size:
                     # every grid value is required: ordinary random ranged generation already covers the full grid
                     if type(effective_min) is float or type(effective_step) is float:
@@ -835,10 +858,12 @@ class ColumnGenerationSpec(SerializableToDict):
                 result = NRange(effective_min, unique_max, effective_step)
 
                 if result.maxValue is not None and effective_max is not None and result.maxValue > effective_max:
-                    self.logger.warning("Computed maxValue for column [%s] of %s is greater than specified maxValue %s",
-                                        self.name,
-                                        result.maxValue,
-                                        effective_max)
+                    self.logger.warning(
+                        "Computed maxValue for column [%s] of %s is greater than specified maxValue %s",
+                        self.name,
+                        result.maxValue,
+                        effective_max,
+                    )
         elif c_range is not None:
             result = c_range
         elif c_range is None:
@@ -868,20 +893,29 @@ class ColumnGenerationSpec(SerializableToDict):
         if c_unique is not None and self.random and effective_end is not None:
             # Draw `unique_count` distinct random values from the discrete grid defined by the range
             begin_val, end_val, interval_val = self._normalizeDatetimeBounds(
-                effective_begin, effective_end, effective_interval, colType)
+                effective_begin, effective_end, effective_interval, colType
+            )
             grid_size = self._datetimeGridSize(begin_val, end_val, interval_val)
             unique_count = min(c_unique, grid_size)
             if c_unique > grid_size:
-                self.logger.warning("Requested %s unique values for column [%s] exceeds the %s values available "
-                                    "in the range; using %s", c_unique, self.name, grid_size, grid_size)
+                self.logger.warning(
+                    "Requested %s unique values for column [%s] exceeds the %s values available "
+                    "in the range; using %s",
+                    c_unique,
+                    self.name,
+                    grid_size,
+                    grid_size,
+                )
             if unique_count >= grid_size:
                 # every grid value is required: ordinary random ranged generation already covers the full range
                 if type(colType) is DateType:
-                    result = DateRange.computeDateRange(effective_begin, effective_end, effective_interval,
-                                                        unique_count)
+                    result = DateRange.computeDateRange(
+                        effective_begin, effective_end, effective_interval, unique_count
+                    )
                 else:
-                    result = DateRange.computeTimestampRange(effective_begin, effective_end, effective_interval,
-                                                             unique_count)
+                    result = DateRange.computeTimestampRange(
+                        effective_begin, effective_end, effective_interval, unique_count
+                    )
             else:
                 self._setupRandomUniqueDatetimeValues(unique_count, grid_size, begin_val, interval_val, colType)
                 # the column now selects from the unique values via a random index (0 to unique_count-1)
