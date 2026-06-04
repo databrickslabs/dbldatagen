@@ -1298,7 +1298,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertEqual(len(unique_vals), 5)
         self.assertTrue(all(date(2020, 1, 1) <= v <= date(2020, 1, 5) for v in unique_vals))
 
-    def test_unique_values_random_large_count_mapped(self):
+    def test_unique_values_random_integer_with_large_count_mapped(self):
         original_threshold = cgs.RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD
         cgs.RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD = 5
         try:
@@ -1312,12 +1312,102 @@ class TestRangedValuesAndDates(unittest.TestCase):
             test_df = test_gen.build()
             unique_values = {row[0] for row in test_df.select("val").distinct().collect()}
 
+            print([val for val in unique_values if val < 0 or val > 100000])
             self.assertEqual(len(unique_values), 40)
             self.assertTrue(all(1 <= value <= 100000 for value in unique_values))
 
             mapping = test_gen.getColumnSpec("val")._uniqueValueMapping
             self.assertIsNotNone(mapping)
             self.assertEqual(mapping["kind"], "numeric")
+
+            unique_values_2 = {row[0] for row in test_gen.build().select("val").distinct().collect()}
+            self.assertEqual(unique_values, unique_values_2)
+
+        finally:
+            cgs.RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD = original_threshold
+
+    def test_unique_values_random_float_with_large_count_mapped(self):
+        original_threshold = cgs.RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD
+        cgs.RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD = 5
+        try:
+            test_gen = (
+                dg.DataGenerator(
+                    spark, name="large_mapped_floats", rows=20000, partitions=4, randomSeedMethod="fixed", randomSeed=24
+                )
+                .withIdOutput()
+                .withColumn("val", "float", minValue=0.0, maxValue=1000.0, step=0.5, uniqueValues=40, random=True)
+            )
+            test_df = test_gen.build()
+            unique_values = {row[0] for row in test_df.select("val").distinct().collect()}
+
+            self.assertEqual(len(unique_values), 40)
+            self.assertTrue(all(0.0 <= value <= 1000.0 for value in unique_values))
+            self.assertTrue(all(abs(value / 0.5 - round(value / 0.5)) < 1e-6 for value in unique_values))
+
+            mapping = test_gen.getColumnSpec("val")._uniqueValueMapping
+            self.assertIsNotNone(mapping)
+            self.assertEqual(mapping["kind"], "numeric")
+
+            unique_values_2 = {row[0] for row in test_gen.build().select("val").distinct().collect()}
+            self.assertEqual(unique_values, unique_values_2)
+
+        finally:
+            cgs.RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD = original_threshold
+
+    def test_unique_values_random_date_with_large_count_mapped(self):
+        original_threshold = cgs.RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD
+        cgs.RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD = 5
+        try:
+            test_gen = (
+                dg.DataGenerator(
+                    spark, name="large_mapped_dates", rows=20000, partitions=4, randomSeedMethod="fixed", randomSeed=24
+                )
+                .withIdOutput()
+                .withColumn(
+                    "val", "date", begin="2020-01-01", end="2025-01-01", interval="1 day", uniqueValues=40, random=True
+                )
+            )
+            test_df = test_gen.build()
+            unique_values = {row[0] for row in test_df.select("val").distinct().collect()}
+
+            self.assertEqual(len(unique_values), 40)
+            self.assertTrue(all(date(2020, 1, 1) <= value <= date(2025, 1, 1) for value in unique_values))
+
+            mapping = test_gen.getColumnSpec("val")._uniqueValueMapping
+            self.assertIsNotNone(mapping)
+            self.assertEqual(mapping["kind"], "date")
+
+            unique_values_2 = {row[0] for row in test_gen.build().select("val").distinct().collect()}
+            self.assertEqual(unique_values, unique_values_2)
+
+        finally:
+            cgs.RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD = original_threshold
+
+    def test_unique_values_random_timestamp_with_large_count_mapped(self):
+        original_threshold = cgs.RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD
+        cgs.RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD = 5
+        try:
+            test_gen = (
+                dg.DataGenerator(
+                    spark, name="large_mapped_ts", rows=20000, partitions=4, randomSeedMethod="fixed", randomSeed=24
+                )
+                .withIdOutput()
+                .withColumn(
+                    "val", "timestamp", begin="2020-01-01 00:00:00", end="2020-01-02 00:00:00", interval="1 minute",
+                    uniqueValues=40, random=True
+                )
+            )
+            test_df = test_gen.build()
+            unique_values = {row[0] for row in test_df.select("val").distinct().collect()}
+
+            self.assertEqual(len(unique_values), 40)
+            self.assertTrue(
+                all(datetime(2020, 1, 1, 0, 0, 0) <= value <= datetime(2020, 1, 2, 0, 0, 0) for value in unique_values)
+            )
+
+            mapping = test_gen.getColumnSpec("val")._uniqueValueMapping
+            self.assertIsNotNone(mapping)
+            self.assertEqual(mapping["kind"], "timestamp")
 
             unique_values_2 = {row[0] for row in test_gen.build().select("val").distinct().collect()}
             self.assertEqual(unique_values, unique_values_2)

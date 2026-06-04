@@ -12,12 +12,9 @@ import math
 import random
 from datetime import datetime, timedelta
 
-import numpy as np
+import pyspark.sql.functions as F
 from pyspark.sql.functions import col, pandas_udf
 from pyspark.sql.functions import lit, concat, rand, round as sql_round, array, expr, when, udf, format_string
-
-import pyspark.sql.functions as F
-
 from pyspark.sql.types import (
     FloatType,
     IntegerType,
@@ -30,6 +27,7 @@ from pyspark.sql.types import (
     ArrayType,
     MapType,
     StructType,
+    LongType,
 )
 
 from .column_spec_options import ColumnSpecOptions
@@ -663,7 +661,7 @@ class ColumnGenerationSpec(SerializableToDict):
         :param random_generator: Random number generator
         :return: Coefficients for mapping a value to the grid
         """
-        a = int(grid_size * (1 - APPROX_GOLDEN_RATIO)) | 1
+        a = int(grid_size * (APPROX_GOLDEN_RATIO - 1)) | 1
         while math.gcd(a, grid_size) != 1:
             a += 2
         b = random_generator.randrange(grid_size)
@@ -1357,7 +1355,8 @@ class ColumnGenerationSpec(SerializableToDict):
         """
         mapping = self._uniqueValueMapping
         a, b, grid_size = mapping["a"], mapping["b"], mapping["grid_size"]
-        grid_index = ((index_expr.astype("decimal(38,0)") * lit(a) + lit(b)) % lit(grid_size)).astype(LongType())
+        raw = index_expr.astype("decimal(38,0)") * lit(a) + lit(b)
+        grid_index = (((raw % lit(grid_size)) + lit(grid_size)) % lit(grid_size)).astype(LongType())
 
         if mapping["kind"] == "numeric":
             value = lit(mapping["min"]) + grid_index * lit(mapping["step"])
