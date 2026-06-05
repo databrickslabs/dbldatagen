@@ -1299,8 +1299,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
         self.assertTrue(all(date(2020, 1, 1) <= v <= date(2020, 1, 5) for v in unique_vals))
 
     def test_unique_values_random_integer_with_large_count_mapped(self):
-        original_threshold = cgs.RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD
-        cgs.RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD = 5
+        original_threshold = cgs.RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD
+        cgs.RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD = 5
         try:
             test_gen = (
                 dg.DataGenerator(
@@ -1324,11 +1324,11 @@ class TestRangedValuesAndDates(unittest.TestCase):
             self.assertEqual(unique_values, unique_values_2)
 
         finally:
-            cgs.RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD = original_threshold
+            cgs.RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD = original_threshold
 
     def test_unique_values_random_float_with_large_count_mapped(self):
-        original_threshold = cgs.RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD
-        cgs.RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD = 5
+        original_threshold = cgs.RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD
+        cgs.RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD = 5
         try:
             test_gen = (
                 dg.DataGenerator(
@@ -1352,11 +1352,11 @@ class TestRangedValuesAndDates(unittest.TestCase):
             self.assertEqual(unique_values, unique_values_2)
 
         finally:
-            cgs.RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD = original_threshold
+            cgs.RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD = original_threshold
 
     def test_unique_values_random_date_with_large_count_mapped(self):
-        original_threshold = cgs.RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD
-        cgs.RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD = 5
+        original_threshold = cgs.RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD
+        cgs.RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD = 5
         try:
             test_gen = (
                 dg.DataGenerator(
@@ -1381,11 +1381,11 @@ class TestRangedValuesAndDates(unittest.TestCase):
             self.assertEqual(unique_values, unique_values_2)
 
         finally:
-            cgs.RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD = original_threshold
+            cgs.RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD = original_threshold
 
     def test_unique_values_random_timestamp_with_large_count_mapped(self):
-        original_threshold = cgs.RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD
-        cgs.RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD = 5
+        original_threshold = cgs.RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD
+        cgs.RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD = 5
         try:
             test_gen = (
                 dg.DataGenerator(
@@ -1418,7 +1418,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
             self.assertEqual(unique_values, unique_values_2)
 
         finally:
-            cgs.RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD = original_threshold
+            cgs.RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD = original_threshold
 
     def test_unique_values_random_floats_exceeds_grid(self):
         test_df = (

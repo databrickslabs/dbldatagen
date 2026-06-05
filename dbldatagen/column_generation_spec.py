@@ -51,7 +51,7 @@ from .utils import ensure, coalesce_values, parse_time_interval
 from .schema_parser import SchemaParser
 
 APPROX_GOLDEN_RATIO = 1.6180339887498949
-RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD = 10000
+RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD = 10000
 HASH_COMPUTE_METHOD = "hash"
 VALUES_COMPUTE_METHOD = "values"
 RAW_VALUES_COMPUTE_METHOD = "raw_values"
@@ -626,7 +626,7 @@ class ColumnGenerationSpec(SerializableToDict):
         return random.Random()
 
     @staticmethod
-    def _numericGridSize(min_val, max_val, step_val):
+    def _computeNumericGridSize(min_val, max_val, step_val):
         """Computes the number of discrete points on the grid ``{min, min + step, ..., <= max}``
         for numeric-valued columns.
 
@@ -640,7 +640,7 @@ class ColumnGenerationSpec(SerializableToDict):
         return int((max_val - min_val) // step_val) + 1
 
     @staticmethod
-    def _datetimeGridSize(begin_val, end_val, interval_val):
+    def _computeDatetimeGridSize(begin_val, end_val, interval_val):
         """Computes the number of discrete date/timestamp points in ``[begin, end]`` for the given interval
         for ordinal-valued columns.
 
@@ -671,9 +671,9 @@ class ColumnGenerationSpec(SerializableToDict):
         """Configures generation of ``unique_count`` distinct random values from a numeric grid. Uses
         the following heuristic:
 
-        * Counts at or below ``RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD`` use an explicit
+        * Counts at or below ``RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD`` use an explicit
             value list (exact set guaranteed).
-        * Counts above ``RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD`` use a bijective index mapping
+        * Counts above ``RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD`` use a bijective index mapping
 
         :param unique_count: Number of unique values to generate
         :param grid_size: Number of possible values in the grid spanned by the min, max, and step values
@@ -681,7 +681,7 @@ class ColumnGenerationSpec(SerializableToDict):
         :param step_val: Step / increment value
         """
         random_generator = self._randomUniqueGenerator()
-        if unique_count <= RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD:
+        if unique_count <= RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD:
             values = [min_val + i * step_val for i in random_generator.sample(range(grid_size), unique_count)]
             if isinstance(min_val, float) or isinstance(step_val, float):
                 values = [round(v, 9) for v in values]
@@ -708,9 +708,9 @@ class ColumnGenerationSpec(SerializableToDict):
         """Configures generation of ``unique_count`` distinct random date/timestamp values from a grid. Uses
         the following heuristic:
 
-        * Counts at or below ``RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD`` use an explicit
+        * Counts at or below ``RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD`` use an explicit
             value list (exact set guaranteed).
-        * Counts above ``RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD`` use a bijective index mapping
+        * Counts above ``RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD`` use a bijective index mapping
 
         :param unique_count: Number of unique values to generate
         :param grid_size: Number of possible values in the grid spanned by the min, max, and step values
@@ -719,7 +719,7 @@ class ColumnGenerationSpec(SerializableToDict):
         :param column_type: Spark column type (e.g. DateType, TimestampType)
         """
         random_generator = self._randomUniqueGenerator()
-        if unique_count <= RANDOM_UNIQUE_VALUES_MATERIALIZE_THRESHOLD:
+        if unique_count <= RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD:
             self.values = [
                 begin_val + interval_val * i for i in random_generator.sample(range(grid_size), unique_count)
             ]
@@ -820,10 +820,9 @@ class ColumnGenerationSpec(SerializableToDict):
             effective_step = coalesce_values(effective_step, c_step, 1)
             effective_max = coalesce_values(effective_max, c_max)
 
-            # Check if both uniqueValues and random=True are specified
             if self.random and effective_max is not None:
                 # Draw `unique_count` distinct random values from the discrete grid defined by the range
-                grid_size = self._numericGridSize(effective_min, effective_max, effective_step)
+                grid_size = self._computeNumericGridSize(effective_min, effective_max, effective_step)
                 unique_count = min(c_unique, grid_size)
                 if c_unique > grid_size:
                     self.logger.warning(
@@ -834,8 +833,7 @@ class ColumnGenerationSpec(SerializableToDict):
                         grid_size,
                         grid_size,
                     )
-                if unique_count >= grid_size:
-                    # every grid value is required: ordinary random ranged generation already covers the full grid
+                if unique_count == grid_size:
                     if type(effective_min) is float or type(effective_step) is float:
                         full_max = round(effective_min + (grid_size - 1) * effective_step, 9)
                     else:
@@ -843,12 +841,8 @@ class ColumnGenerationSpec(SerializableToDict):
                     result = NRange(effective_min, full_max, effective_step)
                 else:
                     self._setupRandomUniqueNumericValues(unique_count, grid_size, effective_min, effective_step)
-                    # the column now selects from the unique values via a random index (0 to unique_count-1)
                     result = NRange(0, unique_count - 1, 1)
             else:
-                # Original behavior: create sequential range
-                # due to floating point errors in some Python floating point calculations, we need to apply rounding
-                # if any of the components are float
                 if type(effective_min) is float or type(effective_step) is float:
                     unique_max = round(c_unique * effective_step + effective_min - effective_step, 9)
                 else:
@@ -887,13 +881,11 @@ class ColumnGenerationSpec(SerializableToDict):
         effective_end = coalesce_values(effective_end, c_end)
         effective_begin = coalesce_values(effective_begin, c_begin)
 
-        # Check if both uniqueValues and random=True are specified for date/timestamp
         if c_unique is not None and self.random and effective_end is not None:
-            # Draw `unique_count` distinct random values from the discrete grid defined by the range
             begin_val, end_val, interval_val = self._normalizeDatetimeBounds(
                 effective_begin, effective_end, effective_interval, colType
             )
-            grid_size = self._datetimeGridSize(begin_val, end_val, interval_val)
+            grid_size = self._computeDatetimeGridSize(begin_val, end_val, interval_val)
             unique_count = min(c_unique, grid_size)
             if c_unique > grid_size:
                 self.logger.warning(
@@ -905,7 +897,6 @@ class ColumnGenerationSpec(SerializableToDict):
                     grid_size,
                 )
             if unique_count >= grid_size:
-                # every grid value is required: ordinary random ranged generation already covers the full range
                 if type(colType) is DateType:
                     result = DateRange.computeDateRange(
                         effective_begin, effective_end, effective_interval, unique_count
@@ -916,10 +907,8 @@ class ColumnGenerationSpec(SerializableToDict):
                     )
             else:
                 self._setupRandomUniqueDatetimeValues(unique_count, grid_size, begin_val, interval_val, colType)
-                # the column now selects from the unique values via a random index (0 to unique_count-1)
                 result = NRange(0, unique_count - 1, 1)
         else:
-            # Original behavior
             if type(colType) is DateType:
                 result = DateRange.computeDateRange(effective_begin, effective_end, effective_interval, c_unique)
             else:
