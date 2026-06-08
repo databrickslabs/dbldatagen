@@ -43,7 +43,7 @@ from .datagen_constants import (
 )
 
 from .daterange import DateRange
-from .distributions import Normal, DataDistribution
+from .distributions import DataDistribution
 from .nrange import NRange
 from .serialization import SerializableToDict
 from .text_generators import TemplateGenerator
@@ -533,7 +533,7 @@ class ColumnGenerationSpec(SerializableToDict):
     def setBaseColumnDatatypes(self, columnDatatypes):
         """Set the data types for the base columns
 
-        :param column_datatypes: = list of data types for the base columns
+        :param columnDatatypes: = list of data types for the base columns
 
         """
         assert type(columnDatatypes) is list, " `column_datatypes` parameter must be list"
@@ -642,20 +642,23 @@ class ColumnGenerationSpec(SerializableToDict):
     @staticmethod
     def _computeDatetimeGridSize(begin_val, end_val, interval_val):
         """Computes the number of discrete date/timestamp points in ``[begin, end]`` for the given interval
-        for ordinal-valued columns.
+        for ordinal-valued columns. Uses units of microseconds.
 
         :param begin_val: Begin value in the column range
         :param end_val: End value in the column range
         :interval_val: Step / interval value
         :return: Number of discrete values in the range
         """
-        interval_seconds = interval_val.total_seconds()
-        if interval_seconds == 0:
+        interval_micros = interval_val // timedelta(microseconds=1)
+        if interval_micros == 0:
             return 1
-        return int((end_val - begin_val).total_seconds() // interval_seconds) + 1
+        span_micros = (end_val - begin_val) // timedelta(microseconds=1)
+        return int(span_micros // interval_micros) + 1
 
-    def _computeScatterMapping(self, grid_size, random_generator):
-        """Chooses coefficients ``(a, b)`` for the bijective mapping ``g(k) = (a*k + b) mod grid_size``.
+    @staticmethod
+    def _computeScatterMapping(grid_size, random_generator):
+        """Chooses coefficients *(a, b)* for mapping randomly-chosen values onto a grid
+        using the function *g(k) = (a*k + b) mod grid_size*.
 
         :param grid_size: Number of discrete values in the grid
         :param random_generator: Random number generator
@@ -725,7 +728,10 @@ class ColumnGenerationSpec(SerializableToDict):
             ]
         else:
             a, b = self._computeScatterMapping(grid_size, random_generator)
-            interval_units = interval_val.days if type(column_type) is DateType else int(interval_val.total_seconds())
+            if type(column_type) is DateType:
+                interval_units = interval_val.days
+            else:
+                interval_units = interval_val // timedelta(microseconds=1)
             self._uniqueValueMapping = {
                 "kind": "date" if type(column_type) is DateType else "timestamp",
                 "a": a,
@@ -881,11 +887,24 @@ class ColumnGenerationSpec(SerializableToDict):
         effective_end = coalesce_values(effective_end, c_end)
         effective_begin = coalesce_values(effective_begin, c_begin)
 
+        if effective_begin is not None and effective_end is not None:
+            begin_val, end_val, interval_val = self._normalizeDatetimeBounds(
+                effective_begin, effective_end, effective_interval, colType
+            )
+            if begin_val == end_val:
+                self.values = [begin_val]
+                return NRange(0, 0, 1)
+            if type(colType) is DateType and timedelta(0) < interval_val < timedelta(days=1):
+                raise ValueError(f"Column [{self.name}]: date interval must be at least 1 day, got {interval_val}")
+
         if c_unique is not None and self.random and effective_end is not None:
             begin_val, end_val, interval_val = self._normalizeDatetimeBounds(
                 effective_begin, effective_end, effective_interval, colType
             )
             grid_size = self._computeDatetimeGridSize(begin_val, end_val, interval_val)
+            if grid_size <= 1:  # NOTE: Only true if begin_val + interval_val > end_val; begin_val is used
+                self.values = [begin_val]
+                return NRange(0, 0, 1)
             unique_count = min(c_unique, grid_size)
             if c_unique > grid_size:
                 self.logger.warning(
@@ -1357,8 +1376,8 @@ class ColumnGenerationSpec(SerializableToDict):
             offset_days = (grid_index * lit(mapping["interval"])).astype(IntegerType())
             return F.date_add(lit(mapping["begin"]).astype(DateType()), offset_days)
 
-        begin_seconds = F.unix_timestamp(lit(mapping["begin"]).astype(TimestampType()))
-        return F.timestamp_seconds(begin_seconds + grid_index * lit(mapping["interval"]))
+        begin_micros = F.unix_micros(lit(mapping["begin"]).astype(TimestampType()))
+        return F.timestamp_micros(begin_micros + grid_index * lit(mapping["interval"]))
 
     def _makeSingleGenerationExpression(self, index=None, use_pandas_optimizations=True):
         """generate column data for a single column value via Spark SQL expression
