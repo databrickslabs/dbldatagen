@@ -17,6 +17,7 @@ from dbldatagen.core.spec.schema import (
     ColumnSpec,
     ConstantColumn,
     DataType,
+    ExpressionColumn,
     RangeColumn,
     SequenceColumn,
     TableSpec,
@@ -107,3 +108,31 @@ def test_decimal_fit_check_skips_constant_string_value():
         scale=0,
     )
     assert spec.precision == 5
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"dtype": DataType.DECIMAL, "precision": 11, "scale": 2},
+        {"dtype": DataType.DECIMAL, "precision": 11},
+        {"scale": 2},
+        {"dtype": DataType.DOUBLE},
+        {"dtype": DataType.DATE},
+    ],
+)
+def test_declared_type_rejected_on_expression_column(kwargs):
+    """An ``ExpressionColumn``'s type is always inferred from its SQL
+    (the engine evaluates the expression as-is, no cast), so a declared
+    ``dtype`` / ``precision`` / ``scale`` would be a silent no-op.
+    ``validate_expression_column_type`` rejects all three -- the caller
+    must cast inside the expression instead.
+    """
+    with pytest.raises(ValueError, match="cannot be set on an ExpressionColumn"):
+        ColumnSpec(name="derived", gen=ExpressionColumn(expr="a * b"), **kwargs)
+
+
+def test_bare_expression_column_is_allowed():
+    """A bare ExpressionColumn (no declared type) is fine -- the
+    rejection only fires when dtype/precision/scale are actually set."""
+    spec = ColumnSpec(name="derived", gen=ExpressionColumn(expr="a * b"))
+    assert spec.dtype is None and spec.precision is None and spec.scale is None

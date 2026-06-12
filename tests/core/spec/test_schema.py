@@ -46,9 +46,11 @@ class TestDistributions:
         assert d.stddev == 2.5
 
     def test_normal_defaults(self):
+        # mean/stddev default to None, meaning "auto-center on the host
+        # range" (midpoint, span/6) -- they are not 0.0/1.0.
         d = Normal()
-        assert d.mean == 0.0
-        assert d.stddev == 1.0
+        assert d.mean is None
+        assert d.stddev is None
 
     def test_lognormal(self):
         d = LogNormal(mean=1.0, stddev=0.5)
@@ -183,7 +185,10 @@ class TestColumnStrategies:
             TimestampColumn()  # type: ignore[call-arg]
 
     def test_timestamp_column_with_distribution(self):
-        s = TimestampColumn(start="2023-01-01", end="2023-12-31", distribution=Normal(mean=0.5, stddev=0.1))
+        # Bare Normal() is allowed on TimestampColumn (auto-centers on the
+        # range); explicit mean/stddev are rejected -- see
+        # test_distribution_validators for that case.
+        s = TimestampColumn(start="2023-01-01", end="2023-12-31", distribution=Normal())
         assert isinstance(s.distribution, Normal)
 
     def test_constant_column(self):

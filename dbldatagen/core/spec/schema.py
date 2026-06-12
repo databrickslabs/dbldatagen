@@ -151,30 +151,46 @@ class Uniform(_StrictModel):
 
 
 class Normal(_StrictModel):
-    """Normal/Gaussian distribution.
+    """Normal/Gaussian distribution over the strategy's target range.
 
-    Samples are drawn from N(``mean``, ``stddev``) and then mapped onto
-    the strategy's target range.  ``stddev >= 0`` is enforced at
-    validation time.
+    ``mean`` and ``stddev`` are in the **value units** of the host
+    range -- for ``RangeColumn(min=0, max=100)`` a ``mean`` of ``40``
+    peaks the bell at ``40``.  Samples are drawn from ``N(mean, stddev)``
+    and clamped to the range bounds.
+
+    Both fields default to ``None``, meaning **auto-center**: the bell
+    is centered on the range midpoint with a spread of ``span / 6`` (so
+    ~99.7% of values land inside the range).  Pass either field to
+    override it; the other stays on its auto value.
+
+    ``mean`` / ``stddev`` are honored only on numeric ``RangeColumn``.
+    ``TimestampColumn`` (epoch seconds), ``ForeignKeyRef`` (parent-row
+    index), and ``ValuesColumn`` (list position) have no meaningful
+    float value space, so passing explicit ``mean`` / ``stddev`` on
+    those is rejected at plan time -- use a bare ``Normal()`` there
+    (which still auto-centers).
 
     Attributes:
         type: Discriminator literal; always ``"normal"``.
-        mean: Distribution mean.  Defaults to ``0.0``.
-        stddev: Standard deviation.  Must be non-negative; ``0.0`` is
-          accepted and produces a degenerate (constant) distribution.
-          Defaults to ``1.0``.
+        mean: Peak of the bell, in the range's value units.  ``None``
+          (default) auto-centers on the range midpoint.
+        stddev: Standard deviation, in the range's value units.  Must
+          be non-negative when set; ``0.0`` produces a degenerate
+          (constant) distribution.  ``None`` (default) uses ``span / 6``.
     """
 
     type: Literal["normal"] = "normal"
-    mean: float = 0.0
-    stddev: float = 1.0
+    mean: float | None = None
+    stddev: float | None = None
 
     @model_validator(mode="after")
     def validate_params(self) -> Normal:
-        _require_finite("mean", self.mean, "Normal")
-        _require_finite("stddev", self.stddev, "Normal")
-        if self.stddev < 0:
-            raise ValueError(f"stddev must be >= 0, got {self.stddev}")
+        if self.mean is not None:
+            _require_finite("mean", self.mean, "Normal")
+        if self.stddev is not None:
+            _require_finite("stddev", self.stddev, "Normal")
+            if self.stddev < 0:
+                raise ValueError(f"stddev must be >= 0, got {self.stddev}")
         return self
 
 
@@ -335,6 +351,30 @@ Distribution = Annotated[
 ]
 
 
+def _reject_parametrized_normal(distribution: Distribution, host: str) -> None:
+    """Reject a ``Normal`` carrying explicit ``mean`` / ``stddev`` on a host
+    that cannot honor value-space parameters.
+
+    ``Normal.mean`` / ``stddev`` are value-space and only meaningful on
+    numeric ``RangeColumn``.  ``TimestampColumn`` (epoch seconds),
+    ``ForeignKeyRef`` (parent-row index), and ``ValuesColumn`` (list
+    position) have no usable float value space, so explicit params there
+    would be silently misinterpreted.  Bare ``Normal()`` (auto-centered)
+    is always allowed.  Called from each non-numeric distribution host's
+    validator; keep the host list in sync with the strategies that route
+    ``Normal`` through ``apply_distribution`` rather than the value-space
+    path in ``numeric.py``.
+    """
+    if isinstance(distribution, Normal) and (distribution.mean is not None or distribution.stddev is not None):
+        raise ValueError(
+            f"{host} does not support Normal with explicit mean/stddev.  "
+            f"Normal's mean/stddev are value-space parameters honored only on "
+            f"numeric RangeColumn; on {host} Normal auto-centers on the range.  "
+            f"Use a bare Normal() here, or move the parametrized Normal to a "
+            f"numeric RangeColumn."
+        )
+
+
 class RangeColumn(_StrictModel):
     """Generate values from a numeric range.
 
@@ -438,6 +478,7 @@ class ValuesColumn(_StrictModel):
     def validate_values(self) -> ValuesColumn:
         if not self.values:
             raise ValueError("values list must not be empty")
+        _reject_parametrized_normal(self.distribution, "ValuesColumn")
         # Duplicates silently inflate the probability mass on the
         # repeated entry under Uniform (and create ambiguous keying
         # under WeightedValues since ``str(v)`` collides).  The user
@@ -745,6 +786,7 @@ class TimestampColumn(_StrictModel):
 
     @model_validator(mode="after")
     def validate_timestamps(self) -> TimestampColumn:
+        _reject_parametrized_normal(self.distribution, "TimestampColumn")
         parsed = {}
         for field_name in ("start", "end"):
             val = getattr(self, field_name)
@@ -1104,6 +1146,7 @@ class ForeignKeyRef(_StrictModel):
         # ``table.column`` format; the planner uses the same helper to
         # avoid drift between schema validation and downstream parsing.
         parse_fk_ref(self.ref)
+        _reject_parametrized_normal(self.distribution, "ForeignKeyRef")
         if not 0.0 <= self.null_fraction <= 1.0:
             raise ValueError(f"null_fraction must be in [0.0, 1.0], got {self.null_fraction}")
         if 0.0 < self.null_fraction < _MIN_NULL_FRACTION:
@@ -1219,6 +1262,41 @@ class ColumnSpec(_StrictModel):
                 f"metadata column.  Reserved names: "
                 f"{sorted(_RESERVED_INTERNAL_COLUMN_NAMES)}.  Rename to avoid "
                 f"silent shadowing."
+            )
+        return self
+
+    @model_validator(mode="after")
+    def validate_expression_column_type(self) -> ColumnSpec:
+        """An ``ExpressionColumn`` carries no declared type.
+
+        The engine passes the expression's SQL straight to ``F.expr()``
+        with no cast (``generator.py`` dispatch), so the column's type is
+        always *inferred* by Spark from the expression.  A declared
+        ``dtype`` / ``precision`` / ``scale`` on the ``ColumnSpec`` would
+        be silently ignored -- a type-declaration lie.  Reject all three
+        so the only way to control an expression's type is the honest one:
+        cast inside the SQL (``cast(<expr> as date)``,
+        ``cast(<expr> as decimal(11, 2))``).
+
+        Runs before ``validate_decimal_precision_scale`` and
+        ``validate_date_dtype_strategy`` so the ExpressionColumn case is
+        owned here with a single clear message rather than surfacing as a
+        decimal/date error.
+        """
+        if not isinstance(self.gen, ExpressionColumn):
+            return self
+        declared = [
+            field
+            for field, value in (("dtype", self.dtype), ("precision", self.precision), ("scale", self.scale))
+            if value is not None
+        ]
+        if declared:
+            raise ValueError(
+                f"Column '{self.name}': {', '.join(declared)} cannot be set on an "
+                f"ExpressionColumn -- its output type is always inferred from the "
+                f"SQL (the engine evaluates the expression as-is, with no cast).  "
+                f"Cast inside the expression instead, e.g. "
+                f"``cast({self.gen.expr} as <type>)``."
             )
         return self
 
@@ -1343,9 +1421,10 @@ class ColumnSpec(_StrictModel):
             # than falling through silently) so the next reader knows
             # this exemption is intentional.
             pass
-        # ExpressionColumn: raw SQL evaluated by Spark at run time --
-        # we have no static expression value to fit-check.  Any
-        # overflow surfaces as NUMERIC_VALUE_OUT_OF_RANGE at
+        # ExpressionColumn can't reach here: ``validate_expression_column_type``
+        # (runs earlier) rejects any declared dtype/precision/scale on an
+        # ExpressionColumn, so it never carries a DECIMAL fit-check.  Any
+        # overflow in user SQL surfaces as NUMERIC_VALUE_OUT_OF_RANGE at
         # materialisation; the user wrote the SQL and accepts that.
         # Other strategies (Faker/Pattern/UUID/Struct/Array/Timestamp)
         # don't produce numeric values that need a fit check here.
@@ -1362,11 +1441,14 @@ class ColumnSpec(_StrictModel):
         # warning -- produces integers or strings where the user asked
         # for a date.
         #
-        # ConstantColumn, ValuesColumn, ExpressionColumn, and
-        # ForeignKeyColumn can all legitimately carry dates (a
-        # user-typed date literal, a list of date values, a CAST in
-        # SQL, or inherited from a date-typed parent PK), so they're
-        # not flagged here.
+        # ConstantColumn, ValuesColumn, and ForeignKeyColumn can
+        # legitimately carry dates (a user-typed date literal, a list of
+        # date values, or a type inherited from a date-typed parent PK),
+        # so they're not flagged here.  ExpressionColumn never reaches
+        # this check with dtype=DATE: ``validate_expression_column_type``
+        # (runs earlier) rejects any declared dtype on an
+        # ExpressionColumn -- a date expression carries its own
+        # ``cast(... as date)`` in the SQL instead.
         #
         # FakerColumn is NOT allowed with ``dtype=DATE``: the Faker
         # pool pandas_udf hardcodes ``StringType`` and ``str(val)``

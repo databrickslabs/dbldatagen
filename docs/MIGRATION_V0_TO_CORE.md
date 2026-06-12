@@ -167,10 +167,9 @@ ColumnSpec(name="is_active", dtype=DataType.BOOLEAN, gen=ValuesColumn(values=[Tr
 # v0
 .withColumn("total", DoubleType(), expr="quantity * unit_price")
 
-# core
+# core -- an expression's type is inferred; cast in the SQL to pin it
 from dbldatagen.core.spec import dsl as datagendg
-from dbldatagen.core.spec.schema import DataType
-datagendg.expression("total", "quantity * unit_price", dtype=DataType.DOUBLE)
+datagendg.expression("total", "cast(quantity * unit_price as double)")
 ```
 
 #### Template / Pattern

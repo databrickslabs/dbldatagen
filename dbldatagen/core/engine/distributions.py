@@ -141,6 +141,43 @@ def normal_sample_expr(
     return z * F.lit(stddev) + F.lit(mean)
 
 
+def normal_value_expr(
+    cell_seed_col: Column,
+    lo: float,
+    hi: float,
+    mean: float | None = None,
+    stddev: float | None = None,
+) -> Column:
+    """Sample a value-space ``N(mean, stddev)`` clamped to ``[lo, hi]``.
+
+    ``mean`` / ``stddev`` are in the range's value units.  ``None``
+    auto-centers: ``mean`` -> midpoint ``(lo + hi) / 2``, ``stddev`` ->
+    ``(hi - lo) / 6`` (so ~99.7% of the unclamped bell lands inside the
+    range).  Box-Muller can return past 6 sigma, so the result is
+    clamped to the bounds.
+
+    This is the value-space Normal used by ``RangeColumn`` (both the
+    integer-lattice and float paths in ``numeric.py``).  The index-space
+    ``apply_distribution`` Normal branch handles only the auto-center
+    case for hosts (timestamps, FK, value lists) whose schema validators
+    reject explicit ``mean`` / ``stddev``.
+
+    Args:
+        cell_seed_col: Per-cell seed ``Column`` (long).
+        lo: Inclusive lower bound of the target range (value units).
+        hi: Inclusive upper bound of the target range (value units).
+        mean: Peak in value units, or ``None`` to center on the midpoint.
+        stddev: Spread in value units, or ``None`` for ``(hi - lo) / 6``.
+
+    Returns:
+        A Spark ``Column`` (double) holding values in ``[lo, hi]``.
+    """
+    effective_mean = mean if mean is not None else (lo + hi) / 2.0
+    effective_stddev = stddev if stddev is not None else (hi - lo) / 6.0
+    raw = normal_sample_expr(cell_seed_col, mean=effective_mean, stddev=effective_stddev)
+    return F.greatest(F.lit(lo), F.least(raw, F.lit(hi)))
+
+
 def zipf_sample_expr(cell_seed_col: Column, n: int, exponent: float = 1.5) -> Column:
     """Approximates Zipfian sampling via inverse power-law CDF.
 
@@ -284,6 +321,12 @@ def apply_distribution(
     if isinstance(distribution, Exponential):
         return exponential_sample_expr(cell_seed_col, n, distribution.rate)
     if isinstance(distribution, Normal):
+        # Index-space auto-center only: midpoint n/2, spread n/6.  A
+        # Normal carrying explicit value-space mean/stddev never reaches
+        # here -- RangeColumn handles it via ``normal_value_expr`` in
+        # numeric.py, and the other hosts (timestamps, FK, value lists)
+        # reject explicit mean/stddev at plan time
+        # (``_reject_parametrized_normal``).
         raw = normal_sample_expr(cell_seed_col, mean=n / 2.0, stddev=n / 6.0)
         idx = F.floor(raw).cast("long")
         return F.greatest(F.lit(0), F.least(idx, F.lit(n - 1)))

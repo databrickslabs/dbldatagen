@@ -258,7 +258,7 @@ class TestRangeColumnStep:
                 0,
                 100,
                 step=5,
-                distribution=Normal(mean=0.5, stddev=0.1),
+                distribution=Normal(mean=50, stddev=15),
             ).alias("v")
         )
         values = [r.v for r in df.collect()]
@@ -281,6 +281,41 @@ class TestRangeColumnStep:
         df = spark.range(500).select(build_range_column("id", col_seed, 0, 10, step=3).alias("v"))
         values = {r.v for r in df.collect()}
         assert values.issubset({0, 3, 6, 9}), f"non-lattice values: {values - {0, 3, 6, 9}}"
+
+
+class TestNormalValueSpace:
+    """``Normal`` honors value-space ``mean``/``stddev`` on numeric ranges;
+    a bare ``Normal()`` auto-centers on the range midpoint (byte-identical
+    to the historical always-centered behavior)."""
+
+    def test_integer_normal_honors_explicit_mean(self, spark):
+        col_seed = derive_column_seed(42, "t", "v")
+        df = spark.range(4000).select(
+            build_range_column("id", col_seed, 0, 1000, distribution=Normal(mean=200, stddev=50)).alias("v")
+        )
+        vals = [r.v for r in df.collect()]
+        emp_mean = sum(vals) / len(vals)
+        # Peak requested at 200 (well inside [0, 1000]); the empirical mean
+        # must land near it, NOT at the midpoint 500 (the old ignored behavior).
+        assert 170 <= emp_mean <= 230, f"empirical mean {emp_mean} not near requested 200"
+        assert all(0 <= v <= 1000 for v in vals), "values escaped the range"
+
+    def test_float_normal_honors_explicit_mean(self, spark):
+        col_seed = derive_column_seed(42, "t", "v")
+        df = spark.range(4000).select(
+            build_range_column("id", col_seed, 0.0, 1000.0, distribution=Normal(mean=800, stddev=40)).alias("v")
+        )
+        vals = [r.v for r in df.collect()]
+        emp_mean = sum(vals) / len(vals)
+        assert 770 <= emp_mean <= 830, f"empirical mean {emp_mean} not near requested 800"
+
+    def test_bare_normal_auto_centers_on_midpoint(self, spark):
+        col_seed = derive_column_seed(42, "t", "v")
+        df = spark.range(4000).select(build_range_column("id", col_seed, 0, 1000, distribution=Normal()).alias("v"))
+        vals = [r.v for r in df.collect()]
+        emp_mean = sum(vals) / len(vals)
+        # Auto-center => peak at the midpoint 500.
+        assert 460 <= emp_mean <= 540, f"auto-center empirical mean {emp_mean} not near midpoint 500"
 
 
 # ---------------------------------------------------------------------------

@@ -55,7 +55,6 @@ ACCEPTED_STRATEGIES = [
     ("TimestampColumn", lambda: TimestampColumn(start="2024-01-01", end="2024-12-31")),
     ("ConstantColumn", lambda: ConstantColumn(value="2024-01-15")),
     ("ValuesColumn", lambda: ValuesColumn(values=["2024-01-01", "2024-06-30"])),
-    ("ExpressionColumn", lambda: ExpressionColumn(expr="CAST('2024-01-15' AS DATE)")),
 ]
 
 
@@ -67,3 +66,17 @@ def test_date_dtype_accepts_date_carrying_strategies(descr, gen_factory):
     otherwise the parametrize will fail and remind the author."""
     spec = ColumnSpec(name=f"x_{descr}", dtype=DataType.DATE, gen=gen_factory())
     assert spec.dtype == DataType.DATE
+
+
+def test_date_dtype_rejected_on_expression_column():
+    """``ExpressionColumn`` carries no declared dtype -- a date
+    expression casts inside its SQL (``cast(... as date)``) rather than
+    setting ``dtype=DATE`` on the ``ColumnSpec``.  ``dtype=DATE`` on an
+    ExpressionColumn is rejected by ``validate_expression_column_type``
+    (before the DATE-compatibility validator runs)."""
+    with pytest.raises(ValueError, match="cannot be set on an ExpressionColumn"):
+        ColumnSpec(
+            name="d",
+            dtype=DataType.DATE,
+            gen=ExpressionColumn(expr="CAST('2024-01-15' AS DATE)"),
+        )

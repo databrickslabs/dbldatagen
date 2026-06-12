@@ -12,8 +12,12 @@ import pytest
 
 from dbldatagen.core.spec.schema import (
     Exponential,
+    ForeignKeyRef,
     LogNormal,
     Normal,
+    RangeColumn,
+    TimestampColumn,
+    ValuesColumn,
     WeightedValues,
     Zipf,
 )
@@ -97,3 +101,49 @@ def test_distributions_accept_normal_values():
     Zipf(exponent=1.5)
     Exponential(rate=1.0)
     WeightedValues(weights={"a": 1.0, "b": 2.0, "c": 0.0})
+
+
+# ---------------------------------------------------------------------------
+# Normal mean/stddev are value-space: honored on numeric RangeColumn,
+# rejected on hosts with no usable float value space (timestamps, FK,
+# value lists).  Bare ``Normal()`` (auto-center) is always allowed.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "host_factory, host_name",
+    [
+        (lambda dist: TimestampColumn(start="2023-01-01", end="2023-12-31", distribution=dist), "TimestampColumn"),
+        (lambda dist: ForeignKeyRef(ref="parent.id", distribution=dist), "ForeignKeyRef"),
+        (lambda dist: ValuesColumn(values=["a", "b", "c"], distribution=dist), "ValuesColumn"),
+    ],
+)
+@pytest.mark.parametrize(
+    "dist",
+    [Normal(mean=5.0), Normal(stddev=2.0), Normal(mean=5.0, stddev=2.0)],
+)
+def test_parametrized_normal_rejected_on_non_numeric_hosts(host_factory, host_name, dist):
+    with pytest.raises(ValueError, match="does not support Normal with explicit mean/stddev"):
+        host_factory(dist)
+
+
+@pytest.mark.parametrize(
+    "host_factory",
+    [
+        lambda: TimestampColumn(start="2023-01-01", end="2023-12-31", distribution=Normal()),
+        lambda: ForeignKeyRef(ref="parent.id", distribution=Normal()),
+        lambda: ValuesColumn(values=["a", "b", "c"], distribution=Normal()),
+    ],
+)
+def test_bare_normal_allowed_on_non_numeric_hosts(host_factory):
+    # Auto-centered Normal() carries no value-space params, so it is fine.
+    host_factory()
+
+
+@pytest.mark.parametrize(
+    "dist",
+    [Normal(), Normal(mean=40.0), Normal(stddev=12.0), Normal(mean=40.0, stddev=12.0)],
+)
+def test_numeric_range_accepts_normal_with_or_without_params(dist):
+    # RangeColumn honors value-space mean/stddev, so every form is accepted.
+    RangeColumn(min=0, max=100, distribution=dist)

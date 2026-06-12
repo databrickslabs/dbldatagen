@@ -378,22 +378,24 @@ def pattern(
 def expression(
     name: str,
     expr: str,
-    dtype: DataType | None = None,
 ) -> ColumnSpec:
     """Build a column spec computed from a Spark SQL expression.
+
+    The output type is always inferred by Spark from the expression --
+    there is no ``dtype`` parameter.  To control the type, cast inside
+    the expression, e.g. ``cast(quantity * unit_price as decimal(11, 2))``
+    or ``cast(ts_string as date)``.
 
     Args:
         name: Column name.
         expr: Spark SQL expression string referencing already-generated
             columns, e.g. ``"quantity * unit_price"``.
-        dtype: Optional explicit output type. When ``None`` the type
-            is inferred by Spark from the expression.
 
     Returns:
-        ``ColumnSpec`` with the given ``dtype`` (or inferred) and an
-        ``ExpressionColumn`` generator.
+        ``ColumnSpec`` with an ``ExpressionColumn`` generator; its type
+        is inferred from ``expr``.
     """
-    return ColumnSpec(name=name, dtype=dtype, gen=ExpressionColumn(expr=expr))
+    return ColumnSpec(name=name, gen=ExpressionColumn(expr=expr))
 
 
 def constant(
@@ -437,11 +439,15 @@ def struct(name: str, fields: list[ColumnSpec]) -> ColumnSpec:
         ``ColumnSpec`` with a ``StructColumn`` generator. The dtype is
         derived from the field list.
 
+    ``FakerColumn`` and foreign-key columns are not allowed as struct
+    fields (``StructColumn`` rejects them at plan time); use them as
+    top-level columns instead.
+
     Example::
 
         struct("address", [
-            faker("street", "street_address"),
-            faker("city", "city"),
+            pattern("street", "{digit:3} {alpha:6} St"),
+            text("city", ["Springfield", "Riverton", "Fairview"]),
             pattern("zip", "{digit:5}"),
         ])
     """

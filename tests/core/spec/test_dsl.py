@@ -287,13 +287,12 @@ class TestExpression:
         assert isinstance(col.gen, ExpressionColumn)
         assert col.gen.expr == "quantity * unit_price"
 
-    def test_dtype_default_none(self):
+    def test_type_is_always_inferred(self):
+        # expression() takes no dtype -- an ExpressionColumn's type is
+        # always inferred from the SQL; cast inside the expression to
+        # control it.
         col = datagendg.expression("total", "a + b")
         assert col.dtype is None
-
-    def test_custom_dtype(self):
-        col = datagendg.expression("total", "a + b", dtype=DataType.DOUBLE)
-        assert col.dtype == DataType.DOUBLE
 
 
 class TestConstant:

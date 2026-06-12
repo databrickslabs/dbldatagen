@@ -16,7 +16,7 @@ from pyspark.sql import types as T
 from dbldatagen.core.engine.distributions import (
     _CONTINUOUS_PRECISION,
     apply_distribution,
-    normal_sample_expr,
+    normal_value_expr,
 )
 from dbldatagen.core.engine.seed import cell_seed_expr
 from dbldatagen.core.spec._constants import (
@@ -41,11 +41,15 @@ def build_range_column(
 
     For integer ``dtype`` (or when ``min_val``, ``max_val``, and
     ``step`` are all integer and ``dtype`` is ``None``), the range is
-    discrete and sampled via ``apply_distribution``.  For float /
-    double / decimal types, the values are continuous; ``Normal`` is
-    sampled directly (centred, clipped to the range) while every
-    other distribution maps a uniform fraction onto
-    ``[min_val, max_val]``.
+    discrete; a ``Normal`` carrying explicit ``mean`` / ``stddev`` is
+    sampled in value space and snapped to the nearest lattice index,
+    while every other distribution (and a bare ``Normal()``) is sampled
+    via ``apply_distribution``.  For float / double / decimal types the
+    values are continuous; ``Normal`` is sampled directly via
+    ``normal_value_expr`` -- honoring explicit value-space ``mean`` /
+    ``stddev`` and auto-centering on the midpoint (spread ``span / 6``)
+    when they are unset -- while every other distribution maps a uniform
+    fraction onto ``[min_val, max_val]``.
 
     When ``step`` is set, output is snapped to the lattice
     ``{min_val, min_val + step, min_val + 2*step, ...}`` intersected
@@ -123,7 +127,16 @@ def _build_integer_range(
             f"schema validator should have rejected this."
         )
 
-    idx = apply_distribution(seed_col, n_lattice, distribution)
+    if isinstance(distribution, Normal) and (distribution.mean is not None or distribution.stddev is not None):
+        # Explicit value-space Normal: sample in value units, snap to the
+        # nearest lattice index, and clamp.  Auto/None Normal and every
+        # other distribution keep routing through ``apply_distribution``
+        # so their output is byte-identical to before.
+        value = normal_value_expr(seed_col, float(min_val), float(max_val), distribution.mean, distribution.stddev)
+        idx = F.round((value - F.lit(float(min_val))) / F.lit(float(s))).cast("long")
+        idx = F.greatest(F.lit(0), F.least(idx, F.lit(n_lattice - 1)))
+    else:
+        idx = apply_distribution(seed_col, n_lattice, distribution)
     result = idx * F.lit(s) + F.lit(min_val)
 
     spark_type = _resolve_spark_type(dtype, integer=True)
@@ -169,11 +182,10 @@ def _build_float_range(
         idx = F.pmod(seed_col, F.lit(n_lattice))
         result = idx.cast("double") * F.lit(float(step)) + F.lit(min_val)
     elif isinstance(distribution, Normal):
-        # Use the continuous normal directly, scaled to [min, max] (centred)
-        mid = (min_val + max_val) / 2.0
-        sd = span / 6.0  # ~99.7% within range
-        raw = normal_sample_expr(seed_col, mean=mid, stddev=sd)
-        clamped = F.greatest(F.lit(min_val), F.least(raw, F.lit(max_val)))
+        # Value-space Normal honoring explicit mean/stddev; None on either
+        # field auto-centers (midpoint, span/6) -- byte-identical to the
+        # prior always-centered behavior for a bare ``Normal()``.
+        clamped = normal_value_expr(seed_col, min_val, max_val, distribution.mean, distribution.stddev)
         if step is not None:
             # Snap continuous Normal to the lattice.  Round-to-nearest
             # preserves the bell-curve shape across the lattice points;
