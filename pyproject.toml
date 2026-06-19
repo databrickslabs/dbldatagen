@@ -50,7 +50,7 @@ lint = [
     "mypy~=1.9.0",
     "pylint~=3.3.1",
     "pylint-pytest==2.0.0a0",
-    "ruff~=0.13.0",
+    "ruff~=0.15.17",
     "types-PyYAML~=6.0.12",
     "types-requests~=2.31.0",
 ]
