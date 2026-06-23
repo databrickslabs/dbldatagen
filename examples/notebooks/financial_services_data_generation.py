@@ -1,9 +1,10 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # Financial Services Industry Demo — `dbldatagen`
+# MAGIC # Financial Services Data Generation with dbldatagen
 # MAGIC
 # MAGIC This notebook demonstrates how to use the **Databricks Labs Data Generator (`dbldatagen`)**
-# MAGIC to synthesize realistic Financial Services data at scale.
+# MAGIC to synthesize realistic Financial Services data at scale. All data is fully synthetic. No real
+# MAGIC PII, account numbers, or financial records are used.
 # MAGIC
 # MAGIC ### Covered Use Cases
 # MAGIC | # | Dataset | Rows | Description |
@@ -14,17 +15,6 @@
 # MAGIC | 4 | **Credit Card Applications** | 100 K | Underwriting data with FICO, DTI, income, approval flag |
 # MAGIC | 5 | **Trade Orders** | 1 M | Equities & fixed-income orders (order management system) |
 # MAGIC | 6 | **Fraud Labels** | derived | Rule-based fraud flags joined on the transaction table |
-# MAGIC
-# MAGIC ### What this demo highlights
-# MAGIC - **Weighted categorical values** for realistic distributions (`values` + `weights`)
-# MAGIC - **Statistical distributions** (`Normal`, `Exponential`) for scores, balances, and amounts
-# MAGIC - **SQL expressions** (`expr`) to derive columns from one another (dates, flags, approvals)
-# MAGIC - **Correlated columns** — e.g. a transaction's `channel` / `merchant_category` / `pos_entry_mode`
-# MAGIC   all follow from its `txn_type`
-# MAGIC - **Foreign keys** built from the row-count constants so child rows reference real parents
-# MAGIC
-# MAGIC > **Runtime**: Databricks 13.3 LTS or above (Unity Catalog supported).
-# MAGIC > **Note**: All data is fully synthetic. No real PII, account numbers, or financial records are used.
 
 # COMMAND ----------
 # MAGIC %pip install dbldatagen
@@ -38,7 +28,7 @@ spark.conf.set("spark.sql.shuffle.partitions", "auto")
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## 1 — Customer Profiles
+# MAGIC ## Customer Profiles
 # MAGIC
 # MAGIC Simulates a retail bank's customer master table.
 # MAGIC Fields include demographics, contact info, KYC tier, credit score bucket, and onboarding channel.
@@ -103,7 +93,7 @@ display(customers_df.limit(5))
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## 2 — Bank Accounts
+# MAGIC ## Bank Accounts
 # MAGIC
 # MAGIC Each customer can hold multiple accounts, linked via the `customer_id` foreign key.
 # MAGIC The key is built from `CUSTOMER_COUNT` (ids run `0 .. COUNT-1`), so every account points at a
@@ -148,7 +138,7 @@ display(accounts_df.limit(5))
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## 3 — Transactions
+# MAGIC ## Transactions
 # MAGIC
 # MAGIC Payments dataset covering card-present, card-not-present, ACH, wire, and ATM channels.
 # MAGIC Timestamps span the last 3 years; amounts follow a long-tailed (exponential) distribution.
@@ -228,7 +218,7 @@ display(transactions_df.limit(5))
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## 4 — Credit Card Applications
+# MAGIC ## Credit Card Applications
 # MAGIC
 # MAGIC Underwriting dataset used to train / evaluate credit risk models.
 # MAGIC Includes FICO score, debt-to-income ratio, employment tenure, requested credit limit, and approval outcome.
@@ -309,7 +299,7 @@ display(apps_df.limit(5))
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## 5 — Trade Orders (Capital Markets)
+# MAGIC ## Trade Orders (Capital Markets)
 # MAGIC
 # MAGIC Order management system (OMS) data for equities and fixed income.
 # MAGIC Includes order type, execution venue, fill status, and notional value.
@@ -375,7 +365,7 @@ display(orders_df.limit(5))
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## 6 — Fraud Labels (Derived via SQL)
+# MAGIC ## Fraud Labels (Derived via SQL)
 # MAGIC
 # MAGIC Apply heuristic fraud rules to the transactions table to create a labelled dataset
 # MAGIC suitable for training a binary classifier (e.g. a fraud detection model).
