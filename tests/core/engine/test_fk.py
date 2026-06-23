@@ -199,7 +199,7 @@ class TestFKNullable:
                 ),
             ],
         )
-        with pytest.raises(RuntimeError, match="no FKResolution"):
+        with pytest.raises(TypeError, match="no FKResolution"):
             generate_table(spark, orders)
 
     def test_fk_top_level_null_fraction_applied(self, spark):
@@ -330,6 +330,6 @@ class TestReconstructParentPkBackstop:
             pk_step=1,
             pk_template=None,
         )
-        with pytest.raises(RuntimeError, match="unknown pk_type='bogus'"):
+        with pytest.raises(ValueError, match="unknown pk_type='bogus'"):
             # parent_index_col can be anything; the raise fires before we use it
             _reconstruct_parent_pk(F.col("id"), meta)

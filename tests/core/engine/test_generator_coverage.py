@@ -41,10 +41,10 @@ class TestSeedFromWithFaker:
                 ),
             ],
         )
-        _df, id_col = create_range_df(spark, 50)
+        _df, id_column = create_range_df(spark, 50)
         _col_exprs, _udf_columns, seeded_columns = build_all_column_exprs(
             spec,
-            id_col,
+            id_column,
             None,
             seed=42,
             row_count=50,

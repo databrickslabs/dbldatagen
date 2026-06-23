@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from dbldatagen.core.engine.seed import NULL_PRECISION, derive_column_seed, null_mask_expr, to_signed64
+from dbldatagen.core.engine.seed import derive_column_seed, null_mask_expr, seed_xor, to_signed64
 
 
 LONG_MAX = 2**63 - 1
@@ -82,11 +82,51 @@ class TestDeriveColumnSeed:
         assert a != b
 
 
+class TestSeedXor:
+    """seed_xor derives a decorrelated sub-seed by XORing a column seed with a
+    constant, then clamping into signed-64 range."""
+
+    @pytest.mark.parametrize(
+        "column_seed, constant",
+        [
+            (0, 0),
+            (42, 0xDEADBEEF),
+            (-1, 0x9E3779B9),
+            (LONG_MAX, 0xDEADBEEF),
+            (LONG_MIN, 0xDEADBEEF),
+        ],
+    )
+    def test_matches_to_signed64_of_xor(self, column_seed, constant):
+        """seed_xor is defined as to_signed64(column_seed ^ constant)."""
+        assert seed_xor(column_seed, constant) == to_signed64(column_seed ^ constant)
+
+    def test_xor_with_zero_is_identity_clamp(self):
+        """XOR with 0 leaves the bits unchanged, returning to_signed64(column_seed)."""
+        for column_seed in [0, 1, -1, 42, LONG_MAX, LONG_MIN]:
+            assert seed_xor(column_seed, 0) == to_signed64(column_seed)
+
+    def test_result_always_in_signed64_range(self):
+        """The XOR of a signed-64 seed with a large constant can exceed signed-64;
+        seed_xor must clamp it back so F.lit accepts the result."""
+        for column_seed in [LONG_MIN, LONG_MAX, -1, 0, 7]:
+            for constant in [0, 0xDEADBEEF, 0x9E3779B9, 10**18, (2**32) * 0x9E3779B9]:
+                r = seed_xor(column_seed, constant)
+                assert LONG_MIN <= r <= LONG_MAX, f"seed_xor({column_seed}, {constant}) = {r} out of range"
+
+    def test_distinct_constants_decorrelate(self):
+        """A fixed seed XORed with distinct constants yields distinct sub-seeds."""
+        column_seed = derive_column_seed(42, "orders", "amount")
+        sub_seeds = {seed_xor(column_seed, c) for c in (0xDEADBEEF, 0x9E3779B9, 2 * 0x9E3779B9, 3 * 0x9E3779B9)}
+        assert len(sub_seeds) == 4
+
+    def test_determinism(self):
+        assert seed_xor(123, 0xDEADBEEF) == seed_xor(123, 0xDEADBEEF)
+
+
 class TestNullMaskBoundaries:
-    """``null_mask_expr`` has three short-circuit boundaries worth
-    pinning: ``f <= 0`` (no nulls), ``f >= 1`` (all nulls), and
-    ``f`` below ``1/NULL_PRECISION`` granularity where ``int(f*N)``
-    rounds to zero (raises to avoid silent zero-NULL output)."""
+    """``null_mask_expr`` has two short-circuit boundaries worth pinning:
+    ``f <= 0`` (no nulls) and ``f >= 1`` (all nulls).  In between, a row is
+    NULL when its uniform draw falls below ``f``."""
 
     def test_zero_returns_false_literal(self, spark):
         from pyspark.sql import functions as F
@@ -98,13 +138,9 @@ class TestNullMaskBoundaries:
     def test_one_returns_true_literal(self, spark):
         """``null_fraction >= 1`` short-circuits to ``F.lit(True)``.
 
-        The implementation's full ``pmod(hash, NULL_PRECISION) <
-        threshold`` path also happens to be True for all rows when
-        threshold == NULL_PRECISION, so a hash-path regression would
-        still pass a naive "all True" check.  Introspect the Column's
-        SQL representation to confirm the short-circuit actually
-        fired -- the hash path contains ``pmod`` / ``xxhash64`` in its
-        plan, a literal-True path doesn't.
+        Introspect the Column's SQL to confirm the short-circuit fired: the
+        full hash path contains ``pmod`` / ``xxhash64``, a literal-True path
+        doesn't.
         """
         from pyspark.sql import functions as F
 
@@ -118,23 +154,18 @@ class TestNullMaskBoundaries:
         assert "pmod" not in sql.lower(), f"expected short-circuit lit; got {sql}"
         assert "xxhash64" not in sql.lower(), f"expected short-circuit lit; got {sql}"
 
-    def test_below_granularity_raises(self):
-        """A user asking for 1e-6 NULLs with NULL_PRECISION=1e4 gets
-        ``int(1e-6 * 1e4) == 0`` and would silently emit zero NULLs.
-        Raise so the user sees why the rate didn't materialise."""
-        with pytest.raises(ValueError, match="below the engine's"):
-            null_mask_expr(42, "id", 1e-6)
+    def test_tiny_fraction_accepted(self, spark):
+        """A very small fraction is accepted without error and yields a valid
+        boolean mask -- the uniform comparison has no granularity floor."""
+        from pyspark.sql import functions as F
 
-    def test_just_above_granularity_accepted(self):
-        """``1/NULL_PRECISION`` is the smallest fraction that produces
-        ``threshold == 1`` (floor, not round).  Accept without raising."""
-        # float arithmetic: 1/10000 * 10000 = 1.0 exactly in IEEE 754.
-        null_mask_expr(42, "id", 1.0 / NULL_PRECISION)
+        mask = null_mask_expr(42, F.col("id"), 1e-6)
+        df = spark.range(100).select(mask.alias("m"))
+        assert all(isinstance(r.m, bool) for r in df.collect())
 
     def test_99999_fraction_produces_near_all_nulls(self, spark):
-        """At 0.99999 the threshold is 9999 / 10000: all but one pmod
-        bucket should return True.  Statistical check with enough rows
-        to make the boundary visible."""
+        """At 0.9999, nearly every row's uniform draw falls below the
+        fraction, so almost all rows are NULL.  Statistical check."""
         from pyspark.sql import functions as F
 
         mask = null_mask_expr(42, F.col("id"), 0.9999)

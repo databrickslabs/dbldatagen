@@ -1,4 +1,7 @@
-"""Sequential primary key generation (pure Spark SQL)."""
+"""Sequential primary key generation.
+
+Builds an integer key as `start + id * step` directly from each row's index.
+"""
 
 from __future__ import annotations
 
@@ -6,24 +9,19 @@ from pyspark.sql import Column
 from pyspark.sql import functions as F
 
 
-def build_sequential_pk(id_col: Column | str, start: int = 1, step: int = 1) -> Column:
-    """Builds a sequential PK column: ``start + id * step``.
+def build_sequential_pk(id_column: Column | str, start: int = 1, step: int = 1) -> Column:
+    """Builds a sequential primary key column.
 
-    Zero overhead -- a simple arithmetic expression on the row id,
-    cast to ``long``.  Used by ``SequenceColumn``; ``TableSpec``
-    validates that ``start + (rows - 1) * step`` does not overflow
-    int64 at plan time.
+    The value at row `i` is `start + i * step`, cast to long.
 
     Args:
-        id_col: Row-id ``Column`` reference or the name of the
-          column.
-        start: Sequence value at ``id == 0``.  Defaults to ``1``.
-        step: Increment per row.  May be negative.  Defaults to
-          ``1``.
+        id_column: Row-id column, given as a `Column` or column name.
+        start: Optional value at row 0 (default 1).
+        step: Optional increment per row; may be negative (default 1).
 
     Returns:
-        A Spark ``Column`` (long) holding ``start + id * step``.
+        A Spark long `Column` holding `start + id * step`.
     """
-    if isinstance(id_col, str):
-        id_col = F.col(id_col)
-    return (id_col * F.lit(step) + F.lit(start)).cast("long")
+    if isinstance(id_column, str):
+        id_column = F.col(id_column)
+    return (id_column * F.lit(step) + F.lit(start)).cast("long")

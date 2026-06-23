@@ -1,8 +1,8 @@
 # Getting started
 
-This walkthrough builds a small two-table dataset — `customers` and
-`orders`, joined by a foreign key — and generates it with Spark. It's
-the canonical example referenced throughout these docs.
+This walkthrough builds a small two-table dataset spec (`customers` 
+and `orders`) joined by a foreign key using dbldatagen's core modules.
+Data is then generated from the spec with Spark.
 
 ## Prerequisites
 
@@ -15,9 +15,9 @@ provided for you).
 
 ## 1. Describe the plan
 
-A plan is a `DataGenPlan` holding one or more `TableSpec`s. Each
-`TableSpec` lists its `ColumnSpec`s, and each column carries a
-generation strategy in its `gen` field.
+A plan is a `DataGenPlan` holding one or more `TableSpec` objects. 
+Each `TableSpec` lists `ColumnSpec` objects, and each column carries 
+a generation strategy in its `gen` field.
 
 ```python
 from dbldatagen.core import (
@@ -88,15 +88,16 @@ plan = DataGenPlan(
 )
 ```
 
-What this plan says:
+What this plan encodes:
 
 - **`customer_id`** is a monotonic integer sequence (`1, 2, 3, …`) and
-  the table's primary key — required because `orders` references it.
+  the table's primary key. This is required because the `orders` table 
+  references it.
 - **`name`** picks uniformly from four strings.
 - **`signup_date`** is a random timestamp in the given range.
 - **`orders.customer_id`** is a foreign key into
-  `customers.customer_id`. The `Zipf` distribution makes a few
-  customers place disproportionately many orders, like real data.
+  `customers.customer_id`. The `Zipf` distribution makes a few customers 
+  place disproportionately many orders, simulating skew.
 - **`amount`** is a continuous double in `[5.0, 500.0]`.
 - **`status`** is a weighted categorical — 60% `delivered`, etc.
 
@@ -106,9 +107,9 @@ What this plan says:
 dfs = generate(spark, plan)
 ```
 
-`generate` resolves the plan (ordering tables so parents build before
-children), then returns a `dict` mapping each table name to its
-`DataFrame`:
+`generate` resolves the plan. During resolution, tables are ordered 
+so that parents build before children). Tables are then built and
+returned in a `dict` that maps each table name to its `DataFrame`:
 
 ```python
 dfs["customers"].show(5)

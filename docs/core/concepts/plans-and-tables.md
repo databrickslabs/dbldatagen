@@ -1,6 +1,6 @@
 # Plans, tables, and columns
 
-Core has three nested building blocks. From the outside in:
+The core modules use nested building blocks. From the outside in:
 
 ```
 DataGenPlan          # the whole dataset
@@ -9,7 +9,7 @@ DataGenPlan          # the whole dataset
         └── gen      # the generation strategy (SequenceColumn, RangeColumn, …)
 ```
 
-## `DataGenPlan`
+## DataGenPlan
 
 The top-level object. Holds the list of tables and the global seed.
 
@@ -19,17 +19,18 @@ The top-level object. Holds the list of tables and the global seed.
 | `seed` | `int` | `42` | Global seed; propagated to tables. Omitting it emits a `UserWarning` — see [determinism-and-seeds.md](determinism-and-seeds.md). |
 | `default_locale` | `str` | `"en_US"` | Default Faker locale for `FakerColumn`s that don't set their own. |
 
-The plan validates relationships eagerly: duplicate table names are
-rejected, and foreign-key references are resolved (with cycle
-detection) when the plan is resolved for generation.
+The plan validates relationships eagerly. Duplicate table names are
+rejected, and foreign-key references are resolved (with cycle detection) 
+when the plan is resolved for generation.
 
 ```python
 plan = DataGenPlan(seed=42, tables=[customers, orders])
 ```
 
-## `TableSpec`
+## TableSpec
 
-One table to generate.
+Defines a single table to generate. One or more `TableSpec` instances
+can be added to a single `DataGenPlan`.
 
 | Field | Type | Default | Notes |
 | --- | --- | --- | --- |
@@ -48,10 +49,11 @@ TableSpec(
 )
 ```
 
-## `ColumnSpec`
+## ColumnSpec
 
-One column. The `gen` field carries the strategy that decides how
-values are produced; everything else is metadata around it.
+Defines a single column to generate. The `gen` field specifies the 
+strategy that determines how values are generated. Other fields
+capture metadata.
 
 | Field | Type | Default | Notes |
 | --- | --- | --- | --- |

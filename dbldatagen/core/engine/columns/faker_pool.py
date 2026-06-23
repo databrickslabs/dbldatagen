@@ -1,10 +1,8 @@
 """Pool-based Faker column generation for realistic text data.
 
-Strategy:
-1. Driver-side: Create Faker with deterministic seed, generate pool of values
-2. Executor-side: pandas_udf selects from pool via hash(column_seed, id) % pool_size
-
-For Spark Connect compatibility: pool is passed via closure (not sc.broadcast).
+Generates a fixed-size pool of Faker values on the driver, then selects from it
+per row on the executors. The pool travels via closure rather than a broadcast
+variable, for Spark Connect compatibility.
 """
 
 import numpy as np
@@ -18,46 +16,39 @@ from dbldatagen.core.spec.schema import ColumnSpec, FakerColumn
 
 
 def build_faker_column(
-    id_col: Column,
+    id_column: Column,
     column_seed: int,
     provider: str,
     kwargs: dict | None = None,
-    locale: str | None = None,
+    locale: str = "en_US",
     pool_size: int = 10_000,
 ) -> Column:
-    """Generates realistic text using a pre-computed Faker pool.
+    """Builds a string column of realistic Faker values.
 
-    Two-phase strategy chosen for Spark Connect compatibility (the
-    pool travels via closure, not ``sc.broadcast``):
-
-        1. Driver-side: create a ``Faker`` instance with a
-           deterministic seed, generate a fixed-size pool of values.
-        2. Executor-side: a ``pandas_udf`` selects from the pool via
-           ``hash(column_seed, id) % pool_size``.
+    Generates a fixed-size pool of values on the driver using a seeded `Faker`
+    instance, then selects a pool entry per row from the column seed and row id.
+    Output is reproducible for a given seed.
 
     Args:
-        id_col: Row-id ``Column``.
-        column_seed: Per-column seed.  Used both to seed the
-          driver-side Faker (so the pool is reproducible) and to
-          index into the pool at execution time.
-        provider: Faker provider method name (e.g. ``"first_name"``,
-          ``"company"``).
-        kwargs: Keyword arguments forwarded to the provider.  ``None``
-          (default) is treated as an empty mapping.
-        locale: Faker locale (e.g. ``"en_US"``).  ``None`` (default)
-          falls back to ``"en_US"``.
-        pool_size: Number of pre-computed values to draw at the
-          driver.  Larger pools reduce cross-row repetition at the
-          cost of driver memory.  Defaults to ``10_000``.
+        id_column: Row-id column.
+        column_seed: Per-column seed. Seeds the driver-side pool and selects
+            entries at execution time.
+        provider: Faker provider method name (e.g. "first_name", "company").
+        kwargs: Optional keyword arguments forwarded to the provider
+            (default None, treated as no arguments).
+        locale: Faker locale such as "de_DE" (default "en_US").
+        pool_size: Optional number of values to pre-generate (default 10000).
 
     Returns:
-        A Spark ``Column`` (string) holding the per-row Faker output.
+        A Spark string `Column` of per-row Faker values.
 
     Raises:
-        ImportError: ``faker`` is not installed; install with
-          ``pip install 'dbldatagen[core-faker]'``.
-        ValueError: ``provider`` is not a method on the ``Faker``
-          instance for the chosen locale.
+        ImportError: If the `faker` package is not installed.
+        ValueError: If `provider` is not a method on the Faker instance.
+
+    Note:
+        A column has at most `pool_size` distinct values regardless of row
+        count, so large tables will repeat values.
     """
     try:
         from faker import Faker
@@ -70,22 +61,22 @@ def build_faker_column(
     if kwargs is None:
         kwargs = {}
 
-    # Faker wants a non-negative 32-bit seed.  Mask to u64 BEFORE the
-    # right-shift -- Python ``>>`` on negative ints sign-extends and
-    # collapses half the signed-64 space onto the same mix value.
-    fake = Faker(locale or "en_US")
+    # Faker wants a non-negative 32-bit seed. Mask to u64 BEFORE the right-shift:
+    # Python ``>>`` on negative ints sign-extends and collapses half the signed-64
+    # space onto the same mix value.
+    faker_instance = Faker(locale)
     seed_u64 = column_seed & 0xFFFFFFFFFFFFFFFF
-    seed32 = (seed_u64 ^ (seed_u64 >> 32)) & 0x7FFFFFFF
-    fake.seed_instance(seed32)
+    seed_32bit = (seed_u64 ^ (seed_u64 >> 32)) & 0x7FFFFFFF
+    faker_instance.seed_instance(seed_32bit)
 
-    faker_method = getattr(fake, provider, None)
+    faker_method = getattr(faker_instance, provider, None)
     if faker_method is None:
         raise ValueError(f"Unknown Faker provider method: '{provider}'")
 
     pool: list[str] = []
     for _ in range(pool_size):
-        val = faker_method(**kwargs)
-        pool.append(str(val) if val is not None else "")
+        value = faker_method(**kwargs)
+        pool.append(str(value) if value is not None else "")
 
     # Capture pool as numpy array in closure for vectorized indexing
     pool_array = np.array(pool, dtype=object)
@@ -96,43 +87,49 @@ def build_faker_column(
     def _faker_pool_udf(id_series: pd.Series) -> pd.Series:
         ids = id_series.values.astype(np.int64)
         # ``np.mod`` (not ``np.abs() % N``): np.abs silently wraps on
-        # Long.MIN_VALUE.  ``errstate(over="ignore")`` silences the LCG
-        # overflow warning -- overflow is the mixing mechanism here.
+        # Long.MIN_VALUE. ``errstate(over="ignore")`` silences the LCG overflow
+        # warning -- overflow is the mixing mechanism here.
         with np.errstate(over="ignore"):
-            x = ids ^ np.int64(_column_seed)
-            x = x * np.int64(6364136223846793005) + np.int64(1442695040888963407)
-        indices = np.mod(x, _pool_size)
+            mixed = ids ^ np.int64(_column_seed)
+            mixed = mixed * np.int64(6364136223846793005) + np.int64(1442695040888963407)
+        indices = np.mod(mixed, _pool_size)
         return pd.Series(pool_array[indices.astype(np.intp)])
 
-    return _faker_pool_udf(id_col)  # type: ignore[no-any-return]
+    return _faker_pool_udf(id_column)  # type: ignore[no-any-return]
 
 
 def build_faker_expr(
     col_spec: ColumnSpec,
-    id_col: Column,
+    id_column: Column,
     column_seed: int,
 ) -> tuple[str, Column]:
-    """Dispatch-layer entry point for Faker columns.
+    """Builds a Faker column expression for the column-building loop.
 
-    Validates the ColumnSpec's ``gen`` is a ``FakerColumn`` (the
-    upstream loop's invariant), builds the Faker pool UDF expression
-    via ``build_faker_column``, and wraps with the null mask if
-    ``null_fraction > 0``.
+    Constructs the Faker pool expression via `build_faker_column` and wraps it
+    with the null mask when the null fraction is positive.
 
-    Lives next to ``build_faker_column`` so the Faker-specific
-    pre-flight check and the actual UDF construction share a module.
+    Args:
+        col_spec: The column's spec; its `gen` must be a `FakerColumn`.
+        id_column: Row-id column.
+        column_seed: Per-column seed.
+
+    Returns:
+        A tuple `(column_name, expr)` for the Faker column.
+
+    Raises:
+        TypeError: If `col_spec.gen` is not a `FakerColumn`.
     """
     if not isinstance(col_spec.gen, FakerColumn):
-        raise RuntimeError(
+        raise TypeError(
             f"build_faker_expr called for '{col_spec.name}' with non-FakerColumn gen "
             f"{type(col_spec.gen).__name__}; dispatcher invariant bypassed"
         )
     faker_expr = build_faker_column(
-        id_col,
+        id_column,
         column_seed,
         provider=col_spec.gen.provider,
         kwargs=col_spec.gen.kwargs or None,
-        locale=col_spec.gen.locale,
+        locale=col_spec.gen.locale or "en_US",
     )
-    faker_expr = apply_null_fraction(faker_expr, column_seed, id_col, col_spec.null_fraction)
+    faker_expr = apply_null_fraction(faker_expr, column_seed, id_column, col_spec.null_fraction)
     return (col_spec.name, faker_expr)

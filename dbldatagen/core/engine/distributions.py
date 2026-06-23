@@ -31,34 +31,29 @@ _CONTINUOUS_PRECISION = 2**53
 
 
 def _uniform_fraction(seed_col: Column) -> Column:
-    """Map a long-typed seed column to a uniform double in ``[0.0, 1.0)``.
+    """Maps a long-typed seed column to a uniform double in `[0.0, 1.0)`.
 
-    The repeated ``pmod(seed, P) / P`` algebra appeared at four call
-    sites in this module (Box-Muller's two uniform draws, Zipf's
-    inverse CDF, exponential's inverse CDF); centralising it removes
-    drift risk if ``_CONTINUOUS_PRECISION`` ever changes.
+    Args:
+        seed_col: A long-typed seed or hash column.
+
+    Returns:
+        A Spark double `Column` uniformly distributed in `[0.0, 1.0)`.
     """
     return F.pmod(seed_col, F.lit(_CONTINUOUS_PRECISION)).cast("double") / F.lit(float(_CONTINUOUS_PRECISION))
 
 
 def uniform_sample(cell_seed_col: Column, n: int) -> Column:
-    """Maps a seed column to a uniform index in ``[0, n)``.
-
-    Uses ``F.pmod`` (not ``F.abs(x) % n``) to avoid the
-    ``abs(Long.MIN_VALUE)`` overflow trap under Spark ANSI mode.
+    """Maps a seed column to a uniform index in `[0, n)`.
 
     Args:
-        cell_seed_col: Per-cell seed ``Column`` (long).
-        n: Exclusive upper bound on the output index.  Must be
-          strictly positive; ``n == 1`` short-circuits to a constant
-          ``0``.
+        cell_seed_col: Per-cell seed `Column` (long).
+        n: Exclusive upper bound on the index; must be positive.
 
     Returns:
-        A Spark ``Column`` (long) holding uniform indices in
-        ``[0, n)``.
+        A Spark long `Column` of uniform indices in `[0, n)`.
 
     Raises:
-        ValueError: ``n <= 0``.
+        ValueError: If `n <= 0`.
     """
     if n <= 0:
         raise ValueError("n must be positive")
@@ -72,39 +67,36 @@ def weighted_sample_expr(
     values: list,
     weights: dict[str, float],
 ) -> Column:
-    """Builds a CASE/WHEN chain that selects from *values* using cumulative weights.
+    """Selects from `values` using cumulative weights.
 
-    Falls back to ``_array_index`` (uniform) if all weights are zero,
-    rather than emitting an all-NULL column.
+    Falls back to uniform selection when all weights are zero.
 
     Args:
-        cell_seed_col: Per-cell seed ``Column`` (long).
-        values: The list of allowed values (``ValuesColumn.values``).
-        weights: Mapping of value (rendered as ``str``) to relative
-          weight.  Values absent from this mapping receive weight
-          ``0`` and are never selected.
+        cell_seed_col: Per-cell seed `Column` (long).
+        values: The list of allowed values.
+        weights: Mapping of value (rendered as `str`) to relative weight. Values
+            absent from the mapping get weight 0 and are never selected.
 
     Returns:
-        A Spark ``Column`` whose runtime type matches ``values``'
-        element type.
+        A Spark `Column` whose element type matches `values`.
     """
-    # Normalise weights so they sum to 1.0
-    total = sum(weights.values())
-    if total <= 0:
-        # Fall back to uniform
+    total_weight = sum(weights.values())
+    if total_weight <= 0:
         return _array_index(cell_seed_col, values)
 
-    cum = 0.0
+    cumulative = 0.0
     thresholds: list[tuple[float, object]] = []
-    for v in values:
-        w = weights.get(str(v), 0.0) / total
-        cum += w
-        thresholds.append((cum, v))
+    for value in values:
+        normalized_weight = weights.get(str(value), 0.0) / total_weight
+        cumulative += normalized_weight
+        thresholds.append((cumulative, value))
 
-    frac = F.pmod(cell_seed_col, F.lit(_UNIFORM_PRECISION)).cast("double") / F.lit(float(_UNIFORM_PRECISION))
+    fraction = F.pmod(cell_seed_col, F.lit(_UNIFORM_PRECISION)).cast("double") / F.lit(float(_UNIFORM_PRECISION))
 
     return functools.reduce(
-        lambda acc, threshold: F.when(frac < F.lit(threshold[0]), F.lit(threshold[1])).otherwise(acc),
+        lambda accumulated, threshold: F.when(fraction < F.lit(threshold[0]), F.lit(threshold[1])).otherwise(
+            accumulated
+        ),
         reversed(thresholds[:-1]),
         F.lit(thresholds[-1][1]),
     )
@@ -115,90 +107,71 @@ def normal_sample_expr(
     mean: float = 0.0,
     stddev: float = 1.0,
 ) -> Column:
-    """Samples ``N(mean, stddev)`` via the Box-Muller transform.
-
-    ``Z = sqrt(-2 ln U1) * cos(2 pi U2)`` where ``U1, U2`` are two
-    independent uniform draws in ``(0, 1]``.  ``U1`` is clamped away
-    from ``0`` so ``log`` stays finite.  Callers that need a bounded
-    output (``RangeColumn``, ``LogNormal``) must clamp after the call
-    — Box-Muller can return past 6 sigma.
+    """Samples `N(mean, stddev)` using a Box-Muller transform.
 
     Args:
-        cell_seed_col: Per-cell seed ``Column`` (long).
-        mean: Distribution mean.  Defaults to ``0.0``.
-        stddev: Standard deviation.  Defaults to ``1.0``.
+        cell_seed_col: Per-cell seed `Column` (long).
+        mean: Optional distribution mean (default 0.0).
+        stddev: Optional standard deviation (default 1.0).
 
     Returns:
-        A Spark ``Column`` (double) holding ``N(mean, stddev)``
-        samples.
+        A Spark double `Column` of `N(mean, stddev)` samples.
+
+    Note:
+        Output is unbounded. Callers that need a bounded result must clamp it.
     """
-    h1 = F.xxhash64(cell_seed_col, F.lit(0).cast("long"))
-    h2 = F.xxhash64(cell_seed_col, F.lit(1).cast("long"))
-    eps = 1.0 / _CONTINUOUS_PRECISION
-    u1 = F.greatest(_uniform_fraction(h1), F.lit(eps))
-    u2 = _uniform_fraction(h2)
-    z = F.sqrt(F.lit(-2.0) * F.log(u1)) * F.cos(F.lit(2.0 * math.pi) * u2)
-    return z * F.lit(stddev) + F.lit(mean)
+    hash1 = F.xxhash64(cell_seed_col, F.lit(0).cast("long"))
+    hash2 = F.xxhash64(cell_seed_col, F.lit(1).cast("long"))
+    epsilon = 1.0 / _CONTINUOUS_PRECISION
+    uniform1 = F.greatest(_uniform_fraction(hash1), F.lit(epsilon))
+    uniform2 = _uniform_fraction(hash2)
+    standard_normal = F.sqrt(F.lit(-2.0) * F.log(uniform1)) * F.cos(F.lit(2.0 * math.pi) * uniform2)
+    return standard_normal * F.lit(stddev) + F.lit(mean)
 
 
 def normal_value_expr(
     cell_seed_col: Column,
-    lo: float,
-    hi: float,
+    min_val: float,
+    max_val: float,
     mean: float | None = None,
     stddev: float | None = None,
 ) -> Column:
-    """Sample a value-space ``N(mean, stddev)`` clamped to ``[lo, hi]``.
+    """Samples a normal distribution clamped to a specified value range.
 
-    ``mean`` / ``stddev`` are in the range's value units.  ``None``
-    auto-centers: ``mean`` -> midpoint ``(lo + hi) / 2``, ``stddev`` ->
-    ``(hi - lo) / 6`` (so ~99.7% of the unclamped bell lands inside the
-    range).  Box-Muller can return past 6 sigma, so the result is
-    clamped to the bounds.
-
-    This is the value-space Normal used by ``RangeColumn`` (both the
-    integer-lattice and float paths in ``numeric.py``).  The index-space
-    ``apply_distribution`` Normal branch handles only the auto-center
-    case for hosts (timestamps, FK, value lists) whose schema validators
-    reject explicit ``mean`` / ``stddev``.
+    `mean` and `stddev` are in the range's value units. When unset, the bell is
+    auto-centered: `mean` becomes the midpoint `(min_val + max_val) / 2` and
+    `stddev` becomes `(max_val - min_val) / 6`.
 
     Args:
-        cell_seed_col: Per-cell seed ``Column`` (long).
-        lo: Inclusive lower bound of the target range (value units).
-        hi: Inclusive upper bound of the target range (value units).
-        mean: Peak in value units, or ``None`` to center on the midpoint.
-        stddev: Spread in value units, or ``None`` for ``(hi - lo) / 6``.
+        cell_seed_col: Per-cell seed `Column` (long).
+        min_val: Inclusive lower bound, in value units.
+        max_val: Inclusive upper bound, in value units.
+        mean: Optional peak in value units (default None, meaning the midpoint).
+        stddev: Optional spread in value units (default None, meaning
+            (max_val - min_val) / 6).
 
     Returns:
-        A Spark ``Column`` (double) holding values in ``[lo, hi]``.
+        A Spark double `Column` of values in `[min_val, max_val]`.
     """
-    effective_mean = mean if mean is not None else (lo + hi) / 2.0
-    effective_stddev = stddev if stddev is not None else (hi - lo) / 6.0
+    effective_mean = mean if mean is not None else (min_val + max_val) / 2.0
+    effective_stddev = stddev if stddev is not None else (max_val - min_val) / 6.0
     raw = normal_sample_expr(cell_seed_col, mean=effective_mean, stddev=effective_stddev)
-    return F.greatest(F.lit(lo), F.least(raw, F.lit(hi)))
+    return F.greatest(F.lit(min_val), F.least(raw, F.lit(max_val)))
 
 
 def zipf_sample_expr(cell_seed_col: Column, n: int, exponent: float = 1.5) -> Column:
-    """Approximates Zipfian sampling via inverse power-law CDF.
-
-    ``index = floor(N * (1-u)^(1/(exponent-1)))``, clamped to
-    ``[0, N-1]``.  The schema-level ``Zipf.validate_params`` enforces
-    ``exponent > 1`` at plan time; this function also raises as a
-    defensive backstop against validator bypass.
+    """Samples a Zipf-like distribution over `[0, n)` using an inverse power-law CDF.
 
     Args:
-        cell_seed_col: Per-cell seed ``Column`` (long).
-        n: Exclusive upper bound on the output index.  ``n <= 1``
-          short-circuits to a constant ``0``.
-        exponent: Power-law exponent.  Must be strictly greater than
-          ``1.0``.  Defaults to ``1.5``.
+        cell_seed_col: Per-cell seed `Column` (long).
+        n: Exclusive upper bound on the index; `n <= 1` returns 0.
+        exponent: Optional power-law exponent; must be > 1.0 (default 1.5).
 
     Returns:
-        A Spark ``Column`` (long) holding Zipf-distributed indices in
-        ``[0, n)``.
+        A Spark long `Column` of indices in `[0, n)`.
 
     Raises:
-        ValueError: ``exponent <= 1.0``.
+        ValueError: If `exponent <= 1.0`.
     """
     if n <= 1:
         return F.lit(0)
@@ -206,11 +179,11 @@ def zipf_sample_expr(cell_seed_col: Column, n: int, exponent: float = 1.5) -> Co
         # Defensive: Zipf.validate_params enforces exponent > 1, but raise
         # (not assert) so a validator bypass also fails under python -O.
         raise ValueError(f"zipf_sample_expr requires exponent > 1, got {exponent}")
-    u = F.greatest(_uniform_fraction(cell_seed_col), F.lit(1e-9))
-    power = 1.0 / (exponent - 1.0)
-    inv = F.lit(float(n)) * F.pow(F.lit(1.0) - u, F.lit(power))
-    idx = F.floor(inv).cast("long")
-    return F.greatest(F.lit(0), F.least(idx, F.lit(n - 1)))
+    uniform = F.greatest(_uniform_fraction(cell_seed_col), F.lit(1e-9))
+    inverse_exponent = 1.0 / (exponent - 1.0)
+    scaled_index = F.lit(float(n)) * F.pow(F.lit(1.0) - uniform, F.lit(inverse_exponent))
+    index = F.floor(scaled_index).cast("long")
+    return F.greatest(F.lit(0), F.least(index, F.lit(n - 1)))
 
 
 def exponential_sample_expr(
@@ -218,29 +191,22 @@ def exponential_sample_expr(
     n: int,
     rate: float = 1.0,
 ) -> Column:
-    """Maps a seed to ``[0, n)`` with exponential distribution.
-
-    Inverse CDF ``x = -ln(1 - u) / rate``, scaled to ``[0, n)``.
-    Clips the right tail (modulo would wrap tail draws back into
-    early bins and break the monotonically-decreasing shape).
+    """Samples an exponential distribution over `[0, n)` using an inverse CDF.
 
     Args:
-        cell_seed_col: Per-cell seed ``Column`` (long).
-        n: Exclusive upper bound on the output index.  ``n <= 1``
-          short-circuits to a constant ``0``.
-        rate: Rate parameter (``lambda``); must be positive.
-          Defaults to ``1.0``.
+        cell_seed_col: Per-cell seed `Column` (long).
+        n: Exclusive upper bound on the index; `n <= 1` returns 0.
+        rate: Optional rate parameter (lambda); must be positive (default 1.0).
 
     Returns:
-        A Spark ``Column`` (long) holding exponentially-distributed
-        indices in ``[0, n)``.
+        A Spark long `Column` of indices in `[0, n)`.
     """
     if n <= 1:
         return F.lit(0)
-    u = F.least(_uniform_fraction(cell_seed_col), F.lit(0.999999))  # avoid log(0)
-    x = -F.log(F.lit(1.0) - u) / F.lit(rate)
-    idx = F.floor(x * F.lit(float(n) / 5.0)).cast("long")
-    return F.greatest(F.lit(0), F.least(idx, F.lit(n - 1)))
+    uniform = F.least(_uniform_fraction(cell_seed_col), F.lit(0.999999))  # avoid log(0)
+    sample = F.lit(-1.0) * F.log(F.lit(1.0) - uniform) / F.lit(rate)
+    index = F.floor(sample * F.lit(float(n) / 5.0)).cast("long")
+    return F.greatest(F.lit(0), F.least(index, F.lit(n - 1)))
 
 
 def lognormal_sample_expr(
@@ -249,37 +215,28 @@ def lognormal_sample_expr(
     mean: float = 0.0,
     stddev: float = 1.0,
 ) -> Column:
-    """Maps a seed to ``[0, n)`` with log-normal distribution.
-
-    Sample ``Z ~ N(mean, stddev)``, then
-    ``floor(exp(Z) * scale)`` clamped to ``[0, n-1]``.  ``scale``
-    places the median ``exp(mean)`` at ~10% of ``n`` so the heavy
-    right tail fits with minimal clipping.
+    """Samples a log-normal distribution over `[0, n)`.
 
     Args:
-        cell_seed_col: Per-cell seed ``Column`` (long).
-        n: Exclusive upper bound on the output index.  ``n <= 1``
-          short-circuits to a constant ``0``.
-        mean: Mean of the underlying normal distribution.  Defaults
-          to ``0.0``.  ``LogNormal.validate_params`` enforces
-          ``|mean| <= 100`` at plan time.
-        stddev: Standard deviation of the underlying normal
-          distribution.  Defaults to ``1.0``.
+        cell_seed_col: Per-cell seed `Column` (long).
+        n: Exclusive upper bound on the index; `n <= 1` returns 0.
+        mean: Optional mean of the underlying normal (default 0.0).
+        stddev: Optional standard deviation of the underlying normal
+            (default 1.0).
 
     Returns:
-        A Spark ``Column`` (long) holding log-normal-distributed
-        indices in ``[0, n)``.
+        A Spark long `Column` of indices in `[0, n)`.
     """
     if n <= 1:
         return F.lit(0)
-    z = normal_sample_expr(cell_seed_col, mean=mean, stddev=stddev)
-    x = F.exp(z)
+    standard_normal = normal_sample_expr(cell_seed_col, mean=mean, stddev=stddev)
+    sample = F.exp(standard_normal)
     median = math.exp(mean)
     scale = float(n) / (median * 10.0)
     # Clamp as double before the long cast: extreme mean+stddev pushes
-    # x*scale past 2**63 and trips ARITHMETIC_OVERFLOW under Spark ANSI.
-    x_scaled = F.floor(x * F.lit(scale))
-    clamped = F.least(F.lit(float(n - 1)), F.greatest(F.lit(0.0), x_scaled))
+    # sample*scale past 2**63 and trips ARITHMETIC_OVERFLOW under Spark ANSI.
+    scaled_index = F.floor(sample * F.lit(scale))
+    clamped = F.least(F.lit(float(n - 1)), F.greatest(F.lit(0.0), scaled_index))
     return clamped.cast("long")
 
 
@@ -288,31 +245,20 @@ def apply_distribution(
     n: int,
     distribution: Distribution | None,
 ) -> Column:
-    """Routes to the appropriate sampling function for a ``Distribution``.
-
-    The single dispatch point for every ``RangeColumn`` / FK / range
-    sampling site.  ``WeightedValues`` is rejected here because it
-    needs the discrete value list (dispatched directly via
-    ``weighted_sample_expr``); the schema validators on the strategies
-    that don't support ``WeightedValues`` catch this at plan time, so
-    this raise is the engine-level backstop.
+    """Routes a `Distribution` to its sampling function.
 
     Args:
-        cell_seed_col: Per-cell seed ``Column`` (long).
+        cell_seed_col: Per-cell seed `Column` (long).
         n: Exclusive upper bound on the output index.
-        distribution: The ``Distribution`` instance to sample under.
-          ``None`` falls back to ``Uniform``.
+        distribution: The distribution to sample under (None means uniform).
 
     Returns:
-        A Spark ``Column`` (long) holding sampled indices in
-        ``[0, n)``.
+        A Spark long `Column` of indices in `[0, n)`.
 
     Raises:
-        ValueError: ``distribution`` is ``WeightedValues`` (which is
-          handled out-of-band by ``weighted_sample_expr``).
-        TypeError: ``distribution`` is a ``Distribution`` subclass
-          that this dispatcher does not handle (forgot an
-          ``isinstance`` branch when adding a new subclass).
+        ValueError: If `distribution` is `WeightedValues` (handled out-of-band
+            by `weighted_sample_expr`).
+        TypeError: If `distribution` is an unhandled `Distribution` subclass.
     """
     if distribution is None or isinstance(distribution, Uniform):
         return uniform_sample(cell_seed_col, n)
@@ -321,22 +267,18 @@ def apply_distribution(
     if isinstance(distribution, Exponential):
         return exponential_sample_expr(cell_seed_col, n, distribution.rate)
     if isinstance(distribution, Normal):
-        # Index-space auto-center only: midpoint n/2, spread n/6.  A
-        # Normal carrying explicit value-space mean/stddev never reaches
-        # here -- RangeColumn handles it via ``normal_value_expr`` in
-        # numeric.py, and the other hosts (timestamps, FK, value lists)
-        # reject explicit mean/stddev at plan time
-        # (``_reject_parametrized_normal``).
-        raw = normal_sample_expr(cell_seed_col, mean=n / 2.0, stddev=n / 6.0)
-        idx = F.floor(raw).cast("long")
-        return F.greatest(F.lit(0), F.least(idx, F.lit(n - 1)))
+        # Index-space auto-center only (midpoint n/2, spread n/6). A Normal
+        # carrying explicit value-space mean/stddev never reaches here: RangeColumn
+        # routes it to normal_value_expr, and other hosts reject it at plan time.
+        raw_sample = normal_sample_expr(cell_seed_col, mean=n / 2.0, stddev=n / 6.0)
+        index = F.floor(raw_sample).cast("long")
+        return F.greatest(F.lit(0), F.least(index, F.lit(n - 1)))
     if isinstance(distribution, LogNormal):
         return lognormal_sample_expr(cell_seed_col, n, distribution.mean, distribution.stddev)
     if isinstance(distribution, WeightedValues):
-        # WeightedValues needs the discrete value list and is dispatched
-        # at the column level via weighted_sample_expr.  Schema validators
-        # on RangeColumn/TimestampColumn/ForeignKeyRef reject this at plan
-        # time; this raise is the engine-level backstop.
+        # WeightedValues needs the discrete value list and is dispatched at the
+        # column level via weighted_sample_expr; this raise is the engine-level
+        # backstop for a plan that bypassed schema validation.
         raise ValueError(
             "WeightedValues distribution reached apply_distribution; only "
             "ValuesColumn dispatches WeightedValues correctly (via "
@@ -350,7 +292,15 @@ def apply_distribution(
 
 
 def _array_index(cell_seed_col: Column, values: list) -> Column:
-    """Pick from a Python list using cell seed as index."""
-    arr = F.array(*[F.lit(v) for v in values])
-    idx = F.pmod(cell_seed_col, F.lit(len(values)))
-    return arr[idx.cast("int")]
+    """Selects from a list using the seed as a uniform index.
+
+    Args:
+        cell_seed_col: Per-cell seed `Column` (long).
+        values: The list of allowed values.
+
+    Returns:
+        A Spark `Column` whose element type matches `values`.
+    """
+    value_array = F.array(*[F.lit(value) for value in values])
+    index = F.pmod(cell_seed_col, F.lit(len(values)))
+    return value_array[index.cast("int")]

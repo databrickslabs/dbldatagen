@@ -277,7 +277,7 @@ Errors are grouped by the phase they surface in: **plan construction**
   but a bare `TableSpec` doesn't get one.
 - **Fix** — set `TableSpec.seed` explicitly, or generate through a
   `DataGenPlan` (which propagates the plan seed). See
-  [api-reference.md](api-reference.md).
+  [API reference](reference/api/api.md).
 
 ### Faker `ImportError` — "the 'faker' package is required"
 
@@ -313,9 +313,8 @@ Errors are grouped by the phase they surface in: **plan construction**
   error, not the engine's.
 - **Fix** — always include a full `HH:mm:ss` in the literal
   (`'2024-01-01 00:00:00'`). Note also that `unix_timestamp` parses in
-  `spark.sql.session.timeZone`, not UTC — see
-  [recipes/sequential-timestamps.md](recipes/sequential-timestamps.md)
-  for the time-zone caveat and the UTC-pinning workaround.
+  `spark.sql.session.timeZone`, not UTC, so pin the session time zone
+  when you need timezone-independent output.
 
 ---
 
@@ -327,5 +326,5 @@ Errors are grouped by the phase they surface in: **plan construction**
   strategy accepts
 - [relationships/foreign-keys.md](relationships/foreign-keys.md) — FK
   rules in full
-- [api-reference.md](api-reference.md) — `generate` / `generate_table` /
+- [API reference](reference/api/api.md) — `generate` / `generate_table` /
   `resolve_plan`

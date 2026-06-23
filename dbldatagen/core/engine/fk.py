@@ -1,7 +1,8 @@
 """Foreign key generation with guaranteed referential integrity.
 
-The core insight: we reconstruct what the parent PK generator would have
-produced for a given row index, without materializing the parent table.
+Generates child FK values by reconstructing the primary key the parent table
+would have produced for a chosen row index. Every FK value matches a real parent
+key, and the parent table never has to be materialized to look it up.
 """
 
 from __future__ import annotations
@@ -18,91 +19,79 @@ from dbldatagen.core.spec.schema import ColumnSpec
 
 
 def build_fk_column(
-    id_col: Column,
+    id_column: Column,
     column_seed: int,
     fk_resolution: FKResolution,
 ) -> Column:
-    """Generates FK values that are guaranteed to be valid parent PKs.
+    """Builds a column of foreign-key values that are valid parent keys.
 
-    Algorithm:
-        1. ``cell_seed = xxhash64(column_seed, id)``
-        2. ``parent_index = distribution_sample(cell_seed, N_parent)``
-        3. ``fk_value = reconstruct_parent_pk(parent_index, pk_metadata)``
-
-    Step 3 reconstructs what the parent PK column would have produced
-    for the chosen row index, without re-materialising the parent
-    table.
+    Derives a per-row seed, samples a parent row index using the configured
+    distribution, and reconstructs the parent's primary key for that index. When
+    the null fraction is positive, a fraction of rows are emitted as NULL.
 
     Args:
-        id_col: Row-id ``Column`` (typically
-          ``F.col("_synth_row_id")``).
-        column_seed: Per-column seed for the FK column
-          (planning-time constant).
-        fk_resolution: ``FKResolution`` from ``ResolvedPlan``
-          carrying the parent ``PKMetadata``, sampling distribution,
-          and null fraction.
+        id_column: Row-id column.
+        column_seed: Per-column seed for the FK column.
+        fk_resolution: Resolved FK information carrying the parent key metadata,
+            sampling distribution, and null fraction.
 
     Returns:
-        A Spark ``Column`` whose runtime type matches the parent
-        PK's type (long for sequence/uuid PKs, string for pattern
-        PKs).  When ``null_fraction > 0``, a per-row mask wraps the
-        result with ``NULL`` literals.
+        A Spark `Column` whose type matches the parent key (long for
+        sequence/UUID keys, string for pattern keys).
     """
-    meta = fk_resolution.parent_meta
+    parent_metadata = fk_resolution.parent_metadata
     distribution = fk_resolution.distribution
     null_fraction = fk_resolution.null_fraction
 
-    # Step 1: Derive per-cell seed
-    seed_col = cell_seed_expr(column_seed, id_col)
+    cell_seed = cell_seed_expr(column_seed, id_column)
+    parent_index = apply_distribution(cell_seed, parent_metadata.row_count, distribution)
+    fk_value = _reconstruct_parent_pk(parent_index, parent_metadata)
 
-    # Step 2: Map seed to a parent row index via distribution
-    parent_index = apply_distribution(seed_col, meta.row_count, distribution)
-
-    # Step 3: Reconstruct the parent PK value from the index
-    fk_value = _reconstruct_parent_pk(parent_index, meta)
-
-    # Step 4: Apply null injection if needed
     if null_fraction > 0:
-        is_null = null_mask_expr(column_seed, id_col, null_fraction)
+        is_null = null_mask_expr(column_seed, id_column, null_fraction)
         fk_value = F.when(is_null, F.lit(None)).otherwise(fk_value)
 
     return fk_value
 
 
-def _reconstruct_parent_pk(parent_index_col: Column, meta: PKMetadata) -> Column:
-    """Given a parent row index, reconstruct the PK value that the parent
-    generator would produce for that row.
+def _reconstruct_parent_pk(parent_index_col: Column, parent_metadata: PKMetadata) -> Column:
+    """Reconstructs the parent primary key value for a given row index.
 
-    For sequential PKs: parent_index * step + start
-    For pattern PKs: apply pattern formatting
-    For UUID PKs: apply UUID generation function
+    Mirrors how each parent key strategy generates values: `index * step + start`
+    for sequence keys, pattern formatting for pattern keys, and UUID generation
+    for UUID keys.
+
+    Args:
+        parent_index_col: Column of parent row indices.
+        parent_metadata: Parent primary key metadata.
+
+    Returns:
+        A Spark `Column` of reconstructed parent key values.
+
+    Raises:
+        ValueError: If a pattern key has no template, or `pk_type` is not one of
+            "sequence", "pattern", or "uuid".
     """
-    if meta.pk_type == "sequence":
-        return (parent_index_col * F.lit(meta.pk_step) + F.lit(meta.pk_start)).cast("long")
+    if parent_metadata.pk_type == "sequence":
+        return (parent_index_col * F.lit(parent_metadata.pk_step) + F.lit(parent_metadata.pk_start)).cast("long")
 
-    if meta.pk_type == "pattern":
-        # Pattern PKs use build_pattern_column with the parent's column seed
-        # parent_index_col acts as the "id" the parent would have used
-        if meta.pk_template is None:
-            raise RuntimeError(
-                f"pattern PK for '{meta.table_name}.{meta.pk_column}' has no template -- "
+    if parent_metadata.pk_type == "pattern":
+        if parent_metadata.pk_template is None:
+            raise ValueError(
+                f"pattern PK for '{parent_metadata.table_name}.{parent_metadata.pk_column}' has no template -- "
                 f"planner.extract_pk_metadata should have populated it; invariant bypassed"
             )
-        return build_pattern_column(parent_index_col, meta.pk_seed, meta.pk_template)
+        return build_pattern_column(parent_index_col, parent_metadata.pk_seed, parent_metadata.pk_template)
 
-    if meta.pk_type == "uuid":
-        # UUID PKs use xxhash64(column_seed, id) and xxhash64(column_seed+1, id)
-        # We need to reconstruct the UUID from the parent_index
-        return build_uuid_column(parent_index_col, meta.pk_seed)
+    if parent_metadata.pk_type == "uuid":
+        return build_uuid_column(parent_index_col, parent_metadata.pk_seed)
 
-    # ``_validate_primary_keys`` rejects non-{Sequence, Pattern, UUID}
-    # PK strategies at plan time, so ``meta.pk_type`` cannot be anything
-    # else here.  Raise instead of silently casting the index to long
-    # so a hand-constructed ``PKMetadata`` with a bogus ``pk_type``
-    # surfaces the bypass rather than emitting wrong FK values.
-    raise RuntimeError(
-        f"_reconstruct_parent_pk received unknown pk_type='{meta.pk_type}' "
-        f"for '{meta.table_name}.{meta.pk_column}'.  Expected one of "
+    # _validate_primary_keys rejects non-{sequence, pattern, uuid} PK strategies
+    # at plan time; this raise surfaces a hand-constructed PKMetadata with a bogus
+    # pk_type rather than silently emitting wrong FK values.
+    raise ValueError(
+        f"_reconstruct_parent_pk received unknown pk_type='{parent_metadata.pk_type}' "
+        f"for '{parent_metadata.table_name}.{parent_metadata.pk_column}'.  Expected one of "
         f"'sequence', 'pattern', 'uuid' — the plan-time validator "
         f"``_validate_primary_keys`` should have rejected this."
     )
@@ -111,35 +100,37 @@ def _reconstruct_parent_pk(parent_index_col: Column, meta: PKMetadata) -> Column
 def build_fk_column_expr(
     col_spec: ColumnSpec,
     table_name: str,
-    id_col: Column,
+    id_column: Column,
     column_seed: int,
     fk_resolutions: dict[tuple[str, str], FKResolution] | None,
 ) -> tuple[str, Column]:
-    """Build an FK column expression; raise if the resolution is missing.
+    """Builds an FK column expression, raising if its resolution is missing.
 
-    Dispatch-layer entry point used by the engine's column-building
-    loop in ``generator.py``.  Lives here (next to ``build_fk_column``)
-    so the FK-specific pre-flight check and the actual value
-    reconstruction share a module.
+    Used by the engine's column-building loop. A missing resolution is an error
+    rather than a silent all-NULL column, so calling `generate_table` directly
+    requires passing a `ResolvedPlan` that includes this column's FK.
 
-    The ``ForeignKeyColumn`` strategy was introduced specifically to
-    close the silent-all-NULL class of bug (commit ``a78597b``).
-    Returning ``None`` here -- which the caller previously translated
-    into ``F.lit(None).alias(...)`` -- reintroduced it: a direct call
-    to ``generate_table`` without a ``ResolvedPlan`` carrying the FK
-    map silently produced an all-NULL column instead of surfacing the
-    missing resolution.  Raise a clear error that names the column
-    and the expected call sequence so the failure is impossible to
-    miss.
+    Args:
+        col_spec: The FK column's spec.
+        table_name: Name of the table that owns the column.
+        id_column: Row-id column.
+        column_seed: Per-column seed.
+        fk_resolutions: Map of `(table, column)` to its `FKResolution`, or None.
+
+    Returns:
+        A tuple `(column_name, expr)` for the FK column.
+
+    Raises:
+        TypeError: If no `FKResolution` exists for this column.
     """
     fk_key = (table_name, col_spec.name)
     if fk_resolutions is None or fk_key not in fk_resolutions:
-        raise RuntimeError(
+        raise TypeError(
             f"FK column '{table_name}.{col_spec.name}' has no FKResolution — "
             f"caller must resolve the plan (via ``resolve_plan`` / ``generate``) "
             f"before reaching ``build_column_expr``.  Calling ``generate_table`` "
             f"directly requires passing a ``ResolvedPlan`` that includes this "
             f"column's FK."
         )
-    fk_expr = build_fk_column(id_col, column_seed, fk_resolutions[fk_key])
+    fk_expr = build_fk_column(id_column, column_seed, fk_resolutions[fk_key])
     return (col_spec.name, fk_expr)

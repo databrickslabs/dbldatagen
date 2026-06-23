@@ -9,9 +9,7 @@ regression baselines, and reproducing customer issues.
 
 > **New to the library and coming from the classic API?** The core
 > engine is a separate, newer surface from the v0 `DataGenerator` /
-> `.withColumn(...)` API documented in the Sphinx site. If you're
-> porting an existing v0 generator, start with
-> [`../MIGRATION_V0_TO_CORE.md`](../MIGRATION_V0_TO_CORE.md). This tree
+> `.withColumn(...)` API documented in the Sphinx site. This tree
 > documents core on its own terms.
 
 ## Install
@@ -96,21 +94,11 @@ See [concepts/authoring-styles.md](concepts/authoring-styles.md).
 - [relationships/foreign-keys.md](relationships/foreign-keys.md) — cross-table FKs
 - [relationships/correlated-columns.md](relationships/correlated-columns.md) — `seed_from`
 
-### Output and reference
-- [persisting-output.md](persisting-output.md) — write to Delta / Unity Catalog
+### Reference
 - [loading-plans.md](loading-plans.md) — load plans from JSON / YAML
-- [api-reference.md](api-reference.md) — `generate` / `generate_table` / `resolve_plan`
+- [API reference](reference/api/api.md) — `generate` / `generate_table` /
+  `resolve_plan`. Auto-generated from docstrings (`make docs-api-core`); see
+  also [spec/schema](reference/api/spec/schema.md) and
+  [spec/dsl](reference/api/spec/dsl.md).
 - [limitations.md](limitations.md) — what core can't do today (and the workarounds)
 - [troubleshooting.md](troubleshooting.md) — common errors and fixes
-
-### Recipes — [recipes/index.md](recipes/index.md)
-Foundational building blocks:
-- [recipes/multi-table.md](recipes/multi-table.md) — two tables joined by a foreign key
-- [recipes/sequential-timestamps.md](recipes/sequential-timestamps.md) — evenly-spaced timestamps
-
-Industry datasets:
-- [recipes/retail-star-schema.md](recipes/retail-star-schema.md) — retail: `order_items` fact referencing orders + products
-- [recipes/iot-telematics.md](recipes/iot-telematics.md) — IoT / GPS device telemetry (time series + device dimension)
-- [recipes/stock-ticker.md](recipes/stock-ticker.md) — finance: daily OHLCV per symbol
-- [recipes/process-historian.md](recipes/process-historian.md) — manufacturing: sensor / tag readings
-- [recipes/realistic-customers.md](recipes/realistic-customers.md) — CRM: realistic PII with Faker

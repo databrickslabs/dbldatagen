@@ -1,16 +1,12 @@
-"""dbldatagen.core.spec -- Declarative Pydantic models and DSL for data generation plans.
+"""Declarative Pydantic models for data-generation plans.
 
-The lowercase DSL factory helpers (``integer``, ``decimal``, ``text``,
-``array``, ``struct``, ``faker``, ...) live in :mod:`dbldatagen.core.spec.dsl`
-and are deliberately not re-exported here.  Several of those names shadow
-stdlib modules (``decimal``, ``array``, ``struct``) or popular third-party
-packages (``faker``) when flat-imported.  Import the module under a short
-alias instead::
+Exports the plan models (`ColumnSpec`, `TableSpec`, `DataGenPlan`, `PrimaryKey`,
+`ForeignKeyRef`, `ForeignKeyColumn`, `DataType`).
 
-    from dbldatagen.core.spec import dsl as datagendg
-
-    datagendg.integer("age", 0, 99)
-    datagendg.decimal("price", precision=10, scale=2)
+Note:
+    DSL helper functions (`integer`, `decimal`, `text`, ...) should be imported
+    from `dbldatagen.core.spec.dsl` and are not re-exported here. Import that
+    module under an alias, e.g. `from dbldatagen.core.spec import dsl as datagendg`.
 """
 
 from __future__ import annotations

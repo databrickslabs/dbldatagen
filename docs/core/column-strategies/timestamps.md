@@ -15,8 +15,9 @@ draw from the range, optionally skewed by a distribution.
 If you need **sequential or evenly-spaced** timestamps (a row every
 hour, a monotonic event stream), `TimestampColumn` is the wrong tool —
 it samples, it doesn't step. Compose a `SequenceColumn` (the step index)
-with an `ExpressionColumn` (turn the index into a timestamp) instead.
-See [../recipes/sequential-timestamps.md](../recipes/sequential-timestamps.md).
+with an `ExpressionColumn` (turn the index into a timestamp) instead —
+see [sequences-and-ids.md](sequences-and-ids.md) and
+[expressions.md](expressions.md).
 
 ## Schema form
 
@@ -110,8 +111,6 @@ datagendg.timestamp(
 
 ## See also
 
-- [../recipes/sequential-timestamps.md](../recipes/sequential-timestamps.md)
-  — evenly-spaced timestamps via `SequenceColumn` + `ExpressionColumn`
 - [sequences-and-ids.md](sequences-and-ids.md) — the `SequenceColumn`
   building block
 - [expressions.md](expressions.md) — `ExpressionColumn`, used to turn an

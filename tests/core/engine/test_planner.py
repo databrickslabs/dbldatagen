@@ -66,9 +66,9 @@ class TestResolveSimplePlan:
 
         assert ("orders", "customer_id") in resolved.fk_resolutions
         fk_res = resolved.fk_resolutions[("orders", "customer_id")]
-        assert fk_res.parent_meta.table_name == "customers"
-        assert fk_res.parent_meta.pk_column == "customer_id"
-        assert fk_res.parent_meta.row_count == 1000
+        assert fk_res.parent_metadata.table_name == "customers"
+        assert fk_res.parent_metadata.pk_column == "customer_id"
+        assert fk_res.parent_metadata.row_count == 1000
 
 
 class TestResolveStarSchema:
@@ -338,7 +338,7 @@ class TestPKMetadataExtraction:
         """Verify correct metadata for sequence PK."""
         plan = _make_simple_plan()
         resolved = resolve_plan(plan)
-        meta = resolved.fk_resolutions[("orders", "customer_id")].parent_meta
+        meta = resolved.fk_resolutions[("orders", "customer_id")].parent_metadata
 
         assert meta.pk_type == "sequence"
         assert meta.pk_start == 1
@@ -369,7 +369,7 @@ class TestPKMetadataExtraction:
         )
         plan = DataGenPlan(tables=[customers, orders], seed=42)
         resolved = resolve_plan(plan)
-        meta = resolved.fk_resolutions[("orders", "cid")].parent_meta
+        meta = resolved.fk_resolutions[("orders", "cid")].parent_metadata
 
         assert meta.pk_type == "pattern"
         assert meta.pk_template == "CUST-{digit:6}"
@@ -398,7 +398,7 @@ class TestPKMetadataExtraction:
         )
         plan = DataGenPlan(tables=[customers, orders], seed=42)
         resolved = resolve_plan(plan)
-        meta = resolved.fk_resolutions[("orders", "uid")].parent_meta
+        meta = resolved.fk_resolutions[("orders", "uid")].parent_metadata
 
         assert meta.pk_type == "uuid"
         assert meta.row_count == 300

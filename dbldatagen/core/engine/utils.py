@@ -1,4 +1,8 @@
-"""Shared engine utilities."""
+"""Shared helpers for building table DataFrames.
+
+Provides the base range DataFrame, null-fraction wrapping, and the phased
+application of column expressions.
+"""
 
 from __future__ import annotations
 
@@ -12,88 +16,74 @@ def create_range_df(
     spark: SparkSession,
     row_count: int,
 ) -> tuple[DataFrame, Column]:
-    """Creates a range ``DataFrame`` with a ``_synth_row_id`` column.
+    """Creates the base row-ID DataFrame for a table.
 
-    Renames ``spark.range()``'s default ``id`` column to avoid
-    collisions with user columns named ``id``.  The renamed column
-    is reserved internally and dropped before the final ``DataFrame``
-    is returned to the user.
+    Returns a one-column DataFrame backed by `spark.range`, with the column
+    named `_synth_row_id` to avoid clashing with a user column named `id`. The
+    column is internal and dropped before the final result is returned.
 
     Args:
-        spark: Active ``SparkSession``.
-        row_count: Number of rows to generate.  Must be non-negative.
+        spark: Active `SparkSession`.
+        row_count: Number of rows to generate. Must be non-negative.
 
     Returns:
-        A two-tuple ``(df, id_col)`` where ``df`` has a single
-        ``_synth_row_id`` column and ``id_col`` is the corresponding
-        ``Column`` reference for use in downstream expressions.
+        A tuple `(df, id_column)`: the DataFrame and a `Column` reference to its
+        `_synth_row_id` column for use in downstream expressions.
     """
     df = spark.range(row_count).withColumnRenamed("id", "_synth_row_id")
     return df, F.col("_synth_row_id")
 
 
 def apply_null_fraction(
-    expr: Column,
+    column: Column,
     column_seed: int,
-    id_col: Column,
+    id_column: Column,
     null_fraction: float,
 ) -> Column:
-    """Wraps *expr* with a null mask when *null_fraction* > 0.
+    """Wraps a column expression so a fraction of its rows become NULL.
 
     Args:
-        expr: The Spark ``Column`` expression to wrap.
-        column_seed: Per-column seed (planning-time constant).
-        id_col: Row-id ``Column`` (typically
-          ``F.col("_synth_row_id")``).
-        null_fraction: Target fraction of rows to mark NULL, in
-          ``[0.0, 1.0]``.
+        column: The column expression to wrap.
+        column_seed: Per-column seed.
+        id_column: Row-id column.
+        null_fraction: Fraction of rows to set to NULL, in [0.0, 1.0].
 
     Returns:
-        ``expr`` unchanged when ``null_fraction <= 0``; otherwise
-        ``F.when(null_mask, NULL).otherwise(expr)``.
+        The original expression when `null_fraction` is 0 or less; otherwise an
+        expression that yields NULL for the selected rows and `column` for the rest.
     """
     if null_fraction <= 0:
-        return expr
-    is_null = null_mask_expr(column_seed, id_col, null_fraction)
-    return F.when(is_null, F.lit(None)).otherwise(expr)
+        return column
+    is_null = null_mask_expr(column_seed, id_column, null_fraction)
+    return F.when(is_null, F.lit(None)).otherwise(column)
 
 
 def apply_column_phases(
     df: DataFrame,
-    id_col: Column,
+    id_column: Column,
     col_exprs: list[Column],
     udf_columns: list[tuple[str, Column]],
     seeded_columns: list[tuple[str, Column]],
 ) -> DataFrame:
-    """Applies the three-phase column application pattern.
+    """Applies column expressions to the base DataFrame and returns the table.
 
-    Phase 1 -- flat ``select`` for Spark SQL expressions (cheapest).
-    Phase 2 -- ``withColumn`` for UDF-based columns (FK, Faker) so
-        each one anchors against the already-projected scalar
-        columns.
-    Phase 3 -- ``withColumn`` for ``seed_from`` columns so they
-        reference the already-materialised parent column.
-    Finally, drops the internal ``_synth_row_id`` column.
+    Builds the table in three passes: plain Spark SQL columns via a single
+    `select`, then UDF-based columns (foreign keys, Faker) via `withColumn`, then
+    `seed_from` columns, which depend on a column added in an earlier pass. The
+    internal `_synth_row_id` column is dropped at the end.
 
     Args:
-        df: Source ``DataFrame`` carrying the ``_synth_row_id``
-          column produced by ``create_range_df``.
-        id_col: ``Column`` reference to ``_synth_row_id``.
-        col_exprs: Phase-1 Spark SQL expression columns to project.
-        udf_columns: Phase-2 list of ``(name, expr)`` pairs for
-          UDF-based columns added via ``withColumn``.
-        seeded_columns: Phase-3 list of ``(name, expr)`` pairs for
-          ``seed_from``-derived columns added after their parents.
+        df: Base DataFrame containing the `_synth_row_id` column.
+        id_column: Column reference to `_synth_row_id`.
+        col_exprs: Plain Spark SQL column expressions, applied first.
+        udf_columns: `(name, column)` pairs for UDF-based columns.
+        seeded_columns: `(name, column)` pairs for `seed_from`-derived columns.
 
     Returns:
-        A ``DataFrame`` with the user-facing columns projected in
-        phase order (phase 1 first, then phase 2, then phase 3);
-        declaration order is preserved within each phase but not
-        across phases.  ``_synth_row_id`` is no longer present.
-        Callers that need byte-exact declared order can append
-        ``df.select(*[c.name for c in table_spec.columns])``.
+        The table DataFrame, without `_synth_row_id`. Columns follow phase order;
+        `generate_table` re-selects them into the declared order.
     """
-    df = df.select(id_col, *col_exprs)
+    df = df.select(id_column, *col_exprs)
 
     for col_name, col_expr in udf_columns:
         df = df.withColumn(col_name, col_expr)

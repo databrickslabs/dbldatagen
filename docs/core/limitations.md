@@ -140,16 +140,7 @@ There's no implicit "row number" column.
 There's no first-class "every N seconds" timestamp strategy.
 
 - **Workaround** — compose a `SequenceColumn` (the step index) with an
-  `ExpressionColumn` that adds `index * interval` to a base time. See
-  [recipes/sequential-timestamps.md](recipes/sequential-timestamps.md).
-
-## Not in core yet
-
-### CDC (change data capture)
-
-CDC support is **not available in the current release** of core.
-
-- See [../MIGRATION_V0_TO_CORE.md](../MIGRATION_V0_TO_CORE.md).
+  `ExpressionColumn` that adds `index * interval` to a base time.
 
 ## See also
 
@@ -158,6 +149,3 @@ CDC support is **not available in the current release** of core.
 - [distributions.md](distributions.md) — distribution support matrix
 - [column-strategies/index.md](column-strategies/index.md) — all
   strategies
-- [../MIGRATION_V0_TO_CORE.md](../MIGRATION_V0_TO_CORE.md) — v0
-  features and their core status (Beta / Gamma / `uniqueValues` are
-  tracked follow-ups)

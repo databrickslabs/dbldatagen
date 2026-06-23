@@ -204,7 +204,7 @@ for the full reasoning.
 
 ## Next steps
 
-- [api-reference.md](api-reference.md) — `generate`, `resolve_plan`,
+- [API reference](reference/api/api.md) — `generate`, `resolve_plan`,
   `generate_table`
 - [concepts/plans-and-tables.md](concepts/plans-and-tables.md) — the
   model fields the file maps onto

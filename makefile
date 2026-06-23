@@ -65,6 +65,7 @@ lock-dependencies:
 	  uv pip compile --generate-hashes --universal --no-header - > build-constraints-new.txt
 	mv build-constraints-new.txt .build-constraints.txt
 	perl -pi -e 's|registry = "https://[^"]*"|registry = "https://pypi.org/simple"|g' uv.lock
+	perl -pi -e 's|https://pypi-proxy\.dev\.databricks\.com/packages/|https://files.pythonhosted.org/packages/|g' uv.lock
 
 docs-build:
 	$(UV_RUN) --group docs sphinx-build -M html docs/source docs/build
@@ -76,5 +77,12 @@ docs-serve:
 	make docs-build
 	open docs/build/html/index.html
 
+# docs-api-core: regenerate the core API reference markdown from docstrings via
+# pydoc-markdown (config in pyproject.toml [tool.pydoc-markdown]).  Scoped to the
+# dbldatagen.core package only; output lands in docs/core/reference/api.
+docs-api-core:
+	rm -rf docs/core/reference/api
+	$(UV_RUN) --group docs pydoc-markdown
+
 .DEFAULT: all
-.PHONY: all clean dev lint fmt test test-fast test-coverage build lock-dependencies docs-build docs-clean docs-serve
+.PHONY: all clean dev lint fmt test test-fast test-coverage build lock-dependencies docs-build docs-clean docs-serve docs-api-core

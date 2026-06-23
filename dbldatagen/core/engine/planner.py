@@ -1,4 +1,7 @@
-"""Plan resolution: FK reference validation, topological sort, metadata propagation."""
+"""Plan resolution: validates foreign-key references, sorts tables into
+dependency order, and extracts the primary-key metadata each foreign-key column
+needs.
+"""
 
 from __future__ import annotations
 
@@ -23,16 +26,14 @@ from dbldatagen.core.spec.schema import (
 
 
 # SQL keywords, literals, and type names that appear as bare tokens in
-# ExpressionColumn expressions.  Function names are intentionally NOT
-# listed: the "followed by ``(``" heuristic in
-# ``_extract_column_references`` handles function calls generically so
-# this set does not drift as Spark adds builtins.
+# ExpressionColumn expressions. Function names are intentionally NOT listed: the
+# "followed by ``(``" heuristic in _extract_column_references handles function
+# calls generically, so this set does not drift as Spark adds builtins.
 #
-# Trade-off: entries like ``year``/``month``/``day`` are legal bare in
-# ``interval`` literals but also collide with common column-name stems.
-# If a user types ``year`` meaning ``year_val`` the typo slips past the
-# validator — we accept that to avoid false-positives on every interval
-# expression.  Spark's UNRESOLVED_COLUMN at job time is the backstop.
+# Trade-off: entries like ``year`` are legal bare in ``interval`` literals but
+# also collide with common column-name stems, so a user who types ``year``
+# meaning ``year_val`` slips past the validator. Spark's UNRESOLVED_COLUMN at job
+# time is the backstop.
 _SQL_KEYWORDS: frozenset[str] = frozenset(
     {
         # Keywords / operators
@@ -60,15 +61,9 @@ _SQL_KEYWORDS: frozenset[str] = frozenset(
         "false",
         "null",
         "true",
-        # Window function / aggregation clause keywords
-        # (legal as bare tokens inside ``rank() over (partition by a order by b)``,
-        # ``sum(a) over (rows between unbounded preceding and current row)``,
-        # ``filter(x) where y > 0``, ``order by x nulls first``, etc.).
-        # Same trade-off as the interval-unit and type-name entries
-        # above: a user who picks ``order`` / ``group`` / ``row`` / ``range`` /
-        # ``where`` / ``first`` / ``last`` as a bare column name no longer gets
-        # plan-time typo detection on the un-suffixed form.  Spark's
-        # ``UNRESOLVED_COLUMN`` is still the backstop at job time.
+        # Window-function / aggregation clause keywords, legal as bare tokens
+        # inside e.g. ``rank() over (partition by a order by b)``. Same column-name
+        # collision trade-off as the interval-unit and type-name entries above.
         "asc",
         "by",
         "current",
@@ -147,31 +142,23 @@ _QUOTED_SEGMENT = re.compile(
 
 @dataclass
 class PKMetadata:
-    """Metadata about a parent table's primary key needed for FK generation.
+    """Primary-key metadata a foreign-key column needs to reconstruct parent keys.
 
-    Produced by ``_extract_pk_metadata`` during plan resolution and
-    consumed by ``FKResolution.parent_meta`` and the engine's
-    ``_reconstruct_parent_pk``: the child FK column reconstructs the
-    parent PK value at row index ``i`` from these fields alone, so
-    the parent table never has to be materialised twice.
+    Produced during plan resolution and used by the engine to reconstruct a
+    parent key value at a given row index, so the parent table is never
+    generated twice.
 
     Attributes:
-        table_name: Name of the parent table the PK belongs to.
-        pk_column: Name of the PK column on that table.
-        row_count: Number of rows the parent table will produce.
-          Used as the index range from which FK children sample.
-        pk_type: PK generation kind.  One of ``"sequence"``,
-          ``"pattern"``, or ``"uuid"``.
-        pk_seed: Column seed used when generating the PK column.
-          Threaded back into the child's reconstruction so output
-          matches the parent byte-for-byte.
-        pk_start: For ``pk_type == "sequence"``: the sequence start
-          value.  Ignored for other PK types.
-        pk_step: For ``pk_type == "sequence"``: the sequence step
-          value.  Ignored for other PK types.
-        pk_template: For ``pk_type == "pattern"``: the
-          ``PatternColumn.template`` string used to format the PK.
-          ``None`` for non-pattern PKs.
+        table_name: Name of the parent table.
+        pk_column: Name of the primary-key column.
+        row_count: Number of rows the parent table produces; the index range
+            foreign-key children sample from.
+        pk_type: Primary-key kind: "sequence", "pattern", or "uuid".
+        pk_seed: Column seed used to generate the primary key, so the child's
+            reconstruction matches the parent.
+        pk_start: Sequence start value (sequence keys only).
+        pk_step: Sequence step value (sequence keys only).
+        pk_template: Pattern template (pattern keys only); None otherwise.
     """
 
     table_name: str
@@ -186,58 +173,42 @@ class PKMetadata:
 
 @dataclass
 class FKResolution:
-    """Resolved FK info for a single FK column.
+    """Resolved foreign-key information for a single column.
 
-    One ``FKResolution`` is created per FK column at ``resolve_plan``
-    time and stored in ``ResolvedPlan.fk_resolutions`` keyed by
-    ``(child_table, child_column)``.  The engine reads it at
-    materialisation to drive the parent-row sampling and reconstruct
-    the parent PK value for each child row.
+    Created per foreign-key column at resolution time and read by the engine to
+    sample parent rows and reconstruct the referenced key for each child row.
 
     Attributes:
-        child_table: Name of the table that owns the FK column.
-        child_column: Name of the FK column on that table.
-        parent_meta: ``PKMetadata`` of the referenced parent
-          ``(table.column)``.  Carries everything needed to
-          reconstruct the parent's PK values without re-materialising
-          the parent table.
-        distribution: Sampling distribution over the parent row index
-          range.  Defaults to the ``ForeignKeyRef.distribution`` set
-          on the user-facing spec; ``None`` falls back to ``Uniform``
-          at materialisation.
-        null_fraction: Probability in ``[0.0, 1.0]`` that a given
-          child row emits ``NULL`` instead of resolving the FK.  The
-          higher of ``ColumnSpec.null_fraction`` and
-          ``ForeignKeyRef.null_fraction`` (validated to agree when
-          both non-zero).
+        child_table: Name of the table that owns the foreign-key column.
+        child_column: Name of the foreign-key column.
+        parent_metadata: Primary-key metadata of the referenced parent.
+        distribution: Sampling distribution over the parent row range (None
+            means uniform).
+        null_fraction: Probability in [0.0, 1.0] that a child row is NULL
+            instead of resolving the key.
     """
 
     child_table: str
     child_column: str
-    parent_meta: PKMetadata
+    parent_metadata: PKMetadata
     distribution: Distribution | None
     null_fraction: float
 
 
 @dataclass
 class ResolvedPlan:
-    """Fully resolved plan with FK metadata and generation order.
+    """A fully resolved plan with foreign-key metadata and generation order.
 
-    Produced by ``resolve_plan(plan)``.  Pass into ``generate(spark, plan,
-    resolved_plan=...)`` or ``generate_table(spark, table_spec, resolved_plan)``
-    to skip re-resolution when generating the same plan multiple times
-    (e.g. across seeds, batches, or partitions).
+    Produced by `resolve_plan(plan)`. Pass it to `generate` or `generate_table`
+    to skip re-resolution when generating the same plan multiple times.
 
     Attributes:
-        generation_order: Table names sorted so each parent is built
-            before any of its children.
-        fk_resolutions: Per FK column ``(table_name, column_name)`` ->
-            ``FKResolution`` describing the parent PK metadata,
-            sampling distribution, and null fraction.
-        plan: The original ``DataGenPlan`` this resolution was built
-            from.  ``generate()`` checks identity here so the resolved
-            plan cannot be silently used against a different plan
-            object.
+        generation_order: Table names ordered so each parent is built before its
+            children.
+        fk_resolutions: Map of `(table, column)` to its `FKResolution`.
+        plan: `DataGenPlan` used to build this resolved plan. `generate`
+            identity-checks it so a resolved plan can't be used against a
+            different plan.
     """
 
     generation_order: list[str]
@@ -246,51 +217,44 @@ class ResolvedPlan:
 
 
 def resolve_plan(plan: DataGenPlan) -> ResolvedPlan:
-    """Resolves a ``DataGenPlan`` into a generation-ready plan.
+    """Resolves a `DataGenPlan` into a generation-ready plan.
 
-    Validates every foreign-key reference, builds the table-dependency
-    graph, topologically sorts it (so each parent is generated before
-    its children), and extracts the PK metadata each FK child needs
-    at materialisation.  The result is safe to thread through
-    ``generate()`` / ``generate_table()`` so resolution is paid once
-    even when the same plan is generated many times (e.g. across
-    seeds, partitions, or batches).
+    Validates foreign-key references, sorts the tables so each parent comes
+    before its children, and extracts the primary-key metadata each foreign-key
+    column needs. The result can be reused across repeated generations of the
+    same plan so resolution is paid only once.
 
     Args:
-        plan: The ``DataGenPlan`` to resolve.  All FK ``ref`` values
-          must use the ``"table.column"`` form and point at a column
-          that is part of the referenced table's ``primary_key``.
+        plan: The plan to resolve. Foreign-key references must use the
+            `"table.column"` form and point at a column in the referenced
+            table's primary key.
 
     Returns:
-        A ``ResolvedPlan`` carrying ``generation_order`` (parents
-        before children), per-FK ``FKResolution`` records, and a
-        back-pointer to the original ``plan`` so callers downstream
-        can identity-check the pairing.
+        A `ResolvedPlan` with the generation order, per-column `FKResolution`
+        records, and a back-pointer to `plan`.
 
     Raises:
-        ValueError: an FK ``ref`` is malformed, points at a missing
-          table or column, points at a non-PK column, or the FK graph
-          contains a cycle.  Also raised by upstream
-          ``expression_columns`` / ``seed_from`` / ``primary_keys``
-          validators when their invariants fail.
+        ValueError: If a foreign-key reference is malformed, points at a missing
+            or non-primary-key column, or the foreign-key graph contains a cycle.
+            Also propagated from the expression, seed_from, and primary-key
+            validators.
     """
-    table_map: dict[str, TableSpec] = {t.name: t for t in plan.tables}
+    table_map: dict[str, TableSpec] = {table.name: table for table in plan.tables}
     all_table_names = list(table_map.keys())
 
-    # Pre-build column lookup dicts for O(1) access (avoids O(N) scan per FK)
-    table_col_maps: dict[str, dict[str, ColumnSpec]] = {t.name: {c.name: c for c in t.columns} for t in plan.tables}
+    # Per-table column lookups for O(1) access, avoiding an O(N) scan per FK.
+    table_col_maps: dict[str, dict[str, ColumnSpec]] = {
+        table.name: {col.name: col for col in table.columns} for table in plan.tables
+    }
 
-    # Cross-column reference validators run BEFORE the FK loop so that
-    # _extract_pk_metadata (called from the loop) is only reached for
-    # PK columns that have already been verified to use a supported
-    # strategy.  A bad-PK plan with a child FK would otherwise hit the
-    # ``_extract_pk_metadata`` RuntimeError backstop instead of the
-    # friendly ``_validate_primary_keys`` ValueError.
+    # Cross-column validators run before the FK loop so _extract_pk_metadata is
+    # only reached for PK columns already verified to use a supported strategy;
+    # otherwise a bad-PK plan would hit that backstop instead of the friendly
+    # _validate_primary_keys error.
     _validate_expression_columns(plan)
     _validate_seed_from(plan)
     _validate_primary_keys(plan)
 
-    # Collect all FK references and validate them
     fk_resolutions: dict[tuple[str, str], FKResolution] = {}
 
     for table_spec in plan.tables:
@@ -299,13 +263,10 @@ def resolve_plan(plan: DataGenPlan) -> ResolvedPlan:
                 continue
 
             ref = col_spec.foreign_key.ref
-            # ``ForeignKeyRef.validate_ref_format`` already ran
-            # ``parse_fk_ref`` at construction time, so a malformed
-            # ref can't reach this point.  Re-call here to get the
-            # parts -- single source of truth for the parse rule.
+            # ForeignKeyRef validation already ran parse_fk_ref at construction
+            # time, so a malformed ref can't reach here; re-call to get the parts.
             parent_table_name, parent_col_name = parse_fk_ref(ref)
 
-            # Validate parent table exists
             if parent_table_name not in table_map:
                 raise ValueError(
                     f"FK reference '{ref}' in {table_spec.name}.{col_spec.name}: "
@@ -314,7 +275,6 @@ def resolve_plan(plan: DataGenPlan) -> ResolvedPlan:
 
             parent_table = table_map[parent_table_name]
 
-            # Validate parent column exists (O(1) lookup via pre-built dict)
             parent_col = table_col_maps[parent_table_name].get(parent_col_name)
             if parent_col is None:
                 raise ValueError(
@@ -322,22 +282,14 @@ def resolve_plan(plan: DataGenPlan) -> ResolvedPlan:
                     f"column '{parent_col_name}' does not exist in table '{parent_table_name}'"
                 )
 
-            # Validate referenced column is a PK
             if parent_table.primary_key is None:
                 raise ValueError(
                     f"FK reference '{ref}' in {table_spec.name}.{col_spec.name}: "
                     f"table '{parent_table_name}' has no primary key defined"
                 )
-            # ``ForeignKeyRef.ref`` is a single ``"table.column"``;
-            # ``_extract_pk_metadata`` and ``PKMetadata`` are
-            # single-column by construction.  Pointing at one
-            # sub-column of a composite parent PK can match multiple
-            # parent rows once the user joins back (the composite PK
-            # guarantees tuple uniqueness, not sub-column
-            # uniqueness), which breaks the "every FK matches
-            # exactly one parent" invariant the engine relies on.
-            # Reject up front rather than silently emit
-            # join-ambiguous FKs.
+            # A single-column ForeignKeyRef can't deterministically resolve to one
+            # row of a composite PK (tuple uniqueness, not sub-column uniqueness),
+            # so reject it up front rather than emit join-ambiguous FKs.
             if len(parent_table.primary_key.columns) > 1:
                 raise ValueError(
                     f"FK reference '{ref}' in {table_spec.name}.{col_spec.name}: "
@@ -354,24 +306,21 @@ def resolve_plan(plan: DataGenPlan) -> ResolvedPlan:
                     f"column '{parent_col_name}' is not a primary key of '{parent_table_name}'"
                 )
 
-            # Extract PK metadata
-            parent_meta = _extract_pk_metadata(parent_table, parent_col)
+            parent_metadata = _extract_pk_metadata(parent_table, parent_col)
 
-            # ColumnSpec.null_fraction and ForeignKeyRef.null_fraction are
-            # both legal sources (the ColumnSpec validator rejects
-            # disagreeing non-zero values so max() here is unambiguous).
+            # Both null_fraction sources are legal; the ColumnSpec validator
+            # rejects disagreeing non-zero values, so max() here is unambiguous.
             null_fraction = max(col_spec.null_fraction, col_spec.foreign_key.null_fraction)
             distribution = col_spec.foreign_key.distribution
 
             fk_resolutions[(table_spec.name, col_spec.name)] = FKResolution(
                 child_table=table_spec.name,
                 child_column=col_spec.name,
-                parent_meta=parent_meta,
+                parent_metadata=parent_metadata,
                 distribution=distribution,
                 null_fraction=null_fraction,
             )
 
-    # Build dependency graph and topological sort
     dep_graph = _build_dependency_graph(plan)
     generation_order = _topological_sort(dep_graph, all_table_names)
 
@@ -383,13 +332,16 @@ def resolve_plan(plan: DataGenPlan) -> ResolvedPlan:
 
 
 def _build_dependency_graph(plan: DataGenPlan) -> dict[str, set[str]]:
-    """Build {child_table: {parent_table, ...}} from FK refs.
+    """Builds a {table: {parent tables}} dependency graph from foreign keys.
 
-    Pure shape transform: every table gets a key, mapping to the set
-    of parent tables it references through FK columns (empty set if
-    none).  Uses ``parse_fk_ref`` -- the same helper the schema
-    validator and ``resolve_plan``'s FK loop run on -- so the parse
-    rule has a single source of truth.
+    Every table maps to the set of tables it references through foreign-key
+    columns (empty if none).
+
+    Args:
+        plan: The plan to inspect.
+
+    Returns:
+        A dict mapping each table name to the set of parent table names.
     """
     return {
         table_spec.name: {
@@ -402,7 +354,19 @@ def _build_dependency_graph(plan: DataGenPlan) -> dict[str, set[str]]:
 
 
 def _topological_sort(graph: dict[str, set[str]], all_tables: list[str]) -> list[str]:
-    """Kahn's algorithm. Raise ValueError on cycles."""
+    """Orders tables so each parent comes before its children using Kahn's algorithm.
+
+    Args:
+        graph: A dependency graph as a dictionary of the form
+            {table: {parent tables}}.
+        all_tables: All table names to order.
+
+    Returns:
+        Table names in dependency order.
+
+    Raises:
+        ValueError: If the graph contains a cycle.
+    """
     # Parent -> children adjacency, derived from the child -> parents graph.
     adj: dict[str, list[str]] = {
         parent: [child for child, parents in graph.items() if parent in parents] for parent in all_tables
@@ -432,14 +396,19 @@ def _topological_sort(graph: dict[str, set[str]], all_tables: list[str]) -> list
 
 
 def _extract_pk_metadata(table_spec: TableSpec, pk_col_spec: ColumnSpec) -> PKMetadata:
-    """Extract PK generation metadata from a TableSpec.
+    """Extracts the primary-key metadata a foreign key needs to reconstruct keys.
 
-    Raises if ``table_spec.seed is None`` -- matches the strictness of
-    ``generate_table``.  A prior implementation silently substituted
-    ``plan.seed``, which would have the FK child reconstruct parent
-    PKs under a different seed than the parent itself was generated
-    under once the generator entry points started raising -- splitting
-    the same TableSpec across two seeds on the FK boundary.
+    Args:
+        table_spec: The parent table; its `seed` must be set.
+        pk_col_spec: The primary-key column spec.
+
+    Returns:
+        The `PKMetadata` for the primary key.
+
+    Raises:
+        ValueError: If `table_spec.seed` is None, or the primary key uses an
+            unsupported strategy (the plan-time validator should have rejected
+            it).
     """
     if table_spec.seed is None:
         raise ValueError(
@@ -451,17 +420,14 @@ def _extract_pk_metadata(table_spec: TableSpec, pk_col_spec: ColumnSpec) -> PKMe
 
     table_name = table_spec.name
     pk_column = pk_col_spec.name
-    # ``rows`` is ``int | str`` on the user-facing model; ``resolve_row_count``
-    # normalises it to ``int`` at validation time.  ``cast`` is a pure
-    # type assertion -- no runtime conversion.
+    # TableSpec validation normalises ``rows`` (int | str) to int, so this is a
+    # pure type assertion with no runtime conversion.
     row_count = cast(int, table_spec.rows)
     pk_seed = derive_column_seed(table_spec.seed, table_spec.name, pk_col_spec.name)
 
-    # ``_validate_primary_keys`` rejects any other strategy at plan
-    # time; the ``case _`` branch is a defensive backstop for an
-    # invariant bypass and surfaces a clear error instead of silently
-    # building synthetic-sequence metadata that would corrupt FK
-    # children.
+    # _validate_primary_keys rejects any other strategy at plan time; the case _
+    # branch is a defensive backstop that surfaces a clear error instead of
+    # silently building synthetic-sequence metadata that would corrupt FK children.
     match pk_col_spec.gen:
         case SequenceColumn(start=start, step=step):
             return PKMetadata(
@@ -497,7 +463,7 @@ def _extract_pk_metadata(table_spec: TableSpec, pk_col_spec: ColumnSpec) -> PKMe
                 pk_template=None,
             )
         case _:
-            raise RuntimeError(
+            raise ValueError(
                 f"_extract_pk_metadata received PK column '{table_spec.name}."
                 f"{pk_col_spec.name}' with unsupported strategy "
                 f"{type(pk_col_spec.gen).__name__}.  ``_validate_primary_keys`` "
@@ -507,18 +473,17 @@ def _extract_pk_metadata(table_spec: TableSpec, pk_col_spec: ColumnSpec) -> PKMe
 
 
 def _extract_column_references(expr: str) -> set[str]:
-    """Return identifiers in ``expr`` that look like column references.
+    """Returns the identifiers in an expression that look like column references.
 
-    Filters out function calls (identifier immediately followed by ``(``),
-    qualified field access (identifier preceded by ``.``), and a small
-    set of SQL keywords / literals / type names.  Single-quoted string
-    literals, double-quoted string literals, and backtick-quoted
-    identifiers are all stripped before tokenizing so their contents do
-    not false-positive.
+    Strips quoted string and identifier literals, then ignores function calls (a
+    name followed by `(`), qualified field access (a name preceded by `.`), and
+    SQL keywords, literals, and type names.
 
-    Intentionally does NOT maintain a list of Spark function names: the
-    "followed by ``(``" test works for any function Spark adds without
-    the allowlist drifting out of date.
+    Args:
+        expr: A Spark SQL expression string.
+
+    Returns:
+        The set of likely column-reference identifiers.
     """
     cleaned = _QUOTED_SEGMENT.sub("", expr)
     return {
@@ -531,27 +496,24 @@ def _extract_column_references(expr: str) -> set[str]:
 
 
 def _validate_expression_columns(plan: DataGenPlan) -> None:
-    """Raise ValueError if an ExpressionColumn references an unknown or unreachable column.
+    """Validates that every `ExpressionColumn` references a usable column.
 
-    Two checks, both phrased so the failure surfaces at plan time with
-    a clean traceback instead of a downstream Spark ``UNRESOLVED_COLUMN``:
+    Each referenced name must be a column on the same table and must be available
+    when the expression evaluates. Expressions run before foreign-key, Faker, and
+    `seed_from` columns are added, so referencing one of those is rejected.
 
-    1. Every referenced name must be a column on the same table.
-    2. Every referenced name must be **phase-1-visible**.  The engine
-       applies columns in three phases (regular Spark SQL via flat
-       ``select``, then FK / Faker via ``withColumn``, then
-       ``seed_from``-derived via ``withColumn``).  ``ExpressionColumn``
-       runs in phase 1, so referencing an FK / Faker / ``seed_from``
-       column means the referenced column isn't in the DataFrame yet
-       at evaluation time -- Spark would raise
-       ``UNRESOLVED_COLUMN`` far from the offending declaration.
+    Args:
+        plan: The plan to validate.
+
+    Raises:
+        ValueError: If an expression references an unknown column, or one added
+            in a later phase (foreign-key, Faker, or seed_from).
     """
     for table_spec in plan.tables:
         col_by_name = {c.name: c for c in table_spec.columns}
         col_names = set(col_by_name)
-        # Names of columns that are NOT phase-1-visible: anything with
-        # a foreign_key (phase 2), a FakerColumn strategy (phase 2),
-        # or a seed_from (phase 3).
+        # Columns not visible in phase 1: foreign_key or Faker (phase 2), or
+        # seed_from (phase 3).
         non_phase1 = {
             c.name
             for c in table_spec.columns
@@ -585,27 +547,18 @@ def _validate_expression_columns(plan: DataGenPlan) -> None:
 
 
 def _validate_seed_from(plan: DataGenPlan) -> None:
-    """Validate seed_from references.
+    """Validates `seed_from` references.
 
-    Three checks, in order:
+    Checks that the referenced column exists, that a column does not reference
+    itself, and that it does not reference another `seed_from` column (chains are
+    not supported).
 
-    1. The referenced column exists in the same table.
-    2. A column does not reference itself (``a.seed_from = 'a'``).
-    3. The referenced column does not itself have ``seed_from`` set
-       (no chains).  Chains like ``a -> b -> c`` would break at
-       Spark plan time because phase-3 columns are applied in
-       declaration order, not dependency-topo order; an ``F.col(b)``
-       reference resolves to the un-materialised ``b`` and Spark
-       raises ``UNRESOLVED_COLUMN``.  Real users want one source
-       column with many derived columns, not chains -- the planner
-       rejects the chain shape with a clear error rather than
-       complicating the engine to topo-sort phase 3.
+    Args:
+        plan: The plan to validate.
 
-    Checks 2 and 3 together close every cycle shape: check 2 rejects
-    the self-edge ``a -> a``, and check 3 forbids any path of length
-    >= 2 so longer cycles can't form.  All three failures would
-    otherwise surface at Spark query-build as ``UNRESOLVED_COLUMN``
-    or a self-join plan, far from the offending column declaration.
+    Raises:
+        ValueError: If a `seed_from` reference is missing, self-referential, or
+            chained.
     """
     for table_spec in plan.tables:
         col_names = {c.name for c in table_spec.columns}
@@ -640,20 +593,19 @@ def _validate_seed_from(plan: DataGenPlan) -> None:
 
 
 def _validate_primary_keys(plan: DataGenPlan) -> None:
-    """Validate that PK columns exist and use a supported PK strategy.
+    """Validates that primary-key columns exist and use a supported strategy.
 
-    Two checks:
+    Each named primary-key column must exist, and its strategy must be one of
+    `SequenceColumn`, `PatternColumn`, or `UUIDColumn`. Other strategies can't be
+    reconstructed deterministically, so a foreign key pointing at them would
+    produce values that don't match the parent.
 
-    1. Each named PK column exists on the table.
-    2. The PK column's ``gen`` strategy is one the FK reconstruction
-       path actually handles: ``SequenceColumn``, ``PatternColumn``,
-       or ``UUIDColumn``.  Any other strategy (``RangeColumn``,
-       ``ValuesColumn``, ``ConstantColumn``, etc.) cannot be
-       reconstructed deterministically from PK metadata alone, so an
-       FK pointed at such a PK would emit values that don't match the
-       parent's actual PK values.  Reject at plan time so the error
-       names the offending column rather than surfacing as silent
-       data corruption at materialization.
+    Args:
+        plan: The plan to validate.
+
+    Raises:
+        ValueError: If a primary-key column is missing or uses an unsupported
+            strategy.
     """
     for table_spec in plan.tables:
         if table_spec.primary_key is None:

@@ -161,7 +161,7 @@ class TestTimestampDegenerateRange:
 
 
 class TestDateColumnStringId:
-    """Line 70: build_date_column with string id_col."""
+    """Line 70: build_date_column with string id_column."""
 
     def test_string_id_col(self, spark):
         df = spark.range(10).withColumnRenamed("id", "row_id")
@@ -196,6 +196,29 @@ class TestDateRangeDaysZero:
         )
         result = df.select(col.alias("d")).collect()
         assert all(r.d is not None for r in result)
+
+
+class TestTemporalEndInclusive:
+    """The end bound is inclusive for timestamp and date columns, matching RangeColumn."""
+
+    def test_timestamp_end_is_reachable(self, spark):
+        """A 3-second range [00:00:00, 00:00:02] must be able to draw the end second."""
+        start_epoch = 1672531200  # 2023-01-01 00:00:00 UTC
+        df = spark.range(200).select(
+            build_timestamp_column(F.col("id"), 42, start="2023-01-01 00:00:00", end="2023-01-01 00:00:02").alias("ts")
+        )
+        epochs = {r.e for r in df.select(F.unix_timestamp("ts").alias("e")).collect()}
+        assert min(epochs) == start_epoch
+        assert max(epochs) == start_epoch + 2  # end is inclusive
+
+    def test_date_end_is_reachable(self, spark):
+        """A 3-day range [2024-01-01, 2024-01-03] must be able to draw the end date."""
+        df = spark.range(200).select(
+            build_date_column(F.col("id"), 42, start="2024-01-01", end="2024-01-03").alias("d")
+        )
+        dates = {str(r.d) for r in df.collect()}
+        assert min(dates) == "2024-01-01"
+        assert max(dates) == "2024-01-03"  # end is inclusive
 
 
 # ===================================================================
@@ -261,11 +284,11 @@ class TestRandomAlphaSingleChar:
             assert r.p.isupper()
 
     def test_alpha_seed_xor_clamps_to_signed64(self, spark, ansi_enabled):
-        """``_random_alpha`` XORs ``column_seed`` with ``(idx+1) * GOLDEN_RATIO_HASH``.
+        """``_random_alpha`` XORs ``column_seed`` with ``(placeholder_index+1) * GOLDEN_RATIO_HASH``.
 
         For the Column seed branch the XOR is in Spark SQL and stays in
         signed-64 by construction; the int branch can exceed signed-64
-        when ``column_seed`` is negative and the idx-scaled constant
+        when ``column_seed`` is negative and the index-scaled constant
         is large, and previously raised at ``F.lit`` because Python
         ints that don't fit in signed-long are rejected.  The int
         branch now passes through ``to_signed64`` before ``F.lit`` so
@@ -273,9 +296,9 @@ class TestRandomAlphaSingleChar:
         """
         from dbldatagen.core.engine.columns.string import _random_alpha
 
-        # idx=10**10 forces the XOR result outside signed-64 without the clamp.
+        # placeholder_index=10**10 forces the XOR result outside signed-64 without the clamp.
         df = spark.range(5)
-        col = _random_alpha(F.col("id"), -(2**63), idx=10**10, width=3)
+        col = _random_alpha(F.col("id"), -(2**63), placeholder_index=10**10, width=3)
         rows = df.select(col.alias("p")).collect()
         for r in rows:
             assert len(r.p) == 3
@@ -394,9 +417,9 @@ class TestDecimalPrecisionScale:
         for r in rows:
             assert isinstance(r.v, Decimal)
             _, _, exponent = r.v.as_tuple()
-            assert exponent == -4, (
-                f"value {r.v} has exponent {exponent}, expected -4 " f"(would be 0 if the default scale leaked through)"
-            )
+            assert (
+                exponent == -4
+            ), f"value {r.v} has exponent {exponent}, expected -4 (would be 0 if the default scale leaked through)"
 
     def test_high_precision_decimal_38_8(self, spark):
         """Crypto-scale decimal(38, 8) works end-to-end."""
@@ -459,7 +482,7 @@ class TestPmodForLongMinValueSweep:
         from dbldatagen.core.engine.seed import null_mask_expr
 
         df = spark.range(10000)
-        mask = null_mask_expr(column_seed=42, id_col="id", null_fraction=0.3)
+        mask = null_mask_expr(column_seed=42, id_column="id", null_fraction=0.3)
         null_count = df.select(mask.alias("is_null")).filter("is_null").count()
         # Not asserting an exact ratio (stat variance); just that
         # the query ran to completion without ANSI overflow.
@@ -472,10 +495,10 @@ class TestPmodForLongMinValueSweep:
 
 
 class TestUUIDColumnEdgeCases:
-    """Edge cases on ``build_uuid_column``: string id_col and Long.MAX seed."""
+    """Edge cases on ``build_uuid_column``: string id_column and Long.MAX seed."""
 
     def test_uuid_with_string_id_col(self, spark):
-        """String id_col branch (line 25-26)."""
+        """String id_column branch (line 25-26)."""
         df = spark.range(10).withColumnRenamed("id", "row_id")
         col = build_uuid_column("row_id", 42)
         result = df.select(col.alias("uuid")).collect()
@@ -543,6 +566,6 @@ class TestUUIDColumnEdgeCases:
             col = build_uuid_column("row_id", seed)
             rows = df.select("row_id", col.alias("u")).collect()
             actual = {r.row_id: r.u for r in rows}
-            assert actual == id_to_uuid, (
-                f"UUID determinism regression at seed={seed}: " f"expected {id_to_uuid}, got {actual}"
-            )
+            assert (
+                actual == id_to_uuid
+            ), f"UUID determinism regression at seed={seed}: expected {id_to_uuid}, got {actual}"

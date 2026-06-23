@@ -86,6 +86,7 @@ docs = [
     "Jinja2>3.1,<4",
     "sphinx-copybutton~=0.5.2",
     "rst2pdf[sphinx]~=0.102",
+    "pydoc-markdown>=4.8.2,<5.0",
 ]
 core = ["pydantic>=2.0"]
 core-faker = ["pydantic>=2.0", "faker>=20.0"]
@@ -102,6 +103,38 @@ build-backend = "hatchling.build"
 [tool.uv]
 exclude-newer-package = { "databricks-sdk" = false }
 required-version = "~= 0.11.0"
+
+# pydoc-markdown: auto-generate the core API reference (docs/core/reference/api).
+# Scoped to the dbldatagen.core package only -- the v0 API is documented via
+# Sphinx (see `make docs-build`).  Run with `make docs-api-core`.  Mirrors the
+# DQX setup (databrickslabs/dqx): python loader -> smart/crossref/filter
+# processors -> per-module markdown files, with a post-render hook that flattens
+# the dbldatagen/core/ package prefix up into reference/api.
+[tool.pydoc-markdown]
+loaders = [
+    { type = "python", search_path = ["."], packages = ["dbldatagen.core"] },
+]
+processors = [
+    { type = "google" },
+    { type = "crossref" },
+    { type = "filter", skip_empty_modules = true },
+]
+hooks = { post-render = [
+    "cp -r docs/core/reference/api/dbldatagen/core/. docs/core/reference/api/",
+    "rm -rf docs/core/reference/api/dbldatagen",
+    "perl -pi -e 's{reference/api/dbldatagen/core/}{reference/api/}g' docs/core/reference/api/sidebar.json",
+] }
+
+[tool.pydoc-markdown.renderer]
+type = "docusaurus"
+docs_base_path = "docs/core"
+relative_output_path = "reference/api"
+relative_sidebar_path = "sidebar.json"
+# escape_html_in_docstring=false: the docusaurus default HTML-escapes docstring
+# bodies, which corrupts argument names of params with defaults (renders as
+# "0"/"2"/...) and litters output with &#x27; entities.  Methods/functions
+# default to header level 4, which is too deep; lift them to 3.
+markdown = { escape_html_in_docstring = false, header_level_by_type = { Method = 3, Function = 3, Class = 2, Module = 1 } }
 
 [tool.hatch.version]
 path = "dbldatagen/_version.py"
@@ -280,6 +313,7 @@ ignore-paths = [
 [tool.pylint.messages_control]
 max-line-length = 120
 disable = [
+    "redefined-builtin",
     "too-many-instance-attributes",
     "invalid-name",
     "no-else-return",
@@ -316,6 +350,7 @@ max-args = 10
 max-locals = 20
 max-branches = 15
 max-statements = 60
+max-positional-arguments = 9
 
 # Pytest configuration
 [tool.pytest.ini_options]

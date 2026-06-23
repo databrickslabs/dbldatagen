@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import pytest
 from pyspark.sql import functions as F
 
-from dbldatagen.core.engine.columns.faker_pool import build_faker_column
+from dbldatagen.core.engine.columns.faker_pool import build_faker_column, build_faker_expr
 from dbldatagen.core.engine.seed import derive_column_seed
+from dbldatagen.core.spec.schema import ColumnSpec, ConstantColumn
 
 
 class TestFakerName:
@@ -127,3 +129,14 @@ class TestFakerPicklability:
         col_expr = build_faker_column(F.col("id"), col_seed, "name", pool_size=50)
         out = spark.range(1).select(col_expr.alias("n")).collect()
         assert len(out) == 1 and out[0].n is not None and len(out[0].n) > 0
+
+
+class TestBuildFakerExprRejectsNonFaker:
+    """build_faker_expr is the dispatch entry point for Faker columns and
+    assumes its caller only routes FakerColumn specs to it.  Passing any other
+    strategy is a programming error and must fail loudly."""
+
+    def test_non_faker_gen_raises_type_error(self):
+        spec = ColumnSpec(name="x", gen=ConstantColumn(value=1))
+        with pytest.raises(TypeError, match="non-FakerColumn"):
+            build_faker_expr(spec, F.col("id"), 42)

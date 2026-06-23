@@ -208,7 +208,7 @@ all join with zero orphans).
   distributions you can pass to `ForeignKeyRef`
 - [concepts/plans-and-tables.md](../concepts/plans-and-tables.md) —
   `PrimaryKey`, `TableSpec`, and how the pieces connect
-- [api-reference.md](../api-reference.md) — `resolve_plan` /
+- [API reference](../reference/api/api.md) — `resolve_plan` /
   `generate`
 - [getting-started.md](../getting-started.md) — the full
   customers/orders walkthrough
