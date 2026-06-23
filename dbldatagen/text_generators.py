@@ -395,48 +395,74 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
     The base value is passed to the template generation and may be used in the generated text. The base value is the
     value the column would have if the template generation had not been applied.
 
-    It uses the following special chars:
+    It uses the following template tokens:
 
-    ==========  ======================================
-    Chars       Meaning
-    ==========  ======================================
-    ``\\``       Apply escape to next char.
-    v0,v1,..v9  Use base value as an array of values and substitute the `nth` element ( 0 .. 9). Always escaped.
-    x           Insert a random lowercase hex digit
-    X           Insert an uppercase random hex digit
-    d           Insert a random lowercase decimal digit
-    D           Insert an uppercase random decimal digit
-    a           Insert a random lowercase alphabetical character
-    A           Insert a random uppercase alphabetical character
-    k           Insert a random lowercase alphanumeric character
-    K           Insert a random uppercase alphanumeric character
-    n           Insert a random number between 0 .. 255 inclusive. This option must always be escaped
-    N           Insert a random number between 0 .. 65535 inclusive. This option must always be escaped
-    w           Insert a random lowercase word from the ipsum lorem word set. Always escaped
-    W           Insert a random uppercase word from the ipsum lorem word set. Always escaped
-    ==========  ======================================
+    .. list-table:: Template tokens
+       :header-rows: 1
+       :widths: 25 75
 
-    .. note::
-              If escape is used and`escapeSpecialChars` is False, then the following
-              char is assumed to have no special meaning.
-
-              If the `escapeSpecialChars` option is set to True, then the following char only has its special
-              meaning when preceded by an escape.
-
-              Some options must be always escaped for example  ``\\v``, ``\\n`` and ``\\w``.
-
-              A special case exists for ``\\v`` - if immediately followed by a digit 0 - 9, the underlying base value
-              is interpreted as an array of values and the nth element is retrieved where `n` is the digit specified.
+       * - Token
+         - Meaning
+       * - ``a``
+         - Random lowercase letter (``a`` through ``z``).
+       * - ``A``
+         - Random uppercase letter (``A`` through ``Z``).
+       * - ``x``
+         - Random lowercase hex digit (``0`` through ``9`` and ``a`` through ``f``).
+       * - ``X``
+         - Random uppercase hex digit (``0`` through ``9`` and ``A`` through ``F``).
+       * - ``d``
+         - Random decimal digit (``0`` through ``9``).
+       * - ``D``
+         - Random non-zero decimal digit (``1`` through ``9``).
+       * - ``k``
+         - Random lowercase alphanumeric character (``a`` through ``z`` and ``0`` through ``9``).
+       * - ``K``
+         - Random uppercase alphanumeric character (``A`` through ``Z`` and ``0`` through ``9``).
+       * - ``\\n``
+         - Random integer text from ``0`` through ``255`` inclusive; variable width. Always escaped.
+       * - ``\\N``
+         - Random integer text from ``0`` through ``65535`` inclusive; variable width. Always escaped.
+       * - ``\\w``
+         - Random lowercase word from the lowercase ipsum lorem word set, or ``extendedWordList``. Always escaped.
+       * - ``\\W``
+         - Random uppercase word from the uppercase ipsum lorem word set, or uppercased ``extendedWordList``.
+           Always escaped.
+       * - ``\\v``
+         - Entire base value. Always escaped.
+       * - ``\\v0`` through ``\\v9``
+         - Element ``0`` through element ``9`` of an array/list base value. Always escaped.
+       * - ``\\V``
+         - Entire base value. Always escaped.
+       * - ``\\``
+         - Escape the following character. A backslash is always treated as an escape marker and is not emitted
+           as a literal character.
+       * - ``|``
+         - Separate alternatives; one alternative is chosen randomly per generated value. Escape as ``\\|`` for a
+           literal pipe.
 
     In all other cases, the char itself is used.
 
-    The setting of the `escapeSpecialChars` determines how templates generate data.
+    .. note::
+       The default is ``escapeSpecialChars=False`` for backwards compatibility. In this mode, the character classes
+       ``a``, ``A``, ``x``, ``X``, ``d``, ``D``, ``k`` and ``K`` have their special meaning without a leading escape.
+       Escape one of those characters to use it as a literal character.
 
-    If set to False, then the template ``r"\\dr_\\v"`` will generate the values ``"dr_0"`` ... ``"dr_999"`` when applied
-    to the values zero to 999. This conforms to earlier implementations for backwards compatibility.
+       If ``escapeSpecialChars=True``, those character classes only have their special meaning when preceded by an
+       escape. Bare characters are literal.
 
-    If set to True, then the template ``r"dr_\\v"`` will generate the values ``"dr_0"`` ... ``"dr_999"``
-    when applied to the values zero to 999. This conforms to the preferred style going forward
+       Always-escaped classes and base-value substitutions, such as ``\\n``, ``\\w``, ``\\v`` and ``\\V``, require the
+       leading escape in both modes. If ``\\v`` is immediately followed by a digit 0 through 9, the underlying base
+       value is interpreted as an array/list and the indexed element is substituted.
+
+       An unescaped ``|`` separates the template into alternatives; one alternative is chosen at random for each
+       generated value. Escape a pipe as ``\\|`` to include a literal pipe.
+
+    If ``escapeSpecialChars=False``, then the template ``r"\\dr_\\v"`` will generate the values ``"dr_0"`` ...
+    ``"dr_999"`` when applied to the values zero to 999.
+
+    If ``escapeSpecialChars=True``, then the template ``r"dr_\\v"`` will generate the values ``"dr_0"`` ...
+    ``"dr_999"`` when applied to the values zero to 999.
     """
 
     _template: str

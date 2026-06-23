@@ -136,62 +136,163 @@ VINs, IBANs and many other structured codes.
 The base value is passed to the template generation and may be used in the generated text. The base value is the
 value the column would have if the template generation had not been applied.
 
-It uses the following special chars:
+It uses the following template tokens:
 
-    ========  ======================================
-    Chars     Meaning
-    ========  ======================================
-    ``\``     Apply escape to next char.
-    v0,..v9   Use base value as an array of values and substitute the `nth` element ( 0 .. 9). Always escaped.
-    x         Insert a random lowercase hex digit
-    X         Insert an uppercase random hex digit
-    d         Insert a random lowercase decimal digit
-    D         Insert an uppercase random decimal digit
-    a         Insert a random lowercase alphabetical character
-    A         Insert a random uppercase alphabetical character
-    k         Insert a random lowercase alphanumeric character
-    K         Insert a random uppercase alphanumeric character
-    n         Insert a random number between 0 .. 255 inclusive. This option must always be escaped
-    N         Insert a random number between 0 .. 65535 inclusive. This option must always be escaped
-    w         Insert a random lowercase word from the ipsum lorem word set. Always escaped
-    W         Insert a random uppercase word from the ipsum lorem word set. Always escaped
-    ========  ======================================
+.. list-table:: Template meta-character reference
+   :header-rows: 1
+   :widths: 18 18 32 26 18
+
+   * - Group
+     - Token
+     - Inserts or behavior
+     - Range or set
+     - Always escaped?
+   * - Character classes
+     - ``a``
+     - Random lowercase letter
+     - ``a`` through ``z``
+     - No; mode-dependent
+   * - Character classes
+     - ``A``
+     - Random uppercase letter
+     - ``A`` through ``Z``
+     - No; mode-dependent
+   * - Character classes
+     - ``x``
+     - Random lowercase hex digit
+     - ``0`` through ``9`` and ``a`` through ``f``
+     - No; mode-dependent
+   * - Character classes
+     - ``X``
+     - Random uppercase hex digit
+     - ``0`` through ``9`` and ``A`` through ``F``
+     - No; mode-dependent
+   * - Character classes
+     - ``d``
+     - Random decimal digit
+     - ``0`` through ``9``
+     - No; mode-dependent
+   * - Character classes
+     - ``D``
+     - Random non-zero decimal digit
+     - ``1`` through ``9``
+     - No; mode-dependent
+   * - Character classes
+     - ``k``
+     - Random lowercase alphanumeric character
+     - ``a`` through ``z`` and ``0`` through ``9``
+     - No; mode-dependent
+   * - Character classes
+     - ``K``
+     - Random uppercase alphanumeric character
+     - ``A`` through ``Z`` and ``0`` through ``9``
+     - No; mode-dependent
+   * - Always-escaped classes
+     - ``\n``
+     - Random integer text
+     - ``0`` through ``255`` inclusive; variable width
+     - Yes
+   * - Always-escaped classes
+     - ``\N``
+     - Random integer text
+     - ``0`` through ``65535`` inclusive; variable width
+     - Yes
+   * - Always-escaped classes
+     - ``\w``
+     - Random lowercase word
+     - Lowercase ipsum lorem word set, or ``extendedWordList``
+     - Yes
+   * - Always-escaped classes
+     - ``\W``
+     - Random uppercase word
+     - Uppercase ipsum lorem word set, or uppercased ``extendedWordList``
+     - Yes
+   * - Base-value substitution
+     - ``\v``
+     - Entire base value
+     - Value the column would otherwise have had
+     - Yes
+   * - Base-value substitution
+     - ``\v0`` through ``\v9``
+     - Base-value element by index
+     - Element ``0`` through element ``9`` of an array/list base value
+     - Yes
+   * - Base-value substitution
+     - ``\V``
+     - Entire base value
+     - Value the column would otherwise have had
+     - Yes
+   * - Escape
+     - ``\``
+     - Escapes the following character (see escaping rules below). A backslash is always treated as an
+       escape marker and is not emitted as a literal character.
+     - See escaping rules below
+     - N/A
+   * - Alternation
+     - ``|``
+     - Chooses one template alternative at random per generated value
+     - Split on each unescaped ``|``; use ``\|`` for a literal pipe
+     - No
 
 In all other cases, the char itself is used.
 
-The setting of the ``escapeSpecialChars`` determines how the template generate interprets the special chars.
+Escaping and the escapeSpecialChars option
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If set to False, which defaults to `False`, then the special char does not need to be escaped to have its special
-meaning. But the special char must be escaped to be treated as a literal char.
+The setting of ``escapeSpecialChars`` determines how the template generator interprets the character classes
+``a``, ``A``, ``x``, ``X``, ``d``, ``D``, ``k`` and ``K``.
 
-So the template ``r"\dr_\v"`` will generate the values ``"dr_0"`` ... ``"dr_999"`` when used via the template option
-and applied to the values zero to 999.
-Here the the character `d` is escaped to avoid interpretation as a special character.
+The default is ``escapeSpecialChars=False`` for backwards compatibility. In this mode, those character classes have
+their special meaning without a leading escape. Escape one of those characters to use it as a literal character.
+Always-escaped classes and base-value substitutions, such as ``\n``, ``\w``, ``\v`` and ``\V``, still require the
+leading escape.
 
-If set to True, then the special char only has its special meaning when preceded by an escape.
+For example, the template ``r"\dr_\v"`` generates the values ``"dr_0"`` ... ``"dr_999"`` when used via the
+``template=`` option and applied to the values zero to 999. Here ``\d`` is an escaped literal ``d``, ``r_`` is
+literal text, and ``\v`` substitutes the base value.
 
-So the option `text=dg.TemplateGenerator(r'dr_\v', escapeSpecialChars=True)` will generate the values
-``"dr_0"`` ... ``"dr_999"`` when applied to the values zero to 999.
+If ``escapeSpecialChars=True``, those character classes only have their special meaning when preceded by an escape.
+Bare characters are literal. For example, ``text=dg.TemplateGenerator(r"dr_\v", escapeSpecialChars=True)`` generates
+the values ``"dr_0"`` ... ``"dr_999"`` when applied to the values zero to 999.
 
-This conforms to earlier implementations for backwards compatibility.
+Alternation
+^^^^^^^^^^^
 
-.. note::
-          Setting the argument `escapeSpecialChars=False` means that the special char does not need to be escaped to
-          be treated as a special char. But it must be escaped to be treated as a literal char.
+An unescaped ``|`` separates the template into alternatives. One alternative is selected at random for each generated
+value. Escape a pipe as ``\|`` to include a literal pipe in the generated text.
 
-          If the ``escapeSpecialChars`` option is set to True, then the following char only has its special
-          meaning when preceded by an escape.
+For example, ``(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd`` generates one of three phone-number shapes. The
+parentheses in this template are literal output characters. Similarly, ``\w.\w@\w.com|\w@\w.co.u\k`` generates an
+email-like value using one of two domain shapes.
 
-          Some options must be always escaped for example  ``\\v``, ``\\n`` and ``\\w``.
+Worked examples
+^^^^^^^^^^^^^^^
 
-          A special case exists for ``\\v`` - if immediately followed by a digit 0 - 9, the underlying base value
-          is interpreted as an array of values and the nth element is retrieved where `n` is the digit specified.
+The template syntax does not include repetition operators or optional groups. Repeat a class character literally for
+fixed-width output, such as ``dddd`` for four random decimal digits.
 
-          The ``escapeSpecialChars`` is set to False by default for backwards compatibility.
+.. list-table:: Template examples
+   :header-rows: 1
+   :widths: 35 65
 
-          To use the ``escapeSpecialChars`` option, use the variant
-          ``text=dg.TemplateGenerator(template=..., escapeSpecialChars=True)``
-
+   * - Template
+     - Generates
+   * - ``\n.\n.\n.\n``
+     - A dotted IPv4-style address; each octet is a random integer from ``0`` through ``255``.
+   * - ``ddd-dd-dddd``
+     - A US-SSN-shaped value with decimal digits from ``0`` through ``9``.
+   * - ``XXXX-XXXX-XXXX-XXXX``
+     - Four groups of uppercase hexadecimal digits separated by hyphens.
+   * - ``\w.\w@\w.com|\w@\w.co.u\k``
+     - An email-like value in one of two shapes, with words from the configured word list.
+   * - ``(ddd)-ddd-dddd|1(ddd) ddd-dddd|ddd ddddddd``
+     - A phone-number-shaped value in one of three formats; parentheses are literal characters.
+   * - ``r"\dr_\v"`` with default ``escapeSpecialChars=False``
+     - ``dr_`` followed by the base value; ``\d`` is a literal ``d`` in default mode.
+   * - ``r"dr_\v"`` with ``escapeSpecialChars=True``
+     - ``dr_`` followed by the base value; bare ``d`` and ``r`` are literal characters.
+   * - ``\v0-\v1``
+     - Elements ``0`` and ``1`` of an array/list base value joined by a hyphen.
 
 Using a custom word list
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -256,4 +357,3 @@ generated data with other data sources to generate the required data.
 
 In these cases, the generator can be specified to produce lookup keys that can be used to join with the
 other data sources.
-
