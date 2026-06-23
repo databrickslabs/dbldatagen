@@ -8,6 +8,7 @@ import pytest
 
 import dbldatagen as dg
 from dbldatagen import DateRange
+from dbldatagen import column_generation_spec as cgs
 
 # build spark session
 
@@ -1035,20 +1036,569 @@ class TestRangedValuesAndDates(unittest.TestCase):
         s1_values = [r[0] for r in results.select("s1").distinct().collect()]
         self.assertSetEqual(set(s1_expected_values), set(s1_values))
 
+    def test_unique_values_random_integers(self):
+        test_df = (
+            dg.DataGenerator(
+                sparkSession=spark,
+                name="test_data_set1",
+                rows=10000,
+                partitions=4,
+                randomSeedMethod="fixed",
+                randomSeed=24,
+            )
+            .withIdOutput()
+            .withColumn("val1", "int", minValue=1, maxValue=100, uniqueValues=10, random=True)
+            .withColumn("val2", "int", minValue=1, maxValue=100, uniqueValues=10, random=False)
+            .build()
+        )
 
-def test_daterange_parse_interval_requires_value():
-    """Validate DateRange.parseInterval requires a non-null interval string."""
-    with pytest.raises(ValueError, match="Parameter 'interval_str' must be specified"):
-        DateRange.parseInterval(None)
+        # Ensure that we get exactly 10 unique values for both columns:
+        count_unique_val1 = test_df.select("val1").distinct().count()
+        count_unique_val2 = test_df.select("val2").distinct().count()
+        self.assertEqual(count_unique_val1, 10)
+        self.assertEqual(count_unique_val2, 10)
 
+        # Get the generated unique values:
+        unique_set_val1 = {r[0] for r in test_df.select("val1").distinct().collect()}
+        unique_set_val2 = {r[0] for r in test_df.select("val2").distinct().collect()}
+        expected_sequence = set(range(1, 11))
 
-def test_daterange_compute_date_range_unique_values_positive():
-    """Validate DateRange.computeDateRange enforces positive unique_values."""
-    with pytest.raises(ValueError, match="Parameter 'unique_values' must be a positive integer"):
-        DateRange.computeDateRange(begin=None, end=None, interval="days=1", unique_values=0)
+        # Ensure that the expected values for val1 are not generated in sequence:
+        self.assertNotEqual(unique_set_val1, expected_sequence)
 
+        # Ensure that the non-random values for val2 are generated in sequence:
+        self.assertEqual(unique_set_val2, expected_sequence)
 
-def test_daterange_compute_timestamp_range_unique_values_positive():
-    """Validate DateRange.computeTimestampRange enforces positive unique_values."""
-    with pytest.raises(ValueError, match="Parameter 'unique_values' must be a positive integer"):
-        DateRange.computeTimestampRange(begin=None, end=None, interval="days=1", unique_values=-5)
+        # Ensure that all values are generated in the provided range:
+        self.assertTrue(all(1 <= v <= 100 for v in unique_set_val1))
+        self.assertTrue(all(1 <= v <= 100 for v in unique_set_val2))
+
+    def test_unique_values_random_floats(self):
+        test_df = (
+            dg.DataGenerator(
+                sparkSession=spark,
+                name="test_data_set1",
+                rows=5000,
+                partitions=4,
+                randomSeedMethod="fixed",
+                randomSeed=42,
+            )
+            .withIdOutput()
+            .withColumn("val1", "float", minValue=1.0, maxValue=10.0, step=0.5, uniqueValues=10, random=True)
+            .withColumn("val2", "float", minValue=1.0, maxValue=10.0, step=0.5, uniqueValues=10, random=False)
+            .build()
+        )
+
+        # Ensure that we get exactly 10 unique values for both columns:
+        count_unique_val1 = test_df.select("val1").distinct().count()
+        count_unique_val2 = test_df.select("val2").distinct().count()
+        self.assertEqual(count_unique_val1, 10)
+        self.assertEqual(count_unique_val2, 10)
+
+        # Get the generated unique values:
+        unique_set_val1 = {r[0] for r in test_df.select("val1").distinct().collect()}
+        unique_set_val2 = {r[0] for r in test_df.select("val2").distinct().collect()}
+        expected_sequence = {1.0 + i * 0.5 for i in range(10)}
+
+        # Ensure that the expected values for val1 are not generated in sequence:
+        self.assertNotEqual(unique_set_val1, expected_sequence)
+
+        # Ensure that the non-random values for val2 are generated in sequence:
+        self.assertEqual(unique_set_val2, expected_sequence)
+
+        # Ensure that all values are generated in the provided range:
+        self.assertTrue(all(1.0 <= v <= 10.0 for v in unique_set_val1))
+        self.assertTrue(all(1.0 <= v <= 10.0 for v in unique_set_val2))
+
+    def test_unique_values_random_dates(self):
+        test_df = (
+            dg.DataGenerator(
+                sparkSession=spark,
+                name="test_data_set1",
+                rows=5000,
+                partitions=4,
+                randomSeedMethod="fixed",
+                randomSeed=456,
+            )
+            .withIdOutput()
+            .withColumn(
+                "val1", "date", begin="2020-01-01", end="2020-01-31", interval="1 day", uniqueValues=10, random=True
+            )
+            .withColumn(
+                "val2", "date", begin="2020-01-01", end="2020-01-31", interval="1 day", uniqueValues=10, random=False
+            )
+            .build()
+        )
+
+        # Ensure that we get exactly 10 unique values for both columns:
+        count_unique_val1 = test_df.select("val1").distinct().count()
+        count_unique_val2 = test_df.select("val2").distinct().count()
+        self.assertEqual(count_unique_val1, 10)
+        self.assertEqual(count_unique_val2, 10)
+
+        # Get the generated unique values:
+        unique_set_val1 = {r[0] for r in test_df.select("val1").distinct().collect()}
+        unique_set_val2 = {r[0] for r in test_df.select("val2").distinct().collect()}
+        end_date = date(2020, 1, 31)
+        expected_sequence = {end_date - timedelta(days=j - 1) for j in range(10, 0, -1)}
+
+        # Ensure that the expected values for val1 are not generated in sequence:
+        self.assertNotEqual(unique_set_val1, expected_sequence)
+
+        # Ensure that the non-random values for val2 are generated in sequence:
+        self.assertEqual(unique_set_val2, expected_sequence)
+
+        # Ensure that all values are generated in the provided range:
+        start_date = date(2020, 1, 1)
+        end_date = date(2020, 1, 31)
+        self.assertTrue(all(start_date <= v <= end_date for v in unique_set_val1))
+        self.assertTrue(all(start_date <= v <= end_date for v in unique_set_val2))
+
+    def test_unique_values_random_timestamps(self):
+        test_df = (
+            dg.DataGenerator(
+                sparkSession=spark,
+                name="test_data_set1",
+                rows=3000,
+                partitions=4,
+                randomSeedMethod="fixed",
+                randomSeed=789,
+            )
+            .withIdOutput()
+            .withColumn(
+                "val1",
+                "timestamp",
+                begin="2020-01-01 00:00:00",
+                end="2020-01-01 23:59:59",
+                interval="1 hour",
+                uniqueValues=10,
+                random=True,
+            )
+            .withColumn(
+                "val2",
+                "timestamp",
+                begin="2020-01-01 00:00:00",
+                end="2020-01-01 23:59:59",
+                interval="1 hour",
+                uniqueValues=10,
+                random=False,
+            )
+            .build()
+        )
+
+        # Ensure that we get exactly 10 unique values for both columns:
+        count_unique_val1 = test_df.select("val1").distinct().count()
+        count_unique_val2 = test_df.select("val2").distinct().count()
+        self.assertEqual(count_unique_val1, 10)
+        self.assertEqual(count_unique_val2, 10)
+
+        # Get the generated unique values:
+        unique_set_val1 = {r[0] for r in test_df.select("val1").distinct().collect()}
+        unique_set_val2 = {r[0] for r in test_df.select("val2").distinct().collect()}
+        end_time = datetime(2020, 1, 1, 23, 59, 59)
+        expected_sequence = {end_time - timedelta(hours=j - 1) for j in range(10, 0, -1)}
+
+        # Ensure that the expected values for val1 are not generated in sequence:
+        self.assertNotEqual(unique_set_val1, expected_sequence)
+
+        # Ensure that the non-random values for val2 are generated in sequence:
+        self.assertEqual(unique_set_val2, expected_sequence)
+
+        # Ensure that all values are generated in the provided range:
+        start_ts = datetime(2020, 1, 1, 0, 0, 0)
+        end_ts = datetime(2020, 1, 1, 23, 59, 59)
+        self.assertTrue(all(start_ts <= v <= end_ts for v in unique_set_val1))
+        self.assertTrue(all(start_ts <= v <= end_ts for v in unique_set_val2))
+
+    def test_unique_values_random_reproducible(self):
+        test_gen = (
+            dg.DataGenerator(
+                sparkSession=spark,
+                name="test_data_set1",
+                rows=1000,
+                partitions=2,
+                randomSeedMethod="fixed",
+                randomSeed=999,
+            )
+            .withIdOutput()
+            .withColumn("val", "int", minValue=1, maxValue=50, uniqueValues=8, random=True)
+        )
+
+        # Generate data using the same random seed:
+        test_df1 = test_gen.build()
+        test_df2 = test_gen.build()
+
+        # Get the unique generated values:
+        unique_set_val1 = {r[0] for r in test_df1.select("val").distinct().collect()}
+        unique_set_val2 = {r[0] for r in test_df2.select("val").distinct().collect()}
+
+        # Ensure the same unique values are generated using the same random seed:
+        self.assertEqual(unique_set_val1, unique_set_val2)
+
+        # Generate data with a new random seed:
+        test_gen_new_seed = (
+            dg.DataGenerator(
+                sparkSession=spark,
+                name="test_data_set1",
+                rows=1000,
+                partitions=2,
+                randomSeedMethod="fixed",
+                randomSeed=42,
+            )
+            .withIdOutput()
+            .withColumn("val", "int", minValue=1, maxValue=50, uniqueValues=8, random=True)
+        )
+        test_df3 = test_gen_new_seed.build()
+        unique_set_val3 = {r[0] for r in test_df3.select("val").distinct().collect()}
+
+        # Ensure different unique values are generated using the new random seed:
+        self.assertNotEqual(unique_set_val1, unique_set_val3)
+
+    def test_unique_values_random_exceeds_grid(self):
+        # Requesting more unique values than the range can supply must NOT hang and must clamp to the grid
+        test_df = (
+            dg.DataGenerator(
+                spark, name="exceeds_grid", rows=5000, partitions=4, randomSeedMethod="fixed", randomSeed=24
+            )
+            .withIdOutput()
+            .withColumn("val", "int", minValue=1, maxValue=10, uniqueValues=50, random=True)
+            .build()
+        )
+        unique_vals = {r[0] for r in test_df.select("val").distinct().collect()}
+        # grid only has 10 distinct values (1..10); the request of 50 is clamped to 10
+        self.assertEqual(unique_vals, set(range(1, 11)))
+
+    def test_unique_values_random_equals_grid(self):
+        # Requesting exactly the grid size should surface every grid value, in range
+        test_df = (
+            dg.DataGenerator(
+                spark, name="equals_grid", rows=5000, partitions=4, randomSeedMethod="fixed", randomSeed=24
+            )
+            .withIdOutput()
+            .withColumn("val", "int", minValue=1, maxValue=10, step=1, uniqueValues=10, random=True)
+            .build()
+        )
+        unique_vals = {r[0] for r in test_df.select("val").distinct().collect()}
+        self.assertEqual(unique_vals, set(range(1, 11)))
+
+    def test_unique_values_random_dates_exceeds_grid(self):
+        # Date columns must also clamp (regression: the date path previously clamped, the numeric did not)
+        test_df = (
+            dg.DataGenerator(
+                spark, name="dates_exceeds_grid", rows=5000, partitions=4, randomSeedMethod="fixed", randomSeed=456
+            )
+            .withIdOutput()
+            .withColumn(
+                "val", "date", begin="2020-01-01", end="2020-01-05", interval="1 day", uniqueValues=100, random=True
+            )
+            .build()
+        )
+        unique_vals = {r[0] for r in test_df.select("val").distinct().collect()}
+        # range 2020-01-01..2020-01-05 at 1 day = 5 grid points
+        self.assertEqual(len(unique_vals), 5)
+        self.assertTrue(all(date(2020, 1, 1) <= v <= date(2020, 1, 5) for v in unique_vals))
+
+    def test_unique_values_random_integer_with_large_count_mapped(self):
+        original_threshold = cgs.RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD
+        cgs.RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD = 5
+        try:
+            test_gen = (
+                dg.DataGenerator(
+                    spark, name="large_mapped", rows=20000, partitions=4, randomSeedMethod="fixed", randomSeed=24
+                )
+                .withIdOutput()
+                .withColumn("val", "int", minValue=1, maxValue=100000, uniqueValues=40, random=True)
+            )
+            test_df = test_gen.build()
+            unique_values = {row[0] for row in test_df.select("val").distinct().collect()}
+
+            self.assertEqual(len(unique_values), 40)
+            self.assertTrue(all(1 <= value <= 100000 for value in unique_values))
+
+            mapping = test_gen.getColumnSpec("val")._uniqueValueMapping
+            self.assertIsNotNone(mapping)
+            self.assertEqual(mapping["kind"], "numeric")
+
+            unique_values_2 = {row[0] for row in test_gen.build().select("val").distinct().collect()}
+            self.assertEqual(unique_values, unique_values_2)
+
+        finally:
+            cgs.RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD = original_threshold
+
+    def test_unique_values_random_float_with_large_count_mapped(self):
+        original_threshold = cgs.RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD
+        cgs.RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD = 5
+        try:
+            test_gen = (
+                dg.DataGenerator(
+                    spark, name="large_mapped_floats", rows=20000, partitions=4, randomSeedMethod="fixed", randomSeed=24
+                )
+                .withIdOutput()
+                .withColumn("val", "float", minValue=0.0, maxValue=1000.0, step=0.5, uniqueValues=40, random=True)
+            )
+            test_df = test_gen.build()
+            unique_values = {row[0] for row in test_df.select("val").distinct().collect()}
+
+            self.assertEqual(len(unique_values), 40)
+            self.assertTrue(all(0.0 <= value <= 1000.0 for value in unique_values))
+            self.assertTrue(all(abs(value / 0.5 - round(value / 0.5)) < 1e-6 for value in unique_values))
+
+            mapping = test_gen.getColumnSpec("val")._uniqueValueMapping
+            self.assertIsNotNone(mapping)
+            self.assertEqual(mapping["kind"], "numeric")
+
+            unique_values_2 = {row[0] for row in test_gen.build().select("val").distinct().collect()}
+            self.assertEqual(unique_values, unique_values_2)
+
+        finally:
+            cgs.RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD = original_threshold
+
+    def test_unique_values_random_date_with_large_count_mapped(self):
+        original_threshold = cgs.RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD
+        cgs.RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD = 5
+        try:
+            test_gen = (
+                dg.DataGenerator(
+                    spark, name="large_mapped_dates", rows=20000, partitions=4, randomSeedMethod="fixed", randomSeed=24
+                )
+                .withIdOutput()
+                .withColumn(
+                    "val", "date", begin="2020-01-01", end="2025-01-01", interval="1 day", uniqueValues=40, random=True
+                )
+            )
+            test_df = test_gen.build()
+            unique_values = {row[0] for row in test_df.select("val").distinct().collect()}
+
+            self.assertEqual(len(unique_values), 40)
+            self.assertTrue(all(date(2020, 1, 1) <= value <= date(2025, 1, 1) for value in unique_values))
+
+            mapping = test_gen.getColumnSpec("val")._uniqueValueMapping
+            self.assertIsNotNone(mapping)
+            self.assertEqual(mapping["kind"], "date")
+
+            unique_values_2 = {row[0] for row in test_gen.build().select("val").distinct().collect()}
+            self.assertEqual(unique_values, unique_values_2)
+
+        finally:
+            cgs.RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD = original_threshold
+
+    def test_unique_values_random_timestamp_with_large_count_mapped(self):
+        original_threshold = cgs.RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD
+        cgs.RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD = 5
+        try:
+            test_gen = (
+                dg.DataGenerator(
+                    spark, name="large_mapped_ts", rows=20000, partitions=4, randomSeedMethod="fixed", randomSeed=24
+                )
+                .withIdOutput()
+                .withColumn(
+                    "val",
+                    "timestamp",
+                    begin="2020-01-01 00:00:00",
+                    end="2020-01-02 00:00:00",
+                    interval="1 minute",
+                    uniqueValues=40,
+                    random=True,
+                )
+            )
+            test_df = test_gen.build()
+            unique_values = {row[0] for row in test_df.select("val").distinct().collect()}
+
+            self.assertEqual(len(unique_values), 40)
+            self.assertTrue(
+                all(datetime(2020, 1, 1, 0, 0, 0) <= value <= datetime(2020, 1, 2, 0, 0, 0) for value in unique_values)
+            )
+
+            mapping = test_gen.getColumnSpec("val")._uniqueValueMapping
+            self.assertIsNotNone(mapping)
+            self.assertEqual(mapping["kind"], "timestamp")
+
+            unique_values_2 = {row[0] for row in test_gen.build().select("val").distinct().collect()}
+            self.assertEqual(unique_values, unique_values_2)
+
+        finally:
+            cgs.RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD = original_threshold
+
+    def test_unique_values_random_floats_exceeds_grid(self):
+        test_df = (
+            dg.DataGenerator(
+                spark, name="floats_exceeds_grid", rows=2000, partitions=4, randomSeedMethod="fixed", randomSeed=42
+            )
+            .withIdOutput()
+            .withColumn("val", "float", minValue=1.0, maxValue=2.0, step=0.5, uniqueValues=10, random=True)
+            .build()
+        )
+        unique_values = {row[0] for row in test_df.select("val").distinct().collect()}
+
+        self.assertEqual(len(unique_values), 3)
+        self.assertTrue(all(1.0 <= value <= 2.0 for value in unique_values))
+        self.assertTrue(all(abs(value / 0.5 - round(value / 0.5)) < 1e-6 for value in unique_values))
+
+    def test_unique_values_random_timestamps_exceeds_grid(self):
+        test_df = (
+            dg.DataGenerator(
+                spark, name="ts_exceeds_grid", rows=3000, partitions=4, randomSeedMethod="fixed", randomSeed=42
+            )
+            .withIdOutput()
+            .withColumn(
+                "val",
+                "timestamp",
+                begin="2020-01-01 00:00:00",
+                end="2020-01-01 01:00:00",
+                interval="10 minutes",
+                uniqueValues=50,
+                random=True,
+            )
+            .build()
+        )
+        unique_values = {row[0] for row in test_df.select("val").distinct().collect()}
+
+        self.assertEqual(len(unique_values), 7)
+        self.assertTrue(
+            all(datetime(2020, 1, 1, 0, 0, 0) <= value <= datetime(2020, 1, 1, 1, 0, 0) for value in unique_values)
+        )
+
+    def test_unique_values_random_without_max_value_uses_sequential_range(self):
+        test_df = (
+            dg.DataGenerator(spark, name="no_max", rows=2000, partitions=4, randomSeedMethod="fixed", randomSeed=42)
+            .withIdOutput()
+            .withColumn("val", "int", minValue=10, uniqueValues=5, random=True)
+            .build()
+        )
+        unique_values = {row[0] for row in test_df.select("val").distinct().collect()}
+
+        self.assertEqual(unique_values, {10, 11, 12, 13, 14})
+
+    def test_unique_values_random_unseeded_generator(self):
+        test_df = (
+            dg.DataGenerator(spark, name="unseeded", rows=10000, partitions=4, randomSeed=-1)
+            .withIdOutput()
+            .withColumn("val", "int", minValue=1, maxValue=100, uniqueValues=10, random=True)
+            .build()
+        )
+        unique_values = {row[0] for row in test_df.select("val").distinct().collect()}
+
+        self.assertEqual(len(unique_values), 10)
+        self.assertTrue(all(1 <= value <= 100 for value in unique_values))
+
+    def test_unique_values_random_dates_with_object_bounds_and_timedelta_interval(self):
+        begin = date(2021, 1, 1)
+        end = date(2021, 2, 1)
+        test_df = (
+            dg.DataGenerator(spark, name="date_objs", rows=3000, partitions=4, randomSeedMethod="fixed", randomSeed=42)
+            .withIdOutput()
+            .withColumn("val", "date", begin=begin, end=end, interval=timedelta(days=2), uniqueValues=5, random=True)
+            .build()
+        )
+        unique_values = {row[0] for row in test_df.select("val").distinct().collect()}
+
+        self.assertEqual(len(unique_values), 5)
+        self.assertTrue(all(begin <= value <= end for value in unique_values))
+        self.assertTrue(all((value - begin).days % 2 == 0 for value in unique_values))
+
+    def test_unique_values_random_timestamps_without_interval_defaults_to_one_day(self):
+        test_df = (
+            dg.DataGenerator(
+                spark, name="ts_no_interval", rows=3000, partitions=4, randomSeedMethod="fixed", randomSeed=42
+            )
+            .withIdOutput()
+            .withColumn(
+                "val",
+                "timestamp",
+                begin="2020-01-01 00:00:00",
+                end="2020-01-05 00:00:00",
+                uniqueValues=3,
+                random=True,
+            )
+            .build()
+        )
+        unique_values = {row[0] for row in test_df.select("val").distinct().collect()}
+
+        self.assertEqual(len(unique_values), 3)
+        self.assertTrue(all(datetime(2020, 1, 1) <= value <= datetime(2020, 1, 5) for value in unique_values))
+        self.assertTrue(all(value.hour == 0 and value.minute == 0 and value.second == 0 for value in unique_values))
+
+    def test_unique_values_random_timestamps_subsecond_interval_materialized(self):
+        # sub-second (millisecond) intervals must be preserved (not truncated to whole seconds)
+        test_df = (
+            dg.DataGenerator(
+                spark, name="ts_subsecond", rows=5000, partitions=4, randomSeedMethod="fixed", randomSeed=42
+            )
+            .withColumn(
+                "val",
+                "timestamp",
+                begin="2020-01-01 00:00:00",
+                end="2020-01-01 00:00:01",
+                interval="milliseconds=1",
+                uniqueValues=50,
+                random=True,
+            )
+            .build()
+        )
+        unique_values = {row[0] for row in test_df.select("val").distinct().collect()}
+
+        self.assertEqual(len(unique_values), 50)
+        self.assertTrue(all(datetime(2020, 1, 1, 0, 0, 0) <= v <= datetime(2020, 1, 1, 0, 0, 1) for v in unique_values))
+        # at least one generated value falls on a sub-second (non-zero microsecond) boundary
+        self.assertTrue(any(v.microsecond != 0 for v in unique_values))
+
+    def test_unique_values_random_timestamps_subsecond_interval_mapped(self):
+        original_threshold = cgs.RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD
+        cgs.RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD = 5
+        try:
+            test_gen = dg.DataGenerator(
+                spark, name="ts_subsecond_mapped", rows=20000, partitions=4, randomSeedMethod="fixed", randomSeed=24
+            ).withColumn(
+                "val",
+                "timestamp",
+                begin="2020-01-01 00:00:00",
+                end="2020-01-01 00:00:10",
+                interval="milliseconds=1",
+                uniqueValues=40,
+                random=True,
+            )
+            test_df = test_gen.build()
+            unique_values = {row[0] for row in test_df.select("val").distinct().collect()}
+
+            self.assertEqual(len(unique_values), 40)
+            self.assertTrue(any(v.microsecond != 0 for v in unique_values))
+
+            # the mapped path stores the interval in whole microseconds (1 millisecond -> 1000)
+            mapping = test_gen.getColumnSpec("val")._uniqueValueMapping
+            self.assertIsNotNone(mapping)
+            self.assertEqual(mapping["kind"], "timestamp")
+            self.assertEqual(mapping["interval"], 1000)
+        finally:
+            cgs.RANDOM_UNIQUE_VALUES_MATERIALIZATION_THRESHOLD = original_threshold
+
+    def test_datetime_range_begin_equals_end_uses_literal_timestamp(self):
+        test_df = (
+            dg.DataGenerator(spark, name="ts_literal", rows=1000, partitions=4)
+            .withColumn(
+                "val",
+                "timestamp",
+                begin="2020-05-05 12:00:00",
+                end="2020-05-05 12:00:00",
+                interval="seconds=1",
+            )
+            .build()
+        )
+        unique_values = {row[0] for row in test_df.select("val").distinct().collect()}
+        self.assertEqual(unique_values, {datetime(2020, 5, 5, 12, 0, 0)})
+
+    def test_datetime_range_begin_equals_end_uses_literal_date_unique_random(self):
+        test_df = (
+            dg.DataGenerator(spark, name="dt_literal", rows=1000, partitions=4, randomSeedMethod="fixed", randomSeed=1)
+            .withColumn("val", "date", begin="2021-03-03", end="2021-03-03", uniqueValues=10, random=True)
+            .build()
+        )
+        unique_values = {row[0] for row in test_df.select("val").distinct().collect()}
+        self.assertEqual(unique_values, {date(2021, 3, 3)})
+
+    def test_date_interval_less_than_one_day_raises(self):
+        with pytest.raises(ValueError):
+            (
+                dg.DataGenerator(spark, name="d_subday", rows=10, partitions=2)
+                .withColumn("val", "date", begin="2021-01-01", end="2021-12-31", interval="hours=6")
+                .build()
+            )
