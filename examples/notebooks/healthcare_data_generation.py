@@ -32,8 +32,6 @@
 
 # COMMAND ----------
 # MAGIC %pip install dbldatagen
-
-# COMMAND ----------
 # MAGIC %restart_python
 
 # COMMAND ----------
