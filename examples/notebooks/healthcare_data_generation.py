@@ -24,7 +24,7 @@
 # MAGIC - **Weighted categorical values** for realistic distributions (`values` + `weights`)
 # MAGIC - **Statistical distributions** (`Normal`, `Exponential`) for vitals and financials
 # MAGIC - **SQL expressions** (`expr`) to derive columns from one another (e.g. dates, flags)
-# MAGIC - **Correlated columns** — keeping a code and its description in sync via a shared base column
+# MAGIC - **Correlated columns** — keeping a code and its description in sync via a shared index column
 # MAGIC - **Referential integrity** — child tables that reference real parent rows via a join
 # MAGIC
 # MAGIC > **Runtime**: Databricks 13.3 LTS or above (Unity Catalog supported).
@@ -34,7 +34,7 @@
 # MAGIC %pip install dbldatagen
 
 # COMMAND ----------
-dbutils.library.restartPython()
+# MAGIC %restart_python
 
 # COMMAND ----------
 from typing import Sequence
@@ -84,65 +84,66 @@ patient_spec = (
                      randomSeedMethod="hash_fieldname")
     .withIdOutput()
     # --- Identity ---
-    .withColumn("patient_id",          "string", prefix="PAT-", baseColumn="id")
-    .withColumn("first_name",          "string",
-                values=["James","Maria","David","Sarah","Wei","Aisha","Carlos","Priya",
-                        "Mohammed","Emily","Robert","Linda","Michael","Barbara","William","Patricia"],
+    .withColumn("patient_id", "string", prefix="PAT", baseColumn="id")
+    .withColumn("first_name", "string",
+                values=["James", "Maria", "David", "Sarah", "Wei", "Aisha", "Carlos", "Priya",
+                        "Mohammed", "Emily", "Robert", "Linda", "Michael", "Barbara", "William", "Patricia"],
                 random=True)
-    .withColumn("last_name",           "string",
-                values=["Smith","Johnson","Williams","Brown","Jones","Garcia","Miller","Davis",
-                        "Wilson","Moore","Taylor","Anderson","Thomas","Jackson","White","Harris"],
+    .withColumn("last_name", "string",
+                values=["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis",
+                        "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris"],
                 random=True)
-    .withColumn("date_of_birth",       "date",
+    .withColumn("date_of_birth", "date",
                 begin="1930-01-01", end="2024-01-01", random=True)
-    .withColumn("gender",              "string",
-                values=["Male","Female","Non-binary","Unknown"],
+    .withColumn("gender", "string",
+                values=["Male", "Female", "Non-binary", "Unknown"],
                 weights=[48, 48, 3, 1])
-    .withColumn("race",                "string",
-                values=["White","Black or African American","Asian","Hispanic or Latino",
-                        "American Indian or Alaska Native","Native Hawaiian","Two or More","Unknown"],
+    .withColumn("race", "string",
+                values=["White", "Black or African American", "Asian", "Hispanic or Latino",
+                        "American Indian or Alaska Native", "Native Hawaiian", "Two or More", "Unknown"],
                 weights=[60, 13, 6, 18, 1, 0.5, 1.5, 0])
-    .withColumn("ethnicity",           "string",
-                values=["Not Hispanic or Latino","Hispanic or Latino","Unknown"],
+    .withColumn("ethnicity", "string",
+                values=["Not Hispanic or Latino", "Hispanic or Latino", "Unknown"],
                 weights=[77, 18, 5])
     # --- Contact ---
-    .withColumn("address_state",       "string",
-                values=["CA","TX","NY","FL","IL","PA","OH","GA","NC","MI",
-                        "NJ","WA","AZ","MA","TN","IN","MO","MD","WI","CO"],
-                weights=[12,9,8,7,5,4,4,4,4,3,3,3,3,3,2,2,2,2,2,2])
-    .withColumn("zip_code",            "string", template=r"ddddd")
-    .withColumn("phone",               "string", template=r"(ddd) ddd-dddd")
+    .withColumn("address_state", "string",
+                values=["CA", "TX", "NY", "FL", "IL", "PA", "OH", "GA", "NC", "MI",
+                        "NJ", "WA", "AZ", "MA", "TN", "IN", "MO", "MD", "WI", "CO"],
+                weights=[12, 9, 8, 7, 5, 4, 4, 4, 4, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2])
+    .withColumn("zip_code", "string", template=r"ddddd")
+    .withColumn("phone", "string", template=r"(ddd) ddd-dddd")
     # --- Clinical profile ---
-    .withColumn("blood_type",          "string",
-                values=["O+","A+","B+","AB+","O-","A-","B-","AB-"],
+    .withColumn("blood_type", "string",
+                values=["O+", "A+", "B+", "AB+", "O-", "A-", "B-", "AB-"],
                 weights=[38, 34, 9, 3, 7, 6, 2, 1])
-    .withColumn("smoking_status",      "string",
-                values=["Never","Former","Current","Unknown"],
+    .withColumn("smoking_status", "string",
+                values=["Never", "Former", "Current", "Unknown"],
                 weights=[55, 25, 15, 5])
-    .withColumn("bmi_category",        "string",
-                values=["Underweight","Normal","Overweight","Obese"],
+    .withColumn("bmi_category", "string",
+                values=["Underweight", "Normal", "Overweight", "Obese"],
                 weights=[3, 32, 34, 31])
-    .withColumn("primary_language",    "string",
-                values=["English","Spanish","Chinese","Vietnamese","Arabic","French","Other"],
+    .withColumn("primary_language", "string",
+                values=["English", "Spanish", "Chinese", "Vietnamese", "Arabic", "French", "Other"],
                 weights=[78, 13, 2, 1, 1, 1, 4])
     # --- Insurance ---
-    .withColumn("insurance_type",      "string",
-                values=["Commercial","Medicare","Medicaid","Self-Pay","Military","Other"],
+    .withColumn("insurance_type", "string",
+                values=["Commercial", "Medicare", "Medicaid", "Self-Pay", "Military", "Other"],
                 weights=[48, 20, 17, 8, 4, 3])
-    .withColumn("insurance_plan_id",   "string", template=r"INS-ddddddd", random=True)
-    .withColumn("member_id",           "string", template=r"MBR-ddddddddd", random=True)
+    .withColumn("insurance_plan_id", "string", template=r"INS-ddddddd", random=True)
+    .withColumn("member_id", "string", template=r"MBR-ddddddddd", random=True)
     # --- Care assignment ---
-    .withColumn("primary_care_npi",    "string", template=r"dddddddddd", random=True)
+    .withColumn("primary_care_npi", "string", template=r"dddddddddd", random=True)
     # Register the patient on a random day between their birth date and the present,
     # so registration is always after birth (demonstrates deriving one column from another).
-    .withColumn("registration_date",   "date",
+    .withColumn("registration_date", "date",
                 expr="date_add(date_of_birth, cast(rand() * datediff(date'2024-06-01', date_of_birth) as int))")
-    .withColumn("is_active",           "boolean",
+    .withColumn("is_active", "boolean",
                 expr="registration_date >= date'2015-01-01'")
 )
 
 patients_df = patient_spec.build()
 patients_df.createOrReplaceTempView("patients")
+
 print(f"Patients generated: {patients_df.count():,}")
 display(patients_df.limit(5))
 
@@ -165,29 +166,29 @@ PROVIDER_COUNT = 5_000
 # A representative (deliberately short) list of specialties. Nurse Practitioner and
 # Physician Assistant are kept as explicit special cases for the credential rule below.
 specialties = [
-    "Internal Medicine","Family Medicine","Pediatrics","Cardiology","Oncology",
-    "Orthopedics","Emergency Medicine","Obstetrics & Gynecology","General Surgery",
-    "Psychiatry","Nurse Practitioner","Physician Assistant",
+    "Internal Medicine", "Family Medicine", "Pediatrics", "Cardiology", "Oncology",
+    "Orthopedics", "Emergency Medicine", "Obstetrics & Gynecology", "General Surgery",
+    "Psychiatry", "Nurse Practitioner", "Physician Assistant",
 ]
 
 provider_spec = (
     dg.DataGenerator(spark, name="providers", rows=PROVIDER_COUNT, partitions=4,
                      randomSeedMethod="hash_fieldname")
     .withIdOutput()
-    .withColumn("provider_id",         "string", prefix="PRV-", baseColumn="id")
-    .withColumn("npi",                 "string", template=r"dddddddddd", random=True)
-    .withColumn("first_name",          "string",
-                values=["James","Maria","David","Sarah","Wei","Aisha","Carlos",
-                        "Robert","Linda","Michael","William","Patricia","John","Jennifer"],
+    .withColumn("provider_id", "string", prefix="PRV", baseColumn="id")
+    .withColumn("npi", "string", template=r"dddddddddd", random=True)
+    .withColumn("first_name", "string",
+                values=["James", "Maria", "David", "Sarah", "Wei", "Aisha", "Carlos",
+                        "Robert", "Linda", "Michael", "William", "Patricia", "John", "Jennifer"],
                 random=True)
-    .withColumn("last_name",           "string",
-                values=["Smith","Johnson","Williams","Brown","Jones","Garcia","Miller",
-                        "Davis","Wilson","Moore","Taylor","Anderson","Thomas","Jackson"],
+    .withColumn("last_name", "string",
+                values=["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller",
+                        "Davis", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson"],
                 random=True)
-    .withColumn("specialty",           "string", values=specialties, random=True)
+    .withColumn("specialty", "string", values=specialties, random=True)
     # Credential follows from the specialty: NP/PA are explicit, everyone else is a
     # physician (mostly MD, some DO).
-    .withColumn("credential",          "string",
+    .withColumn("credential", "string",
                 expr="""
                     CASE
                         WHEN specialty = 'Nurse Practitioner'  THEN 'NP'
@@ -197,7 +198,7 @@ provider_spec = (
                     END
                 """)
     # Sub-specialty: a handful of meaningful cases, everything else falls through to 'General'.
-    .withColumn("sub_specialty",       "string",
+    .withColumn("sub_specialty", "string",
                 expr="""
                     CASE specialty
                         WHEN 'Cardiology'  THEN 'Interventional Cardiology'
@@ -207,23 +208,24 @@ provider_spec = (
                         ELSE 'General'
                     END
                 """)
-    .withColumn("facility_id",         "string", template=r"FAC-ddddd", random=True)
-    .withColumn("facility_type",       "string",
-                values=["Hospital","Outpatient Clinic","ASC","Urgent Care",
-                        "Telehealth","Long-Term Care","Rehab Center"],
+    .withColumn("facility_id", "string", template=r"FAC-ddddd", random=True)
+    .withColumn("facility_type", "string",
+                values=["Hospital", "Outpatient Clinic", "ASC", "Urgent Care",
+                        "Telehealth", "Long-Term Care", "Rehab Center"],
                 weights=[30, 35, 10, 10, 8, 4, 3])
-    .withColumn("state",               "string",
-                values=["CA","TX","NY","FL","IL","PA","OH","GA","NC","MI",
-                        "NJ","WA","AZ","MA","TN","IN","MO","MD","WI","CO"],
+    .withColumn("state", "string",
+                values=["CA", "TX", "NY", "FL", "IL", "PA", "OH", "GA", "NC", "MI",
+                        "NJ", "WA", "AZ", "MA", "TN", "IN", "MO", "MD", "WI", "CO"],
                 random=True)
-    .withColumn("accepting_patients",  "boolean", expr="rand() < 0.7")
-    .withColumn("years_experience",    "integer",
+    .withColumn("accepting_patients", "boolean", expr="rand() < 0.7")
+    .withColumn("years_experience", "integer",
                 minValue=1, maxValue=40, random=True,
                 distribution=dg.distributions.Normal(mean=15, stddev=8))
 )
 
 providers_df = provider_spec.build()
 providers_df.createOrReplaceTempView("providers")
+
 print(f"Providers generated: {providers_df.count():,}")
 display(providers_df.limit(5))
 
@@ -249,66 +251,65 @@ encounter_spec = (
     dg.DataGenerator(spark, name="encounters", rows=ENCOUNTER_COUNT, partitions=16,
                      randomSeedMethod="hash_fieldname")
     .withIdOutput()
-    .withColumn("encounter_id",        "string", prefix="ENC-", baseColumn="id")
+    .withColumn("encounter_id", "string", prefix="ENC", baseColumn="id")
     # Foreign keys into patients (0..PATIENT_COUNT-1) and providers (0..PROVIDER_COUNT-1).
-    .withColumn("patient_id",          "string",
-                expr=f"concat('PAT-', cast(rand() * {PATIENT_COUNT} as int))")
-    .withColumn("provider_id",         "string",
-                expr=f"concat('PRV-', cast(rand() * {PROVIDER_COUNT} as int))")
-    .withColumn("facility_id",         "string", template=r"FAC-ddddd", random=True)
+    .withColumn("patient_id", "string",
+                expr=f"concat('PAT_', cast(rand() * {PATIENT_COUNT} as int))")
+    .withColumn("provider_id", "string",
+                expr=f"concat('PRV_', cast(rand() * {PROVIDER_COUNT} as int))")
+    .withColumn("facility_id", "string", template=r"FAC-ddddd", random=True)
     # Encounter metadata
-    .withColumn("encounter_type",      "string",
-                values=["Inpatient","Outpatient","Emergency","Telehealth",
-                        "Urgent Care","Observation","Home Health","Preventive"],
+    .withColumn("encounter_type", "string",
+                values=["Inpatient", "Outpatient", "Emergency", "Telehealth",
+                        "Urgent Care", "Observation", "Home Health", "Preventive"],
                 weights=[15, 40, 12, 15, 8, 4, 3, 3])
-    .withColumn("admit_date",          "date",
+    .withColumn("admit_date", "date",
                 begin="2019-01-01", end="2024-12-31", random=True)
     .withColumn("length_of_stay_days", "integer",
                 minValue=0, maxValue=60, random=True,
                 distribution=dg.distributions.Exponential(rate=0.5))
-    .withColumn("discharge_date",      "date",
+    .withColumn("discharge_date", "date",
                 expr="date_add(admit_date, length_of_stay_days)")
-    .withColumn("discharge_disposition","string",
-                values=["Home","SNF","Rehab","Home with Services","AMA","Expired","Transfer","Hospice"],
+    .withColumn("discharge_disposition", "string",
+                values=["Home", "SNF", "Rehab", "Home with Services", "AMA", "Expired", "Transfer", "Hospice"],
                 weights=[65, 10, 5, 10, 2, 1, 5, 2])
-    .withColumn("chief_complaint",     "string",
-                values=["Chest pain","Shortness of breath","Abdominal pain","Fever","Headache",
-                        "Back pain","Dizziness","Nausea/vomiting","Follow-up","Annual exam",
-                        "Cough","Fatigue","Rash","Injury","Mental health","Other"],
-                weights=[8,7,8,7,6,7,5,5,12,8,5,5,3,5,4,6])
-    .withColumn("visit_type",          "string",
-                values=["Scheduled","Unscheduled","Follow-up","Referral","Walk-in","Transfer"],
+    .withColumn("chief_complaint", "string",
+                values=["Chest pain", "Shortness of breath", "Abdominal pain", "Fever", "Headache",
+                        "Back pain", "Dizziness", "Nausea/vomiting", "Follow-up", "Annual exam",
+                        "Cough", "Fatigue", "Rash", "Injury", "Mental health", "Other"],
+                weights=[8, 7, 8, 7, 6, 7, 5, 5, 12, 8, 5, 5, 3, 5, 4, 6])
+    .withColumn("visit_type", "string",
+                values=["Scheduled", "Unscheduled", "Follow-up", "Referral", "Walk-in", "Transfer"],
                 weights=[35, 20, 25, 10, 7, 3])
-    .withColumn("department",          "string",
-                values=["Internal Medicine","Emergency","Cardiology","Orthopedics",
-                        "Oncology","Neurology","OB/GYN","Pediatrics","Psychiatry","Surgery"],
+    .withColumn("department", "string",
+                values=["Internal Medicine", "Emergency", "Cardiology", "Orthopedics",
+                        "Oncology", "Neurology", "OB/GYN", "Pediatrics", "Psychiatry", "Surgery"],
                 weights=[20, 15, 12, 10, 8, 8, 7, 8, 6, 6])
     # Vitals snapshot — Normal distributions centred on clinically typical values.
-    .withColumn("systolic_bp",         "integer",
+    .withColumn("systolic_bp", "integer",
                 minValue=80, maxValue=220, random=True,
                 distribution=dg.distributions.Normal(mean=122, stddev=18))
-    .withColumn("diastolic_bp",        "integer",
+    .withColumn("diastolic_bp", "integer",
                 minValue=50, maxValue=130, random=True,
                 distribution=dg.distributions.Normal(mean=79, stddev=12))
-    .withColumn("heart_rate",          "integer",
+    .withColumn("heart_rate", "integer",
                 minValue=40, maxValue=180, random=True,
                 distribution=dg.distributions.Normal(mean=75, stddev=15))
-    .withColumn("temperature_f",       "double",
+    .withColumn("temperature_f", "double",
                 minValue=96.0, maxValue=106.0, random=True,
                 distribution=dg.distributions.Normal(mean=98.6, stddev=1.0))
-    .withColumn("o2_saturation_pct",   "integer",
+    .withColumn("o2_saturation_pct", "integer",
                 minValue=85, maxValue=100, random=True,
                 distribution=dg.distributions.Normal(mean=97, stddev=2))
     # Financial — Exponential gives a long right tail (most charges small, a few very large).
-    .withColumn("total_charge_usd",    "double",
+    .withColumn("total_charge_usd", "double",
                 minValue=50.0, maxValue=500_000.0, random=True,
                 distribution=dg.distributions.Exponential(rate=0.00005))
 )
 
-# Cache encounters: it is the parent table joined by the four child tables below
-# (to inherit consistent foreign keys) and is read again by the analytics queries.
-encounters_df = encounter_spec.build().cache()
+encounters_df = encounter_spec.build()
 encounters_df.createOrReplaceTempView("encounters")
+
 print(f"Encounters generated: {encounters_df.count():,}")
 display(encounters_df.limit(5))
 
@@ -360,10 +361,10 @@ DIAGNOSIS_COUNT = 2_000_000
 
 # Representative ICD-10 codes paired position-for-position with their descriptions.
 icd10_codes = [
-    "I10","E11.9","E11.65","J06.9","M54.5","Z00.00","K21.0","F41.1","I25.10",
-    "E78.5","J44.1","N18.3","F32.9","M79.3","Z12.11","I50.9","E13.9","G47.33",
-    "K57.30","M17.11","J45.909","N39.0","I48.91","E11.40","Z23","R05.9","M47.816",
-    "I63.9","G43.909","F03.90"
+    "I10", "E11.9", "E11.65", "J06.9", "M54.5", "Z00.00", "K21.0", "F41.1", "I25.10",
+    "E78.5", "J44.1", "N18.3", "F32.9", "M79.3", "Z12.11", "I50.9", "E13.9", "G47.33",
+    "K57.30", "M17.11", "J45.909", "N39.0", "I48.91", "E11.40", "Z23", "R05.9", "M47.816",
+    "I63.9", "G43.909", "F03.90"
 ]
 icd10_descriptions = [
     "Essential (primary) hypertension",
@@ -402,40 +403,42 @@ diagnosis_spec = (
     dg.DataGenerator(spark, name="diagnoses", rows=DIAGNOSIS_COUNT, partitions=16,
                      randomSeedMethod="hash_fieldname")
     .withIdOutput()
-    .withColumn("diagnosis_id",        "string", prefix="DX-", baseColumn="id")
-    .withColumn("encounter_id",        "string",
-                expr=f"concat('ENC-', cast(rand() * {ENCOUNTER_COUNT} as int))")
+    .withColumn("diagnosis_id", "string", prefix="DX", baseColumn="id")
+    .withColumn("encounter_id", "string",
+                expr=f"concat('ENC_', cast(rand() * {ENCOUNTER_COUNT} as int))")
     # Omitted index for matching entries across lists of values
-    .withColumn("code_index",          "integer",
+    .withColumn("code_index", "integer",
                 minValue=0, maxValue=len(icd10_codes) - 1, random=True, omit=True)
-    .withColumn("icd10_code",          "string",
+    .withColumn("icd10_code", "string",
                 expr=f"element_at({sql_array(icd10_codes)}, code_index + 1)")
-    .withColumn("icd10_description",   "string",
+    .withColumn("icd10_description", "string",
                 expr=f"element_at({sql_array(icd10_descriptions)}, code_index + 1)")
-    .withColumn("diagnosis_type",      "string",
-                values=["Primary","Secondary","Tertiary","Admitting","Discharge"],
+    .withColumn("diagnosis_type", "string",
+                values=["Primary", "Secondary", "Tertiary", "Admitting", "Discharge"],
                 weights=[35, 40, 10, 8, 7])
-    .withColumn("diagnosis_date",      "date",
+    .withColumn("diagnosis_date", "date",
                 begin="2019-01-01", end="2024-12-31", random=True)
-    .withColumn("is_chronic",          "boolean",
+    .withColumn("is_chronic", "boolean",
                 expr="""icd10_code IN (
                     'I10','E11.9','E11.65','I25.10','E78.5','J44.1','N18.3',
                     'F32.9','I50.9','G47.33','M17.11','J45.909','I48.91','E11.40','F03.90'
                 )""")
-    .withColumn("onset_type",          "string",
-                values=["Acute","Chronic","Acute-on-Chronic","Unknown"],
+    .withColumn("onset_type", "string",
+                values=["Acute", "Chronic", "Acute-on-Chronic", "Unknown"],
                 weights=[35, 40, 15, 10])
-    .withColumn("severity",            "string",
-                values=["Mild","Moderate","Severe","Critical","Unspecified"],
+    .withColumn("severity", "string",
+                values=["Mild", "Moderate", "Severe", "Critical", "Unspecified"],
                 weights=[30, 35, 20, 5, 10])
-    .withColumn("clinician_notes",     "string",
-                values=["Stable","Worsening","Improving","New onset","Under treatment",
-                        "Resolved","Monitoring","Referred"],
+    .withColumn("clinician_notes", "string",
+                values=["Stable", "Worsening", "Improving", "New onset", "Under treatment",
+                        "Resolved", "Monitoring", "Referred"],
                 random=True)
 )
 
-diagnoses_df = add_encounter_columns(diagnosis_spec.build(), columns=("patient_id",))
+diagnoses_df = diagnosis_spec.build()
+diagnoses_df = add_encounter_columns(diagnoses_df, columns=("patient_id",))
 diagnoses_df.createOrReplaceTempView("diagnoses")
+
 print(f"Diagnoses generated: {diagnoses_df.count():,}")
 display(diagnoses_df.limit(5))
 
@@ -456,67 +459,69 @@ display(diagnoses_df.limit(5))
 MEDICATION_COUNT = 1_000_000
 
 medications = [
-    "Lisinopril","Metformin","Atorvastatin","Amlodipine","Metoprolol Succinate",
-    "Omeprazole","Levothyroxine","Albuterol","Gabapentin","Hydrochlorothiazide",
-    "Sertraline","Losartan","Montelukast","Furosemide","Pantoprazole",
-    "Escitalopram","Bupropion","Duloxetine","Rosuvastatin","Empagliflozin"
+    "Lisinopril", "Metformin", "Atorvastatin", "Amlodipine", "Metoprolol Succinate",
+    "Omeprazole", "Levothyroxine", "Albuterol", "Gabapentin", "Hydrochlorothiazide",
+    "Sertraline", "Losartan", "Montelukast", "Furosemide", "Pantoprazole",
+    "Escitalopram", "Bupropion", "Duloxetine", "Rosuvastatin", "Empagliflozin"
 ]
 # NDC labeler prefixes, paired position-for-position with the drugs above.
 ndc_prefixes = [
-    "00006","00071","00185","00378","00555","00603","00677","00781","00904","16714",
-    "43598","45963","50111","51079","55111","60505","62037","65862","68180","72205"
+    "00006", "00071", "00185", "00378", "00555", "00603", "00677", "00781", "00904", "16714",
+    "43598", "45963", "50111", "51079", "55111", "60505", "62037", "65862", "68180", "72205"
 ]
 
 medication_spec = (
     dg.DataGenerator(spark, name="medications", rows=MEDICATION_COUNT, partitions=16,
                      randomSeedMethod="hash_fieldname")
     .withIdOutput()
-    .withColumn("prescription_id",     "string", prefix="RX-", baseColumn="id")
-    .withColumn("encounter_id",        "string",
-                expr=f"concat('ENC-', cast(rand() * {ENCOUNTER_COUNT} as int))")
+    .withColumn("prescription_id", "string", prefix="RX", baseColumn="id")
+    .withColumn("encounter_id", "string",
+                expr=f"concat('ENC_', cast(rand() * {ENCOUNTER_COUNT} as int))")
     # Omitted index for matching entries across lists of values
-    .withColumn("drug_index",          "integer",
+    .withColumn("drug_index", "integer",
                 minValue=0, maxValue=len(medications) - 1, random=True, omit=True)
-    .withColumn("drug_name",           "string",
+    .withColumn("drug_name", "string",
                 expr=f"element_at({sql_array(medications)}, drug_index + 1)")
-    .withColumn("ndc_code",            "string",
+    .withColumn("ndc_code", "string",
                 expr=f"element_at({sql_array(ndc_prefixes)}, drug_index + 1)")
-    .withColumn("dose",                "double",
+    .withColumn("dose", "double",
                 values=[2.5, 5.0, 10.0, 20.0, 25.0, 40.0, 50.0, 80.0, 100.0, 500.0],
                 random=True)
-    .withColumn("dose_unit",           "string",
-                values=["mg","mcg","mL","units","puffs"],
+    .withColumn("dose_unit", "string",
+                values=["mg", "mcg", "mL", "units", "puffs"],
                 weights=[70, 15, 8, 4, 3])
-    .withColumn("route",               "string",
-                values=["Oral","Intravenous","Subcutaneous","Topical","Inhaled","Sublingual","Intramuscular"],
+    .withColumn("route", "string",
+                values=["Oral", "Intravenous", "Subcutaneous", "Topical", "Inhaled", "Sublingual", "Intramuscular"],
                 weights=[70, 10, 8, 5, 4, 2, 1])
-    .withColumn("frequency",           "string",
-                values=["Once daily","Twice daily","Three times daily","Four times daily",
-                        "Every 8 hours","As needed","Weekly","Monthly"],
+    .withColumn("frequency", "string",
+                values=["Once daily", "Twice daily", "Three times daily", "Four times daily",
+                        "Every 8 hours", "As needed", "Weekly", "Monthly"],
                 weights=[40, 25, 10, 5, 8, 7, 3, 2])
-    .withColumn("days_supply",         "integer",
+    .withColumn("days_supply", "integer",
                 values=[7, 14, 30, 60, 90],
                 weights=[5, 5, 50, 20, 20])
-    .withColumn("refills_authorized",  "integer",
+    .withColumn("refills_authorized", "integer",
                 minValue=0, maxValue=12, random=True,
                 distribution=dg.distributions.Normal(mean=3, stddev=2))
-    .withColumn("refills_dispensed",   "integer",
+    .withColumn("refills_dispensed", "integer",
                 minValue=0, maxValue=12, random=True)
-    .withColumn("prescribed_date",     "date",
+    .withColumn("prescribed_date", "date",
                 begin="2019-01-01", end="2024-12-31", random=True)
-    .withColumn("is_generic",          "boolean",
+    .withColumn("is_generic", "boolean",
                 expr="rand() > 0.35")
     # Adherence: patient filled >=80% of authorized refills.
-    .withColumn("is_adherent",         "boolean",
+    .withColumn("is_adherent", "boolean",
                 expr="refills_dispensed >= (refills_authorized * 0.8)")
-    .withColumn("pharmacy_id",         "string", template=r"PHR-ddddd", random=True)
-    .withColumn("formulary_tier",      "integer",
+    .withColumn("pharmacy_id", "string", template=r"PHR-ddddd", random=True)
+    .withColumn("formulary_tier", "integer",
                 minValue=1, maxValue=5, random=True,
                 distribution=dg.distributions.Normal(mean=2, stddev=1))
 )
 
-medications_df = add_encounter_columns(medication_spec.build(), columns=("patient_id", "provider_id"))
+medications_df = medication_spec.build()
+medications_df = add_encounter_columns(medications_df, columns=("patient_id", "provider_id"))
 medications_df.createOrReplaceTempView("medications")
+
 # Compute the row count and non-adherent count in a single pass instead of scanning twice.
 rx_stats = medications_df.selectExpr(
     "count(*) AS total_rx",
@@ -546,46 +551,46 @@ display(medications_df.limit(5))
 LAB_COUNT = 2_000_000
 
 # Common LOINC codes with their names and typical reference ranges — paired by position.
-loinc_codes     = ["2345-7","2160-0","17861-6","2093-3","2085-9","4548-4","33914-3",
-                   "2823-3","2951-2","6768-6","1742-6","1920-8","2532-0","6298-4",
-                   "2028-9","718-7","777-3","26515-7","3094-0","1975-2"]
-loinc_names     = ["Glucose","Creatinine","Calcium","Cholesterol Total","HDL Cholesterol",
-                   "Hemoglobin A1c","eGFR","Potassium","Sodium","Alkaline Phosphatase",
-                   "ALT","AST","LDH","Potassium (plasma)","CO2","Hemoglobin",
-                   "Platelets","Platelets (auto)","BUN","Bilirubin Total"]
-ref_range_low   = [70,  0.6, 8.5, 0,   40,  0,   60, 3.5, 135, 44,  7,  10, 140, 3.5, 22, 12.0, 150, 150, 7,  0.2]
-ref_range_high  = [100, 1.2, 10.5,200, 60,  5.7, 999,5.0, 145, 147, 56, 40, 280, 5.0, 29, 17.5, 400, 400, 20, 1.2]
+loinc_codes = ["2345-7", "2160-0", "17861-6", "2093-3", "2085-9", "4548-4", "33914-3",
+               "2823-3", "2951-2", "6768-6", "1742-6", "1920-8", "2532-0", "6298-4",
+               "2028-9", "718-7", "777-3", "26515-7", "3094-0", "1975-2"]
+loinc_names = ["Glucose", "Creatinine", "Calcium", "Cholesterol Total", "HDL Cholesterol",
+               "Hemoglobin A1c", "eGFR", "Potassium", "Sodium", "Alkaline Phosphatase",
+               "ALT", "AST", "LDH", "Potassium (plasma)", "CO2", "Hemoglobin",
+               "Platelets", "Platelets (auto)", "BUN", "Bilirubin Total"]
+ref_range_low = [70, 0.6, 8.5, 0, 40, 0, 60, 3.5, 135, 44, 7, 10, 140, 3.5, 22, 12.0, 150, 150, 7, 0.2]
+ref_range_high = [100, 1.2, 10.5, 200, 60, 5.7, 999, 5.0, 145, 147, 56, 40, 280, 5.0, 29, 17.5, 400, 400, 20, 1.2]
 
 lab_spec = (
     dg.DataGenerator(spark, name="lab_results", rows=LAB_COUNT, partitions=16,
                      randomSeedMethod="hash_fieldname")
     .withIdOutput()
-    .withColumn("lab_result_id",       "string", prefix="LAB-", baseColumn="id")
-    .withColumn("encounter_id",        "string",
-                expr=f"concat('ENC-', cast(rand() * {ENCOUNTER_COUNT} as int))")
+    .withColumn("lab_result_id", "string", prefix="LAB", baseColumn="id")
+    .withColumn("encounter_id", "string",
+                expr=f"concat('ENC_', cast(rand() * {ENCOUNTER_COUNT} as int))")
     # Omitted index for matching entries across lists of values
-    .withColumn("test_index",          "integer",
+    .withColumn("test_index", "integer",
                 minValue=0, maxValue=len(loinc_codes) - 1, random=True, omit=True)
-    .withColumn("loinc_code",          "string",
+    .withColumn("loinc_code", "string",
                 expr=f"element_at({sql_array(loinc_codes)}, test_index + 1)")
-    .withColumn("test_name",           "string",
+    .withColumn("test_name", "string",
                 expr=f"element_at({sql_array(loinc_names)}, test_index + 1)")
     .withColumn("reference_range_low", "double",
                 expr=f"element_at({sql_array(ref_range_low)}, test_index + 1)")
-    .withColumn("reference_range_high","double",
+    .withColumn("reference_range_high", "double",
                 expr=f"element_at({sql_array(ref_range_high)}, test_index + 1)")
     # Draw the result around this test's own reference band; the *1.2 spread with a -0.15
     # offset lets a realistic minority of results fall below low / above high.
-    .withColumn("result_value",        "double",
-                expr="round(reference_range_low + (rand() - 0.15) * 1.2 * "
-                     "(reference_range_high - reference_range_low), 2)")
-    .withColumn("result_unit",         "string",
-                values=["mg/dL","mmol/L","g/dL","%","U/L","mEq/L","10^3/uL","mL/min/1.73m2"],
+    .withColumn("result_value", "double",
+                expr="greatest(round(reference_range_low + (rand() - 0.15) * 1.2 * "
+                     "(reference_range_high - reference_range_low), 2), 0.0)")
+    .withColumn("result_unit", "string",
+                values=["mg/dL", "mmol/L", "g/dL", "%", "U/L", "mEq/L", "10^3/uL", "mL/min/1.73m2"],
                 random=True)
     # Flag results outside the (correlated) reference range.
-    .withColumn("is_abnormal",         "boolean",
+    .withColumn("is_abnormal", "boolean",
                 expr="result_value < reference_range_low OR result_value > reference_range_high")
-    .withColumn("abnormal_flag",       "string",
+    .withColumn("abnormal_flag", "string",
                 expr="""
                     CASE
                         WHEN result_value < reference_range_low  THEN 'L'
@@ -593,22 +598,24 @@ lab_spec = (
                         ELSE 'N'
                     END
                 """)
-    .withColumn("result_status",       "string",
-                values=["Final","Preliminary","Corrected","Cancelled","Entered in Error"],
+    .withColumn("result_status", "string",
+                values=["Final", "Preliminary", "Corrected", "Cancelled", "Entered in Error"],
                 weights=[90, 5, 3, 1, 1])
     .withColumn("collection_datetime", "timestamp",
                 begin="2019-01-01 00:00:00", end="2024-12-31 23:59:59", random=True)
-    .withColumn("resulted_datetime",   "timestamp",
+    .withColumn("resulted_datetime", "timestamp",
                 expr="collection_datetime + interval 2 hours")
-    .withColumn("performing_lab",      "string",
-                values=["Quest Diagnostics","LabCorp","Hospital Lab","Point of Care","Reference Lab"],
+    .withColumn("performing_lab", "string",
+                values=["Quest Diagnostics", "LabCorp", "Hospital Lab", "Point of Care", "Reference Lab"],
                 weights=[30, 30, 25, 10, 5])
-    .withColumn("critical_flag",       "boolean",
+    .withColumn("critical_flag", "boolean",
                 expr="is_abnormal AND rand() < 0.05")
 )
 
-labs_df = add_encounter_columns(lab_spec.build(), columns=("patient_id",))
+labs_df = lab_spec.build()
+labs_df = add_encounter_columns(labs_df, columns=("patient_id",))
 labs_df.createOrReplaceTempView("lab_results")
+
 # One aggregation pass for the row count and both rates (instead of three full scans).
 lab_stats = labs_df.selectExpr(
     "count(*) AS total",
@@ -638,9 +645,9 @@ CLAIM_COUNT = 500_000
 
 # Common CPT (Current Procedural Terminology) codes, paired with descriptions.
 cpt_codes = [
-    "99213","99214","99215","99232","99291","93000","71046","80053","36415",
-    "93306","70553","27447","43239","45378","99285","29881","93510","70450",
-    "99283","97110"
+    "99213", "99214", "99215", "99232", "99291", "93000", "71046", "80053", "36415",
+    "93306", "70553", "27447", "43239", "45378", "99285", "29881", "93510", "70450",
+    "99283", "97110"
 ]
 cpt_descriptions = [
     "Office visit, est. patient moderate complexity",
@@ -669,44 +676,44 @@ claim_spec = (
     dg.DataGenerator(spark, name="insurance_claims", rows=CLAIM_COUNT, partitions=8,
                      randomSeedMethod="hash_fieldname")
     .withIdOutput()
-    .withColumn("claim_id",            "string", prefix="CLM-", baseColumn="id")
-    .withColumn("encounter_id",        "string",
-                expr=f"concat('ENC-', cast(rand() * {ENCOUNTER_COUNT} as int))")
-    .withColumn("payer_id",            "string", template=r"PAY-ddddd", random=True)
-    .withColumn("payer_name",          "string",
-                values=["UnitedHealth","Anthem","Aetna","Cigna","Humana",
-                        "BCBS","Medicare","Medicaid","Centene","Molina"],
+    .withColumn("claim_id", "string", prefix="CLM", baseColumn="id")
+    .withColumn("encounter_id", "string",
+                expr=f"concat('ENC_', cast(rand() * {ENCOUNTER_COUNT} as int))")
+    .withColumn("payer_id", "string", template=r"PAY-ddddd", random=True)
+    .withColumn("payer_name", "string",
+                values=["UnitedHealth", "Anthem", "Aetna", "Cigna", "Humana",
+                        "BCBS", "Medicare", "Medicaid", "Centene", "Molina"],
                 weights=[14, 12, 11, 10, 9, 13, 10, 8, 7, 6])
-    .withColumn("claim_type",          "string",
-                values=["Professional","Institutional","Dental","Vision","Pharmacy"],
+    .withColumn("claim_type", "string",
+                values=["Professional", "Institutional", "Dental", "Vision", "Pharmacy"],
                 weights=[45, 30, 8, 5, 12])
-    .withColumn("service_date",        "date",
+    .withColumn("service_date", "date",
                 begin="2019-01-01", end="2024-12-31", random=True)
-    .withColumn("submission_date",     "date",
+    .withColumn("submission_date", "date",
                 expr="date_add(service_date, cast(rand() * 14 as int))")
     # Omitted index for matching entries across lists of values
-    .withColumn("cpt_index",           "integer",
+    .withColumn("cpt_index", "integer",
                 minValue=0, maxValue=len(cpt_codes) - 1, random=True, omit=True)
-    .withColumn("cpt_code",            "string",
+    .withColumn("cpt_code", "string",
                 expr=f"element_at({sql_array(cpt_codes)}, cpt_index + 1)")
-    .withColumn("cpt_description",     "string",
+    .withColumn("cpt_description", "string",
                 expr=f"element_at({sql_array(cpt_descriptions)}, cpt_index + 1)")
-    .withColumn("diagnosis_code",      "string", values=icd10_codes, random=True)
+    .withColumn("diagnosis_code", "string", values=icd10_codes, random=True)
     # Financials — each amount is a consistent fraction of the one above it.
-    .withColumn("billed_amount",       "double",
+    .withColumn("billed_amount", "double",
                 minValue=50.0, maxValue=250_000.0, random=True,
                 distribution=dg.distributions.Exponential(rate=0.00008))
-    .withColumn("allowed_amount",      "double",
+    .withColumn("allowed_amount", "double",
                 expr="round(billed_amount * (0.3 + rand() * 0.5), 2)")
-    .withColumn("patient_responsibility","double",
+    .withColumn("patient_responsibility", "double",
                 expr="round(allowed_amount * (0.1 + rand() * 0.25), 2)")
-    .withColumn("payer_paid_amount",   "double",
+    .withColumn("payer_paid_amount", "double",
                 expr="round(allowed_amount - patient_responsibility, 2)")
     # Adjudication
-    .withColumn("claim_status",        "string",
-                values=["Paid","Denied","Pending","Partially Paid","Adjusted","Voided"],
+    .withColumn("claim_status", "string",
+                values=["Paid", "Denied", "Pending", "Partially Paid", "Adjusted", "Voided"],
                 weights=[65, 12, 8, 8, 5, 2])
-    .withColumn("denial_reason",       "string",
+    .withColumn("denial_reason", "string", baseColumn="claim_status",
                 expr="""
                     CASE WHEN claim_status = 'Denied' THEN
                         CASE cast(rand() * 5 as int)
@@ -719,16 +726,18 @@ claim_spec = (
                     ELSE NULL
                     END
                 """)
-    .withColumn("place_of_service",    "string",
-                values=["11","21","22","23","24","31","32","81"],
+    .withColumn("place_of_service", "string",
+                values=["11", "21", "22", "23", "24", "31", "32", "81"],
                 weights=[35, 20, 10, 12, 8, 5, 5, 5])
-    .withColumn("drg_code",            "string",
-                values=["470","291","292","871","392","603","065","247","313","281"],
+    .withColumn("drg_code", "string",
+                values=["470", "291", "292", "871", "392", "603", "065", "247", "313", "281"],
                 random=True)
 )
 
-claims_df = add_encounter_columns(claim_spec.build(), columns=("patient_id", "provider_id"))
+claims_df = claim_spec.build()
+claims_df = add_encounter_columns(claims_df, columns=("patient_id", "provider_id"))
 claims_df.createOrReplaceTempView("insurance_claims")
+
 # Row count and denied count in one pass.
 claim_stats = claims_df.selectExpr(
     "count(*) AS total",
