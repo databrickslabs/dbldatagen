@@ -44,6 +44,14 @@ To validate code locally:
 ### Testing
 dbldatagen aims to have the highest possible test coverage. Code should be tested for any new commits.
 
+The repo has three test targets:
+
+| Target | Coverage | Use when |
+|--------|----------|----------|
+| `make test` | yes, `--fail-under=80` | CI runs this; run before pushing |
+| `make test-fast` | no | fastest feedback loop while iterating |
+| `make test-coverage` | yes, + opens HTML | when you want to inspect uncovered lines |
+
 To run unit tests locally:
 
 1. Run the following terminal command in your IDE:
@@ -53,6 +61,16 @@ To run unit tests locally:
 2. Verify that all tests pass.
 3. Open the coverage report in your browser.
 4. Verify that all modified modules have full coverage.
+
+Slow tests (large-row perf / scale workloads) are marked `@pytest.mark.slow` and excluded from the default lane. Run them explicitly with `pytest -m slow`.
+
+#### Coverage gotchas with `pandas_udf`
+
+`dbldatagen/core/engine/columns/faker_pool.py` is omitted from coverage. This is because `coverage.py` installs a `sys.settrace` hook that `cloudpickle` cannot serialise, so any `pandas_udf` in a traced module fails at worker-side pickle-load time. `tests/core/engine/test_faker_pool.py` is therefore excluded from the coverage lane in the `Makefile test` target. To still exercise the file in CI, `make test` runs it as a final no-coverage `pytest` step after the coverage gate, so the 7 faker_pool tests fail the build the same way every other test would. `make test-fast` also runs it (no coverage at all).
+
+**If you add a new module that defines a `pandas_udf`**, add its path to the `omit` list in `.coveragerc-core` and `.coveragerc-all`, skip the corresponding test file under coverage via `--ignore=...` in the `Makefile` `test` target's coverage step, and append it to the final no-coverage `pytest` step at the bottom of the target. Otherwise the coverage run will fail inside the UDF with an opaque cloudpickle error, or the tests will silently stop running in CI.
+
+Bare `pytest --cov` from the shell does NOT apply the `.coveragerc-core` overrides and will crash on `test_faker_pool.py`. Prefer `make test` (honours the overrides; runs faker_pool as a separate no-coverage step) or `make test-fast` (no coverage, runs everything).
 
 ### Submitting a PR
 To submit a pull request:
