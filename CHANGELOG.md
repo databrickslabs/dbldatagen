@@ -5,8 +5,6 @@ All notable changes to the Databricks Labs Data Generator will be documented in 
 
 ### unreleased
 
-- feat: add comprehensive HLS synthetic data notebook to examples ([#356](https://github.com/databrickslabs/dbldatagen/issues/356))
-
 #### Fixed 
 * Refactored `DataAnalyzer` and `BasicStockTickerProvider` to comply with ANSI SQL standards
 * Refactored `Constraint` to treat `_filterExpression` and `_calculatedFilterExpression` as instance variables

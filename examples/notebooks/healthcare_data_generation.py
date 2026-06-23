@@ -12,44 +12,76 @@
 # MAGIC ### Covered Use Cases
 # MAGIC | # | Dataset | Rows | Description |
 # MAGIC |---|---------|------|-------------|
-# MAGIC | 1 | **Patients** | 500 K | Demographics, insurance, blood type, primary care assignment |
-# MAGIC | 2 | **Providers** | 50 K | Physicians, nurses, specialists with NPI, specialty, facility |
-# MAGIC | 3 | **Encounters** | 5 M | Hospital visits, ER admissions, telehealth — linked to patients & providers |
-# MAGIC | 4 | **Diagnoses** | 15 M | ICD-10 coded diagnoses per encounter (multi-row, chronic & acute) |
-# MAGIC | 5 | **Medications** | 10 M | Prescription orders with NDC codes, dosage, and adherence flags |
-# MAGIC | 6 | **Lab Results** | 20 M | Lab test results with LOINC codes, reference ranges, and abnormal flags |
-# MAGIC | 7 | **Insurance Claims** | 3 M | Claims derived from encounters with procedure codes, amounts, and status |
+# MAGIC | 1 | **Patients** | 100 K | Demographics, insurance, blood type, primary care assignment |
+# MAGIC | 2 | **Providers** | 5 K | Physicians, nurses, specialists with NPI, specialty, facility |
+# MAGIC | 3 | **Encounters** | 1 M | Hospital visits, ER admissions, telehealth — linked to patients & providers |
+# MAGIC | 4 | **Diagnoses** | 2 M | ICD-10 coded diagnoses per encounter (multi-row, chronic & acute) |
+# MAGIC | 5 | **Medications** | 1 M | Prescription orders with NDC codes, dosage, and adherence flags |
+# MAGIC | 6 | **Lab Results** | 2 M | Lab test results with LOINC codes, reference ranges, and abnormal flags |
+# MAGIC | 7 | **Insurance Claims** | 500 K | Claims derived from encounters with procedure codes, amounts, and status |
 # MAGIC
-# MAGIC > **Runtime**: Databricks 13.3 LTS or above (Unity Catalog supported).  
+# MAGIC ### What this demo highlights
+# MAGIC - **Weighted categorical values** for realistic distributions (`values` + `weights`)
+# MAGIC - **Statistical distributions** (`Normal`, `Exponential`) for vitals and financials
+# MAGIC - **SQL expressions** (`expr`) to derive columns from one another (e.g. dates, flags)
+# MAGIC - **Correlated columns** — keeping a code and its description in sync via a shared base column
+# MAGIC - **Referential integrity** — child tables that reference real parent rows via a join
+# MAGIC
+# MAGIC > **Runtime**: Databricks 13.3 LTS or above (Unity Catalog supported).
 # MAGIC > **Note**: All data is fully synthetic. No real patient PII, PHI, or medical records are used.
 
 # COMMAND ----------
 # MAGIC %pip install dbldatagen
+
+# COMMAND ----------
 dbutils.library.restartPython()
 
 # COMMAND ----------
-import dbldatagen as dg
-from dbldatagen import DataGenerator
-from pyspark.sql import functions as F
-from pyspark.sql.types import *
+from typing import Sequence
 
+import dbldatagen as dg
+from pyspark.sql import DataFrame
+
+# Let Adaptive Query Execution pick the shuffle partition count for us.
 spark.conf.set("spark.sql.shuffle.partitions", "auto")
+
+
+def sql_array(values: Sequence[str | float | int]) -> str:
+    """Renders a Python list as a Spark SQL ``array(...)`` literal.
+
+    Used together with a hidden random index column and ``element_at`` so that paired
+    lists — e.g. a code and its description — stay correlated: the same index selects
+    the matching entry from each list.
+
+    Args:
+        values: Items to render. String items are quoted; numeric items are rendered
+            as-is.
+
+    Returns:
+        A Spark SQL ``array(...)`` literal, e.g. ``array('A', 'B')`` or ``array(1, 2)``.
+    """
+    items = ", ".join(f"'{v}'" if isinstance(v, str) else str(v) for v in values)
+    return f"array({items})"
 
 # COMMAND ----------
 # MAGIC %md
 # MAGIC ## 1 — Patients
 # MAGIC
-# MAGIC The patient master table — the central entity all other healthcare datasets link to.  
-# MAGIC Includes demographics, contact details, insurance coverage, and care assignment.  
+# MAGIC The patient master table — the central entity all other healthcare datasets link to.
+# MAGIC Includes demographics, contact details, insurance coverage, and care assignment.
 # MAGIC Blood type, smoking status, and BMI bucket are included to support clinical ML use cases.
+# MAGIC
+# MAGIC Note how `registration_date` is derived from `date_of_birth` with an `expr` so a patient is
+# MAGIC never registered before they were born, and `is_active` is in turn derived from
+# MAGIC `registration_date`.
 
 # COMMAND ----------
 
-PATIENT_COUNT = 500_000
+PATIENT_COUNT = 100_000
 
 patient_spec = (
-    DataGenerator(spark, name="patients", rows=PATIENT_COUNT, partitions=16,
-                  randomSeedMethod="hash_fieldname")
+    dg.DataGenerator(spark, name="patients", rows=PATIENT_COUNT, partitions=8,
+                     randomSeedMethod="hash_fieldname")
     .withIdOutput()
     # --- Identity ---
     .withColumn("patient_id",          "string", prefix="PAT-", baseColumn="id")
@@ -101,11 +133,12 @@ patient_spec = (
     .withColumn("member_id",           "string", template=r"MBR-ddddddddd", random=True)
     # --- Care assignment ---
     .withColumn("primary_care_npi",    "string", template=r"dddddddddd", random=True)
+    # Register the patient on a random day between their birth date and the present,
+    # so registration is always after birth (demonstrates deriving one column from another).
     .withColumn("registration_date",   "date",
-                begin="2000-01-01", end="2024-06-01", random=True)
+                expr="date_add(date_of_birth, cast(rand() * datediff(date'2024-06-01', date_of_birth) as int))")
     .withColumn("is_active",           "boolean",
-                expr="registration_date >= '2015-01-01'",
-                random=True)
+                expr="registration_date >= date'2015-01-01'")
 )
 
 patients_df = patient_spec.build()
@@ -117,26 +150,29 @@ display(patients_df.limit(5))
 # MAGIC %md
 # MAGIC ## 2 — Providers
 # MAGIC
-# MAGIC Healthcare providers: physicians, nurses, specialists, and allied health professionals.  
-# MAGIC Each provider has a unique NPI (National Provider Identifier), specialty, and facility assignment.  
+# MAGIC Healthcare providers: physicians, nurses, specialists, and allied health professionals.
+# MAGIC Each provider has a unique NPI (National Provider Identifier), specialty, and facility assignment.
 # MAGIC This table is the "provider" dimension that encounters and prescriptions reference.
+# MAGIC
+# MAGIC `credential` and `sub_specialty` are derived from `specialty` with `CASE` expressions — a few
+# MAGIC special cases plus a default keeps each provider internally consistent (no "Nurse Practitioner"
+# MAGIC carrying an `MD` credential) without an exhaustive rule for every specialty.
 
 # COMMAND ----------
 
-PROVIDER_COUNT = 50_000
+PROVIDER_COUNT = 5_000
 
-# Common medical specialties
+# A representative (deliberately short) list of specialties. Nurse Practitioner and
+# Physician Assistant are kept as explicit special cases for the credential rule below.
 specialties = [
     "Internal Medicine","Family Medicine","Pediatrics","Cardiology","Oncology",
-    "Orthopedics","Neurology","Psychiatry","Emergency Medicine","Radiology",
-    "Anesthesiology","Obstetrics & Gynecology","Dermatology","Gastroenterology",
-    "Pulmonology","Nephrology","Endocrinology","Infectious Disease","Rheumatology",
-    "Ophthalmology","Urology","General Surgery","Hospitalist","Nurse Practitioner","Physician Assistant"
+    "Orthopedics","Emergency Medicine","Obstetrics & Gynecology","General Surgery",
+    "Psychiatry","Nurse Practitioner","Physician Assistant",
 ]
 
 provider_spec = (
-    DataGenerator(spark, name="providers", rows=PROVIDER_COUNT, partitions=8,
-                  randomSeedMethod="hash_fieldname")
+    dg.DataGenerator(spark, name="providers", rows=PROVIDER_COUNT, partitions=4,
+                     randomSeedMethod="hash_fieldname")
     .withIdOutput()
     .withColumn("provider_id",         "string", prefix="PRV-", baseColumn="id")
     .withColumn("npi",                 "string", template=r"dddddddddd", random=True)
@@ -148,13 +184,29 @@ provider_spec = (
                 values=["Smith","Johnson","Williams","Brown","Jones","Garcia","Miller",
                         "Davis","Wilson","Moore","Taylor","Anderson","Thomas","Jackson"],
                 random=True)
-    .withColumn("credential",          "string",
-                values=["MD","DO","NP","PA","RN","PhD","DDS"],
-                weights=[50, 15, 15, 10, 5, 3, 2])
     .withColumn("specialty",           "string", values=specialties, random=True)
+    # Credential follows from the specialty: NP/PA are explicit, everyone else is a
+    # physician (mostly MD, some DO).
+    .withColumn("credential",          "string",
+                expr="""
+                    CASE
+                        WHEN specialty = 'Nurse Practitioner'  THEN 'NP'
+                        WHEN specialty = 'Physician Assistant' THEN 'PA'
+                        WHEN rand() < 0.85                     THEN 'MD'
+                        ELSE 'DO'
+                    END
+                """)
+    # Sub-specialty: a handful of meaningful cases, everything else falls through to 'General'.
     .withColumn("sub_specialty",       "string",
-                values=["General","Interventional","Pediatric","Geriatric","Surgical","None"],
-                weights=[40, 15, 15, 10, 10, 10])
+                expr="""
+                    CASE specialty
+                        WHEN 'Cardiology'  THEN 'Interventional Cardiology'
+                        WHEN 'Orthopedics' THEN 'Sports Medicine'
+                        WHEN 'Oncology'    THEN 'Medical Oncology'
+                        WHEN 'Pediatrics'  THEN 'General Pediatrics'
+                        ELSE 'General'
+                    END
+                """)
     .withColumn("facility_id",         "string", template=r"FAC-ddddd", random=True)
     .withColumn("facility_type",       "string",
                 values=["Hospital","Outpatient Clinic","ASC","Urgent Care",
@@ -164,9 +216,7 @@ provider_spec = (
                 values=["CA","TX","NY","FL","IL","PA","OH","GA","NC","MI",
                         "NJ","WA","AZ","MA","TN","IN","MO","MD","WI","CO"],
                 random=True)
-    .withColumn("accepting_patients",  "boolean",
-                expr="credential IN ('MD','DO','NP','PA')",
-                random=True)
+    .withColumn("accepting_patients",  "boolean", expr="rand() < 0.7")
     .withColumn("years_experience",    "integer",
                 minValue=1, maxValue=40, random=True,
                 distribution=dg.distributions.Normal(mean=15, stddev=8))
@@ -181,24 +231,30 @@ display(providers_df.limit(5))
 # MAGIC %md
 # MAGIC ## 3 — Encounters
 # MAGIC
-# MAGIC An encounter is any clinical interaction between a patient and the health system —  
-# MAGIC an ER visit, inpatient admission, outpatient appointment, or telehealth call.  
+# MAGIC An encounter is any clinical interaction between a patient and the health system —
+# MAGIC an ER visit, inpatient admission, outpatient appointment, or telehealth call.
 # MAGIC This is the central fact table that diagnoses, medications, labs, and claims all reference.
+# MAGIC
+# MAGIC The `patient_id` / `provider_id` foreign keys are built from the **same count constants**
+# MAGIC used to generate those tables (`PATIENT_COUNT`, `PROVIDER_COUNT`). Because `withIdOutput()`
+# MAGIC numbers ids `0 .. COUNT-1`, `cast(rand() * COUNT as int)` covers exactly that range — every
+# MAGIC generated key points at a row that actually exists, and the keys stay valid if you change the
+# MAGIC counts above.
 
 # COMMAND ----------
 
-ENCOUNTER_COUNT = 5_000_000
+ENCOUNTER_COUNT = 1_000_000
 
 encounter_spec = (
-    DataGenerator(spark, name="encounters", rows=ENCOUNTER_COUNT, partitions=64,
-                  randomSeedMethod="hash_fieldname")
+    dg.DataGenerator(spark, name="encounters", rows=ENCOUNTER_COUNT, partitions=16,
+                     randomSeedMethod="hash_fieldname")
     .withIdOutput()
     .withColumn("encounter_id",        "string", prefix="ENC-", baseColumn="id")
-    # Foreign keys
+    # Foreign keys into patients (0..PATIENT_COUNT-1) and providers (0..PROVIDER_COUNT-1).
     .withColumn("patient_id",          "string",
-                expr="concat('PAT-', cast(cast(rand() * 499999 as int) + 1 as string))")
+                expr=f"concat('PAT-', cast(rand() * {PATIENT_COUNT} as int))")
     .withColumn("provider_id",         "string",
-                expr="concat('PRV-', cast(cast(rand() * 49999 as int) + 1 as string))")
+                expr=f"concat('PRV-', cast(rand() * {PROVIDER_COUNT} as int))")
     .withColumn("facility_id",         "string", template=r"FAC-ddddd", random=True)
     # Encounter metadata
     .withColumn("encounter_type",      "string",
@@ -227,7 +283,7 @@ encounter_spec = (
                 values=["Internal Medicine","Emergency","Cardiology","Orthopedics",
                         "Oncology","Neurology","OB/GYN","Pediatrics","Psychiatry","Surgery"],
                 weights=[20, 15, 12, 10, 8, 8, 7, 8, 6, 6])
-    # Vitals snapshot
+    # Vitals snapshot — Normal distributions centred on clinically typical values.
     .withColumn("systolic_bp",         "integer",
                 minValue=80, maxValue=220, random=True,
                 distribution=dg.distributions.Normal(mean=122, stddev=18))
@@ -243,30 +299,66 @@ encounter_spec = (
     .withColumn("o2_saturation_pct",   "integer",
                 minValue=85, maxValue=100, random=True,
                 distribution=dg.distributions.Normal(mean=97, stddev=2))
-    # Financial
+    # Financial — Exponential gives a long right tail (most charges small, a few very large).
     .withColumn("total_charge_usd",    "double",
                 minValue=50.0, maxValue=500_000.0, random=True,
                 distribution=dg.distributions.Exponential(rate=0.00005))
 )
 
-encounters_df = encounter_spec.build()
+# Cache encounters: it is the parent table joined by the four child tables below
+# (to inherit consistent foreign keys) and is read again by the analytics queries.
+encounters_df = encounter_spec.build().cache()
 encounters_df.createOrReplaceTempView("encounters")
 print(f"Encounters generated: {encounters_df.count():,}")
 display(encounters_df.limit(5))
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## 4 — Diagnoses (ICD-10)
+# MAGIC ### A reusable helper — referential integrity via join
 # MAGIC
-# MAGIC Each encounter can have multiple diagnoses — a primary diagnosis plus secondary conditions.  
-# MAGIC ICD-10 codes are used globally for classifying diseases and health conditions.  
-# MAGIC This dataset is key for population health analytics, chronic disease management, and ML risk models.
+# MAGIC The diagnoses, medications, labs, and claims tables are all *children* of an encounter.
+# MAGIC We generate each child with only its `encounter_id` foreign key, then **join back to
+# MAGIC `encounters`** to pull the matching `patient_id` (and `provider_id` where relevant). This
+# MAGIC guarantees a diagnosis and its encounter always agree on the patient — something that
+# MAGIC generating `patient_id` independently in each table cannot do.
 
 # COMMAND ----------
 
-DIAGNOSIS_COUNT = 15_000_000
+def add_encounter_columns(child_df: DataFrame,
+                          columns: Sequence[str] = ("patient_id",)) -> DataFrame:
+    """Joins a child table to ``encounters`` on ``encounter_id`` to copy parent columns.
 
-# Representative ICD-10 codes and descriptions (high-prevalence conditions)
+    Args:
+        child_df: A generated child table containing an ``encounter_id`` column.
+        columns: Encounter columns to copy onto each child row.
+
+    Returns:
+        The child DataFrame with the requested encounter columns joined on.
+    """
+    return child_df.join(
+        encounters_df.select("encounter_id", *columns),
+        on="encounter_id",
+        how="inner",
+    )
+
+# COMMAND ----------
+# MAGIC %md
+# MAGIC ## 4 — Diagnoses (ICD-10)
+# MAGIC
+# MAGIC Each encounter can have multiple diagnoses — a primary diagnosis plus secondary conditions.
+# MAGIC ICD-10 codes are used globally for classifying diseases and health conditions.
+# MAGIC This dataset is key for population health analytics, chronic disease management, and ML risk models.
+# MAGIC
+# MAGIC `icd10_code` and `icd10_description` must stay in sync. We generate a single hidden index
+# MAGIC column (`code_index`, `omit=True`) and have **both** columns pick their entry from that same
+# MAGIC index with `element_at` — so position *i* of the code list always pairs with position *i* of
+# MAGIC the description list.
+
+# COMMAND ----------
+
+DIAGNOSIS_COUNT = 2_000_000
+
+# Representative ICD-10 codes paired position-for-position with their descriptions.
 icd10_codes = [
     "I10","E11.9","E11.65","J06.9","M54.5","Z00.00","K21.0","F41.1","I25.10",
     "E78.5","J44.1","N18.3","F32.9","M79.3","Z12.11","I50.9","E13.9","G47.33",
@@ -307,16 +399,19 @@ icd10_descriptions = [
 ]
 
 diagnosis_spec = (
-    DataGenerator(spark, name="diagnoses", rows=DIAGNOSIS_COUNT, partitions=128,
-                  randomSeedMethod="hash_fieldname")
+    dg.DataGenerator(spark, name="diagnoses", rows=DIAGNOSIS_COUNT, partitions=16,
+                     randomSeedMethod="hash_fieldname")
     .withIdOutput()
     .withColumn("diagnosis_id",        "string", prefix="DX-", baseColumn="id")
     .withColumn("encounter_id",        "string",
-                expr="concat('ENC-', cast(cast(rand() * 4999999 as int) + 1 as string))")
-    .withColumn("patient_id",          "string",
-                expr="concat('PAT-', cast(cast(rand() * 499999 as int) + 1 as string))")
-    .withColumn("icd10_code",          "string", values=icd10_codes, random=True)
-    .withColumn("icd10_description",   "string", values=icd10_descriptions, random=True)
+                expr=f"concat('ENC-', cast(rand() * {ENCOUNTER_COUNT} as int))")
+    # Omitted index for matching entries across lists of values
+    .withColumn("code_index",          "integer",
+                minValue=0, maxValue=len(icd10_codes) - 1, random=True, omit=True)
+    .withColumn("icd10_code",          "string",
+                expr=f"element_at({sql_array(icd10_codes)}, code_index + 1)")
+    .withColumn("icd10_description",   "string",
+                expr=f"element_at({sql_array(icd10_descriptions)}, code_index + 1)")
     .withColumn("diagnosis_type",      "string",
                 values=["Primary","Secondary","Tertiary","Admitting","Discharge"],
                 weights=[35, 40, 10, 8, 7])
@@ -339,7 +434,7 @@ diagnosis_spec = (
                 random=True)
 )
 
-diagnoses_df = diagnosis_spec.build()
+diagnoses_df = add_encounter_columns(diagnosis_spec.build(), columns=("patient_id",))
 diagnoses_df.createOrReplaceTempView("diagnoses")
 print(f"Diagnoses generated: {diagnoses_df.count():,}")
 display(diagnoses_df.limit(5))
@@ -348,14 +443,17 @@ display(diagnoses_df.limit(5))
 # MAGIC %md
 # MAGIC ## 5 — Medications & Prescriptions
 # MAGIC
-# MAGIC Prescription orders linked to encounters and patients.  
-# MAGIC Includes NDC (National Drug Code) codes, dosage, route, frequency, and adherence signals.  
-# MAGIC Medication adherence (`is_adherent`) is derived from refill behaviour and is useful for  
+# MAGIC Prescription orders linked to encounters and patients.
+# MAGIC Includes NDC (National Drug Code) labeler codes, dosage, route, frequency, and adherence signals.
+# MAGIC Medication adherence (`is_adherent`) is derived from refill behaviour and is useful for
 # MAGIC chronic disease management and population health models.
+# MAGIC
+# MAGIC As with diagnoses, `drug_name` and its `ndc_code` are kept correlated through a shared
+# MAGIC hidden index.
 
 # COMMAND ----------
 
-MEDICATION_COUNT = 10_000_000
+MEDICATION_COUNT = 1_000_000
 
 medications = [
     "Lisinopril","Metformin","Atorvastatin","Amlodipine","Metoprolol Succinate",
@@ -363,25 +461,27 @@ medications = [
     "Sertraline","Losartan","Montelukast","Furosemide","Pantoprazole",
     "Escitalopram","Bupropion","Duloxetine","Rosuvastatin","Empagliflozin"
 ]
+# NDC labeler prefixes, paired position-for-position with the drugs above.
 ndc_prefixes = [
     "00006","00071","00185","00378","00555","00603","00677","00781","00904","16714",
     "43598","45963","50111","51079","55111","60505","62037","65862","68180","72205"
 ]
 
 medication_spec = (
-    DataGenerator(spark, name="medications", rows=MEDICATION_COUNT, partitions=64,
-                  randomSeedMethod="hash_fieldname")
+    dg.DataGenerator(spark, name="medications", rows=MEDICATION_COUNT, partitions=16,
+                     randomSeedMethod="hash_fieldname")
     .withIdOutput()
     .withColumn("prescription_id",     "string", prefix="RX-", baseColumn="id")
     .withColumn("encounter_id",        "string",
-                expr="concat('ENC-', cast(cast(rand() * 4999999 as int) + 1 as string))")
-    .withColumn("patient_id",          "string",
-                expr="concat('PAT-', cast(cast(rand() * 499999 as int) + 1 as string))")
-    .withColumn("provider_id",         "string",
-                expr="concat('PRV-', cast(cast(rand() * 49999 as int) + 1 as string))")
-    .withColumn("drug_name",           "string", values=medications, random=True)
-    .withColumn("ndc_code",            "string", values=ndc_prefixes, random=True)
-    .withColumn("dose_mg",             "double",
+                expr=f"concat('ENC-', cast(rand() * {ENCOUNTER_COUNT} as int))")
+    # Omitted index for matching entries across lists of values
+    .withColumn("drug_index",          "integer",
+                minValue=0, maxValue=len(medications) - 1, random=True, omit=True)
+    .withColumn("drug_name",           "string",
+                expr=f"element_at({sql_array(medications)}, drug_index + 1)")
+    .withColumn("ndc_code",            "string",
+                expr=f"element_at({sql_array(ndc_prefixes)}, drug_index + 1)")
+    .withColumn("dose",                "double",
                 values=[2.5, 5.0, 10.0, 20.0, 25.0, 40.0, 50.0, 80.0, 100.0, 500.0],
                 random=True)
     .withColumn("dose_unit",           "string",
@@ -406,7 +506,7 @@ medication_spec = (
                 begin="2019-01-01", end="2024-12-31", random=True)
     .withColumn("is_generic",          "boolean",
                 expr="rand() > 0.35")
-    # Adherence: patient filled ≥80% of authorized refills
+    # Adherence: patient filled >=80% of authorized refills.
     .withColumn("is_adherent",         "boolean",
                 expr="refills_dispensed >= (refills_authorized * 0.8)")
     .withColumn("pharmacy_id",         "string", template=r"PHR-ddddd", random=True)
@@ -415,28 +515,37 @@ medication_spec = (
                 distribution=dg.distributions.Normal(mean=2, stddev=1))
 )
 
-medications_df = medication_spec.build()
+medications_df = add_encounter_columns(medication_spec.build(), columns=("patient_id", "provider_id"))
 medications_df.createOrReplaceTempView("medications")
-print(f"Prescriptions generated: {medications_df.count():,}")
-non_adherent = medications_df.filter("NOT is_adherent").count()
-total_rx = medications_df.count()
-print(f"Non-adherence rate: {non_adherent/total_rx:.1%}")
+# Compute the row count and non-adherent count in a single pass instead of scanning twice.
+rx_stats = medications_df.selectExpr(
+    "count(*) AS total_rx",
+    "count_if(NOT is_adherent) AS non_adherent",
+).first()
+print(f"Prescriptions generated: {rx_stats.total_rx:,}")
+print(f"Non-adherence rate: {rx_stats.non_adherent / rx_stats.total_rx:.1%}")
 display(medications_df.limit(5))
 
 # COMMAND ----------
 # MAGIC %md
 # MAGIC ## 6 — Lab Results (LOINC)
 # MAGIC
-# MAGIC Laboratory test results are one of the richest signals in healthcare analytics.  
-# MAGIC LOINC (Logical Observation Identifiers Names and Codes) is the international standard for lab tests.  
-# MAGIC Each result includes the observed value, reference range, and an `is_abnormal` flag —  
+# MAGIC Laboratory test results are one of the richest signals in healthcare analytics.
+# MAGIC LOINC (Logical Observation Identifiers Names and Codes) is the international standard for lab tests.
+# MAGIC Each result includes the observed value, reference range, and an `is_abnormal` flag —
 # MAGIC essential for building early-warning and sepsis prediction models.
+# MAGIC
+# MAGIC Here a single hidden index keeps **four** columns aligned: `loinc_code`, `test_name`,
+# MAGIC `reference_range_low`, and `reference_range_high`. Because low/high come from the same row of
+# MAGIC the reference table, `low` is never greater than `high`. `result_value` is then generated with
+# MAGIC an `expr` *relative to that test's own range*, so the `is_abnormal` flag is meaningful (roughly
+# MAGIC 15–20% abnormal) rather than random.
 
 # COMMAND ----------
 
-LAB_COUNT = 20_000_000
+LAB_COUNT = 2_000_000
 
-# Common LOINC codes with their typical reference ranges
+# Common LOINC codes with their names and typical reference ranges — paired by position.
 loinc_codes     = ["2345-7","2160-0","17861-6","2093-3","2085-9","4548-4","33914-3",
                    "2823-3","2951-2","6768-6","1742-6","1920-8","2532-0","6298-4",
                    "2028-9","718-7","777-3","26515-7","3094-0","1975-2"]
@@ -448,27 +557,32 @@ ref_range_low   = [70,  0.6, 8.5, 0,   40,  0,   60, 3.5, 135, 44,  7,  10, 140,
 ref_range_high  = [100, 1.2, 10.5,200, 60,  5.7, 999,5.0, 145, 147, 56, 40, 280, 5.0, 29, 17.5, 400, 400, 20, 1.2]
 
 lab_spec = (
-    DataGenerator(spark, name="lab_results", rows=LAB_COUNT, partitions=128,
-                  randomSeedMethod="hash_fieldname")
+    dg.DataGenerator(spark, name="lab_results", rows=LAB_COUNT, partitions=16,
+                     randomSeedMethod="hash_fieldname")
     .withIdOutput()
     .withColumn("lab_result_id",       "string", prefix="LAB-", baseColumn="id")
     .withColumn("encounter_id",        "string",
-                expr="concat('ENC-', cast(cast(rand() * 4999999 as int) + 1 as string))")
-    .withColumn("patient_id",          "string",
-                expr="concat('PAT-', cast(cast(rand() * 499999 as int) + 1 as string))")
-    .withColumn("loinc_code",          "string", values=loinc_codes, random=True)
-    .withColumn("test_name",           "string", values=loinc_names, random=True)
+                expr=f"concat('ENC-', cast(rand() * {ENCOUNTER_COUNT} as int))")
+    # Omitted index for matching entries across lists of values
+    .withColumn("test_index",          "integer",
+                minValue=0, maxValue=len(loinc_codes) - 1, random=True, omit=True)
+    .withColumn("loinc_code",          "string",
+                expr=f"element_at({sql_array(loinc_codes)}, test_index + 1)")
+    .withColumn("test_name",           "string",
+                expr=f"element_at({sql_array(loinc_names)}, test_index + 1)")
+    .withColumn("reference_range_low", "double",
+                expr=f"element_at({sql_array(ref_range_low)}, test_index + 1)")
+    .withColumn("reference_range_high","double",
+                expr=f"element_at({sql_array(ref_range_high)}, test_index + 1)")
+    # Draw the result around this test's own reference band; the *1.2 spread with a -0.15
+    # offset lets a realistic minority of results fall below low / above high.
     .withColumn("result_value",        "double",
-                minValue=0.1, maxValue=500.0, random=True,
-                distribution=dg.distributions.Normal(mean=95, stddev=40))
+                expr="round(reference_range_low + (rand() - 0.15) * 1.2 * "
+                     "(reference_range_high - reference_range_low), 2)")
     .withColumn("result_unit",         "string",
                 values=["mg/dL","mmol/L","g/dL","%","U/L","mEq/L","10^3/uL","mL/min/1.73m2"],
                 random=True)
-    .withColumn("reference_range_low", "double",
-                values=ref_range_low, random=True)
-    .withColumn("reference_range_high","double",
-                values=ref_range_high, random=True)
-    # Flag results outside reference range
+    # Flag results outside the (correlated) reference range.
     .withColumn("is_abnormal",         "boolean",
                 expr="result_value < reference_range_low OR result_value > reference_range_high")
     .withColumn("abnormal_flag",       "string",
@@ -486,7 +600,6 @@ lab_spec = (
                 begin="2019-01-01 00:00:00", end="2024-12-31 23:59:59", random=True)
     .withColumn("resulted_datetime",   "timestamp",
                 expr="collection_datetime + interval 2 hours")
-    .withColumn("lab_id",              "string", template=r"LAB-ddddd", random=True)
     .withColumn("performing_lab",      "string",
                 values=["Quest Diagnostics","LabCorp","Hospital Lab","Point of Care","Reference Lab"],
                 weights=[30, 30, 25, 10, 5])
@@ -494,27 +607,36 @@ lab_spec = (
                 expr="is_abnormal AND rand() < 0.05")
 )
 
-labs_df = lab_spec.build()
+labs_df = add_encounter_columns(lab_spec.build(), columns=("patient_id",))
 labs_df.createOrReplaceTempView("lab_results")
-print(f"Lab results generated: {labs_df.count():,}")
-abnormal_pct = labs_df.filter("is_abnormal").count() / labs_df.count()
-critical_pct = labs_df.filter("critical_flag").count() / labs_df.count()
-print(f"Abnormal rate: {abnormal_pct:.1%}  |  Critical rate: {critical_pct:.1%}")
+# One aggregation pass for the row count and both rates (instead of three full scans).
+lab_stats = labs_df.selectExpr(
+    "count(*) AS total",
+    "count_if(is_abnormal) AS abnormal",
+    "count_if(critical_flag) AS critical",
+).first()
+print(f"Lab results generated: {lab_stats.total:,}")
+print(f"Abnormal rate: {lab_stats.abnormal / lab_stats.total:.1%}  |  "
+      f"Critical rate: {lab_stats.critical / lab_stats.total:.1%}")
 display(labs_df.limit(5))
 
 # COMMAND ----------
 # MAGIC %md
 # MAGIC ## 7 — Insurance Claims
 # MAGIC
-# MAGIC Medical claims derived from encounters — the financial record of care delivered.  
-# MAGIC Includes CPT procedure codes, billed vs. allowed amounts, payer adjudication, and denial reasons.  
+# MAGIC Medical claims derived from encounters — the financial record of care delivered.
+# MAGIC Includes CPT procedure codes, billed vs. allowed amounts, payer adjudication, and denial reasons.
 # MAGIC Revenue cycle analytics, fraud detection, and payer-provider benchmarking all rely on this data.
+# MAGIC
+# MAGIC `cpt_code` and `cpt_description` are correlated via a shared index, and the financial columns
+# MAGIC are layered with `expr` so `allowed_amount`, `patient_responsibility`, and `payer_paid_amount`
+# MAGIC are all consistent fractions of the `billed_amount`.
 
 # COMMAND ----------
 
-CLAIM_COUNT = 3_000_000
+CLAIM_COUNT = 500_000
 
-# Common CPT (Current Procedural Terminology) codes
+# Common CPT (Current Procedural Terminology) codes, paired with descriptions.
 cpt_codes = [
     "99213","99214","99215","99232","99291","93000","71046","80053","36415",
     "93306","70553","27447","43239","45378","99285","29881","93510","70450",
@@ -544,16 +666,12 @@ cpt_descriptions = [
 ]
 
 claim_spec = (
-    DataGenerator(spark, name="insurance_claims", rows=CLAIM_COUNT, partitions=32,
-                  randomSeedMethod="hash_fieldname")
+    dg.DataGenerator(spark, name="insurance_claims", rows=CLAIM_COUNT, partitions=8,
+                     randomSeedMethod="hash_fieldname")
     .withIdOutput()
     .withColumn("claim_id",            "string", prefix="CLM-", baseColumn="id")
     .withColumn("encounter_id",        "string",
-                expr="concat('ENC-', cast(cast(rand() * 4999999 as int) + 1 as string))")
-    .withColumn("patient_id",          "string",
-                expr="concat('PAT-', cast(cast(rand() * 499999 as int) + 1 as string))")
-    .withColumn("provider_id",         "string",
-                expr="concat('PRV-', cast(cast(rand() * 49999 as int) + 1 as string))")
+                expr=f"concat('ENC-', cast(rand() * {ENCOUNTER_COUNT} as int))")
     .withColumn("payer_id",            "string", template=r"PAY-ddddd", random=True)
     .withColumn("payer_name",          "string",
                 values=["UnitedHealth","Anthem","Aetna","Cigna","Humana",
@@ -566,10 +684,15 @@ claim_spec = (
                 begin="2019-01-01", end="2024-12-31", random=True)
     .withColumn("submission_date",     "date",
                 expr="date_add(service_date, cast(rand() * 14 as int))")
-    .withColumn("cpt_code",            "string", values=cpt_codes, random=True)
-    .withColumn("cpt_description",     "string", values=cpt_descriptions, random=True)
+    # Omitted index for matching entries across lists of values
+    .withColumn("cpt_index",           "integer",
+                minValue=0, maxValue=len(cpt_codes) - 1, random=True, omit=True)
+    .withColumn("cpt_code",            "string",
+                expr=f"element_at({sql_array(cpt_codes)}, cpt_index + 1)")
+    .withColumn("cpt_description",     "string",
+                expr=f"element_at({sql_array(cpt_descriptions)}, cpt_index + 1)")
     .withColumn("diagnosis_code",      "string", values=icd10_codes, random=True)
-    # Financials
+    # Financials — each amount is a consistent fraction of the one above it.
     .withColumn("billed_amount",       "double",
                 minValue=50.0, maxValue=250_000.0, random=True,
                 distribution=dg.distributions.Exponential(rate=0.00008))
@@ -600,15 +723,19 @@ claim_spec = (
                 values=["11","21","22","23","24","31","32","81"],
                 weights=[35, 20, 10, 12, 8, 5, 5, 5])
     .withColumn("drg_code",            "string",
-                values=["470","291","292","871","291","392","603","065","247","313"],
+                values=["470","291","292","871","392","603","065","247","313","281"],
                 random=True)
 )
 
-claims_df = claim_spec.build()
+claims_df = add_encounter_columns(claim_spec.build(), columns=("patient_id", "provider_id"))
 claims_df.createOrReplaceTempView("insurance_claims")
-print(f"Claims generated: {claims_df.count():,}")
-denial_rate = claims_df.filter("claim_status = 'Denied'").count() / claims_df.count()
-print(f"Claim denial rate: {denial_rate:.1%}")
+# Row count and denied count in one pass.
+claim_stats = claims_df.selectExpr(
+    "count(*) AS total",
+    "count_if(claim_status = 'Denied') AS denied",
+).first()
+print(f"Claims generated: {claim_stats.total:,}")
+print(f"Claim denial rate: {claim_stats.denied / claim_stats.total:.1%}")
 display(claims_df.limit(5))
 
 # COMMAND ----------
@@ -705,41 +832,15 @@ spark.sql("""
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## Optional — Persist to Delta Tables
-
-# COMMAND ----------
-
-# Uncomment to write all datasets to Delta (requires a catalog / schema to exist)
-#
-# TARGET_CATALOG = "main"
-# TARGET_SCHEMA  = "healthcare_synthetic"
-#
-# spark.sql(f"CREATE SCHEMA IF NOT EXISTS {TARGET_CATALOG}.{TARGET_SCHEMA}")
-#
-# datasets = {
-#     "patients":         patients_df,
-#     "providers":        providers_df,
-#     "encounters":       encounters_df,
-#     "diagnoses":        diagnoses_df,
-#     "medications":      medications_df,
-#     "lab_results":      labs_df,
-#     "insurance_claims": claims_df,
-# }
-#
-# for table_name, df in datasets.items():
-#     full_name = f"{TARGET_CATALOG}.{TARGET_SCHEMA}.{table_name}"
-#     df.write.format("delta").mode("overwrite").saveAsTable(full_name)
-#     print(f"Saved {full_name}")
-
-# COMMAND ----------
-# MAGIC %md
 # MAGIC ---
 # MAGIC ### Notes & HIPAA Reminder
-# MAGIC - All data is **fully synthetic** — no real patient PII, PHI, or medical records.  
+# MAGIC - All data is **fully synthetic** — no real patient PII, PHI, or medical records.
 # MAGIC   Safe to use in any environment without HIPAA compliance considerations.
-# MAGIC - ICD-10 codes, LOINC codes, CPT codes, and NDC prefixes used are real coding standards  
+# MAGIC - ICD-10 codes, LOINC codes, CPT codes, and NDC prefixes used are real coding standards
 # MAGIC   but the data values associated with them are randomly generated.
-# MAGIC - Row counts are representative. Scale `PATIENT_COUNT`, `ENCOUNTER_COUNT`, etc. to match  
-# MAGIC   your cluster size and workload. For billion-row testing, increase `partitions` proportionally.
-# MAGIC - See the [dbldatagen documentation](https://databrickslabs.github.io/dbldatagen) for  
+# MAGIC - Row counts are kept modest so the notebook runs quickly. Scale `PATIENT_COUNT`,
+# MAGIC   `ENCOUNTER_COUNT`, etc. up to match your cluster size and workload — the foreign keys and
+# MAGIC   `partitions` settings will follow. For billion-row testing, increase `partitions`
+# MAGIC   proportionally.
+# MAGIC - See the [dbldatagen documentation](https://databrickslabs.github.io/dbldatagen) for
 # MAGIC   more on distributions, constraints, and change data capture (CDC) data generation.
