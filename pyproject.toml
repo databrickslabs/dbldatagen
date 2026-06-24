@@ -89,8 +89,8 @@ docs = [
     "pydoc-markdown>=4.8.2,<5.0",
 ]
 core = ["pydantic>=2.0"]
-core-faker = ["pydantic>=2.0", "faker>=20.0"]
-core-dev = ["pydantic>=2.0", "faker>=20.0", "pyyaml>=6.0"]
+core-faker = ["pydantic>=2.0", "faker>=40.23.0"]
+core-dev = ["pydantic>=2.0", "faker>=40.23.0", "pyyaml>=6.0"]
 yq = [
     "yq~=3.4.3",
 ]
