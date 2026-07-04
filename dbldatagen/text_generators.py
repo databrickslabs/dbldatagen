@@ -433,7 +433,7 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
        * - ``\\v0`` through ``\\v9``
          - Element ``0`` through element ``9`` of an array/list base value. Always escaped.
        * - ``\\V``
-         - Entire base value. Always escaped.
+         - Entire base value. Must always be escaped with ``\\``.
        * - ``\\``
          - Escape the following character. A backslash is always treated as an escape marker and is not emitted
            as a literal character.

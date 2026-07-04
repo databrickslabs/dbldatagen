@@ -239,11 +239,11 @@ In all other cases, the char itself is used.
 Escaping and the escapeSpecialChars option
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The setting of ``escapeSpecialChars`` determines how the template generator interprets the character classes
-``a``, ``A``, ``x``, ``X``, ``d``, ``D``, ``k`` and ``K``.
+The ``escapeSpecialChars`` parameter determines how the template generator interprets reserved character classes
+(e.g. ``a``, ``A``, ``x``, ``X``, ``d``, ``D``, ``k`` and ``K``).
 
-The default is ``escapeSpecialChars=False`` for backwards compatibility. In this mode, those character classes have
-their special meaning without a leading escape. Escape one of those characters to use it as a literal character.
+The default is ``escapeSpecialChars=False`` for backwards compatibility. In this mode, reserved character classes have
+their special meaning without a leading escape. Escape one of these reserved characters to use it as a literal character.
 Always-escaped classes and base-value substitutions, such as ``\n``, ``\w``, ``\v`` and ``\V``, still require the
 leading escape.
 
@@ -251,7 +251,7 @@ For example, the template ``r"\dr_\v"`` generates the values ``"dr_0"`` ... ``"d
 ``template=`` option and applied to the values zero to 999. Here ``\d`` is an escaped literal ``d``, ``r_`` is
 literal text, and ``\v`` substitutes the base value.
 
-If ``escapeSpecialChars=True``, those character classes only have their special meaning when preceded by an escape.
+If ``escapeSpecialChars=True``, reserved character classes only have their special meaning when preceded by an escape.
 Bare characters are literal. For example, ``text=dg.TemplateGenerator(r"dr_\v", escapeSpecialChars=True)`` generates
 the values ``"dr_0"`` ... ``"dr_999"`` when applied to the values zero to 999.
 
