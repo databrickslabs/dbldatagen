@@ -20,6 +20,7 @@ The following distributions are supported:
 - Beta distribution
 - Gamma distribution
 - Exponential distribution
+- Pareto distribution
 
 > Note the `distribution` option will have no effect for values that are not randomly generated as
 > per use of the `random` option.
@@ -128,8 +129,41 @@ constructor parameters.
 
 .withColumn("w", "float", minValue=0, maxValue=100, random=True,
             distribution="exponential(rate=1.5)")
+
+.withColumn("v", "float", minValue=0, maxValue=100, random=True,
+            distribution="pareto(shape=1.16)")
 ```
 
 Note that partial overrides are supported. Any arguments you omit fall back to their default 
 values. For example, `"gamma(shape=2.0)"` will create a distribution with the default value 
 `scale=1.0`.
+
+## Pareto distribution
+
+The Pareto (power-law) distribution is useful for modelling naturally skewed quantities where
+most values are small but a small number of values are very large — for example, the number of
+orders per customer, file sizes, or city populations.
+
+The `shape` parameter (tail index `alpha`) controls how heavy the tail is. A smaller value
+produces more skew; `shape ≈ 1.16` corresponds to the classic 80/20 Pareto principle.
+
+```python
+import dbldatagen as dg
+import dbldatagen.distributions as dist
+
+testDataSpec = (
+    dg.DataGenerator(spark, name="pareto_example", rows=100_000)
+    .withColumn("customer_id", "integer", minValue=1, maxValue=100_000)
+    # most customers place few orders; a handful place very many
+    .withColumn(
+        "order_count",
+        "integer",
+        minValue=1,
+        maxValue=500,
+        random=True,
+        distribution=dist.Pareto(shape=1.16),
+    )
+)
+
+dfTestData = testDataSpec.build()
+```

@@ -560,7 +560,7 @@ class TestDistributions:
 
     def test_distribution_string_invalid_lists_valid_options(self):
         """Test that the error message for an invalid distribution lists valid options."""
-        with pytest.raises(ValueError, match="Valid distribution names are: beta, exponential, gamma, normal"):
+        with pytest.raises(ValueError, match="Valid distribution names are: beta, exponential, gamma, normal, pareto"):
             dg.DataGenerator(
                 sparkSession=spark, name="test_invalid2", rows=100, seedMethod='hash_fieldname'
             ).withIdOutput().withColumn(
@@ -643,7 +643,7 @@ class TestDistributions:
 
     def test_registered_names(self):
         """Test that registeredNames returns a sorted list of all registered names."""
-        assert dist.DataDistribution.registeredNames() == ["beta", "exponential", "gamma", "normal"]
+        assert dist.DataDistribution.registeredNames() == ["beta", "exponential", "gamma", "normal", "pareto"]
 
     def test_distribution_string_missing_equals_raises(self):
         """Test that a bare token with no '=' inside the argument list raises ValueError."""
@@ -656,3 +656,97 @@ class TestDistributions:
         assert isinstance(n, dist.Normal)
         assert n.mean == 0.0
         assert n.stddev == 1.0
+
+    def test_pareto_distribution(self):
+        pareto_data_generator = (
+            dg.DataGenerator(sparkSession=spark, rows=self.TESTDATA_ROWS, partitions=4)
+            .withIdOutput()
+            .withColumn("code1", "integer", minValue=1, maxValue=20, step=1)
+            .withColumn("code4", "integer", minValue=1, maxValue=40, step=1, random=True, distribution=dist.Pareto(1.0))
+            .withColumn(
+                "sector_status_desc",
+                "string",
+                minValue=1,
+                maxValue=200,
+                step=1,
+                prefix='status',
+                random=True,
+                distribution="normal",
+            )
+            .withColumn(
+                "tech", "string", values=["GSM", "LTE", "UMTS", "UNKNOWN"], weights=desired_weights, random=True
+            )
+        )
+        df_pareto_data = pareto_data_generator.build().cache()
+
+        df_summary = df_pareto_data.agg(
+            F.min('code4').alias('min_c4'),
+            F.max('code4').alias('max_c4'),
+            F.avg('code4').alias('mean_c4'),
+        )
+        df_summary.show()
+
+        summary_data = df_summary.collect()[0]
+
+        assert summary_data['min_c4'] == 1
+        assert summary_data['max_c4'] == 40
+
+    def test_pareto_generation_func(self):
+        dist_instance = dist.Pareto(1.0)
+
+        data_size = 10000
+        shapes = pd.Series(np.full(data_size, dist_instance.shape))
+        seeds = pd.Series(np.full(data_size, 42, dtype=np.int32))
+        results = dist_instance.pareto_func(shapes, seeds)
+
+        assert len(results) == len(shapes)
+
+        # output must be normalized to [0, 1]
+        assert float(results.min()) >= 0.0
+        assert float(results.max()) <= 1.0
+
+        # Pareto is right-skewed: mean sits well below 0.5
+        m1 = float(np.mean(results))
+        s1 = float(np.std(results))
+        assert m1 < 0.5
+        assert s1 == pytest.approx(0.013, abs=0.003)
+
+        # unseeded run has the same statistical shape
+        seeds2 = pd.Series(np.full(data_size, -1, dtype=np.int32))
+        results2 = dist_instance.pareto_func(shapes, seeds2)
+        assert float(results2.min()) >= 0.0
+        assert float(results2.max()) <= 1.0
+        assert float(np.mean(results2)) < 0.5
+
+    def test_pareto_distribution_string(self):
+        """Test that 'pareto' string resolves to a Pareto distribution."""
+        data_generator = (
+            dg.DataGenerator(sparkSession=spark, name="test_pareto_str", rows=100, seedMethod='hash_fieldname')
+            .withIdOutput()
+            .withColumn("code1", "integer", minValue=1, maxValue=20, step=1, random=True, distribution="pareto")
+        )
+        df = data_generator.build()
+        assert df.count() == 100
+
+    def test_pareto_distribution_string_with_kwargs(self):
+        """Test that pareto(shape=…) overrides the default shape."""
+        p = dist.DataDistribution.fromName("pareto(shape=2.0)")
+        assert isinstance(p, dist.Pareto)
+        assert p.shape == 2.0
+
+    def test_pareto_shape_property(self):
+        """Test that the shape property round-trips correctly."""
+        p = dist.Pareto(shape=3.5)
+        assert p.shape == 3.5
+
+    def test_pareto_default_shape(self):
+        """Test that omitting shape gives the registered default of 1.0."""
+        p = dist.Pareto()
+        assert p.shape == 1.0
+
+    def test_pareto_str_representation(self):
+        """Test __str__ includes the key parameters."""
+        p = dist.Pareto(shape=1.5).withRandomSeed(7)
+        s = str(p)
+        assert "1.5" in s
+        assert "7" in s
