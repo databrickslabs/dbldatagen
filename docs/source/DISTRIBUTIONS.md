@@ -13,10 +13,11 @@ When the field is not numeric, the underlying seed value will generated to confo
 known distribution before being converted 
 to the appropriate type as per usual semantics. 
 
-Note that the distribution will be scaled to the possible range of values
+Note that the distribution will be scaled to the possible range of values. If all samples from a
+distribution are equal (e.g. if the requested data contains only 1 row), the minimum value is returned.
 
 The following distributions are supported:
-- normal or Gaussian distribution
+- Normal (Gaussian) distribution
 - Beta distribution
 - Gamma distribution
 - Exponential distribution

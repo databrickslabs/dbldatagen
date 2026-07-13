@@ -750,3 +750,69 @@ class TestDistributions:
         s = str(p)
         assert "1.5" in s
         assert "7" in s
+
+    def test_pareto_generation_func_single_row_batch(self):
+        """A single-row batch normalizes to 0.0 rather than dividing 0/0 into NaN."""
+        dist_instance = dist.Pareto(1.0)
+        shapes = pd.Series(np.full(1, dist_instance.shape))
+        seeds = pd.Series(np.full(1, 42, dtype=np.int32))
+
+        results = dist_instance.pareto_func(shapes, seeds)
+
+        assert (results.to_numpy() == 0.0).all()
+
+    def test_exponential_generation_func_single_row_batch(self):
+        """A single-row batch normalizes to 0.0 rather than dividing 0/0 into NaN."""
+        dist_instance = dist.Exponential(0.5)
+        scales = pd.Series(np.full(1, dist_instance.scale))
+        seeds = pd.Series(np.full(1, 42, dtype=np.int32))
+
+        results = dist_instance.exponential_func(scales, seeds)
+
+        assert (results.to_numpy() == 0.0).all()
+
+    def test_gamma_generation_func_single_row_batch(self):
+        """A single-row batch normalizes to 0.0 rather than dividing 0/0 into NaN."""
+        dist_instance = dist.Gamma(0.5, 0.5)
+        shapes = pd.Series(np.full(1, dist_instance.shape))
+        scales = pd.Series(np.full(1, dist_instance.scale))
+        seeds = pd.Series(np.full(1, 42, dtype=np.int32))
+
+        results = dist_instance.gamma_func(shapes, scales, seeds)
+
+        assert (results.to_numpy() == 0.0).all()
+
+    def test_normal_generation_func_single_row_batch(self):
+        """A single-row batch normalizes to 0.0 rather than dividing 0/0 into NaN."""
+        dist_instance = dist.Normal(20.0, 1.0)
+        means = pd.Series(np.full(1, 100.0))
+        std_deviations = pd.Series(np.full(1, 20.0))
+        seeds = pd.Series(np.full(1, 42, dtype=np.int32))
+
+        results = dist_instance.normal_func(means, std_deviations, seeds)
+
+        assert (results.to_numpy() == 0.0).all()
+
+    @pytest.mark.parametrize(
+        "distribution",
+        [
+            dist.Pareto(1.0),
+            dist.Exponential(0.5),
+            dist.Gamma(0.5, 0.5),
+            dist.Normal(20.0, 1.0),
+        ],
+        ids=["pareto", "exponential", "gamma", "normal"],
+    )
+    def test_single_row_partitions_yield_min_value(self, distribution):
+        """End-to-end: more partitions than rows forces single-row batches. Each normalizes to
+        0.0, so every generated value collapses to exactly minValue instead of becoming NaN."""
+        min_value = 5.0
+        data_generator = (
+            dg.DataGenerator(sparkSession=spark, rows=4, partitions=8, seed=42)
+            .withIdOutput()
+            .withColumn("value", "float", minValue=min_value, maxValue=100.0, random=True, distribution=distribution)
+        )
+        rows = data_generator.build().collect()
+
+        for row in rows:
+            assert row["value"] == min_value
