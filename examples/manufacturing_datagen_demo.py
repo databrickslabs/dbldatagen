@@ -40,7 +40,13 @@ spark.conf.set("spark.sql.shuffle.partitions", "auto")
 
 # --- Scale knobs: tune these to match your workload ---------------------------
 NUM_TURBINES          = 1_000
-SENSOR_READING_COUNT  = 10_000_000
+# Each turbine emits a fixed-cadence stream (mirrors the dbdemos generator's
+# `sample_size` / `frequency_sec`), so every hourly bucket holds the same number of
+# evenly-spaced readings — 3600 / READING_FREQ_SEC = 360 per turbine-hour here.
+READINGS_PER_TURBINE  = 10_000
+READING_FREQ_SEC      = 10       # seconds between consecutive readings for a turbine
+SENSOR_START          = "2024-06-01 00:00:00"
+SENSOR_READING_COUNT  = NUM_TURBINES * READINGS_PER_TURBINE   # = 10M, high-volume headline
 PARTS_COUNT           = 200
 # Fault model: ~10% of turbines are faulty; a faulty turbine degrades exactly one
 # of its six sensors. Both the status log and the sensor stream derive the fault
@@ -68,15 +74,27 @@ turbine_spec = (
     .withColumn("capacity_kw",    "integer",
                 values=[1500, 2000, 2500, 3000, 4000],
                 weights=[15, 30, 30, 15, 10])
-    .withColumn("lat",            "double", minValue=25.0,  maxValue=49.0,  random=True)
-    .withColumn("long",           "double", minValue=-124.0, maxValue=-67.0, random=True)
-    .withColumn("location",       "string",
-                values=["Greenpoint", "Eastfield", "Westridge", "Northgate", "Southport",
-                        "Lakeside", "Hillcrest", "Bayview", "Fairwind", "Crestline"],
-                random=True)
-    .withColumn("state",          "string",
-                values=["TX", "IA", "OK", "KS", "CA", "IL", "CO", "MN", "ND", "OR"],
-                weights=[20, 14, 12, 10, 10, 8, 8, 6, 6, 6])
+    # One physical wind-farm site packs city, state, and a base lat/long together, so
+    # turbines at the same site share a location instead of city/state/coordinates being
+    # drawn independently. Omitted from the output; the components are split out below.
+    .withColumn("site",           "string",
+                values=["Greenpoint,TX,32.90,-97.30", "Eastfield,IA,41.60,-93.60",
+                        "Westridge,OK,35.50,-97.50",  "Northgate,KS,38.50,-98.00",
+                        "Southport,CA,35.30,-119.00", "Lakeside,IL,40.10,-89.00",
+                        "Hillcrest,CO,39.00,-104.80", "Bayview,MN,46.70,-94.70",
+                        "Fairwind,ND,47.50,-100.50",  "Crestline,OR,44.10,-120.50"],
+                weights=[20, 14, 12, 10, 10, 8, 8, 6, 6, 6],
+                random=True, omit=True)
+    .withColumn("location",       "string", expr="split(site, ',')[0]", baseColumn="site")
+    .withColumn("state",          "string", expr="split(site, ',')[1]", baseColumn="site")
+    # Jitter ±0.25° (~25 km) around the site's base coordinates so turbines cluster
+    # geographically while still being individually distinct.
+    .withColumn("lat",            "double",
+                expr="round(cast(split(site, ',')[2] as double) + (rand() - 0.5) * 0.5, 5)",
+                baseColumn="site")
+    .withColumn("long",           "double",
+                expr="round(cast(split(site, ',')[3] as double) + (rand() - 0.5) * 0.5, 5)",
+                baseColumn="site")
     .withColumn("country",        "string", values=["US"])
     .withColumn("install_date",   "date", begin="2010-01-01", end="2023-12-31", random=True)
 )
@@ -128,10 +146,13 @@ display(status_df.limit(5))
 # MAGIC %md
 # MAGIC ## 3 — Sensor Readings
 # MAGIC
-# MAGIC High-volume time-series (10 M rows): six vibration sensors (A–F) plus energy produced, one
-# MAGIC reading per turbine per timestamp. A hidden `fault_idx` (omitted from the output) is derived
-# MAGIC from `turbine_id` using the **same** rule as the status log; the matching sensor then receives
-# MAGIC elevated variance so faulty turbines are statistically distinguishable downstream.
+# MAGIC High-volume time-series (10 M rows): six vibration sensors (A–F) plus energy produced. Each
+# MAGIC turbine emits a fixed-cadence stream (`READINGS_PER_TURBINE` readings, one every
+# MAGIC `READING_FREQ_SEC` s), so every hourly bucket holds the same number of evenly-spaced samples
+# MAGIC — this keeps the downstream hourly `stddev` features dense and stable. A hidden `fault_idx`
+# MAGIC (omitted from the output) is derived from `turbine_id` using the **same** rule as the status
+# MAGIC log; the matching sensor then receives elevated variance so faulty turbines are statistically
+# MAGIC distinguishable downstream.
 
 # COMMAND ----------
 
@@ -153,10 +174,18 @@ sensor_spec = (
                   randomSeedMethod="hash_fieldname")
     .withIdOutput()
     .withColumn("reading_id",  "string", expr="concat('R-', cast(id as string))", baseColumn="id")
-    # Fan readings across the turbine fleet (floor keeps ids in range 0..NUM_TURBINES-1)
+    # Decompose the row id into (turbine, sequence) so each turbine gets an equal,
+    # fixed-cadence stream rather than a random scatter. id 0..9,999 -> turbine 0,
+    # 10,000..19,999 -> turbine 1, etc.; `seq` is the reading's position in that stream.
+    .withColumn("turbine_idx", "long", expr=f"id div {READINGS_PER_TURBINE}", baseColumn="id", omit=True)
+    .withColumn("seq",         "long", expr=f"id % {READINGS_PER_TURBINE}",  baseColumn="id", omit=True)
     .withColumn("turbine_id",  "string",
-                expr=f"concat('TBN-', lpad(cast(cast(floor(rand() * {NUM_TURBINES}) as int) as string), 5, '0'))")
-    .withColumn("timestamp",   "timestamp", begin="2024-06-01 00:00:00", end="2024-12-31 23:59:59", random=True)
+                expr="concat('TBN-', lpad(cast(turbine_idx as string), 5, '0'))", baseColumn="turbine_idx")
+    # Regular grid: base time + seq * READING_FREQ_SEC — evenly spaced, so hourly stats
+    # are computed over dense, uniformly-sampled buckets (360 readings / turbine-hour).
+    .withColumn("timestamp",   "timestamp",
+                expr=f"timestampadd(SECOND, seq * {READING_FREQ_SEC}, timestamp('{SENSOR_START}'))",
+                baseColumn="seq")
     .withColumn("fault_idx",   "integer", expr=FAULT_IDX_EXPR, baseColumn="turbine_id", omit=True)
     .withColumn("sensor_A",    "double", expr=sensor_expr(1, 2.5, 0.30), baseColumn="fault_idx")
     .withColumn("sensor_B",    "double", expr=sensor_expr(2, 3.1, 0.35), baseColumn="fault_idx")
@@ -332,37 +361,10 @@ UNION ALL SELECT 'Training Set',             COUNT(*) FROM turbine_training_data
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## Optional — Persist to Delta Tables
-
-# COMMAND ----------
-
-# Uncomment to write all datasets to Delta (requires a catalog / schema to exist)
-#
-# TARGET_CATALOG = "main"
-# TARGET_SCHEMA  = "manufacturing_synthetic"
-#
-# spark.sql(f"CREATE SCHEMA IF NOT EXISTS {TARGET_CATALOG}.{TARGET_SCHEMA}")
-#
-# datasets = {
-#     "turbines":                  turbines_df,
-#     "historical_turbine_status": status_df,
-#     "sensor_readings":           sensor_df,
-#     "parts":                     parts_df,
-#     "maintenance_work_orders":   work_orders_df,
-#     "turbine_training_dataset":  training_df,
-# }
-#
-# for table_name, df in datasets.items():
-#     full_name = f"{TARGET_CATALOG}.{TARGET_SCHEMA}.{table_name}"
-#     df.write.format("delta").mode("overwrite").saveAsTable(full_name)
-#     print(f"Saved {full_name}")
-
-# COMMAND ----------
-# MAGIC %md
 # MAGIC ---
 # MAGIC ### Notes
 # MAGIC - All data is **fully synthetic** — no real turbine, sensor, or operational records are used or implied.
-# MAGIC - Row counts above are representative; scale `NUM_TURBINES`, `SENSOR_READING_COUNT`, etc. to match your workload.
+# MAGIC - Row counts above are representative; scale `NUM_TURBINES`, `READINGS_PER_TURBINE`, etc. to match your workload.
 # MAGIC - For billion-row testing, increase `partitions` proportionally and use a multi-node cluster (≥ 8 workers).
 # MAGIC - The fault signal is intentionally learnable: a faulty turbine shows elevated variance on exactly one sensor,
 # MAGIC   and that sensor is recorded as the `abnormal_sensor` label — ideal for an AutoML predictive-maintenance demo.
