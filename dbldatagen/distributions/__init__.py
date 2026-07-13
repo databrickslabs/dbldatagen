@@ -23,5 +23,6 @@ from .data_distribution import DataDistribution
 from .beta import Beta
 from .gamma import Gamma
 from .exponential_distribution import Exponential
+from .pareto import Pareto
 
-__all__ = ["normal_distribution", "gamma", "beta", "data_distribution", "exponential_distribution"]
+__all__ = ["normal_distribution", "gamma", "beta", "data_distribution", "exponential_distribution", "pareto"]
