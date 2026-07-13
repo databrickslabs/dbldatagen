@@ -420,18 +420,21 @@ class TemplateGenerator(TextGenerator, SerializableToDict):  # lgtm [py/missing-
        * - ``K``
          - Random uppercase alphanumeric character (``A`` through ``Z`` and ``0`` through ``9``).
        * - ``\\n``
-         - Random integer text from ``0`` through ``255`` inclusive; variable width. Always escaped.
+         - Random integer text from ``0`` through ``255`` inclusive; variable width.
+            Must always be escaped with ``\\``.
        * - ``\\N``
-         - Random integer text from ``0`` through ``65535`` inclusive; variable width. Always escaped.
+         - Random integer text from ``0`` through ``65535`` inclusive; variable width.
+            Must always be escaped with ``\\``.
        * - ``\\w``
-         - Random lowercase word from the lowercase ipsum lorem word set, or ``extendedWordList``. Always escaped.
+         - Random lowercase word from the lowercase ipsum lorem word set, or ``extendedWordList``.
+            Must always be escaped with ``\\``.
        * - ``\\W``
          - Random uppercase word from the uppercase ipsum lorem word set, or uppercased ``extendedWordList``.
-           Always escaped.
+            Must always be escaped with ``\\``.
        * - ``\\v``
-         - Entire base value. Always escaped.
+         - Entire base value. Must always be escaped with ``\\``.
        * - ``\\v0`` through ``\\v9``
-         - Element ``0`` through element ``9`` of an array/list base value. Always escaped.
+         - Element ``0`` through element ``9`` of an array/list base value. Must always be escaped with ``\\``.
        * - ``\\V``
          - Entire base value. Must always be escaped with ``\\``.
        * - ``\\``
