@@ -168,3 +168,138 @@ testDataSpec = (
 
 dfTestData = testDataSpec.build()
 ```
+
+## Normal distribution
+
+The Normal (Gaussian) distribution models symmetric variation around a central value — physical
+measurements such as adult heights and weights, exam scores clustering around a class mean, or
+sensor readings fluctuating around a calibrated baseline. The bell-curve shape means most generated
+values fall close to the mean and become exponentially rarer farther away.
+
+The `mean` parameter sets the centre of the distribution; `stddev` controls the spread.
+With `mean=170.0` and `stddev=10.0`, roughly 68% of generated values fall between 160 and 180 —
+a realistic model for adult height in centimetres where extreme values below 140 or above 210 are
+effectively impossible.
+
+```python
+import dbldatagen as dg
+import dbldatagen.distributions as dist
+
+testDataSpec = (
+    dg.DataGenerator(spark, name="normal_example", rows=100_000)
+    .withColumn("person_id", "integer", minValue=1, maxValue=100_000)
+    # heights cluster around 170 cm; ~68% of values fall within one stddev (160–180)
+    .withColumn(
+        "height_cm",
+        "float",
+        minValue=140.0,
+        maxValue=210.0,
+        random=True,
+        distribution=dist.Normal(mean=170.0, stddev=10.0),
+    )
+)
+
+dfTestData = testDataSpec.build()
+```
+
+## Beta distribution
+
+The Beta distribution is the standard choice for modelling bounded proportions and rates that live
+naturally in the interval [0, 1] — click-through rates, A/B test conversion probabilities, the
+fraction of budget consumed, or defect rates. Because its output is natively in [0, 1], a column
+with `minValue=0.0` and `maxValue=1.0` maps the distribution directly without rescaling artefacts.
+
+The two shape parameters `alpha` and `beta` jointly control location and skew. When `alpha == beta`
+the distribution is symmetric around 0.5. Increasing `alpha` relative to `beta` shifts probability
+mass toward higher values; a larger `beta` relative to `alpha` concentrates mass near zero.
+`alpha=2.0, beta=18.0` yields a mean of 0.10 — a realistic e-commerce page conversion rate where
+most pages convert below 20% but a handful reach 30% or more.
+
+```python
+import dbldatagen as dg
+import dbldatagen.distributions as dist
+
+testDataSpec = (
+    dg.DataGenerator(spark, name="beta_example", rows=100_000)
+    .withColumn("page_id", "integer", minValue=1, maxValue=100_000)
+    # most pages convert at low rates; a few outliers reach 30%+
+    .withColumn(
+        "conversion_rate",
+        "float",
+        minValue=0.0,
+        maxValue=1.0,
+        random=True,
+        distribution=dist.Beta(alpha=2.0, beta=18.0),
+    )
+)
+
+dfTestData = testDataSpec.build()
+```
+
+## Gamma distribution
+
+The Gamma distribution generates positive-valued durations, waiting times, and magnitudes —
+session lengths, time-to-resolution for support tickets, or insurance claim amounts. Unlike the
+Exponential distribution, Gamma can produce a mode away from zero when `shape > 1`, making it
+more realistic for durations that are rarely instantaneous.
+
+The `shape` parameter controls how many effective "stages" contribute to the total duration:
+`shape=1` reduces to an Exponential, while larger values shift the peak rightward and concentrate
+the distribution. The `scale` parameter stretches the time axis — the mean equals `shape × scale`.
+With `shape=2.0` and `scale=5.0`, the mean session length is 10 minutes and values are concentrated
+in the 2–30 minute range, which models typical web session behaviour.
+
+```python
+import dbldatagen as dg
+import dbldatagen.distributions as dist
+
+testDataSpec = (
+    dg.DataGenerator(spark, name="gamma_example", rows=100_000)
+    .withColumn("session_id", "integer", minValue=1, maxValue=100_000)
+    # session durations peak around 10 min; shape=2 avoids the spike at zero
+    .withColumn(
+        "session_duration_minutes",
+        "float",
+        minValue=0.0,
+        maxValue=120.0,
+        random=True,
+        distribution=dist.Gamma(shape=2.0, scale=5.0),
+    )
+)
+
+dfTestData = testDataSpec.build()
+```
+
+## Exponential distribution
+
+The Exponential distribution models the time between successive events in a Poisson process —
+inter-arrival times between API requests, time-to-failure for hardware components, or gaps between
+customer purchases. Its defining property is memorylessness: the probability of the next event
+occurring in the next instant is independent of how long you have already waited.
+
+The single `rate` parameter (λ) is the reciprocal of the mean: `mean = 1 / rate`. The
+Exponential is a special case of the Gamma distribution with `shape=1`. With `rate=2.0`, the
+average gap between requests is 0.5 seconds — appropriate for a moderately busy API endpoint where
+most inter-arrival times are well under a second but occasional pauses of several seconds still
+occur.
+
+```python
+import dbldatagen as dg
+import dbldatagen.distributions as dist
+
+testDataSpec = (
+    dg.DataGenerator(spark, name="exponential_example", rows=100_000)
+    .withColumn("request_id", "integer", minValue=1, maxValue=100_000)
+    # inter-arrival times at 2 req/s on average; memoryless — each gap is independent
+    .withColumn(
+        "request_gap_seconds",
+        "float",
+        minValue=0.0,
+        maxValue=30.0,
+        random=True,
+        distribution=dist.Exponential(rate=2.0),
+    )
+)
+
+dfTestData = testDataSpec.build()
+```
