@@ -139,42 +139,12 @@ Note that partial overrides are supported. Any arguments you omit fall back to t
 values. For example, `"gamma(shape=2.0)"` will create a distribution with the default value 
 `scale=1.0`.
 
-## Pareto distribution
-
-The Pareto (power-law) distribution is useful for modelling naturally skewed quantities where
-most values are small but a small number of values are very large — for example, the number of
-orders per customer, file sizes, or city populations.
-
-The `shape` parameter (tail index `alpha`) controls how heavy the tail is. A smaller value
-produces more skew; `shape ≈ 1.16` corresponds to the classic 80/20 Pareto principle.
-
-```python
-import dbldatagen as dg
-import dbldatagen.distributions as dist
-
-testDataSpec = (
-    dg.DataGenerator(spark, name="pareto_example", rows=100_000)
-    .withColumn("customer_id", "integer", minValue=1, maxValue=100_000)
-    # most customers place few orders; a handful place very many
-    .withColumn(
-        "order_count",
-        "integer",
-        minValue=1,
-        maxValue=500,
-        random=True,
-        distribution=dist.Pareto(shape=1.16),
-    )
-)
-
-dfTestData = testDataSpec.build()
-```
-
 ## Normal distribution
 
-The Normal (Gaussian) distribution models symmetric variation around a central value — physical
-measurements such as adult heights and weights, exam scores clustering around a class mean, or
-sensor readings fluctuating around a calibrated baseline. The bell-curve shape means most generated
-values fall close to the mean and become exponentially rarer farther away.
+The Normal (Gaussian) distribution models symmetric variation around a central value. This is useful
+for physical measurements such as adult heights and weights, exam scores clustering around a class 
+mean, or sensor readings fluctuating around a calibrated baseline. The bell-curve shape means most 
+generated values fall close to the mean and become exponentially rarer farther away.
 
 The `mean` parameter sets the centre of the distribution; `stddev` controls the spread.
 With `mean=170.0` and `stddev=10.0`, roughly 68% of generated values fall between 160 and 180 —
@@ -205,8 +175,8 @@ dfTestData = testDataSpec.build()
 ## Beta distribution
 
 The Beta distribution is the standard choice for modelling bounded proportions and rates that live
-naturally in the interval [0, 1] — click-through rates, A/B test conversion probabilities, the
-fraction of budget consumed, or defect rates. Because its output is natively in [0, 1], a column
+naturally in the interval [0, 1]. This includes click-through rates, A/B test conversion probabilities, 
+the fraction of budget consumed, or defect rates. Because its output is natively in [0, 1], a column
 with `minValue=0.0` and `maxValue=1.0` maps the distribution directly without rescaling artefacts.
 
 The two shape parameters `alpha` and `beta` jointly control location and skew. When `alpha == beta`
@@ -241,7 +211,7 @@ dfTestData = testDataSpec.build()
 The Gamma distribution generates positive-valued durations, waiting times, and magnitudes —
 session lengths, time-to-resolution for support tickets, or insurance claim amounts. Unlike the
 Exponential distribution, Gamma can produce a mode away from zero when `shape > 1`, making it
-more realistic for durations that are rarely instantaneous.
+more realistic for quantities that are accumulated over time or durations that are not instantaneous.
 
 The `shape` parameter controls how many effective "stages" contribute to the total duration:
 `shape=1` reduces to an Exponential, while larger values shift the peak rightward and concentrate
@@ -256,7 +226,7 @@ import dbldatagen.distributions as dist
 testDataSpec = (
     dg.DataGenerator(spark, name="gamma_example", rows=100_000)
     .withColumn("session_id", "integer", minValue=1, maxValue=100_000)
-    # session durations peak around 10 min; shape=2 avoids the spike at zero
+    # session durations peak around 10 min; shape=2 avoids a spike at zero
     .withColumn(
         "session_duration_minutes",
         "float",
@@ -272,10 +242,10 @@ dfTestData = testDataSpec.build()
 
 ## Exponential distribution
 
-The Exponential distribution models the time between successive events in a Poisson process —
-inter-arrival times between API requests, time-to-failure for hardware components, or gaps between
-customer purchases. Its defining property is memorylessness: the probability of the next event
-occurring in the next instant is independent of how long you have already waited.
+The Exponential distribution models the time between successive events in a Poisson process. This
+could be the inter-arrival times between API requests, time-to-failure for hardware components, or 
+gaps between customer purchases. Its defining property is memorylessness: the probability of the next 
+event occurring in the next instant is independent of how long you have already waited.
 
 The single `rate` parameter (λ) is the reciprocal of the mean: `mean = 1 / rate`. The
 Exponential is a special case of the Gamma distribution with `shape=1`. With `rate=2.0`, the
@@ -298,6 +268,36 @@ testDataSpec = (
         maxValue=30.0,
         random=True,
         distribution=dist.Exponential(rate=2.0),
+    )
+)
+
+dfTestData = testDataSpec.build()
+```
+
+## Pareto distribution
+
+The Pareto (power-law) distribution is useful for modelling naturally skewed quantities where
+most values are small but a small number of values are very large — for example, the number of
+orders per customer, file sizes, or city populations.
+
+The `shape` parameter (tail index `alpha`) controls how heavy the tail is. A smaller value
+produces more skew; `shape ≈ 1.16` corresponds to the classic 80/20 Pareto principle.
+
+```python
+import dbldatagen as dg
+import dbldatagen.distributions as dist
+
+testDataSpec = (
+    dg.DataGenerator(spark, name="pareto_example", rows=100_000)
+    .withColumn("customer_id", "integer", minValue=1, maxValue=100_000)
+    # most customers place few orders; a handful place very many
+    .withColumn(
+        "order_count",
+        "integer",
+        minValue=1,
+        maxValue=500,
+        random=True,
+        distribution=dist.Pareto(shape=1.16),
     )
 )
 
