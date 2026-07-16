@@ -90,11 +90,13 @@ class Gamma(DataDistribution):
         amin = np.amin(results) * 1.0
         amax = np.amax(results) * 1.0
 
+        if amin == amax:
+            return pd.Series(np.zeros_like(results))
+
         adjusted_results = results - amin
-
         scaling_factor = amax - amin
-
         results2 = adjusted_results / scaling_factor
+
         return pd.Series(results2)
 
     def generateNormalizedDistributionSample(self) -> Column:

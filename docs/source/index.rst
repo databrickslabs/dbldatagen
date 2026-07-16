@@ -33,7 +33,6 @@ As it is installable via `%pip install`, it can also be incorporated in environm
    Using streaming data <using_streaming_data>
    Generating JSON and structured column data <generating_json_data>
    Generating synthetic data from existing data <generating_from_existing_data>
-   Generating Change Data Capture (CDC) data <generating_cdc_data>
    Using multiple tables <multi_table_data>
    Extending text generation <extending_text_generation>
    Use with Delta Live Tables <using_delta_live_tables>

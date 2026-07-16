@@ -86,7 +86,11 @@ docs = [
     "Jinja2>3.1,<4",
     "sphinx-copybutton~=0.5.2",
     "rst2pdf[sphinx]~=0.102",
+    "pydoc-markdown>=4.8.2,<5.0",
 ]
+core = ["pydantic>=2.0"]
+core-faker = ["pydantic>=2.0", "faker>=20.0"]
+core-dev = ["pydantic>=2.0", "faker>=20.0", "pyyaml>=6.0"]
 yq = [
     "yq~=3.4.3",
 ]
@@ -99,6 +103,38 @@ build-backend = "hatchling.build"
 [tool.uv]
 exclude-newer-package = { "databricks-sdk" = false }
 required-version = "~= 0.11.0"
+
+# pydoc-markdown: auto-generate the core API reference (docs/core/reference/api).
+# Scoped to the dbldatagen.core package only -- the v0 API is documented via
+# Sphinx (see `make docs-build`).  Run with `make docs-api-core`.  Mirrors the
+# DQX setup (databrickslabs/dqx): python loader -> smart/crossref/filter
+# processors -> per-module markdown files, with a post-render hook that flattens
+# the dbldatagen/core/ package prefix up into reference/api.
+[tool.pydoc-markdown]
+loaders = [
+    { type = "python", search_path = ["."], packages = ["dbldatagen.core"] },
+]
+processors = [
+    { type = "google" },
+    { type = "crossref" },
+    { type = "filter", skip_empty_modules = true },
+]
+hooks = { post-render = [
+    "cp -r docs/core/reference/api/dbldatagen/core/. docs/core/reference/api/",
+    "rm -rf docs/core/reference/api/dbldatagen",
+    "perl -pi -e 's{reference/api/dbldatagen/core/}{reference/api/}g' docs/core/reference/api/sidebar.json",
+] }
+
+[tool.pydoc-markdown.renderer]
+type = "docusaurus"
+docs_base_path = "docs/core"
+relative_output_path = "reference/api"
+relative_sidebar_path = "sidebar.json"
+# escape_html_in_docstring=false: the docusaurus default HTML-escapes docstring
+# bodies, which corrupts argument names of params with defaults (renders as
+# "0"/"2"/...) and litters output with &#x27; entities.  Methods/functions
+# default to header level 4, which is too deep; lift them to 3.
+markdown = { escape_html_in_docstring = false, header_level_by_type = { Method = 3, Function = 3, Class = 2, Module = 1 } }
 
 [tool.hatch.version]
 path = "dbldatagen/_version.py"
@@ -121,6 +157,7 @@ include = [
     "/CONTRIBUTING.md",
     "/MANIFEST.in",
 ]
+
 
 [tool.black]
 target-version = ["py310"]
@@ -145,7 +182,8 @@ exclude = [
     "docs/build",
     "tutorial",
     "examples",
-    "tests",
+    "tests/test_*.py",
+    "tests/__init__.py",
     "dbldatagen/__init__.py",
     "dbldatagen/constraints/__init__.py",
     "dbldatagen/distributions/__init__.py",
@@ -191,6 +229,14 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["PLR2004", "S101", "TID252"]
+# PLC0415 is allowed only inside the optional-dep import guard
+# (``try: from faker import Faker except ImportError: ...`` rewrites
+# the message to point at ``pip install 'dbldatagen[core-faker]'``).
+# The guard cannot be hoisted to module level without breaking the
+# optional-dependency contract.  Everywhere else in dbldatagen/core
+# the rule applies.
+"dbldatagen/core/engine/columns/faker_pool.py" = ["PLC0415"]
+"tests/core/*" = ["ANN", "PLC0415", "PLR2004", "S101", "TID252", "B905"]
 "examples/*" = ["ALL"]
 "tutorial/*" = ["ALL"]
 "docs/*" = ["ALL"]
@@ -220,7 +266,6 @@ ignore = [
     "docs/build",
     "tutorial",
     "examples",
-    "tests",
     "dbldatagen/datasets",
     "dbldatagen/__init__.py",
     "dbldatagen/constraints/__init__.py",
@@ -251,7 +296,8 @@ ignore-paths = [
     "docs/build",
     "tutorial",
     "examples",
-    "tests",
+    "tests/test_.*",
+    "tests/__init__\\.py",
     "dbldatagen/datasets",
     "dbldatagen/distributions",
     "dbldatagen/__init__.py",
@@ -267,6 +313,7 @@ ignore-paths = [
 [tool.pylint.messages_control]
 max-line-length = 120
 disable = [
+    "redefined-builtin",
     "too-many-instance-attributes",
     "invalid-name",
     "no-else-return",
@@ -303,6 +350,7 @@ max-args = 10
 max-locals = 20
 max-branches = 15
 max-statements = 60
+max-positional-arguments = 9
 
 # Pytest configuration
 [tool.pytest.ini_options]
@@ -311,12 +359,11 @@ addopts = [
     "-ra",
     "--strict-markers",
     "--strict-config",
-    "--cov=dbldatagen",
-    "--cov-report=term-missing:skip-covered",
-    "--cov-report=xml",
-    "--cov-report=html",
-    "--cov-fail-under=80",
     "-p", "no:warnings",
+    "-m", "not slow",
+]
+markers = [
+    "slow: long-running perf/large-row tests (excluded by default; run with -m slow)",
 ]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
@@ -333,7 +380,12 @@ filterwarnings = [
 ]
 cache_dir = ".venv/pytest-cache"
 
-# Coverage configuration
+# Coverage configuration.  The v0 lane uses .coveragerc; the core lane uses
+# .coveragerc-core (which omits faker_pool.py because coverage.py sys.settrace
+# breaks cloudpickle serialization of pandas_udf closures).  CI runs `make
+# test`, which wires both lanes and produces a single coverage.xml.
+# Bare `pytest --cov` uses only the defaults below and will CRASH on
+# test_faker_pool.py under coverage — use `make test` or `make test-fast`.
 [tool.coverage.run]
 source = ["dbldatagen"]
 branch = true
@@ -374,18 +426,20 @@ exclude = [
     "build",
     "docs",
     "examples",
-    "tests",
+    "tests/test_",
+    "tests/__init__\\.py",
     "tutorial",
-    "tests",
     "dbldatagen/datasets",
+    "dbldatagen/datasets_object.py",
+    "dbldatagen/constraints",
+    "dbldatagen/distributions",
     "dbldatagen/__init__.py",
-    "dbldatagen/constraints/__init__.py",
-    "dbldatagen/distributions/__init__.py",
     "dbldatagen/column_generation_spec.py",
     "dbldatagen/column_spec_options.py",
     "dbldatagen/datagen_constants.py",
     "dbldatagen/schema_parser.py",
     "dbldatagen/serialization.py",
+    "dbldatagen/text_generators.py",
     "dbldatagen/utils.py"
 ]
 warn_return_any = true
@@ -410,3 +464,4 @@ module = [
     "numpy.*",
 ]
 ignore_missing_imports = true
+
