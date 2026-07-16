@@ -10,6 +10,7 @@ import copy
 import logging
 import math
 import random
+import zlib
 from datetime import datetime, timedelta
 
 import pyspark.sql.functions as F
@@ -250,7 +251,7 @@ class ColumnGenerationSpec(SerializableToDict):
 
         if self._randomSeedMethod == RANDOM_SEED_HASH_FIELD_NAME:
             assert self.name is not None, "field name cannot be None"
-            self._randomSeed = abs(hash(self.name))
+            self._randomSeed = self._hashFieldName(self.name)
         else:
             self._randomSeed = self[OPTION_RANDOM_SEED]
 
@@ -425,7 +426,7 @@ class ColumnGenerationSpec(SerializableToDict):
                 self._cs.name = self._newName
 
                 if self._cs._randomSeedMethod == RANDOM_SEED_HASH_FIELD_NAME:
-                    self._cs._randomSeed = abs(hash(self._cs.name))
+                    self._cs._randomSeed = ColumnGenerationSpec._hashFieldName(self._cs.name)
 
                     if self._cs._textGenerator is not None and self._cs._randomSeed is not None:
                         self._cs._textGenerator = self._cs._textGenerator.withRandomSeed(self._cs._randomSeed)
@@ -614,6 +615,15 @@ class ColumnGenerationSpec(SerializableToDict):
                 )
                 self._weightedBaseColumn = temp_name
 
+    @staticmethod
+    def _hashFieldName(name):
+        """Computes a stable, non-negative 32-bit hash of a field name for use as a random seed.
+
+        :param name: Field name to hash
+        :return: A stable non-negative integer hash
+        """
+        return zlib.crc32(name.encode("utf-8"))
+
     def _randomUniqueGenerator(self):
         """Returns a seeded random number generator for reproducible random-unique value selection.
 
@@ -646,7 +656,7 @@ class ColumnGenerationSpec(SerializableToDict):
 
         :param begin_val: Begin value in the column range
         :param end_val: End value in the column range
-        :interval_val: Step / interval value
+        :param interval_val: Step / interval value
         :return: Number of discrete values in the range
         """
         interval_micros = interval_val // timedelta(microseconds=1)
