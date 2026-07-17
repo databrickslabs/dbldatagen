@@ -1595,10 +1595,66 @@ class TestRangedValuesAndDates(unittest.TestCase):
         unique_values = {row[0] for row in test_df.select("val").distinct().collect()}
         self.assertEqual(unique_values, {date(2021, 3, 3)})
 
-    def test_date_interval_less_than_one_day_raises(self):
+    def test_date_interval_less_than_one_day_builds(self):
+        test_df = (
+            dg.DataGenerator(spark, name="d_subday", rows=100, partitions=2)
+            .withColumn("val", "date", begin="2021-01-01", end="2021-12-31", interval="hours=6")
+            .build()
+        )
+        values = [row[0] for row in test_df.select("val").distinct().collect()]
+        self.assertTrue(all(isinstance(v, date) for v in values))
+        self.assertTrue(all(date(2021, 1, 1) <= v <= date(2021, 12, 31) for v in values))
+
+    def test_unique_values_random_date_subday_interval_yields_distinct_dates(self):
+        test_df = (
+            dg.DataGenerator(spark, name="d_subday_unique", rows=1000, partitions=4,
+                             randomSeedMethod="fixed", randomSeed=1)
+            .withColumn("val", "date", begin="2021-01-01", end="2021-01-10", interval="hours=6",
+                        uniqueValues=5, random=True)
+            .build()
+        )
+        unique_values = {row[0] for row in test_df.select("val").distinct().collect()}
+        self.assertEqual(len(unique_values), 5)
+        self.assertTrue(all(isinstance(v, date) for v in unique_values))
+        self.assertTrue(all(date(2021, 1, 1) <= v <= date(2021, 1, 10) for v in unique_values))
+
+    def test_unique_values_random_date_without_begin_uses_derived_range(self):
+        test_df = (
+            dg.DataGenerator(spark, name="d_no_begin", rows=200, partitions=4,
+                             randomSeedMethod="fixed", randomSeed=42)
+            .withColumn("val", "date", end="2020-12-31", uniqueValues=10, random=True)
+            .build()
+        )
+        unique_values = {row[0] for row in test_df.select("val").distinct().collect()}
+        self.assertEqual(len(unique_values), 10)
+        self.assertTrue(all(isinstance(v, date) for v in unique_values))
+        self.assertEqual(min(unique_values), date(2020, 12, 22))
+        self.assertEqual(max(unique_values), date(2020, 12, 31))
+
+    def test_unique_values_random_default_hash_fieldname_reproducible(self):
+        def build_unique_set():
+            test_gen = (
+                dg.DataGenerator(spark, name="hash_repro", rows=1000, partitions=2)
+                .withColumn("val", "int", minValue=1, maxValue=50, uniqueValues=8, random=True)
+            )
+            return {r[0] for r in test_gen.build().select("val").distinct().collect()}
+
+        self.assertEqual(build_unique_set(), build_unique_set())
+
+    def test_unique_values_random_reversed_numeric_range_does_not_raise(self):
+        test_df = (
+            dg.DataGenerator(spark, name="reversed_range", rows=100, partitions=2,
+                             randomSeedMethod="fixed", randomSeed=7)
+            .withColumn("val", "int", minValue=100, maxValue=1, step=2, uniqueValues=5, random=True)
+            .build()
+        )
+        unique_values = {r[0] for r in test_df.select("val").distinct().collect()}
+        self.assertGreaterEqual(len(unique_values), 1)
+
+    def test_unique_values_random_zero_step_raises_on_discrete_range(self):
         with pytest.raises(ValueError):
             (
-                dg.DataGenerator(spark, name="d_subday", rows=10, partitions=2)
-                .withColumn("val", "date", begin="2021-01-01", end="2021-12-31", interval="hours=6")
+                dg.DataGenerator(spark, name="zero_step", rows=50, partitions=2)
+                .withColumn("val", "int", minValue=1, maxValue=100, step=0, uniqueValues=5, random=True)
                 .build()
             )

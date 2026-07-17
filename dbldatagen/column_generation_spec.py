@@ -645,7 +645,7 @@ class ColumnGenerationSpec(SerializableToDict):
         :param step_val: Step / increment value
         :return: Number of discrete values in the range
         """
-        if step_val == 0:
+        if step_val == 0 or max_val < min_val:
             return 0
         if isinstance(min_val, float) or isinstance(max_val, float) or isinstance(step_val, float):
             return int(math.floor(round((max_val - min_val) / step_val, 9))) + 1
@@ -786,6 +786,8 @@ class ColumnGenerationSpec(SerializableToDict):
                 begin_val = begin_val.date()
             if isinstance(end_val, datetime):
                 end_val = end_val.date()
+            interval_days = interval_val.days
+            interval_val = timedelta(days=interval_days if interval_days >= 1 else 1)
         return begin_val, end_val, interval_val
 
     def _setup_logger(self):
@@ -899,22 +901,15 @@ class ColumnGenerationSpec(SerializableToDict):
         effective_end = coalesce_values(effective_end, c_end)
         effective_begin = coalesce_values(effective_begin, c_begin)
 
-        if effective_begin is not None and effective_end is not None:
+        if c_unique is not None and self.random and effective_begin is not None and effective_end is not None:
             begin_val, end_val, interval_val = self._normalizeDatetimeBounds(
                 effective_begin, effective_end, effective_interval, colType
             )
             if begin_val == end_val:
                 self.values = [begin_val]
                 return NRange(0, 0, 1)
-            if type(colType) is DateType and timedelta(0) < interval_val < timedelta(days=1):
-                raise ValueError(f"Column [{self.name}]: date interval must be at least 1 day, got {interval_val}")
-
-        if c_unique is not None and self.random and effective_end is not None:
-            begin_val, end_val, interval_val = self._normalizeDatetimeBounds(
-                effective_begin, effective_end, effective_interval, colType
-            )
             grid_size = self._computeDatetimeGridSize(begin_val, end_val, interval_val)
-            if grid_size <= 1:  # NOTE: Only true if begin_val + interval_val > end_val; begin_val is used
+            if grid_size <= 1:
                 self.values = [begin_val]
                 return NRange(0, 0, 1)
             unique_count = min(c_unique, grid_size)
