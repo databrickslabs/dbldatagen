@@ -1607,10 +1607,12 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
     def test_unique_values_random_date_subday_interval_yields_distinct_dates(self):
         test_df = (
-            dg.DataGenerator(spark, name="d_subday_unique", rows=1000, partitions=4,
-                             randomSeedMethod="fixed", randomSeed=1)
-            .withColumn("val", "date", begin="2021-01-01", end="2021-01-10", interval="hours=6",
-                        uniqueValues=5, random=True)
+            dg.DataGenerator(
+                spark, name="d_subday_unique", rows=1000, partitions=4, randomSeedMethod="fixed", randomSeed=1
+            )
+            .withColumn(
+                "val", "date", begin="2021-01-01", end="2021-01-10", interval="hours=6", uniqueValues=5, random=True
+            )
             .build()
         )
         unique_values = {row[0] for row in test_df.select("val").distinct().collect()}
@@ -1620,8 +1622,7 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
     def test_unique_values_random_date_without_begin_uses_derived_range(self):
         test_df = (
-            dg.DataGenerator(spark, name="d_no_begin", rows=200, partitions=4,
-                             randomSeedMethod="fixed", randomSeed=42)
+            dg.DataGenerator(spark, name="d_no_begin", rows=200, partitions=4, randomSeedMethod="fixed", randomSeed=42)
             .withColumn("val", "date", end="2020-12-31", uniqueValues=10, random=True)
             .build()
         )
@@ -1633,9 +1634,8 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
     def test_unique_values_random_default_hash_fieldname_reproducible(self):
         def build_unique_set():
-            test_gen = (
-                dg.DataGenerator(spark, name="hash_repro", rows=1000, partitions=2)
-                .withColumn("val", "int", minValue=1, maxValue=50, uniqueValues=8, random=True)
+            test_gen = dg.DataGenerator(spark, name="hash_repro", rows=1000, partitions=2).withColumn(
+                "val", "int", minValue=1, maxValue=50, uniqueValues=8, random=True
             )
             return {r[0] for r in test_gen.build().select("val").distinct().collect()}
 
@@ -1643,8 +1643,9 @@ class TestRangedValuesAndDates(unittest.TestCase):
 
     def test_unique_values_random_reversed_numeric_range_does_not_raise(self):
         test_df = (
-            dg.DataGenerator(spark, name="reversed_range", rows=100, partitions=2,
-                             randomSeedMethod="fixed", randomSeed=7)
+            dg.DataGenerator(
+                spark, name="reversed_range", rows=100, partitions=2, randomSeedMethod="fixed", randomSeed=7
+            )
             .withColumn("val", "int", minValue=100, maxValue=1, step=2, uniqueValues=5, random=True)
             .build()
         )
