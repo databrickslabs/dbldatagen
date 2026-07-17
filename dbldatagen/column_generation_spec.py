@@ -645,6 +645,8 @@ class ColumnGenerationSpec(SerializableToDict):
         :param step_val: Step / increment value
         :return: Number of discrete values in the range
         """
+        if step_val == 0:
+            return 0
         if isinstance(min_val, float) or isinstance(max_val, float) or isinstance(step_val, float):
             return int(math.floor(round((max_val - min_val) / step_val, 9))) + 1
         return int((max_val - min_val) // step_val) + 1
@@ -849,7 +851,7 @@ class ColumnGenerationSpec(SerializableToDict):
                         grid_size,
                         grid_size,
                     )
-                if unique_count == grid_size:
+                if unique_count >= grid_size:
                     if type(effective_min) is float or type(effective_step) is float:
                         full_max = round(effective_min + (grid_size - 1) * effective_step, 9)
                     else:
