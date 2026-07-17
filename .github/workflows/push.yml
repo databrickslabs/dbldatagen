@@ -84,6 +84,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           name: dbldatagen
           files: ./coverage.xml
+          flags: v0,core
 
   tests:
     needs: [fmt, test-version]
