@@ -78,12 +78,21 @@ jobs:
       - name: Run unit tests
         run: make dev test
 
-      - name: Publish test coverage
+      - name: Publish test coverage (v0)
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de  # v5.5.2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           name: dbldatagen
           files: ./coverage.xml
+          flags: v0
+
+      - name: Publish test coverage (core)
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de  # v5.5.2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          name: dbldatagen
+          files: ./coverage.xml
+          flags: core
 
   tests:
     needs: [fmt, test-version]
