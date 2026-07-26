@@ -106,11 +106,18 @@ class TestTextGeneratorBasic:
             (None, (2, 12)),
             (5, (5, 5)),
             ((3, 8), (3, 8)),
-            ([3, 8], (3, 8)),  # a bounds pair is written to JSON as an array, so it returns as a list
+            ([3, 8], (3, 8)),  # a bounds pair arrives as a list after a JSON round trip
+            (0, (2, 12)),
+            ((), (2, 12)),
+            ([], (2, 12)),
         ],
     )
     def test_get_as_tuple_or_else_accepts_supported_forms(self, boundsValue, expectedTuple):
-        """Test that None, a single value, a 2 element tuple and a 2 element list are all accepted."""
+        """Test that None, a single value, a 2 element tuple and a 2 element list are all accepted.
+
+        A falsy value such as 0 or an empty pair also returns the default, which is the long standing
+        behaviour of this helper.
+        """
         assert TextGenerator.getAsTupleOrElse(boundsValue, (2, 12), "words") == expectedTuple
 
     def test_get_as_tuple_or_else_rejects_unsupported_type(self):

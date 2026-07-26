@@ -348,13 +348,9 @@ class TextGenerator(ABC):
                   as the `(minimum, maximum)` pair.
         :param defaultValue: value to use as a default if value of `v` is None. Must be a tuple.
         :param valueName: name of value for debugging and logging purposes
-        :returns: return `v` as tuple if not `None` or value of `default_v` if `v` is `None`. If `v` is a single
+        :returns: return `v` as tuple if not `None` or value of `defaultValue` if `v` is `None`. If `v` is a single
                   value, returns the tuple (`v`, `v`)
         :raises ValueError: If `v` is not an integer, a 2 element tuple or list, or `None`
-
-        .. note::
-           A bounds pair is written to JSON as an array, so a list is accepted as well as a tuple. This keeps
-           a saved data generation specification loadable, as `loadFromJson` passes the array straight back in.
         """
         if not v:
             return defaultValue
@@ -976,20 +972,20 @@ class ILText(TextGenerator, SerializableToDict):  # lgtm [py/missing-equals]
     """
     This class generates Ipsum Lorem text paragraphs, words, and sentences.
 
-    :param paragraphs: Number of paragraphs to generate. If a tuple is provided, we will generate a random number of
-        paragraphs in the provided range.
-    :param sentences: Number of sentences per paragraph to generate. If a tuple is provided, we will generate a random
-        number of sentences in the provided range.
-    :param words: Number of words per sentence to generate. If a tuple is provided, we will generate a random number of
-        words in the provided range.
+    :param paragraphs: Number of paragraphs to generate. If a 2 element tuple or list is provided, we will generate
+        a random number of paragraphs in the provided range.
+    :param sentences: Number of sentences per paragraph to generate. If a 2 element tuple or list is provided, we
+        will generate a random number of sentences in the provided range.
+    :param words: Number of words per sentence to generate. If a 2 element tuple or list is provided, we will
+        generate a random number of words in the provided range.
     :param extendedWordList: Optional list of words to use instead of the default Ipsum Lorem list.
     """
 
     def __init__(
         self,
-        paragraphs: int | tuple[int, int] | None = None,
-        sentences: int | tuple[int, int] | None = None,
-        words: int | tuple[int, int] | None = None,
+        paragraphs: int | tuple[int, int] | list[int] | None = None,
+        sentences: int | tuple[int, int] | list[int] | None = None,
+        words: int | tuple[int, int] | list[int] | None = None,
         extendedWordList: list[str] | None = None,
     ) -> None:
         assert (

@@ -54,9 +54,9 @@ class TestSerialization:
                         "text": {"kind": "ILText", "paragraphs": 2, "sentences": 4, "words": 10},
                     },
                     {
-                        # bounds pairs arrive as JSON arrays, which is what `saveToJson` writes for them
                         "colName": "col5",
                         "colType": "string",
+                        # bounds pairs arrive as JSON arrays, which is what `saveToJson` writes for them
                         "text": {"kind": "ILText", "paragraphs": [1, 2], "sentences": [2, 4], "words": [3, 8]},
                     },
                 ],
@@ -132,6 +132,12 @@ class TestSerialization:
                         "colType": "string",
                         "text": {"kind": "InvalidTextFactory", "property": "value"},
                     }
+                ],
+            ),
+            (
+                pytest.raises(ValueError),
+                [  # Testing serialization error with an ILText bounds pair of the wrong length
+                    {"colName": "col1", "colType": "string", "text": {"kind": "ILText", "paragraphs": [1, 2, 3]}}
                 ],
             ),
         ],

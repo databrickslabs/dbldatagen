@@ -109,19 +109,9 @@ To define a column with a text generator, pass a dictionary with the ``TextGener
    }
 
 Options that take a ``(minimum, maximum)`` bounds pair, such as the ``paragraphs``, ``sentences`` and
-``words`` options of ``ILText``, are written to JSON as arrays. Both a two element list and a two element
-tuple are accepted when a saved data generation specification is loaded, so a bounds pair survives a save
-and load cycle unchanged.
-
-.. code-block:: python
-
-   dataSpecOptions = {
-      "name": "users_dataset", "rows": 1000, "randomSeedMethod": "hash_fieldname",
-      "columns": [
-         {"colName": "description", "colType": "string", "text": {
-            "kind": "ILText", "paragraphs": [1, 2], "sentences": [2, 4], "words": [3, 8]}}
-      ]
-   }
+``words`` options of ``ILText``, are written to JSON as arrays, for example ``"words": [3, 8]``. Both a two
+element list and a two element tuple are accepted when a saved data generation specification is loaded, so a
+bounds pair survives a save and load cycle unchanged.
 
 
 To define a column with a text generator, pass a dictionary with the ``TextGenerator`` options.
