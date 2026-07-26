@@ -64,11 +64,13 @@ values
 
 ### Ranges for integral column types
 
-The integral column types are an exception to the rescaling rule above. The Spark SQL integral types are 
-signed, so the values a column can hold are narrower than the number of distinct values the type provides. 
-Rather than rescaling a `minValue` or `maxValue` that falls outside the limits below, `build` raises a 
-`ValueError` naming the bound, the limit and the column type. Rescaling is not used here because it would 
-silently change the range that was asked for, and the values would otherwise wrap around during generation.
+The integral column types are an exception to two of the precedence rules above: the rule that reduces the 
+number of unique values, and the rule that rescales a range conflicting with the data type. The Spark SQL 
+integral types are signed, so the values a column can hold are narrower than the number of distinct values 
+the type provides. Rather than reducing or rescaling a `minValue` or `maxValue` that falls outside the limits 
+in the table below, `build` raises a `ValueError` naming the bound, the limit and the column type. Neither 
+reducing nor rescaling is used here, because both would silently change the range that was asked for, and the 
+values would otherwise wrap around during generation.
 
 | Column type | Minimum value | Maximum value |
 |:------------|--------------:|--------------:|
@@ -80,6 +82,10 @@ silently change the range that was asked for, and the values would otherwise wra
 Each of `minValue` and `maxValue` must fall within the limits for the column type. A decreasing range such 
 as `minValue=127`, `maxValue=1` with a negative `step` is still permitted, since the check does not require 
 `minValue` to be the smaller of the two.
+
+The limits apply however the range is arrived at. A `uniqueValues` count that implies a bound beyond the type 
+limit is reported rather than reduced, and `until` sets `maxValue` one above the value supplied, so 
+`until=127` on a `ByteType` column reports a `maxValue` of 128 and is rejected while `until=126` is accepted.
 
 ### Handling of dates and timestamps
 

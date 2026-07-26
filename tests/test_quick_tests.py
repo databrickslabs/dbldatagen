@@ -585,12 +585,54 @@ class TestQuickTests:
 
         assert rng.maxValue == above_long_max
 
-    def test_nrange_bounds_are_enforced_when_building_a_byte_column(self):
-        """Test that a byte column declaring a `maxValue` of 200 is rejected when `build` is called."""
-        data_generator = dg.DataGenerator(sparkSession=spark, name="byte_range", rows=300, partitions=1)
+    @pytest.mark.parametrize(
+        "columnOptions",
+        [
+            {"minValue": 0, "maxValue": 200, "step": 1},
+            {"uniqueValues": 200},
+            {"dataRange": NRange(minValue=0, maxValue=200, step=1)},
+        ],
+        ids=["maxValue", "uniqueValues", "dataRange"],
+    )
+    def test_nrange_bounds_are_enforced_when_building_a_byte_column(self, columnOptions):
+        """Test that a byte column is rejected when `build` is called, however the out of range bound arrives."""
+        data_generator = dg.DataGenerator(sparkSession=spark, name="byte_range", rows=10, partitions=1)
 
         with pytest.raises(ValueError, match=r"`maxValue` of 200 is above the maximum value of 127 for ByteType\."):
-            data_generator.withColumn("v", ByteType(), minValue=0, maxValue=200, step=1).build()
+            data_generator.withColumn("v", ByteType(), **columnOptions).build()
+
+    @pytest.mark.parametrize(
+        "untilValue, expectedMaxValue",
+        [(125, 126), (126, 127)],
+        ids=["below_limit", "at_limit"],
+    )
+    def test_nrange_until_within_the_type_limit_is_accepted(self, untilValue, expectedMaxValue):
+        """Test that `until` is accepted while the `maxValue` it implies stays within the type limit.
+
+        `until` sets `maxValue` one above the value supplied, so the last accepted value is one below the limit.
+        """
+        rng = NRange(until=untilValue)
+        rng.adjustForColumnDatatype(ByteType())
+
+        assert rng.maxValue == expectedMaxValue
+
+    def test_nrange_until_above_the_type_limit_is_rejected(self):
+        """Test that `until` is rejected once the `maxValue` it implies exceeds the type limit."""
+        rng = NRange(until=127)
+        with pytest.raises(
+            ValueError,
+            match=r"`maxValue` of 128 is above the maximum value of 127 for ByteType\.",
+        ):
+            rng.adjustForColumnDatatype(ByteType())
+
+    def test_nrange_rejects_a_fractional_bound_above_the_type_limit(self):
+        """Test that a fractional bound just above the type limit is rejected rather than truncated."""
+        rng = NRange(minValue=0.0, maxValue=127.5)
+        with pytest.raises(
+            ValueError,
+            match=r"`maxValue` of 127.5 is above the maximum value of 127 for ByteType\.",
+        ):
+            rng.adjustForColumnDatatype(ByteType())
 
     def test_nrange_get_continuous_range_requires_min_and_max(self):
         rng = NRange(minValue=None, maxValue=10.0)

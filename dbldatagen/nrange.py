@@ -194,6 +194,7 @@ class NRange(DataRange):
             # each bound is checked against both limits, as a decreasing range puts the larger value in
             # `minValue` and the smaller one in `maxValue`
             for bound_name, bound_value in (("minValue", self.minValue), ("maxValue", self.maxValue)):
+                # both bounds are populated from the type defaults above, so this only narrows the type
                 if bound_value is None:
                     continue
 
