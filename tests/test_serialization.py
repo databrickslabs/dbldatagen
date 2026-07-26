@@ -53,6 +53,12 @@ class TestSerialization:
                         "colType": "string",
                         "text": {"kind": "ILText", "paragraphs": 2, "sentences": 4, "words": 10},
                     },
+                    {
+                        # bounds pairs arrive as JSON arrays, which is what `saveToJson` writes for them
+                        "colName": "col5",
+                        "colType": "string",
+                        "text": {"kind": "ILText", "paragraphs": [1, 2], "sentences": [2, 4], "words": [3, 8]},
+                    },
                 ],
             ),
             (
@@ -482,6 +488,19 @@ class TestSerialization:
         assert column["colName"] == "val"
         assert column["colType"] == "int"
         assert column["expr"] == "id % 12"
+
+    def test_generator_with_iltext_bounds_round_trips(self):
+        """Test that a generator using ILText bounds pairs can be loaded back from its own saved JSON."""
+        gen = dg.DataGenerator(sparkSession=spark, rows=100, name="iltext_bounds").withColumn(
+            "notes", "string", text=dg.ILText(paragraphs=(1, 2), sentences=(2, 4), words=(3, 8))
+        )
+
+        reloaded = dg.DataGenerator.loadFromJson(gen.saveToJson())
+        text_generator = reloaded.getColumnSpec("notes").textGenerator
+
+        assert text_generator.paragraphs == (1, 2)
+        assert text_generator.sentences == (2, 4)
+        assert text_generator.words == (3, 8)
 
     def test_from_options(self):
         options = {

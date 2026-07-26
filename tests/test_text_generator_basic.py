@@ -101,6 +101,36 @@ class TestTextGeneratorBasic:
         assert np_type == expectedType
 
     @pytest.mark.parametrize(
+        "boundsValue, expectedTuple",
+        [
+            (None, (2, 12)),
+            (5, (5, 5)),
+            ((3, 8), (3, 8)),
+            ([3, 8], (3, 8)),  # a bounds pair is written to JSON as an array, so it returns as a list
+        ],
+    )
+    def test_get_as_tuple_or_else_accepts_supported_forms(self, boundsValue, expectedTuple):
+        """Test that None, a single value, a 2 element tuple and a 2 element list are all accepted."""
+        assert TextGenerator.getAsTupleOrElse(boundsValue, (2, 12), "words") == expectedTuple
+
+    def test_get_as_tuple_or_else_rejects_unsupported_type(self):
+        """Test that an unsupported type raises ValueError naming the type that was supplied."""
+        with pytest.raises(ValueError, match="must be an integer, a 2 element tuple or list, or None"):
+            TextGenerator.getAsTupleOrElse("many", (2, 12), "words")
+
+    @pytest.mark.parametrize("boundsValue", [(2, 3, 4), [2, 3, 4], (2,)], ids=["tuple3", "list3", "tuple1"])
+    def test_get_as_tuple_or_else_rejects_wrong_element_count(self, boundsValue):
+        """Test that a bounds pair without exactly 2 elements raises ValueError."""
+        with pytest.raises(ValueError, match="must have exactly 2 elements"):
+            TextGenerator.getAsTupleOrElse(boundsValue, (2, 12), "words")
+
+    @pytest.mark.parametrize("boundsValue", [(2.5, 8), [2, "8"]], ids=["float", "str"])
+    def test_get_as_tuple_or_else_rejects_non_integer_elements(self, boundsValue):
+        """Test that a bounds pair containing a non integer raises ValueError."""
+        with pytest.raises(ValueError, match="must only contain integer values"):
+            TextGenerator.getAsTupleOrElse(boundsValue, (2, 12), "words")
+
+    @pytest.mark.parametrize(
         "template, expectedOutput",
         [
             (r'53.123.ddd.ddd', r"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"),

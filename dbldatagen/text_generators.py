@@ -340,31 +340,43 @@ class TextGenerator(ABC):
 
     @staticmethod
     def getAsTupleOrElse(
-        v: int | tuple[int, int] | None, defaultValue: tuple[int, int], valueName: str = "value"
+        v: int | tuple[int, int] | list[int] | None, defaultValue: tuple[int, int], valueName: str = "value"
     ) -> tuple[int, int]:
         """get value v as tuple or return default value
 
-        :param v: value to test
+        :param v: value to test. A single value is expanded to a pair, and a 2 element tuple or list is used
+                  as the `(minimum, maximum)` pair.
         :param defaultValue: value to use as a default if value of `v` is None. Must be a tuple.
         :param valueName: name of value for debugging and logging purposes
         :returns: return `v` as tuple if not `None` or value of `default_v` if `v` is `None`. If `v` is a single
-                  value, returns the tuple (`v`, `v`)"""
-        assert not v or isinstance(v, int | tuple), f"param {valueName} must be an int, a tuple or None"
-        assert isinstance(defaultValue, tuple) and len(defaultValue) == 2, "default value must be tuple"
+                  value, returns the tuple (`v`, `v`)
+        :raises ValueError: If `v` is not an integer, a 2 element tuple or list, or `None`
 
+        .. note::
+           A bounds pair is written to JSON as an array, so a list is accepted as well as a tuple. This keeps
+           a saved data generation specification loadable, as `loadFromJson` passes the array straight back in.
+        """
         if not v:
-            assert len(defaultValue) == 2, "must have list or iterable with lenght 2"
-            assert isinstance(defaultValue[0], int) and isinstance(
-                defaultValue[1], int
-            ), "all elements must be integers"
             return defaultValue
 
-        if isinstance(v, tuple):
-            assert len(v) == 2, "expecting tuple of length 2"
-            assert isinstance(v[0], int) and isinstance(v[1], int), "expecting tuple with both elements as integers"
-            return v[0], v[1]
+        if isinstance(v, int):
+            return v, v
 
-        return v, v
+        if not isinstance(v, tuple | list):
+            raise ValueError(
+                f"Parameter '{valueName}' must be an integer, a 2 element tuple or list, or None, "
+                f"but a '{type(v).__name__}' was supplied"
+            )
+
+        if len(v) != 2:
+            raise ValueError(
+                f"Parameter '{valueName}' must have exactly 2 elements, but {len(v)} elements were supplied"
+            )
+
+        if not all(isinstance(element, int) for element in v):
+            raise ValueError(f"Parameter '{valueName}' must only contain integer values")
+
+        return v[0], v[1]
 
     @abstractmethod
     def pandasGenerateText(self, v: pd.Series) -> pd.Series:
