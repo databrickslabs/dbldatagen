@@ -346,33 +346,44 @@ class TextGenerator(ABC):
 
         :param v: value to test. A single value is expanded to a pair, and a 2 element tuple or list is used
                   as the `(minimum, maximum)` pair.
-        :param defaultValue: value to use as a default if value of `v` is None. Must be a tuple.
+        :param defaultValue: value to use as a default if `v` is `None` or otherwise empty
         :param valueName: name of value for debugging and logging purposes
-        :returns: return `v` as tuple if not `None` or value of `defaultValue` if `v` is `None`. If `v` is a single
-                  value, returns the tuple (`v`, `v`)
-        :raises ValueError: If `v` is not an integer, a 2 element tuple or list, or `None`
+        :returns: return `v` as tuple, or `defaultValue` as a tuple if `v` is `None`, zero or empty. If `v` is
+                  a single value, returns the tuple (`v`, `v`)
+        :raises ValueError: If `v` or `defaultValue` is not an integer or a 2 element tuple or list of integers
         """
         if not v:
-            return defaultValue
+            return TextGenerator._asBoundsPair(defaultValue, "defaultValue")
 
-        if isinstance(v, int):
-            return v, v
+        return TextGenerator._asBoundsPair(v, valueName)
 
-        if not isinstance(v, tuple | list):
+    @staticmethod
+    def _asBoundsPair(value: int | tuple[int, int] | list[int], valueName: str) -> tuple[int, int]:
+        """Converts a bounds specification to a `(minimum, maximum)` pair of integers.
+
+        :param value: a single integer, or a 2 element tuple or list of integers
+        :param valueName: name of the value, used in the error messages
+        :returns: the bounds as a 2 element tuple
+        :raises ValueError: If `value` is not an integer or a 2 element tuple or list of integers
+        """
+        if isinstance(value, int):
+            return value, value
+
+        if not isinstance(value, tuple | list):
             raise ValueError(
                 f"Parameter '{valueName}' must be an integer, a 2 element tuple or list, or None, "
-                f"but a '{type(v).__name__}' was supplied"
+                f"but a '{type(value).__name__}' was supplied"
             )
 
-        if len(v) != 2:
+        if len(value) != 2:
             raise ValueError(
-                f"Parameter '{valueName}' must have exactly 2 elements, but {len(v)} elements were supplied"
+                f"Parameter '{valueName}' must have exactly 2 elements, but {len(value)} elements were supplied"
             )
 
-        if not all(isinstance(element, int) for element in v):
+        if not all(isinstance(element, int) for element in value):
             raise ValueError(f"Parameter '{valueName}' must only contain integer values")
 
-        return v[0], v[1]
+        return value[0], value[1]
 
     @abstractmethod
     def pandasGenerateText(self, v: pd.Series) -> pd.Series:
@@ -979,6 +990,8 @@ class ILText(TextGenerator, SerializableToDict):  # lgtm [py/missing-equals]
     :param words: Number of words per sentence to generate. If a 2 element tuple or list is provided, we will
         generate a random number of words in the provided range.
     :param extendedWordList: Optional list of words to use instead of the default Ipsum Lorem list.
+    :raises ValueError: If none of `paragraphs`, `sentences` or `words` is specified, or if one of them is not
+        an integer or a 2 element tuple or list of integers.
     """
 
     def __init__(
@@ -988,9 +1001,8 @@ class ILText(TextGenerator, SerializableToDict):  # lgtm [py/missing-equals]
         words: int | tuple[int, int] | list[int] | None = None,
         extendedWordList: list[str] | None = None,
     ) -> None:
-        assert (
-            paragraphs is not None or sentences is not None or words is not None
-        ), "At least one of the params `paragraphs`, `sentences` or `words` must be specified"
+        if paragraphs is None and sentences is None and words is None:
+            raise ValueError("At least one of the params `paragraphs`, `sentences` or `words` must be specified")
 
         super().__init__()
 

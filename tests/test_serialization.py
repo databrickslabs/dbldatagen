@@ -135,9 +135,15 @@ class TestSerialization:
                 ],
             ),
             (
-                pytest.raises(ValueError),
+                pytest.raises(ValueError, match="must have exactly 2 elements"),
                 [  # Testing serialization error with an ILText bounds pair of the wrong length
                     {"colName": "col1", "colType": "string", "text": {"kind": "ILText", "paragraphs": [1, 2, 3]}}
+                ],
+            ),
+            (
+                pytest.raises(ValueError, match="At least one of the params"),
+                [  # Testing serialization error with an ILText that specifies no bounds at all
+                    {"colName": "col1", "colType": "string", "text": {"kind": "ILText"}}
                 ],
             ),
         ],

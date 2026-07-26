@@ -138,6 +138,18 @@ class TestTextGeneratorBasic:
             TextGenerator.getAsTupleOrElse(boundsValue, (2, 12), "words")
 
     @pytest.mark.parametrize(
+        "defaultValue", ["notatuple", (2, 12, 3), (2.0, 12.0)], ids=["str", "three_elements", "float"]
+    )
+    def test_get_as_tuple_or_else_rejects_an_invalid_default(self, defaultValue):
+        """Test that a default which is not a bounds pair is reported rather than returned unchecked."""
+        with pytest.raises(ValueError, match="Parameter 'defaultValue'"):
+            TextGenerator.getAsTupleOrElse(None, defaultValue, "words")
+
+    def test_get_as_tuple_or_else_expands_a_single_value_default(self):
+        """Test that a single value default is expanded to a pair, as a single value is a valid bounds form."""
+        assert TextGenerator.getAsTupleOrElse(None, 7, "words") == (7, 7)
+
+    @pytest.mark.parametrize(
         "template, expectedOutput",
         [
             (r'53.123.ddd.ddd', r"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"),
