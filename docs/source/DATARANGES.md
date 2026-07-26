@@ -62,6 +62,25 @@ the relevant value in the range object is used
 a Boolean field with the range 1 .. 9 will be rescaled to the range 0 .. 1 and still produce both `True` and `False` 
 values
 
+### Ranges for integral column types
+
+The integral column types are an exception to the rescaling rule above. The Spark SQL integral types are 
+signed, so the values a column can hold are narrower than the number of distinct values the type provides. 
+Rather than rescaling a `minValue` or `maxValue` that falls outside the limits below, `build` raises a 
+`ValueError` naming the bound, the limit and the column type. Rescaling is not used here because it would 
+silently change the range that was asked for, and the values would otherwise wrap around during generation.
+
+| Column type | Minimum value | Maximum value |
+|:------------|--------------:|--------------:|
+| `ByteType` | -128 | 127 |
+| `ShortType` | -32768 | 32767 |
+| `IntegerType` | -2147483648 | 2147483647 |
+| `LongType` | -9223372036854775808 | 9223372036854775807 |
+
+Each of `minValue` and `maxValue` must fall within the limits for the column type. A decreasing range such 
+as `minValue=127`, `maxValue=1` with a negative `step` is still permitted, since the check does not require 
+`minValue` to be the smaller of the two.
+
 ### Handling of dates and timestamps
 
 For dates and timestamps, if a number of unique values is specified, these will be generated starting from the start 

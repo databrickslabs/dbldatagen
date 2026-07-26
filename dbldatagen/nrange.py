@@ -26,6 +26,15 @@ from .serialization import SerializableToDict
 _OLD_MIN_OPTION = "min"
 _OLD_MAX_OPTION = "max"
 
+#: inclusive `(minValue, maxValue)` limits of each Spark SQL integral type. These are value limits, so they
+#: are narrower than the count of distinct values checked by `_MAX_TYPE_RANGE` in `column_spec_options`.
+_INTEGRAL_TYPE_BOUNDS: dict[type, tuple[int, int]] = {
+    ByteType: (-(2**7), 2**7 - 1),
+    ShortType: (-(2**15), 2**15 - 1),
+    IntegerType: (-(2**31), 2**31 - 1),
+    LongType: (-(2**63), 2**63 - 1),
+}
+
 
 class NRange(DataRange):
     """Represents a numeric interval for data generation.
@@ -159,12 +168,13 @@ class NRange(DataRange):
 
         - Populate `minValue` and `maxValue` to the default range for the data type
           if they are not already set.
-        - Validate that `maxValue` is within the allowed range for `ByteType` and
-          `ShortType`.
+        - Validate that `minValue` and `maxValue` are within the representable range of the
+          integral types (`ByteType`, `ShortType`, `IntegerType` and `LongType`).
         - Set a default `step` of 1.0 for floating point types and 1 for integral types
           if `step` is not already set.
 
         :param ctype: Spark SQL data type for the column.
+        :raises ValueError: If `minValue` or `maxValue` is outside the range of an integral `ctype`.
         """
         numeric_types = (DecimalType, FloatType, DoubleType, ByteType, ShortType, IntegerType, LongType)
 
@@ -176,13 +186,26 @@ class NRange(DataRange):
                 if self.maxValue is None:
                     self.maxValue = numeric_range[1]
 
-        if isinstance(ctype, ShortType) and self.maxValue is not None:
-            if self.maxValue > 65536:
-                raise ValueError("`maxValue` must be within the valid range for ShortType.")
+        integral_bounds = _INTEGRAL_TYPE_BOUNDS.get(type(ctype))
+        if integral_bounds is not None:
+            type_min, type_max = integral_bounds
+            type_name = type(ctype).__name__
 
-        if isinstance(ctype, ByteType) and self.maxValue is not None:
-            if self.maxValue > 256:
-                raise ValueError("`maxValue` must be within the valid range (0 - 256) for ByteType.")
+            # each bound is checked against both limits, as a decreasing range puts the larger value in
+            # `minValue` and the smaller one in `maxValue`
+            for bound_name, bound_value in (("minValue", self.minValue), ("maxValue", self.maxValue)):
+                if bound_value is None:
+                    continue
+
+                if bound_value < type_min:
+                    raise ValueError(
+                        f"`{bound_name}` of {bound_value} is below the minimum value of {type_min} for {type_name}."
+                    )
+
+                if bound_value > type_max:
+                    raise ValueError(
+                        f"`{bound_name}` of {bound_value} is above the maximum value of {type_max} for {type_name}."
+                    )
 
         if isinstance(ctype, (DoubleType, FloatType)) and self.step is None:
             self.step = 1.0
