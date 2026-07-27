@@ -350,7 +350,8 @@ class TextGenerator(ABC):
         :param valueName: name of value for debugging and logging purposes
         :returns: return `v` as tuple, or `defaultValue` as a tuple if `v` is `None`, zero or empty. If `v` is
                   a single value, returns the tuple (`v`, `v`)
-        :raises ValueError: If `v` or `defaultValue` is not an integer or a 2 element tuple or list of integers
+        :raises ValueError: If `v` or `defaultValue` is not an integer or a 2 element tuple or list of integers,
+                  is a `bool`, or has a minimum greater than its maximum
         """
         if not v:
             return TextGenerator._asBoundsPair(defaultValue, "defaultValue")
@@ -361,11 +362,19 @@ class TextGenerator(ABC):
     def _asBoundsPair(value: int | tuple[int, int] | list[int], valueName: str) -> tuple[int, int]:
         """Converts a bounds specification to a `(minimum, maximum)` pair of integers.
 
-        :param value: a single integer, or a 2 element tuple or list of integers
+        :param value: a single integer, or a 2 element tuple or list of integers, with the minimum not
+                  exceeding the maximum
         :param valueName: name of the value, used in the error messages
         :returns: the bounds as a 2 element tuple
-        :raises ValueError: If `value` is not an integer or a 2 element tuple or list of integers
+        :raises ValueError: If `value` is not an integer or a 2 element tuple or list of integers, is a
+                  `bool`, or has a minimum greater than its maximum
         """
+        if isinstance(value, bool):
+            raise ValueError(
+                f"Parameter '{valueName}' must be an integer, a 2 element tuple or list, or None, "
+                f"but a 'bool' was supplied"
+            )
+
         if isinstance(value, int):
             return value, value
 
@@ -380,10 +389,14 @@ class TextGenerator(ABC):
                 f"Parameter '{valueName}' must have exactly 2 elements, but {len(value)} elements were supplied"
             )
 
-        if not all(isinstance(element, int) for element in value):
+        if not all(isinstance(element, int) and not isinstance(element, bool) for element in value):
             raise ValueError(f"Parameter '{valueName}' must only contain integer values")
 
-        return value[0], value[1]
+        minimum, maximum = value[0], value[1]
+        if minimum > maximum:
+            raise ValueError(f"Parameter '{valueName}' minimum ({minimum}) must not exceed maximum ({maximum})")
+
+        return minimum, maximum
 
     @abstractmethod
     def pandasGenerateText(self, v: pd.Series) -> pd.Series:

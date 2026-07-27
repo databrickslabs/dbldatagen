@@ -137,6 +137,24 @@ class TestTextGeneratorBasic:
         with pytest.raises(ValueError, match="must only contain integer values"):
             TextGenerator.getAsTupleOrElse(boundsValue, (2, 12), "words")
 
+    def test_get_as_tuple_or_else_rejects_a_bool_value(self):
+        """Test that a bool is rejected rather than treated as an int, since bool is a subclass of int."""
+        with pytest.raises(ValueError, match="must be an integer, a 2 element tuple or list, or None"):
+            TextGenerator.getAsTupleOrElse(True, (2, 12), "words")
+
+    @pytest.mark.parametrize("boundsValue", [[True, False], (1, True)], ids=["list", "tuple"])
+    def test_get_as_tuple_or_else_rejects_bool_elements(self, boundsValue):
+        """Test that a bounds pair containing a bool element is rejected rather than accepted as an int."""
+        with pytest.raises(ValueError, match="must only contain integer values"):
+            TextGenerator.getAsTupleOrElse(boundsValue, (2, 12), "words")
+
+    @pytest.mark.parametrize("boundsValue", [(8, 3), [8, 3]], ids=["tuple", "list"])
+    def test_get_as_tuple_or_else_rejects_reversed_bounds(self, boundsValue):
+        """Test that a pair with a minimum greater than its maximum raises ValueError rather than being
+        returned reversed."""
+        with pytest.raises(ValueError, match=r"minimum \(8\) must not exceed maximum \(3\)"):
+            TextGenerator.getAsTupleOrElse(boundsValue, (2, 12), "words")
+
     @pytest.mark.parametrize(
         "defaultValue", ["notatuple", (2, 12, 3), (2.0, 12.0)], ids=["str", "three_elements", "float"]
     )
