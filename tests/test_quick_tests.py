@@ -634,6 +634,30 @@ class TestQuickTests:
         ):
             rng.adjustForColumnDatatype(ByteType())
 
+    @pytest.mark.parametrize(
+        "columnType, typeMax",
+        [
+            (ShortType(), 32767),
+            (IntegerType(), 2147483647),
+            (LongType(), 9223372036854775807),
+            (FloatType(), 3.402e38),
+            (DoubleType(), 1.79769e308),
+            (DecimalType(38, 0), 1e38),
+        ],
+        ids=["short", "int", "long", "float", "double", "decimal"],
+    )
+    def test_default_range_for_random_numeric_column_stays_within_type_range(self, columnType, typeMax):
+        df = (
+            dg.DataGenerator(sparkSession=spark, name="default_range", rows=50000, partitions=4)
+            .withColumn("v", columnType, random=True)
+            .build()
+        )
+
+        bounds = df.selectExpr("min(v) as lo", "max(v) as hi").collect()[0]
+
+        assert bounds["lo"] >= 0
+        assert float(bounds["hi"]) <= typeMax
+
     def test_nrange_get_continuous_range_requires_min_and_max(self):
         rng = NRange(minValue=None, maxValue=10.0)
         with pytest.raises(
