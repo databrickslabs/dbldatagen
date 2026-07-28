@@ -340,31 +340,64 @@ class TextGenerator(ABC):
 
     @staticmethod
     def getAsTupleOrElse(
-        v: int | tuple[int, int] | None, defaultValue: tuple[int, int], valueName: str = "value"
+        v: int | tuple[int, int] | list[int] | None, defaultValue: tuple[int, int], valueName: str = "value"
     ) -> tuple[int, int]:
-        """get value v as tuple or return default value
+        """
+        Gets the input value v as a tuple or returns a tuple of the default value. The default values are
+        returned if the input value is None.
 
-        :param v: value to test
-        :param defaultValue: value to use as a default if value of `v` is None. Must be a tuple.
-        :param valueName: name of value for debugging and logging purposes
-        :returns: return `v` as tuple if not `None` or value of `default_v` if `v` is `None`. If `v` is a single
-                  value, returns the tuple (`v`, `v`)"""
-        assert not v or isinstance(v, int | tuple), f"param {valueName} must be an int, a tuple or None"
-        assert isinstance(defaultValue, tuple) and len(defaultValue) == 2, "default value must be tuple"
-
+        :param v: Input value; A single value is expanded to a tuple; A 2 element tuple or list is returned unchanged
+        :param defaultValue: Default value to use if `v` is `None` or empty
+        :param valueName: Name of the value for debugging and logging purposes
+        :returns: The input value `v`  as a tuple, or the default value as a tuple if `v` is `None`, zero or empty
+        :raises ValueError: If `v` or `defaultValue` is not an integer, a 2 element tuple, or a 2 element list of
+            integers, if `v` is of type `bool`, or if `v` is a tuple or list with a minimum greater than its maximum
+        """
         if not v:
-            assert len(defaultValue) == 2, "must have list or iterable with lenght 2"
-            assert isinstance(defaultValue[0], int) and isinstance(
-                defaultValue[1], int
-            ), "all elements must be integers"
-            return defaultValue
+            return TextGenerator._asBoundsPair(defaultValue, "defaultValue")
 
-        if isinstance(v, tuple):
-            assert len(v) == 2, "expecting tuple of length 2"
-            assert isinstance(v[0], int) and isinstance(v[1], int), "expecting tuple with both elements as integers"
-            return v[0], v[1]
+        return TextGenerator._asBoundsPair(v, valueName)
 
-        return v, v
+    @staticmethod
+    def _asBoundsPair(value: int | tuple[int, int] | list[int], valueName: str) -> tuple[int, int]:
+        """
+        Converts a bounds specification to a `(minimum, maximum)` pair of integers.
+
+        :param value: A single integer, or a 2 element tuple or list of integers, with the minimum not
+                  exceeding the maximum
+        :param valueName: Name of the value, used in the error messages
+        :returns: Bounds as a 2 element tuple
+        :raises ValueError: If `value` is not an integer, a 2 element tuple, or a 2 element list of integers, if
+            `value` is a `bool`, or if `value` is a tuple or list with a minimum greater than its maximum
+        """
+        if isinstance(value, bool):
+            raise ValueError(
+                f"Parameter '{valueName}' must be an integer, a 2 element tuple or list, or None, "
+                f"but a 'bool' was supplied"
+            )
+
+        if isinstance(value, int):
+            return value, value
+
+        if not isinstance(value, tuple | list):
+            raise ValueError(
+                f"Parameter '{valueName}' must be an integer, a 2 element tuple or list, or None, "
+                f"but a '{type(value).__name__}' was supplied"
+            )
+
+        if len(value) != 2:
+            raise ValueError(
+                f"Parameter '{valueName}' must have exactly 2 elements, but {len(value)} elements were supplied"
+            )
+
+        if not all(isinstance(element, int) and not isinstance(element, bool) for element in value):
+            raise ValueError(f"Parameter '{valueName}' must only contain integer values")
+
+        minimum, maximum = value[0], value[1]
+        if minimum > maximum:
+            raise ValueError(f"Parameter '{valueName}' minimum ({minimum}) must not exceed maximum ({maximum})")
+
+        return minimum, maximum
 
     @abstractmethod
     def pandasGenerateText(self, v: pd.Series) -> pd.Series:
@@ -964,25 +997,26 @@ class ILText(TextGenerator, SerializableToDict):  # lgtm [py/missing-equals]
     """
     This class generates Ipsum Lorem text paragraphs, words, and sentences.
 
-    :param paragraphs: Number of paragraphs to generate. If a tuple is provided, we will generate a random number of
-        paragraphs in the provided range.
-    :param sentences: Number of sentences per paragraph to generate. If a tuple is provided, we will generate a random
-        number of sentences in the provided range.
-    :param words: Number of words per sentence to generate. If a tuple is provided, we will generate a random number of
-        words in the provided range.
+    :param paragraphs: Number of paragraphs to generate. If a 2 element tuple or list is provided, we will generate
+        a random number of paragraphs in the provided range.
+    :param sentences: Number of sentences per paragraph to generate. If a 2 element tuple or list is provided, we
+        will generate a random number of sentences in the provided range.
+    :param words: Number of words per sentence to generate. If a 2 element tuple or list is provided, we will
+        generate a random number of words in the provided range.
     :param extendedWordList: Optional list of words to use instead of the default Ipsum Lorem list.
+    :raises ValueError: If none of `paragraphs`, `sentences` or `words` is specified, or if one of them is not
+        an integer or a 2 element tuple or list of integers.
     """
 
     def __init__(
         self,
-        paragraphs: int | tuple[int, int] | None = None,
-        sentences: int | tuple[int, int] | None = None,
-        words: int | tuple[int, int] | None = None,
+        paragraphs: int | tuple[int, int] | list[int] | None = None,
+        sentences: int | tuple[int, int] | list[int] | None = None,
+        words: int | tuple[int, int] | list[int] | None = None,
         extendedWordList: list[str] | None = None,
     ) -> None:
-        assert (
-            paragraphs is not None or sentences is not None or words is not None
-        ), "At least one of the params `paragraphs`, `sentences` or `words` must be specified"
+        if paragraphs is None and sentences is None and words is None:
+            raise ValueError("At least one of the params `paragraphs`, `sentences` or `words` must be specified")
 
         super().__init__()
 
