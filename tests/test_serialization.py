@@ -128,6 +128,16 @@ class TestSerialization:
                     }
                 ],
             ),
+            (
+                pytest.raises(ValueError),
+                [  # Testing serialization error with an NRange maxValue outside the ByteType limit
+                    {
+                        "colName": "col1",
+                        "colType": "byte",
+                        "dataRange": {"kind": "NRange", "minValue": 0, "maxValue": 200},
+                    }
+                ],
+            ),
         ],
     )
     def test_column_definitions_from_dict(self, columns, expectation):
