@@ -6,7 +6,6 @@
 This file defines the `DataGenError` and `DataGenerator` classes
 """
 
-import contextlib
 import copy
 import json
 import logging
@@ -215,8 +214,7 @@ class DataGenerator(SerializableToDict):
         self._setupSparkSession(sparkSession)
 
         # set up use of pandas udfs
-        if batchSize:
-            self._setupPandas(batchSize)
+        self._setupPandas()
 
     def __deepcopy__(self, memo: dict[int, object]) -> "DataGenerator":
         do_not_copy = ["logger", "sparkSession"]
@@ -346,14 +344,10 @@ class DataGenerator(SerializableToDict):
         """
         return os.environ.get("IS_SERVERLESS", "").upper() == "TRUE"
 
-    def _setupPandas(self, pandasBatchSize: int | None) -> None:
-        """
-        Sets Spark configurations controlling the batch size for Pandas execution.
-
-        :param pandasBatchSize: Optional batch size for Pandas execution on Spark
-        """
+    def _setupPandas(self) -> None:
+        """Sets Spark configurations controlling the batch size for Pandas execution."""
         self.logger.info("*** using pandas udf for custom functions ***")
-        self.logger.info(f"Spark version '{self.sparkSession.version}'")
+        self.logger.info("Spark version: %s", self.sparkSession.version)
 
         if self._isServerless():
             warnings.warn(
@@ -364,16 +358,18 @@ class DataGenerator(SerializableToDict):
             return
 
         try:
-            self.logger.info("Spark version: %s", self.sparkSession.version)
             spark_major_version = int(str(self.sparkSession.version).split(".")[0])
+
             if spark_major_version >= 3:
-                self.logger.info("Using Spark version '%s'", spark_major_version)
                 self.sparkSession.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
+            else:
+                self.sparkSession.conf.set("spark.sql.execution.arrow.enabled", "true")
+
             if self._batchSize:
-                 self.sparkSession.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", self._batchSize)
+                self.sparkSession.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", self._batchSize)
 
         except ValueError:
-            self.logger.warning(f"Could not parse Spark version '%s'", self.sparkSession.version)
+            self.logger.warning("Could not parse Spark version '%s'", self.sparkSession.version)
             return
 
     def _setupLogger(self) -> None:

@@ -1,6 +1,7 @@
 import os
 import re
-from unittest.mock import MagicMock, patch
+import warnings
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 from pyspark.sql.types import FloatType, IntegerType, StringType
@@ -101,7 +102,57 @@ class TestSimulatedServerless:
         assert (
             ds is not None
         ), f"""expected to get dataset specification for provider `{provider_name}`
-                                   with options: {provider_options} 
+                                   with options: {provider_options}
                                 """
         df = ds.build()
         assert df.count() == provider_options.get("rows", 0)
+
+
+class TestArrowConfiguration:
+    """On non-serverless compute the arrow Spark configuration can be written, and dbldatagen sets it up
+    when a `batchSize` is supplied so that Pandas UDFs run efficiently.
+
+    These tests mock ``conf.set`` to capture the configuration writes without mutating the shared session,
+    and ensure ``IS_SERVERLESS`` is not set so the non-serverless branch of ``_setupPandas`` runs.
+    """
+
+    @pytest.fixture
+    def recording_spark(self):
+        spark_session = dg.SparkSingleton.getLocalInstance("unit tests")
+        old_set_method = spark_session.conf.set
+
+        spark_session.conf.set = MagicMock()
+
+        with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("IS_SERVERLESS", None)
+            yield spark_session
+
+        spark_session.conf.set = old_set_method
+
+    def test_arrow_config_is_set_when_batch_size_supplied(self, recording_spark):
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")  # the serverless warning must not fire off serverless
+            dg.DataGenerator(recording_spark, name="test_arrow_config", rows=100, partitions=4, batchSize=1000)
+
+        recording_spark.conf.set.assert_any_call("spark.sql.execution.arrow.pyspark.enabled", "true")
+        recording_spark.conf.set.assert_any_call("spark.sql.execution.arrow.maxRecordsPerBatch", 1000)
+
+    def test_arrow_enabled_without_batch_size_but_max_records_skipped(self, recording_spark):
+        dg.DataGenerator(recording_spark, name="test_no_batch_size", rows=100, partitions=4)
+
+        recording_spark.conf.set.assert_called_once_with("spark.sql.execution.arrow.pyspark.enabled", "true")
+        assert call("spark.sql.execution.arrow.maxRecordsPerBatch", None) not in recording_spark.conf.set.mock_calls
+
+    def test_max_records_per_batch_uses_supplied_batch_size(self, recording_spark):
+        dg.DataGenerator(recording_spark, name="test_batch_size_value", rows=100, partitions=4, batchSize=37)
+
+        recording_spark.conf.set.assert_any_call("spark.sql.execution.arrow.maxRecordsPerBatch", 37)
+
+    def test_arrow_config_uses_legacy_key_on_spark_2(self, recording_spark):
+        legacy_spark = MagicMock()
+        legacy_spark.version = "2.4.8"
+
+        dg.DataGenerator(legacy_spark, name="test_spark2", rows=100, partitions=4)
+
+        legacy_spark.conf.set.assert_called_once_with("spark.sql.execution.arrow.enabled", "true")
+        assert call("spark.sql.execution.arrow.pyspark.enabled", "true") not in legacy_spark.conf.set.mock_calls
