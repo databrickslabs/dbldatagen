@@ -25,6 +25,12 @@ from .serialization import SerializableToDict
 
 _OLD_MIN_OPTION = "min"
 _OLD_MAX_OPTION = "max"
+_INTEGRAL_TYPE_BOUNDS: dict[type, tuple[int, int]] = {
+    ByteType: (-(2**7), 2**7 - 1),
+    ShortType: (-(2**15), 2**15 - 1),
+    IntegerType: (-(2**31), 2**31 - 1),
+    LongType: (-(2**63), 2**63 - 1),
+}
 
 
 class NRange(DataRange):
@@ -158,13 +164,14 @@ class NRange(DataRange):
         This will:
 
         - Populate `minValue` and `maxValue` to the default range for the data type
-          if they are not already set.
-        - Validate that `maxValue` is within the allowed range for `ByteType` and
-          `ShortType`.
+          (i.e. 0 to the maximum representable value) if they are not already set.
+        - Validate that `minValue` and `maxValue` are within the representable range for any
+          integral types (`ByteType`, `ShortType`, `IntegerType` and `LongType`).
         - Set a default `step` of 1.0 for floating point types and 1 for integral types
           if `step` is not already set.
 
         :param ctype: Spark SQL data type for the column.
+        :raises ValueError: If `minValue` or `maxValue` is outside the representable range of `ctype`.
         """
         numeric_types = (DecimalType, FloatType, DoubleType, ByteType, ShortType, IntegerType, LongType)
 
@@ -176,13 +183,28 @@ class NRange(DataRange):
                 if self.maxValue is None:
                     self.maxValue = numeric_range[1]
 
-        if isinstance(ctype, ShortType) and self.maxValue is not None:
-            if self.maxValue > 65536:
-                raise ValueError("`maxValue` must be within the valid range for ShortType.")
+        integral_bounds = _INTEGRAL_TYPE_BOUNDS.get(type(ctype))
+        if integral_bounds is not None and self.minValue is not None and self.maxValue is not None:
+            type_min, type_max = integral_bounds
+            type_name = type(ctype).__name__
 
-        if isinstance(ctype, ByteType) and self.maxValue is not None:
-            if self.maxValue > 256:
-                raise ValueError("`maxValue` must be within the valid range (0 - 256) for ByteType.")
+            # Determine which bound is smaller before checking type limits (supports decreasing ranges e.g. (10, 1, -1))
+            if self.minValue <= self.maxValue:
+                smaller_name, smaller_value = "minValue", self.minValue
+                larger_name, larger_value = "maxValue", self.maxValue
+            else:
+                smaller_name, smaller_value = "maxValue", self.maxValue
+                larger_name, larger_value = "minValue", self.minValue
+
+            if smaller_value < type_min:
+                raise ValueError(
+                    f"`{smaller_name}` of {smaller_value} is below the minimum allowed {type_name} value {type_min}."
+                )
+
+            if larger_value > type_max:
+                raise ValueError(
+                    f"`{larger_name}` of {larger_value} is above the maximum allowed {type_name} value {type_max}."
+                )
 
         if isinstance(ctype, (DoubleType, FloatType)) and self.step is None:
             self.step = 1.0
@@ -275,10 +297,10 @@ class NRange(DataRange):
         :return: Tuple of `(minValue, maxValue)` for the type, or `None` if not supported.
         """
         value_ranges: dict[type, tuple[float | int, float | int]] = {
-            ByteType: (0, (2**4 - 1)),
-            ShortType: (0, (2**8 - 1)),
-            IntegerType: (0, (2**16 - 1)),
-            LongType: (0, (2**32 - 1)),
+            ByteType: (0, (2**7 - 1)),
+            ShortType: (0, (2**15 - 1)),
+            IntegerType: (0, (2**31 - 1)),
+            LongType: (0, (2**63 - 1)),
             FloatType: (0.0, 3.402e38),
             DoubleType: (0.0, 1.79769e308),
         }

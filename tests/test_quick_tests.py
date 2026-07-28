@@ -52,6 +52,15 @@ schema = StructType(
 # build spark session
 spark = dg.SparkSingleton.getLocalInstance("quick tests")
 
+# `(column type, minimum value, maximum value)` for each Spark SQL integral type
+integral_type_limits = [
+    (ByteType(), -128, 127),
+    (ShortType(), -32768, 32767),
+    (IntegerType(), -2147483648, 2147483647),
+    (LongType(), -9223372036854775808, 9223372036854775807),
+]
+integral_type_ids = ["byte", "short", "int", "long"]
+
 
 class TestQuickTests:
     """These are a set of quick tests to validate some basic behaviors
@@ -499,12 +508,155 @@ class TestQuickTests:
             _ = rng.getDiscreteRange()
 
     def test_nrange_adjust_for_byte_type_maxvalue_out_of_range(self):
-        rng = NRange(maxValue=300)  # above allowed ByteType max of 256
+        rng = NRange(maxValue=300)  # above the ByteType maximum of 127
         with pytest.raises(
             ValueError,
-            match=r"`maxValue` must be within the valid range \(0 - 256\) for ByteType\.",
+            match=r"`maxValue` of 300 is above the maximum allowed ByteType value 127\.",
         ):
             rng.adjustForColumnDatatype(ByteType())
+
+    @pytest.mark.parametrize("columnType, typeMin, typeMax", integral_type_limits, ids=integral_type_ids)
+    def test_nrange_rejects_maxvalue_above_integral_type_limit(self, columnType, typeMin, typeMax):
+        """Test that a `maxValue` above the largest value the column type can hold raises ValueError."""
+        rng = NRange(minValue=typeMin, maxValue=typeMax + 1)
+        expected = (
+            rf"`maxValue` of {typeMax + 1} is above the maximum allowed {type(columnType).__name__} value {typeMax}\."
+        )
+
+        with pytest.raises(ValueError, match=expected):
+            rng.adjustForColumnDatatype(columnType)
+
+    @pytest.mark.parametrize("columnType, typeMin, typeMax", integral_type_limits, ids=integral_type_ids)
+    def test_nrange_rejects_minvalue_below_integral_type_limit(self, columnType, typeMin, typeMax):
+        """Test that a `minValue` below the smallest value the column type can hold raises ValueError."""
+        rng = NRange(minValue=typeMin - 1, maxValue=typeMax)
+        expected = (
+            rf"`minValue` of {typeMin - 1} is below the minimum allowed {type(columnType).__name__} value {typeMin}\."
+        )
+
+        with pytest.raises(ValueError, match=expected):
+            rng.adjustForColumnDatatype(columnType)
+
+    @pytest.mark.parametrize("columnType, typeMin, typeMax", integral_type_limits, ids=integral_type_ids)
+    def test_nrange_accepts_the_full_integral_type_range(self, columnType, typeMin, typeMax):
+        """Test that the exact limits of each integral type are accepted and left unchanged."""
+        rng = NRange(minValue=typeMin, maxValue=typeMax)
+        rng.adjustForColumnDatatype(columnType)
+
+        assert rng.minValue == typeMin
+        assert rng.maxValue == typeMax
+
+    def test_nrange_accepts_a_reversed_range_within_the_type_limits(self):
+        """Test that a decreasing range is still accepted when both bounds are within the type limits."""
+        rng = NRange(minValue=127, maxValue=1, step=-1)
+        rng.adjustForColumnDatatype(ByteType())
+
+        assert rng.minValue == 127
+        assert rng.maxValue == 1
+
+    def test_nrange_rejects_a_reversed_range_with_minvalue_above_the_type_limit(self):
+        """Test that a decreasing range is rejected when `minValue` holds the out of range bound."""
+        rng = NRange(minValue=200, maxValue=1, step=-1)
+        with pytest.raises(
+            ValueError,
+            match=r"`minValue` of 200 is above the maximum allowed ByteType value 127\.",
+        ):
+            rng.adjustForColumnDatatype(ByteType())
+
+    def test_nrange_rejects_a_reversed_range_with_maxvalue_below_the_type_limit(self):
+        """Test that a decreasing range is rejected when `maxValue` holds the out of range bound."""
+        rng = NRange(minValue=0, maxValue=-200, step=-1)
+        with pytest.raises(
+            ValueError,
+            match=r"`maxValue` of -200 is below the minimum allowed ByteType value -128\.",
+        ):
+            rng.adjustForColumnDatatype(ByteType())
+
+    @pytest.mark.parametrize(
+        "columnType",
+        [FloatType(), DoubleType(), DecimalType(38, 0)],
+        ids=["float", "double", "decimal"],
+    )
+    def test_nrange_does_not_apply_integral_limits_to_other_numeric_types(self, columnType):
+        """Test that a value above every integral limit is still accepted for a non integral numeric type."""
+        above_long_max = 1e19
+        rng = NRange(minValue=0, maxValue=above_long_max)
+        rng.adjustForColumnDatatype(columnType)
+
+        assert rng.maxValue == above_long_max
+
+    @pytest.mark.parametrize(
+        "columnOptions",
+        [
+            {"minValue": 0, "maxValue": 200, "step": 1},
+            {"uniqueValues": 200},
+            {"dataRange": NRange(minValue=0, maxValue=200, step=1)},
+        ],
+        ids=["maxValue", "uniqueValues", "dataRange"],
+    )
+    def test_nrange_bounds_are_enforced_when_building_a_byte_column(self, columnOptions):
+        """Test that a byte column is rejected when `build` is called, however the out of range bound arrives."""
+        data_generator = dg.DataGenerator(sparkSession=spark, name="byte_range", rows=10, partitions=1)
+
+        with pytest.raises(ValueError, match=r"`maxValue` of 200 is above the maximum allowed ByteType value 127\."):
+            data_generator.withColumn("v", ByteType(), **columnOptions).build()
+
+    @pytest.mark.parametrize(
+        "untilValue, expectedMaxValue",
+        [(125, 126), (126, 127)],
+        ids=["below_limit", "at_limit"],
+    )
+    def test_nrange_until_within_the_type_limit_is_accepted(self, untilValue, expectedMaxValue):
+        """Test that `until` is accepted while the `maxValue` it implies stays within the type limit.
+
+        `until` sets `maxValue` one above the value supplied, so the last accepted value is one below the limit.
+        """
+        rng = NRange(until=untilValue)
+        rng.adjustForColumnDatatype(ByteType())
+
+        assert rng.maxValue == expectedMaxValue
+
+    def test_nrange_until_above_the_type_limit_is_rejected(self):
+        """Test that `until` is rejected once the `maxValue` it implies exceeds the type limit."""
+        rng = NRange(until=127)
+        with pytest.raises(
+            ValueError,
+            match=r"`maxValue` of 128 is above the maximum allowed ByteType value 127\.",
+        ):
+            rng.adjustForColumnDatatype(ByteType())
+
+    def test_nrange_rejects_a_fractional_bound_above_the_type_limit(self):
+        """Test that a fractional bound just above the type limit is rejected rather than truncated."""
+        rng = NRange(minValue=0.0, maxValue=127.5)
+        with pytest.raises(
+            ValueError,
+            match=r"`maxValue` of 127.5 is above the maximum allowed ByteType value 127\.",
+        ):
+            rng.adjustForColumnDatatype(ByteType())
+
+    @pytest.mark.parametrize(
+        "columnType, typeMax",
+        [
+            (ShortType(), 32767),
+            (IntegerType(), 2147483647),
+            (LongType(), 9223372036854775807),
+            (FloatType(), 3.402e38),
+            (DoubleType(), 1.79769e308),
+            (DecimalType(38, 0), 1e38),
+        ],
+        ids=["short", "int", "long", "float", "double", "decimal"],
+    )
+    def test_default_range_for_random_numeric_column_stays_within_type_range(self, columnType, typeMax):
+        df = (
+            dg.DataGenerator(sparkSession=spark, name="default_range", rows=50000, partitions=4)
+            .withColumn("v", columnType, random=True)
+            .build()
+        )
+
+        bounds = df.selectExpr("min(v) as lo", "max(v) as hi").collect()[0]
+
+        assert bounds["lo"] >= 0
+        assert float(bounds["hi"]) <= typeMax
 
     def test_nrange_get_continuous_range_requires_min_and_max(self):
         rng = NRange(minValue=None, maxValue=10.0)
