@@ -1,6 +1,15 @@
+import os
+import re
+from unittest.mock import MagicMock, patch
+
 import pytest
 
 import dbldatagen as dg
+
+_SERVERLESS_WARNING = (
+    "Running on Databricks serverless compute: skipping arrow configuration. "
+    "The `batchSize` option has no effect on serverless and will be ignored."
+)
 
 
 class TestSimulatedServerless:
@@ -14,25 +23,46 @@ class TestSimulatedServerless:
 
     - Spark config settings cannot be written
 
+    On serverless compute, dbldatagen detects the environment from the ``IS_SERVERLESS`` environment variable.``
+    and skips the Arrow Spark configuration (which is already enabled there and cannot be modified), warning the
+    user instead.
     """
 
     @pytest.fixture(scope="class")
-    def serverlessSpark(self):
-        from unittest.mock import MagicMock
+    def serverless_spark(self):
+        spark_session = dg.SparkSingleton.getLocalInstance("unit tests")
+        old_set_method = spark_session.conf.set
 
-        sparkSession = dg.SparkSingleton.getLocalInstance("unit tests")
-
-        oldSetMethod = sparkSession.conf.set
-        oldGetMethod = sparkSession.conf.get
-        sparkSession.conf.set = MagicMock(
+        spark_session.conf.set = MagicMock(
             side_effect=ValueError("Setting value prohibited in simulated serverless env."))
-        sparkSession.conf.get = MagicMock(
-            side_effect=ValueError("Getting value prohibited in simulated serverless env."))
 
-        yield sparkSession
+        with patch.dict(os.environ, {"IS_SERVERLESS": "TRUE"}):
+            yield spark_session
 
-        sparkSession.conf.set = oldSetMethod
-        sparkSession.conf.get = oldGetMethod
+        spark_session.conf.set = old_set_method
+
+    def test_init_datagen_with_batch_size_warns_on_serverless(self, serverless_spark):
+        with pytest.warns(UserWarning, match=f"^{re.escape(_SERVERLESS_WARNING)}$"):
+            _fails = dg.DataGenerator(serverless_spark, name="test_serverless_pandas_udf", rows=100, partitions=4,
+                                 batchSize=1000)
+            serverless_spark.conf.set.assert_not_called()
+
+
+    def test_pandas_udf_column_builds_and_warns_on_serverless(self, serverless_spark):
+        with pytest.warns(UserWarning, match=f"^{re.escape(_SERVERLESS_WARNING)}$"):
+            test_spec = (
+                dg.DataGenerator(serverless_spark, name="test_serverless_pandas_udf", rows=100, partitions=4,
+                                 batchSize=1000)
+                .withIdOutput()
+                .withColumn("paras", text=dg.ILText(paragraphs=(1, 2), sentences=(2, 4), words=(3, 8)))
+            )
+
+        df = test_spec.build()
+
+        assert df.count() == 100
+        assert "paras" in df.columns
+        # the prohibited Spark config write must never be attempted on serverless
+        serverless_spark.conf.set.assert_not_called()
 
     def test_basic_data(self, serverlessSpark):
         from pyspark.sql.types import FloatType, IntegerType, StringType
@@ -68,7 +98,7 @@ class TestSimulatedServerless:
     def test_basic_user_table_retrieval(self, providerName, providerOptions, serverlessSpark):
         ds = dg.Datasets(serverlessSpark, providerName).get(**providerOptions)
         assert ds is not None, f"""expected to get dataset specification for provider `{providerName}`
-                                   with options: {providerOptions} 
+                                   with options: {providerOptions}
                                 """
         df = ds.build()
 

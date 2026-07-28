@@ -7,7 +7,9 @@ This file defines the `DataGenError` and `DataGenerator` classes
 """
 import copy
 import logging
+import os
 import re
+import warnings
 
 from pyspark.sql.types import LongType, IntegerType, StringType, StructType, StructField, DataType
 
@@ -214,9 +216,18 @@ class DataGenerator:
         sparkVersion = sparkSession.version
         self._checkSparkVersion(sparkVersion, MIN_SPARK_VERSION)
 
+    @staticmethod
+    def _isServerless():
+        """Detects whether the current runtime uses Databricks serverless compute.
+
+        :return: `True` if a serverless environment is detected, `False` otherwise
+        """
+        return os.environ.get("IS_SERVERLESS").upper() == "TRUE"
+
     def _setupPandas(self, pandasBatchSize):
         """
-        Set up pandas
+        Sets up pandas UDF execution using a given batch size.
+
         :param pandasBatchSize: batch size for pandas, may be None
         :return: nothing
         """
@@ -224,23 +235,23 @@ class DataGenerator:
             "If pandas_batch_size is specified, it must be an integer"
         self.logger.info("*** using pandas udf for custom functions ***")
         self.logger.info("Spark version: %s", self.sparkSession.version)
+
+        if self._isServerless():
+            warnings.warn(
+                "Running on Databricks serverless compute: skipping arrow configuration. "
+                "The `batchSize` option has no effect on serverless and will be ignored.",
+                stacklevel=2,
+            )
+            return
+
         if str(self.sparkSession.version).startswith("3"):
             self.logger.info("Using spark 3.x")
-            try:
-                self.sparkSession.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
-            except Exception:  # pylint: disable=broad-exception-caught
-                pass
+            self.sparkSession.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
         else:
-            try:
-                self.sparkSession.conf.set("spark.sql.execution.arrow.enabled", "true")
-            except Exception:  # pylint: disable=broad-exception-caught
-                pass
+            self.sparkSession.conf.set("spark.sql.execution.arrow.enabled", "true")
 
         if self._batchSize is not None:
-            try:
-                self.sparkSession.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", self._batchSize)
-            except Exception:  # pylint: disable=broad-exception-caught
-                pass
+            self.sparkSession.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", self._batchSize)
 
     def _setupLogger(self):
         """Set up logging
