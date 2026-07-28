@@ -3,6 +3,7 @@ import re
 from unittest.mock import MagicMock, patch
 
 import pytest
+from pyspark.sql.types import FloatType, IntegerType, StringType
 
 import dbldatagen as dg
 
@@ -34,7 +35,8 @@ class TestSimulatedServerless:
         old_set_method = spark_session.conf.set
 
         spark_session.conf.set = MagicMock(
-            side_effect=ValueError("Setting value prohibited in simulated serverless env."))
+            side_effect=ValueError("Setting value prohibited in simulated serverless env.")
+        )
 
         with patch.dict(os.environ, {"IS_SERVERLESS": "TRUE"}):
             yield spark_session
@@ -43,16 +45,17 @@ class TestSimulatedServerless:
 
     def test_init_datagen_with_batch_size_warns_on_serverless(self, serverless_spark):
         with pytest.warns(UserWarning, match=f"^{re.escape(_SERVERLESS_WARNING)}$"):
-            _fails = dg.DataGenerator(serverless_spark, name="test_serverless_pandas_udf", rows=100, partitions=4,
-                                 batchSize=1000)
+            _fails = dg.DataGenerator(
+                serverless_spark, name="test_serverless_pandas_udf", rows=100, partitions=4, batchSize=1000
+            )
             serverless_spark.conf.set.assert_not_called()
-
 
     def test_pandas_udf_column_builds_and_warns_on_serverless(self, serverless_spark):
         with pytest.warns(UserWarning, match=f"^{re.escape(_SERVERLESS_WARNING)}$"):
             test_spec = (
-                dg.DataGenerator(serverless_spark, name="test_serverless_pandas_udf", rows=100, partitions=4,
-                                 batchSize=1000)
+                dg.DataGenerator(
+                    serverless_spark, name="test_serverless_pandas_udf", rows=100, partitions=4, batchSize=1000
+                )
                 .withIdOutput()
                 .withColumn("paras", text=dg.ILText(paragraphs=(1, 2), sentences=(2, 4), words=(3, 8)))
             )
@@ -64,13 +67,11 @@ class TestSimulatedServerless:
         # the prohibited Spark config write must never be attempted on serverless
         serverless_spark.conf.set.assert_not_called()
 
-    def test_basic_data(self, serverlessSpark):
-        from pyspark.sql.types import FloatType, IntegerType, StringType
-
+    def test_basic_data(self, serverless_spark):
         row_count = 1000 * 100
         column_count = 10
-        testDataSpec = (
-            dg.DataGenerator(serverlessSpark, name="test_data_set1", rows=row_count, partitions=4)
+        test_spec = (
+            dg.DataGenerator(serverless_spark, name="test_data_set1", rows=row_count, partitions=4)
             .withIdOutput()
             .withColumn(
                 "r",
@@ -85,22 +86,22 @@ class TestSimulatedServerless:
             .withColumn("code5", "string", values=["a", "b", "c"], random=True, weights=[9, 1, 1])
         )
 
-        testDataSpec.build()
+        df = test_spec.build()
+        assert df.count() == row_count
 
     @pytest.mark.parametrize(
-        "providerName, providerOptions",
+        "provider_name, provider_options",
         [
             ("basic/user", {"rows": 50, "partitions": 4, "random": False, "dummyValues": 0}),
             ("basic/user", {"rows": 100, "partitions": -1, "random": True, "dummyValues": 0}),
         ],
     )
-    def test_basic_user_table_retrieval(self, providerName, providerOptions, serverlessSpark):
-        ds = dg.Datasets(serverlessSpark, providerName).get(**providerOptions)
+    def test_basic_user_table_retrieval(self, provider_name, provider_options, serverless_spark):
+        ds = dg.Datasets(serverless_spark, provider_name).get(**provider_options)
         assert (
             ds is not None
-        ), f"""expected to get dataset specification for provider `{providerName}`
-                                   with options: {providerOptions} 
+        ), f"""expected to get dataset specification for provider `{provider_name}`
+                                   with options: {provider_options} 
                                 """
         df = ds.build()
-
-        assert df.count() >= 0
+        assert df.count() == provider_options.get("rows", 0)

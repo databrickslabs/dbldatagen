@@ -339,12 +339,12 @@ class DataGenerator(SerializableToDict):
         self._checkSparkVersion(sparkVersion, datagen_constants.MIN_SPARK_VERSION)
 
     @staticmethod
-    def _isServerless() -> None:
+    def _isServerless() -> bool:
         """Detects whether the current runtime uses Databricks serverless compute.
 
         :return: `True` if a serverless environment is detected, `False` otherwise
         """
-        return os.environ.get("IS_SERVERLESS").upper() == "TRUE"
+        return os.environ.get("IS_SERVERLESS", "").upper() == "TRUE"
 
     def _setupPandas(self, pandasBatchSize: int | None) -> None:
         """
