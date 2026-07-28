@@ -101,6 +101,73 @@ class TestTextGeneratorBasic:
         assert np_type == expectedType
 
     @pytest.mark.parametrize(
+        "boundsValue, expectedTuple",
+        [
+            (None, (2, 12)),
+            (5, (5, 5)),
+            ((3, 8), (3, 8)),
+            ([3, 8], (3, 8)),  # a bounds pair arrives as a list after a JSON round trip
+            (0, (2, 12)),
+            ((), (2, 12)),
+            ([], (2, 12)),
+        ],
+    )
+    def test_get_as_tuple_or_else_accepts_supported_forms(self, boundsValue, expectedTuple):
+        """Test that None, a single value, a 2 element tuple and a 2 element list are all accepted.
+
+        A falsy value such as 0 or an empty pair also returns the default, which is the long standing
+        behaviour of this helper.
+        """
+        assert TextGenerator.getAsTupleOrElse(boundsValue, (2, 12), "words") == expectedTuple
+
+    def test_get_as_tuple_or_else_rejects_unsupported_type(self):
+        """Test that an unsupported type raises ValueError naming the type that was supplied."""
+        with pytest.raises(ValueError, match="must be an integer, a 2 element tuple or list, or None"):
+            TextGenerator.getAsTupleOrElse("many", (2, 12), "words")
+
+    @pytest.mark.parametrize("boundsValue", [(2, 3, 4), [2, 3, 4], (2,)], ids=["tuple3", "list3", "tuple1"])
+    def test_get_as_tuple_or_else_rejects_wrong_element_count(self, boundsValue):
+        """Test that a bounds pair without exactly 2 elements raises ValueError."""
+        with pytest.raises(ValueError, match="must have exactly 2 elements"):
+            TextGenerator.getAsTupleOrElse(boundsValue, (2, 12), "words")
+
+    @pytest.mark.parametrize("boundsValue", [(2.5, 8), [2, "8"]], ids=["float", "str"])
+    def test_get_as_tuple_or_else_rejects_non_integer_elements(self, boundsValue):
+        """Test that a bounds pair containing a non integer raises ValueError."""
+        with pytest.raises(ValueError, match="must only contain integer values"):
+            TextGenerator.getAsTupleOrElse(boundsValue, (2, 12), "words")
+
+    def test_get_as_tuple_or_else_rejects_a_bool_value(self):
+        """Test that a bool is rejected rather than treated as an int, since bool is a subclass of int."""
+        with pytest.raises(ValueError, match="must be an integer, a 2 element tuple or list, or None"):
+            TextGenerator.getAsTupleOrElse(True, (2, 12), "words")
+
+    @pytest.mark.parametrize("boundsValue", [[True, False], (1, True)], ids=["list", "tuple"])
+    def test_get_as_tuple_or_else_rejects_bool_elements(self, boundsValue):
+        """Test that a bounds pair containing a bool element is rejected rather than accepted as an int."""
+        with pytest.raises(ValueError, match="must only contain integer values"):
+            TextGenerator.getAsTupleOrElse(boundsValue, (2, 12), "words")
+
+    @pytest.mark.parametrize("boundsValue", [(8, 3), [8, 3]], ids=["tuple", "list"])
+    def test_get_as_tuple_or_else_rejects_reversed_bounds(self, boundsValue):
+        """Test that a pair with a minimum greater than its maximum raises ValueError rather than being
+        returned reversed."""
+        with pytest.raises(ValueError, match=r"minimum \(8\) must not exceed maximum \(3\)"):
+            TextGenerator.getAsTupleOrElse(boundsValue, (2, 12), "words")
+
+    @pytest.mark.parametrize(
+        "defaultValue", ["notatuple", (2, 12, 3), (2.0, 12.0)], ids=["str", "three_elements", "float"]
+    )
+    def test_get_as_tuple_or_else_rejects_an_invalid_default(self, defaultValue):
+        """Test that a default which is not a bounds pair is reported rather than returned unchecked."""
+        with pytest.raises(ValueError, match="Parameter 'defaultValue'"):
+            TextGenerator.getAsTupleOrElse(None, defaultValue, "words")
+
+    def test_get_as_tuple_or_else_expands_a_single_value_default(self):
+        """Test that a single value default is expanded to a pair, as a single value is a valid bounds form."""
+        assert TextGenerator.getAsTupleOrElse(None, 7, "words") == (7, 7)
+
+    @pytest.mark.parametrize(
         "template, expectedOutput",
         [
             (r'53.123.ddd.ddd', r"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"),

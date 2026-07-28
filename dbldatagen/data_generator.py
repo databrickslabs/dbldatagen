@@ -6,11 +6,12 @@
 This file defines the `DataGenError` and `DataGenerator` classes
 """
 
-import contextlib
 import copy
 import json
 import logging
+import os
 import re
+import warnings
 from datetime import date, datetime, timedelta
 from functools import partial
 from typing import Any
@@ -213,8 +214,7 @@ class DataGenerator(SerializableToDict):
         self._setupSparkSession(sparkSession)
 
         # set up use of pandas udfs
-        if batchSize:
-            self._setupPandas(batchSize)
+        self._setupPandas()
 
     def __deepcopy__(self, memo: dict[int, object]) -> "DataGenerator":
         do_not_copy = ["logger", "sparkSession"]
@@ -336,29 +336,41 @@ class DataGenerator(SerializableToDict):
         sparkVersion = sparkSession.version
         self._checkSparkVersion(sparkVersion, datagen_constants.MIN_SPARK_VERSION)
 
-    def _setupPandas(self, pandasBatchSize: int | None) -> None:
+    @staticmethod
+    def _isServerless() -> bool:
+        """Detects whether the current runtime uses Databricks serverless compute.
+
+        :return: `True` if a serverless environment is detected, `False` otherwise
         """
-        Sets Spark configurations controlling the batch size for Pandas execution.
+        return os.environ.get("IS_SERVERLESS", "").upper() == "TRUE"
 
-        :param pandasBatchSize: Optional batch size for Pandas execution on Spark
-        """
-        if pandasBatchSize is None:
-            raise ValueError("Value 'pandasBatchSize' must be specified")
-
-        if not isinstance(pandasBatchSize, int):
-            raise ValueError("Value 'pandasBatchSize' must be specified with type 'int'.")
-
+    def _setupPandas(self) -> None:
+        """Sets Spark configurations controlling the batch size for Pandas execution."""
         self.logger.info("*** using pandas udf for custom functions ***")
-        self.logger.info(f"Spark version '{self.sparkSession.version}'")
+        self.logger.info("Spark version: %s", self.sparkSession.version)
 
-        with contextlib.suppress(Exception):
-            if str(self.sparkSession.version).startswith("3"):
-                self.logger.info("Using spark 3.x")
+        if self._isServerless():
+            warnings.warn(
+                "Running on Databricks serverless compute: skipping arrow configuration. "
+                "The `batchSize` option has no effect on serverless and will be ignored.",
+                stacklevel=2,
+            )
+            return
+
+        try:
+            spark_major_version = int(str(self.sparkSession.version).split(".")[0])
+
+            if spark_major_version >= 3:
                 self.sparkSession.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
+            else:
+                self.sparkSession.conf.set("spark.sql.execution.arrow.enabled", "true")
 
-            self.sparkSession.conf.set("spark.sql.execution.arrow.enabled", "true")
             if self._batchSize:
                 self.sparkSession.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", self._batchSize)
+
+        except ValueError:
+            self.logger.warning("Could not parse Spark version '%s'", self.sparkSession.version)
+            return
 
     def _setupLogger(self) -> None:
         """
