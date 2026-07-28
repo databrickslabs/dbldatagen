@@ -187,26 +187,29 @@ class NRange(DataRange):
                     self.maxValue = numeric_range[1]
 
         integral_bounds = _INTEGRAL_TYPE_BOUNDS.get(type(ctype))
-        if integral_bounds is not None:
+        # both bounds are already populated from the type defaults above, so this only narrows the type
+        if integral_bounds is not None and self.minValue is not None and self.maxValue is not None:
             type_min, type_max = integral_bounds
             type_name = type(ctype).__name__
 
-            # each bound is checked against both limits, as a decreasing range puts the larger value in
-            # `minValue` and the smaller one in `maxValue`
-            for bound_name, bound_value in (("minValue", self.minValue), ("maxValue", self.maxValue)):
-                # both bounds are populated from the type defaults above, so this only narrows the type
-                if bound_value is None:
-                    continue
+            # a decreasing range puts the larger value in `minValue` and the smaller one in `maxValue`, so
+            # determine which bound is smaller before checking it against the type limits
+            if self.minValue <= self.maxValue:
+                smaller_name, smaller_value = "minValue", self.minValue
+                larger_name, larger_value = "maxValue", self.maxValue
+            else:
+                smaller_name, smaller_value = "maxValue", self.maxValue
+                larger_name, larger_value = "minValue", self.minValue
 
-                if bound_value < type_min:
-                    raise ValueError(
-                        f"`{bound_name}` of {bound_value} is below the minimum value of {type_min} for {type_name}."
-                    )
+            if smaller_value < type_min:
+                raise ValueError(
+                    f"`{smaller_name}` of {smaller_value} is below the minimum allowed {type_name} value {type_min}."
+                )
 
-                if bound_value > type_max:
-                    raise ValueError(
-                        f"`{bound_name}` of {bound_value} is above the maximum value of {type_max} for {type_name}."
-                    )
+            if larger_value > type_max:
+                raise ValueError(
+                    f"`{larger_name}` of {larger_value} is above the maximum allowed {type_name} value {type_max}."
+                )
 
         if isinstance(ctype, (DoubleType, FloatType)) and self.step is None:
             self.step = 1.0

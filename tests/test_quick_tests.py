@@ -511,7 +511,7 @@ class TestQuickTests:
         rng = NRange(maxValue=300)  # above the ByteType maximum of 127
         with pytest.raises(
             ValueError,
-            match=r"`maxValue` of 300 is above the maximum value of 127 for ByteType\.",
+            match=r"`maxValue` of 300 is above the maximum allowed ByteType value 127\.",
         ):
             rng.adjustForColumnDatatype(ByteType())
 
@@ -520,7 +520,7 @@ class TestQuickTests:
         """Test that a `maxValue` above the largest value the column type can hold raises ValueError."""
         rng = NRange(minValue=typeMin, maxValue=typeMax + 1)
         expected = (
-            rf"`maxValue` of {typeMax + 1} is above the maximum value of {typeMax} for {type(columnType).__name__}\."
+            rf"`maxValue` of {typeMax + 1} is above the maximum allowed {type(columnType).__name__} value {typeMax}\."
         )
 
         with pytest.raises(ValueError, match=expected):
@@ -531,7 +531,7 @@ class TestQuickTests:
         """Test that a `minValue` below the smallest value the column type can hold raises ValueError."""
         rng = NRange(minValue=typeMin - 1, maxValue=typeMax)
         expected = (
-            rf"`minValue` of {typeMin - 1} is below the minimum value of {typeMin} for {type(columnType).__name__}\."
+            rf"`minValue` of {typeMin - 1} is below the minimum allowed {type(columnType).__name__} value {typeMin}\."
         )
 
         with pytest.raises(ValueError, match=expected):
@@ -559,7 +559,7 @@ class TestQuickTests:
         rng = NRange(minValue=200, maxValue=1, step=-1)
         with pytest.raises(
             ValueError,
-            match=r"`minValue` of 200 is above the maximum value of 127 for ByteType\.",
+            match=r"`minValue` of 200 is above the maximum allowed ByteType value 127\.",
         ):
             rng.adjustForColumnDatatype(ByteType())
 
@@ -568,7 +568,7 @@ class TestQuickTests:
         rng = NRange(minValue=0, maxValue=-200, step=-1)
         with pytest.raises(
             ValueError,
-            match=r"`maxValue` of -200 is below the minimum value of -128 for ByteType\.",
+            match=r"`maxValue` of -200 is below the minimum allowed ByteType value -128\.",
         ):
             rng.adjustForColumnDatatype(ByteType())
 
@@ -598,7 +598,7 @@ class TestQuickTests:
         """Test that a byte column is rejected when `build` is called, however the out of range bound arrives."""
         data_generator = dg.DataGenerator(sparkSession=spark, name="byte_range", rows=10, partitions=1)
 
-        with pytest.raises(ValueError, match=r"`maxValue` of 200 is above the maximum value of 127 for ByteType\."):
+        with pytest.raises(ValueError, match=r"`maxValue` of 200 is above the maximum allowed ByteType value 127\."):
             data_generator.withColumn("v", ByteType(), **columnOptions).build()
 
     @pytest.mark.parametrize(
@@ -621,7 +621,7 @@ class TestQuickTests:
         rng = NRange(until=127)
         with pytest.raises(
             ValueError,
-            match=r"`maxValue` of 128 is above the maximum value of 127 for ByteType\.",
+            match=r"`maxValue` of 128 is above the maximum allowed ByteType value 127\.",
         ):
             rng.adjustForColumnDatatype(ByteType())
 
@@ -630,7 +630,7 @@ class TestQuickTests:
         rng = NRange(minValue=0.0, maxValue=127.5)
         with pytest.raises(
             ValueError,
-            match=r"`maxValue` of 127.5 is above the maximum value of 127 for ByteType\.",
+            match=r"`maxValue` of 127.5 is above the maximum allowed ByteType value 127\.",
         ):
             rng.adjustForColumnDatatype(ByteType())
 
