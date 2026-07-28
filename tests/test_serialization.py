@@ -514,6 +514,29 @@ class TestSerialization:
         assert text_generator.sentences == (2, 4)
         assert text_generator.words == (3, 8)
 
+    def test_generator_with_iltext_list_bounds_round_trips(self):
+        """Test that a spec whose ILText bounds arrive as JSON arrays (a list, the form `saveToJson`
+        emits and `loadFromInitializationDict` supplies) loads and normalises back to tuples."""
+        options = {
+            "kind": "DataGenerator",
+            "name": "iltext_list_bounds",
+            "rows": 100,
+            "columns": [
+                {
+                    "colName": "notes",
+                    "colType": "string",
+                    "text": {"kind": "ILText", "paragraphs": [1, 2], "sentences": [2, 4], "words": [3, 8]},
+                }
+            ],
+        }
+
+        reloaded = dg.DataGenerator.loadFromInitializationDict(options)
+        text_generator = reloaded.getColumnSpec("notes").textGenerator
+
+        assert text_generator.paragraphs == (1, 2)
+        assert text_generator.sentences == (2, 4)
+        assert text_generator.words == (3, 8)
+
     def test_from_options(self):
         options = {
             "kind": "ColumnGenerationSpec",

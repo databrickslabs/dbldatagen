@@ -74,7 +74,8 @@ To define a column with a data range, pass a dictionary with the ``DateRange`` o
          {"colName": "user_name", "colType": "string", "expr": "concat('user_', id)"},
          {"colName": "phone_number", "colType": "string", "template": "555-DDD-DDDD"},
          {"colName": "created_on", "colType": "date", "dataRange": {
-            "kind": "DateRange", "begin": "2020-01-01", "end": "2025-01-01", "interval": "1 DAY", "datetime_format": "yyyy-MM-dd"}}
+            "kind": "DateRange", "begin": "2020-01-01", "end": "2025-01-01",
+            "interval": "1 DAY", "datetime_format": "yyyy-MM-dd"}}
       ]
    }
 
@@ -104,14 +105,13 @@ To define a column with a text generator, pass a dictionary with the ``TextGener
          {"colName": "user_name", "colType": "string", "expr": "concat('user_', id)"},
          {"colName": "phone_number", "colType": "string", "template": "555-DDD-DDDD"},
          {"colName": "description", "colType": "string", "text": {
-            "kind": "ILText", "sentences": 3, "words": 10}}
+            "kind": "ILText", "sentences": (3, 5), "words": (3, 10)}}
       ]
    }
 
-Options that take a ``(minimum, maximum)`` bounds pair, such as the ``paragraphs``, ``sentences`` and
-``words`` options of ``ILText``, are written to JSON as arrays, for example ``"words": [3, 8]``. Both a two
-element list and a two element tuple are accepted when a saved data generation specification is loaded, so a
-bounds pair survives a save and load cycle unchanged.
+.. note::
+   Options that take a ``(minimum, maximum)`` bounds pair, such as the ``paragraphs``, ``sentences`` and
+   ``words`` options of ``ILText``, are expressed as arrays (e.g. ``"words": [3, 8]``) when saved as JSON.
 
 
 To define a column with a text generator, pass a dictionary with the ``TextGenerator`` options.
