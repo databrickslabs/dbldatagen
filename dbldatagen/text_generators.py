@@ -342,16 +342,16 @@ class TextGenerator(ABC):
     def getAsTupleOrElse(
         v: int | tuple[int, int] | list[int] | None, defaultValue: tuple[int, int], valueName: str = "value"
     ) -> tuple[int, int]:
-        """get value v as tuple or return default value
+        """
+        Gets the input value v as a tuple or returns a tuple of the default value. The default values are
+        returned if the input value is None.
 
-        :param v: value to test. A single value is expanded to a pair, and a 2 element tuple or list is used
-                  as the `(minimum, maximum)` pair.
-        :param defaultValue: value to use as a default if `v` is `None` or otherwise empty
-        :param valueName: name of value for debugging and logging purposes
-        :returns: return `v` as tuple, or `defaultValue` as a tuple if `v` is `None`, zero or empty. If `v` is
-                  a single value, returns the tuple (`v`, `v`)
-        :raises ValueError: If `v` or `defaultValue` is not an integer or a 2 element tuple or list of integers,
-                  is a `bool`, or has a minimum greater than its maximum
+        :param v: Input value; A single value is expanded to a tuple; A 2 element tuple or list is returned unchanged
+        :param defaultValue: Default value to use if `v` is `None` or empty
+        :param valueName: Name of the value for debugging and logging purposes
+        :returns: The input value `v`  as a tuple, or the default value as a tuple if `v` is `None`, zero or empty
+        :raises ValueError: If `v` or `defaultValue` is not an integer, a 2 element tuple, or a 2 element list of
+            integers, if `v` is of type `bool`, or if `v` is a tuple or list with a minimum greater than its maximum
         """
         if not v:
             return TextGenerator._asBoundsPair(defaultValue, "defaultValue")
@@ -360,14 +360,15 @@ class TextGenerator(ABC):
 
     @staticmethod
     def _asBoundsPair(value: int | tuple[int, int] | list[int], valueName: str) -> tuple[int, int]:
-        """Converts a bounds specification to a `(minimum, maximum)` pair of integers.
+        """
+        Converts a bounds specification to a `(minimum, maximum)` pair of integers.
 
-        :param value: a single integer, or a 2 element tuple or list of integers, with the minimum not
+        :param value: A single integer, or a 2 element tuple or list of integers, with the minimum not
                   exceeding the maximum
-        :param valueName: name of the value, used in the error messages
-        :returns: the bounds as a 2 element tuple
-        :raises ValueError: If `value` is not an integer or a 2 element tuple or list of integers, is a
-                  `bool`, or has a minimum greater than its maximum
+        :param valueName: Name of the value, used in the error messages
+        :returns: Bounds as a 2 element tuple
+        :raises ValueError: If `value` is not an integer, a 2 element tuple, or a 2 element list of integers, if
+            `value` is a `bool`, or if `value` is a tuple or list with a minimum greater than its maximum
         """
         if isinstance(value, bool):
             raise ValueError(
