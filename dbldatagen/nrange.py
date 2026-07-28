@@ -25,9 +25,6 @@ from .serialization import SerializableToDict
 
 _OLD_MIN_OPTION = "min"
 _OLD_MAX_OPTION = "max"
-
-#: inclusive `(minValue, maxValue)` limits of each Spark SQL integral type. These are value limits, so they
-#: are narrower than the count of distinct values checked by `_MAX_TYPE_RANGE` in `column_spec_options`.
 _INTEGRAL_TYPE_BOUNDS: dict[type, tuple[int, int]] = {
     ByteType: (-(2**7), 2**7 - 1),
     ShortType: (-(2**15), 2**15 - 1),
@@ -167,14 +164,14 @@ class NRange(DataRange):
         This will:
 
         - Populate `minValue` and `maxValue` to the default range for the data type
-          if they are not already set.
-        - Validate that `minValue` and `maxValue` are within the representable range of the
+          (i.e. 0 to the maximum representable value) if they are not already set.
+        - Validate that `minValue` and `maxValue` are within the representable range for any
           integral types (`ByteType`, `ShortType`, `IntegerType` and `LongType`).
         - Set a default `step` of 1.0 for floating point types and 1 for integral types
           if `step` is not already set.
 
         :param ctype: Spark SQL data type for the column.
-        :raises ValueError: If `minValue` or `maxValue` is outside the range of an integral `ctype`.
+        :raises ValueError: If `minValue` or `maxValue` is outside the representable range of `ctype`.
         """
         numeric_types = (DecimalType, FloatType, DoubleType, ByteType, ShortType, IntegerType, LongType)
 
@@ -187,13 +184,11 @@ class NRange(DataRange):
                     self.maxValue = numeric_range[1]
 
         integral_bounds = _INTEGRAL_TYPE_BOUNDS.get(type(ctype))
-        # both bounds are already populated from the type defaults above, so this only narrows the type
         if integral_bounds is not None and self.minValue is not None and self.maxValue is not None:
             type_min, type_max = integral_bounds
             type_name = type(ctype).__name__
 
-            # a decreasing range puts the larger value in `minValue` and the smaller one in `maxValue`, so
-            # determine which bound is smaller before checking it against the type limits
+            # Determine which bound is smaller before checking type limits (supports decreasing ranges e.g. (10, 1, -1))
             if self.minValue <= self.maxValue:
                 smaller_name, smaller_value = "minValue", self.minValue
                 larger_name, larger_value = "maxValue", self.maxValue
@@ -302,10 +297,10 @@ class NRange(DataRange):
         :return: Tuple of `(minValue, maxValue)` for the type, or `None` if not supported.
         """
         value_ranges: dict[type, tuple[float | int, float | int]] = {
-            ByteType: (0, (2**4 - 1)),
-            ShortType: (0, (2**8 - 1)),
-            IntegerType: (0, (2**16 - 1)),
-            LongType: (0, (2**32 - 1)),
+            ByteType: (0, (2**7 - 1)),
+            ShortType: (0, (2**15 - 1)),
+            IntegerType: (0, (2**31 - 1)),
+            LongType: (0, (2**63 - 1)),
             FloatType: (0.0, 3.402e38),
             DoubleType: (0.0, 1.79769e308),
         }

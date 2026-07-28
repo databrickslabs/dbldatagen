@@ -49,28 +49,25 @@ we may reduce the range
 
 The following rules apply to any ranged data specifications:
 
-- if the `uniqueValues` option is used, its combined with the any range options to produce the effective range. 
-The number of unique values is given highest priority, but the interval, start and end of the values tries to take 
-into account any range options specified. If the range does not allow for sufficient unique values to be generated, 
-the number of unique values is reduced. 
-- if `values` are specified, the implied range is the set of values for column. Any other range options are ignored
+- If `uniqueValues` is used, it is combined with any range options to produce the effective range. The number of 
+unique values is given highest priority, but the interval, start and end of the values tries to take into account 
+any range options specified. If the range does not allow for sufficient unique values to be generated, the number 
+of unique values is reduced.
+- If `values` are specified, the implied range is the set of values for column. Any other range options are ignored
 - If both a range object is specified and any of the options for `begin`, `end` , `interval` are specified, 
 the relevant value in the range object is used
 - If both a range object is specified and any of the options for `minValue`, `maxValue` , `step` are specified, 
 the relevant value in the range object is used
-- if the range of values conflicts with the underlying data type, the data type values take precedence. For example 
+- If the range of values conflicts with the underlying data type, the data type values take precedence. For example 
 a Boolean field with the range 1 .. 9 will be rescaled to the range 0 .. 1 and still produce both `True` and `False` 
 values
 
 ### Ranges for integral column types
 
-The integral column types are an exception to two of the precedence rules above: the rule that reduces the 
-number of unique values, and the rule that rescales a range conflicting with the data type. The Spark SQL 
-integral types are signed, so the values a column can hold are narrower than the number of distinct values 
-the type provides. Rather than reducing or rescaling a `minValue` or `maxValue` that falls outside the limits 
-in the table below, `build` raises a `ValueError` naming the bound, the limit and the column type. Neither 
-reducing nor rescaling is used here, because both would silently change the range that was asked for, and the 
-values would otherwise wrap around during generation.
+Rather than reducing or rescaling a `minValue`, `maxValue`, or `uniqueValues` that falls outside the limits in 
+the table below, `build` raises a `ValueError` naming the bound, the limit and the column type. Neither reducing 
+nor rescaling is used here, because both would silently change the range that was asked for, and the values would 
+otherwise wrap around during generation.
 
 | Column type | Minimum value | Maximum value |
 |:------------|--------------:|--------------:|
@@ -79,13 +76,10 @@ values would otherwise wrap around during generation.
 | `IntegerType` | -2147483648 | 2147483647 |
 | `LongType` | -9223372036854775808 | 9223372036854775807 |
 
-Each of `minValue` and `maxValue` must fall within the limits for the column type. A decreasing range such 
-as `minValue=127`, `maxValue=1` with a negative `step` is still permitted, since the check does not require 
-`minValue` to be the smaller of the two.
-
-The limits apply however the range is arrived at. A `uniqueValues` count that implies a bound beyond the type 
-limit is reported rather than reduced, and `until` sets `maxValue` one above the value supplied, so 
-`until=127` on a `ByteType` column reports a `maxValue` of 128 and is rejected while `until=126` is accepted.
+Both `minValue` and `maxValue` must fall within the representable range for the requested column type. These 
+limits apply however the range is arrived at. A `uniqueValues` that implies a bound beyond the representable limit 
+is reported rather than reduced, and `until` sets `maxValue` one above the value supplied, so `until=127` on a 
+`ByteType` column reports a `maxValue` of 128 and is rejected while `until=126` is accepted.
 
 ### Handling of dates and timestamps
 
