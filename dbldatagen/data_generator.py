@@ -352,12 +352,6 @@ class DataGenerator(SerializableToDict):
 
         :param pandasBatchSize: Optional batch size for Pandas execution on Spark
         """
-        if pandasBatchSize is None:
-            raise ValueError("Value 'pandasBatchSize' must be specified")
-
-        if not isinstance(pandasBatchSize, int):
-            raise ValueError("Value 'pandasBatchSize' must be specified with type 'int'.")
-
         self.logger.info("*** using pandas udf for custom functions ***")
         self.logger.info(f"Spark version '{self.sparkSession.version}'")
 
