@@ -1,6 +1,17 @@
+import os
+import re
+import warnings
+from unittest.mock import MagicMock, call, patch
+
 import pytest
+from pyspark.sql.types import FloatType, IntegerType, StringType
 
 import dbldatagen as dg
+
+_SERVERLESS_WARNING = (
+    "Running on Databricks serverless compute: skipping arrow configuration. "
+    "The `batchSize` option has no effect on serverless and will be ignored."
+)
 
 
 class TestSimulatedServerless:
@@ -14,52 +25,54 @@ class TestSimulatedServerless:
 
     - Spark config settings cannot be written
 
+    On serverless compute, dbldatagen detects the environment from the ``IS_SERVERLESS`` environment variable.``
+    and skips the Arrow Spark configuration (which is already enabled there and cannot be modified), warning the
+    user instead.
     """
 
     @pytest.fixture(scope="class")
-    def serverlessSpark(self):
-        from unittest.mock import MagicMock
+    def serverless_spark(self):
+        spark_session = dg.SparkSingleton.getLocalInstance("unit tests")
+        old_set_method = spark_session.conf.set
 
-        sparkSession = dg.SparkSingleton.getLocalInstance("unit tests")
+        spark_session.conf.set = MagicMock(
+            side_effect=ValueError("Setting value prohibited in simulated serverless env.")
+        )
 
-        oldSetMethod = sparkSession.conf.set
-        oldGetMethod = sparkSession.conf.get
+        with patch.dict(os.environ, {"IS_SERVERLESS": "TRUE"}):
+            yield spark_session
 
-        def mock_conf_set(*args, **kwargs):
-            raise ValueError("Setting value prohibited in simulated serverless env.")
+        spark_session.conf.set = old_set_method
 
-        def mock_conf_get(config_key, default=None):
-            # Allow internal PySpark configuration calls that are needed for basic operation
-            whitelisted_configs = {
-                'spark.sql.stackTracesInDataFrameContext': '1',
-                'spark.sql.execution.arrow.enabled': 'false',
-                'spark.sql.execution.arrow.pyspark.enabled': 'false',
-                'spark.python.sql.dataFrameDebugging.enabled': 'true',
-                'spark.sql.execution.arrow.maxRecordsPerBatch': '10000',
-            }
-            if config_key in whitelisted_configs:
-                try:
-                    return oldGetMethod(config_key, whitelisted_configs[config_key])
-                except:
-                    return whitelisted_configs[config_key]
-            else:
-                raise ValueError("Getting value prohibited in simulated serverless env.")
+    def test_init_datagen_with_batch_size_warns_on_serverless(self, serverless_spark):
+        with pytest.warns(UserWarning, match=f"^{re.escape(_SERVERLESS_WARNING)}$"):
+            _fails = dg.DataGenerator(
+                serverless_spark, name="test_serverless_pandas_udf", rows=100, partitions=4, batchSize=1000
+            )
+            serverless_spark.conf.set.assert_not_called()
 
-        sparkSession.conf.set = MagicMock(side_effect=mock_conf_set)
-        sparkSession.conf.get = MagicMock(side_effect=mock_conf_get)
+    def test_pandas_udf_column_builds_and_warns_on_serverless(self, serverless_spark):
+        with pytest.warns(UserWarning, match=f"^{re.escape(_SERVERLESS_WARNING)}$"):
+            test_spec = (
+                dg.DataGenerator(
+                    serverless_spark, name="test_serverless_pandas_udf", rows=100, partitions=4, batchSize=1000
+                )
+                .withIdOutput()
+                .withColumn("paras", text=dg.ILText(paragraphs=(1, 2), sentences=(2, 4), words=(3, 8)))
+            )
 
-        yield sparkSession
+        df = test_spec.build()
 
-        sparkSession.conf.set = oldSetMethod
-        sparkSession.conf.get = oldGetMethod
+        assert df.count() == 100
+        assert "paras" in df.columns
+        # the prohibited Spark config write must never be attempted on serverless
+        serverless_spark.conf.set.assert_not_called()
 
-    def test_basic_data(self, serverlessSpark):
-        from pyspark.sql.types import FloatType, IntegerType, StringType
-
+    def test_basic_data(self, serverless_spark):
         row_count = 1000 * 100
         column_count = 10
-        testDataSpec = (
-            dg.DataGenerator(serverlessSpark, name="test_data_set1", rows=row_count, partitions=4)
+        test_spec = (
+            dg.DataGenerator(serverless_spark, name="test_data_set1", rows=row_count, partitions=4)
             .withIdOutput()
             .withColumn(
                 "r",
@@ -74,22 +87,72 @@ class TestSimulatedServerless:
             .withColumn("code5", "string", values=["a", "b", "c"], random=True, weights=[9, 1, 1])
         )
 
-        testDataSpec.build()
+        df = test_spec.build()
+        assert df.count() == row_count
 
     @pytest.mark.parametrize(
-        "providerName, providerOptions",
+        "provider_name, provider_options",
         [
             ("basic/user", {"rows": 50, "partitions": 4, "random": False, "dummyValues": 0}),
             ("basic/user", {"rows": 100, "partitions": -1, "random": True, "dummyValues": 0}),
         ],
     )
-    def test_basic_user_table_retrieval(self, providerName, providerOptions, serverlessSpark):
-        ds = dg.Datasets(serverlessSpark, providerName).get(**providerOptions)
+    def test_basic_user_table_retrieval(self, provider_name, provider_options, serverless_spark):
+        ds = dg.Datasets(serverless_spark, provider_name).get(**provider_options)
         assert (
             ds is not None
-        ), f"""expected to get dataset specification for provider `{providerName}`
-                                   with options: {providerOptions} 
+        ), f"""expected to get dataset specification for provider `{provider_name}`
+                                   with options: {provider_options}
                                 """
         df = ds.build()
+        assert df.count() == provider_options.get("rows", 0)
 
-        assert df.count() >= 0
+
+class TestArrowConfiguration:
+    """On non-serverless compute the arrow Spark configuration can be written, and dbldatagen sets it up
+    when a `batchSize` is supplied so that Pandas UDFs run efficiently.
+
+    These tests mock ``conf.set`` to capture the configuration writes without mutating the shared session,
+    and ensure ``IS_SERVERLESS`` is not set so the non-serverless branch of ``_setupPandas`` runs.
+    """
+
+    @pytest.fixture
+    def recording_spark(self):
+        spark_session = dg.SparkSingleton.getLocalInstance("unit tests")
+        old_set_method = spark_session.conf.set
+
+        spark_session.conf.set = MagicMock()
+
+        with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("IS_SERVERLESS", None)
+            yield spark_session
+
+        spark_session.conf.set = old_set_method
+
+    def test_arrow_config_is_set_when_batch_size_supplied(self, recording_spark):
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")  # the serverless warning must not fire off serverless
+            dg.DataGenerator(recording_spark, name="test_arrow_config", rows=100, partitions=4, batchSize=1000)
+
+        recording_spark.conf.set.assert_any_call("spark.sql.execution.arrow.pyspark.enabled", "true")
+        recording_spark.conf.set.assert_any_call("spark.sql.execution.arrow.maxRecordsPerBatch", 1000)
+
+    def test_arrow_enabled_without_batch_size_but_max_records_skipped(self, recording_spark):
+        dg.DataGenerator(recording_spark, name="test_no_batch_size", rows=100, partitions=4)
+
+        recording_spark.conf.set.assert_called_once_with("spark.sql.execution.arrow.pyspark.enabled", "true")
+        assert call("spark.sql.execution.arrow.maxRecordsPerBatch", None) not in recording_spark.conf.set.mock_calls
+
+    def test_max_records_per_batch_uses_supplied_batch_size(self, recording_spark):
+        dg.DataGenerator(recording_spark, name="test_batch_size_value", rows=100, partitions=4, batchSize=37)
+
+        recording_spark.conf.set.assert_any_call("spark.sql.execution.arrow.maxRecordsPerBatch", 37)
+
+    def test_arrow_config_uses_legacy_key_on_spark_2(self, recording_spark):
+        legacy_spark = MagicMock()
+        legacy_spark.version = "2.4.8"
+
+        dg.DataGenerator(legacy_spark, name="test_spark2", rows=100, partitions=4)
+
+        legacy_spark.conf.set.assert_called_once_with("spark.sql.execution.arrow.enabled", "true")
+        assert call("spark.sql.execution.arrow.pyspark.enabled", "true") not in legacy_spark.conf.set.mock_calls
