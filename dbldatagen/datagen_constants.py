@@ -20,29 +20,29 @@ This module defines library constants
 """
 
 # default random seed
-DEFAULT_RANDOM_SEED = 42
-RANDOM_SEED_RANDOM = -1
-RANDOM_SEED_RANDOM_FLOAT = -1.0
-RANDOM_SEED_FIXED = "fixed"
-RANDOM_SEED_HASH_FIELD_NAME = "hash_fieldname"
+DEFAULT_RANDOM_SEED: int = 42
+RANDOM_SEED_RANDOM: int = -1
+RANDOM_SEED_RANDOM_FLOAT: float = -1.0
+RANDOM_SEED_FIXED: str = "fixed"
+RANDOM_SEED_HASH_FIELD_NAME: str = "hash_fieldname"
 
 # constants related to seed column
-DEFAULT_SEED_COLUMN = "id"
+DEFAULT_SEED_COLUMN: str = "id"
 
 # this is the column name produced by `spark.range`
 # dont change unless semantics of `spark.range` changes
-SPARK_RANGE_COLUMN = "id"
+SPARK_RANGE_COLUMN: str = "id"
 
 # minimum versions for version checks
-MIN_PYTHON_VERSION = (3, 8)
-MIN_SPARK_VERSION = (3, 1, 2)
+MIN_PYTHON_VERSION: tuple[int, int] = (3, 8)
+MIN_SPARK_VERSION: tuple[int, int, int] = (3, 1, 2)
 
 # options for randon data generation
-OPTION_RANDOM = "random"
-OPTION_RANDOM_SEED_METHOD = "randomSeedMethod"
-OPTION_RANDOM_SEED = "randomSeed"
+OPTION_RANDOM: str = "random"
+OPTION_RANDOM_SEED_METHOD: str = "randomSeedMethod"
+OPTION_RANDOM_SEED: str = "randomSeed"
 
-INFER_DATATYPE = "__infer__"
+INFER_DATATYPE: str = "__infer__"
 
 # default parallelism when sparkContext is not available
-SPARK_DEFAULT_PARALLELISM = 200
+SPARK_DEFAULT_PARALLELISM: int = 200

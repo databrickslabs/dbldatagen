@@ -1,210 +1,88 @@
-# This Makefile is for project development purposes only.
-.PHONY: clean wheel dist test buildenv install
+all: clean lint fmt test
 
-ENV_NAME=dbl_testdatagenerator
+# Prevent uv from modifying the lock file. UV_FROZEN skips resolution entirely,
+# which is required because the lock file uses public PyPI URLs while the actual
+# index may be an internal proxy. Use `make lock-dependencies` to update the lock file.
+export UV_FROZEN := 1
+# Ensure that hatchling is pinned when builds are needed.
+export UV_BUILD_CONSTRAINT := .build-constraints.txt
+# macOS: prevent Python worker SEGVs in PySpark UDFs from fork() + native libs.
+# No-op on Linux/CI.
+export OBJC_DISABLE_INITIALIZE_FORK_SAFETY := YES
 
-NO_COLOR = \x1b[0m
-OK_COLOR = \x1b[32;01m
-ERROR_COLOR = \x1b[31;01m
-
-PYCACHE := $(shell find . -name '__pycache__')
-EGGS :=  $(shell find . -name '*.egg-info')
-CURRENT_VERSION := $(shell awk '/current_version/ {print $$3}' python/.bumpversion.cfg)
-
-PACKAGE_NAME = "dbldatagen"
+UV_RUN := uv run --exact --all-extras --all-groups
+UV_TEST := $(UV_RUN) pytest -n 2 --timeout 600 --durations 20
 
 clean:
-	@echo "$(OK_COLOR)=> Cleaning$(NO_COLOR)"
-	@echo "Current version: $(CURRENT_VERSION)"
-	@rm -fr build dist $(EGGS) $(PYCACHE)
+	rm -fr .venv clean htmlcov .mypy_cache .pytest_cache .ruff_cache .coverage coverage.xml
+	find . -name '__pycache__' -print0 | xargs -0 rm -fr
 
-prepare: clean
-	@echo "$(OK_COLOR)=> Preparing ...$(NO_COLOR)"
-	git add .
-	git status
-	git commit -m "cleanup before release"
+dev:
+	uv sync --all-extras --all-groups
 
+lint:
+	$(UV_RUN) black --check .
+	$(UV_RUN) ruff check .
+	$(UV_RUN) mypy .
+	$(UV_RUN) pylint --output-format=colorized -j 0 dbldatagen
 
-create-dev-env:
-	@echo "$(OK_COLOR)=> making conda dev environment$(NO_COLOR)"
-	conda create -n $(ENV_NAME) python=3.8.10
+fmt:
+	$(UV_RUN) black .
+	$(UV_RUN) ruff check . --fix
+	$(UV_RUN) mypy .
+	$(UV_RUN) pylint --output-format=colorized -j 0 dbldatagen
 
-create-github-build-env:
-	@echo "$(OK_COLOR)=> making conda dev environment$(NO_COLOR)"
-	conda create -n pip_$(ENV_NAME) python=3.8
+# test: full suite with coverage (what CI runs).  Runs v0 and core lanes
+# separately so each can use its own .coveragerc (v0 omits core/, core omits
+# pandas_udf files that break under coverage.py sys.settrace).  Then runs
+# the faker_pool tests in a separate no-coverage step so the pandas_udf
+# branch is still exercised in CI.  See CONTRIBUTING.
+test:
+	$(UV_TEST) --cov=dbldatagen --cov-config=.coveragerc --cov-report= --ignore=tests/core/ tests/
+	$(UV_RUN) pytest tests/core/ --cov=dbldatagen/core --cov-config=.coveragerc-core --cov-append --cov-report= --timeout 600 --durations 20 --no-header -q --ignore=tests/core/engine/test_faker_pool.py
+	$(UV_RUN) coverage xml --rcfile=.coveragerc-all
+	$(UV_RUN) coverage html --rcfile=.coveragerc-all
+	$(UV_RUN) coverage report --rcfile=.coveragerc-all --fail-under=80 --skip-covered
+	$(UV_RUN) pytest tests/core/engine/test_faker_pool.py --timeout 600 --no-header -q
 
-install-dev-dependencies:
-	@echo "$(OK_COLOR)=> installing dev environment requirements$(NO_COLOR)"
-	pip install -r python/dev_require.txt
+# test-fast: full suite, no coverage.  Runs faker_pool tests (which coverage
+# mode has to skip due to cloudpickle incompat) and uses -n 2 for the v0 lane.
+test-fast:
+	$(UV_RUN) pytest tests/ --ignore=tests/core/ -n 2 --timeout 600 --durations 20
+	$(UV_RUN) pytest tests/core/ --timeout 600 --durations 20 --no-header -q
 
-clean-dev-env:
-	@echo "$(OK_COLOR)=> Cleaning dev environment$(NO_COLOR)"
-	@echo "Current version: $(CURRENT_VERSION)"
-	@rm -fr build dist $(EGGS) $(PYCACHE)
+# test-coverage: same as test, then open HTML report.
+test-coverage: test
+	open htmlcov/index.html
 
+build:
+	uv build --require-hashes --build-constraints=.build-constraints.txt
 
-buildenv: 
-	@echo "$(OK_COLOR)=> Creating and checking build virtual environment ...$(NO_COLOR)"
-	pip install pipenv
-	pipenv install --dev
+lock-dependencies: export UV_FROZEN := 0
+lock-dependencies:
+	uv lock
+	$(UV_RUN) --group yq tomlq -r '.["build-system"].requires[]' pyproject.toml | \
+	  uv pip compile --generate-hashes --universal --no-header - > build-constraints-new.txt
+	mv build-constraints-new.txt .build-constraints.txt
+	perl -pi -e 's|registry = "https://[^"]*"|registry = "https://pypi.org/simple"|g' uv.lock
+	perl -pi -e 's|https://pypi-proxy\.dev\.databricks\.com/packages/|https://files.pythonhosted.org/packages/|g' uv.lock
 
-clean_buildenv:
-	@echo "$(OK_COLOR)=> Cleaning build virtual environment ...$(NO_COLOR)"
-	pipenv clean
+docs-build:
+	$(UV_RUN) --group docs sphinx-build -M html docs/source docs/build
 
-docs: install
-	@echo "$(OK_COLOR)=> Creating docs ...$(NO_COLOR)"
-	@cd docs && make docs
+docs-clean:
+	rm -rf docs/build
 
-dev-docs: dev-install
-	@echo "$(OK_COLOR)=> Creating docs ...$(NO_COLOR)"
-	@cd docs && make docs
+docs-serve:
+	make docs-build
+	open docs/build/html/index.html
 
-prep-doc-release:
-	@echo "$(OK_COLOR)=> Preparing docs for release ...$(NO_COLOR)"
-	cp -r docs/build/html docs/public_docs/
-	touch docs/.nojekyll
-	touch docs/public_docs/.nojekyll
+# docs-api-core: regenerate the core API reference markdown from docstrings via
+# pydoc-markdown (config in pyproject.toml [tool.pydoc-markdown]).  Scoped to the
+# dbldatagen.core package only; output lands in docs/core/reference/api.
+docs-api-core:
+	rm -rf docs/core/reference/api
+	$(UV_RUN) --group docs pydoc-markdown
 
-
-
-# Tests
-test: export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
-
-dev-test: export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
-
-dev-test: export SPARK_MASTER_HOST='localhost'
-
-dev-test: export SPARK_LOCAL_IP=127.0.0.1
-
-dev-test-with-html-report: export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
-
-dev-test-with-html-report: export SPARK_MASTER_HOST='localhost'
-
-dev-test-with-html-report: export SPARK_LOCAL_IP=127.0.0.1
-
-dev-test:
-	@echo "$(OK_COLOR)=> Running unit tests in directory $(PWD) $(NO_COLOR)"
-	pytest tests/ --cov $(PACKAGE_NAME) --cov-report=xml
-
-dev-lint-report:
-	@echo "$(OK_COLOR)=> Running Prospector lint reporting $(PWD) $(NO_COLOR)"
-	prospector --profile prospector.yaml dbldatagen > prospector_report.txt
-	prospector --profile prospector.yaml tests >> prospector_report.txt
-
-dev-lint:
-	@echo "$(OK_COLOR)=> Running Prospector lint reporting $(PWD) $(NO_COLOR)"
-	prospector --profile prospector.yaml dbldatagen
-	prospector --profile prospector.yaml tests
-
-dev-test-with-html-report:
-	@echo "$(OK_COLOR)=> Running unit tests with HTML test coverage report$(NO_COLOR)"
-	pytest --cov $(PACKAGE_NAME) --cov-report html -s
-	@echo "$(OK_COLOR)=> the test coverage report can be found at htmlcov/index.html$(NO_COLOR)"
-
-
-test: buildenv
-	@echo "$(OK_COLOR)=> Running unit tests$(NO_COLOR)"
-	pipenv run pytest tests/ --cov $(PACKAGE_NAME)  --cov-report=xml
-
-test-with-html-report: buildenv
-	@echo "$(OK_COLOR)=> Running unit tests with HTML test coverage report$(NO_COLOR)"
-	pipenv run pytest --cov $(PACKAGE_NAME) --cov-report html -s
-	@echo "$(OK_COLOR)=> the test coverage report can be found at htmlcov/index.html$(NO_COLOR)"
-
-# Version commands
-bump:
-ifdef part
-ifdef version
-	@bumpversion --config-file python/.bumpversion.cfg --allow-dirty --new-version $(version) $(part) ; \
-	grep current python/.bumpversion.cfg ; \
-	grep -H version setup.py ; \
-	grep -H "Version" CHANGELOG.md
-else
-	bumpversion --config-file python/.bumpversion.cfg --allow-dirty $(part) ; \
-	grep current python/.bumpversion.cfg ; \
-	grep -H "version" setup.py ; \
-	grep -H "Version" CHANGELOG.md
-endif
-else
-	@echo "$(ERROR_COLOR)Provide part=major|minor|patch|release|build and optionally version=x.y.z...$(NO_COLOR)"
-	exit 1
-endif
-
-# Dist commands
-# TODO - use conda in future rather than virtual env for better compatibility to ensure we can setup correct version of python
-
-# wheel:
-
-dist:
-	@echo "$(OK_COLOR)=> building dist of wheel$(NO_COLOR)"
-	# clean out old dist files - ignore any errors flagged
-	@- test -d `pwd`/dist && test -n "$(find `pwd`/dist/ -name '*.whl' -print -quit)" && echo "found" && rm `pwd`/dist/*
-	@echo "current dir is `pwd`"
-	@echo "`ls ./dist`"
-	@pipenv run python setup.py sdist bdist_wheel
-	@touch `pwd`/dist/dist_flag.txt
-	@echo "new package is located in dist - listing wheel files"
-	@find ./dist -name "*.whl" -print
-
-dev-dist:
-	@echo "$(OK_COLOR)=> building dist of wheel$(NO_COLOR)"
-	# clean out old dist files - ignore any errors flagged
-	@- test -d `pwd`/dist && test -n "$(find `pwd`/dist/ -name '*.whl' -print -quit)" && echo "found" && rm `pwd`/dist/*
-	@echo "current dir is `pwd`"
-	@echo "`ls ./dist`"
-	@python3 setup.py sdist bdist_wheel
-	@touch `pwd`/dist/dev-dist_flag.txt
-	@echo "new package is located in dist - listing wheel files"
-	@find ./dist -name "*.whl" -print
-
-new_artifact: buildenv
-	@echo "$(OK_COLOR)=> committing new artifact$(NO_COLOR)"
-	-git rm --cached `pwd`/dist/"*.whl"
-	git add -f `pwd`/dist/*.whl
-
-dev-test-pkg: dev-dist
-	@echo "Building test package for Test Pypi..."
-	rm dist/*.txt
-	python3 -m twine upload --repository testpypi dist/*
-
-
-
-dist/dist_flag.txt: dist
-
-dist/dev-dist_flag.txt: dev-dist
-
-newbuild:
-	bumpversion --config-file python/.bumpversion.cfg --allow-dirty part=build ; \
-	grep current python/.bumpversion.cfg ; \
-	grep -H "version" setup.py ; \
-	grep -H "Version" RELEASE_NOTES.md
-	git add -u
-	git status
-	#git commit -m "Latest release: $(CURRENT_VERSION)"
-	#git tag -a v$(CURRENT_VERSION) -m "Latest release: $(CURRENT_VERSION)"
-
-release:
-	@echo "$(OK_COLOR)=> building and committing new artifact$(NO_COLOR)"
-	tar -czf ./dist/html_help.tgz -C ./python/docs/build ./html/
-	-git rm -f --cached `pwd`/dist/"*.whl"
-	git add -f `pwd`/dist/*.whl
-	git add -f ./dist/html_help.tgz
-	git commit -m "Latest release: $(CURRENT_VERSION)"
-	#git tag -a v$(CURRENT_VERSION) -m "Latest release: $(CURRENT_VERSION)"
-
-install: buildenv dist/dist_flag.txt
-	@echo "$(OK_COLOR)=> Installing $(PACKAGE_NAME) $(NO_COLOR)"
-	#@cp README.md python/
-	@pip3 install --upgrade .
-	@touch `pwd`/dist/install_flag.txt
-
-dev-install: dist/dev-dist_flag.txt
-	@echo "$(OK_COLOR)=> Installing $(PACKAGE_NAME)$(NO_COLOR)"
-	#@cp README.md python/
-	@pip3 install --upgrade .
-	@touch `pwd`/dist/dev-install_flag.txt
-
-dist/install_flag.txt: install
-
-dist/dev-install_flag.txt: dev-install
+.DEFAULT: all
+.PHONY: all clean dev lint fmt test test-fast test-coverage build lock-dependencies docs-build docs-clean docs-serve docs-api-core

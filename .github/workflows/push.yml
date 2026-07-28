@@ -1,4 +1,4 @@
-name: build
+name: tests
 
 on:
   pull_request:
@@ -6,56 +6,104 @@ on:
   push:
     branches: [master]
 
+permissions:
+  contents: read
+
 jobs:
-  tests:
-    # Ubuntu latest no longer installs Python 3.9 by default so install it
-    runs-on: ubuntu-latest
+  fmt:
+    if: |
+      (github.event_name == 'push' || github.event_name == 'pull_request') 
+      && !github.event.pull_request.draft 
+      && !github.event.pull_request.head.repo.fork
+    runs-on:
+      group: larger-runners
+      labels: larger
+    permissions:
+      id-token: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098  # v7.3.1
+        with:
+          version: "0.11.2"
+          checksum: "7ac2ca0449c8d68dae9b99e635cd3bc9b22a4cb1de64b7c43716398447d42981"
+
+      - name: Setup for JFrog
+        uses: ./.github/actions/jfrog-auth
+
+      - name: Format check
+        run: make dev fmt
+
+      - name: Fail on differences
+        run: git diff --exit-code
+
+  test-version:
+    if: |
+      (github.event_name == 'push' || github.event_name == 'pull_request') 
+      && !github.event.pull_request.draft 
+      && !github.event.pull_request.head.repo.fork
+    runs-on:
+      group: larger-runners
+      labels: larger
+    permissions:
+      id-token: write
+    strategy:
+      matrix:
+        python: ['3.10', '3.11', '3.12']
+    env:
+      UV_PYTHON: "${{ matrix.python }}"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           fetch-depth: 0
 
-      # - name: Cache packages
-      #   uses: actions/cache@v2
-      #   with:
-      #     path: |
-      #       ~/go/pkg/mod
-      #       ~/.cache/go-build
-      #       vendor
-      #     key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-go-
-
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v5
+      - name: Set up JDK 17
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654  # v5.2.0
         with:
-          python-version: '3.8.12'
-          cache: 'pipenv'
+          distribution: 'temurin'
+          java-version: '17'
 
-      - name: Check Python version
-        run: python --version
+      - name: Setup uv
+        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098  # v7.3.1
+        with:
+          version: "0.11.2"
+          checksum: "7ac2ca0449c8d68dae9b99e635cd3bc9b22a4cb1de64b7c43716398447d42981"
 
-      - name: Install pip
-        run: python -m pip install --upgrade pip
+      - name: Setup for JFrog
+        uses: ./.github/actions/jfrog-auth
 
-      - name: Install 
-        run: pip install pipenv
+      - name: Run unit tests
+        run: make dev test
 
-      - name: Install dependencies
-        run: pipenv install --dev
-
-      - name: Lint
-        run: |
-          pipenv run prospector --profile prospector.yaml
-
-      - name: Run tests
-        run: make test
-
-      - name: Publish test coverage to coverage site
-        uses: codecov/codecov-action@v4
+      - name: Publish test coverage (v0)
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de  # v5.5.2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           name: dbldatagen
           files: ./coverage.xml
+          flags: v0
 
+      - name: Publish test coverage (core)
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de  # v5.5.2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          name: dbldatagen
+          files: ./coverage.xml
+          flags: core
+
+  tests:
+    needs: [fmt, test-version]
+    runs-on:
+      group: larger-runners
+      labels: larger
+
+    steps:
+      - run: |
+          if [[ "${{ needs.fmt.result }}" == "success" && "${{ needs.test-version.result }}" == "success" ]]; then
+            exit 0
+          else
+            exit 1
+          fi

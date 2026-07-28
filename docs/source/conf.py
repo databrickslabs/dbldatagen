@@ -13,12 +13,9 @@
 import os
 import sys
 
-PACKAGE_DIR = "../../dbldatagen"
+PACKAGE_DIR = "../.."
 
-sys.path.insert(0, os.path.abspath(f"{PACKAGE_DIR}"))
-sys.path.insert(0, os.path.abspath(f"{PACKAGE_DIR}/constraints"))
-sys.path.insert(0, os.path.abspath(f"{PACKAGE_DIR}/datasets"))
-sys.path.insert(0, os.path.abspath(f"{PACKAGE_DIR}/distributions"))
+sys.path.insert(0, os.path.abspath(PACKAGE_DIR))
 
 from dbldatagen import *
 from dbldatagen.distributions import *
@@ -28,11 +25,11 @@ from dbldatagen.datasets import *
 # -- Project information -----------------------------------------------------
 
 project = 'Databricks Labs Data Generator'
-copyright = '2022 - 2024, Databricks Inc'
+copyright = '2022 - 2026, Databricks Inc'
 author = 'Databricks Inc'
 
 # The full version, including alpha/beta/rc tags
-release = "0.4.0post1"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpversion
+release = "0.4.0post2"  # DO NOT EDIT THIS DIRECTLY!  It is managed by bumpversion
 
 # -- General configuration ---------------------------------------------------
 
@@ -46,15 +43,13 @@ extensions = [
     # 'sphinx.ext.autosummary',
     'sphinx.ext.viewcode',  # add links to source code
     # 'numpydoc',  # handle NumPy documentation formatted docstrings. Needs to install
-    'recommonmark',  # allow including Commonmark markdown in sources
+    # 'recommonmark',  # allow including Commonmark markdown in sources
     'sphinx_rtd_theme',
-    'sphinx_copybutton'
+    'sphinx_copybutton',
+    'myst_parser',
 ]
 
-source_suffix = {
-    '.rst': 'restructuredtext',
-    '.md': 'markdown'
-}
+source_suffix = {'.rst': 'restructuredtext', '.md': 'markdown'}
 
 pdf_documents = [
     ("index", project, project, author),
@@ -110,9 +105,7 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-html_css_files = [
-    'css/tdg.css'
-]
+html_css_files = ['css/tdg.css']
 
 # html_sidebars={
 #    '**' : [ 'globaltoc.html']
@@ -129,3 +122,6 @@ numpydoc_show_class_members = True
 numpydoc_show_inherited_class_members = False
 numpydoc_class_members_toctree = False
 numpydoc_attributes_as_param_list = True
+
+# Create headers automatically down to level 3 for myst
+myst_heading_anchors = 3

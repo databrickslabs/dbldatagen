@@ -1,0 +1,13 @@
+[run]
+branch = True
+source = dbldatagen/core
+omit =
+    ; pandas_udf files — coverage sys.settrace breaks cloudpickle serialization
+    dbldatagen/core/engine/columns/faker_pool.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    raise NotImplementedError
+    if __name__ == .__main__.:
+ignore_errors = True

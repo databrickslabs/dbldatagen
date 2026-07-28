@@ -1,0 +1,467 @@
+[project]
+name = "dbldatagen"
+dynamic = ["version"]
+description = "Databricks Labs - PySpark Synthetic Data Generator"
+authors = [
+    {name = "Databricks Labs", email = "labs-oss@databricks.com"},
+    {name = "Ronan Stokes", email = "ronan.stokes@databricks.com"},
+]
+maintainers = [
+    {name = "Daniel Tomes", email = "daniel.tomes@databricks.com"},
+    {name = "Greg Hansen", email = "gregory.hansen@databricks.com"},
+    {name = "Anup Kalburgi", email = "anup.kalburgi@databricks.com"}
+]
+readme = "README.md"
+license = {text = "Databricks License"}
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: Other/Proprietary License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "databricks-sdk~=0.57",
+    "jmespath>=0.10.0,<1.1.0",
+    "pyparsing>=3.0.0,<3.3.0",
+]
+
+[project.urls]
+Issues = "https://github.com/databrickslabs/dbldatagen/issues"
+Changelog = "https://github.com/databrickslabs/dbldatagen/blob/main/CHANGELOG.md"
+Documentation = "https://databrickslabs.github.io/dbldatagen/public_docs/index.html"
+Homepage = "https://github.com/databrickslabs/dbldatagen"
+Repository = "https://github.com/databrickslabs/dbldatagen.git"
+
+[dependency-groups]
+dev = [
+    { include-group = "lint" },
+    { include-group = "test" },
+]
+lint = [
+    "black~=25.12.0",
+    "mypy~=1.9.0",
+    "pylint~=3.3.1",
+    "pylint-pytest==2.0.0a0",
+    "ruff~=0.13.0",
+    "types-PyYAML~=6.0.12",
+    "types-requests~=2.31.0",
+]
+test = [
+    "coverage[toml]~=7.4.4",
+    "pytest~=8.3.3",
+    "pytest-cov~=4.1.0",
+    "pytest-mock~=3.14.0",
+    "pytest-timeout~=2.3.1",
+    "pytest-xdist~=3.5.0",
+    "databricks-sdk~=0.57",
+    "numpy>=1.21.5,<2.4",
+    "pandas>=1.4.4,<3",
+    "pyarrow>=8.0.0,<23.0.0",
+    "pyspark[sql]>=3.4.1,<4.2",
+    "python-dateutil>=2.8.2,<2.9.0",
+    "six~=1.16.0",
+    "pyparsing>=3.0.0,<3.3.0",
+    "jmespath>=0.10.0,<1.1.0",
+    "py4j~=0.10.9",
+    "pickleshare>=0.7.5,<0.8",
+]
+docs = [
+    "sphinx~=7.0.0",
+    "sphinx-rtd-theme~=3.1",
+    "nbsphinx~=0.9.8",
+    "numpydoc~=1.8",
+    "pypandoc~=1.13",
+    "ipython~=8.10",
+    "myst-parser~=3.0",
+    #"recommonmark~=0.7.1",
+    "sphinx-markdown-builder~=0.6.10",
+    "Jinja2>3.1,<4",
+    "sphinx-copybutton~=0.5.2",
+    "rst2pdf[sphinx]~=0.102",
+    "pydoc-markdown>=4.8.2,<5.0",
+]
+core = ["pydantic>=2.0"]
+core-faker = ["pydantic>=2.0", "faker>=20.0"]
+core-dev = ["pydantic>=2.0", "faker>=20.0", "pyyaml>=6.0"]
+yq = [
+    "yq~=3.4.3",
+]
+
+[build-system]
+requires = ["hatchling>=1.9.0,<2.0"]
+build-backend = "hatchling.build"
+
+# uv configuration
+[tool.uv]
+exclude-newer-package = { "databricks-sdk" = false }
+required-version = "~= 0.11.0"
+
+# pydoc-markdown: auto-generate the core API reference (docs/core/reference/api).
+# Scoped to the dbldatagen.core package only -- the v0 API is documented via
+# Sphinx (see `make docs-build`).  Run with `make docs-api-core`.  Mirrors the
+# DQX setup (databrickslabs/dqx): python loader -> smart/crossref/filter
+# processors -> per-module markdown files, with a post-render hook that flattens
+# the dbldatagen/core/ package prefix up into reference/api.
+[tool.pydoc-markdown]
+loaders = [
+    { type = "python", search_path = ["."], packages = ["dbldatagen.core"] },
+]
+processors = [
+    { type = "google" },
+    { type = "crossref" },
+    { type = "filter", skip_empty_modules = true },
+]
+hooks = { post-render = [
+    "cp -r docs/core/reference/api/dbldatagen/core/. docs/core/reference/api/",
+    "rm -rf docs/core/reference/api/dbldatagen",
+    "perl -pi -e 's{reference/api/dbldatagen/core/}{reference/api/}g' docs/core/reference/api/sidebar.json",
+] }
+
+[tool.pydoc-markdown.renderer]
+type = "docusaurus"
+docs_base_path = "docs/core"
+relative_output_path = "reference/api"
+relative_sidebar_path = "sidebar.json"
+# escape_html_in_docstring=false: the docusaurus default HTML-escapes docstring
+# bodies, which corrupts argument names of params with defaults (renders as
+# "0"/"2"/...) and litters output with &#x27; entities.  Methods/functions
+# default to header level 4, which is too deep; lift them to 3.
+markdown = { escape_html_in_docstring = false, header_level_by_type = { Method = 3, Function = 3, Class = 2, Module = 1 } }
+
+[tool.hatch.version]
+path = "dbldatagen/_version.py"
+pattern = "__version__ = \"(?P<version>[^\"]+)\""
+
+[tool.hatch.build.targets.wheel]
+packages = ["dbldatagen"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/dbldatagen",
+    "/tests",
+    "/examples",
+    "/tutorial",
+    "/docs",
+    "/README.md",
+    "/LICENSE",
+    "/NOTICE",
+    "/CHANGELOG.md",
+    "/CONTRIBUTING.md",
+    "/MANIFEST.in",
+]
+
+
+[tool.black]
+target-version = ["py310"]
+line-length = 120
+skip-string-normalization = true
+extend-exclude = "examples"
+
+# Ruff configuration - replaces flake8, isort, pydocstyle, etc.
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".venv",
+    ".env",
+    "htmlcov",
+    ".pytest_cache",
+    ".mypy_cache",
+    "docs/build",
+    "tutorial",
+    "examples",
+    "tests/test_*.py",
+    "tests/__init__.py",
+    "dbldatagen/__init__.py",
+    "dbldatagen/constraints/__init__.py",
+    "dbldatagen/distributions/__init__.py",
+    "dbldatagen/column_generation_spec.py",
+    "dbldatagen/column_spec_options.py",
+    "dbldatagen/datagen_constants.py",
+    "dbldatagen/schema_parser.py",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+    "SIM",    # flake8-simplify
+    "TID",    # flake8-tidy-imports
+    "Q",      # flake8-quotes
+    "PL",     # pylint
+    "RUF",    # ruff-specific rules
+    "ANN",    # ruff-flake8-annotations
+]
+ignore = [
+    "E501",   # Line too long (let ruff formatter handle this)
+    "B008",   # Do not perform function calls in argument defaults
+    "B006",   # Do not use mutable data structures for argument defaults
+    "C901",   # Too complex (let pylint handle complexity)
+    "PLC0414", # Import alias does not rename original package
+    "PLR0912", # Too many branches
+    "PLR0913", # Too many arguments in function definition
+    "PLR0915", # Too many statements
+    "PLR2004", # Magic value used in comparison
+    "PLW2901", # for loop variable overwritten by assignment target
+    "SIM102", # Use a single if-statement
+    "SIM108", # Use ternary operator
+    "UP007",  # Use X | Y for type annotations (keep Union for compatibility)
+    "ANN002", # Missing type annotation for *args
+    "ANN003", # Missing type annotation for **kwargs
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["PLR2004", "S101", "TID252"]
+# PLC0415 is allowed only inside the optional-dep import guard
+# (``try: from faker import Faker except ImportError: ...`` rewrites
+# the message to point at ``pip install 'dbldatagen[core-faker]'``).
+# The guard cannot be hoisted to module level without breaking the
+# optional-dependency contract.  Everywhere else in dbldatagen/core
+# the rule applies.
+"dbldatagen/core/engine/columns/faker_pool.py" = ["PLC0415"]
+"tests/core/*" = ["ANN", "PLC0415", "PLR2004", "S101", "TID252", "B905"]
+"examples/*" = ["ALL"]
+"tutorial/*" = ["ALL"]
+"docs/*" = ["ALL"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["dbldatagen"]
+force-single-line = false
+lines-after-imports = 2
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+
+# Pylint configuration
+[tool.pylint.MASTER]
+ignore = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".venv",
+    ".env",
+    "htmlcov",
+    ".pytest_cache",
+    ".mypy_cache",
+    "docs/build",
+    "tutorial",
+    "examples",
+    "dbldatagen/datasets",
+    "dbldatagen/__init__.py",
+    "dbldatagen/constraints/__init__.py",
+    "dbldatagen/distributions/__init__.py",
+    "dbldatagen/column_generation_spec.py",
+    "dbldatagen/column_spec_options.py",
+    "dbldatagen/datagen_constants.py",
+    "dbldatagen/daterange.py",
+    "dbldatagen/schema_parser.py",
+    "dbldatagen/serialization.py",
+    "dbldatagen/utils.py"
+]
+
+[tool.pylint.main]
+py-version = "3.10"
+suggestion-mode = true
+fail-under = 8.0
+ignore-paths = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".venv",
+    ".env",
+    "htmlcov",
+    ".pytest_cache",
+    ".mypy_cache",
+    "docs/build",
+    "tutorial",
+    "examples",
+    "tests/test_.*",
+    "tests/__init__\\.py",
+    "dbldatagen/datasets",
+    "dbldatagen/distributions",
+    "dbldatagen/__init__.py",
+    "dbldatagen/column_generation_spec.py",
+    "dbldatagen/column_spec_options.py",
+    "dbldatagen/data_generator.py",
+    "dbldatagen/datagen_constants.py",
+    "dbldatagen/schema_parser.py",
+    "dbldatagen/serialization.py",
+    "dbldatagen/utils.py"
+]
+
+[tool.pylint.messages_control]
+max-line-length = 120
+disable = [
+    "redefined-builtin",
+    "too-many-instance-attributes",
+    "invalid-name",
+    "no-else-return",
+    "protected-access",
+    "too-many-arguments",
+    "too-many-locals",
+    "inconsistent-return-statements",
+    "import-outside-toplevel",
+    "consider-using-set-comprehension",
+    "useless-object-inheritance",
+    "unnecessary-pass",
+    "unidiomatic-typecheck",
+    "too-many-lines",
+    "too-many-statements",
+    "unused-argument",
+    "unused-import",
+    "too-many-branches",
+    "unnecessary-lambda",
+    "unused-variable",
+    "logging-fstring-interpolation",
+    "unnecessary-lambda-assignment",
+    "redefined-outer-name",
+    "duplicate-code",
+    "consider-using-f-string",
+    "too-few-public-methods",
+    "line-too-long", # handled by ruff
+]
+
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.pylint.design]
+max-args = 10
+max-locals = 20
+max-branches = 15
+max-statements = 60
+max-positional-arguments = 9
+
+# Pytest configuration
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+    "-p", "no:warnings",
+    "-m", "not slow",
+]
+markers = [
+    "slow: long-running perf/large-row tests (excluded by default; run with -m slow)",
+]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "[pytest][%(asctime)s][%(levelname)s][%(module)s][%(funcName)s] %(message)s"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+filterwarnings = [
+    "error",
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning",
+]
+cache_dir = ".venv/pytest-cache"
+
+# Coverage configuration.  The v0 lane uses .coveragerc; the core lane uses
+# .coveragerc-core (which omits faker_pool.py because coverage.py sys.settrace
+# breaks cloudpickle serialization of pandas_udf closures).  CI runs `make
+# test`, which wires both lanes and produces a single coverage.xml.
+# Bare `pytest --cov` uses only the defaults below and will CRASH on
+# test_faker_pool.py under coverage — use `make test` or `make test-fast`.
+[tool.coverage.run]
+source = ["dbldatagen"]
+branch = true
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/examples/*",
+    "*/tutorial/*",
+    "*/docs/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+show_missing = true
+skip_covered = true
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+# MyPy configuration
+[tool.mypy]
+python_version = "3.10"
+exclude = [
+    "venv",
+    ".venv",
+    "build",
+    "docs",
+    "examples",
+    "tests/test_",
+    "tests/__init__\\.py",
+    "tutorial",
+    "dbldatagen/datasets",
+    "dbldatagen/datasets_object.py",
+    "dbldatagen/constraints",
+    "dbldatagen/distributions",
+    "dbldatagen/__init__.py",
+    "dbldatagen/column_generation_spec.py",
+    "dbldatagen/column_spec_options.py",
+    "dbldatagen/datagen_constants.py",
+    "dbldatagen/schema_parser.py",
+    "dbldatagen/serialization.py",
+    "dbldatagen/text_generators.py",
+    "dbldatagen/utils.py"
+]
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+disallow_untyped_decorators = false
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "pyspark.*",
+    "pyarrow.*",
+    "pandas.*",
+    "numpy.*",
+]
+ignore_missing_imports = true
+

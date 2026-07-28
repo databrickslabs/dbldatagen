@@ -22,25 +22,26 @@ class TestScripting(unittest.TestCase):
 
         for c1, c2 in zip(schema1.fields, schema2.fields):
             self.assertEqual(c1.name, c2.name, msg=f"{c1.name} != {c2.name}")
-            self.assertEqual(c1.dataType, c2.dataType,
-                             msg=f"{c1.name}.datatype ({c1.dataType}) != {c2.name}.datatype ({c2.dataType})")
+            self.assertEqual(
+                c1.dataType,
+                c2.dataType,
+                msg=f"{c1.name}.datatype ({c1.dataType}) != {c2.name}.datatype ({c2.dataType})",
+            )
 
     def test_generate_table_script(self):
         tbl_name = "scripted_table1"
         spark.sql(f"drop table if exists {tbl_name}")
 
-        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count,
-                                         partitions=4)
-                        .withIdOutput()
-                        .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
-                                    numColumns=self.column_count)
-                        .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
-                        .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
-                        .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-                        .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
-                        .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
-
-                        )
+        testDataSpec = (
+            dg.DataGenerator(sparkSession=spark, name="test_data_set1", rows=self.row_count, partitions=4)
+            .withIdOutput()
+            .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)", numColumns=self.column_count)
+            .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
+            .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
+            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+            .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+            .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+        )
 
         creation_script = testDataSpec.scriptTable(name=tbl_name, tableFormat="parquet")
 
@@ -66,18 +67,16 @@ class TestScripting(unittest.TestCase):
         tbl_name = "scripted_table1"
         spark.sql(f"drop table if exists {tbl_name}")
 
-        testDataSpec = (dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count,
-                                         partitions=4)
-                        .withIdOutput()
-                        .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)",
-                                    numColumns=self.column_count)
-                        .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
-                        .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
-                        .withColumn("code3", StringType(), values=['a', 'b', 'c'])
-                        .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
-                        .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
-
-                        )
+        testDataSpec = (
+            dg.DataGenerator(sparkSession=spark, name="test_data_set2", rows=self.row_count, partitions=4)
+            .withIdOutput()
+            .withColumn("r", FloatType(), expr="floor(rand() * 350) * (86400 + 3600)", numColumns=self.column_count)
+            .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
+            .withColumn("code2", IntegerType(), minValue=0, maxValue=10)
+            .withColumn("code3", StringType(), values=['a', 'b', 'c'])
+            .withColumn("code4", StringType(), values=['a', 'b', 'c'], random=True)
+            .withColumn("code5", StringType(), values=['a', 'b', 'c'], random=True, weights=[9, 1, 1])
+        )
 
         creation_script = testDataSpec.scriptTable(name=tbl_name, tableFormat="parquet", location="/tmp/test")
 

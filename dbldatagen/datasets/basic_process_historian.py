@@ -1,10 +1,19 @@
-from .dataset_provider import DatasetProvider, dataset_definition
+from typing import Any, ClassVar
+
+import numpy as np
+from pyspark.sql import SparkSession
+
+import dbldatagen as dg
+from dbldatagen.data_generator import DataGenerator
+from dbldatagen.datasets.dataset_provider import DatasetProvider, dataset_definition
 
 
-@dataset_definition(name="basic/process_historian",
-                    summary="Basic Historian Data for Process Manufacturing",
-                    autoRegister=True,
-                    supportsStreaming=True)
+@dataset_definition(
+    name="basic/process_historian",
+    summary="Basic Historian Data for Process Manufacturing",
+    autoRegister=True,
+    supportsStreaming=True,
+)
 class BasicProcessHistorianProvider(DatasetProvider.NoAssociatedDatasetsMixin, DatasetProvider):
     """
     Basic Process Historian Dataset
@@ -33,6 +42,7 @@ class BasicProcessHistorianProvider(DatasetProvider.NoAssociatedDatasetsMixin, D
     streaming dataframe, and so the flag `supportsStreaming` is set to True.
 
     """
+
     MIN_DEVICE_ID = 0x100000000
     MAX_DEVICE_ID = 9223372036854775807
     MIN_PROPERTY_VALUE = 50.0
@@ -43,20 +53,26 @@ class BasicProcessHistorianProvider(DatasetProvider.NoAssociatedDatasetsMixin, D
     DEFAULT_START_TIMESTAMP = "2024-01-01 00:00:00"
     DEFAULT_END_TIMESTAMP = "2024-02-01 00:00:00"
     COLUMN_COUNT = 10
-    ALLOWED_OPTIONS = [
+    ALLOWED_OPTIONS: ClassVar[list[str]] = [
         "numDevices",
         "numPlants",
-        "numTags", 
-        "startTimestamp", 
-        "endTimestamp", 
+        "numTags",
+        "startTimestamp",
+        "endTimestamp",
         "dataQualityRatios",
-        "random"
+        "random",
     ]
 
     @DatasetProvider.allowed_options(options=ALLOWED_OPTIONS)
-    def getTableGenerator(self, sparkSession, *, tableName=None, rows=-1, partitions=-1, **options):
-        import dbldatagen as dg  # import locally to avoid circular imports
-        import numpy as np
+    def getTableGenerator(
+        self,
+        sparkSession: SparkSession,
+        *,
+        tableName: str | None = None,
+        rows: int = -1,
+        partitions: int = -1,
+        **options: dict[str, Any],
+    ) -> DataGenerator:
 
         generateRandom = options.get("random", False)
         numDevices = options.get("numDevices", self.DEFAULT_NUM_DEVICES)
@@ -64,7 +80,7 @@ class BasicProcessHistorianProvider(DatasetProvider.NoAssociatedDatasetsMixin, D
         numTags = options.get("numTags", self.DEFAULT_NUM_TAGS)
         startTimestamp = options.get("startTimestamp", self.DEFAULT_START_TIMESTAMP)
         endTimestamp = options.get("endTimestamp", self.DEFAULT_END_TIMESTAMP)
-        dataQualityRatios = options.get("dataQualityRatios", None)
+        dataQualityRatios = options.get("dataQualityRatios")
 
         assert tableName is None or tableName == DatasetProvider.DEFAULT_TABLE_NAME, "Invalid table name"
         if rows is None or rows < 0:
@@ -75,36 +91,51 @@ class BasicProcessHistorianProvider(DatasetProvider.NoAssociatedDatasetsMixin, D
         tag_names = [f"HEX-{str(j).zfill(int(np.ceil(np.log10(numTags))))}_INLET_TMP" for j in range(numTags)]
         plant_ids = [f"PLANT-{str(j).zfill(int(np.ceil(np.log10(numPlants))))}" for j in range(numPlants)]
         testDataSpec = (
-            dg.DataGenerator(sparkSession, name="process_historian_data", rows=rows,
-                             partitions=partitions,
-                             randomSeedMethod="hash_fieldname")
-            .withColumn("internal_device_id", "long", minValue=self.MIN_DEVICE_ID, maxValue=self.MAX_DEVICE_ID,
-                            uniqueValues=numDevices, omit=True, baseColumnType="hash")
+            dg.DataGenerator(
+                sparkSession,
+                name="process_historian_data",
+                rows=rows,
+                partitions=partitions,
+                randomSeedMethod="hash_fieldname",
+            )
+            .withColumn(
+                "internal_device_id",
+                "long",
+                minValue=self.MIN_DEVICE_ID,
+                maxValue=self.MAX_DEVICE_ID,
+                uniqueValues=numDevices,
+                omit=True,
+                baseColumnType="hash",
+            )
             .withColumn("device_id", "string", format="0x%09x", baseColumn="internal_device_id")
             .withColumn("plant_id", "string", values=plant_ids, baseColumn="internal_device_id")
             .withColumn("tag_name", "string", values=tag_names, baseColumn="internal_device_id")
-            .withColumn("ts", "timestamp", begin=startTimestamp, end=endTimestamp, 
-                            interval="1 second", random=generateRandom)
-            .withColumn("value", "float", minValue=self.MIN_PROPERTY_VALUE, maxValue=self.MAX_PROPERTY_VALUE,
-                             step=1e-3, random=generateRandom)
+            .withColumn(
+                "ts", "timestamp", begin=startTimestamp, end=endTimestamp, interval="1 second", random=generateRandom
+            )
+            .withColumn(
+                "value",
+                "float",
+                minValue=self.MIN_PROPERTY_VALUE,
+                maxValue=self.MAX_PROPERTY_VALUE,
+                step=1e-3,
+                random=generateRandom,
+            )
             .withColumn("engineering_units", "string", expr="'Deg.F'")
         )
         # Add the data quality columns if they were provided
         if dataQualityRatios is not None:
             if "pctQuestionable" in dataQualityRatios:
                 testDataSpec = testDataSpec.withColumn(
-                    "is_questionable", "boolean",
-                    expr=f"rand() < {dataQualityRatios['pctQuestionable']}"
+                    "is_questionable", "boolean", expr=f"rand() < {dataQualityRatios['pctQuestionable']}"
                 )
             if "pctSubstituted" in dataQualityRatios:
                 testDataSpec = testDataSpec.withColumn(
-                    "is_substituted", "boolean",
-                    expr=f"rand() < {dataQualityRatios['pctSubstituted']}"
+                    "is_substituted", "boolean", expr=f"rand() < {dataQualityRatios['pctSubstituted']}"
                 )
             if "pctAnnotated" in dataQualityRatios:
                 testDataSpec = testDataSpec.withColumn(
-                    "is_annotated", "boolean",
-                    expr=f"rand() < {dataQualityRatios['pctAnnotated']}"
+                    "is_annotated", "boolean", expr=f"rand() < {dataQualityRatios['pctAnnotated']}"
                 )
 
         return testDataSpec

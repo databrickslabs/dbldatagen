@@ -1,0 +1,10 @@
+version: 2
+updates:
+  - package-ecosystem: "uv"
+    directory: "/"
+    cooldown:
+      default-days: 7
+      exclude:
+        - "databricks*"
+    schedule:
+      interval: "daily"

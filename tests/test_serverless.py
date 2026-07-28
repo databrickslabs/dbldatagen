@@ -81,24 +81,25 @@ class TestSimulatedServerless:
             .withColumn("code1", IntegerType(), minValue=100, maxValue=200)
             .withColumn("code2", "integer", minValue=0, maxValue=10, random=True)
             .withColumn("code3", StringType(), values=["online", "offline", "unknown"])
-            .withColumn(
-                "code4", StringType(), values=["a", "b", "c"], random=True, percentNulls=0.05
-            )
-            .withColumn(
-                "code5", "string", values=["a", "b", "c"], random=True, weights=[9, 1, 1]
-            )
+            .withColumn("code4", StringType(), values=["a", "b", "c"], random=True, percentNulls=0.05)
+            .withColumn("code5", "string", values=["a", "b", "c"], random=True, weights=[9, 1, 1])
         )
 
-        dfTestData = testDataSpec.build()
+        testDataSpec.build()
 
-    @pytest.mark.parametrize("providerName, providerOptions", [
-        ("basic/user", {"rows": 50, "partitions": 4, "random": False, "dummyValues": 0}),
-        ("basic/user", {"rows": 100, "partitions": -1, "random": True, "dummyValues": 0})
-    ])
+    @pytest.mark.parametrize(
+        "providerName, providerOptions",
+        [
+            ("basic/user", {"rows": 50, "partitions": 4, "random": False, "dummyValues": 0}),
+            ("basic/user", {"rows": 100, "partitions": -1, "random": True, "dummyValues": 0}),
+        ],
+    )
     def test_basic_user_table_retrieval(self, providerName, providerOptions, serverlessSpark):
         ds = dg.Datasets(serverlessSpark, providerName).get(**providerOptions)
-        assert ds is not None, f"""expected to get dataset specification for provider `{providerName}`
-                                   with options: {providerOptions}
+        assert (
+            ds is not None
+        ), f"""expected to get dataset specification for provider `{providerName}`
+                                   with options: {providerOptions} 
                                 """
         df = ds.build()
 

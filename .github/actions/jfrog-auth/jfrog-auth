@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+#
+# Obtain a JFrog access token, assuming GitHub OIDC.
+#
+set -eu
+
+_request_url="$1"
+_request_token="$2"
+
+#
+# Step 1: Obtain the OIDC identifier token from GitHub.
+#
+printf '::debug::%s\n' "Fetching OIDC identifier token from GitHub..."
+_id_token="$(curl -sLS \
+    -H 'User-Agent: actions/oidc-client' \
+    -H "Authorization: Bearer ${_request_token}" \
+    "${_request_url}&audience=jfrog-github" |
+    jq -r .value)"
+printf '::add-mask::%s\n' "${_id_token}"
+
+#
+# Step 2: Exchange it for the JFrog access token.
+#
+printf '::debug::%s\n' "Exchanging OIDC identifier token for JFrog access token..."
+_access_token=$(curl -sLS \
+    --json "{\"grant_type\": \"urn:ietf:params:oauth:grant-type:token-exchange\", \"subject_token_type\":\"urn:ietf:params:oauth:token-type:id_token\", \"subject_token\": \"${_id_token}\", \"provider_name\": \"github-actions\"}" \
+    "https://databricks.jfrog.io/access/api/v1/oidc/token" |
+    jq -r .access_token)
+printf '::add-mask::%s\n' "${_access_token}"
+
+if [ -z "${_access_token}" ] || [ "${_access_token}" = 'null' ]
+then
+    printf '::error::%s\n' "Could not fetch JFrog access token."
+    exit 1
+fi
+
+printf '%s=%s\n' 'jfrog-access-token' "${_access_token}" >> "${GITHUB_OUTPUT}"

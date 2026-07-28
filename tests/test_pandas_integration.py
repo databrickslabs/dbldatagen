@@ -7,30 +7,34 @@ from pyspark.sql.functions import expr, col, pandas_udf
 from pyspark.sql.types import BooleanType, DateType
 from pyspark.sql.types import StructType, StructField, StringType, TimestampType
 
-schema = StructType([
-    StructField("PK1", StringType(), True),
-    StructField("LAST_MODIFIED_UTC", TimestampType(), True),
-    StructField("date", DateType(), True),
-    StructField("str1", StringType(), True),
-    StructField("email", StringType(), True),
-    StructField("ip_addr", StringType(), True),
-    StructField("phone", StringType(), True),
-    StructField("isDeleted", BooleanType(), True)
-])
+schema = StructType(
+    [
+        StructField("PK1", StringType(), True),
+        StructField("LAST_MODIFIED_UTC", TimestampType(), True),
+        StructField("date", DateType(), True),
+        StructField("str1", StringType(), True),
+        StructField("email", StringType(), True),
+        StructField("ip_addr", StringType(), True),
+        StructField("phone", StringType(), True),
+        StructField("isDeleted", BooleanType(), True),
+    ]
+)
 
 print("schema", schema)
 
-spark = SparkSession.builder \
-    .master("local[4]") \
-    .appName("spark unit tests") \
-    .config("spark.sql.warehouse.dir", "/tmp/spark-warehouse") \
-    .config("spark.sql.execution.arrow.maxRecordsPerBatch", "1000") \
+spark = (
+    SparkSession.builder.master("local[4]")
+    .appName("spark unit tests")
+    .config("spark.sql.warehouse.dir", "/tmp/spark-warehouse")
+    .config("spark.sql.execution.arrow.maxRecordsPerBatch", "1000")
     .getOrCreate()
+)
 
 
 # Test manipulation and generation of test data for a large schema
 class TestPandasIntegration(unittest.TestCase):
-    """ Test that build environment is setup correctly for pandas and numpy integration"""
+    """Test that build environment is setup correctly for pandas and numpy integration"""
+
     testDataSpec = None
     dfTestData = None
     row_count = 100000
@@ -75,11 +79,12 @@ class TestPandasIntegration(unittest.TestCase):
     @unittest.skip("not yet debugged")
     def test_pandas_udf(self):
         utest_pandas = pandas_udf(self.pandas_udf_example, returnType=StringType()).asNondeterministic()
-        df = (spark.range(1000000)
-              .withColumn("x", expr("cast(id as string)"))
-              .withColumn("y", expr("cast(id as string)"))
-              .withColumn("z", utest_pandas(col("x"), col("y")))
-              )
+        df = (
+            spark.range(1000000)
+            .withColumn("x", expr("cast(id as string)"))
+            .withColumn("y", expr("cast(id as string)"))
+            .withColumn("z", utest_pandas(col("x"), col("y")))
+        )
 
         df.show()
 
@@ -97,5 +102,6 @@ class TestPandasIntegration(unittest.TestCase):
         print(np.sum(data))
 
         self.assertGreater(np.sum(data), 0)
+
 
 #

@@ -3,6 +3,37 @@
 ## Change History
 All notable changes to the Databricks Labs Data Generator will be documented in this file.
 
+### unreleased
+
+#### Fixed 
+* Refactored `DataAnalyzer` and `BasicStockTickerProvider` to comply with ANSI SQL standards
+* Refactored `Constraint` to treat `_filterExpression` and `_calculatedFilterExpression` as instance variables
+* Removed internal modification of `SparkSession`
+
+#### Changed
+* Added type hints for modules and classes
+* Changed base Databricks runtime version to DBR 13.3 LTS (based on Apache Spark 3.4.1) - minimum supported version
+  of Python is now 3.10.12
+* Updated build tooling to use [hatch](https://hatch.pypa.io/latest/)
+* Moved dependencies and tool configuration to [pyproject.toml](pyproject.toml)
+* Removed dependencies provided by the Databricks Runtime
+* Updated Git actions
+* Updated [makefile](makefile)
+* Updated [CONTRIBUTING.md](CONTRIBUTING.md)
+
+#### Added
+* Added support for serialization to/from JSON format
+* Added Ruff and mypy tooling
+* Added `OutputDataset` class and the ability to save a `DataGenerator` to an output table or files
+
+
+### Version 0.4.0 Hotfix 2
+
+#### Fixed
+* Added basic stock ticker and multi-table sales order standard datasets
+* Added min and max latitude and longitude options for the basic geometries dataset provider
+* Added default max values for numeric data types
+
 ### Version 0.4.0 Hotfix 1
 
 #### Fixed

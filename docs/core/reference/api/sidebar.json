@@ -1,0 +1,51 @@
+{
+  "items": [
+    {
+      "items": [
+        {
+          "items": [
+            {
+              "items": [
+                {
+                  "items": [
+                    "reference/api/engine/columns/faker_pool",
+                    "reference/api/engine/columns/numeric",
+                    "reference/api/engine/columns/pk",
+                    "reference/api/engine/columns/string",
+                    "reference/api/engine/columns/temporal",
+                    "reference/api/engine/columns/uuid"
+                  ],
+                  "label": "dbldatagen.core.engine.columns",
+                  "type": "category"
+                },
+                "reference/api/engine/distributions",
+                "reference/api/engine/fk",
+                "reference/api/engine/generator",
+                "reference/api/engine/planner",
+                "reference/api/engine/seed",
+                "reference/api/engine/utils"
+              ],
+              "label": "dbldatagen.core.engine",
+              "type": "category"
+            },
+            {
+              "items": [
+                "reference/api/spec/dsl",
+                "reference/api/spec/schema"
+              ],
+              "label": "dbldatagen.core.spec",
+              "type": "category"
+            },
+            "reference/api/api"
+          ],
+          "label": "dbldatagen.core",
+          "type": "category"
+        }
+      ],
+      "label": "dbldatagen",
+      "type": "category"
+    }
+  ],
+  "label": "Reference",
+  "type": "category"
+}
