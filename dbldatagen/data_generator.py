@@ -369,20 +369,18 @@ class DataGenerator(SerializableToDict):
             )
             return
 
-        with contextlib.suppress(Exception):
-            if str(self.sparkSession.version).startswith("3"):
-                self.logger.info("Using spark 3.x")
+        try:
+            self.logger.info("Spark version: %s", self.sparkSession.version)
+            spark_major_version = int(str(self.sparkSession.version).split(".")[0])
+            if spark_major_version >= 3:
+                self.logger.info("Using Spark version '%s'", spark_major_version)
                 self.sparkSession.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
-
-        self.logger.info("Spark version: %s", self.sparkSession.version)
-
-        if str(self.sparkSession.version).startswith("3"):
-            self.logger.info("Using spark 3.x")
-            self.sparkSession.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
-        else:
-            self.sparkSession.conf.set("spark.sql.execution.arrow.enabled", "true")
             if self._batchSize:
-                self.sparkSession.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", self._batchSize)
+                 self.sparkSession.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", self._batchSize)
+
+        except ValueError:
+            self.logger.warning(f"Could not parse Spark version '%s'", self.sparkSession.version)
+            return
 
     def _setupLogger(self) -> None:
         """
