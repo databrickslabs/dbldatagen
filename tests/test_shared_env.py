@@ -1,5 +1,5 @@
 import logging
-from unittest.mock import Mock, PropertyMock
+from unittest.mock import Mock, patch
 
 import pytest
 import dbldatagen as dg
@@ -81,3 +81,18 @@ class TestSharedEnv:
         # validate that accessing the sparkContext on the shared spark session raises an exception
         context = sparkSessionNullContext.sparkContext
         assert context is None
+
+    def test_connect_session_uses_default_parallelism_without_accessing_spark_context(self):
+        """Spark Connect sessions should not touch ``sparkContext`` when choosing default parallelism."""
+
+        class MockConnectSession:
+            version = "4.0.0"
+
+            @property
+            def sparkContext(self):
+                raise RuntimeError("sparkContext is not available in Spark Connect")
+
+        with patch("dbldatagen.data_generator.is_spark_connect_session", return_value=True):
+            defaultParallelism = dg.DataGenerator._getDefaultSparkParallelism(MockConnectSession())
+
+        assert defaultParallelism == dg.SPARK_DEFAULT_PARALLELISM

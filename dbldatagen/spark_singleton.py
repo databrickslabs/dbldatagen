@@ -14,6 +14,8 @@ import os
 
 from pyspark.sql import SparkSession
 
+from dbldatagen.spark_compat import is_spark_connect_mode
+
 
 class SparkSingleton:
     """A singleton class which returns one Spark session instance"""
@@ -24,8 +26,19 @@ class SparkSingleton:
 
         :returns: A Spark instance
         """
+        active_session = cls.getActiveSession()
+        if active_session is not None:
+            return active_session
 
         return SparkSession.builder.getOrCreate()
+
+    @classmethod
+    def getActiveSession(cls: type["SparkSingleton"]) -> SparkSession | None:
+        """Returns the active Spark session if one exists, without creating a new local session."""
+        try:
+            return SparkSession.getActiveSession()
+        except AttributeError:
+            return None
 
     @classmethod
     def getLocalInstance(
@@ -39,6 +52,13 @@ class SparkSingleton:
         :param useAllCores:  If `useAllCores` is True, then use all cores rather than `n-1` cores
         :returns: A `SparkSession` instance
         """
+        if is_spark_connect_mode():
+            active_session = cls.getActiveSession()
+            if active_session is not None:
+                return active_session
+
+            return SparkSession.builder.getOrCreate()
+
         cpu_count = os.cpu_count()
 
         if not cpu_count:

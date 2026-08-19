@@ -12,6 +12,10 @@ _SERVERLESS_WARNING = (
     "Running on Databricks serverless compute: skipping arrow configuration. "
     "The `batchSize` option has no effect on serverless and will be ignored."
 )
+_SPARK_CONNECT_WARNING = (
+    "Running with Spark Connect: skipping arrow configuration. "
+    "The `batchSize` option may have no effect and will be ignored."
+)
 
 
 class TestSimulatedServerless:
@@ -156,3 +160,27 @@ class TestArrowConfiguration:
 
         legacy_spark.conf.set.assert_called_once_with("spark.sql.execution.arrow.enabled", "true")
         assert call("spark.sql.execution.arrow.pyspark.enabled", "true") not in legacy_spark.conf.set.mock_calls
+
+    def test_arrow_config_is_skipped_for_spark_connect(self):
+        connect_spark = MagicMock()
+        connect_spark.version = "4.0.0"
+
+        with patch("dbldatagen.data_generator.is_spark_connect_session", return_value=True):
+            with pytest.warns(UserWarning, match=f"^{re.escape(_SPARK_CONNECT_WARNING)}$"):
+                dg.DataGenerator(connect_spark, name="test_connect_pandas_udf", rows=100, partitions=4, batchSize=1000)
+
+        connect_spark.conf.set.assert_not_called()
+
+    def test_default_spark_session_uses_connect_compatible_singleton(self):
+        connect_spark = MagicMock()
+        connect_spark.version = "4.0.0"
+
+        with (
+            patch("dbldatagen.data_generator.is_spark_connect_session", return_value=True),
+            patch.object(dg.SparkSingleton, "getInstance", return_value=connect_spark) as get_instance,
+            pytest.warns(UserWarning, match=f"^{re.escape(_SPARK_CONNECT_WARNING)}$"),
+        ):
+            test_spec = dg.DataGenerator(name="test_connect_default_session", rows=100, partitions=4)
+
+        assert test_spec.sparkSession is connect_spark
+        get_instance.assert_called_once_with()
