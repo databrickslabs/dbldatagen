@@ -53,11 +53,7 @@ class SparkSingleton:
         :returns: A `SparkSession` instance
         """
         if is_spark_connect_mode():
-            active_session = cls.getActiveSession()
-            if active_session is not None:
-                return active_session
-
-            return SparkSession.builder.getOrCreate()
+            return cls.getInstance()
 
         cpu_count = os.cpu_count()
 
