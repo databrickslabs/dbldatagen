@@ -151,7 +151,7 @@ class Datasets:
         :param streaming: If True, validdates that dataset supports streaming
         """
         if not sparkSession:
-            sparkSession = SparkSingleton.getLocalInstance()
+            sparkSession = SparkSingleton.getInstance()
 
         self._sparkSession = sparkSession
         self._name = name
