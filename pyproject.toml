@@ -31,6 +31,7 @@ dependencies = [
     "databricks-sdk~=0.57",
     "jmespath>=0.10.0,<1.1.0",
     "pyparsing>=3.0.0,<3.3.0",
+    "certifi~=2026.10.19",  # NOTE: enforce certifi version
 ]
 
 [project.urls]
