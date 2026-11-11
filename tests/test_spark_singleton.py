@@ -29,3 +29,12 @@ class TestSparkSingleton:
     def test_local_spark_instance3(self, setupLogging):
         sparkSession = dg.SparkSingleton.getLocalInstance(useAllCores=False)
         assert sparkSession is not None
+
+    def test_get_local_instance_uses_default_instance_in_connect_mode(self, setupLogging):
+        connect_session = object()
+
+        with pytest.MonkeyPatch.context() as monkeypatch:
+            monkeypatch.setattr("dbldatagen.spark_singleton.is_spark_connect_mode", lambda: True)
+            monkeypatch.setattr(dg.SparkSingleton, "getInstance", classmethod(lambda cls: connect_session))
+
+            assert dg.SparkSingleton.getLocalInstance() is connect_session

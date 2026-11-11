@@ -30,6 +30,7 @@ from dbldatagen.distributions import DataDistribution
 from dbldatagen.html_utils import HtmlUtils
 from dbldatagen.schema_parser import SchemaParser
 from dbldatagen.serialization import SerializableToDict
+from dbldatagen.spark_compat import is_spark_connect_session
 from dbldatagen.spark_singleton import SparkSingleton
 from dbldatagen.text_generators import TextGenerator
 from dbldatagen.utils import (
@@ -60,7 +61,8 @@ class DataGenerator(SerializableToDict):
     :param rows: Number of rows to generate
     :param startingId: Starting value for generated seed column
     :param randomSeed: Random seed for random number generator
-    :param partitions: Number of partitions to generate (default `spark.sparkContext.defaultParallelism`)
+    :param partitions: Number of partitions to generate (default `spark.sparkContext.defaultParallelism` when
+        `SparkContext` is available, otherwise 200)
     :param verbose: Whether to generate verbose output logs (default `False`)
     :param batchSize: Arrow batch size to use when generating data with Pandas UDFs
     :param debug: Whether to output debug-level logs (default `False`)
@@ -73,9 +75,9 @@ class DataGenerator(SerializableToDict):
     This may be specified by setting the `seedColumnName` attribute to `_id`
 
     .. note::
-        When using a shared `SparkSession` (e.g. on Databricks serverless compute), the `SparkContext` is not
-        available and the default parallelism is set to 200. We recommend passing an explicit value for `partitions`
-        in these scenarios.
+        When using a shared or remote `SparkSession` (e.g. on Databricks serverless compute or Spark Connect), the
+        `SparkContext` is not available and the default parallelism is set to 200. We recommend passing an explicit
+        value for `partitions` in these scenarios.
     """
 
     logging.getLogger("py4j").setLevel(logging.WARNING)
@@ -136,7 +138,7 @@ class DataGenerator(SerializableToDict):
         self._schema = None
 
         if sparkSession is None:
-            sparkSession = SparkSingleton.getLocalInstance()
+            sparkSession = SparkSingleton.getInstance()
 
         self.sparkSession = sparkSession
 
@@ -344,6 +346,17 @@ class DataGenerator(SerializableToDict):
         """
         return os.environ.get("IS_SERVERLESS", "").upper() == "TRUE"
 
+    def _isSparkConnect(self) -> bool:
+        """Detects whether the current Spark session uses Spark Connect."""
+        return is_spark_connect_session(self.sparkSession)
+
+    def _setSparkConf(self, key: str, value: Any) -> None:  # noqa: ANN401
+        """Sets a Spark configuration key, tolerating restricted remote/shared sessions."""
+        try:
+            self.sparkSession.conf.set(key, value)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            self.logger.warning("Skipping Spark configuration %s=%r: %s", key, value, exc)
+
     def _setupPandas(self) -> None:
         """Sets Spark configurations controlling the batch size for Pandas execution."""
         self.logger.info("*** using pandas udf for custom functions ***")
@@ -357,16 +370,24 @@ class DataGenerator(SerializableToDict):
             )
             return
 
+        if self._isSparkConnect():
+            warnings.warn(
+                "Running with Spark Connect: skipping arrow configuration. "
+                "The `batchSize` option may have no effect and will be ignored.",
+                stacklevel=2,
+            )
+            return
+
         try:
             spark_major_version = int(str(self.sparkSession.version).split(".")[0])
 
             if spark_major_version >= 3:
-                self.sparkSession.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
+                self._setSparkConf("spark.sql.execution.arrow.pyspark.enabled", "true")
             else:
-                self.sparkSession.conf.set("spark.sql.execution.arrow.enabled", "true")
+                self._setSparkConf("spark.sql.execution.arrow.enabled", "true")
 
             if self._batchSize:
-                self.sparkSession.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", self._batchSize)
+                self._setSparkConf("spark.sql.execution.arrow.maxRecordsPerBatch", self._batchSize)
 
         except ValueError:
             self.logger.warning("Could not parse Spark version '%s'", self.sparkSession.version)
@@ -395,6 +416,9 @@ class DataGenerator(SerializableToDict):
         :param sparkSession: Optional `SparkSession`
         :return: Default parallelism from the associated `SparkContext`
         """
+        if is_spark_connect_session(sparkSession):
+            return _SPARK_DEFAULT_PARALLELISM
+
         try:
             if sparkSession and sparkSession.sparkContext:
                 return sparkSession.sparkContext.defaultParallelism
