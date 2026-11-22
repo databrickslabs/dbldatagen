@@ -235,8 +235,9 @@ class NRange(DataRange):
             return float(self.maxValue - self.minValue)
 
         # when any component is a float, we will return a float for the discrete range
-        # to simplify computations
-        return float(math.floor((self.maxValue - self.minValue) * float(1.0 / self.step)))
+        # to simplify computations; round before flooring so that floating point error
+        # (e.g. `(0.3 - 0.2) / 0.1 == 0.9999999999999998`) does not drop the last step
+        return float(math.floor(round((self.maxValue - self.minValue) / self.step, 9)))
 
     def getContinuousRange(self) -> float:
         """Convert range to continuous range.
