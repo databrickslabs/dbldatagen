@@ -21,6 +21,7 @@ from pyspark.sql.types import (
 
 from .datarange import DataRange
 from .serialization import SerializableToDict
+from .utils import count_numeric_steps
 
 
 _OLD_MIN_OPTION = "min"
@@ -213,17 +214,13 @@ class NRange(DataRange):
             self.step = 1
 
     def getDiscreteRange(self) -> float:
-        """Convert range to a discrete range size.
+        """Return the number of step increments between `minValue` and `maxValue`.
 
-        This is the number of discrete values in the range. For example, `NRange(1, 5, 0.5)`
-        has 8 discrete values.
+        For example, `NRange(0, 4, 0.5)` has 8 step increments. The generated values include
+        both `minValue` and `maxValue`, so that range has 9 values.
 
-        :return: Number of discrete values in the range.
+        :return: Number of step increments in the range.
         :raises ValueError: If the range is not fully specified or `step` is zero.
-
-        .. note::
-           A range of `NRange(0, 4, 0.5)` has 8 discrete values, not 9, as the `maxValue`
-           value itself is not part of the range.
         """
         if self.minValue is None or self.maxValue is None or self.step is None:
             raise ValueError("Range must have 'minValue', 'maxValue', and 'step' defined.")
@@ -235,9 +232,8 @@ class NRange(DataRange):
             return float(self.maxValue - self.minValue)
 
         # when any component is a float, we will return a float for the discrete range
-        # to simplify computations; round before flooring so that floating point error
-        # (e.g. `(0.3 - 0.2) / 0.1 == 0.9999999999999998`) does not drop the last step
-        return float(math.floor(round((self.maxValue - self.minValue) / self.step, 9)))
+        # to simplify computations
+        return float(count_numeric_steps(self.minValue, self.maxValue, self.step))
 
     def getContinuousRange(self) -> float:
         """Convert range to continuous range.

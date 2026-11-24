@@ -48,7 +48,7 @@ from .distributions import DataDistribution
 from .nrange import NRange
 from .serialization import SerializableToDict
 from .text_generators import TemplateGenerator
-from .utils import ensure, coalesce_values, parse_time_interval
+from .utils import ensure, coalesce_values, parse_time_interval, count_numeric_steps
 from .schema_parser import SchemaParser
 
 APPROX_GOLDEN_RATIO = 1.6180339887498949
@@ -648,7 +648,7 @@ class ColumnGenerationSpec(SerializableToDict):
         if step_val == 0 or max_val < min_val:
             return 0
         if isinstance(min_val, float) or isinstance(max_val, float) or isinstance(step_val, float):
-            return int(math.floor(round((max_val - min_val) / step_val, 9))) + 1
+            return count_numeric_steps(min_val, max_val, step_val) + 1
         return int((max_val - min_val) // step_val) + 1
 
     @staticmethod

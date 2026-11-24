@@ -516,6 +516,8 @@ class TestQuickTests:
             (0.3, 1.4, 0.1, 11.0),
             (0.0, 0.3, 0.1, 3.0),
             (1.5, 2.5, 0.35, 2.0),
+            (-0.3, -0.2, 0.1, 1.0),
+            (0.0, 0.07, 0.01, 7.0),
         ],
     )
     def test_nrange_discrete_range_with_float_step(
