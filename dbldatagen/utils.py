@@ -10,6 +10,7 @@ These are meant for internal use only
 
 import functools
 import json
+import math
 import re
 import time
 import warnings
@@ -366,6 +367,20 @@ def system_time_millis() -> int:
     """
     curr_time: int = round(time.time() / 1000)
     return curr_time
+
+
+def count_numeric_steps(min_value: float, max_value: float, step: float) -> int:
+    """Return the number of whole steps of size `step` from `min_value` to at most `max_value`.
+
+    The quotient is rounded to 9 decimal places before flooring, so that floating point error
+    (e.g. `(0.3 - 0.2) / 0.1 == 0.9999999999999998`) does not drop the last step.
+
+    :param min_value: Start of the range
+    :param max_value: End of the range
+    :param step: Step size; must be non-zero
+    :return: Number of step increments; the range then has this many values plus one
+    """
+    return int(math.floor(round((max_value - min_value) / step, 9)))
 
 
 def write_data_to_output(df: DataFrame, output_dataset: OutputDataset) -> StreamingQuery | None:

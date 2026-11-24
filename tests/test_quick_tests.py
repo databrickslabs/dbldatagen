@@ -507,6 +507,37 @@ class TestQuickTests:
         with pytest.raises(ValueError, match="Parameter 'step' must be non-zero when computing discrete range\\."):
             _ = rng.getDiscreteRange()
 
+    @pytest.mark.parametrize(
+        "minValue, maxValue, step, expectedRange",
+        [
+            (0.2, 0.3, 0.1, 1.0),
+            (0.1, 0.3, 0.1, 2.0),
+            (0.2, 0.7, 0.1, 5.0),
+            (0.3, 1.4, 0.1, 11.0),
+            (0.0, 0.3, 0.1, 3.0),
+            (1.5, 2.5, 0.35, 2.0),
+            (-0.3, -0.2, 0.1, 1.0),
+            (0.0, 0.07, 0.01, 7.0),
+        ],
+    )
+    def test_nrange_discrete_range_with_float_step(
+        self, minValue: float, maxValue: float, step: float, expectedRange: float
+    ) -> None:
+        """Test that floating point error in `(maxValue - minValue) / step` does not drop the last step."""
+        rng = NRange(minValue=minValue, maxValue=maxValue, step=step)
+        assert rng.getDiscreteRange() == expectedRange
+
+    @pytest.mark.parametrize("random", [False, True])
+    def test_float_step_column_includes_max_value(self, random: bool) -> None:
+        """Test that a column with a float step generates every value from `minValue` to `maxValue`."""
+        df = (
+            dg.DataGenerator(sparkSession=spark, name="float_step", rows=1000, partitions=1, randomSeed=42)
+            .withColumn("v", DoubleType(), minValue=0.2, maxValue=0.7, step=0.1, random=random)
+            .build()
+        )
+        values = sorted(round(row.v, 6) for row in df.select("v").distinct().collect())
+        assert values == [0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
+
     def test_nrange_adjust_for_byte_type_maxvalue_out_of_range(self):
         rng = NRange(maxValue=300)  # above the ByteType maximum of 127
         with pytest.raises(
